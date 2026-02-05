@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ratio splitter</title>
+  <style>
+    :root{
+      --bg:#ffffff; --fg:#000000; --muted:#333333; --card:#f5f7fb;
+      --blue:#1e88e5;      /* left colour */
+      --yellow:#f59e0b;    /* right text colour (slightly darker yellow for contrast) */
+      --border:#0c1024; --divider:#000; --panel:#fafafa;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    }
+    .wrap{max-width:960px;margin:28px auto;padding:0 16px}
+
+    header{display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+    header h1{font-size:26px;margin:0 0 4px 0;color:#000000}
+
+    .card{
+      background:#fff;
+      border:1px solid #e3e6ef;
+      border-radius:16px;
+      box-shadow:0 6px 22px rgba(0,0,0,.06);
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      padding:14px;
+    }
+    .controls .btn{
+      appearance:none;
+      border:1px solid #bbb;
+      background:#fff;
+      color:#111;
+      padding:9px 14px;
+      border-radius:12px;
+      cursor:pointer;
+    }
+    .controls .btn[disabled]{opacity:.45;cursor:not-allowed}
+    .controls .btn:hover:not([disabled]){background:#f6f6f6}
+    .controls .btn:active:not([disabled]){transform:translateY(1px)}
+    .controls .btn.primary{border-color:#888}
+    .controls .info{margin-left:auto;color:#444;font-size:13px}
+
+    .viz{padding:18px 16px 8px}
+
+    .counters{
+      position:relative;
+      display:flex;
+      gap:0;
+      margin-bottom:8px;
+    }
+    .counter-slot{flex:1;display:flex;justify-content:center}
+    .counter{
+      width:88px;
+      max-width:90%;
+      text-align:center;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #bbbbbb;
+      background:#ffffff;
+      color:#000000;
+      font-size:32px;
+      font-weight:600;
+    }
+
+    /* Bar area */
+    .barWrap{
+      position:relative;
+      border-radius:16px;
+      border:3px solid #0f1328;
+      background:#0b1020;
+      padding:12px;
+      transition:border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    }
+    .bar{
+      position:relative;
+      height:56px;
+      border-radius:10px;
+      overflow:visible;
+      background:#0b0f24;
+      border:2px solid var(--border);
+      outline:none;
+    }
+    .bar .leftFill,
+    .bar .rightFill{
+      position:absolute;
+      top:0;
+      bottom:0;
+      z-index:1;
+    }
+    .bar .leftFill{left:0;background:var(--blue)}
+    .bar .rightFill{right:0;background:#ffd54f}
+
+    .bar .lines{position:absolute;inset:0;pointer-events:none;z-index:2}
+    .bar .lines .v{position:absolute;top:0;bottom:0;width:1px;background:#000}
+
+    .bar .labels{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      display:flex;
+      align-items:stretch;
+      z-index:3;
+    }
+    .bar .labels .cell{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+    }
+
+    .handle{
+      position:absolute;
+      bottom:-34px;
+      transform:translateX(-50%);
+      width:0;
+      height:0;
+      pointer-events:auto;
+      z-index:4;
+      cursor:grab;
+    }
+    .handle .tab{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      top:-16px;
+      width:38px;
+      height:16px;
+      background:#141724;
+      border:2px solid #0e1220;
+      border-bottom:none;
+      border-radius:4px 4px 0 0;
+      box-shadow:0 2px 0 rgba(0,0,0,.25);
+    }
+    .handle .tip{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      top:0;
+      width:0;
+      height:0;
+      border-left:18px solid transparent;
+      border-right:18px solid transparent;
+      border-top:24px solid #141724;
+      filter:drop-shadow(0 2px 0 rgba(0,0,0,.25));
+    }
+    .handle[aria-grabbed="true"]{cursor:grabbing}
+
+    /* Glow when dividing */
+    @keyframes barPulse {
+      0%   { box-shadow:0 0 0 0 rgba(34,197,94,0.4); }
+      100% { box-shadow:0 0 32px 6px rgba(34,197,94,0.75); }
+    }
+    .barWrap.glow{
+      border-color:#16a34a;
+      animation:barPulse 1.4s ease-in-out infinite alternate;
+    }
+
+    /* Snap-back on reset */
+    @keyframes snapBack {
+      0%   { transform:scaleX(1); }
+      40%  { transform:scaleX(0.92); }
+      100% { transform:scaleX(1); }
+    }
+    .barWrap.snap{
+      animation:snapBack 0.18s ease-out;
+    }
+
+    .ratio{
+      margin-top:10px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:8px;
+    }
+    .ratio input{
+      width:220px;
+      text-align:center;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #bbbbbb;
+      background:#ffffff;
+      color:#000000;
+      font-size:32px;
+      font-weight:600;
+    }
+
+    .help-icon{
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      border:1px solid #d1d5db;
+      background:#ffffff;
+      color:#111827;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 2px 4px rgba(0,0,0,0.08);
+    }
+    .help-icon:hover{
+      background:#f9fafb;
+    }
+
+    .help-panel{
+      margin-top:8px;
+      font-size:13px;
+      color:#111827;
+      background:#f9fafb;
+      border-radius:10px;
+      border:1px solid #e5e7eb;
+      padding:10px 12px;
+      max-width:640px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .help-panel strong{font-weight:700;}
+
+    .divideCtrl{
+      margin-top:16px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .divideText{
+      font-size:16px;
+      font-weight:600;
+      color:#222;
+      text-align:center;
+    }
+    .divideBtn{
+      background:#22c55e;
+      border-color:#16a34a;
+      color:#ffffff;
+      font-weight:700;
+      font-size:16px;
+      padding:12px 24px;
+      border-radius:999px;
+      box-shadow:0 4px 10px rgba(34,197,94,0.35);
+      border:1px solid #16a34a;
+      cursor:pointer;
+    }
+    .divideBtn:hover:not([disabled]){
+      background:#16a34a;
+    }
+    .divideBtn:active:not([disabled]){
+      transform:translateY(1px);
+      box-shadow:0 2px 6px rgba(22,163,74,0.4);
+    }
+
+    .dividePanel{
+      margin-top:10px;
+      padding:12px;
+      border:1px solid #e3e6ef;
+      border-radius:12px;
+      background:#fafafa;
+      color:#111;
+    }
+    .dividePanel .msg{color:#b00020;font-size:13px;}
+
+    .summary-main{
+      margin-top:12px;
+      text-align:center;
+      font-weight:600;
+      font-size:20px;
+      color:#14532d;
+    }
+    .summary-answer{
+      margin-top:6px;
+      text-align:center;
+      font-weight:800;
+      font-size:32px;
+    }
+    .summary-answer .answer-left{color:var(--blue);}
+    .summary-answer .answer-right{color:var(--yellow);}
+    .summary-answer .answer-colon{margin:0 0.25em;color:#111827;}
+
+    .summary-note{
+      margin-top:4px;
+      font-size:14px;
+      text-align:center;
+    }
+    .summary-note.integer{
+      color:#15803d;
+      font-weight:600;
+    }
+    .summary-note.approx{
+      color:#374151;
+      font-style:italic;
+    }
+
+    .foot{color:#555;font-size:12px;text-align:center;margin:10px 0 4px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><h1>Ratio splitter</h1></header>
+
+    <section class="card controls">
+      <button class="btn primary" id="splitBtn">Split</button>
+      <button class="btn" id="regroupBtn">Re-group</button>
+      <button class="btn" id="resetBtn">Reset</button>
+      <div class="info" id="partsInfo">Parts: 1 (max 256)</div>
+    </section>
+
+    <section class="card viz">
+      <div class="counters">
+        <div class="counter-slot">
+          <input class="counter" id="leftCount" value="1" readonly aria-label="Left (blue) parts">
+        </div>
+        <div class="counter-slot">
+          <input class="counter" id="rightCount" value="0" readonly aria-label="Right (yellow) parts">
+        </div>
+      </div>
+
+      <div class="barWrap" id="barWrap">
+        <div class="bar" id="bar" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" aria-label="Right (yellow) partitions">
+          <div class="leftFill" id="leftFill" style="width:100%"></div>
+          <div class="rightFill" id="rightFill" style="width:0%"></div>
+          <div class="lines" id="lines"></div>
+          <div class="labels" id="labels"></div>
+          <div class="handle" id="handle" aria-grabbed="false" aria-label="Drag to change right side">
+            <div class="tab"></div>
+            <div class="tip"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ratio">
+        <input id="ratioBox" value="1:0" readonly aria-label="Ratio left to right">
+        <button id="helpBtn" class="help-icon" aria-label="Help about how to use the ratio splitter">?</button>
+      </div>
+      <div id="helpPanel" class="help-panel" hidden>
+        <strong>How this works:</strong> Drag the pointer or use the arrow keys to change the ratio of blue to yellow parts.
+        <br>• <strong>Split</strong> makes more, smaller equal parts but keeps the same ratio.
+        <br>• <strong>Re-group</strong> combines parts back into larger equal blocks (when possible).
+        <br>• The big green button lets you divide a quantity into this ratio.
+      </div>
+
+      <div class="divideCtrl">
+        <div class="divideText">Click here to divide a quantity into this ratio</div>
+        <button id="divideToggle" class="divideBtn">Click here to divide</button>
+      </div>
+
+      <section id="dividePanel" class="dividePanel" hidden>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <label for="divideInput" style="font-weight:600;">Enter number to divide</label>
+          <input id="divideInput" type="number" min="1" step="1"
+                 style="width:130px; padding:6px 10px; border-radius:8px; border:1px solid #bbb;">
+          <span id="divideMsg" class="msg"></span>
+        </div>
+        <div id="divideSummary"></div>
+      </section>
+
+      <div class="foot">Keyboard: ←/→ (Shift = ×5). Max parts: 256.</div>
+    </section>
+  </div>
+
+<script>
+(function(){
+  const MAX_PARTS = 256;
+  const clamp = (v,min,max)=> Math.max(min, Math.min(max,v));
+  const gcd = (a,b)=>{
+    a=Math.abs(a|0); b=Math.abs(b|0);
+    if(a===0) return b||1;
+    if(b===0) return a||1;
+    while(b){ const t=b; b=a%b; a=t; }
+    return a||1;
+  };
+  const round1 = (x)=> Number(x.toFixed(1));
+
+  // Sounds
+  const dragSound    = new Audio("drag.wav");
+  const splitSound   = new Audio("split.wav");
+  const regroupSound = new Audio("regroup.wav");
+  const resetSound   = new Audio("reset.wav");
+
+  function play(audio){
+    if(!audio) return;
+    try{
+      audio.currentTime = 0;
+      audio.play().catch(()=>{});
+    }catch(e){}
+  }
+
+  // State
+  let parts = 1;
+  let leftCount = 1;
+  let dragging = false;
+
+  // Elements
+  const barWrap   = document.getElementById("barWrap");
+  const bar       = document.getElementById("bar");
+  const handle    = document.getElementById("handle");
+  const leftFill  = document.getElementById("leftFill");
+  const rightFill = document.getElementById("rightFill");
+  const lines     = document.getElementById("lines");
+  const labels    = document.getElementById("labels");
+  const leftBox   = document.getElementById("leftCount");
+  const rightBox  = document.getElementById("rightCount");
+  const ratioBox  = document.getElementById("ratioBox");
+  const partsInfo = document.getElementById("partsInfo");
+
+  const splitBtn   = document.getElementById("splitBtn");
+  const regroupBtn = document.getElementById("regroupBtn");
+  const resetBtn   = document.getElementById("resetBtn");
+
+  const divideToggle  = document.getElementById("divideToggle");
+  const dividePanel   = document.getElementById("dividePanel");
+  const divideInput   = document.getElementById("divideInput");
+  const divideMsg     = document.getElementById("divideMsg");
+  const divideSummary = document.getElementById("divideSummary");
+
+  const helpBtn   = document.getElementById("helpBtn");
+  const helpPanel = document.getElementById("helpPanel");
+
+  function counts(){
+    return { L:leftCount, R:parts-leftCount };
+  }
+
+  function baseUnit(){
+    const {L,R} = counts();
+    const g = gcd(L,R);
+    const a0 = g ? L/g : L;
+    const b0 = g ? R/g : R;
+    const S  = a0 + b0;
+    return {a0,b0,S,g};
+  }
+
+  function updateLines(){
+    lines.innerHTML = "";
+    for(let i=1;i<parts;i++){
+      const v=document.createElement("div");
+      v.className="v";
+      v.style.left = (i/parts*100)+"%";
+      lines.appendChild(v);
+    }
+  }
+
+  function updateHandle(){
+    const pct = (leftCount/parts)*100;
+    handle.style.left = pct+"%";
+    leftFill.style.width  = pct+"%";
+    rightFill.style.width = (100-pct)+"%";
+
+    const {L,R} = counts();
+    leftBox.value  = L;
+    rightBox.value = R;
+    ratioBox.value = `${L}:${R}`;
+
+    bar.setAttribute("aria-valuemax", parts);
+    bar.setAttribute("aria-valuenow", R);
+  }
+
+  function updateButtons(){
+    const {S,g} = baseUnit();
+    const canSplit   = (S>0 && parts + S <= MAX_PARTS);
+    const canRegroup = (g>=2 && parts - S >= 1);
+    splitBtn.disabled   = !canSplit;
+    regroupBtn.disabled = !canRegroup;
+    partsInfo.textContent = `Parts: ${parts} (max ${MAX_PARTS})`;
+  }
+
+  function refresh(){
+    updateLines();
+    updateHandle();
+    updateButtons();
+    updateDivideUI();
+  }
+
+  function positionToLeftCount(clientX){
+    const rect = bar.getBoundingClientRect();
+    const x = clamp(clientX - rect.left, 0, rect.width);
+    const frac = x / rect.width;
+    return clamp(Math.round(frac * parts), 0, parts);
+  }
+
+  // Dragging
+  handle.addEventListener("pointerdown", e=>{
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    dragging = true;
+    handle.setAttribute("aria-grabbed","true");
+  });
+
+  window.addEventListener("pointerup", ()=>{
+    if(dragging){
+      dragging = false;
+      handle.setAttribute("aria-grabbed","false");
+    }
+  });
+
+  window.addEventListener("pointermove", e=>{
+    if(!dragging) return;
+    const newLeft = positionToLeftCount(e.clientX);
+    if(newLeft !== leftCount){
+      leftCount = newLeft;
+      play(dragSound);
+    }
+    refresh();
+  });
+
+  // Click bar (no drag sound)
+  bar.addEventListener("pointerdown", e=>{
+    if(e.target.closest && e.target.closest("#handle")) return;
+    leftCount = positionToLeftCount(e.clientX);
+    refresh();
+  });
+
+  // Keyboard arrows
+  bar.addEventListener("keydown", e=>{
+    const step = e.shiftKey ? 5 : 1;
+    if(e.key === "ArrowLeft"){
+      leftCount = clamp(leftCount - step, 0, parts);
+      refresh();
+      e.preventDefault();
+    } else if(e.key === "ArrowRight"){
+      leftCount = clamp(leftCount + step, 0, parts);
+      refresh();
+      e.preventDefault();
+    }
+  });
+
+  // Split / Re-group / Reset
+  splitBtn.addEventListener("click", ()=>{
+    const {a0,S} = baseUnit();
+    if(S>0 && parts + S <= MAX_PARTS){
+      leftCount += a0;
+      parts     += S;
+      refresh();
+      play(splitSound);
+    }
+  });
+
+  regroupBtn.addEventListener("click", ()=>{
+    const {a0,S,g} = baseUnit();
+    if(g>=2 && parts - S >= 1){
+      leftCount -= a0;
+      parts     -= S;
+      leftCount  = clamp(leftCount,0,parts);
+      refresh();
+      play(regroupSound);
+    }
+  });
+
+  resetBtn.addEventListener("click", ()=>{
+    parts = 1;
+    leftCount = 1;
+    divideInput.value = "";
+    divideMsg.textContent = "";
+    divideSummary.innerHTML = "";
+    dividePanel.hidden = true;
+    labels.innerHTML = "";
+    if(barWrap){
+      barWrap.classList.remove("glow");
+      barWrap.classList.add("snap");
+      setTimeout(()=> barWrap.classList.remove("snap"), 220);
+    }
+    helpPanel.setAttribute("hidden","");
+    refresh();
+    play(resetSound);
+  });
+
+  // Render per-part labels in cells
+  function renderPerPartLabels(total){
+    labels.innerHTML = "";
+    if(parts > 64) return; // auto-hide if too many parts
+    const rect = bar.getBoundingClientRect();
+    const cellFont = Math.max(10, Math.min(24, Math.floor((rect.width/parts)*0.45)));
+    const q = round1(total/parts);
+    for(let i=0; i<parts; i++){
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.textContent = q.toFixed(1);
+      cell.style.fontSize = cellFont + "px";
+      cell.style.color = (i < leftCount) ? "#ffffff" : "#000000";
+      labels.appendChild(cell);
+    }
+  }
+
+  // Divide UI
+  function updateDivideUI(){
+    // If panel hidden, clear labels & summary
+    if(dividePanel.hidden){
+      divideSummary.innerHTML = "";
+      divideMsg.textContent   = "";
+      labels.innerHTML = "";
+      if(barWrap) barWrap.classList.remove("glow");
+      return;
+    }
+
+    const v = Number(divideInput.value);
+    if(!Number.isInteger(v) || v <= 0){
+      divideMsg.textContent = "Enter a positive whole number.";
+      divideSummary.innerHTML = "";
+      labels.innerHTML = "";
+      if(barWrap) barWrap.classList.remove("glow");
+      return;
+    }
+
+    divideMsg.textContent = "";
+    if(barWrap) barWrap.classList.add("glow");
+
+    // Per-cell display
+    renderPerPartLabels(v);
+
+    const {L,R} = counts();
+    const gRatio = gcd(L,R);
+    const simpleL = L / gRatio;
+    const simpleR = R / gRatio;
+
+    const perExact   = v / parts;
+    const perRounded = round1(perExact);
+    const leftVal    = round1(perExact * L);
+    const rightVal   = round1(v - leftVal);
+
+    let noteHtml = "";
+    if(Number.isInteger(perExact)){
+      noteHtml =
+        `<div class="summary-note integer">Perfect split: each part gets ${perExact} exactly.</div>`;
+    } else {
+      noteHtml =
+        `<div class="summary-note approx">Each part gets about ${perRounded}.</div>`;
+    }
+
+    divideSummary.innerHTML =
+      `<div class="summary-main">${v} divided into the ratio ${simpleL}:${simpleR}` +
+      (gRatio > 1 ? ` (equivalent to ${L}:${R})` : ``) +
+      ` is</div>` +
+      `<div class="summary-answer">` +
+        `<span class="answer-left">${leftVal}</span>` +
+        `<span class="answer-colon">:</span>` +
+        `<span class="answer-right">${rightVal}</span>` +
+      `</div>` +
+      noteHtml;
+  }
+
+  divideToggle.addEventListener("click", ()=>{
+    dividePanel.hidden = !dividePanel.hidden;
+    updateDivideUI();
+  });
+
+  divideInput.addEventListener("input", updateDivideUI);
+
+  // Help panel toggle
+  helpBtn.addEventListener("click", ()=>{
+    const isHidden = helpPanel.hasAttribute("hidden");
+    if(isHidden) helpPanel.removeAttribute("hidden");
+    else helpPanel.setAttribute("hidden","");
+  });
+
+  // Init
+  parts = 1;
+  leftCount = 1;
+  refresh();
+})();
+</script>
+</body>
+</html>
