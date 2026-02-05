@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Flash Card Practice</title>
+
+  <!-- Handwritten fonts to match main tool -->
+  <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cell-width: 56px;
+      --cell-height: 80px;
+      --border-color: #d0d4e8;
+      --label-color: #555;
+      --digit-color: #0066cc;
+      --decimal-color: #888;
+      --bg-main: #f5f7fb;
+      --card-bg: #ffffff;
+      --accent-blue: #4c6fff;
+      --accent-soft: #e2e6ff;
+      --correct-bg: #d9fdd3;
+      --incorrect-bg: #ffd7d7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top left, #eef1ff, #f5f7fb 50%, #f0f4ff 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #222;
+    }
+
+    .fc-app {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+      padding: 16px 20px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Header / top bar ------------------------------------------------------ */
+
+    .fc-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .back-btn {
+      border: none;
+      background: #eef2ff;
+      color: #374151;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .back-btn span {
+      font-size: 1.1rem;
+      margin-right: 4px;
+    }
+
+    .fc-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-right: auto;
+    }
+
+    .mode-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #e5e7f5;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .mode-btn.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    /* Mini place value grid ------------------------------------------------- */
+
+    .mini-grid-container {
+      margin-top: 6px;
+      border-radius: 14px;
+      background: #f8f9ff;
+      padding: 10px 8px;
+      border: 1px solid #d7ddff;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .pv-grid {
+      display: inline-block;
+      border-collapse: collapse;
+      white-space: nowrap;
+    }
+
+    .pv-row {
+      display: flex;
+    }
+
+    .pv-cell {
+      width: var(--cell-width);
+      height: var(--cell-height);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pv-cell.decimal {
+      width: 24px;
+      min-width: 24px;
+      background: #f1f1f1;
+      border-left: none;
+      border-right: none;
+    }
+
+    .pv-labels .pv-cell {
+      height: 90px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      border-bottom: 0;
+      font-size: 0.65rem;
+      color: var(--label-color);
+      text-align: center;
+      padding: 0 2px;
+    }
+
+    .pv-label-text {
+      display: inline-block;
+      transform: rotate(-90deg);
+      transform-origin: center center;
+      white-space: nowrap;
+    }
+
+    .pv-digits-row .pv-cell {
+      border-top: 0;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--digit-color);
+    }
+
+    .pv-digits-row .pv-cell.decimal {
+      color: var(--decimal-color);
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .digit-span {
+      display: inline-block;
+      position: relative;
+      z-index: 2;
+    }
+
+    .digit-slide-left-1 { animation: digitSlideLeft1 0.8s ease-out forwards; }
+    .digit-slide-right-1 { animation: digitSlideRight1 0.8s ease-out forwards; }
+    .digit-slide-left-2 { animation: digitSlideLeft2 0.8s ease-out forwards; }
+    .digit-slide-right-2 { animation: digitSlideRight2 0.8s ease-out forwards; }
+    .digit-slide-left-3 { animation: digitSlideLeft3 0.8s ease-out forwards; }
+    .digit-slide-right-3 { animation: digitSlideRight3 0.8s ease-out forwards; }
+
+    @keyframes digitSlideLeft1 { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--cell-width))); } }
+    @keyframes digitSlideRight1 { from { transform: translateX(0); } to { transform: translateX(var(--cell-width)); } }
+    @keyframes digitSlideLeft2 { from { transform: translateX(0); } to { transform: translateX(calc(-2 * var(--cell-width))); } }
+    @keyframes digitSlideRight2 { from { transform: translateX(0); } to { transform: translateX(calc(2 * var(--cell-width))); } }
+    @keyframes digitSlideLeft3 { from { transform: translateX(0); } to { transform: translateX(calc(-3 * var(--cell-width))); } }
+    @keyframes digitSlideRight3 { from { transform: translateX(0); } to { transform: translateX(calc(3 * var(--cell-width))); } }
+
+    /* Question area --------------------------------------------------------- */
+
+    .question-area {
+      margin-top: 18px;
+      padding: 18px 20px 24px;
+      border-radius: 18px;
+      background: #fafbff;
+      border: 1px solid #e0e5ff;
+    }
+
+    .question-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: #6b7280;
+    }
+
+    .question-text {
+      text-align: center;
+      font-size: 7rem;
+      color: #111827;
+      font-family: "Schoolbell", "Kalam", "Gloria Hallelujah", "Patrick Hand", "Shadows Into Light", cursive;
+      margin-top: 6px;
+    }
+
+    .question-subtext {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    /* Options --------------------------------------------------------------- */
+
+    .options-grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .option-card {
+      border-radius: 14px;
+      border: 2px solid #e5e7f5;
+      background: #ffffff;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: box-shadow 0.12s ease, transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+      position: relative;
+      text-align: left;
+    }
+
+    .option-card:hover:not(.disabled) {
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+      transform: translateY(-1px);
+      border-color: #c7d2fe;
+    }
+
+    .option-card.disabled {
+      cursor: default;
+      opacity: 0.85;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .option-label {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 2px solid #a855f7;
+      color: #7e22ce;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .option-value {
+      font-size: 3rem;
+      font-weight: 600;
+      color: #111827;
+      font-family: "Schoolbell", "Kalam", "Gloria Hallelujah", "Patrick Hand", , "Shadows Into Light", cursive;
+    }
+
+    .option-card.correct {
+      background: var(--correct-bg);
+      border-color: #22c55e;
+    }
+
+    .option-card.incorrect {
+      background: var(--incorrect-bg);
+      border-color: #f97373;
+    }
+
+    .option-mark {
+      position: absolute;
+      right: 10px;
+      bottom: 6px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .option-mark.correct {
+      color: #16a34a;
+    }
+
+    .option-mark.incorrect {
+      color: #ef4444;
+    }
+
+    /* Bottom controls ------------------------------------------------------- */
+
+    .bottom-controls {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      color: #6b7280;
+    }
+
+    #progressBarOuter {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: #e5e7f5;
+      margin-right: 16px;
+      overflow: hidden;
+    }
+
+    #progressBarInner {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #4f46e5, #22c55e);
+      border-radius: inherit;
+      transition: width 0.25s ease-out;
+    }
+
+    #nextBtn {
+      border: none;
+      border-radius: 999px;
+      background: var(--accent-blue);
+      color: #ffffff;
+      padding: 8px 22px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+      min-width: 120px;
+    }
+
+    #nextBtn:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    /* Results panel --------------------------------------------------------- */
+
+    #resultsPanel {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    #resultsCard {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px 26px 20px;
+      max-width: 420px;
+      width: 95%;
+      text-align: center;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    #resultsCard h2 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+    }
+
+    #resultsScore {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 8px 0;
+    }
+
+    #resultsSummary {
+      font-size: 1rem;
+      color: #4b5563;
+      margin-bottom: 14px;
+    }
+
+    #resultsMessage {
+      font-size: 1rem;
+      color: #111827;
+      margin-bottom: 18px;
+    }
+
+    .results-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .results-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #playAgainBtn {
+      background: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    #closeResultsBtn {
+      background: #e5e7f5;
+      color: #111827;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Confetti -------------------------------------------------------------- */
+
+    #confettiContainer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 8px;
+      height: 16px;
+      border-radius: 2px;
+      opacity: 0.9;
+      animation-name: confettiFall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes confettiFall {
+      0%   { transform: translate3d(0, -100vh, 0) rotateZ(0deg); }
+      100% { transform: translate3d(0, 100vh, 0) rotateZ(360deg); }
+    }
+
+    @media (max-width: 720px) {
+      .fc-app {
+        padding: 12px 12px 20px;
+      }
+      .fc-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .question-text {
+        font-size: 2.4rem;
+      }
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fc-app">
+    <header class="fc-header">
+      <!-- Change href here if your main file has a different name -->
+      <button class="back-btn" type="button" id="backBtn">
+        <span>←</span> Back
+      </button>
+      <div class="fc-title">Student Flash Card Practice</div>
+      <div class="mode-buttons">
+        <button class="mode-btn active" data-mode="ten">× / ÷ 10</button>
+        <button class="mode-btn" data-mode="hundred">× / ÷ 100</button>
+        <button class="mode-btn" data-mode="thousand">× / ÷ 1000</button>
+        <button class="mode-btn" data-mode="mixed">Mixed</button>
+        <button class="mode-btn" data-mode="reverse">Reverse challenge</button>
+      </div>
+    </header>
+
+    <!-- Mini place value grid -->
+    <section class="mini-grid-container">
+      <div id="miniPlaceValue"></div>
+    </section>
+
+    <!-- Question -->
+    <section class="question-area">
+      <div class="question-top-row">
+        <span id="questionCounter">Question 1 of 15</span>
+        <span id="modeLabelText">Mode: × / ÷ 10</span>
+      </div>
+      <div id="questionText" class="question-text">148 × 10 = ?</div>
+      <div id="questionSubtext" class="question-subtext">
+        
+      </div>
+
+      <!-- Options -->
+      <div class="options-grid" id="optionsGrid">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div class="bottom-controls">
+        <div id="progressBarOuter">
+          <div id="progressBarInner"></div>
+        </div>
+        <button id="nextBtn" type="button" disabled>Next</button>
+      </div>
+    </section>
+
+    <!-- Results overlay -->
+    <div id="resultsPanel" class="hidden" aria-modal="true" role="dialog">
+      <div id="resultsCard">
+        <h2>Nice work!</h2>
+        <div id="resultsScore">12 / 15</div>
+        <div id="resultsSummary"></div>
+        <div id="resultsMessage"></div>
+        <div class="results-buttons">
+          <button id="playAgainBtn" class="results-btn">Play again</button>
+          <button id="closeResultsBtn" class="results-btn">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confettiContainer"></div>
+
+  
+<script>
+  /**********************
+   * CONFIG & CONSTANTS *
+   **********************/
+
+  const TOTAL_QUESTIONS = 15;
+
+  const positivePlaces = [
+    "trillions","hundred-billions","ten-billions","billions","hundred-millions",
+    "ten-millions","millions","hundred-thousands","ten-thousands","thousands",
+    "hundreds","tens","ones"
+  ];
+  const negativePlaces = [
+    "tenths","hundredths","thousandths","ten-thousandths","hundred-thousandths","millionths"
+  ];
+
+  const MAX_LEFT_DIGITS  = positivePlaces.length;
+  const MAX_RIGHT_DIGITS = negativePlaces.length;
+  const MAX_INT_VALUE    = Math.pow(10, MAX_LEFT_DIGITS);
+  const MIN_POS_VALUE    = Math.pow(10, -MAX_RIGHT_DIGITS);
+
+  const operationsPool = [
+    { steps: 1, mult: true,  label: "× 10"   },
+    { steps: 1, mult: false, label: "÷ 10"   },
+    { steps: 2, mult: true,  label: "× 100"  },
+    { steps: 2, mult: false, label: "÷ 100"  },
+    { steps: 3, mult: true,  label: "× 1000" },
+    { steps: 3, mult: false, label: "÷ 1000" }
+  ];
+
+  /********************
+   * DOM REFERENCES   *
+   ********************/
+
+  const modeButtons   = document.querySelectorAll(".mode-btn");
+  const backBtn       = document.getElementById("backBtn");
+  const miniPV        = document.getElementById("miniPlaceValue");
+  const questionText  = document.getElementById("questionText");
+  const questionCounter = document.getElementById("questionCounter");
+  const modeLabelText = document.getElementById("modeLabelText");
+  const optionsGrid   = document.getElementById("optionsGrid");
+  const nextBtn       = document.getElementById("nextBtn");
+  const progressBarInner = document.getElementById("progressBarInner");
+  const resultsPanel  = document.getElementById("resultsPanel");
+  const resultsScore  = document.getElementById("resultsScore");
+  const resultsSummary= document.getElementById("resultsSummary");
+  const resultsMessage= document.getElementById("resultsMessage");
+  const playAgainBtn  = document.getElementById("playAgainBtn");
+  const closeResultsBtn = document.getElementById("closeResultsBtn");
+  const confettiContainer = document.getElementById("confettiContainer");
+
+  /********************
+   * STATE            *
+   ********************/
+
+  let currentMode = "ten"; // 'ten' | 'hundred' | 'thousand' | 'mixed' | 'reverse'
+  let currentQuestionIndex = 0; // 0-based
+  let correctCount = 0;
+  let currentQuestion = null; // {original, final, op, questionText, options[], correctIndex}
+  let hasAnsweredCurrent = false;
+
+  /********************
+   * UTILITIES        *
+   ********************/
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function isInPlaceValueRange(value) {
+    if (value >= MAX_INT_VALUE) return false;
+    if (value < MIN_POS_VALUE) return false;
+    return true;
+  }
+
+  function normalizeValue(v) {
+    if (!isFinite(v)) return v;
+    const INT_EPS = 1e-12;
+    const nearestInt = Math.round(v);
+    if (nearestInt !== 0 && Math.abs(v - nearestInt) < INT_EPS) return nearestInt;
+    return v;
+  }
+
+  function formatNumber(value) {
+  // Base numeric string, trimmed of trailing zeros
+  let s = value.toFixed(6);
+  s = s.replace(/\.?0+$/, "");
+  if (s === "") s = "0";
+
+  let [intPart, fracPart = ""] = s.split(".");
+
+  // Strip leading zeros but keep at least one digit
+  intPart = intPart.replace(/^0+/, "") || "0";
+
+  // Add spaces every 3 digits from the right
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+  return fracPart ? `${intPart}.${fracPart}` : intPart;
+}
+
+
+  function approxEqual(a, b) {
+    return Math.abs(a - b) < 1e-10;
+  }
+
+  /********************
+   * MINI GRID RENDER *
+   ********************/
+
+  function getDigitInfoForGrid(value) {
+    let s = value.toFixed(MAX_RIGHT_DIGITS);
+    if (!s.includes(".")) s += ".";
+    let [intPart, fracPart] = s.split(".");
+    intPart = intPart.replace(/^0+/, "") || "0";
+    if (!fracPart) fracPart = "";
+    if (fracPart.length < MAX_RIGHT_DIGITS) {
+      fracPart = fracPart.padEnd(MAX_RIGHT_DIGITS, "0");
+    } else if (fracPart.length > MAX_RIGHT_DIGITS) {
+      fracPart = fracPart.slice(0, MAX_RIGHT_DIGITS);
+    }
+    return {
+      leftDigits: intPart.split(""),
+      rightDigits: fracPart.split("")
+    };
+  }
+
+  function renderMiniGrid(value) {
+    if (value == null || !isInPlaceValueRange(value)) {
+      miniPV.innerHTML =
+        "<em style='color:#6b7280;font-size:0.9rem;'>Digits shown here when a question loads.</em>";
+      return;
+    }
+
+    const { leftDigits, rightDigits } = getDigitInfoForGrid(value);
+
+    const leftCells  = new Array(positivePlaces.length).fill("");
+    const rightCells = new Array(negativePlaces.length).fill("");
+
+    for (let i = 0; i < leftDigits.length; i++) {
+      const targetIndex = leftCells.length - 1 - i;
+      if (targetIndex < 0) break;
+      leftCells[targetIndex] = leftDigits[leftDigits.length - 1 - i];
+    }
+
+    for (let i = 0; i < Math.min(rightDigits.length, rightCells.length); i++) {
+      rightCells[i] = rightDigits[i];
+    }
+
+    let html = '<div class="pv-grid">';
+    // labels
+    html += '<div class="pv-row pv-labels">';
+    positivePlaces.forEach(name => {
+      html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
+    });
+    html += '<div class="pv-cell decimal"></div>';
+    negativePlaces.forEach(name => {
+      html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
+    });
+    html += '</div>';
+
+    // digits
+    html += '<div class="pv-row pv-digits-row">';
+    leftCells.forEach(d => {
+      html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
+    });
+    html += '<div class="pv-cell decimal">.</div>';
+    rightCells.forEach(d => {
+      html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
+    });
+    html += '</div>';
+
+    html += '</div>';
+
+    miniPV.innerHTML = html;
+    miniPV.parentElement.scrollLeft = 0;
+  }
+
+  // UPDATED: now supports a callback that runs AFTER the slide finishes
+  function animateMiniGridSlide(steps, isMultiply, callback) {
+    const spans = miniPV.querySelectorAll(".digit-span");
+    if (!spans.length || steps <= 0) {
+      if (typeof callback === "function") callback();
+      return;
+    }
+    const direction = isMultiply ? "left" : "right";
+    const cls = `digit-slide-${direction}-${steps}`;
+    spans.forEach(s => s.classList.add(cls));
+    const duration = 900;
+    setTimeout(() => {
+      spans.forEach(s => s.classList.remove(
+        "digit-slide-left-1","digit-slide-right-1",
+        "digit-slide-left-2","digit-slide-right-2",
+        "digit-slide-left-3","digit-slide-right-3"
+      ));
+      if (typeof callback === "function") callback();
+    }, duration);
+  }
+
+  /********************
+   * QUESTION GENERATION
+   ********************/
+
+  function chooseOperationForMode(mode) {
+    const candidates = [];
+    if (mode === "ten") {
+      operationsPool.forEach(op => { if (op.steps === 1) candidates.push(op); });
+    } else if (mode === "hundred") {
+      operationsPool.forEach(op => { if (op.steps === 2) candidates.push(op); });
+    } else if (mode === "thousand") {
+      operationsPool.forEach(op => { if (op.steps === 3) candidates.push(op); });
+    } else if (mode === "mixed" || mode === "reverse") {
+      operationsPool.forEach(op => candidates.push(op));
+    }
+    const pick = candidates[randInt(0, candidates.length - 1)];
+    return { steps: pick.steps, mult: pick.mult, label: pick.label };
+  }
+
+  function generateOriginalAndFinal(op, reverseMode) {
+    const maxAttempts = 150;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const base  = randInt(1, 999);
+      const exp   = randInt(-2, 3);
+      let value   = base * Math.pow(10, exp);
+      value       = normalizeValue(parseFloat(value.toFixed(3)));
+
+      if (!isInPlaceValueRange(value)) continue;
+
+      let original, final;
+      if (!reverseMode) {
+        original = value;
+        const factor = Math.pow(10, op.steps);
+        final = normalizeValue(op.mult ? original * factor : original / factor);
+      } else {
+        const factor = Math.pow(10, op.steps);
+        original = op.mult
+          ? normalizeValue(value / factor)
+          : normalizeValue(value * factor);
+        final = value;
+      }
+
+      if (!isFinite(original) || !isFinite(final) || original <= 0 || final <= 0) continue;
+      if (!isInPlaceValueRange(original) || !isInPlaceValueRange(final)) continue;
+
+      return { original, final };
+    }
+    const original = 148;
+    const factor = Math.pow(10, op.steps);
+    const final = op.mult ? original * factor : original / factor;
+    return { original, final };
+  }
+
+  function generateDistractors(original, correctValue, correctOp) {
+    const distractors = [];
+    const used = [correctValue];
+
+    function addCandidate(val) {
+      if (!isFinite(val) || val <= 0) return;
+      val = normalizeValue(val);
+      if (!isInPlaceValueRange(val)) return;
+      if (used.some(x => approxEqual(x, val))) return;
+      used.push(val);
+      distractors.push(val);
+    }
+
+    operationsPool.forEach(op => {
+      if (op.steps === correctOp.steps && op.mult === correctOp.mult) return;
+      const factor = Math.pow(10, op.steps);
+      const val = normalizeValue(op.mult ? original * factor : original / factor);
+      addCandidate(val);
+    });
+
+    while (distractors.length < 3) {
+      const mag = Math.max(0, Math.floor(Math.log10(correctValue)) - 1);
+      const deltaBase = Math.pow(10, mag);
+      const sign = Math.random() < 0.5 ? -1 : 1;
+      const delta = deltaBase * (0.5 + Math.random());
+      const candidate = normalizeValue(correctValue + sign * delta);
+      addCandidate(candidate);
+      if (!isFinite(candidate) || candidate <= 0) break;
+    }
+
+    const picked = distractors.slice(0, 3).map(v => v);
+    return picked;
+  }
+
+  function generateQuestion() {
+    const op = chooseOperationForMode(currentMode);
+    const reverseMode = currentMode === "reverse";
+    const { original, final } = generateOriginalAndFinal(op, reverseMode);
+
+    let prompt, answerValue;
+    if (!reverseMode) {
+      const sign = op.mult ? "×" : "÷";
+      const factor = Math.pow(10, op.steps);
+      prompt = `${formatNumber(original)} ${sign} ${factor} = ?`;
+      answerValue = final;
+    } else {
+      const sign = op.mult ? "×" : "÷";
+      const factor = Math.pow(10, op.steps);
+      prompt = `? ${sign} ${factor} = ${formatNumber(final)}`;
+      answerValue = original;
+    }
+
+    const distractorsValues = generateDistractors(original, answerValue, op);
+
+    const allValues = [answerValue, ...distractorsValues];
+    while (allValues.length < 4) {
+      const mag = Math.max(0, Math.floor(Math.log10(answerValue)) - 1);
+      const delta = Math.pow(10, mag);
+      const candidate = normalizeValue(answerValue + delta * (allValues.length));
+      allValues.push(candidate);
+    }
+
+    const indices = [0, 1, 2, 3];
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = randInt(0, i);
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    const labels = ["A", "B", "C", "D"];
+    const options = indices.map((idx, outIdx) => ({
+      label: labels[outIdx],
+      value: allValues[idx]
+    }));
+
+    const correctIndex = options.findIndex(o => approxEqual(o.value, answerValue));
+
+    return {
+      original,
+      final,
+      operation: op,
+      prompt,
+      options,
+      correctIndex,
+      answerValue
+    };
+  }
+
+  /********************
+   * RENDER QUESTION  *
+   ********************/
+
+  function renderQuestion() {
+    hasAnsweredCurrent = false;
+    nextBtn.disabled = true;
+
+    const qNum = currentQuestionIndex + 1;
+    questionCounter.textContent = `Question ${qNum} of ${TOTAL_QUESTIONS}`;
+    const modeLabelMap = {
+      ten: "× / ÷ 10",
+      hundred: "× / ÷ 100",
+      thousand: "× / ÷ 1000",
+      mixed: "Mixed",
+      reverse: "Reverse challenge"
+    };
+    modeLabelText.textContent = `Mode: ${modeLabelMap[currentMode]}`;
+
+    questionText.textContent = currentQuestion.prompt;
+
+    // Mini-grid starts at ORIGINAL number
+    renderMiniGrid(currentQuestion.original);
+
+    optionsGrid.innerHTML = "";
+    const letterOrder = ["A", "B", "C", "D"];
+    currentQuestion.options.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option-card";
+      btn.dataset.index = idx.toString();
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "option-label";
+      labelSpan.textContent = letterOrder[idx];
+
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "option-value";
+      valueSpan.textContent = formatNumber(opt.value);
+
+      btn.appendChild(labelSpan);
+      btn.appendChild(valueSpan);
+
+      btn.addEventListener("click", () => handleOptionClick(idx, btn));
+      optionsGrid.appendChild(btn);
+    });
+
+    const progress = (currentQuestionIndex / TOTAL_QUESTIONS) * 100;
+    progressBarInner.style.width = `${progress}%`;
+
+    nextBtn.textContent = (currentQuestionIndex === TOTAL_QUESTIONS - 1)
+      ? "Show results"
+      : "Next";
+  }
+
+  function handleOptionClick(index) {
+    if (hasAnsweredCurrent) return;
+    hasAnsweredCurrent = true;
+
+    const correctIndex = currentQuestion.correctIndex;
+
+    const optionCards = optionsGrid.querySelectorAll(".option-card");
+    optionCards.forEach((card, idx) => {
+      card.classList.add("disabled");
+      const mark = document.createElement("div");
+      mark.className = "option-mark";
+
+      if (idx === correctIndex) {
+        card.classList.add("correct");
+        mark.classList.add("correct");
+        mark.textContent = "✓";
+      }
+      if (idx === index && idx !== correctIndex) {
+        card.classList.add("incorrect");
+        mark.classList.add("incorrect");
+        mark.textContent = "✗";
+      }
+      if (idx === correctIndex || idx === index) {
+        card.appendChild(mark);
+      }
+    });
+
+    if (index === correctIndex) {
+      correctCount += 1;
+    }
+
+    // NEW: slide digits THEN update mini-grid to the FINAL number
+    animateMiniGridSlide(
+      currentQuestion.operation.steps,
+      currentQuestion.operation.mult,
+      () => renderMiniGrid(currentQuestion.final)
+    );
+
+    nextBtn.disabled = false;
+  }
+
+  /********************
+   * GAME FLOW        *
+   ********************/
+
+  function startNewGame() {
+    currentQuestionIndex = 0;
+    correctCount = 0;
+    currentQuestion = generateQuestion();
+    renderQuestion();
+    progressBarInner.style.width = "0%";
+  }
+
+  function goToNextQuestion() {
+    if (currentQuestionIndex >= TOTAL_QUESTIONS - 1) {
+      showResults();
+      return;
+    }
+    currentQuestionIndex += 1;
+    currentQuestion = generateQuestion();
+    renderQuestion();
+  }
+
+  function showResults() {
+    const scoreText = `${correctCount} / ${TOTAL_QUESTIONS}`;
+    resultsScore.textContent = scoreText;
+    resultsSummary.textContent = `You answered ${correctCount} questions correctly.`;
+
+    const pct = (correctCount / TOTAL_QUESTIONS) * 100;
+    let message;
+    if (pct === 100) {
+      message = "Perfect score! Decimal place champion!";
+    } else if (pct >= 80) {
+      message = "Awesome effort. The decimal point is right where you want it.";
+    } else if (pct >= 50) {
+      message = "Nice start. Keep practising moving those digits.";
+    } else {
+      message = "Good try. Have another go and watch how the digits slide.";
+    }
+    resultsMessage.textContent = message;
+
+    if (pct >= 80) {
+      launchConfetti();
+    }
+
+    resultsPanel.classList.remove("hidden");
+  }
+
+  function hideResults() {
+    resultsPanel.classList.add("hidden");
+  }
+
+  /********************
+   * CONFETTI         *
+   ********************/
+
+  function launchConfetti() {
+    if (!confettiContainer) return;
+    const colors = ["#f97316","#facc15","#22c55e","#0ea5e9","#6366f1","#ec4899"];
+    const count = 140;
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      piece.style.backgroundColor = colors[i % colors.length];
+
+      const duration = 2 + Math.random() * 2;
+      const delay = Math.random() * 0.5;
+
+      piece.style.animationDuration = duration.toFixed(2) + "s";
+      piece.style.animationDelay = delay.toFixed(2) + "s";
+      piece.style.left = Math.random() * 100 + "%";
+
+      confettiContainer.appendChild(piece);
+      setTimeout(() => {
+        if (piece.parentNode === confettiContainer) {
+          confettiContainer.removeChild(piece);
+        }
+      }, (duration + delay + 0.6) * 1000);
+    }
+  }
+
+  /********************
+   * EVENT LISTENERS  *
+   ********************/
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      modeButtons.forEach(b => b.classList.toggle("active", b === btn));
+      startNewGame();
+    });
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (!hasAnsweredCurrent) return;
+    goToNextQuestion();
+  });
+
+  backBtn.addEventListener("click", () => {
+    window.location.href = "index.html"; // change if your main file has a different name
+  });
+
+  playAgainBtn.addEventListener("click", () => {
+    hideResults();
+    startNewGame();
+  });
+
+  closeResultsBtn.addEventListener("click", () => {
+    hideResults();
+  });
+
+  /********************
+   * INITIALISE       *
+   ********************/
+
+  renderMiniGrid(null);
+  startNewGame();
+</script>
+
+</body>
+</html>
