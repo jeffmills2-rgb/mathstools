@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Probability Spinner Simulator — Clear & Blank Start</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#111; --muted:#555; --border:#000;
+    --card:#ffffff; --shadow:0 6px 18px rgba(0,0,0,.10);
+    --accent:#0b72b9; --warn:#b00020; --ok:#0a7a3c; --amber:#a66b00;
+    --wheel-rim:#111; --progress-bg:#e6e6e6; --progress-fg:#0b72b9;
+  }
+
+  body{ background:var(--bg); color:var(--fg); font-family:Arial, Helvetica, sans-serif; margin:24px 0; }
+  .app{ width:min(100%, 1100px); margin:0 auto; padding:0 14px; }
+  .hidden{ display:none; }
+  .row{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin:12px 0; }
+  .center{ justify-content:center; }
+  .space-between{ justify-content:space-between; }
+  h1{ font-size:34px; margin:0; text-align:center; }
+  h2{ font-size:26px; margin:0; }
+  h3{ font-size:22px; margin:0 0 8px; }
+
+  input, button, label{ font-size:18px; }
+  input[type="number"], input[type="text"], input[type="password"]{
+    padding:10px 12px; border:2px solid var(--border); border-radius:12px;
+    height:44px; line-height:44px; box-sizing:border-box; background:#fff; color:#111;
+  }
+  button{
+    padding:10px 16px; border:3px solid var(--border); border-radius:12px;
+    background:var(--card); color:var(--fg); box-shadow:var(--shadow);
+    cursor:pointer;
+  }
+  button:disabled{ opacity:.55; cursor:not-allowed; }
+
+  .card{ background:var(--card); border:2px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:18px; margin:18px 0; }
+
+  /* Hero header card */
+  .hero{ text-align:center; padding:26px; }
+  .subtitle{ color:var(--muted); margin-top:8px; }
+  .steps{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .step{ display:flex; align-items:center; gap:8px; padding:8px 12px; border:2px solid var(--border); border-radius:999px; background:#fff; font-weight:700; }
+  .step.ok{ background:#eaf8ef; border-color:#0a7a3c; }
+  .step .dot{ width:12px; height:12px; border-radius:999px; background:#bbb; border:2px solid var(--border); }
+  .step.ok .dot{ background:#1db954; }
+
+  /* Primary CTA button (big & roundish) */
+  #startButton{
+    padding:16px 26px; font-size:22px; font-weight:800; border-width:4px; border-radius:16px;
+    background: radial-gradient(circle at 30% 30%, #fff, #e6eef8);
+    box-shadow: 0 8px 0 #000, 0 12px 18px rgba(0,0,0,.25);
+    margin-top:14px;
+  }
+  #startButton:active{ transform:translateY(2px); box-shadow:0 6px 0 #000, 0 8px 12px rgba(0,0,0,.25); }
+
+  /* Section headers */
+  .section-title{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .section-title .icon{ font-size:24px; }
+  .spaced{ margin-top:6px; margin-bottom:6px; }
+
+  /* Preset chips */
+  .chips{ display:flex; gap:10px; flex-wrap:wrap; }
+  .chip{ padding:8px 12px; border:2px solid var(--border); border-radius:999px; background:#fff; cursor:pointer; font-weight:700; }
+  .chip:hover{ transform:translateY(-1px); }
+
+  /* Wider, fixed-layout table to avoid overlap */
+  .table-wrap{ width:min(100%, 820px); margin:0 auto; }
+  table{ width:100%; border-collapse:separate; border-spacing:0; border-radius:18px; overflow:hidden; background:#fff; table-layout:fixed; }
+  th, td{ border:4px solid #000; padding:12px 14px; text-align:center; }
+  th{ background:#f4f6f9; font-size:22px; font-weight:700; }
+  td input{ width:100%; max-width:100%; margin:2px 0; box-sizing:border-box; }
+
+  .note{ color:var(--muted); font-size:14px; text-align:center; }
+  .warn{ color:var(--warn); font-size:16px; margin-top:8px; text-align:center; }
+  .valid-chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border:2px solid var(--border); border-radius:999px; font-weight:700; }
+  .valid-ok{ background:#eaf8ef; color:var(--ok); border-color:#0a7a3c; }
+  .valid-bad{ background:#fde9eb; color:#b00020; border-color:#b00020; }
+
+  /* Add/Clear row actions + row count */
+  .table-actions{ display:flex; gap:12px; align-items:center; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+  #addRowBtn, #clearRowsBtn{ border-radius:999px; padding:10px 16px; font-weight:800; }
+
+  #rowCount{ font-weight:700; color:#333; }
+
+  /* Preview card */
+  .preview-wrap{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; }
+  canvas{ border:3px solid var(--border); border-radius:12px; background:#fff; }
+  #menuWheelCanvas{ border-radius:50%; background:#fff; }
+
+  /* Spinner screen */
+  #spinButton{
+    width:110px; height:110px; border-radius:999px; font-size:24px; font-weight:700;
+    background: radial-gradient(circle at 30% 30%, #fff, #e6eef8); border-width:4px;
+    box-shadow: 0 8px 0 #000, 0 12px 18px rgba(0,0,0,.25);
+  }
+  #spinButton:active{ transform:translateY(2px); box-shadow:0 6px 0 #000, 0 8px 12px rgba(0,0,0,.25); }
+  .progress{ width:min(100%, 900px); height:12px; background:var(--progress-bg); border-radius:999px; overflow:hidden; border:2px solid var(--border); }
+  .progress-bar{ height:100%; width:0%; background:var(--progress-fg); transition:width .15s linear; }
+  .result-win{ color:var(--ok); } .result-small{ color:var(--amber); } .result-loss{ color:var(--warn); }
+  .gauge{ width:300px; height:16px; background:var(--progress-bg); border:2px solid var(--border); border-radius:999px; overflow:hidden; margin:0 auto; }
+  .gauge-fill{ height:100%; width:100%; background:linear-gradient(90deg, #34d399, #4dabf7); transition:width .25s ease; }
+
+  /* Password row */
+  .pwbox{ display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap; justify-content:center; }
+  .pwbox input{ width:240px; }
+
+  /* --- Centered FX layer for wheel --- */
+  .wheel-panel{ position:relative; } /* positioning context */
+  .fx-layer{
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%,-50%); /* center on wheel */
+    width:0; height:0; pointer-events:none; z-index:5;
+  }
+
+  /* Celebration FX */
+  .coin{ position:absolute; font-size:28px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.35)); animation:coinUp 1400ms ease-out forwards; }
+  @keyframes coinUp{
+    0%{ transform:translate(0,0) scale(.7) rotate(0deg); opacity:0; }
+    18%{ opacity:1; }
+    100%{ transform:translate(var(--tx), var(--ty)) scale(1.25) rotate(var(--rot)); opacity:0; }
+  }
+  .confetti{ position:absolute; width:10px; height:16px; border-radius:2px; box-shadow:0 1px 1px rgba(0,0,0,.25); animation:confettiBurst 1500ms cubic-bezier(.2,.8,.2,1) forwards; }
+  @keyframes confettiBurst{
+    0%{ transform:translate(0,0) scale(.6) rotate(0deg); opacity:0; }
+    15%{ opacity:1; }
+    100%{ transform:translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot)); opacity:0; }
+  }
+  .popup{ position:absolute; font-size:32px; font-weight:900; color:gold; text-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 12px rgba(0,0,0,.25); animation:popFloat 1400ms ease-out forwards;}
+  @keyframes popFloat{
+    0%{ transform:translateY(0) scale(.9); opacity:0; }
+    15%{ opacity:1; }
+    100%{ transform:translateY(-90px) scale(1.05); opacity:0; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HERO -->
+  <div class="card hero" role="banner" aria-label="Welcome" id="heroCard">
+    <h1>Probability Spinner Simulator</h1>
+    <div class="subtitle">Set your game, add prizes, preview the distribution — then spin!</div>
+    <div class="steps" aria-live="polite">
+      <div id="step1" class="step"><span class="dot"></span> 1) Cost & Balance</div>
+      <div id="step2" class="step"><span class="dot"></span> 2) Prizes & %</div>
+      <div id="step3" class="step"><span class="dot"></span> 3) Ready to Spin</div>
+    </div>
+    <div class="row center"><button id="startButton" aria-label="Go to spinner">Go to Spinner</button></div>
+  </div>
+
+  <!-- MENU -->
+  <div id="menuScreen" class="card" aria-label="Setup menu">
+    <!-- SETTINGS -->
+    <div class="card" aria-label="Game settings">
+      <div class="section-title"><span class="icon" aria-hidden="true">🎛️</span><h2>Game settings</h2></div>
+      <div class="row center spaced">
+        <label for="costInput">Cost per spin:</label>
+        <input type="number" id="costInput" min="0.01" step="0.01" value="" placeholder="e.g., 25" aria-describedby="costHelp">
+        <label for="balanceInput">Starting balance:</label>
+        <input type="number" id="balanceInput" min="0.01" step="0.01" value="" placeholder="e.g., 10000" aria-describedby="balanceHelp">
+      </div>
+      <div class="row center note" id="costHelp">Must be positive numbers.</div>
+    </div>
+
+    <!-- PRIZES -->
+    <div class="card" aria-label="Prizes and percentages">
+      <div class="section-title space-between">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="icon" aria-hidden="true">🎁</span><h2>Prizes</h2>
+        </div>
+        <div id="sumChip" class="valid-chip valid-bad" aria-live="polite"> % does not total 100 </div>
+      </div>
+
+      <div class="row center">
+        <div class="chips" role="group" aria-label="Quick presets">
+          <button class="chip" id="presetBalanced">Balanced</button>
+          <button class="chip" id="presetFrequent">Frequent small wins</button>
+          <button class="chip" id="presetVolatile">High volatility</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="prizeTable" aria-label="Prize and percentage table">
+          <colgroup><col style="width:40%;"><col style="width:40%;"><col style="width:20%;"></colgroup>
+          <thead>
+            <tr><th>Prize</th><th>Percentage chance</th><th>Row</th></tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot><tr><td colspan="3" class="note">Percentages should total 100%.</td></tr></tfoot>
+        </table>
+      </div>
+
+      <div class="table-actions">
+        <button id="addRowBtn" aria-label="Add prize row">+ Add prize</button>
+        <button id="clearRowsBtn" aria-label="Clear all prize rows">Clear prizes</button>
+        <div id="rowCount" aria-live="polite">0 rows</div>
+      </div>
+
+      <div id="sumWarnAboveButtons" class="warn hidden">% does not total 100</div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="card" aria-label="Visual preview">
+      <div class="section-title"><span class="icon" aria-hidden="true">👀</span><h2>Preview</h2></div>
+      <div class="preview-wrap">
+        <div style="text-align:center;">
+          <div class="note" style="margin-bottom:6px;">Mini prize wheel</div>
+          <canvas id="menuWheelCanvas" width="320" height="320" aria-label="Mini wheel preview"></canvas>
+        </div>
+        <div style="text-align:center;">
+          <div class="note" style="margin-bottom:6px;">Payout distribution</div>
+          <canvas id="menuDonutCanvas" width="160" height="160" aria-label="Donut preview"></canvas>
+        </div>
+      </div>
+      <div class="note">Previews update live. Key stats remain locked until you enter the password below.</div>
+    </div>
+
+    <!-- ACTIONS + KEY INFO -->
+    <div class="row center" style="gap:12px;">
+      <button id="revealKeyBtn">Reveal key information</button>
+      <button id="submitButton">Submit</button>
+      <button id="resetButton">Reset</button>
+    </div>
+
+    <!-- Password + key info -->
+    <div id="pwGate" class="hidden">
+      <div class="pwbox">
+        <label for="pwInput"><strong>Password:</strong></label>
+        <input type="password" id="pwInput" placeholder="Enter password" aria-label="Password to view key information">
+        <button id="pwCheckBtn">Unlock</button>
+        <span id="pwMsg" class="note"></span>
+      </div>
+    </div>
+
+    <div id="keyInfo" class="hidden" aria-live="polite" style="margin-top:10px;">
+      <div id="keyWarn" class="warn hidden">% does not total 100</div>
+      <div id="keyStatsBlock">
+        <div class="row center" style="margin-top:14px;">
+          <span><strong>Average prize:</strong> <input type="text" id="avgPrize" readonly style="width:160px;" aria-label="Average prize"></span>
+          <span><strong>Average RTP:</strong> <input type="text" id="avgRTP" readonly style="width:160px;" aria-label="Average RTP"></span>
+        </div>
+        <div class="note" id="theoryStats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPINNER -->
+  <div id="spinnerScreen" class="card hidden" aria-label="Spinner screen">
+    <div class="row center" style="gap:12px;">
+      <button id="backButton">Back to Menu</button>
+      <button id="spinButton" title="Spin!">Spin</button>
+      <button id="autoRunButton">Run 500 Trials</button>
+      <button id="stopButton" disabled>Stop</button>
+    </div>
+
+    <div class="row center">
+      <div class="wheel-panel">
+        <div class="fx-layer" id="effects"></div>
+        <canvas id="wheelCanvas" width="420" height="420" aria-label="Prize wheel"></canvas>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-left:18px;">
+        <div style="text-align:center;"><strong>Payout distribution</strong></div>
+        <canvas id="donutCanvas" width="180" height="180" aria-label="Payout distribution donut"></canvas>
+        <div style="text-align:center;">
+          <strong>Balance gauge</strong>
+          <div class="gauge"><div id="gaugeFill" class="gauge-fill"></div></div>
+          <div class="note" id="gaugeLabel">100%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row center" style="margin-top:6px;">
+      <div id="resultText" class="ok" aria-live="polite"></div>
+    </div>
+
+    <div class="row center">
+      <label>Balance:</label>
+      <input type="text" id="balanceBox" readonly style="width:160px;" aria-label="Current balance">
+      <span id="costInfo" class="note"></span>
+    </div>
+
+    <div class="row center">
+      <div class="progress" id="runProgress" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+
+    <div class="row center">
+      <canvas id="balanceGraph" width="900" height="420" aria-label="Balance over time"></canvas>
+    </div>
+    <div class="note">Graph shows balance after each spin. Zero line is shown if within range. Colored ticks every 10 spins: green (win ≥ cost), red (loss).</div>
+  </div>
+</div>
+
+<audio id="spinSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+
+<script>
+/* ================== STATE ================== */
+let values=[], probs=[], cdf=[];
+let balance=0, cost=25, startingBalance=0, spinCount=0;
+let balanceHistory=[], resultFlags=[];
+let autoRunInterval=null, insufficientFundsShown=false;
+let wheelSegments=[], rotation=0, spinning=false;
+let highlightIdx=null, highlightUntil=0;
+let fxEnabled = true; // disable celebration FX during autorun
+
+// Menu preview rotation
+let menuRot=0, menuAnimId=null;
+
+/* ================== ELEMENTS ================== */
+const heroCard=document.getElementById('heroCard');
+const menuScreen=document.getElementById('menuScreen');
+const spinnerScreen=document.getElementById('spinnerScreen');
+
+const tableBody=document.querySelector('#prizeTable tbody');
+const addRowBtn=document.getElementById('addRowBtn');
+const clearRowsBtn=document.getElementById('clearRowsBtn');
+const rowCount=document.getElementById('rowCount');
+
+const submitButton=document.getElementById('submitButton');
+const startButton=document.getElementById('startButton');
+const resetButton=document.getElementById('resetButton');
+const backButton=document.getElementById('backButton');
+const spinButton=document.getElementById('spinButton');
+const autoRunButton=document.getElementById('autoRunButton');
+const stopButton=document.getElementById('stopButton');
+
+const revealKeyBtn=document.getElementById('revealKeyBtn');
+const pwGate=document.getElementById('pwGate');
+const pwInput=document.getElementById('pwInput');
+const pwCheckBtn=document.getElementById('pwCheckBtn');
+const pwMsg=document.getElementById('pwMsg');
+const keyInfo=document.getElementById('keyInfo');
+const keyWarn=document.getElementById('keyWarn');
+const sumWarnAboveButtons=document.getElementById('sumWarnAboveButtons');
+const keyStatsBlock=document.getElementById('keyStatsBlock');
+const avgPrizeBox=document.getElementById('avgPrize');
+const avgRTPBox=document.getElementById('avgRTP');
+const theoryStats=document.getElementById('theoryStats');
+
+const resultText=document.getElementById('resultText');
+const balanceBox=document.getElementById('balanceBox');
+const costInfo=document.getElementById('costInfo');
+const costInput=document.getElementById('costInput');
+const balanceInput=document.getElementById('balanceInput');
+
+const runProgress=document.getElementById('runProgress');
+const progressBar=document.getElementById('progressBar');
+const gaugeFill=document.getElementById('gaugeFill');
+const gaugeLabel=document.getElementById('gaugeLabel');
+
+const graphCanvas=document.getElementById('balanceGraph');
+const gctx=graphCanvas.getContext('2d');
+
+const spinSound=document.getElementById('spinSound');
+const wheelCanvas=document.getElementById('wheelCanvas');
+const wctx=wheelCanvas.getContext('2d');
+const effects=document.getElementById('effects');
+const W=wheelCanvas.width, H=wheelCanvas.height, CX=W/2, CY=H/2, R=Math.min(W,H)/2-24;
+
+const donutCanvas=document.getElementById('donutCanvas');
+const dctx=donutCanvas.getContext('2d');
+
+const menuWheelCanvas=document.getElementById('menuWheelCanvas');
+const mwctx=menuWheelCanvas.getContext('2d');
+const mW=menuWheelCanvas.width, mH=menuWheelCanvas.height, mCX=mW/2, mCY=mH/2, mR=Math.min(mW,mH)/2-20;
+
+const menuDonutCanvas=document.getElementById('menuDonutCanvas');
+const mdctx=menuDonutCanvas.getContext('2d');
+const TAU=Math.PI*2;
+
+/* Color-blind-safe Okabe–Ito palette */
+const palette=["#E69F00","#56B4E9","#009E73","#F0E442","#0072B2","#D55E00","#CC79A7","#999999"];
+
+/* ================== HELPERS ================== */
+const fmtMoney=n=>Number(n).toFixed(2);
+const fmtPct=n=>(Number(n)*100).toFixed(2)+"%";
+const modTau=a=>((a%TAU)+TAU)%TAU;
+const easeOutCubic=t=>1-Math.pow(1-t,3);
+const varGet=name=>getComputedStyle(document.body).getPropertyValue(name).trim();
+
+/* ================== MENU TABLE ================== */
+function addRow(v="",p=""){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input type="number" step="0.01" class="prize" value="${v}" aria-label="Prize"></td>
+    <td><input type="number" step="0.01" min="0" max="100" class="pct" value="${p}" aria-label="Percentage chance"></td>
+    <td><button class="delRowBtn" style="width:110px;">Delete</button></td>`;
+  tr.querySelector('.delRowBtn').addEventListener('click',()=>{ tr.remove(); onMenuInputsChanged(); });
+  tr.querySelector('.prize').addEventListener('input', onMenuInputsChanged);
+  tr.querySelector('.pct').addEventListener('input', onMenuInputsChanged);
+  tableBody.appendChild(tr);
+  updateRowCount();
+}
+function updateRowCount(){
+  const rows=tableBody.querySelectorAll('tr').length;
+  rowCount.textContent = `${rows} row${rows===1?'':'s'}`;
+}
+function getRows(){
+  const rows=[...tableBody.querySelectorAll('tr')];
+  return{ prizes:rows.map(r=>Number(r.querySelector('.prize').value)),
+          pcts:rows.map(r=>Number(r.querySelector('.pct').value)) };
+}
+function percentagesSumTo100(){
+  const {pcts}=getRows(); if(pcts.length===0) return false;
+  if(pcts.some(p=>Number.isNaN(p)||p<0)) return false;
+  const total=pcts.reduce((a,b)=>a+b,0);
+  return Math.abs(total-100)<=0.001;
+}
+function buildDistributionFromTable(){
+  const {prizes,pcts}=getRows();
+  values=prizes; probs=pcts.map(x=>x/100);
+  cdf=[]; let c=0; for(const p of probs){ c+=p; cdf.push(c); } if(cdf.length) cdf[cdf.length-1]=1;
+}
+function expectedPrizeWeighted(){ return values.reduce((s,v,i)=>s+v*probs[i],0); }
+
+/* ================== CHECKLIST & CHIPS ================== */
+const step1=document.getElementById('step1');
+const step2=document.getElementById('step2');
+const step3=document.getElementById('step3');
+const sumChip=document.getElementById('sumChip');
+
+function updateChecklistAndChips(){
+  const costOk = Number(costInput.value)>0;
+  const balOk  = Number(balanceInput.value)>0;
+  const step1Ok = costOk && balOk;
+  step1.classList.toggle('ok', step1Ok);
+
+  const hasRows = tableBody.querySelectorAll('tr').length>0;
+  const sumOk = percentagesSumTo100();
+  step2.classList.toggle('ok', hasRows && sumOk);
+
+  step3.classList.toggle('ok', step1Ok && hasRows && sumOk);
+
+  sumChip.textContent = sumOk ? 'Sum 100% ✓' : '% does not total 100';
+  sumChip.classList.toggle('valid-ok', sumOk);
+  sumChip.classList.toggle('valid-bad', !sumOk);
+}
+
+/* ================== KEY INFO ================== */
+function renderKeyStats(){
+  const costPer=Number(costInput.value); if(Number.isNaN(costPer)||costPer<=0) return;
+  const avg=expectedPrizeWeighted(), rtp=avg/costPer, ev=avg-costPer, houseEdge=1-rtp;
+  const mean=avg, variance=values.reduce((s,v,i)=>s+probs[i]*(v-mean)*(v-mean),0), stdev=Math.sqrt(variance);
+  const sorted=[...values].sort((a,b)=>a-b), median= sorted.length%2 ? sorted[(sorted.length-1)/2] : (sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+  avgPrizeBox.value=fmtMoney(avg); avgRTPBox.value=fmtPct(rtp);
+  theoryStats.innerHTML=
+    `<div><strong>Expected change/spin:</strong> ${fmtMoney(ev)} &nbsp; <strong>House edge:</strong> ${fmtPct(houseEdge)}</div>`+
+    `<div>Min: ${fmtMoney(Math.min(...values))} &nbsp; Median: ${fmtMoney(median)} &nbsp; Max: ${fmtMoney(Math.max(...values))} &nbsp; Std dev: ${fmtMoney(stdev)}</div>`;
+}
+function clearKeyStats(){ avgPrizeBox.value=""; avgRTPBox.value=""; theoryStats.textContent=""; }
+function showKeyInfo(){
+  const ok=percentagesSumTo100(); sumWarnAboveButtons.classList.toggle('hidden',ok); keyWarn.classList.toggle('hidden',ok);
+  if(!ok){ clearKeyStats(); keyStatsBlock.classList.add('hidden'); return; }
+  keyStatsBlock.classList.remove('hidden'); buildDistributionFromTable(); renderKeyStats(); keyInfo.classList.remove('hidden');
+}
+
+/* ================== MENU PREVIEW ================== */
+function drawMenuWheel(){
+  mwctx.clearRect(0,0,mW,mH);
+  const {pcts}=getRows(); const localProbs=pcts.map(v=>v/100);
+  let a=0;
+  mwctx.save();
+  mwctx.translate(mCX,mCY); mwctx.rotate(menuRot); mwctx.translate(-mCX,-mCY);
+  for(let i=0;i<localProbs.length;i++){
+    const span=localProbs[i]*TAU, start=a, end=a+span; a=end;
+    mwctx.beginPath(); mwctx.moveTo(mCX,mCY);
+    mwctx.fillStyle=palette[i%palette.length];
+    mwctx.arc(mCX,mCY,mR, start, end);
+    mwctx.closePath(); mwctx.fill();
+    mwctx.strokeStyle=varGet("--wheel-rim"); mwctx.lineWidth=2; mwctx.stroke();
+  }
+  mwctx.restore();
+  // pointer
+  mwctx.beginPath();
+  mwctx.moveTo(mCX, mCY-mR-6);
+  mwctx.lineTo(mCX-12, mCY-mR-34);
+  mwctx.lineTo(mCX+12, mCY-mR-34);
+  mwctx.closePath();
+  mwctx.fillStyle="#fdfdfd"; mwctx.fill();
+  mwctx.strokeStyle="#111"; mwctx.lineWidth=2; mwctx.stroke();
+  // center cap
+  mwctx.beginPath(); mwctx.arc(mCX,mCY, 16, 0, TAU); mwctx.fillStyle="#fff"; mwctx.fill(); mwctx.strokeStyle="#111"; mwctx.stroke();
+}
+function drawMenuDonut(){
+  const {pcts}=getRows(); const localProbs=pcts.map(v=>v/100);
+  mdctx.clearRect(0,0,menuDonutCanvas.width,menuDonutCanvas.height);
+  const cx=menuDonutCanvas.width/2, cy=menuDonutCanvas.height/2, r=60, inner=32; let a=0;
+  for(let i=0;i<localProbs.length;i++){
+    const span=localProbs[i]*TAU; mdctx.beginPath(); mdctx.moveTo(cx,cy);
+    mdctx.fillStyle=palette[i%palette.length];
+    mdctx.arc(cx,cy,r,a,a+span); mdctx.lineTo(cx,cy); mdctx.fill(); a+=span;
+  }
+  // hole + strokes
+  mdctx.globalCompositeOperation="destination-out"; mdctx.beginPath(); mdctx.arc(cx,cy,inner,0,TAU); mdctx.fill();
+  mdctx.globalCompositeOperation="source-over"; mdctx.strokeStyle="#000"; mdctx.lineWidth=2; mdctx.beginPath(); mdctx.arc(cx,cy,r,0,TAU); mdctx.stroke();
+  mdctx.beginPath(); mdctx.arc(cx,cy,inner,0,TAU); mdctx.stroke();
+}
+function startMenuAnim(){
+  cancelMenuAnim();
+  const step=()=>{ menuRot += 0.01; drawMenuWheel(); menuAnimId=requestAnimationFrame(step); };
+  step();
+}
+function cancelMenuAnim(){ if(menuAnimId){ cancelAnimationFrame(menuAnimId); menuAnimId=null; } }
+
+/* tie previews to input changes */
+function onMenuInputsChanged(){
+  updateRowCount();
+  updateChecklistAndChips();
+  drawMenuWheel(); drawMenuDonut();
+  autoRefreshKeyInfo();
+}
+
+/* ================== SPINNER WHEEL & DONUT ================== */
+function buildWheelSegments(){
+  wheelSegments=[]; let a=0;
+  for(let i=0;i<probs.length;i++){
+    const span=probs[i]*TAU, start=a, end=a+span; a=end;
+    wheelSegments.push({ start,end,label:fmtMoney(values[i]), color:palette[i%palette.length] });
+  }
+  rotation=modTau(rotation);
+}
+function drawPointerShiny(){
+  const tipX=CX, tipY=CY-R-8, baseLx=CX-16, baseLy=CY-R-42, baseRx=CX+16, baseRy=CY-R-42;
+  const grd=wctx.createLinearGradient(baseLx,baseLy,baseRx,baseRy);
+  grd.addColorStop(0,"#fafafa"); grd.addColorStop(0.5,"#e0e0e0"); grd.addColorStop(1,"#fafafa");
+  wctx.save();
+  wctx.shadowColor="rgba(0,0,0,.35)"; wctx.shadowBlur=6; wctx.shadowOffsetY=2;
+  wctx.beginPath(); wctx.moveTo(tipX,tipY); wctx.lineTo(baseLx,baseLy); wctx.lineTo(baseRx,baseRy); wctx.closePath();
+  wctx.fillStyle=grd; wctx.fill(); wctx.strokeStyle=varGet("--wheel-rim"); wctx.lineWidth=2; wctx.stroke();
+  wctx.restore();
+}
+function drawWheel(){
+  wctx.clearRect(0,0,W,H);
+  wctx.save(); if(spinning) wctx.filter="blur(1.2px)";
+  wheelSegments.forEach((seg)=>{
+    wctx.beginPath(); wctx.moveTo(CX,CY);
+    wctx.fillStyle=seg.color;
+    wctx.arc(CX,CY,R, seg.start+rotation, seg.end+rotation);
+    wctx.closePath(); wctx.fill();
+    wctx.strokeStyle=varGet("--wheel-rim"); wctx.lineWidth=2; wctx.stroke();
+  });
+  wctx.restore();
+
+  wctx.fillStyle="#000"; wctx.font="16px Arial"; wctx.textAlign="center"; wctx.textBaseline="middle";
+  wheelSegments.forEach((seg)=>{
+    const span=seg.end-seg.start; if(span<0.06) return;
+    const mid=(seg.start+seg.end)/2 + rotation;
+    const rx=CX + Math.cos(mid)*(R*0.62), ry=CY + Math.sin(mid)*(R*0.62);
+    wctx.fillText(seg.label, rx, ry);
+  });
+
+  wctx.beginPath(); wctx.arc(CX,CY, 20, 0, TAU); wctx.fillStyle="#fff"; wctx.fill();
+  wctx.strokeStyle=varGet("--wheel-rim"); wctx.lineWidth=2; wctx.stroke();
+
+  drawPointerShiny();
+
+  if(highlightIdx!==null && Date.now()<highlightUntil){
+    const seg=wheelSegments[highlightIdx];
+    wctx.save();
+    wctx.strokeStyle="rgba(255,215,0,.95)";
+    wctx.lineWidth=10; wctx.shadowColor="rgba(255,215,0,.9)"; wctx.shadowBlur=22;
+    wctx.beginPath(); wctx.arc(CX,CY,R-4, seg.start+rotation, seg.end+rotation); wctx.stroke();
+    wctx.restore();
+  }
+}
+
+function segmentMidAngle(idx){ const seg=wheelSegments[idx]; return (seg.start+seg.end)/2; }
+function animateSpinToIndex(idx,onDone){
+  if(!wheelSegments.length){ onDone&&onDone(); return; }
+  spinning=true; spinButton.disabled=true; autoRunButton.disabled=true; backButton.disabled=true;
+  const pointerAngle=-Math.PI/2; // up
+  const midBase=segmentMidAngle(idx);
+  const delta=modTau(pointerAngle - (midBase + rotation));
+  const finalRotation=rotation + 4*TAU + delta; // 4 full spins + align
+  const duration=3000, start=performance.now(), startRot=rotation;
+  const step=(ts)=>{
+    const t=Math.min(1,(ts-start)/duration), eased=easeOutCubic(t);
+    rotation=startRot + (finalRotation-startRot)*eased; drawWheel();
+    if(t<1) requestAnimationFrame(step); else{
+      rotation=modTau(finalRotation); drawWheel(); spinning=false;
+      spinButton.disabled=false; autoRunButton.disabled=false; backButton.disabled=false;
+      onDone&&onDone();
+    }
+  };
+  requestAnimationFrame(step);
+}
+
+function renderDonut(){
+  const {pcts}=getRows(); const probsLocal=pcts.map(v=>v/100);
+  dctx.clearRect(0,0,donutCanvas.width,donutCanvas.height);
+  const cx=donutCanvas.width/2, cy=donutCanvas.height/2, r=70, inner=35; let a=0;
+  for(let i=0;i<probsLocal.length;i++){
+    const span=probsLocal[i]*TAU; dctx.beginPath(); dctx.moveTo(cx,cy);
+    dctx.fillStyle=palette[i%palette.length];
+    dctx.arc(cx,cy,r,a,a+span); dctx.lineTo(cx,cy); dctx.fill(); a+=span;
+  }
+  dctx.globalCompositeOperation="destination-out"; dctx.beginPath(); dctx.arc(cx,cy,inner,0,TAU); dctx.fill();
+  dctx.globalCompositeOperation="source-over"; dctx.strokeStyle="#000"; dctx.lineWidth=2; dctx.beginPath(); dctx.arc(cx,cy,r,0,TAU); dctx.stroke();
+  dctx.beginPath(); dctx.arc(cx,cy,inner,0,TAU); dctx.stroke();
+}
+
+/* ================== GRAPH (full redraw) ================== */
+const graph={ left:70,right:24,top:46,bottom:46,yMin:null,yMax:null };
+function computeYRange(){
+  const minBal=Math.min(...balanceHistory), maxBal=Math.max(...balanceHistory);
+  let yMin=Math.min(minBal,0), yMax=Math.max(maxBal,1); if(yMax-yMin<1) yMax=yMin+1; return {yMin,yMax};
+}
+function yToPx(v){ const H=graphCanvas.height, top=graph.top, bottom=graph.bottom, plotH=H-top-bottom; return top + ((graph.yMax - v)/(graph.yMax-graph.yMin))*plotH; }
+function xToPx(i){ const W=graphCanvas.width, left=graph.left, right=graph.right, plotW=W-left-right, n=Math.max(1,balanceHistory.length-1); return left + plotW*(i/n); }
+function drawAxesAndGrid(){
+  const W=graphCanvas.width, H=graphCanvas.height; const {left,right,top,bottom}=graph; const plotW=W-left-right, plotH=H-top-bottom;
+  gctx.clearRect(0,0,W,H);
+  gctx.font="22px Arial"; gctx.textAlign="center"; gctx.fillStyle=varGet("--fg"); gctx.fillText("Balance over time", W/2, 32);
+  gctx.strokeStyle=varGet("--border"); gctx.lineWidth=3; gctx.strokeRect(left,top,plotW,plotH);
+  gctx.font="14px Arial"; gctx.textAlign="right"; gctx.fillStyle=varGet("--fg");
+  for(let i=0;i<=5;i++){ const t=i/5, yVal=graph.yMax - t*(graph.yMax-graph.yMin), y=top+t*plotH;
+    gctx.fillText(yVal.toFixed(0), left-8, y+4); gctx.strokeStyle="#ddd"; gctx.lineWidth=1.5; gctx.beginPath(); gctx.moveTo(left,y); gctx.lineTo(left+plotW,y); gctx.stroke(); }
+  if(graph.yMin<0 && graph.yMax>0){ const t0=(graph.yMax-0)/(graph.yMax-graph.yMin), y0=top+t0*plotH; gctx.strokeStyle="#999"; gctx.setLineDash([6,5]); gctx.lineWidth=2; gctx.beginPath(); gctx.moveTo(left,y0); gctx.lineTo(left+plotW,y0); gctx.stroke(); gctx.setLineDash([]); }
+  gctx.textAlign="center"; const n=balanceHistory.length-1;
+  for(let i=0;i<=10;i++){ const idx=Math.round(n*i/10), x=left+plotW*(idx/Math.max(1,n)); gctx.fillText(idx, x, top+plotH+22); gctx.strokeStyle="#eee"; gctx.beginPath(); gctx.moveTo(x,top); gctx.lineTo(x,top+plotH); gctx.stroke(); }
+}
+function fullRedraw(){
+  if(balanceHistory.length===0){ gctx.clearRect(0,0,graphCanvas.width,graphCanvas.height); return; }
+  const {yMin,yMax}=computeYRange(); graph.yMin=yMin; graph.yMax=yMax; drawAxesAndGrid();
+  gctx.strokeStyle="#1e88e5"; gctx.lineWidth=3; gctx.beginPath();
+  for(let i=0;i<balanceHistory.length;i++){ const x=xToPx(i), y=yToPx(balanceHistory[i]); if(i===0) gctx.moveTo(x,y); else gctx.lineTo(x,y); } gctx.stroke();
+  gctx.fillStyle="#e53935";
+  for(let i=0;i<balanceHistory.length;i++){ const x=xToPx(i), y=yToPx(balanceHistory[i]); gctx.beginPath(); gctx.arc(x,y,3,0,TAU); gctx.fill(); }
+  const H=graphCanvas.height, bottom=graph.bottom, baseY=H-bottom+4;
+  for(let i=10;i<=balanceHistory.length-1;i+=10){
+    const winFlag=resultFlags[i-1]; gctx.strokeStyle= winFlag ? "#2ca02c" : "#d62728"; gctx.lineWidth=3;
+    const x=xToPx(i); gctx.beginPath(); gctx.moveTo(x, baseY-12); gctx.lineTo(x, baseY-2); gctx.stroke();
+  }
+}
+
+/* ================== SPIN / RUN ================== */
+function weightedPick(){
+  const r=Math.random(); let lo=0, hi=cdf.length-1, ans=hi;
+  while(lo<=hi){ const mid=(lo+hi)>>1; if(r<=cdf[mid]){ ans=mid; hi=mid-1; } else lo=mid+1; } return ans;
+}
+function updateGauge(){
+  const pct = Math.max(0, Math.min(100, (balance/startingBalance)*100));
+  gaugeFill.style.width = pct + "%";
+  gaugeLabel.textContent = pct.toFixed(0) + "%";
+}
+function celebrateBigWin(amount){
+  const threshold = Number(costInput.value);   // wins > 1× cost
+  if (!fxEnabled || amount <= threshold) return;
+
+  const confettiColors = ['#FF595E','#FFCA3A','#8AC926','#1982C4','#6A4C93','#FFD166','#06D6A0'];
+
+  for(let i=0;i<24;i++){
+    const span=document.createElement('div'); span.className='coin'; span.textContent='🪙';
+    const tx=(Math.random()*360-180)+'px';
+    const ty=(Math.random()*-240-120)+'px';
+    const rot=(Math.random()*720-360)+'deg';
+    span.style.setProperty('--tx', tx); span.style.setProperty('--ty', ty);
+    span.style.setProperty('--rot', rot);
+    effects.appendChild(span); setTimeout(()=>span.remove(), 1600);
+  }
+  for(let i=0;i<40;i++){
+    const bit=document.createElement('div'); bit.className='confetti';
+    const tx=(Math.random()*420-210)+'px';
+    const ty=(Math.random()*-260-130)+'px';
+    const rot=(Math.random()*720-360)+'deg';
+    bit.style.background = confettiColors[i % confettiColors.length];
+    bit.style.setProperty('--tx', tx); bit.style.setProperty('--ty', ty); bit.style.setProperty('--rot', rot);
+    effects.appendChild(bit); setTimeout(()=>bit.remove(), 1700);
+  }
+  const pop=document.createElement('div'); pop.className='popup'; pop.textContent=`+${fmtMoney(amount)}`;
+  effects.appendChild(pop); setTimeout(()=>pop.remove(), 1500);
+}
+function setProgress(show, frac=0){
+  runProgress.style.visibility = show ? 'visible' : 'hidden';
+  progressBar.style.width = (Math.max(0, Math.min(1, frac))*100).toFixed(1) + "%";
+}
+function settleSpin(idx,win,manual){
+  balance -= Number(costInput.value); balance += win;
+  spinCount++; balanceHistory.push(balance); resultFlags.push(win >= Number(costInput.value));
+  const cls = win >= Number(costInput.value) ? 'result-win' : (win>0 ? 'result-small' : 'result-loss');
+  resultText.className = cls; resultText.textContent = `Spin #${spinCount}: won ${fmtMoney(win)} (p≈${fmtPct(probs[idx])})`;
+  balanceBox.value = fmtMoney(balance);
+  highlightIdx = idx; highlightUntil = Date.now() + 1200; drawWheel();
+  celebrateBigWin(win);
+  updateGauge(); fullRedraw();
+}
+function spin(manual=true){
+  // Defensive rebuild if needed
+  if (!wheelSegments.length || !cdf.length || !values.length) {
+    buildDistributionFromTable();
+    buildWheelSegments();
+    drawWheel();
+  }
+
+  if(spinning) return false;
+  const c=Number(costInput.value);
+  if(balance < c){ if(!insufficientFundsShown && manual) alert("Insufficient funds"); insufficientFundsShown=true; return false; }
+  if(manual){ try{ spinSound.currentTime=0; spinSound.play(); }catch(e){} }
+  const idx=weightedPick(), win=values[idx];
+  if(manual) animateSpinToIndex(idx, ()=>settleSpin(idx,win,true)); else settleSpin(idx,win,false);
+  return true;
+}
+function autoRunTrials(total=500, speed=20){
+  let ct=0; clearInterval(autoRunInterval);
+  fxEnabled = false;                 // disable FX during autorun
+  stopButton.disabled=false; autoRunButton.disabled=true; spinButton.disabled=true; setProgress(true,0);
+  autoRunInterval=setInterval(()=>{
+    if(ct>=total || balance < Number(costInput.value)){
+      clearInterval(autoRunInterval);
+      fxEnabled = true;              // re-enable FX
+      stopButton.disabled=true; autoRunButton.disabled=false; spinButton.disabled=false; setProgress(false,0);
+      if(balance < Number(costInput.value) && !insufficientFundsShown) alert("Insufficient funds");
+      insufficientFundsShown = balance < Number(costInput.value);
+      return;
+    }
+    spin(false); ct++; setProgress(true, ct/total);
+  }, speed);
+}
+function stopAutoRun(){ clearInterval(autoRunInterval); fxEnabled = true; stopButton.disabled=true; autoRunButton.disabled=false; spinButton.disabled=false; setProgress(false,0); }
+
+/* ================== NAVIGATION ================== */
+function toSpinnerScreen(){
+  heroCard.classList.add('hidden');
+  menuScreen.classList.add('hidden');
+  spinnerScreen.classList.remove('hidden');
+
+  cancelMenuAnim();
+  buildDistributionFromTable(); buildWheelSegments(); drawWheel(); renderDonut(); updateGauge(); fullRedraw();
+}
+function toMenuScreen(){
+  spinnerScreen.classList.add('hidden');
+  menuScreen.classList.remove('hidden');
+  heroCard.classList.remove('hidden');
+  keyInfo.classList.add('hidden'); pwGate.classList.add('hidden'); pwInput.value=""; pwMsg.textContent="";
+  startMenuAnim(); drawMenuWheel(); drawMenuDonut(); updateChecklistAndChips();
+}
+function submit(){
+  if(!percentagesSumTo100()){ sumWarnAboveButtons.classList.remove('hidden'); keyWarn.classList.remove('hidden'); keyStatsBlock.classList.add('hidden'); return; }
+  buildDistributionFromTable(); startingBalance = Number(balanceInput.value); balance = startingBalance; cost = Number(costInput.value);
+  if(Number.isNaN(balance)||Number.isNaN(cost)||balance<=0||cost<=0){ alert("Please enter valid positive numbers for balance and cost per spin."); return; }
+  showKeyInfo();
+  balanceHistory=[balance]; resultFlags=[]; spinCount=0; insufficientFundsShown=false; setProgress(false,0);
+  toSpinnerScreen(); balanceBox.value=fmtMoney(balance); costInfo.textContent=`Cost per spin: ${fmtMoney(cost)}`;
+}
+function resetAll(){
+  tableBody.innerHTML='';           // no preloaded rows
+  costInput.value="";               // blank cost
+  balanceInput.value="";            // blank balance
+  keyInfo.classList.add('hidden'); pwGate.classList.add('hidden'); pwInput.value=""; pwMsg.textContent="";
+  clearKeyStats(); sumWarnAboveButtons.classList.add('hidden');
+  rotation=0; wheelSegments=[]; drawWheel(); renderDonut();
+  gctx.clearRect(0,0,graphCanvas.width,graphCanvas.height); updateGauge(); setProgress(false,0);
+  updateRowCount(); updateChecklistAndChips(); drawMenuWheel(); drawMenuDonut(); startMenuAnim();
+}
+
+/* ================== PRESETS ================== */
+function applyPreset(name){
+  if(name==='balanced'){
+    tableBody.innerHTML='';
+    addRow(10,50); addRow(20,30); addRow(40,20);
+  }else if(name==='frequent'){
+    tableBody.innerHTML='';
+    addRow(2,60); addRow(5,30); addRow(25,10);
+  }else if(name==='volatile'){
+    tableBody.innerHTML='';
+    addRow(0,70); addRow(10,25); addRow(200,5);
+  }
+  onMenuInputsChanged();
+}
+
+/* ================== EVENTS ================== */
+document.getElementById('presetBalanced').addEventListener('click',()=>applyPreset('balanced'));
+document.getElementById('presetFrequent').addEventListener('click',()=>applyPreset('frequent'));
+document.getElementById('presetVolatile').addEventListener('click',()=>applyPreset('volatile'));
+
+addRowBtn.addEventListener('click', ()=>{ addRow(); onMenuInputsChanged(); });
+clearRowsBtn.addEventListener('click', ()=>{
+  if (!confirm("Clear all prize rows? This cannot be undone.")) return;
+  tableBody.innerHTML = '';                // clear all rows
+  updateRowCount();                        // show 0 rows
+  onMenuInputsChanged();                   // refresh previews + validity/warnings
+});
+tableBody.addEventListener('input', onMenuInputsChanged);
+costInput.addEventListener('input', onMenuInputsChanged);
+balanceInput.addEventListener('input', onMenuInputsChanged);
+
+revealKeyBtn.addEventListener('click', ()=>{ showKeyInfo(); pwGate.classList.remove('hidden'); keyInfo.classList.add('hidden'); pwInput.focus(); });
+pwCheckBtn.addEventListener('click', ()=>{ if(pwInput.value==="Piis3.14"){ keyInfo.classList.remove('hidden'); pwMsg.textContent="Unlocked."; pwMsg.style.color="var(--ok)"; showKeyInfo(); } else { pwMsg.textContent="Incorrect password."; pwMsg.style.color="var(--warn)"; } });
+pwInput.addEventListener('keydown',(e)=>{ if(e.key==="Enter") pwCheckBtn.click(); });
+
+submitButton.addEventListener('click', submit);
+startButton.addEventListener('click', submit);
+resetButton.addEventListener('click', resetAll);
+backButton.addEventListener('click', ()=>{ stopAutoRun(); toMenuScreen(); });
+spinButton.addEventListener('click', ()=>spin(true));
+autoRunButton.addEventListener('click', ()=>autoRunTrials());
+stopButton.addEventListener('click', stopAutoRun);
+
+/* Keyboard niceties */
+document.addEventListener('keydown',(e)=>{
+  // Ctrl/Cmd+Enter to submit (on menu only)
+  if((e.ctrlKey || e.metaKey) && e.key==='Enter' && !spinnerScreen.classList.contains('hidden')){
+    return; // ignore on spinner
+  }
+  if((e.ctrlKey || e.metaKey) && e.key==='Enter' && !menuScreen.classList.contains('hidden')){
+    e.preventDefault(); submit();
+  }
+  // Enter to add row if focus is inside the prize table on the menu
+  if(e.key==='Enter' && menuScreen.contains(document.activeElement) && tableBody.contains(document.activeElement)){
+    e.preventDefault(); addRow(); onMenuInputsChanged();
+  }
+});
+
+/* ================== INIT ================== */
+resetAll();  // now starts with BLANK inputs and EMPTY table
+
+/* Auto-update key info when totals valid/invalid */
+function autoRefreshKeyInfo(){
+  const ok = percentagesSumTo100();
+  if (!ok) {
+    document.getElementById('keyWarn').classList.remove('hidden');
+    document.getElementById('sumWarnAboveButtons').classList.remove('hidden');
+    document.getElementById('keyStatsBlock').classList.add('hidden');
+    return;
+  }
+  document.getElementById('keyWarn').classList.add('hidden');
+  document.getElementById('sumWarnAboveButtons').classList.add('hidden');
+  document.getElementById('keyStatsBlock').classList.remove('hidden');
+  buildDistributionFromTable(); renderKeyStats();
+}
+</script>
+</body>
+</html>
