@@ -1,0 +1,1467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number line – Missing value</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #1f2937;
+      --accent: #2563eb;
+      --ok: #16a34a;
+      --bad:#dc2626;
+
+      --label:#374151;
+      --label-soft:#4b5563;
+      --box:#0f172a;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 18px;
+
+      --border:#e5e7eb;
+      --panel:#ffffff;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .wrap{
+      max-width: 1100px;
+      margin: 22px auto 40px;
+      padding: 0 16px;
+    }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      position: relative;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    h1{
+      font-size: 18px;
+      margin:0;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    button{
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor:pointer;
+      background: #f3f4f6;
+      color: #111827;
+      transition: transform .04s ease, filter .15s ease;
+      user-select:none;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{
+      background: var(--accent);
+      color: white;
+    }
+    button.danger{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+    button.icon{
+      padding: 10px 12px;
+      min-width: 44px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      font-weight: 900;
+    }
+
+    /* ---------- Tools dropdown (robust) ---------- */
+    .toolsWrap{
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .toolsBtn{
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 900;
+      border: 1px solid var(--border);
+      background:#f3f4f6;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .toolsBtn:hover{ filter: brightness(0.98); }
+    .toolsBtn .caret{
+      display:inline-block;
+      transition: transform .15s ease;
+      font-weight: 1000;
+    }
+    .toolsBtn[aria-expanded="true"] .caret{
+      transform: rotate(180deg);
+    }
+
+    .toolsMenu{
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 290px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.12);
+      padding: 10px;
+      display: none;
+      z-index: 50;
+    }
+    .toolsMenu.open{ display:block; }
+    .toolsItem{
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: transparent;
+      padding: 12px 12px;
+      border-radius: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      color: #111827;
+    }
+    .toolsItem:hover{
+      background:#f3f4f6;
+    }
+    .toolsHint{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      padding: 8px 12px 4px;
+    }
+
+    /* Stage */
+    .stage{
+      margin-top: 14px;
+      padding: 12px 12px 18px;
+      border-radius: 16px;
+      background: linear-gradient(180deg,#ffffff, #f9fafb);
+      border: 1px solid #e5e7eb;
+      overflow:hidden;
+      position: relative;
+      min-height: 420px;
+    }
+    .svgwrap{
+      width:100%;
+      height: 360px;
+    }
+
+    /* Bottom actions inside the stage */
+    .stageActions{
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .stageActions button{ pointer-events: auto; }
+    .stageActions button{
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-weight: 950;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+    }
+
+    /* Solid dots (NO wobble) */
+    .tick-dot{
+      transition: opacity .12s ease;
+    }
+    .tick-dot:hover{
+      opacity: 1;
+    }
+
+    /* Animations */
+    @keyframes boxPulse {
+      0%,100% { filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }
+      50%     { filter: drop-shadow(0 0 10px rgba(37,99,235,.35)); }
+    }
+    .box-pulse { animation: boxPulse 1.4s ease-in-out infinite; }
+
+    @keyframes wipeIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .wipe-in { animation: wipeIn .22s ease-out both; }
+
+    @keyframes pop {
+      0%   { transform: scale(0.92); opacity: 0; }
+      60%  { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .pop {
+      animation: pop .22s ease-out both;
+      transform-origin: center;
+    }
+
+    /* ---------- Modal (Teacher settings popup) ---------- */
+    .modalOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 200;
+    }
+    .modalOverlay.open{ display:flex; }
+
+    .modal{
+      width: min(920px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.25);
+      border: 1px solid rgba(229,231,235,.85);
+      overflow: hidden;
+    }
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fafafa;
+    }
+    .modalHeader h2{
+      margin:0;
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing:.2px;
+    }
+    .closeBtn{
+      border-radius: 999px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      background:#fff;
+      font-weight: 950;
+    }
+    .modalBody{
+      padding: 16px;
+    }
+
+    .modeGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 720px){
+      .modeGrid{ grid-template-columns: 1fr; }
+    }
+    .modeCard{
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      background: #f9fafb;
+    }
+    .modeCard h3{
+      margin:0 0 8px;
+      font-size: 14px;
+      font-weight: 950;
+    }
+    .modeCard p{
+      margin:0 0 14px;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .modeCard button{
+      width: 100%;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 950;
+      background:#111827;
+      color:#fff;
+    }
+
+    /* Preset panels */
+    .presetGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (max-width: 820px){
+      .presetGrid{ grid-template-columns: 1fr; }
+    }
+
+    .presetPanel{
+      border-radius: 14px;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      position: relative;
+    }
+    .presetPanel h3{
+      margin:0 0 10px;
+      font-size: 13px;
+      font-weight: 950;
+      color:#111827;
+      letter-spacing:.2px;
+    }
+    .field{
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label{
+      font-weight: 950;
+      color:#111827;
+      font-size: 13px;
+    }
+    input[type="text"], select{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      outline: none;
+      font-weight: 900;
+      color:#111827;
+      background:#fff;
+    }
+    input[type="text"]:focus, select:focus{
+      border-color: rgba(37,99,235,.45);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+    }
+    .err{
+      display:none;
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 950;
+      color: var(--bad);
+    }
+    .err.show{ display:block; }
+
+    /* Colour tints like your sketch */
+    .tintGreen{ border-color: rgba(22,163,74,.55); background: rgba(22,163,74,.07); }
+    .tintBlue{  border-color: rgba(37,99,235,.55); background: rgba(37,99,235,.07); }
+    .tintPurple{border-color: rgba(147,51,234,.45); background: rgba(147,51,234,.07); }
+    .tintRed{   border-color: rgba(220,38,38,.45); background: rgba(220,38,38,.07); }
+
+    .modalFooter{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-top: 1px solid #e5e7eb;
+      background:#fafafa;
+      flex-wrap:wrap;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+    .footerBtns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .preview{
+      margin-top: 12px;
+      font-size: 12px;
+      color: #111827;
+      font-weight: 850;
+      background:#eff6ff;
+      border: 1px solid rgba(37,99,235,.18);
+      padding: 10px 12px;
+      border-radius: 12px;
+      display:none;
+    }
+    .preview.show{ display:block; }
+
+    .backBtn{
+      border: 1px solid #e5e7eb;
+      background:#fff;
+      font-weight: 950;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div><h1>Number line – Missing value</h1></div>
+
+        <div class="btnrow">
+          <div class="toolsWrap" id="toolsWrap">
+            <button id="toolsBtn" class="toolsBtn" aria-expanded="false" aria-haspopup="true">
+              Tools <span class="caret">▼</span>
+            </button>
+            <div id="toolsMenu" class="toolsMenu" role="menu" aria-label="Tools menu">
+              <div class="toolsHint">Open in a new tab</div>
+              <button class="toolsItem" id="toolWorksheet" role="menuitem">Worksheet creator</button>
+              <button class="toolsItem" id="toolQuiz" role="menuitem">Student Online Quiz</button>
+            </div>
+          </div>
+
+          <button id="teacherBtn" class="icon" title="Teacher settings">Teacher settings</button>
+          <button id="resetBtn" class="danger" title="Reset settings + history">Reset</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <svg id="svg" class="svgwrap" viewBox="0 0 1000 360" role="img" aria-label="number line"></svg>
+
+        <div class="stageActions">
+          <button id="revealBtn" class="ghost" title="R">Reveal (R)</button>
+          <button id="nextBtn" class="primary" title="Space">Next Question (Space)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher settings modal -->
+  <div id="modalOverlay" class="modalOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHeader">
+        <h2 id="modalTitle">Teacher settings</h2>
+        <button id="closeModalBtn" class="closeBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modalBody" id="modalBody">
+        <!-- content injected by JS -->
+      </div>
+      <div class="modalFooter">
+        <div class="hint" id="footerHint">Shortcuts: Space = next · R = reveal/hide</div>
+        <div class="footerBtns" id="footerBtns">
+          <!-- buttons injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // Limits + formatting rules
+  const STEP_MAX = 1000;
+  const MID_MIN = -10000;
+  const MID_MAX =  10000;
+
+  // Current applied settings
+  let step = 1.0;
+  let midpoint = 0.0;
+
+  // Prefer negatives is now ALWAYS on (no UI), but only applies if negatives exist on the line.
+  const preferNegatives = true;
+
+  let revealed = false;
+
+  // Teacher settings mode
+  let activeMode = "manual"; // "manual" | "preset"
+  let activePreset = null;   // { group: string, id: string }
+
+  let q = null;
+  const last5 = [];
+
+  let refs = null; // { labelsByIndex, labelsG, labelY, xFn, dots, ticks }
+
+  const svg = document.getElementById('svg');
+
+  const nextBtn = document.getElementById('nextBtn');
+  const revealBtn = document.getElementById('revealBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const teacherBtn = document.getElementById('teacherBtn');
+
+  // Modal elements
+  const modalOverlay = document.getElementById('modalOverlay');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const modalBody = document.getElementById('modalBody');
+  const footerBtns = document.getElementById('footerBtns');
+
+  // Tools dropdown elements
+  const toolsWrap = document.getElementById('toolsWrap');
+  const toolsBtn = document.getElementById('toolsBtn');
+  const toolsMenu = document.getElementById('toolsMenu');
+  const toolWorksheet = document.getElementById('toolWorksheet');
+  const toolQuiz = document.getElementById('toolQuiz');
+
+  const EPS = 1e-9;
+
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice = (arr) => arr[randInt(0, arr.length-1)];
+
+  function round1(x){ return Math.round(x * 10) / 10; }
+
+  // Display formatting: drop trailing .0
+  function fmt(x){
+    const r = round1(x);
+    if (Math.abs(r - Math.round(r)) < EPS) return String(Math.round(r));
+    return r.toFixed(1);
+  }
+
+  // Parse + validate a number with max 1 decimal place
+  function parseOneDecimal(str){
+    const s = (str ?? "").trim();
+    if (!s) return { ok:false };
+    if (!/^[+-]?\d+(\.\d+)?$/.test(s)) return { ok:false };
+    const n = Number(s);
+    if (!Number.isFinite(n)) return { ok:false };
+    const oneDec = round1(n);
+    if (Math.abs(n - oneDec) > 1e-6) return { ok:false };
+    return { ok:true, value: oneDec };
+  }
+
+  // ---------- Tools dropdown: robust open/close ----------
+  function setToolsOpen(open){
+    toolsMenu.classList.toggle('open', open);
+    toolsBtn.setAttribute('aria-expanded', String(open));
+  }
+  function isToolsOpen(){
+    return toolsMenu.classList.contains('open');
+  }
+  toolsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setToolsOpen(!isToolsOpen());
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!isToolsOpen()) return;
+    if (toolsWrap.contains(e.target)) return;
+    setToolsOpen(false);
+  });
+
+  // Close on Esc
+  document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape" && isToolsOpen()){
+      setToolsOpen(false);
+    }
+  });
+
+  function openInNewTab(file){
+    window.open(file, "_blank", "noopener,noreferrer");
+  }
+
+  toolWorksheet.addEventListener('click', () => {
+    setToolsOpen(false);
+    openInNewTab("integerworksheet.html");
+  });
+
+  toolQuiz.addEventListener('click', () => {
+    setToolsOpen(false);
+    openInNewTab("studentquiz.html");
+  });
+
+  // "Nice anchor" scoring (float-safe)
+  function isNiceAnchor(v){
+    const av = Math.abs(v);
+    const isInt = Math.abs(v - Math.round(v)) < EPS;
+
+    if (!isInt) {
+      const frac = Math.abs(v - Math.floor(v));
+      const isHalf = Math.abs(frac - 0.5) < EPS;
+      if (isHalf) return av < 10;
+      return false;
+    }
+
+    const iv = Math.round(v);
+    if (av >= 100) return iv % 100 === 0 || iv % 10 === 0;
+    if (av >= 10)  return iv % 10 === 0;
+    return true;
+  }
+
+  function signatureFor(question){
+    const answer = question.values[question.targetIndex];
+    return { answer, targetIndex: question.targetIndex, step, midpoint };
+  }
+  function matchesAnyRecent(sig){
+    for (const s of last5){
+      if (Math.abs(s.answer - sig.answer) < EPS) return true;
+      if (s.targetIndex === sig.targetIndex) return true;
+      if (Math.abs(s.step - sig.step) < EPS && Math.abs(s.midpoint - sig.midpoint) < EPS && s.targetIndex === sig.targetIndex) return true;
+    }
+    return false;
+  }
+
+  function pickAnchors(values, targetIndex){
+    const pairs = [];
+    for (let i=0; i<10; i++){
+      if (i === targetIndex) continue;
+      if (i+1 === targetIndex) continue;
+      const v1 = values[i], v2 = values[i+1];
+      let score = 0;
+      if (isNiceAnchor(v1)) score += 2;
+      if (isNiceAnchor(v2)) score += 2;
+      pairs.push({i, score});
+    }
+    pairs.sort((a,b) => b.score - a.score);
+    const bestScore = pairs.length ? pairs[0].score : 0;
+    const topPairs = pairs.filter(p => p.score === bestScore);
+    const pair = topPairs.length ? choice(topPairs) : {i: randInt(0,9)};
+
+    const idxA = pair.i;
+    const idxB = pair.i + 1;
+
+    const farCandidates = [];
+    for (let j=0; j<11; j++){
+      if (j === targetIndex) continue;
+      if (j === idxA || j === idxB) continue;
+      const v = values[j];
+      let score = 0;
+      if (isNiceAnchor(v)) score += 3;
+      score += Math.abs(j - idxA) * 0.25;
+      farCandidates.push({j, score});
+    }
+    farCandidates.sort((a,b) => b.score - a.score);
+    const bestFar = farCandidates.length ? farCandidates[0].score : 0;
+    const topFar = farCandidates.filter(c => c.score === bestFar);
+    const far = topFar.length ? choice(topFar).j : randInt(0,10);
+
+    return new Set([idxA, idxB, far]);
+  }
+
+  function buildValuesFromMidpoint(){
+    const vals = [];
+    for (let i=0;i<11;i++){
+      const v = round1(midpoint + (i - 5) * step);
+      vals.push(v);
+    }
+    return vals;
+  }
+
+  function chooseTargetIndex(values){
+    const anyNeg = values.some(v => v < 0);
+
+    const weightedAll = [];
+    for (let i=0;i<11;i++){
+      let w = 1;
+      if (i===0 || i===10) w = 0.8;
+      if (i===5) w = 0.9;
+      for (let k=0;k<Math.round(w*10);k++) weightedAll.push(i);
+    }
+
+    if (preferNegatives && anyNeg){
+      const negIdx = values.map((v,i)=> (v < 0 ? i : null)).filter(v => v !== null);
+      const weightedNeg = [];
+      for (const i of negIdx){
+        let w = 1.15;
+        if (i===0 || i===10) w = 0.95;
+        if (i===5) w = 1.0;
+        for (let k=0;k<Math.round(w*10);k++) weightedNeg.push(i);
+      }
+
+      if (weightedNeg.length && Math.random() < 0.70){
+        return choice(weightedNeg);
+      }
+    }
+
+    return choice(weightedAll);
+  }
+
+  function generateQuestion(){
+    for (let attempt=0; attempt<120; attempt++){
+      const values = buildValuesFromMidpoint();
+      const targetIndex = chooseTargetIndex(values);
+
+      const anchors = pickAnchors(values, targetIndex);
+      if (anchors.has(targetIndex)) continue;
+
+      const question = {
+        values,
+        targetIndex,
+        anchors,
+        teacherRevealed: new Set()
+      };
+
+      const sig = signatureFor(question);
+      if (matchesAnyRecent(sig)) continue;
+
+      last5.push(sig);
+      while (last5.length > 5) last5.shift();
+
+      return question;
+    }
+
+    const values = buildValuesFromMidpoint();
+    return {
+      values,
+      targetIndex: 4,
+      anchors: new Set([0,1,10]),
+      teacherRevealed: new Set()
+    };
+  }
+
+  function clearSVG(){
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    refs = null;
+  }
+  function el(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNode(str, attrs={}){
+    const t = el('text', attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  function buildHiddenScene(question){
+    clearSVG();
+
+    const left=90, right=910;
+    const yLine=160;
+    const tickTop=yLine-14, tickBot=yLine+14;
+    const n=11;
+    const x = (i) => left + (right-left)* (i/(n-1));
+    const labelY = 248;
+
+    svg.appendChild(textNode("What is the missing value?", {
+      x: 500, y: 56, "text-anchor":"middle",
+      "font-size":"30", "font-weight":"950", fill:"#111827"
+    }));
+    svg.appendChild(textNode("Write it. Show me. Reveal.", {
+      x: 500, y: 86, "text-anchor":"middle",
+      "font-size":"14", "font-weight":"850", fill:"#9ca3af"
+    }));
+
+    svg.appendChild(el('line', {
+      x1:left, y1:yLine, x2:right, y2:yLine,
+      stroke: "#1f2937", "stroke-width":"4", "stroke-linecap":"round"
+    }));
+
+    const ticksG = el('g', {});
+    const dotsG  = el('g', {});
+    const labelsG= el('g', {});
+    const boxG   = el('g', { id: "mysteryBox" });
+
+    const labelsByIndex = new Map();
+    const ticks = [];
+    const dots = [];
+
+    function highlightTeacher(idx){
+      const tick = ticks[idx];
+      const dot  = dots[idx];
+      if (tick) tick.setAttribute("stroke-width", "5");
+      if (dot){
+        dot.setAttribute("opacity", "1");
+        dot.setAttribute("fill", "#2563eb");
+      }
+    }
+
+    function ensureLabel(idx, animate){
+      if (labelsByIndex.has(idx)) return;
+      if (idx === question.targetIndex) return;
+
+      const allowed = question.anchors.has(idx) || question.teacherRevealed.has(idx);
+      if (!allowed) return;
+
+      const t = textNode(fmt(question.values[idx]), {
+        x: x(idx),
+        y: labelY,
+        "text-anchor":"middle",
+        "font-size":"24",
+        "font-weight":"900",
+        fill: "var(--label)"
+      });
+      if (animate) t.classList.add("wipe-in");
+      labelsG.appendChild(t);
+      labelsByIndex.set(idx, t);
+
+      if (question.teacherRevealed.has(idx)) highlightTeacher(idx);
+    }
+
+    function handleTickClick(idx){
+      if (revealed) return;
+      if (idx === question.targetIndex) return;
+      question.teacherRevealed.add(idx);
+      ensureLabel(idx, true);
+      highlightTeacher(idx);
+    }
+
+    for (let i=0;i<n;i++){
+      const xi = x(i);
+
+      const tick = el('line', {
+        x1:xi, y1:tickTop, x2:xi, y2:tickBot,
+        stroke:"#1f2937", "stroke-width":"4",
+        "stroke-linecap":"round"
+      });
+      tick.style.cursor = "pointer";
+      tick.addEventListener('click', () => handleTickClick(i));
+      ticksG.appendChild(tick);
+      ticks.push(tick);
+
+      const dot = el('circle', {
+        cx: xi, cy: yLine,
+        r: 7,
+        fill: "#111827",
+        opacity: 0.75
+      });
+      dot.classList.add("tick-dot");
+      dot.style.cursor = "pointer";
+      dot.addEventListener('click', () => handleTickClick(i));
+      dotsG.appendChild(dot);
+      dots.push(dot);
+    }
+
+    for (const idx of question.anchors){
+      if (idx !== question.targetIndex) ensureLabel(idx, false);
+    }
+
+    const tx = x(question.targetIndex);
+    const boxW=64, boxH=44;
+    const boxX = tx - boxW/2;
+    const boxY = labelY - 34;
+
+    const rect = el('rect', {
+      x: boxX, y: boxY,
+      width: boxW, height: boxH,
+      rx: 12, ry: 12,
+      fill: "var(--box)"
+    });
+    rect.classList.add("box-pulse");
+
+    const qmark = textNode("?", {
+      x: tx, y: boxY + 31,
+      "text-anchor":"middle",
+      "font-size":"28",
+      "font-weight":"950",
+      fill:"#ffffff"
+    });
+
+    boxG.appendChild(rect);
+    boxG.appendChild(qmark);
+
+    svg.appendChild(ticksG);
+    svg.appendChild(dotsG);
+    svg.appendChild(labelsG);
+    svg.appendChild(boxG);
+
+    refs = { labelsByIndex, labelsG, labelY, xFn: x, dots, ticks };
+  }
+
+  function revealAllLabels(question){
+    if (!refs) return;
+
+    svg.querySelector('#mysteryBox')?.remove();
+
+    for (let i=0;i<11;i++){
+      if (refs.labelsByIndex.has(i)) continue;
+
+      const t = textNode(fmt(question.values[i]), {
+        x: refs.xFn(i),
+        y: refs.labelY,
+        "text-anchor":"middle",
+        "font-weight":"900",
+        fill: "var(--label-soft)",
+        "font-size":"24"
+      });
+
+      const isAnswer = (i === question.targetIndex);
+      if (isAnswer){
+        t.setAttribute("fill", "var(--ok)");
+        t.setAttribute("font-size", "34");
+        t.setAttribute("font-weight", "950");
+        t.classList.add("pop");
+      } else {
+        t.classList.add("wipe-in");
+        t.style.animationDelay = (i * 0.04) + "s";
+      }
+
+      refs.labelsG.appendChild(t);
+      refs.labelsByIndex.set(i, t);
+    }
+  }
+
+  function hideToPrompt(question){
+    if (!refs) return;
+
+    question.teacherRevealed.clear();
+
+    for (let i=0;i<11;i++){
+      const lab = refs.labelsByIndex.get(i);
+      if (!lab) continue;
+
+      const keep = question.anchors.has(i);
+      if (!keep){
+        lab.remove();
+        refs.labelsByIndex.delete(i);
+      }
+    }
+
+    for (let i=0;i<11;i++){
+      if (refs.ticks[i]) refs.ticks[i].setAttribute("stroke-width", "4");
+      if (refs.dots[i]){
+        refs.dots[i].setAttribute("opacity", "0.75");
+        refs.dots[i].setAttribute("fill", "#111827");
+      }
+    }
+
+    if (!svg.querySelector('#mysteryBox')){
+      const tx = refs.xFn(question.targetIndex);
+      const boxW=64, boxH=44;
+      const boxX = tx - boxW/2;
+      const boxY = refs.labelY - 34;
+
+      const boxG = el('g', { id: "mysteryBox" });
+
+      const rect = el('rect', {
+        x: boxX, y: boxY,
+        width: boxW, height: boxH,
+        rx: 12, ry: 12,
+        fill: "var(--box)"
+      });
+      rect.classList.add("box-pulse");
+
+      const qmark = textNode("?", {
+        x: tx, y: boxY + 31,
+        "text-anchor":"middle",
+        "font-size":"28",
+        "font-weight":"950",
+        fill:"#ffffff"
+      });
+
+      boxG.appendChild(rect);
+      boxG.appendChild(qmark);
+      svg.appendChild(boxG);
+    }
+  }
+
+  function render(){
+    if (!q){
+      q = generateQuestion();
+      revealed = false;
+      buildHiddenScene(q);
+      return;
+    }
+
+    if (!refs){
+      buildHiddenScene(q);
+      return;
+    }
+
+    if (revealed){
+      revealAllLabels(q);
+    } else {
+      hideToPrompt(q);
+    }
+  }
+
+  // ---------- Validation ----------
+  function validateStepField(s){
+    const parsed = parseOneDecimal(s);
+    if (!parsed.ok) return { ok:false };
+    if (parsed.value <= 0) return { ok:false };
+    if (parsed.value > STEP_MAX) return { ok:false };
+    return parsed;
+  }
+  function validateMidField(s){
+    const parsed = parseOneDecimal(s);
+    if (!parsed.ok) return { ok:false };
+    if (parsed.value < MID_MIN || parsed.value > MID_MAX) return { ok:false };
+    return parsed;
+  }
+
+  // ---------- Presets ----------
+  const POS_PRESETS = [
+    { id:"pos_0_10",   label:"Numbers from 0 to 10",     min:0,   max:10,  desiredMidMin:5, desiredMidMax:10, steps:[1] },
+    { id:"pos_0_20",   label:"Numbers from 0 to 20",     min:0,   max:20,  desiredMidMin:5, desiredMidMax:20, steps:[1] },
+    { id:"pos_0_20_h", label:"Harder 0 to 20",           min:0,   max:20,  desiredMidMin:5, desiredMidMax:20, steps:[1,2,5] },
+    { id:"pos_0_100",  label:"Numbers from 0 to 100",    min:0,   max:100, desiredMidMin:5, desiredMidMax:100, steps:[1,2,5,10] },
+    { id:"pos_0_100_h",label:"Harder 0 to 100",          min:0,   max:100, desiredMidMin:5, desiredMidMax:100, steps:[1,2,3,4,5,6,7,8,9,10] },
+    { id:"pos_0_200",  label:"Numbers 0 to 200",         min:0,   max:200, desiredMidMin:5, desiredMidMax:200, steps:[1,2,5,10] },
+    { id:"pos_0_200_h",label:"Harder 0 to 200",          min:0,   max:200, desiredMidMin:5, desiredMidMax:200, steps:[1,2,3,4,5,6,7,8,9,10] },
+  ];
+
+  const INT_PRESETS = [
+    { id:"int_10",     label:"Integers -10 to 10",          min:-10,   max:10,   desiredMidMin:-10,  desiredMidMax:10,  steps:[1] },
+    { id:"int_10_h",   label:"-10 to 10 harder",            min:-10,   max:10,   desiredMidMin:-10,  desiredMidMax:10,  steps:[1,2,3,4] },
+    { id:"int_20",     label:"Integers -20 to 20",          min:-20,   max:20,   desiredMidMin:-20,  desiredMidMax:20,  steps:[1,2,5] },
+    { id:"int_20_h",   label:"-20 to 20 harder",            min:-20,   max:20,   desiredMidMin:-20,  desiredMidMax:20,  steps:[1,2,3,4,5] },
+    { id:"int_100",    label:"Integers -100 to 100",        min:-100,  max:100,  desiredMidMin:-100, desiredMidMax:100, steps:[1,2,5,10] },
+    { id:"int_100_h",  label:"-100 to 100 harder",          min:-100,  max:100,  desiredMidMin:-100, desiredMidMax:100, steps:[1,2,3,4,5,6,7,8,9,10] },
+    { id:"int_1000",   label:"Integers -1000 to 1000",      min:-1000, max:1000, desiredMidMin:-1000,desiredMidMax:1000,steps:[1,2,10,100] },
+    { id:"int_1000_h", label:"-1000 to 1000 harder",        min:-1000, max:1000, desiredMidMin:-1000,desiredMidMax:1000,steps:[1,2,3,4,5,6,7,8,9,10,20,50,100,150] },
+  ];
+
+  // Expand steps for halves mode: allow x or x+0.5 (x+0.5 only), and keep unique.
+  function stepsWithHalves(baseSteps){
+    const out = [];
+    for (const x of baseSteps){
+      out.push(x);
+      out.push(round1(x + 0.5));
+    }
+    // unique
+    return [...new Set(out.map(v => round1(v)))].sort((a,b)=>a-b);
+  }
+
+  function getPresetById(group, id){
+    let list = null;
+    if (group === "posWhole" || group === "posHalves") list = POS_PRESETS;
+    if (group === "intWhole" || group === "negHalves") list = INT_PRESETS;
+    return (list || []).find(p => p.id === id) || null;
+  }
+
+  function computePreviewText(preset, halves){
+    const steps = halves ? stepsWithHalves(preset.steps) : preset.steps;
+    const stepList = steps.map(fmt).join(", ");
+    const halfNote = halves ? " Midpoint and step may include halves (.5)." : "";
+    return `Range: ${preset.min} to ${preset.max}. Step size will be one of: ${stepList}. Midpoint is random (auto-fitted so the 11-tick line stays within the range).${halfNote}`;
+  }
+
+  function randHalfStep(min, max){
+    // choose a value in [min,max] in increments of 0.5
+    const a = Math.ceil(min * 2);
+    const b = Math.floor(max * 2);
+    if (a > b) return null;
+    return randInt(a, b) / 2;
+  }
+
+  function rollPreset(preset, halves){
+    // No spill: midpoint in [min+5*step, max-5*step]
+    // Approach A: auto-raise/lower desired midpoint range based on step.
+    const stepChoices = halves ? stepsWithHalves(preset.steps) : preset.steps;
+
+    for (let attempt=0; attempt<260; attempt++){
+      const stepChoice = choice(stepChoices);
+
+      const hardMin = preset.min + 5 * stepChoice;
+      const hardMax = preset.max - 5 * stepChoice;
+      if (hardMin > hardMax) continue;
+
+      const desiredMin = preset.desiredMidMin;
+      const desiredMax = preset.desiredMidMax;
+
+      const midMin = Math.max(hardMin, desiredMin);
+      const midMax = Math.min(hardMax, desiredMax);
+      if (midMin > midMax) continue;
+
+      let midChoice;
+      if (halves){
+        midChoice = randHalfStep(midMin, midMax);
+        if (midChoice === null) continue;
+      } else {
+        const a = Math.ceil(midMin);
+        const b = Math.floor(midMax);
+        if (a > b) continue;
+        midChoice = randInt(a, b);
+      }
+
+      step = round1(stepChoice);
+      midpoint = round1(midChoice);
+      return true;
+    }
+
+    // fallback: find a step that fits, then choose midpoint
+    const sortedSteps = [...stepChoices].sort((a,b)=>a-b);
+    for (const s of sortedSteps){
+      const hardMin = preset.min + 5 * s;
+      const hardMax = preset.max - 5 * s;
+      if (hardMin > hardMax) continue;
+
+      let midChoice;
+      if (halves){
+        midChoice = randHalfStep(hardMin, hardMax);
+        if (midChoice === null) continue;
+      } else {
+        midChoice = randInt(Math.ceil(hardMin), Math.floor(hardMax));
+      }
+      step = round1(s);
+      midpoint = round1(midChoice);
+      return true;
+    }
+    return false;
+  }
+
+  function maybeRollPresetForNext(){
+    if (activeMode !== "preset" || !activePreset) return true;
+
+    // groups:
+    // posWhole, posHalves, intWhole, negHalves
+    const halves = (activePreset.group === "posHalves" || activePreset.group === "negHalves");
+    const preset = getPresetById(activePreset.group, activePreset.id);
+    if (!preset) return true;
+    return rollPreset(preset, halves);
+  }
+
+  // ---------- Next / Reveal / Reset ----------
+  function nextQuestion(){
+    // If preset mode, roll step+midpoint each Next
+    maybeRollPresetForNext();
+
+    revealed = false;
+    q = generateQuestion();
+    buildHiddenScene(q);
+    render();
+  }
+
+  nextBtn.addEventListener('click', () => nextQuestion());
+
+  revealBtn.addEventListener('click', () => {
+    revealed = !revealed;
+    render();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    // reset to manual defaults
+    activeMode = "manual";
+    activePreset = null;
+
+    step = 1.0;
+    midpoint = 0.0;
+
+    revealed = false;
+    last5.length = 0;
+    q = null;
+
+    closeModal();
+    clearSVG();
+    nextQuestion(); // regenerate instantly
+  });
+
+  // Keyboard shortcuts (disabled while modal is open)
+  document.addEventListener('keydown', (e) => {
+    if (isModalOpen()){
+      if (e.key === "Escape"){
+        e.preventDefault();
+        closeModal();
+      }
+      return;
+    }
+
+    if (e.code === "Space"){
+      e.preventDefault();
+      nextQuestion();
+    }
+    if (e.key.toLowerCase() === "r"){
+      e.preventDefault();
+      revealed = !revealed;
+      render();
+    }
+  });
+
+  // ---------- Modal UI ----------
+  function isModalOpen(){
+    return modalOverlay.classList.contains("open");
+  }
+  function openModal(){
+    modalOverlay.classList.add("open");
+    modalOverlay.setAttribute("aria-hidden", "false");
+    showChooseModeView();
+  }
+  function closeModal(){
+    modalOverlay.classList.remove("open");
+    modalOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  teacherBtn.addEventListener("click", () => openModal());
+  closeModalBtn.addEventListener("click", () => closeModal());
+
+  // click outside closes
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  function setFooterButtons(btns){
+    footerBtns.innerHTML = "";
+    for (const b of btns) footerBtns.appendChild(b);
+  }
+
+  function makeBtn(text, opts={}){
+    const b = document.createElement("button");
+    b.textContent = text;
+    if (opts.className) b.className = opts.className;
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
+
+  function showChooseModeView(){
+    modalBody.innerHTML = `
+      <div style="font-weight:950; font-size:14px;">Choose your mode</div>
+      <div class="modeGrid">
+        <div class="modeCard">
+          <h3>Manual mode</h3>
+          <p>Teacher sets the step size and midpoint.</p>
+          <button id="pickManual">Manual mode</button>
+        </div>
+        <div class="modeCard">
+          <h3>Preset mode</h3>
+          <p>Pick a preset. The tool rolls step + midpoint (no spill) each question.</p>
+          <button id="pickPreset">Preset mode</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("pickManual").addEventListener("click", () => showManualView());
+    document.getElementById("pickPreset").addEventListener("click", () => showPresetView());
+
+    setFooterButtons([
+      makeBtn("Close", { className:"backBtn", onClick: () => closeModal() })
+    ]);
+  }
+
+  function showManualView(){
+    modalBody.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div style="font-weight:950; font-size:14px;">Manual mode</div>
+        <div style="color:var(--muted); font-weight:850; font-size:12px;">Press Enter to apply & generate</div>
+      </div>
+
+      <div class="presetGrid" style="margin-top:12px;">
+        <div class="presetPanel" style="background:#f9fafb; border-color:#e5e7eb;">
+          <h3>Step size</h3>
+          <div class="field">
+            <label for="mStep">Enter step size</label>
+            <input id="mStep" type="text" inputmode="decimal" autocomplete="off" />
+            <div class="err" id="mStepErr">Please enter a number greater than 0 (up to 1000), max 1 decimal place.</div>
+          </div>
+        </div>
+
+        <div class="presetPanel" style="background:#f9fafb; border-color:#e5e7eb;">
+          <h3>Midpoint</h3>
+          <div class="field">
+            <label for="mMid">Enter midpoint (middle tick value)</label>
+            <input id="mMid" type="text" inputmode="decimal" autocomplete="off" />
+            <div class="err" id="mMidErr">Please enter a number from -10000 to 10000, max 1 decimal place.</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const mStep = document.getElementById("mStep");
+    const mMid  = document.getElementById("mMid");
+    const mStepErr = document.getElementById("mStepErr");
+    const mMidErr  = document.getElementById("mMidErr");
+
+    mStep.value = fmt(step);
+    mMid.value  = fmt(midpoint);
+
+    function validate(){
+      const vs = validateStepField(mStep.value);
+      const vm = validateMidField(mMid.value);
+
+      mStepErr.classList.toggle("show", !vs.ok);
+      mMidErr.classList.toggle("show", !vm.ok);
+
+      if (!vs.ok || !vm.ok) return null;
+      return { step: vs.value, mid: vm.value };
+    }
+
+    function applyAndGenerate(){
+      const v = validate();
+      if (!v) return;
+
+      activeMode = "manual";
+      activePreset = null;
+
+      step = v.step;
+      midpoint = v.mid;
+
+      closeModal();
+      nextQuestion();
+    }
+
+    [mStep, mMid].forEach(inp => {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter"){
+          e.preventDefault();
+          applyAndGenerate();
+        }
+      });
+      inp.addEventListener("input", () => validate());
+    });
+
+    setFooterButtons([
+      makeBtn("Back", { className:"backBtn", onClick: () => showChooseModeView() }),
+      makeBtn("Enter", { className:"primary", onClick: () => applyAndGenerate() }),
+    ]);
+  }
+
+  function showPresetView(){
+    modalBody.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div style="font-weight:950; font-size:14px;">Preset mode</div>
+        <div style="color:var(--muted); font-weight:850; font-size:12px;">Press Enter to apply & generate</div>
+      </div>
+
+      <div class="presetGrid">
+        <div class="presetPanel tintGreen">
+          <h3>Positive – Whole numbers</h3>
+          <div class="field">
+            <label for="posWholeSelect">Choose a preset</label>
+            <select id="posWholeSelect">
+              <option value="">— Select —</option>
+              ${POS_PRESETS.map(p => `<option value="${p.id}">${p.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div class="presetPanel tintPurple">
+          <h3>Integers</h3>
+          <div class="field">
+            <label for="intWholeSelect">Choose a preset</label>
+            <select id="intWholeSelect">
+              <option value="">— Select —</option>
+              ${INT_PRESETS.map(p => `<option value="${p.id}">${p.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div class="presetPanel tintBlue">
+          <h3>Positive – halves</h3>
+          <div class="field">
+            <label for="posHalfSelect">Choose a preset</label>
+            <select id="posHalfSelect">
+              <option value="">— Select —</option>
+              ${POS_PRESETS.map(p => `<option value="${p.id}">${p.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div class="presetPanel tintRed">
+          <h3>Negative – halves</h3>
+          <div class="field">
+            <label for="negHalfSelect">Choose a preset</label>
+            <select id="negHalfSelect">
+              <option value="">— Select —</option>
+              ${INT_PRESETS.map(p => `<option value="${p.id}">${p.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="presetPreview" class="preview"></div>
+      <div class="err" id="presetErr" style="margin-top:10px;">Please choose exactly one preset.</div>
+    `;
+
+    const posWholeSelect = document.getElementById("posWholeSelect");
+    const intWholeSelect = document.getElementById("intWholeSelect");
+    const posHalfSelect  = document.getElementById("posHalfSelect");
+    const negHalfSelect  = document.getElementById("negHalfSelect");
+    const presetPreview = document.getElementById("presetPreview");
+    const presetErr = document.getElementById("presetErr");
+
+    presetErr.classList.remove("show");
+
+    // Load current selection
+    if (activeMode === "preset" && activePreset){
+      if (activePreset.group === "posWhole") posWholeSelect.value = activePreset.id;
+      if (activePreset.group === "intWhole") intWholeSelect.value = activePreset.id;
+      if (activePreset.group === "posHalves") posHalfSelect.value = activePreset.id;
+      if (activePreset.group === "negHalves") negHalfSelect.value = activePreset.id;
+    }
+
+    function clearOthers(except){
+      const all = [posWholeSelect, intWholeSelect, posHalfSelect, negHalfSelect];
+      for (const sel of all){
+        if (sel !== except) sel.value = "";
+      }
+    }
+
+    function currentSelection(){
+      if (posWholeSelect.value) return { group:"posWhole", id: posWholeSelect.value };
+      if (intWholeSelect.value) return { group:"intWhole", id: intWholeSelect.value };
+      if (posHalfSelect.value)  return { group:"posHalves", id: posHalfSelect.value };
+      if (negHalfSelect.value)  return { group:"negHalves", id: negHalfSelect.value };
+      return null;
+    }
+
+    function updatePreview(){
+      presetErr.classList.remove("show");
+      const sel = currentSelection();
+      if (!sel){
+        presetPreview.classList.remove("show");
+        presetPreview.textContent = "";
+        return;
+      }
+
+      const halves = (sel.group === "posHalves" || sel.group === "negHalves");
+      const preset = getPresetById(sel.group, sel.id);
+      if (!preset){
+        presetPreview.classList.remove("show");
+        presetPreview.textContent = "";
+        return;
+      }
+
+      presetPreview.textContent = computePreviewText(preset, halves);
+      presetPreview.classList.add("show");
+    }
+
+    // Mutually exclusive
+    posWholeSelect.addEventListener("change", () => { if (posWholeSelect.value) clearOthers(posWholeSelect); updatePreview(); });
+    intWholeSelect.addEventListener("change", () => { if (intWholeSelect.value) clearOthers(intWholeSelect); updatePreview(); });
+    posHalfSelect.addEventListener("change",  () => { if (posHalfSelect.value)  clearOthers(posHalfSelect);  updatePreview(); });
+    negHalfSelect.addEventListener("change",  () => { if (negHalfSelect.value)  clearOthers(negHalfSelect);  updatePreview(); });
+
+    updatePreview();
+
+    function applyPresetAndGenerate(){
+      const sel = currentSelection();
+      if (!sel){
+        presetErr.classList.add("show");
+        return;
+      }
+
+      activeMode = "preset";
+      activePreset = sel;
+
+      // Roll immediately (apply & generate instantly)
+      maybeRollPresetForNext();
+
+      closeModal();
+      nextQuestion();
+    }
+
+    // Enter key triggers apply
+    [posWholeSelect, intWholeSelect, posHalfSelect, negHalfSelect].forEach(sel => {
+      sel.addEventListener("keydown", (e) => {
+        if (e.key === "Enter"){
+          e.preventDefault();
+          applyPresetAndGenerate();
+        }
+      });
+    });
+
+    setFooterButtons([
+      makeBtn("Back", { className:"backBtn", onClick: () => showChooseModeView() }),
+      makeBtn("Enter", { className:"primary", onClick: () => applyPresetAndGenerate() }),
+    ]);
+  }
+
+  // ---------- Initial ----------
+  activeMode = "manual";
+  activePreset = null;
+
+  q = generateQuestion();
+  buildHiddenScene(q);
+  render();
+
+})();
+</script>
+</body>
+</html>
