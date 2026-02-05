@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Class Flash Card Activity</title>
+
+  <!-- Handwritten-style fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card-bg: #ffffff;
+      --accent-blue: #4c6fff;
+      --accent-gold: #ffd66b;
+      --accent-green: #1b8a5a;
+      --accent-grey: #e0e4f2;
+      --text-main: #222;
+
+      --pv-cell-width: 70px;
+      --pv-cell-height: 90px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+    }
+
+    .hidden {
+  visibility: hidden !important;   /* or opacity: 0; */
+}
+
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 24px 32px;
+    }
+
+    /* ---------- Top bar ---------- */
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .top-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .back-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: #ffffff;
+      color: #333;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .back-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    .mode-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .mode-button {
+      border: 1px solid rgba(36, 59, 128, 0.3);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: #e0e7ff;
+      color: #243b80;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      white-space: nowrap;
+    }
+
+    .mode-button.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    /* ---------- Mini place value slider ---------- */
+
+    .pv-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .pv-slider-mini {
+      position: relative;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      padding: 6px 10px 14px;
+      transform: scale(0.7);
+      transform-origin: top center;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .pv-cell-row {
+      display: flex;
+    }
+
+    .pv-cell,
+    .pv-dot-cell {
+      width: var(--pv-cell-width);
+      height: var(--pv-cell-height);
+      border-radius: 14px;
+      border: 1px solid #d5d9eb;
+      background: #ffffff;
+      margin-right: 4px;
+      position: relative;
+    }
+
+    .pv-dot-cell {
+      background: #f1f3ff;
+    }
+
+    .pv-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4b5563;
+    }
+
+    .pv-digit-row {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: var(--pv-cell-height);
+      display: flex;
+      align-items: center;
+      width: 100%;
+      pointer-events: none;
+      transition: transform 0.35s ease-out;
+    }
+
+    .pv-digit {
+      width: var(--pv-cell-width);
+      text-align: center;
+      font-size: 3rem;
+      font-weight: 700;
+      color: #1d4ed8;
+      margin-right: 4px;          /* NEW: match cell spacing */
+
+    }
+
+    /* ---------- Card ---------- */
+
+    .card-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .flash-card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.09);
+      padding: 60px 40px;
+      min-width: min(1100px, 100%);
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .question-text,
+    .answer-text {
+      font-family: "Patrick Hand", "Kalam", "Schoolbell", "Caveat", "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .question-text {
+      white-space: normal;
+      word-break: break-word;
+      font-size: clamp(6.7rem, 11vw, 12rem);
+      margin-bottom: 36px;
+    }
+
+    .answer-text {
+      white-space: normal;
+      word-break: break-word;
+      font-size: clamp(7.8rem, 12vw, 13.2rem);
+      color: var(--accent-green) !important;
+    }
+
+    /* Hand-drawn “write on” animation */
+    .question-text.drawn {
+      animation: handwriting 0.4s ease-out;
+    }
+
+    @keyframes handwriting {
+      from {
+        clip-path: inset(0 100% 0 0);
+      }
+      to {
+        clip-path: inset(0 0 0 0);
+      }
+    }
+
+    /* ---------- Bottom controls ---------- */
+
+    .controls {
+      display: flex;
+      gap: 14px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .control-button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+      min-width: 220px;
+      color: #222;
+      background: #ffffff;
+    }
+
+    .control-button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    #newProblemBtn {
+      background: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    #revealBtn {
+      background: var(--accent-gold);
+      color: #6b4a00;
+    }
+
+    @media (max-width: 768px) {
+      .flash-card {
+        padding: 40px 18px;
+        min-height: 260px;
+      }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .mode-buttons {
+        justify-content: flex-start;
+      }
+
+      .pv-slider-mini {
+        transform: scale(0.6);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top-bar">
+      <div class="top-left">
+        <button class="back-btn" type="button" onclick="window.location.href='index.html';">
+          ← Back
+        </button>
+        <div class="app-title">Class Flash Card Activity</div>
+      </div>
+
+      <div class="mode-buttons">
+        <button class="mode-button active" data-mode="x10">× / ÷ 10</button>
+        <button class="mode-button" data-mode="x100">× / ÷ 100</button>
+        <button class="mode-button" data-mode="x1000">× / ÷ 1000</button>
+        <button class="mode-button" data-mode="mixed">Mixed</button>
+        <button class="mode-button" data-mode="reverse">Reverse challenge</button>
+      </div>
+    </header>
+
+    <section class="card-container">
+      <!-- Mini place value slider (visual only) -->
+      <div class="pv-wrapper">
+        <div id="pvSliderMini" class="pv-slider-mini"></div>
+      </div>
+
+      <div class="flash-card">
+        <div id="questionText" class="question-text">
+          Press space begin
+        </div>
+        <div id="answerText" class="answer-text hidden">
+          0
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="newProblemBtn" class="control-button" type="button">
+          New problem (Space)
+        </button>
+        <button id="revealBtn" class="control-button" type="button">
+          Reveal / Hide (R)
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ---------- Slider config ----------
+    const PV_CELL_WIDTH = 70; // must match CSS var
+    const pvConfig = [
+      { type: "cell", power: 5 },
+      { type: "cell", power: 4 },
+      { type: "cell", power: 3 },
+      { type: "cell", power: 2 },
+      { type: "cell", power: 1 },
+      { type: "cell", power: 0 },
+      { type: "dot" },
+      { type: "cell", power: -1 },
+      { type: "cell", power: -2 },
+      { type: "cell", power: -3 },
+      { type: "cell", power: -4 },
+      { type: "cell", power: -5 }
+    ];
+
+    let pvDigitRow = null;
+    let pvPowerToSlot = {};
+
+    function initPlaceValueSlider() {
+      const container = document.getElementById("pvSliderMini");
+      if (!container) return;
+
+      const cellRow = document.createElement("div");
+      cellRow.className = "pv-cell-row";
+
+      const digitRow = document.createElement("div");
+      digitRow.className = "pv-digit-row";
+
+      pvPowerToSlot = {};
+
+      pvConfig.forEach(cfg => {
+        if (cfg.type === "dot") {
+          const cell = document.createElement("div");
+          cell.className = "pv-dot-cell";
+
+          const dot = document.createElement("div");
+          dot.className = "pv-dot";
+          cell.appendChild(dot);
+
+          cellRow.appendChild(cell);
+
+          const digitSlot = document.createElement("div");
+          digitSlot.className = "pv-digit";
+          digitRow.appendChild(digitSlot);
+        } else {
+          const cell = document.createElement("div");
+          cell.className = "pv-cell";
+          cellRow.appendChild(cell);
+
+          const digitSlot = document.createElement("div");
+          digitSlot.className = "pv-digit";
+          digitSlot.dataset.power = cfg.power;
+          digitRow.appendChild(digitSlot);
+
+          pvPowerToSlot[cfg.power] = digitSlot;
+        }
+      });
+
+      container.appendChild(cellRow);
+      container.appendChild(digitRow);
+      pvDigitRow = digitRow;
+
+      // start with 0
+      updatePlaceValueSlider(0, false, 0);
+    }
+
+    function updatePlaceValueSlider(value, animate, exponentShift) {
+      if (!pvDigitRow) return;
+
+      const formatted = formatNumber(Math.abs(value));
+      const parts = formatted.split(".");
+      const intPart = parts[0] || "0";
+      const fracPart = parts[1] || "";
+
+      const digitsByPower = {};
+
+      // First, compute raw digits for each power
+      for (let p = 5; p >= -5; p--) {
+        let digit = "0";
+        if (p >= 0) {
+          const idxFromRight = p;
+          const pos = intPart.length - 1 - idxFromRight;
+          if (pos >= 0) digit = intPart[pos];
+        } else {
+          const idx = -p - 1;
+          if (idx < fracPart.length) digit = fracPart[idx];
+        }
+        digitsByPower[p] = digit;
+      }
+
+      // Remove leading zeros on the LEFT of the number
+      let highestNonZeroInt = null;
+      for (let p = 5; p >= 0; p--) {
+        if (digitsByPower[p] !== "0") {
+          highestNonZeroInt = p;
+          break;
+        }
+      }
+      // If all integer digits are zero, keep the ones place as 0
+      if (highestNonZeroInt === null) highestNonZeroInt = 0;
+      for (let p = 5; p > highestNonZeroInt; p--) {
+        digitsByPower[p] = "";
+      }
+
+      // Now write to the DOM
+      for (let p = 5; p >= -5; p--) {
+        const slot = pvPowerToSlot[p];
+        if (slot) {
+          slot.textContent = digitsByPower[p];
+        }
+      }
+
+      // Handle sliding animation
+      if (!animate || !exponentShift) {
+        pvDigitRow.style.transition = "none";
+        pvDigitRow.style.transform = "translateX(0px)";
+        void pvDigitRow.offsetWidth; // reflow
+        pvDigitRow.style.transition = "transform 0.35s ease-out";
+      } else {
+        const offset = PV_CELL_WIDTH * exponentShift;
+        pvDigitRow.style.transition = "none";
+        pvDigitRow.style.transform = `translateX(${offset}px)`;
+        void pvDigitRow.offsetWidth; // reflow
+        pvDigitRow.style.transition = "transform 0.35s ease-out";
+        pvDigitRow.style.transform = "translateX(0px)";
+      }
+    }
+
+    // ---------- Flash card state ----------
+    let currentMode = "x10"; // x10, x100, x1000, mixed, reverse
+    let currentProblem = null; // { start, factor, isMultiply, result }
+
+    const modeButtons = document.querySelectorAll(".mode-button");
+    const questionEl = document.getElementById("questionText");
+    const answerEl = document.getElementById("answerText");
+    const newProblemBtn = document.getElementById("newProblemBtn");
+    const revealBtn = document.getElementById("revealBtn");
+
+    // ---------- Helpers ----------
+
+    // Format number so we don't lose digits like 301.23 / 1000 -> 0.30123
+    function formatNumber(value) {
+      const rounded = Math.round(value * 1e8) / 1e8; // kill floating-point noise
+      let s = rounded.toFixed(8);
+      s = s.replace(/0+$/, "").replace(/\.$/, "");
+      if (s === "-0") s = "0";
+      return s;
+    }
+
+    // Random start between hundredths (0.01) and hundreds (999),
+    // with 0, 1, or 2 decimal places.
+    function randomStartNumber() {
+      const decimalChance = Math.random();
+      if (decimalChance < 0.4) {
+        // integer 1..999
+        return Math.floor(Math.random() * 999) + 1;
+      } else {
+        // 1 or 2 decimal places
+        const decimals = Math.random() < 0.5 ? 1 : 2;
+        const factor = Math.pow(10, decimals);
+        const min = Math.ceil(0.01 * factor);
+        const max = Math.floor(999 * factor);
+        const n = Math.floor(Math.random() * (max - min + 1)) + min;
+        return n / factor;
+      }
+    }
+
+    function chooseFactorForMode() {
+      if (currentMode === "x10") return 10;
+      if (currentMode === "x100") return 100;
+      if (currentMode === "x1000") return 1000;
+      // mixed or reverse: choose freely from 10, 100, 1000
+      const factors = [10, 100, 1000];
+      return factors[Math.floor(Math.random() * factors.length)];
+    }
+
+    function buildProblem() {
+      const factor = chooseFactorForMode();
+      const isMultiply = Math.random() < 0.5;
+      const start = randomStartNumber();
+      const result = isMultiply ? start * factor : start / factor;
+
+      return { start, factor, isMultiply, result };
+    }
+
+    function displayProblem() {
+      currentProblem = buildProblem();
+      const { start, factor, isMultiply, result } = currentProblem;
+
+      const startStr = formatNumber(start);
+      const resultStr = formatNumber(result);
+      const op = isMultiply ? "×" : "÷";
+
+      // Remove existing draw animation, then re-trigger
+      questionEl.classList.remove("drawn");
+      void questionEl.offsetWidth; // force reflow
+      questionEl.classList.add("drawn");
+
+      if (currentMode === "reverse") {
+        // Reverse challenge: show the answer expression, hide the starting number
+        const question = `? ${op} ${factor} = ${resultStr}`;
+        const answer = startStr;
+        questionEl.textContent = question;
+        answerEl.textContent = answer;
+      } else {
+        // Normal: show start op factor = ? and answer is result
+        const question = `${startStr} ${op} ${factor} = ?`;
+        const answer = resultStr;
+        questionEl.textContent = question;
+        answerEl.textContent = answer;
+      }
+
+      // Show starting number on slider (visual only)
+      updatePlaceValueSlider(currentProblem.start, false, 0);
+
+      // Hide answer on new problem
+      answerEl.classList.add("hidden");
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      modeButtons.forEach(btn => {
+        const m = btn.getAttribute("data-mode");
+        btn.classList.toggle("active", m === mode);
+      });
+      displayProblem();
+    }
+
+    function toggleAnswer() {
+      if (!currentProblem) return;
+
+      const wasHidden = answerEl.classList.contains("hidden");
+      answerEl.classList.toggle("hidden");
+
+      // When revealing, animate slider so digits slide into new place
+      if (wasHidden) {
+        let places = 1;
+        if (currentProblem.factor === 100) places = 2;
+        else if (currentProblem.factor === 1000) places = 3;
+
+        const exponentShift = currentProblem.isMultiply ? places : -places;
+        updatePlaceValueSlider(currentProblem.result, true, exponentShift);
+      }
+    }
+
+    // ---------- Event listeners ----------
+
+    newProblemBtn.addEventListener("click", displayProblem);
+    revealBtn.addEventListener("click", toggleAnswer);
+
+    modeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.getAttribute("data-mode");
+        setMode(mode);
+      });
+    });
+
+    // Keyboard shortcuts: Space -> new problem, R -> reveal/hide
+    window.addEventListener("keydown", e => {
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+        return;
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        displayProblem();
+      } else if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
+        toggleAnswer();
+      }
+    });
+
+    // Initialise mini slider once DOM is ready
+    initPlaceValueSlider();
+  </script>
+</body>
+</html>
