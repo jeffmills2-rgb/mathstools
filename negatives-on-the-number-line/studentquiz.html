@@ -1,0 +1,1383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Student practice – Missing value</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #1f2937;
+      --accent: #2563eb;
+
+      --hint: #7c3aed;         /* purple */
+      --hintSoft: #f3e8ff;
+
+      --ok: #16a34a;
+      --bad: #dc2626;
+      --badSoft: #fee2e2;
+      --okSoft: #dcfce7;
+
+      --label: #374151;
+      --box:#0f172a;
+
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 18px;
+
+      /* Level colours (banner + menu highlights) */
+      --lvl1: #16a34a;      /* green */
+      --lvl2: #f59e0b;      /* amber/yellow */
+      --lvl3: #f97316;      /* orange */
+      --lvl4: #ef4444;      /* red */
+
+      --lvl1Soft: #dcfce7;
+      --lvl2Soft: #fef9c3;
+      --lvl3Soft: #ffedd5;
+      --lvl4Soft: #fee2e2;
+
+      /* dynamic (set by JS) */
+      --levelBannerBg: #1d4ed8;
+      --levelBannerBg2: #1e40af;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .wrap{
+      max-width: 1100px;
+      margin: 22px auto 40px;
+      padding: 0 16px;
+    }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+    }
+
+    /* Header: title left (2 lines), compact level tab centre, Reset right */
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .titleBlock{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 220px;
+    }
+    .titleMain{
+      font-size: 18px;
+      margin:0;
+      font-weight: 950;
+      letter-spacing: .2px;
+      line-height: 1.1;
+    }
+    .titleSub{
+      margin:0;
+      font-size: 16px;
+      font-weight: 950;
+      color:#111827;
+      letter-spacing: .2px;
+    }
+
+    /* Smaller, "tab-like" level badge (reduced cog load) */
+    .levelBanner{
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height: 46px;
+      min-width: 360px;
+      max-width: 560px;
+      width: 52%;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--levelBannerBg), var(--levelBannerBg2));
+      color: #ffffff;
+      font-weight: 950;
+      font-size: 28px;
+      letter-spacing: .2px;
+      box-shadow: 0 14px 26px rgba(0,0,0,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      padding: 0 18px;
+      margin-top: 2px;
+      white-space:nowrap;
+    }
+    @media (max-width: 880px){
+      .levelBanner{
+        width: 100%;
+        min-width: 0;
+        font-size: 24px;
+        height: 44px;
+        order: 3;
+      }
+    }
+
+    button{
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 950;
+      cursor:pointer;
+      background: #f3f4f6;
+      color: #111827;
+      transition: transform .04s ease, filter .15s ease, opacity .15s ease;
+      user-select:none;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background: var(--accent); color: #fff; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+    button.small{ padding: 9px 12px; border-radius: 12px; font-size: 13px; }
+    button.bigNav{ padding: 12px 16px; border-radius: 16px; font-size: 16px; font-weight: 950; }
+    button:disabled{ opacity: .45; cursor:not-allowed; }
+
+    /* Progress row */
+    .progressWrap{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin: 10px 0 12px;
+    }
+    .progressBar{
+      flex: 1 1 380px;
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow:hidden;
+    }
+    .progressFill{
+      height:100%;
+      width:0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width .2s ease;
+    }
+    .qCounter{
+      font-weight: 950;
+      color:#111827;
+      font-size: 13px;
+      white-space:nowrap;
+    }
+
+    /* Stage */
+    .stage{
+      padding: 12px 12px 16px;
+      border-radius: 16px;
+      background: linear-gradient(180deg,#ffffff, #f9fafb);
+      border: 1px solid #e5e7eb;
+      overflow:hidden;
+      position: relative;
+      min-height: 520px;
+    }
+    .promptText{
+      text-align:center;
+      font-weight: 950;
+      font-size: 34px;
+      margin: 16px 0 0;
+      letter-spacing:.2px;
+    }
+    .routine{
+      text-align:center;
+      margin: 6px 0 0;
+      font-size: 14px;
+      font-weight: 900;
+      color: #9ca3af;
+    }
+    .svgwrap{
+      width:100%;
+      height: 320px;
+      display:block;
+      margin-top: 14px;
+    }
+
+    /* Hint button upper-right inside stage */
+    .hintBtn{
+      position:absolute;
+      top: 18px;
+      right: 18px;
+      background: var(--hint);
+      color:#fff;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 950;
+      font-size: 14px;
+      box-shadow: 0 10px 20px rgba(124,58,237,.18);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .hintBtn:hover{ filter: brightness(1.03); }
+    .hintBtn:disabled{
+      background: #e5e7eb;
+      color: #6b7280;
+      box-shadow: none;
+      border: 1px solid #e5e7eb;
+    }
+
+    /* Hint nudge animation (only while available) */
+    @keyframes hintNudge {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+    .hint-nudge{
+      animation: hintNudge 1.4s ease-in-out infinite;
+    }
+
+    /* Answer row (center bottom) */
+    .answerRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    .answerBox{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 2px solid #e5e7eb;
+      background: #fff;
+      min-width: 360px;
+      justify-content:center;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+    }
+    .answerBox.correct{
+      border-color: rgba(22,163,74,.55);
+      background: var(--okSoft);
+    }
+    .answerBox.incorrect{
+      border-color: rgba(220,38,38,.45);
+      background: var(--badSoft);
+    }
+    .answerLabel{
+      font-weight: 950;
+      color:#111827;
+      font-size: 14px;
+      white-space:nowrap;
+    }
+    input{
+      width: 140px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      outline:none;
+      font-weight: 950;
+      font-size: 16px;
+      text-align:center;
+    }
+    input:focus{ border-color: rgba(37,99,235,.55); }
+
+    /* Nav buttons positioned like sketch */
+    .navLeft{
+      position:absolute;
+      left: 18px;
+      bottom: 18px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .navRight{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    /* Modal */
+    .modalOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .modal{
+      width: min(560px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      padding: 16px;
+    }
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .modalTitle{
+      font-size: 16px;
+      font-weight: 950;
+      margin:0;
+    }
+    .modalBody{ padding: 6px 4px 10px; }
+
+    .levelGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .levelCard{
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      background:#f9fafb;
+    }
+    .levelName{
+      font-weight: 950;
+      font-size: 14px;
+    }
+
+    /* Level menu highlights (as per your Image 3) */
+    .levelCard.level1{ background: var(--lvl1Soft); border-color: rgba(22,163,74,.25); }
+    .levelCard.level2{ background: var(--lvl2Soft); border-color: rgba(245,158,11,.25); }
+    .levelCard.level3{ background: var(--lvl3Soft); border-color: rgba(249,115,22,.25); }
+    .levelCard.level4{ background: var(--lvl4Soft); border-color: rgba(239,68,68,.25); }
+
+    /* Certificate modal styling */
+    .certTitle{
+      font-size: 28px;
+      font-weight: 950;
+      margin: 0 0 10px;
+    }
+    .certRow{
+      display:flex;
+      align-items:flex-start;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .trophyBox{
+      width: 84px;
+      height: 84px;
+      border-radius: 20px;
+      background: #fff7ed;
+      border: 2px solid #fed7aa;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 40px;
+      flex: 0 0 auto;
+    }
+    .certMain{
+      font-weight: 950;
+      font-size: 28px;
+      line-height: 1.2;
+      color:#111827;
+      max-width: 820px;
+    }
+    .certSub{
+      font-weight: 900;
+      color: #6b7280;
+      font-size: 24px;
+      margin-top: 6px;
+    }
+    .certActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+    .copyStatus{
+      font-weight: 900;
+      color: #6b7280;
+      font-size: 12px;
+      min-height: 16px;
+      margin-top: 6px;
+    }
+
+    /* SVG animations */
+    @keyframes wipeIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .wipe-in { animation: wipeIn .22s ease-out both; }
+
+    @keyframes pop {
+      0%   { transform: scale(0.92); opacity: 0; }
+      60%  { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .pop { animation: pop .22s ease-out both; transform-origin:center; }
+
+    @keyframes boxPulse {
+      0%,100% { filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }
+      50%     { filter: drop-shadow(0 0 10px rgba(37,99,235,.35)); }
+    }
+    .box-pulse { animation: boxPulse 1.4s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <div class="topbar">
+        <div class="titleBlock">
+          <p class="titleMain">Student practice</p>
+          <p class="titleSub">Missing value</p>
+        </div>
+
+        <div id="levelBanner" class="levelBanner" aria-live="polite">
+          Level: —
+        </div>
+
+        <div>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressBar" aria-label="progress">
+          <div class="progressFill" id="progressFill"></div>
+        </div>
+        <div class="qCounter" id="qCounter">Question 1 / 20</div>
+      </div>
+
+      <div class="stage">
+        <button id="hintBtn" class="hintBtn">Hint 0/2</button>
+
+        <div class="promptText">What is the missing value?</div>
+        <div class="routine">Write it. Check it. Fix it.</div>
+
+        <svg id="svg" class="svgwrap" viewBox="0 0 1000 320" role="img" aria-label="number line"></svg>
+
+        <div class="answerRow">
+          <div class="answerBox" id="answerBox">
+            <div class="answerLabel">Missing value:</div>
+            <input id="answerInput" inputmode="decimal" autocomplete="off" placeholder="Type…" />
+            <button id="submitBtn" class="primary small">Enter</button>
+          </div>
+        </div>
+
+        <div class="navLeft">
+          <button id="prevBtn" class="bigNav">← Back</button>
+        </div>
+        <div class="navRight">
+          <button id="nextBtn" class="bigNav">Next →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Level selector modal -->
+  <div class="modalOverlay" id="levelModal" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 class="modalTitle">Choose your level</h2>
+      </div>
+      <div class="modalBody">
+        <div class="levelGrid">
+          <div class="levelCard level1">
+            <div class="levelName">Level 1 Mild</div>
+            <button class="primary small" data-level="1">Start</button>
+          </div>
+          <div class="levelCard level2">
+            <div class="levelName">Level 2 Medium</div>
+            <button class="primary small" data-level="2">Start</button>
+          </div>
+          <div class="levelCard level3">
+            <div class="levelName">Level 3 Spicy</div>
+            <button class="primary small" data-level="3">Start</button>
+          </div>
+          <div class="levelCard level4">
+            <div class="levelName">Level 4 Extra hot</div>
+            <button class="primary small" data-level="4">Start</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Certificate modal -->
+  <div class="modalOverlay" id="certModal" style="display:none;" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modalBody">
+        <div id="certCard">
+          <div class="certTitle">Certificate</div>
+          <div class="certRow">
+            <div class="trophyBox" aria-hidden="true">🏆</div>
+            <div style="flex:1 1 320px;">
+              <div class="certMain" id="certMainText">
+                You completed Level 2 and got 0 out of 20. Paste a screenshot into Google Classroom.
+              </div>
+              <div class="certSub">
+                Screenshot this and paste into Google Classroom.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="certActions">
+          <button id="copyBtn" class="primary">Copy to clipboard</button>
+          <button id="closeCertBtn">Close</button>
+          <button id="backToMenuBtn" class="danger">Back to level menu</button>
+        </div>
+        <div class="copyStatus" id="copyStatus"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // --------------------
+  // Config (we store ALL values as "scaled by 2" integers)
+  // So:
+  //   7    -> 14
+  //   7.5  -> 15
+  // This makes comparisons exact and prevents float wobble.
+  // --------------------
+  const QUESTIONS_PER_LEVEL = 20;
+  const TICKS = 11;
+  const MID_INDEX = 5;       // centre tick index
+  const MAX_HINTS = 2;
+
+  // Helper for scale-2:
+  const toS2 = (n) => Math.round(n * 2);
+
+  // Level definitions
+  const LEVELS = {
+    1: {
+      label: "Level 1",
+      name: "Mild",
+      midMin: -10, midMax: 5,
+      stepsFirst10: [1],
+      stepsLast10: [1,2],
+      guaranteeNeg: false
+    },
+    2: {
+      label: "Level 2",
+      name: "Medium",
+      midMin: -100, midMax: 50,
+      stepsAll: [1,2,5,10],
+      guaranteeNeg: true
+    },
+    3: {
+      label: "Level 3",
+      name: "Spicy",
+      midMin: -200, midMax: 100,
+      stepsAll: [1,2,3,4,5,10],
+      guaranteeNeg: true
+    },
+    4: {
+      label: "Level 4",
+      name: "Extra hot",
+      midMin: -200, midMax: 100,
+      // step sizes can be halves
+      stepsAll: [0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,10],
+      guaranteeNeg: true
+    }
+  };
+
+  // Level colours (banner gradient)
+  const LEVEL_COLOURS = {
+    1: { a: "#16a34a", b: "#15803d" }, // green
+    2: { a: "#f59e0b", b: "#d97706" }, // yellow/amber
+    3: { a: "#f97316", b: "#ea580c" }, // orange
+    4: { a: "#ef4444", b: "#dc2626" }  // red
+  };
+
+  // --------------------
+  // State
+  // --------------------
+  let level = null;
+
+  // questions: { midS2, stepS2, valuesS2[], anchors:Set, targetIndex, hintRevealed:Set }
+  let questions = [];
+  let current = 0;
+
+  let answers = Array(QUESTIONS_PER_LEVEL).fill("");   // raw text
+  let correct = Array(QUESTIONS_PER_LEVEL).fill(false);
+  let hintsUsed = Array(QUESTIONS_PER_LEVEL).fill(0);
+
+  // SVG refs for current question
+  let refs = null;
+
+  // --------------------
+  // DOM
+  // --------------------
+  const levelModal = document.getElementById('levelModal');
+  const certModal  = document.getElementById('certModal');
+
+  const svg = document.getElementById('svg');
+
+  const progressFill = document.getElementById('progressFill');
+  const qCounter = document.getElementById('qCounter');
+
+  const hintBtn = document.getElementById('hintBtn');
+
+  const answerBox = document.getElementById('answerBox');
+  const answerInput = document.getElementById('answerInput');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const resetBtn = document.getElementById('resetBtn');
+
+  const levelBanner = document.getElementById('levelBanner');
+
+  const certMainText = document.getElementById('certMainText');
+  const copyBtn = document.getElementById('copyBtn');
+  const closeCertBtn = document.getElementById('closeCertBtn');
+  const backToMenuBtn = document.getElementById('backToMenuBtn');
+  const copyStatus = document.getElementById('copyStatus');
+
+  // --------------------
+  // Helpers
+  // --------------------
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice = (arr) => arr[randInt(0, arr.length-1)];
+
+  function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+  function formatS2(s2){
+    // integer or .5 only
+    if (s2 % 2 === 0) return String(s2/2);
+    const sign = s2 < 0 ? "-" : "";
+    const abs = Math.abs(s2);
+    const whole = Math.floor(abs/2);
+    return `${sign}${whole}.5`;
+  }
+
+  function normalizeToS2(text){
+    // Ignore spaces. Accept integers or x.5 only.
+    const t = String(text ?? "").trim().replace(/\s+/g, "");
+    if (t === "") return { ok:false, empty:true };
+    if (!/^[+-]?\d+(\.5)?$/.test(t)) return { ok:false, empty:false };
+
+    // Convert to scaled2 int
+    const neg = t.startsWith("-");
+    const cleaned = t.replace(/^\+/, "");
+    const parts = cleaned.replace(/^-/, "").split(".");
+    const whole = parseInt(parts[0], 10);
+    const hasHalf = parts.length === 2;
+    let s2 = whole * 2 + (hasHalf ? 1 : 0);
+    if (neg) s2 = -s2;
+    return { ok:true, empty:false, s2 };
+  }
+
+  function lineHasNegativeS2(valuesS2){
+    return valuesS2.some(v => v < 0);
+  }
+
+  // For anchor “niceness”: treat half values as not nice
+  function isNiceAnchorS2(s2){
+    if (s2 % 2 !== 0) return false; // halves not "nice"
+    const v = s2 / 2;
+    const av = Math.abs(v);
+    if (av >= 100) return v % 100 === 0 || v % 10 === 0;
+    if (av >= 10)  return v % 10 === 0;
+    return true;
+  }
+
+  // Pattern 3 anchors: consecutive pair + far one, avoiding target
+  function pickAnchors(valuesS2, targetIndex){
+    const pairs = [];
+    for (let i=0; i<10; i++){
+      if (i === targetIndex) continue;
+      if (i+1 === targetIndex) continue;
+      const v1 = valuesS2[i], v2 = valuesS2[i+1];
+      let score = 0;
+      if (isNiceAnchorS2(v1)) score += 2;
+      if (isNiceAnchorS2(v2)) score += 2;
+      pairs.push({i, score});
+    }
+    pairs.sort((a,b) => b.score - a.score);
+    const bestScore = pairs.length ? pairs[0].score : 0;
+    const topPairs = pairs.filter(p => p.score === bestScore);
+    const pair = topPairs.length ? choice(topPairs) : {i: randInt(0,9)};
+    const idxA = pair.i, idxB = pair.i + 1;
+
+    const farCandidates = [];
+    for (let j=0; j<11; j++){
+      if (j === targetIndex) continue;
+      if (j === idxA || j === idxB) continue;
+      const v = valuesS2[j];
+      let score = 0;
+      if (isNiceAnchorS2(v)) score += 3;
+      score += Math.abs(j - idxA) * 0.25;
+      farCandidates.push({j, score});
+    }
+    farCandidates.sort((a,b) => b.score - a.score);
+    const bestFar = farCandidates.length ? farCandidates[0].score : 0;
+    const topFar = farCandidates.filter(c => c.score === bestFar);
+    const far = topFar.length ? choice(topFar).j : randInt(0,10);
+
+    return new Set([idxA, idxB, far]);
+  }
+
+  function signature(q){
+    return `${q.midS2}|${q.stepS2}|${q.targetIndex}`;
+  }
+
+  function setBannerColoursForLevel(lvl){
+    const c = LEVEL_COLOURS[lvl] || {a:"#1d4ed8", b:"#1e40af"};
+    document.documentElement.style.setProperty("--levelBannerBg", c.a);
+    document.documentElement.style.setProperty("--levelBannerBg2", c.b);
+  }
+
+  // --------------------
+  // Question generation
+  // --------------------
+  function generateQuestionsForLevel(lvl){
+    const cfg = LEVELS[lvl];
+    const out = [];
+    const seen = new Set();
+
+    let attempts = 0;
+    while (out.length < QUESTIONS_PER_LEVEL && attempts < 40000){
+      attempts++;
+
+      const qIndex = out.length;
+      let step;
+      if (lvl === 1){
+        step = (qIndex < 10) ? choice(cfg.stepsFirst10) : choice(cfg.stepsLast10);
+      } else {
+        step = choice(cfg.stepsAll);
+      }
+
+      const stepS2 = toS2(step);
+
+      // midpoint is integer (scaled2 is even)
+      const midInt = randInt(cfg.midMin, cfg.midMax);
+      const midS2 = midInt * 2;
+
+      const startS2 = midS2 - MID_INDEX * stepS2;
+      const valuesS2 = Array.from({length:TICKS}, (_,i)=> startS2 + i*stepS2);
+
+      if (cfg.guaranteeNeg && !lineHasNegativeS2(valuesS2)) continue;
+
+      const targetIndex = randInt(0, 10);
+
+      const anchors = pickAnchors(valuesS2, targetIndex);
+
+      // Missing tick can be endpoints, but not labelled tick marks
+      if (anchors.has(targetIndex)) continue;
+
+      const q = {
+        midS2, stepS2,
+        valuesS2,
+        anchors,
+        targetIndex,
+        hintRevealed: new Set()
+      };
+
+      const sig = signature(q);
+      if (seen.has(sig)) continue;
+      seen.add(sig);
+
+      out.push(q);
+    }
+
+    // Fallback if needed: still produce 20
+    while (out.length < QUESTIONS_PER_LEVEL){
+      const step = (lvl === 1)
+        ? (out.length < 10 ? 1 : choice([1,2]))
+        : choice(cfg.stepsAll);
+      const stepS2 = toS2(step);
+
+      let midS2 = randInt(cfg.midMin, cfg.midMax) * 2;
+      let startS2 = midS2 - MID_INDEX * stepS2;
+      let valuesS2 = Array.from({length:TICKS}, (_,i)=> startS2 + i*stepS2);
+
+      if (cfg.guaranteeNeg && !lineHasNegativeS2(valuesS2)){
+        midS2 -= (Math.abs(valuesS2[0]) + 2); // force down
+        startS2 = midS2 - MID_INDEX * stepS2;
+        valuesS2 = Array.from({length:TICKS}, (_,i)=> startS2 + i*stepS2);
+      }
+
+      const targetIndex = randInt(0,10);
+      const anchors = pickAnchors(valuesS2, targetIndex);
+      if (anchors.has(targetIndex)) continue;
+
+      out.push({ midS2, stepS2, valuesS2, anchors, targetIndex, hintRevealed: new Set() });
+    }
+
+    return out;
+  }
+
+  // --------------------
+  // SVG building
+  // --------------------
+  function clearSVG(){
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    refs = null;
+  }
+
+  function el(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+
+  function textNode(str, attrs={}){
+    const t = el('text', attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  function buildQuestionScene(q){
+    clearSVG();
+
+    const left=140, right=860;
+    const yLine=150;
+    const tickTop=yLine-14, tickBot=yLine+14;
+    const x = (i) => left + (right-left) * (i/(TICKS-1));
+    const labelY = 260;
+
+    // line
+    svg.appendChild(el('line', {
+      x1:left, y1:yLine, x2:right, y2:yLine,
+      stroke: "#1f2937", "stroke-width":"4", "stroke-linecap":"round"
+    }));
+
+    const ticksG = el('g', {});
+    const dotsG  = el('g', {});
+    const labelsG= el('g', {});
+    const boxG   = el('g', { id:"mysteryBox" });
+
+    const labelsByIndex = new Map();
+
+    for (let i=0;i<TICKS;i++){
+      const xi = x(i);
+
+      ticksG.appendChild(el('line', {
+        x1:xi, y1:tickTop, x2:xi, y2:tickBot,
+        stroke:"#1f2937", "stroke-width":"4",
+        "stroke-linecap":"round"
+      }));
+
+      dotsG.appendChild(el('circle', {
+        cx: xi, cy: yLine,
+        r: 7,
+        fill: "#111827",
+        opacity: 0.75
+      }));
+    }
+
+    function addLabel(i, animate, isAnswer=false){
+      if (labelsByIndex.has(i)) return;
+      const t = textNode(formatS2(q.valuesS2[i]), {
+        x: x(i),
+        y: labelY,
+        "text-anchor":"middle",
+        "font-weight": isAnswer ? "950" : "900",
+        "font-size": isAnswer ? "34" : "24",
+        fill: isAnswer ? "var(--ok)" : "var(--label)"
+      });
+      if (animate){
+        if (isAnswer) t.classList.add("pop");
+        else t.classList.add("wipe-in");
+      }
+      labelsG.appendChild(t);
+      labelsByIndex.set(i, t);
+    }
+
+    // 3 anchors only
+    [...q.anchors].forEach(i => {
+      if (i !== q.targetIndex) addLabel(i, false, false);
+    });
+
+    // mystery box
+    const tx = x(q.targetIndex);
+    const boxW=64, boxH=44;
+    const boxX = tx - boxW/2;
+    const boxY = labelY - 34;
+
+    const rect = el('rect', {
+      x: boxX, y: boxY,
+      width: boxW, height: boxH,
+      rx: 12, ry: 12,
+      fill: "var(--box)"
+    });
+    rect.classList.add("box-pulse");
+
+    const qmark = textNode("?", {
+      x: tx, y: boxY + 31,
+      "text-anchor":"middle",
+      "font-size":"28",
+      "font-weight":"950",
+      fill:"#ffffff"
+    });
+
+    boxG.appendChild(rect);
+    boxG.appendChild(qmark);
+
+    svg.appendChild(ticksG);
+    svg.appendChild(dotsG);
+    svg.appendChild(labelsG);
+    svg.appendChild(boxG);
+
+    refs = { labelsByIndex, labelsG, labelY, xFn: x };
+  }
+
+  function revealHintLabel(q){
+    // reveal one extra label (not missing tick, not anchors, not already revealed)
+    const shown = new Set([...q.anchors, ...q.hintRevealed]);
+    shown.add(q.targetIndex);
+
+    const candidates = [];
+    for (let i=0;i<TICKS;i++){
+      if (!shown.has(i)) candidates.push(i);
+    }
+    if (candidates.length === 0) return;
+
+    const idx = choice(candidates);
+    q.hintRevealed.add(idx);
+
+    if (refs && !refs.labelsByIndex.has(idx)){
+      const t = textNode(formatS2(q.valuesS2[idx]), {
+        x: refs.xFn(idx),
+        y: refs.labelY,
+        "text-anchor":"middle",
+        "font-weight":"900",
+        "font-size":"24",
+        fill: "var(--label)"
+      });
+      t.classList.add("wipe-in");
+      refs.labelsG.appendChild(t);
+      refs.labelsByIndex.set(idx, t);
+    }
+  }
+
+  function showAnswerOnLine(q){
+    document.getElementById('mysteryBox')?.remove();
+    if (!refs) return;
+    if (!refs.labelsByIndex.has(q.targetIndex)){
+      const t = textNode(formatS2(q.valuesS2[q.targetIndex]), {
+        x: refs.xFn(q.targetIndex),
+        y: refs.labelY,
+        "text-anchor":"middle",
+        "font-weight":"950",
+        "font-size":"34",
+        fill: "var(--ok)"
+      });
+      t.classList.add("pop");
+      refs.labelsG.appendChild(t);
+      refs.labelsByIndex.set(q.targetIndex, t);
+    }
+  }
+
+  function restoreBox(q){
+    if (document.getElementById('mysteryBox')) return;
+    if (!refs) return;
+
+    // remove answer label if present
+    const ans = refs.labelsByIndex.get(q.targetIndex);
+    if (ans){
+      ans.remove();
+      refs.labelsByIndex.delete(q.targetIndex);
+    }
+
+    const tx = refs.xFn(q.targetIndex);
+    const boxW=64, boxH=44;
+    const boxX = tx - boxW/2;
+    const boxY = refs.labelY - 34;
+
+    const boxG = el('g', { id:"mysteryBox" });
+
+    const rect = el('rect', {
+      x: boxX, y: boxY,
+      width: boxW, height: boxH,
+      rx: 12, ry: 12,
+      fill: "var(--box)"
+    });
+    rect.classList.add("box-pulse");
+
+    const qmark = textNode("?", {
+      x: tx, y: boxY + 31,
+      "text-anchor":"middle",
+      "font-size":"28",
+      "font-weight":"950",
+      fill:"#ffffff"
+    });
+
+    boxG.appendChild(rect);
+    boxG.appendChild(qmark);
+    svg.appendChild(boxG);
+  }
+
+  // --------------------
+  // Marking / UI
+  // --------------------
+  function currentQuestion(){ return questions[current]; }
+
+  function setAnswerBoxState(state){
+    answerBox.classList.remove("correct","incorrect");
+    if (state === "correct") answerBox.classList.add("correct");
+    if (state === "incorrect") answerBox.classList.add("incorrect");
+  }
+
+  function updateTopUI(){
+    qCounter.textContent = `Question ${current+1} / ${QUESTIONS_PER_LEVEL}`;
+    const pct = (current / (QUESTIONS_PER_LEVEL-1)) * 100;
+    progressFill.style.width = `${pct}%`;
+
+    prevBtn.disabled = (current === 0);
+    nextBtn.disabled = (current === QUESTIONS_PER_LEVEL-1);
+
+    // Hint button text + disable
+    const used = hintsUsed[current];
+    hintBtn.textContent = `Hint ${used}/${MAX_HINTS}`;
+    hintBtn.disabled = (used >= MAX_HINTS);
+
+    // Hint nudge (only while available)
+    hintBtn.classList.remove("hint-nudge");
+    if (!hintBtn.disabled) hintBtn.classList.add("hint-nudge");
+  }
+
+  function loadQuestion(index){
+    current = clamp(index, 0, QUESTIONS_PER_LEVEL-1);
+    const q = currentQuestion();
+
+    buildQuestionScene(q);
+
+    // re-apply hints
+    for (const idx of q.hintRevealed){
+      if (idx !== q.targetIndex && refs && !refs.labelsByIndex.has(idx)){
+        const t = textNode(formatS2(q.valuesS2[idx]), {
+          x: refs.xFn(idx),
+          y: refs.labelY,
+          "text-anchor":"middle",
+          "font-weight":"900",
+          "font-size":"24",
+          fill: "var(--label)"
+        });
+        refs.labelsG.appendChild(t);
+        refs.labelsByIndex.set(idx, t);
+      }
+    }
+
+    // restore input
+    answerInput.value = answers[current];
+    if (answers[current].trim() === ""){
+      setAnswerBoxState("");
+      restoreBox(q);
+    } else {
+      setAnswerBoxState(correct[current] ? "correct" : "incorrect");
+      if (correct[current]) showAnswerOnLine(q);
+      else restoreBox(q);
+    }
+
+    updateTopUI();
+    answerInput.focus();
+  }
+
+  function maybeShowCertificate(){
+    // Completion rule: attempted all 20 (non-blank)
+    const allAttempted = answers.every(a => String(a).trim() !== "");
+    if (!allAttempted) return;
+
+    const score = correct.filter(Boolean).length;
+    const levelText = LEVELS[level]?.label ?? "Level";
+    certMainText.textContent =
+      `You completed ${levelText} and got ${score} out of 20. Paste a screenshot into Google Classroom.`;
+
+    certModal.style.display = "flex";
+    copyStatus.textContent = "";
+  }
+
+  function checkAndMark(){
+    const q = currentQuestion();
+    const raw = answerInput.value;
+
+    answers[current] = raw;
+
+    const parsed = normalizeToS2(raw);
+
+    if (parsed.empty){
+      setAnswerBoxState("");
+      correct[current] = false;
+      restoreBox(q);
+      return;
+    }
+    if (!parsed.ok){
+      setAnswerBoxState("incorrect");
+      correct[current] = false;
+      restoreBox(q);
+      maybeShowCertificate();
+      return;
+    }
+
+    const studentS2 = parsed.s2;
+    const targetS2 = q.valuesS2[q.targetIndex];
+
+    if (studentS2 === targetS2){
+      setAnswerBoxState("correct");
+      correct[current] = true;
+      showAnswerOnLine(q);
+    } else {
+      setAnswerBoxState("incorrect");
+      correct[current] = false;
+      restoreBox(q);
+    }
+
+    maybeShowCertificate();
+  }
+
+  // Enter behavior:
+  // - If current question already has a stored non-blank answer AND input hasn't changed,
+  //   Enter goes Next (shortcut).
+  // - Otherwise Enter checks/marks.
+  function handleEnter(){
+    const rawNow = answerInput.value;
+    const hasStored = String(answers[current]).trim() !== "";
+
+    if (hasStored){
+      const storedParsed = normalizeToS2(answers[current]);
+      const nowParsed = normalizeToS2(rawNow);
+
+      const unchanged =
+        (storedParsed.empty && nowParsed.empty) ||
+        (!storedParsed.empty && !nowParsed.empty && storedParsed.ok && nowParsed.ok && storedParsed.s2 === nowParsed.s2) ||
+        (!storedParsed.empty && !nowParsed.empty && !storedParsed.ok && !nowParsed.ok &&
+          String(answers[current]).trim() === String(rawNow).trim());
+
+      if (unchanged){
+        if (String(rawNow).trim() !== ""){
+          if (current < QUESTIONS_PER_LEVEL-1) loadQuestion(current + 1);
+          return;
+        }
+      }
+    }
+
+    checkAndMark();
+  }
+
+  // --------------------
+  // Level start / reset
+  // --------------------
+  function startLevel(lvl){
+    level = Number(lvl);
+    questions = generateQuestionsForLevel(level);
+    current = 0;
+
+    answers = Array(QUESTIONS_PER_LEVEL).fill("");
+    correct = Array(QUESTIONS_PER_LEVEL).fill(false);
+    hintsUsed = Array(QUESTIONS_PER_LEVEL).fill(0);
+
+    for (const q of questions) q.hintRevealed = new Set();
+
+    // Banner text + colours
+    const name = LEVELS[level]?.name ?? level;
+    levelBanner.textContent = `Level: ${name}`;
+    setBannerColoursForLevel(level);
+
+    levelModal.style.display = "none";
+    certModal.style.display = "none";
+    loadQuestion(0);
+  }
+
+  function backToMenu(){
+    level = null;
+    questions = [];
+    current = 0;
+    answers = Array(QUESTIONS_PER_LEVEL).fill("");
+    correct = Array(QUESTIONS_PER_LEVEL).fill(false);
+    hintsUsed = Array(QUESTIONS_PER_LEVEL).fill(0);
+
+    clearSVG();
+    setAnswerBoxState("");
+    answerInput.value = "";
+
+    qCounter.textContent = `Question 1 / 20`;
+    progressFill.style.width = "0%";
+
+    hintBtn.textContent = `Hint 0/${MAX_HINTS}`;
+    hintBtn.disabled = true;
+    hintBtn.classList.remove("hint-nudge");
+
+    levelBanner.textContent = "Level: —";
+    // default banner colour (blue) while menu is open
+    setBannerColoursForLevel(null);
+
+    levelModal.style.display = "flex";
+    certModal.style.display = "none";
+  }
+
+  // --------------------
+  // Certificate image copy
+  // --------------------
+  async function copyCertificateAsImage(){
+    try{
+      if (!navigator.clipboard || !window.ClipboardItem){
+        copyStatus.textContent = "Copy not supported on this device/browser. Please screenshot instead.";
+        return;
+      }
+
+      const score = correct.filter(Boolean).length;
+      const levelText = LEVELS[level]?.label ?? "Level";
+
+      const W = 1300;
+      const H = 220;
+      const c = document.createElement('canvas');
+      c.width = W;
+      c.height = H;
+      const ctx = c.getContext('2d');
+
+      // background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0,0,W,H);
+
+      // Title
+      ctx.fillStyle = "#111827";
+      ctx.font = "900 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Certificate", 28, 58);
+
+      // Trophy box
+      const boxX = 28, boxY = 92, boxS = 92;
+      ctx.fillStyle = "#fff7ed";
+      ctx.strokeStyle = "#fed7aa";
+      ctx.lineWidth = 3;
+
+      roundRect(ctx, boxX, boxY, boxS, boxS, 22);
+      ctx.fill();
+      ctx.stroke();
+
+      // Trophy emoji
+      ctx.font = "48px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillStyle = "#111827";
+      ctx.fillText("🏆", boxX + 22, boxY + 62);
+
+      const main = `You completed ${levelText} and got ${score} out of 20. Paste a screenshot into Google Classroom.`;
+      const sub = `Screenshot this and paste into Google Classroom.`;
+
+      const textX = boxX + boxS + 24;
+      const maxWidth = W - textX - 28;
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "900 36px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      wrapText(ctx, main, textX, 130, maxWidth, 42);
+
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "900 30px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(sub, textX, 186);
+
+      const blob = await new Promise(res => c.toBlob(res, "image/png", 1));
+      if (!blob){
+        copyStatus.textContent = "Copy failed. Please screenshot instead.";
+        return;
+      }
+
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      copyStatus.textContent = "Copied image to clipboard!";
+    } catch (e){
+      copyStatus.textContent = "Copy failed. Please screenshot instead.";
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const words = text.split(" ");
+    let line = "";
+    let yy = y;
+    for (let n = 0; n < words.length; n++){
+      const testLine = line + words[n] + " ";
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0){
+        ctx.fillText(line.trim(), x, yy);
+        line = words[n] + " ";
+        yy += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line.trim(), x, yy);
+  }
+
+  // --------------------
+  // Events
+  // --------------------
+  levelModal.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-level]');
+    if (!btn) return;
+    startLevel(btn.getAttribute('data-level'));
+  });
+
+  resetBtn.addEventListener('click', () => backToMenu());
+
+  submitBtn.addEventListener('click', () => handleEnter());
+
+  answerInput.addEventListener('keydown', (e) => {
+    if (e.key === "Enter"){
+      e.preventDefault();
+      handleEnter();
+    }
+  });
+
+  prevBtn.addEventListener('click', () => loadQuestion(current - 1));
+  nextBtn.addEventListener('click', () => loadQuestion(current + 1));
+
+  hintBtn.addEventListener('click', () => {
+    if (!level) return;
+    if (hintsUsed[current] >= MAX_HINTS) return;
+
+    const q = currentQuestion();
+    revealHintLabel(q);
+    hintsUsed[current]++;
+
+    updateTopUI();
+    answerInput.focus();
+  });
+
+  closeCertBtn.addEventListener('click', () => {
+    certModal.style.display = "none";
+    answerInput.focus();
+  });
+
+  backToMenuBtn.addEventListener('click', () => backToMenu());
+
+  copyBtn.addEventListener('click', () => copyCertificateAsImage());
+
+  // close modal on outside click
+  certModal.addEventListener('click', (e) => {
+    if (e.target === certModal){
+      certModal.style.display = "none";
+      answerInput.focus();
+    }
+  });
+
+  // --------------------
+  // Init
+  // --------------------
+  // default banner colour for menu
+  setBannerColoursForLevel(null);
+  backToMenu();
+})();
+</script>
+</body>
+</html>
