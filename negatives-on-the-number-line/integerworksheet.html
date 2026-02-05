@@ -1,0 +1,846 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number line worksheet maker</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+
+      --lvl1:#16a34a; --lvl1Soft:#dcfce7;
+      --lvl2:#f59e0b; --lvl2Soft:#fef9c3;
+      --lvl3:#f97316; --lvl3Soft:#ffedd5;
+      --lvl4:#ef4444; --lvl4Soft:#fee2e2;
+
+      --line:#1f2937;
+      --dot:#111827;
+
+      --box:#0f172a;
+      --ans:#16a34a;
+
+      --shadow:0 10px 25px rgba(0,0,0,.08);
+      --radius:18px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:var(--bg);
+      color:var(--ink);
+    }
+    .wrap{
+      max-width: 1200px;
+      margin: 18px auto 40px;
+      padding: 0 16px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .sub{
+      color:var(--muted);
+      font-weight:800;
+      margin-top:6px;
+      font-size:13px;
+    }
+
+    .controls{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:flex-end;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:linear-gradient(180deg,#fff,#f9fafb);
+    }
+
+    label{
+      font-size:12px;
+      font-weight:900;
+      color:#374151;
+      display:block;
+      margin-bottom:6px;
+    }
+    select, input[type="number"]{
+      width: 220px;
+      padding:10px 10px;
+      border-radius:12px;
+      border:2px solid var(--border);
+      font-weight:900;
+      outline:none;
+      background:#fff;
+    }
+    input[type="number"]{ width: 140px; }
+
+    button{
+      border:none;
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:950;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .15s ease;
+      user-select:none;
+    }
+    button:active{ transform:scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .actions{
+      margin-left:auto;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .preview{
+      margin-top:14px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      overflow:hidden;
+    }
+
+    .printHeader{
+      padding:14px 16px 10px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      gap:14px;
+      align-items:flex-end;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .phLeft{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .phTitle{
+      font-size:18px;
+      font-weight:950;
+      letter-spacing:.2px;
+      margin:0;
+    }
+    .phMeta{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      color:#111827;
+      font-weight:900;
+      font-size:12px;
+    }
+    .lineBlank{
+      display:inline-block;
+      min-width: 160px;
+      border-bottom: 2px solid #111827;
+      transform: translateY(-2px);
+      margin-left:6px;
+    }
+
+    .levelChip{
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:950;
+      font-size:12px;
+      border:1px solid rgba(0,0,0,.08);
+      color:#111827;
+      white-space:nowrap;
+    }
+    .levelChip.l1{ background:var(--lvl1Soft); }
+    .levelChip.l2{ background:var(--lvl2Soft); }
+    .levelChip.l3{ background:var(--lvl3Soft); }
+    .levelChip.l4{ background:var(--lvl4Soft); }
+
+    .pages{
+      padding: 16px;
+    }
+
+    .page{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding: 10px;
+      margin: 0 0 18px;
+      background: #fff;
+    }
+    .pageTitleRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:8px;
+      gap:10px;
+    }
+    .pageTitle{
+      font-weight:950;
+      font-size:13px;
+      color:#111827;
+      margin:0;
+    }
+    .pageNum{
+      font-weight:950;
+      font-size:12px;
+      color:#6b7280;
+      margin:0;
+    }
+
+    /* 2 columns; rows adapt automatically (page 1 will contain 3 rows, later pages 4 rows) */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .qcard{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding: 8px 8px 6px;
+      background: linear-gradient(180deg,#ffffff,#fafafa);
+      position:relative;
+      min-height: 175px;
+    }
+    .qnum{
+      position:absolute;
+      top: 8px;
+      left: 8px;
+      font-weight:950;
+      font-size:12px;
+      color:#6b7280;
+    }
+    .qprompt{
+      text-align:center;
+      font-weight:950;
+      font-size:13px;
+      margin: 2px 0 6px;
+      color:#111827;
+    }
+
+    .qrow{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .svgBox{
+      flex: 1 1 auto;
+    }
+    svg{
+      width:100%;
+      height: 120px;
+      display:block;
+    }
+
+    .answerSide{
+      flex: 0 0 70px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      font-weight:950;
+      color:#111827;
+    }
+    .ansSquare{
+      width: 36px;
+      height: 36px;
+      border:2px solid #111827;
+      border-radius:6px;
+      background:#fff;
+    }
+
+    .keyBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight:950;
+      font-size:13px;
+      margin: 0;
+    }
+    .keyDot{
+      width:10px;height:10px;border-radius:999px;background:var(--ans);
+      box-shadow:0 0 0 3px rgba(22,163,74,.15);
+    }
+
+    @media print{
+      body{ background:#fff; }
+      .wrap{ max-width:none; margin:0; padding:0; }
+      .card{ box-shadow:none; border-radius:0; padding:0; }
+      .controls, .sub, .topUi, .actions{ display:none !important; }
+      .preview{ border:none; border-radius:0; }
+      .pages{ padding: 0; }
+      .page{ border:none; border-radius:0; padding: 0; margin: 0; page-break-after: always; }
+      .page:last-child{ page-break-after: auto; }
+
+      @page{
+        size: A4;
+        margin: 12mm;
+      }
+
+      .printHeader{
+        padding: 0 0 8mm;
+        border-bottom: 1px solid #000;
+        border-radius:0;
+      }
+
+      /* Slightly larger vertical gaps in print units */
+      .grid{ gap: 8mm 8mm; }
+
+      .qcard{
+        border:1px solid #000;
+        border-radius:10px;
+        /* tuned to fit 3 rows on first page and 4 rows on subsequent pages */
+        min-height: 58mm;
+      }
+      .qprompt{ font-size: 12px; }
+      .qnum{ font-size: 11px; }
+      .ansSquare{ border:2px solid #000; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topUi">
+        <h1>Number line worksheet maker</h1>
+        <div class="sub">Generate printable A4 worksheets + a completed answer key. Page 1 has 6 questions; later pages have 8.</div>
+      </div>
+
+      <div class="controls" id="setup">
+        <div>
+          <label for="levelSel">Level</label>
+          <select id="levelSel">
+            <option value="1">Level 1 Mild</option>
+            <option value="2">Level 2 Medium</option>
+            <option value="3">Level 3 Spicy</option>
+            <option value="4">Level 4 Extra hot</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="numQ">Number of questions (1–48)</label>
+          <input id="numQ" type="number" min="1" max="48" value="20" />
+        </div>
+
+        <div class="actions">
+          <button id="genBtn" class="primary">Generate worksheet</button>
+          <button id="printBtn" disabled>Print (Ctrl+P)</button>
+          <button id="clearBtn" class="danger" disabled>Reset</button>
+        </div>
+      </div>
+
+      <div class="preview" id="preview" style="display:none;">
+        <div class="printHeader">
+          <div class="phLeft">
+            <p class="phTitle">Number line practice</p>
+            <div class="phMeta">
+              <span>Name:<span class="lineBlank"></span></span>
+              <span>Class:<span class="lineBlank" style="min-width:120px;"></span></span>
+              <span>Date:<span class="lineBlank" style="min-width:120px;"></span></span>
+            </div>
+          </div>
+          <div id="levelChip" class="levelChip l1">Level 1 Mild</div>
+        </div>
+
+        <div class="pages" id="pages"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // =========================
+  // Scaled-by-2 numbers (supports halves cleanly)
+  // =========================
+  const toS2 = (n) => Math.round(n * 2);
+  const fmtS2 = (s2) => {
+    if (s2 % 2 === 0) return String(s2/2);
+    const sign = s2 < 0 ? "-" : "";
+    const abs = Math.abs(s2);
+    const whole = Math.floor(abs/2);
+    return `${sign}${whole}.5`;
+  };
+
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice = (arr) => arr[randInt(0, arr.length-1)];
+
+  const TICKS = 7;
+  const MID_INDEX = 3; // for 7 ticks
+
+  // Pagination rule you requested:
+  const FIRST_PAGE_COUNT = 6;  // page 1
+  const OTHER_PAGE_COUNT = 8;  // pages 2+
+
+  const LEVELS = {
+    1: { name:"Level 1 Mild", chip:"l1", midMin:-10,  midMax:5,   stepsFirstHalf:[1], stepsSecondHalf:[1,2] },
+    2: { name:"Level 2 Medium", chip:"l2", midMin:-100, midMax:50,  stepsAll:[1,2,5,10] },
+    3: { name:"Level 3 Spicy", chip:"l3", midMin:-200, midMax:100, stepsAll:[1,2,3,4,5,10] },
+    4: { name:"Level 4 Extra hot", chip:"l4", midMin:-200, midMax:100, stepsAll:[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,10] }
+  };
+
+  function isNiceAnchorS2(s2){
+    if (s2 % 2 !== 0) return false; // halves not treated as "nice"
+    const v = s2/2;
+    const av = Math.abs(v);
+    if (av >= 100) return v % 100 === 0 || v % 10 === 0;
+    if (av >= 10) return v % 10 === 0;
+    return true;
+  }
+
+  // Pattern 3 anchors: consecutive pair + far one (avoid target)
+  function pickAnchors(valuesS2, targetIndex){
+    const pairs = [];
+    for (let i=0; i<TICKS-1; i++){
+      if (i === targetIndex) continue;
+      if (i+1 === targetIndex) continue;
+      const v1 = valuesS2[i], v2 = valuesS2[i+1];
+      let score = 0;
+      if (isNiceAnchorS2(v1)) score += 2;
+      if (isNiceAnchorS2(v2)) score += 2;
+      pairs.push({i, score});
+    }
+    pairs.sort((a,b)=>b.score-a.score);
+    const best = pairs.length ? pairs[0].score : 0;
+    const topPairs = pairs.filter(p=>p.score===best);
+    const pair = topPairs.length ? choice(topPairs) : {i: randInt(0, TICKS-2)};
+    const a = pair.i, b = pair.i+1;
+
+    const farCands = [];
+    for (let j=0; j<TICKS; j++){
+      if (j === targetIndex) continue;
+      if (j === a || j === b) continue;
+      const v = valuesS2[j];
+      let score = 0;
+      if (isNiceAnchorS2(v)) score += 3;
+      score += Math.abs(j - a) * 0.25;
+      farCands.push({j, score});
+    }
+    farCands.sort((x,y)=>y.score-x.score);
+    const bestFar = farCands.length ? farCands[0].score : 0;
+    const topFar = farCands.filter(c=>c.score===bestFar);
+    const far = topFar.length ? choice(topFar).j : randInt(0, TICKS-1);
+
+    return new Set([a,b,far]);
+  }
+
+  function lineHasNegative(valuesS2){
+    return valuesS2.some(v => v < 0);
+  }
+
+  // No repeats: same midpoint + step + missing index
+  function sig(q){
+    return `${q.midS2}|${q.stepS2}|${q.targetIndex}`;
+  }
+
+  // Ensure at least half questions have negatives somewhere on the line
+  function generateQuestions(level, n){
+    const cfg = LEVELS[level];
+    const halfNegNeeded = Math.ceil(n/2);
+
+    const out = [];
+    const seen = new Set();
+
+    let attempts = 0;
+    while (out.length < n && attempts < 50000){
+      attempts++;
+
+      const idx = out.length;
+      const mustBeNegative = (idx < halfNegNeeded);
+
+      let step;
+      if (level === 1){
+        const firstHalf = Math.ceil(n/2);
+        step = (idx < firstHalf) ? choice(cfg.stepsFirstHalf) : choice(cfg.stepsSecondHalf);
+      } else {
+        step = choice(cfg.stepsAll);
+      }
+      const stepS2 = toS2(step);
+
+      // midpoint is integer (scaled2 even)
+      const midInt = randInt(cfg.midMin, cfg.midMax);
+      const midS2 = midInt * 2;
+
+      const startS2 = midS2 - MID_INDEX * stepS2;
+      const valuesS2 = Array.from({length:TICKS}, (_,i)=> startS2 + i*stepS2);
+
+      if (mustBeNegative && !lineHasNegative(valuesS2)) continue;
+
+      const targetIndex = randInt(0, TICKS-1); // endpoints allowed
+
+      const anchors = pickAnchors(valuesS2, targetIndex);
+      if (anchors.has(targetIndex)) continue; // missing tick never labelled
+      if (anchors.size !== 3) continue;
+
+      const q = { midS2, stepS2, valuesS2, targetIndex, anchors };
+      const s = sig(q);
+      if (seen.has(s)) continue;
+      seen.add(s);
+
+      out.push(q);
+    }
+
+    // Fallback if needed
+    while (out.length < n){
+      const idx = out.length;
+      const mustBeNegative = (idx < Math.ceil(n/2));
+
+      let step;
+      if (level === 1){
+        const firstHalf = Math.ceil(n/2);
+        step = (idx < firstHalf) ? 1 : choice([1,2]);
+      } else {
+        step = choice(cfg.stepsAll);
+      }
+      const stepS2 = toS2(step);
+
+      let midS2 = randInt(cfg.midMin, cfg.midMax) * 2;
+      let startS2 = midS2 - MID_INDEX * stepS2;
+      let valuesS2 = Array.from({length:TICKS}, (_,i)=> startS2 + i*stepS2);
+
+      if (mustBeNegative && !lineHasNegative(valuesS2)){
+        midS2 -= (Math.abs(valuesS2[0]) + 2);
+        startS2 = midS2 - MID_INDEX * stepS2;
+        valuesS2 = Array.from({length:TICKS}, (_,i)=> startS2 + i*stepS2);
+      }
+
+      const targetIndex = randInt(0, TICKS-1);
+      const anchors = pickAnchors(valuesS2, targetIndex);
+      if (anchors.has(targetIndex)) continue;
+
+      const q = { midS2, stepS2, valuesS2, targetIndex, anchors };
+      const s = sig(q);
+      if (out.some(qq => sig(qq) === s)) continue;
+
+      out.push(q);
+    }
+
+    return out;
+  }
+
+  // =========================
+  // Pagination helpers
+  // =========================
+  function computeTotalPages(totalItems){
+    if (totalItems <= 0) return 0;
+    if (totalItems <= FIRST_PAGE_COUNT) return 1;
+    return 1 + Math.ceil((totalItems - FIRST_PAGE_COUNT) / OTHER_PAGE_COUNT);
+  }
+
+  function sliceForPage(items, pageNum){
+    const total = items.length;
+    if (total === 0) return { start:0, end:0, count:0 };
+
+    if (pageNum === 1){
+      const end = Math.min(FIRST_PAGE_COUNT, total);
+      return { start: 0, end, count: end };
+    }
+
+    const start = FIRST_PAGE_COUNT + (pageNum - 2) * OTHER_PAGE_COUNT;
+    const end = Math.min(start + OTHER_PAGE_COUNT, total);
+    const count = Math.max(0, end - start);
+    return { start, end, count };
+  }
+
+  // =========================
+  // SVG rendering
+  // =========================
+  function makeSVGQuestion(q, showAllLabels, showAnswer){
+    const W = 520, H = 120;
+    const left = 18, right = W - 18;
+    const yLine = 44;
+    const tickTop = yLine - 12, tickBot = yLine + 12;
+    const labelY = 102;
+
+    const x = (i) => left + (right-left) * (i/(TICKS-1));
+
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+    const line = document.createElementNS(ns, "line");
+    line.setAttribute("x1", left);
+    line.setAttribute("y1", yLine);
+    line.setAttribute("x2", right);
+    line.setAttribute("y2", yLine);
+    line.setAttribute("stroke", "var(--line)");
+    line.setAttribute("stroke-width", "3.5");
+    line.setAttribute("stroke-linecap", "round");
+    svg.appendChild(line);
+
+    for (let i=0;i<TICKS;i++){
+      const xi = x(i);
+
+      const t = document.createElementNS(ns, "line");
+      t.setAttribute("x1", xi);
+      t.setAttribute("y1", tickTop);
+      t.setAttribute("x2", xi);
+      t.setAttribute("y2", tickBot);
+      t.setAttribute("stroke", "var(--line)");
+      t.setAttribute("stroke-width", "3.5");
+      t.setAttribute("stroke-linecap", "round");
+      svg.appendChild(t);
+
+      const c = document.createElementNS(ns, "circle");
+      c.setAttribute("cx", xi);
+      c.setAttribute("cy", yLine);
+      c.setAttribute("r", "5.5");
+      c.setAttribute("fill", "var(--dot)");
+      c.setAttribute("opacity", ".65");
+      svg.appendChild(c);
+    }
+
+    const shouldLabel = (i) => showAllLabels ? true : q.anchors.has(i);
+
+    for (let i=0;i<TICKS;i++){
+      if (i === q.targetIndex && !showAllLabels) continue;
+      if (!shouldLabel(i)) continue;
+
+      const txt = document.createElementNS(ns, "text");
+      txt.textContent = fmtS2(q.valuesS2[i]);
+      txt.setAttribute("x", x(i));
+      txt.setAttribute("y", labelY);
+      txt.setAttribute("text-anchor", "middle");
+      txt.setAttribute("font-size", "18");
+      txt.setAttribute("font-weight", "900");
+      txt.setAttribute("fill", "#374151");
+      svg.appendChild(txt);
+    }
+
+    const tx = x(q.targetIndex);
+    const boxW = 44, boxH = 32;
+    const boxX = tx - boxW/2;
+    const boxY = labelY - 26;
+
+    if (!showAllLabels && !showAnswer){
+      const rect = document.createElementNS(ns, "rect");
+      rect.setAttribute("x", boxX);
+      rect.setAttribute("y", boxY);
+      rect.setAttribute("width", boxW);
+      rect.setAttribute("height", boxH);
+      rect.setAttribute("rx", "10");
+      rect.setAttribute("fill", "var(--box)");
+      svg.appendChild(rect);
+
+      const qm = document.createElementNS(ns, "text");
+      qm.textContent = "?";
+      qm.setAttribute("x", tx);
+      qm.setAttribute("y", boxY + 22);
+      qm.setAttribute("text-anchor", "middle");
+      qm.setAttribute("font-size", "20");
+      qm.setAttribute("font-weight", "950");
+      qm.setAttribute("fill", "#ffffff");
+      svg.appendChild(qm);
+    } else {
+      const ans = document.createElementNS(ns, "text");
+      ans.textContent = fmtS2(q.valuesS2[q.targetIndex]);
+      ans.setAttribute("x", tx);
+      ans.setAttribute("y", labelY);
+      ans.setAttribute("text-anchor", "middle");
+      ans.setAttribute("font-size", "22");
+      ans.setAttribute("font-weight", "950");
+      ans.setAttribute("fill", "var(--ans)");
+      svg.appendChild(ans);
+    }
+
+    return svg;
+  }
+
+  function makeQuestionCard(q, qIndex, mode){
+    // mode: "student" or "key"
+    const qc = document.createElement('div');
+    qc.className = 'qcard';
+
+    const qn = document.createElement('div');
+    qn.className = 'qnum';
+    qn.textContent = `Q${qIndex+1}`;
+    qc.appendChild(qn);
+
+    const prompt = document.createElement('div');
+    prompt.className = 'qprompt';
+    prompt.textContent = "What is the missing value?";
+    qc.appendChild(prompt);
+
+    const row = document.createElement('div');
+    row.className = 'qrow';
+
+    const svgBox = document.createElement('div');
+    svgBox.className = 'svgBox';
+
+    const showAll = (mode === "key");
+    const showAnswer = (mode === "key");
+    svgBox.appendChild(makeSVGQuestion(q, showAll, showAnswer));
+
+    const ansSide = document.createElement('div');
+    ansSide.className = 'answerSide';
+
+    const eq = document.createElement('div');
+    eq.textContent = "=";
+    eq.style.fontSize = "18px";
+
+    const sq = document.createElement('div');
+    sq.className = 'ansSquare';
+
+    if (mode === "key"){
+      sq.style.display = "flex";
+      sq.style.alignItems = "center";
+      sq.style.justifyContent = "center";
+      sq.style.fontWeight = "950";
+      sq.style.color = "var(--ans)";
+      sq.style.borderColor = "var(--ans)";
+      sq.textContent = fmtS2(q.valuesS2[q.targetIndex]);
+    }
+
+    ansSide.appendChild(eq);
+    ansSide.appendChild(sq);
+
+    row.appendChild(svgBox);
+    row.appendChild(ansSide);
+
+    qc.appendChild(row);
+    return qc;
+  }
+
+  function buildSectionPages(container, titleText, questions, mode){
+    // mode: "student" or "key"
+    const totalPages = computeTotalPages(questions.length);
+    for (let p=1; p<=totalPages; p++){
+      const { start, end } = sliceForPage(questions, p);
+      const pageQs = questions.slice(start, end);
+
+      const page = document.createElement('div');
+      page.className = 'page';
+
+      const titleRow = document.createElement('div');
+      titleRow.className = 'pageTitleRow';
+
+      const left = document.createElement('p');
+      const right = document.createElement('p');
+      right.className = 'pageNum';
+
+      if (mode === "key"){
+        left.className = 'keyBadge';
+        const dot = document.createElement('span');
+        dot.className = 'keyDot';
+        left.appendChild(dot);
+        const txt = document.createElement('span');
+        txt.textContent = "Answer key (completed version)";
+        left.appendChild(txt);
+
+        right.textContent = `Answer key — Page ${p} of ${totalPages}`;
+      } else {
+        left.className = 'pageTitle';
+        left.textContent = titleText;
+        right.textContent = `Page ${p} of ${totalPages}`;
+      }
+
+      titleRow.appendChild(left);
+      titleRow.appendChild(right);
+      page.appendChild(titleRow);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      for (let i=0; i<pageQs.length; i++){
+        const qIndex = start + i;
+        grid.appendChild(makeQuestionCard(pageQs[i], qIndex, mode));
+      }
+
+      page.appendChild(grid);
+      container.appendChild(page);
+    }
+  }
+
+  // =========================
+  // UI wiring
+  // =========================
+  const levelSel = document.getElementById('levelSel');
+  const numQ = document.getElementById('numQ');
+  const genBtn = document.getElementById('genBtn');
+  const printBtn = document.getElementById('printBtn');
+  const clearBtn = document.getElementById('clearBtn');
+
+  const preview = document.getElementById('preview');
+  const pagesEl = document.getElementById('pages');
+  const levelChip = document.getElementById('levelChip');
+
+  function setChip(level){
+    const cfg = LEVELS[level];
+    levelChip.textContent = cfg.name;
+    levelChip.className = `levelChip ${cfg.chip}`;
+  }
+
+  function clampN(){
+    let v = parseInt(numQ.value, 10);
+    if (isNaN(v)) v = 20;
+    v = Math.max(1, Math.min(48, v));
+    numQ.value = v;
+    return v;
+  }
+
+  function renderWorksheet(level, n){
+    setChip(level);
+    pagesEl.innerHTML = "";
+
+    const qs = generateQuestions(level, n);
+
+    // Student section
+    buildSectionPages(pagesEl, "Number line practice", qs, "student");
+
+    // Divider spacer (screen only)
+    const spacer = document.createElement('div');
+    spacer.style.height = "18px";
+    pagesEl.appendChild(spacer);
+
+    // Answer key section
+    const keyWrap = document.createElement('div');
+    keyWrap.style.marginTop = "18px";
+    buildSectionPages(keyWrap, "", qs, "key");
+    pagesEl.appendChild(keyWrap);
+  }
+
+  genBtn.addEventListener('click', () => {
+    const lvl = parseInt(levelSel.value, 10);
+    const n = clampN();
+
+    preview.style.display = "block";
+    renderWorksheet(lvl, n);
+
+    printBtn.disabled = false;
+    clearBtn.disabled = false;
+
+    preview.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  printBtn.addEventListener('click', () => window.print());
+
+  clearBtn.addEventListener('click', () => {
+    pagesEl.innerHTML = "";
+    preview.style.display = "none";
+    printBtn.disabled = true;
+    clearBtn.disabled = true;
+    numQ.value = 20;
+  });
+
+  numQ.addEventListener('change', clampN);
+})();
+</script>
+</body>
+</html>
