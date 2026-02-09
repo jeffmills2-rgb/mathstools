@@ -1,16 +1,14 @@
-
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Place Value: Multiply &amp; Divide by 10</title>
   <style>
-    /* Handwritten font for the number sentence */
     @import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Schoolbell&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Schoolbell&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap');
 
     :root {
       --cell-width: 90px;
@@ -30,13 +28,15 @@
     body {
       margin: 0;
       padding: 20px;
+      padding-bottom: 64px; /* room for footer banner */
       background: #f5f7fb;
       color: #222;
     }
 
     h1 {
-      margin-top: 0;
+      margin: 0;
       font-size: 1.9rem;
+      line-height: 1.2;
     }
 
     .app-container {
@@ -45,9 +45,129 @@
       background: #ffffff;
       border-radius: 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      padding: 20px 24px 30px;
+      padding: 16px 24px 30px;
       position: relative;
       z-index: 1;
+    }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .back-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid #111;
+      background: #fff;
+      color: #111;
+      text-decoration: none;
+      font-weight: 700;
+      width: fit-content;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: transform 0.08s ease, box-shadow 0.12s ease;
+    }
+    .back-pill:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+    .back-pill img {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .dropdown {
+      position: relative;
+    }
+
+    .pill-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      min-width: 92px;
+      font-size: 0.98rem;
+      cursor: pointer;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #eef1f8;
+      color: #111;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
+    }
+
+    .pill-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    .pill-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .reset-pill {
+      background: #ffe7ea;
+      color: #8a1f2a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-width: 86px;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 220px;
+      background: #fff;
+      border: 1px solid #d6dbee;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+      padding: 8px;
+      z-index: 50;
+      display: none;
+    }
+
+    .dropdown-menu.open {
+      display: block;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #111;
+    }
+
+    .dropdown-item:hover {
+      background: #f3f6ff;
     }
 
     .top-row {
@@ -120,10 +240,8 @@
       box-shadow: 0 2px 6px rgba(241,87,87,0.5);
     }
 
-    #resetBtn {
-      background: #e2e6f5;
-      color: #333;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    #resetBtnRow {
+      display: none !important;
     }
 
     #errorMessage {
@@ -146,8 +264,6 @@
       display: none !important;
     }
 
-    /* Place value grid */
-
     .pv-grid-wrapper {
       min-height: 220px;
       position: relative;
@@ -168,9 +284,7 @@
       white-space: nowrap;
     }
 
-    .pv-row {
-      display: flex;
-    }
+    .pv-row { display: flex; }
 
     .pv-cell {
       width: var(--cell-width);
@@ -211,15 +325,8 @@
       white-space: nowrap;
     }
 
-    .pv-digits-row {
-      display: flex;
-      align-items: stretch;
-    }
-
-    .pv-digits-left,
-    .pv-digits-right {
-      display: flex;
-    }
+    .pv-digits-row { display: flex; align-items: stretch; }
+    .pv-digits-left, .pv-digits-right { display: flex; }
 
     .pv-digits-row .pv-cell {
       border-top: 0;
@@ -240,11 +347,7 @@
       border-bottom-right-radius: 0;
     }
 
-    .digit-span {
-      display: inline-block;
-      position: relative;
-      z-index: 2;
-    }
+    .digit-span { display: inline-block; position: relative; z-index: 2; }
 
     .digit-slide-left-1 { animation: digitSlideLeft1 1s ease-out forwards; }
     .digit-slide-right-1 { animation: digitSlideRight1 1s ease-out forwards; }
@@ -260,48 +363,18 @@
     @keyframes digitSlideLeft3 { from { transform: translateX(0); } to { transform: translateX(calc(-3 * var(--cell-width))); } }
     @keyframes digitSlideRight3 { from { transform: translateX(0); } to { transform: translateX(calc(3 * var(--cell-width))); } }
 
-    .pv-cell.highlight {
-      animation: cellHighlight 0.6s ease-out;
-    }
-
+    .pv-cell.highlight { animation: cellHighlight 0.6s ease-out; }
     @keyframes cellHighlight {
       0%   { background-color: var(--highlight-color); }
       100% { background-color: #ffffff; }
     }
 
-    /* Scientific view */
+    #sciView { text-align: center; padding: 20px 10px 12px; }
+    #sciView h2 { margin: 0 0 10px; font-size: 1.2rem; color: #333; }
+    #sciNumber { font-size: 1.9rem; font-weight: 700; color: #0066cc; }
+    #sciStandard { margin-top: 8px; font-size: 1rem; color: #555; }
 
-    #sciView {
-      text-align: center;
-      padding: 20px 10px 12px;
-    }
-
-    #sciView h2 {
-      margin: 0 0 10px;
-      font-size: 1.2rem;
-      color: #333;
-    }
-
-    #sciNumber {
-      font-size: 1.9rem;
-      font-weight: 700;
-      color: #0066cc;
-    }
-
-    #sciStandard {
-      margin-top: 8px;
-      font-size: 1rem;
-      color: #555;
-    }
-
-    /* Words panel */
-
-    .words-row {
-      margin-top: 16px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
+    .words-row { margin-top: 16px; display: flex; align-items: flex-start; gap: 10px; }
 
     #wordsBtn {
       border-radius: 999px;
@@ -314,10 +387,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.12);
     }
 
-    #wordsBtn:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
+    #wordsBtn:disabled { opacity: 0.5; cursor: default; }
 
     #wordsBox {
       flex: 1;
@@ -330,32 +400,23 @@
       color: #444;
     }
 
-    /* Expression row */
+    .expression-row { margin-top: 14px; }
 
-    .expression-row {
-      margin-top: 14px;
+    #expressionBox {
+      width: 100%;
+      min-height: 40px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d3d8ea;
+      background: #ffffff;
+      font-size: 4.6rem;
+      font-weight: 400;
+      text-align: center;
+      color: #174d45;
+      font-family: "Kalam","Gloria Hallelujah","Patrick Hand","Schoolbell","Shadows Into Light",sans-serif;
     }
 
-   #expressionBox {
-  width: 100%;
-  min-height: 40px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d3d8ea;
-  background: #ffffff;
-  font-size: 4.6rem; /* larger handwritten style */
-  font-weight: 400;
-  text-align: center;
-  color: #174d45; /* nice dark green */
-  font-family:  "Kalam","Gloria Hallelujah", "Patrick Hand", "Schoolbell", "Shadows Into Light", sans-serif;
-}
-
-
-    /* Equivalence hint row */
-
-    .equivalence-row {
-      margin-top: 10px;
-    }
+    .equivalence-row { margin-top: 10px; }
 
     #equivalenceBox {
       width: 100%;
@@ -369,275 +430,75 @@
       font-style: italic;
     }
 
-    /* Bottom controls / practice button */
-
-    .bottom-controls {
-      margin-top: 14px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;  /* space between buttons */
-    }
-
-    #mysteryBtn {
-      background: #4c6fff;
-      color: #fff;
-      box-shadow: 0 2px 6px rgba(76, 111, 255, 0.4);
-      font-size: 0.98rem;
-    }
-
-    /* NEW: button that links to the flash-card page */
-    #flashCardBtn {
-      background: #ffc94a;
-      color: #5c3b00;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      font-size: 0.98rem;
-    }
-
-    /* Practice lab panel */
-
-    #mysteryPanel {
-      margin-top: 20px;
-      padding: 22px 22px 22px;
-      border-radius: 16px;
-      border: 1px solid #c1cffb;
-      background: linear-gradient(135deg, #f4f7ff, #e9f0ff);
-    }
-
-    #mysteryPanel h2 {
-      margin: 0 0 6px;
-      font-size: 1.6rem;
-    }
-
-    #mysterySubtext {
-      margin: 0 0 12px;
-      font-size: 1.05rem;
-      color: #495057;
-    }
-
-    .mystery-row {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .mystery-label {
-      font-weight: 600;
-      margin-right: 4px;
-      font-size: 1.1rem;
-    }
-
-    .mystery-levels button,
-    .mystery-modes button {
-      background: #e2e6ff;
-      color: #243b80;
-      padding: 6px 16px;
-      border-radius: 999px;
-      font-size: 1rem;
-      min-width: auto;
-      box-shadow: none;
-    }
-
-    .mystery-levels button.active,
-    .mystery-modes button.active {
-      background: #4c6fff;
-      color: #fff;
-    }
-
-    #checkMysteryBtn {
-      background: #32b46c;
-      color: #fff;
-      display: none;
-    }
-
-    #newMysteryBtn {
-      background: #ffd66b;
-      color: #654321;
-      font-size: 1rem;
-      padding-inline: 22px;
-    }
-
-    #exitMysteryBtn,
-    #createBackBtn {
-      background: #e2e6f5;
-      color: #333;
-      font-size: 1rem;
-    }
-
-    #revealAnswerBtn {
-      background: #fff;
-      color: #34495e;
-      border: 1px solid #c5c8dd;
-      min-width: 150px;
-    }
-
-    #mysteryFeedback,
-    #createMysteryFeedback {
-      margin-top: 8px;
-      font-weight: 600;
-      font-size: 1rem;
-    }
-
-    #mysteryFeedback.ok,
-    #createMysteryFeedback.ok {
-      color: #1a7f37;
-    }
-
-    #mysteryFeedback.error,
-    #createMysteryFeedback.error {
-      color: #c92a2a;
-    }
-
-    #mysteryAnswer {
-      margin-top: 4px;
-      font-weight: 600;
-      font-size: 1rem;
-      color: #212529;
-    }
-
-    /* Operation bubbles */
-
-    .mystery-ops-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .mystery-op {
-      padding: 8px 20px;
-      border-radius: 999px;
-      font-size: 1rem;
-      color: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      transform-origin: center center;
-    }
-
-    .mystery-op.mult {
-      background: #32b46c;
-    }
-
-    .mystery-op.div {
-      background: #f15757;
-    }
-
-    .mystery-op.pulse {
-      animation: opPulse 0.9s ease-out;
-    }
-
-    @keyframes opPulse {
-      0%   { transform: scale(1); }
-      30%  { transform: scale(1.3); }
-      60%  { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-
-    /* Starting number box */
-
-    .start-number-box {
-      padding: 8px 20px;
-      border-radius: 12px;
-      background: #ffffff;
-      border: 1px solid #c1cffb;
-      font-size: 1.4rem;
-      font-weight: 700;
-      min-width: 220px;
-      text-align: center;
-    }
-
-    /* Answer input inside practice lab */
-
-    #mysteryAnswerInput {
-      padding: 10px 14px;
-      font-size: 1.2rem;
-      border-radius: 10px;
-      border: 1px solid #b0b7e3;
-      min-width: 220px;
-      background: #ffffff;
-    }
-
-    /* Create-mode inputs */
-
-    .create-input {
-      padding: 8px 10px;
-      font-size: 1.05rem;
-      border-radius: 10px;
-      border: 1px solid #b0b7e3;
-      min-width: 220px;
-    }
-
-    #createOpsDisplay {
-      min-height: 28px;
-    }
-
-    #checkCreateMysteryBtn {
-      background: #32b46c;
-      color: #fff;
-    }
-
-    #clearCreateOpsBtn {
-      background: #e2e6f5;
-      color: #333;
-    }
-
-    /* Confetti */
-
-    #confettiContainer {
+    .mmt-footer {
       position: fixed;
       left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 9999;
+      right: 0;
+      bottom: 0;
+      background: #ffffff;
+      border-top: 1px solid rgba(0,0,0,0.18);
+      text-align: center;
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      color: #333;
+      box-shadow: 0 -6px 16px rgba(0,0,0,0.06);
+      z-index: 999;
     }
-
-    .confetti-piece {
-      position: absolute;
-      width: 8px;
-      height: 16px;
-      border-radius: 2px;
-      opacity: 0.9;
-      animation-name: confettiFall;
-      animation-timing-function: linear;
-      animation-fill-mode: forwards;
+    .mmt-footer a {
+      font-weight: 800;
+      color: #111;
+      text-decoration: underline;
     }
-
-    @keyframes confettiFall {
-      0% {
-        transform: translate3d(0, -100vh, 0) rotateZ(0deg);
-      }
-      100% {
-        transform: translate3d(0, 100vh, 0) rotateZ(360deg);
-      }
+    .mmt-footer a:hover {
+      text-decoration: none;
     }
 
     @media (max-width: 600px) {
-      :root {
-        --cell-width: 70px;
-        --cell-height: 70px;
-      }
-
-      .pv-digits-row .pv-cell {
-        font-size: 1.6rem;
-      }
-
-      h1 {
-        font-size: 1.6rem;
-      }
-
-      .start-number-box {
-        min-width: 160px;
-      }
+      :root { --cell-width: 70px; --cell-height: 70px; }
+      .pv-digits-row .pv-cell { font-size: 1.6rem; }
+      h1 { font-size: 1.6rem; }
+      #expressionBox { font-size: 3.2rem; }
+      body { padding-bottom: 72px; }
     }
   </style>
 </head>
+
 <body>
   <main>
     <div class="app-container">
-      <h1>Place Value: Multiply &amp; Divide by 10</h1>
+      <div class="header-bar">
+        <div class="header-left">
+          <a class="back-pill" href="https://www.millsmathstools.com" aria-label="Back to Mills Maths Tools">
+            <img src="mmt.png" alt="MMT logo" />
+            <span>Back to Mills Maths Tools</span>
+          </a>
+          <h1>Place Value: Multiply &amp; Divide by 10</h1>
+        </div>
+
+        <div class="header-right">
+          <div class="dropdown">
+            <button id="toolsBtn" class="pill-btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Tools <span aria-hidden="true">▼</span>
+            </button>
+
+            <div id="toolsMenu" class="dropdown-menu" role="menu" aria-label="Tools menu">
+              <button class="dropdown-item" type="button" role="menuitem" id="toolClassFlash">
+                Class flash card
+              </button>
+              <button class="dropdown-item" type="button" role="menuitem" id="toolStudentQuiz">
+                Student Quiz
+              </button>
+
+              <!-- NEW: worksheet generator -->
+              <button class="dropdown-item" type="button" role="menuitem" id="toolWorksheet">
+                Worksheet generator
+              </button>
+            </div>
+          </div>
+
+          <button id="resetTopBtn" class="pill-btn reset-pill" type="button">Reset</button>
+        </div>
+      </div>
 
       <div class="top-row">
         <label for="numberInput" id="numberInputLabel">Enter a positive number:</label>
@@ -651,27 +512,27 @@
 
         <div class="button-groups">
           <div class="button-row">
-            <button id="timesTenBtn" type="button" disabled>&times; 10</button>
-            <button id="timesHundredBtn" type="button" disabled>&times; 100</button>
-            <button id="timesThousandBtn" type="button" disabled>&times; 1000</button>
+            <button id="timesTenBtn" type="button">&times; 10</button>
+            <button id="timesHundredBtn" type="button">&times; 100</button>
+            <button id="timesThousandBtn" type="button">&times; 1000</button>
           </div>
           <div class="button-row">
-            <button id="divideTenBtn" type="button" disabled>&divide; 10</button>
-            <button id="divideHundredBtn" type="button" disabled>&divide; 100</button>
-            <button id="divideThousandBtn" type="button" disabled>&divide; 1000</button>
+            <button id="divideTenBtn" type="button">&divide; 10</button>
+            <button id="divideHundredBtn" type="button">&divide; 100</button>
+            <button id="divideThousandBtn" type="button">&divide; 1000</button>
           </div>
         </div>
-        <button id="resetBtn" type="button" disabled>Reset</button>
+
+        <button id="resetBtnRow" type="button">Reset</button>
       </div>
+
       <div id="errorMessage" role="alert" aria-live="assertive">Invalid input</div>
 
       <div class="view-container" aria-live="polite">
-        <!-- Place value view -->
         <div id="placeValueView" class="pv-grid-wrapper">
           <div class="pv-placeholder">Enter a number above to see its digits in the place-value grid.</div>
         </div>
 
-        <!-- Scientific notation view -->
         <div id="sciView" class="hidden">
           <h2>Scientific notation view</h2>
           <div id="sciNumber"></div>
@@ -680,7 +541,7 @@
       </div>
 
       <div class="words-row">
-        <button id="wordsBtn" type="button" disabled>In words</button>
+        <button id="wordsBtn" type="button">In words</button>
         <div id="wordsBox" class="hidden" aria-live="polite"></div>
       </div>
 
@@ -688,119 +549,19 @@
         <div id="expressionBox" class="hidden" aria-live="polite"></div>
       </div>
 
-      <!-- Equivalence hint -->
       <div class="equivalence-row">
         <div id="equivalenceBox" class="hidden" aria-live="polite"></div>
       </div>
-
-     <div class="bottom-controls">
-  <button id="flashCardBtn" type="button">Class flash card activity</button>
-  <button id="studentFlashBtn" type="button">Student flash card activity</button>
-  <button id="mysteryBtn" type="button">Practice lab</button>
-</div>
-
-
-      <!-- Practice lab panel (unchanged from your original file) -->
-      <!-- everything below here is exactly what you already had -->
-      <div id="mysteryPanel" class="hidden">
-        <h2>Practice lab</h2>
-        <p id="mysterySubtext">
-          Use the <strong>starting number</strong> and the <strong>operations</strong> to work out what the
-          <strong>final number</strong> will be.
-        </p>
-
-        <!-- MODE ROW -->
-        <div class="mystery-row mystery-modes">
-          <span class="mystery-label">Mode:</span>
-          <button type="button" id="modePlayBtn" data-mode="play" aria-pressed="false">Play</button>
-          <button type="button" id="modeCreateBtn" data-mode="create" aria-pressed="false">Create</button>
-        </div>
-
-        <!-- PLAY MODE PANEL -->
-        <div id="playMysteryPanel">
-          <!-- Difficulty appears after Play chosen -->
-          <div class="mystery-row mystery-levels hidden" id="playDifficultyRow">
-            <span class="mystery-label">Difficulty:</span>
-            <button type="button" data-level="1" id="levelBtn1" aria-pressed="false">Level 1</button>
-            <button type="button" data-level="2" id="levelBtn2" aria-pressed="false">Level 2</button>
-            <button type="button" data-level="3" id="levelBtn3" aria-pressed="false">Level 3</button>
-            <button type="button" data-level="4" id="levelBtn4" aria-pressed="false">Level 4</button>
-          </div>
-
-          <!-- Remaining interface appears after difficulty selected -->
-          <div id="playDetails" class="hidden">
-            <div class="mystery-row">
-              <span class="mystery-label">Starting number:</span>
-              <span id="mysteryFinalValue" class="start-number-box"></span>
-            </div>
-            <div class="mystery-row">
-              <span class="mystery-label">Operations used:</span>
-              <span id="mysteryOperations"></span>
-            </div>
-            <div class="mystery-row">
-              <span class="mystery-label">Answer:</span>
-              <input id="mysteryAnswerInput" type="text" inputmode="decimal" />
-              <button id="checkMysteryBtn" type="button">Check</button>
-            </div>
-            <div class="mystery-row">
-              <button id="newMysteryBtn" type="button">New problem</button>
-              <button id="exitMysteryBtn" type="button">Back</button>
-              <button
-                id="revealAnswerBtn"
-                type="button"
-                aria-label="Reveal or hide the answer for the teacher"
-              >
-                Reveal answer (teacher)
-              </button>
-            </div>
-            <div id="mysteryFeedback"></div>
-            <div id="mysteryAnswer" class="hidden"></div>
-          </div>
-        </div>
-
-        <!-- CREATE MODE PANEL -->
-        <div id="createMysteryPanel" class="hidden">
-          <div class="mystery-row">
-            <span class="mystery-label">Original number:</span>
-            <input id="createOrigInput" type="text" inputmode="decimal" class="create-input" placeholder="e.g. 43.8" />
-          </div>
-          <div class="mystery-row">
-            <span class="mystery-label">Final number:</span>
-            <input id="createFinalInput" type="text" inputmode="decimal" class="create-input" placeholder="What will the final number be?" />
-          </div>
-          <div class="mystery-row">
-            <span class="mystery-label">Operations you plan:</span>
-          </div>
-          <div class="mystery-row">
-            <div id="createOpsPalette" class="mystery-ops-container">
-              <button type="button" class="mystery-op mult" data-op="x10">×10</button>
-              <button type="button" class="mystery-op div"  data-op="d10">÷10</button>
-              <button type="button" class="mystery-op mult" data-op="x100">×100</button>
-              <button type="button" class="mystery-op div"  data-op="d100">÷100</button>
-              <button type="button" class="mystery-op mult" data-op="x1000">×1000</button>
-              <button type="button" class="mystery-op div"  data-op="d1000">÷1000</button>
-            </div>
-          </div>
-          <div class="mystery-row">
-            <span class="mystery-label">Chosen operations:</span>
-            <span id="createOpsDisplay"></span>
-          </div>
-          <div class="mystery-row">
-            <button id="clearCreateOpsBtn" type="button">Clear operations</button>
-            <button id="checkCreateMysteryBtn" type="button">Check</button>
-          </div>
-          <div class="mystery-row">
-            <button id="createBackBtn" type="button">Back</button>
-          </div>
-          <div id="createMysteryFeedback"></div>
-        </div>
-      </div>
     </div>
-    <div id="confettiContainer"></div>
   </main>
 
+  <div class="mmt-footer">
+    This tool and more can be found at
+    <a href="https://www.millsmathstools.com" target="_blank" rel="noopener noreferrer">www.millsmathstools.com</a>
+  </div>
+
   <script>
-    /* ---------- place names (trillions ↔ millionths) ---------- */
+    const DEFAULT_VALUE = 1;
 
     const positivePlaces = [
       "trillions","hundred-billions","ten-billions","billions","hundred-millions",
@@ -817,10 +578,7 @@
     const MAX_INT_VALUE    = Math.pow(10, MAX_LEFT_DIGITS);
     const MIN_POS_VALUE    = Math.pow(10, -MAX_RIGHT_DIGITS);
 
-    /* ---------- DOM refs ---------- */
-
     const inputEl        = document.getElementById("numberInput");
-    const inputLabelEl   = document.getElementById("numberInputLabel");
     const errorEl        = document.getElementById("errorMessage");
     const placeValueView = document.getElementById("placeValueView");
     const sciView        = document.getElementById("sciView");
@@ -828,106 +586,30 @@
     const sciStandardEl  = document.getElementById("sciStandard");
     const viewContainer  = document.querySelector(".view-container");
 
-    const topRow         = document.querySelector(".top-row");
-    const wordsRow       = document.querySelector(".words-row");
-    const expressionRow  = document.querySelector(".expression-row");
-    const equivalenceRow = document.querySelector(".equivalence-row");
-
     const timesTenBtn       = document.getElementById("timesTenBtn");
     const divideTenBtn      = document.getElementById("divideTenBtn");
     const timesHundredBtn   = document.getElementById("timesHundredBtn");
     const divideHundredBtn  = document.getElementById("divideHundredBtn");
     const timesThousandBtn  = document.getElementById("timesThousandBtn");
     const divideThousandBtn = document.getElementById("divideThousandBtn");
-    const resetBtn          = document.getElementById("resetBtn");
+
+    const resetTopBtn       = document.getElementById("resetTopBtn");
     const wordsBtn          = document.getElementById("wordsBtn");
     const wordsBox          = document.getElementById("wordsBox");
     const expressionBox     = document.getElementById("expressionBox");
     const equivalenceBox    = document.getElementById("equivalenceBox");
 
-    const mysteryBtn        = document.getElementById("mysteryBtn");
-    const flashCardBtn      = document.getElementById("flashCardBtn"); // NEW
-    const studentFlashBtn   = document.getElementById("studentFlashBtn"); // NEW
-    const mysteryPanel      = document.getElementById("mysteryPanel");
-    const mysteryFinalValue = document.getElementById("mysteryFinalValue");
-    const mysteryOperations = document.getElementById("mysteryOperations");
-    const mysteryFeedback   = document.getElementById("mysteryFeedback");
-    const mysteryAnswer     = document.getElementById("mysteryAnswer");
-    const checkMysteryBtn   = document.getElementById("checkMysteryBtn");
-    const newMysteryBtn     = document.getElementById("newMysteryBtn");
-    const exitMysteryBtn    = document.getElementById("exitMysteryBtn");
-    const revealAnswerBtn   = document.getElementById("revealAnswerBtn");
-    const levelBtn1         = document.getElementById("levelBtn1");
-    const levelBtn2         = document.getElementById("levelBtn2");
-    const levelBtn3         = document.getElementById("levelBtn3");
-    const levelBtn4         = document.getElementById("levelBtn4");
-    const levelButtons      = [levelBtn1, levelBtn2, levelBtn3, levelBtn4];
+    const toolsBtn         = document.getElementById("toolsBtn");
+    const toolsMenu        = document.getElementById("toolsMenu");
+    const toolClassFlash   = document.getElementById("toolClassFlash");
+    const toolStudentQuiz  = document.getElementById("toolStudentQuiz");
 
-    const modePlayBtn       = document.getElementById("modePlayBtn");
-    const modeCreateBtn     = document.getElementById("modeCreateBtn");
-    const playMysteryPanel  = document.getElementById("playMysteryPanel");
-    const createMysteryPanel= document.getElementById("createMysteryPanel");
-    const playDifficultyRow = document.getElementById("playDifficultyRow");
-    const playDetails       = document.getElementById("playDetails");
-    const mysteryAnswerInput= document.getElementById("mysteryAnswerInput");
-
-    const createOrigInput   = document.getElementById("createOrigInput");
-    const createFinalInput  = document.getElementById("createFinalInput");
-    const createOpsPalette  = document.getElementById("createOpsPalette");
-    const createOpsDisplay  = document.getElementById("createOpsDisplay");
-    const clearCreateOpsBtn = document.getElementById("clearCreateOpsBtn");
-    const checkCreateMysteryBtn = document.getElementById("checkCreateMysteryBtn");
-    const createBackBtn     = document.getElementById("createBackBtn");
-    const createMysteryFeedback = document.getElementById("createMysteryFeedback");
-
-    const confettiContainer = document.getElementById("confettiContainer");
-
-    /* ---------- confetti ---------- */
-
-    function launchConfetti() {
-      if (!confettiContainer) return;
-      const colors = ["#f94144","#f3722c","#f9c74f","#90be6d","#577590","#9b5de5"];
-      const count = 120;
-      for (let i = 0; i < count; i++) {
-        const piece = document.createElement("div");
-        piece.className = "confetti-piece";
-        piece.style.backgroundColor = colors[i % colors.length];
-
-        const duration = 2 + Math.random() * 2; // 2–4 seconds
-        const delay = Math.random() * 0.5;      // 0–0.5 seconds
-
-        piece.style.animationDuration = duration.toFixed(2) + "s";
-        piece.style.animationDelay = delay.toFixed(2) + "s";
-        piece.style.left = Math.random() * 100 + "%";
-
-        confettiContainer.appendChild(piece);
-        setTimeout(() => {
-          if (piece.parentNode === confettiContainer) {
-            confettiContainer.removeChild(piece);
-          }
-        }, (duration + delay + 0.5) * 1000);
-      }
-    }
-
-    /* ---------- state ---------- */
+    // NEW
+    const toolWorksheet    = document.getElementById("toolWorksheet");
 
     let currentValue  = null;
     let originalValue = null;
-    let currentMode   = null; // "grid" | "sci" | null
-
-    // Practice lab state
-    let mysteryMode        = false;
-    let mysteryDifficulty  = 1;
-    let mysteryOriginal    = null;
-    let mysteryFinal       = null;
-    let mysteryOps         = [];
-    let savedExploreState  = null;
-    let mysterySubMode     = "play"; // "play" | "create"
-
-    // create-mode state
-    let createOps = [];
-
-    /* ---------- helpers: parsing / formatting ---------- */
+    let currentMode   = null;
 
     function clearViews() {
       placeValueView.innerHTML =
@@ -994,10 +676,7 @@
         s = s.replace(/\.?0+$/, "");
       } else {
         s = value.toPrecision(15);
-        if (s.includes("e") || s.includes("E")) {
-          const v = Number(s);
-          s = v.toString();
-        }
+        if (s.includes("e") || s.includes("E")) s = Number(s).toString();
         if (s.includes(".")) s = s.replace(/\.?0+$/, "");
       }
 
@@ -1018,15 +697,9 @@
       let [intPart, fracPart] = s.split(".");
       intPart = intPart.replace(/^0+/, "") || "0";
       if (!fracPart) fracPart = "";
-      if (fracPart.length < MAX_RIGHT_DIGITS) {
-        fracPart = fracPart.padEnd(MAX_RIGHT_DIGITS, "0");
-      } else if (fracPart.length > MAX_RIGHT_DIGITS) {
-        fracPart = fracPart.slice(0, MAX_RIGHT_DIGITS);
-      }
-      return {
-        leftDigits: intPart.split(""),
-        rightDigits: fracPart.split("")
-      };
+      if (fracPart.length < MAX_RIGHT_DIGITS) fracPart = fracPart.padEnd(MAX_RIGHT_DIGITS, "0");
+      else if (fracPart.length > MAX_RIGHT_DIGITS) fracPart = fracPart.slice(0, MAX_RIGHT_DIGITS);
+      return { leftDigits: intPart.split(""), rightDigits: fracPart.split("") };
     }
 
     function isInPlaceValueRange(value) {
@@ -1041,8 +714,7 @@
       if (!m) return { mantissa: value, exponent: 0 };
       const mantissa = parseFloat(m[1]);
       const exponent = parseInt(m[2], 10);
-      const mantRounded = parseFloat(mantissa.toFixed(1));
-      return { mantissa: mantRounded, exponent };
+      return { mantissa: parseFloat(mantissa.toFixed(1)), exponent };
     }
 
     function sciToHtml(sci) {
@@ -1056,21 +728,20 @@
     }
 
     function toggleButtons(enabled) {
-      const canUse = enabled && !mysteryMode;
-      timesTenBtn.disabled       = !canUse;
-      divideTenBtn.disabled      = !canUse;
-      timesHundredBtn.disabled   = !canUse;
-      divideHundredBtn.disabled  = !canUse;
-      timesThousandBtn.disabled  = !canUse;
-      divideThousandBtn.disabled = !canUse;
-      resetBtn.disabled          = !canUse || originalValue === null;
-      wordsBtn.disabled          = !canUse;
+      timesTenBtn.disabled       = !enabled;
+      divideTenBtn.disabled      = !enabled;
+      timesHundredBtn.disabled   = !enabled;
+      divideHundredBtn.disabled  = !enabled;
+      timesThousandBtn.disabled  = !enabled;
+      divideThousandBtn.disabled = !enabled;
+      resetTopBtn.disabled       = !enabled;
+      wordsBtn.disabled          = !enabled;
     }
 
     function centerDecimal() {
       const decimalCell = placeValueView.querySelector(".pv-digits-row .pv-cell.decimal");
       if (!decimalCell) return;
-      const left   = decimalCell.offsetLeft;
+      const left = decimalCell.offsetLeft;
       const center = left + decimalCell.offsetWidth / 2;
       const target = center - viewContainer.clientWidth / 2;
       viewContainer.scrollLeft = Math.max(0, target);
@@ -1078,7 +749,6 @@
 
     function renderPlaceValueGrid(value) {
       const { leftDigits, rightDigits } = getDigitInfoForGrid(value);
-
       const leftCells  = new Array(positivePlaces.length).fill("");
       const rightCells = new Array(negativePlaces.length).fill("");
 
@@ -1093,56 +763,33 @@
       }
 
       let html = '<div class="pv-grid">';
-
       html += '<div class="pv-row pv-labels">';
-      for (const name of positivePlaces) {
-        html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
-      }
+      for (const name of positivePlaces) html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
       html += '<div class="pv-cell decimal"></div>';
-      for (const name of negativePlaces) {
-        html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
-      }
+      for (const name of negativePlaces) html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
       html += '</div>';
 
       html += '<div class="pv-digits-row">';
       html += '<div class="pv-digits-left">';
-      for (const d of leftCells) {
-        html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
-      }
+      for (const d of leftCells) html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
       html += '</div>';
 
       html += '<div class="pv-cell decimal">.</div>';
 
       html += '<div class="pv-digits-right">';
-      for (const d of rightCells) {
-        html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
-      }
-      html += '</div></div>';
-
-      html += "</div>";
+      for (const d of rightCells) html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
+      html += '</div></div></div>';
 
       placeValueView.innerHTML = html;
       placeValueView.classList.remove("hidden");
       sciView.classList.add("hidden");
       currentMode = "grid";
-
       centerDecimal();
-    }
-
-    function highlightEdge(side) {
-      const selector =
-        side === "left"
-          ? ".pv-digits-left .pv-cell:first-child"
-          : ".pv-digits-right .pv-cell:last-child";
-      const cell = placeValueView.querySelector(selector);
-      if (!cell) return;
-      cell.classList.add("highlight");
-      setTimeout(() => cell.classList.remove("highlight"), 600);
     }
 
     function renderScientificView(value) {
       const sci = toScientific(value);
-      sciNumberEl.innerHTML   = sciToHtml(sci);
+      sciNumberEl.innerHTML     = sciToHtml(sci);
       sciStandardEl.textContent = "Standard form: " + value.toPrecision(6);
       sciView.classList.remove("hidden");
       placeValueView.classList.add("hidden");
@@ -1158,7 +805,6 @@
       }
       const cls = `digit-slide-${direction}-${steps}`;
       spans.forEach(s => s.classList.add(cls));
-      const duration = 1000;
       setTimeout(() => {
         spans.forEach(s => s.classList.remove(
           "digit-slide-left-1","digit-slide-right-1",
@@ -1166,7 +812,7 @@
           "digit-slide-left-3","digit-slide-right-3"
         ));
         if (typeof callback === "function") callback();
-      }, duration);
+      }, 1000);
     }
 
     function groupWithSpaces(digits) {
@@ -1175,8 +821,7 @@
 
     function powerOfTenString(n) {
       if (n === 0) return "1";
-      const raw = "1" + "0".repeat(n);
-      return groupWithSpaces(raw);
+      return groupWithSpaces("1" + "0".repeat(n));
     }
 
     function decimalFromExponent(n) {
@@ -1192,65 +837,37 @@
 
     function inferExponentFromValues() {
       if (originalValue == null || currentValue == null) return 0;
-
       const ratio = currentValue / originalValue;
       if (!isFinite(ratio) || ratio <= 0) return 0;
-
       const nApprox = Math.round(Math.log10(ratio));
       const expected = Math.pow(10, nApprox);
       if (!isFinite(expected) || expected === 0) return 0;
-
       const relErr = Math.abs(ratio - expected) / expected;
       return relErr < 1e-10 ? nApprox : 0;
     }
 
     function updateEquivalenceBox() {
-      if (mysteryMode) {
-        hideEquivalenceBox();
-        return;
-      }
-
-      if (originalValue == null || currentValue == null) {
-        hideEquivalenceBox();
-        return;
-      }
-
+      if (originalValue == null || currentValue == null) { hideEquivalenceBox(); return; }
       const n = inferExponentFromValues();
-      if (n === 0) {
-        hideEquivalenceBox();
-        return;
-      }
+      if (n === 0) { hideEquivalenceBox(); return; }
 
       const inRangeOrig = isInPlaceValueRange(originalValue);
       const inRangeCurr = isInPlaceValueRange(currentValue);
-      if (!inRangeOrig || !inRangeCurr) {
-        hideEquivalenceBox();
-        return;
-      }
+      if (!inRangeOrig || !inRangeCurr) { hideEquivalenceBox(); return; }
 
       const decStr  = decimalFromExponent(n);
       const origStr = formatStandard(originalValue, { forGrid: true, withSpaces: false });
       const currStr = formatStandard(currentValue, { forGrid: true, withSpaces: false });
 
-      let equation;
-      if (n > 0) {
-        equation = `${origStr} ÷ ${decStr} = ${currStr}`;
-      } else {
-        equation = `${origStr} × ${decStr} = ${currStr}`;
-      }
+      let equation = (n > 0)
+        ? `${origStr} ÷ ${decStr} = ${currStr}`
+        : `${origStr} × ${decStr} = ${currStr}`;
 
       equivalenceBox.textContent = `Did you know ${equation}`;
       equivalenceBox.classList.remove("hidden");
     }
 
     function updateExpressionBox() {
-      if (mysteryMode) {
-        expressionBox.innerHTML = "";
-        expressionBox.classList.add("hidden");
-        hideEquivalenceBox();
-        return;
-      }
-
       if (originalValue == null || currentValue == null) {
         expressionBox.innerHTML = "";
         expressionBox.classList.add("hidden");
@@ -1275,37 +892,30 @@
       if (n === 0) {
         opText = "&times; 1";
       } else if (n > 0) {
-        if (inRangeOrig && inRangeCurr) {
-          opText = "&times; " + powerOfTenString(n);
-        } else {
-          opText = `&times; 10<sup>${n}</sup>`;
-        }
+        opText = inRangeOrig && inRangeCurr
+          ? "&times; " + powerOfTenString(n)
+          : `&times; 10<sup>${n}</sup>`;
       } else {
         const k = Math.abs(n);
-        if (inRangeOrig && inRangeCurr) {
-          opText = "&divide; " + powerOfTenString(k);
-        } else {
-          opText = `&divide; 10<sup>${k}</sup>`;
-        }
+        opText = inRangeOrig && inRangeCurr
+          ? "&divide; " + powerOfTenString(k)
+          : `&divide; 10<sup>${k}</sup>`;
       }
 
       expressionBox.innerHTML = `${origStr} ${opText} = ${currStr}`;
       expressionBox.classList.remove("hidden");
-
       updateEquivalenceBox();
     }
 
     function updateFromInput(isUserTyping = false) {
-      if (mysteryMode) return;
-
-      const raw    = inputEl.value;
+      const raw = inputEl.value;
       const parsed = parseInput(raw);
 
       wordsBox.classList.add("hidden");
       wordsBox.textContent = "";
 
       if (parsed.status === "empty" || parsed.status === "partial") {
-        currentValue  = null;
+        currentValue = null;
         originalValue = null;
         toggleButtons(false);
         clearError();
@@ -1315,7 +925,7 @@
       }
 
       if (parsed.status === "invalid") {
-        currentValue  = null;
+        currentValue = null;
         originalValue = null;
         toggleButtons(false);
         setError("Invalid input");
@@ -1325,26 +935,20 @@
       }
 
       clearError();
-      let value = normalizeValue(parsed.value);
+      const value = normalizeValue(parsed.value);
       currentValue = value;
-      if (isUserTyping) {
-        originalValue = value;
-      }
+      if (isUserTyping) originalValue = value;
 
       if (isInPlaceValueRange(value)) {
         renderPlaceValueGrid(value);
       } else {
         const sci = toScientific(value);
-        if (!isUserTyping) {
-          inputEl.value = sciToText(sci);
-        }
+        if (!isUserTyping) inputEl.value = sciToText(sci);
         renderScientificView(value);
       }
 
-      if (!isUserTyping) {
-        if (isInPlaceValueRange(value)) {
-          inputEl.value = formatStandard(value, { forGrid: true, withSpaces: true });
-        }
+      if (!isUserTyping && isInPlaceValueRange(value)) {
+        inputEl.value = formatStandard(value, { forGrid: true, withSpaces: true });
       }
 
       toggleButtons(true);
@@ -1376,9 +980,8 @@
         if (rest > 0) words += " ";
       }
       if (rest > 0) {
-        if (rest < 20) {
-          words += ones[rest];
-        } else {
+        if (rest < 20) words += ones[rest];
+        else {
           const t = Math.floor(rest / 10);
           const u = rest % 10;
           words += tensWords[t];
@@ -1403,9 +1006,7 @@
         const chunk = chunks[i];
         if (chunk === 0) continue;
         let w = chunkToWords(chunk);
-        if (i > 0 && scalesForWords[i]) {
-          w += " " + scalesForWords[i];
-        }
+        if (i > 0 && scalesForWords[i]) w += " " + scalesForWords[i];
         parts.unshift(w);
       }
       return parts.join(" ");
@@ -1418,7 +1019,6 @@
 
     function decimalToWords(value) {
       let s = formatStandard(value, { forGrid: true, withSpaces: false });
-
       if (!s.includes(".")) return intToWords(parseInt(s, 10));
 
       let [intStr, fracStr] = s.split(".");
@@ -1426,17 +1026,16 @@
 
       let lastNonZero = -1;
       for (let i = fracStr.length - 1; i >= 0; i--) {
-        if (fracStr[i] !== "0") {
-          lastNonZero = i;
-          break;
-        }
+        if (fracStr[i] !== "0") { lastNonZero = i; break; }
       }
       if (lastNonZero === -1) return intToWords(intVal);
-      const sigFrac     = fracStr.slice(0, lastNonZero + 1);
-      const fracIntVal  = parseInt(sigFrac, 10);
-      const placeName   = negativePlaceNameForWords(lastNonZero + 1);
+
+      const sigFrac = fracStr.slice(0, lastNonZero + 1);
+      const fracIntVal = parseInt(sigFrac, 10);
+      const placeName = negativePlaceNameForWords(lastNonZero + 1);
+
       const intPartText = intToWords(intVal);
-      const fracText    = intToWords(fracIntVal);
+      const fracText = intToWords(fracIntVal);
 
       if (intVal === 0) return `${fracText} ${placeName}`;
       return `${intPartText} and ${fracText} ${placeName}`;
@@ -1453,21 +1052,17 @@
       if (!s.includes(".")) return intToWords(parseInt(s, 10));
       const [i, f] = s.split(".");
       let result = intToWords(parseInt(i, 10)) + " point";
-      for (const ch of f) {
-        result += " " + ones[parseInt(ch, 10)];
-      }
+      for (const ch of f) result += " " + ones[parseInt(ch, 10)];
       return result;
     }
 
     function sciValueToWords(value) {
       const sci = toScientific(value);
-      const m   = sci.mantissa;
-      const e   = sci.exponent;
+      const m = sci.mantissa;
+      const e = sci.exponent;
       if (Math.abs(e) > 100) return "";
-
       if (m === 1 && e === 100)  return "one googol";
       if (m === 1 && e === -100) return "one googolth";
-
       return `${mantissaToWords(m)} times ten to the power of ${exponentToWords(e)}`;
     }
 
@@ -1476,12 +1071,9 @@
       wordsBox.textContent = "";
       if (currentValue == null) return;
 
-      let text;
-      if (isInPlaceValueRange(currentValue)) {
-        text = decimalToWords(currentValue);
-      } else {
-        text = sciValueToWords(currentValue);
-      }
+      const text = isInPlaceValueRange(currentValue)
+        ? decimalToWords(currentValue)
+        : sciValueToWords(currentValue);
 
       if (!text) return;
       wordsBox.textContent = text;
@@ -1495,10 +1087,11 @@
       }
 
       const direction = isMultiply ? "left" : "right";
-      const factor    = Math.pow(10, steps);
+      const factor = Math.pow(10, steps);
 
       let newValue = isMultiply ? currentValue * factor : currentValue / factor;
-      newValue     = normalizeValue(newValue);
+      newValue = normalizeValue(newValue);
+
       if (!isFinite(newValue) || newValue <= 0) {
         if (typeof doneCallback === "function") doneCallback();
         return;
@@ -1523,424 +1116,35 @@
       };
 
       if (currentMode === "grid") {
-        if (isInPlaceValueRange(newValue)) {
-          animateSlide(direction, steps, renderNewValue);
-        } else {
-          animateSlide(direction, steps, () => {
-            if (direction === "left") highlightEdge("left");
-            else highlightEdge("right");
-            renderNewValue();
-          });
-        }
+        animateSlide(direction, steps, renderNewValue);
       } else {
         renderNewValue();
       }
     }
 
-    const operationsPool = [
-      { steps: 1, mult: true,  label: "×10"   },
-      { steps: 1, mult: false, label: "÷10"   },
-      { steps: 2, mult: true,  label: "×100"  },
-      { steps: 2, mult: false, label: "÷100"  },
-      { steps: 3, mult: true,  label: "×1000" },
-      { steps: 3, mult: false, label: "÷1000" }
-    ];
-
-    function randInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    function closeToolsMenu() {
+      toolsMenu.classList.remove("open");
+      toolsBtn.setAttribute("aria-expanded", "false");
     }
 
-    function chooseOriginalForDifficulty(level) {
-      const maxTries = 200;
-      let minExp, maxExp;
-
-      if (level === 1) {
-        minExp = -2;
-        maxExp =  2;
-      } else {
-        minExp = -3;
-        maxExp =  3;
-      }
-
-      const minVal = Math.pow(10, minExp);
-      const maxVal = Math.pow(10, maxExp);
-
-      for (let i = 0; i < maxTries; i++) {
-        const base = randInt(1, 999);
-        const e = randInt(minExp, maxExp);
-        let val = base * Math.pow(10, e);
-        if (val < minVal || val > maxVal) continue;
-        val = normalizeValue(parseFloat(val.toFixed(3)));
-        if (!isInPlaceValueRange(val)) continue;
-        return val;
-      }
-      return level === 1 ? 45 : 4.5;
+    function toggleToolsMenu() {
+      const isOpen = toolsMenu.classList.toggle("open");
+      toolsBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
     }
 
-    function stepsForLevel(level) {
-      return Math.min(Math.max(level, 1), 4);
-    }
+    toolsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleToolsMenu();
+    });
 
-    function generateMysteryState(level) {
-      const maxAttempts = 80;
-      const stepsCount = stepsForLevel(level);
+    document.addEventListener("click", () => closeToolsMenu());
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeToolsMenu(); });
 
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const orig = chooseOriginalForDifficulty(level);
-        let value = orig;
-        const ops = [];
-        let ok = true;
+    toolClassFlash.addEventListener("click", () => { window.location.href = "flash-cards.html"; });
+    toolStudentQuiz.addEventListener("click", () => { window.location.href = "student-flash.html"; });
 
-        for (let i = 0; i < stepsCount; i++) {
-          const op = operationsPool[randInt(0, operationsPool.length - 1)];
-          const factor = Math.pow(10, op.steps);
-          const newVal = normalizeValue(op.mult ? value * factor : value / factor);
-          if (!isInPlaceValueRange(newVal)) {
-            ok = false;
-            break;
-          }
-          ops.push({ ...op });
-          value = newVal;
-        }
-
-        if (!ok) continue;
-        if (!isInPlaceValueRange(orig) || !isInPlaceValueRange(value)) continue;
-
-        return { original: orig, final: value, operations: ops };
-      }
-
-      return {
-        original: 5,
-        final: 50,
-        operations: [{ steps: 1, mult: true, label: "×10" }]
-      };
-    }
-
-    function setDifficulty(level) {
-      mysteryDifficulty = level;
-      levelButtons.forEach(btn => {
-        const lvl = parseInt(btn.dataset.level, 10);
-        const active = lvl === level;
-        btn.classList.toggle("active", active);
-        btn.setAttribute("aria-pressed", active ? "true" : "false");
-      });
-    }
-
-    function clearDifficultySelection() {
-      levelButtons.forEach(btn => {
-        btn.classList.remove("active");
-        btn.setAttribute("aria-pressed", "false");
-      });
-    }
-
-    function setMysterySubMode(mode) {
-      mysterySubMode = mode;
-      const isPlay = mode === "play";
-
-      playMysteryPanel.classList.toggle("hidden", !isPlay);
-      createMysteryPanel.classList.toggle("hidden", isPlay);
-
-      modePlayBtn.classList.toggle("active", isPlay);
-      modePlayBtn.setAttribute("aria-pressed", isPlay ? "true" : "false");
-
-      modeCreateBtn.classList.toggle("active", !isPlay);
-      modeCreateBtn.setAttribute("aria-pressed", !isPlay ? "true" : "false");
-
-      if (!isPlay) {
-        placeValueView.innerHTML = "";
-        placeValueView.classList.add("hidden");
-      }
-    }
-
-    function enterMysteryMode() {
-      if (mysteryMode) return;
-      mysteryMode = true;
-
-      savedExploreState = {
-        currentValue,
-        originalValue,
-        currentMode
-      };
-
-      inputEl.value = "";
-      wordsBox.classList.add("hidden");
-      wordsBox.textContent = "";
-      expressionBox.classList.add("hidden");
-      expressionBox.innerHTML = "";
-      hideEquivalenceBox();
-      mysteryBtn.classList.add("hidden");
-      flashCardBtn.classList.add("hidden");
-      mysteryPanel.classList.remove("hidden");
-      clearError();
-
-      toggleButtons(false);
-
-      topRow.classList.add("hidden");
-      wordsRow.classList.add("hidden");
-      expressionRow.classList.add("hidden");
-      if (equivalenceRow) equivalenceRow.classList.add("hidden");
-
-      setMysterySubMode("play");
-      playDifficultyRow.classList.remove("hidden");
-      playDetails.classList.add("hidden");
-      checkMysteryBtn.style.display = "none";
-      clearDifficultySelection();
-      mysteryAnswerInput.value = "";
-    }
-
-    function exitMysteryMode() {
-      if (!mysteryMode) return;
-      mysteryMode = false;
-
-      if (!savedExploreState) {
-        inputEl.value = "";
-        clearViews();
-      } else {
-        const {
-          currentValue: savedCurrent,
-          originalValue: savedOriginal,
-          currentMode: savedMode
-        } = savedExploreState;
-
-        currentValue  = savedCurrent;
-        originalValue = savedOriginal;
-        currentMode   = savedMode;
-
-        if (currentValue != null) {
-          if (isInPlaceValueRange(currentValue)) {
-            inputEl.value = formatStandard(currentValue, { forGrid: true, withSpaces: true });
-            renderPlaceValueGrid(currentValue);
-          } else {
-            const sci = toScientific(currentValue);
-            inputEl.value = sciToText(sci);
-            renderScientificView(currentValue);
-          }
-        } else {
-          inputEl.value = "";
-          clearViews();
-        }
-      }
-
-      updateExpressionBox();
-
-      mysteryPanel.classList.add("hidden");
-      mysteryBtn.classList.remove("hidden");
-      flashCardBtn.classList.remove("hidden");
-      mysteryFeedback.textContent = "";
-      mysteryFeedback.className = "";
-      mysteryAnswer.textContent = "";
-      mysteryAnswer.classList.add("hidden");
-      checkMysteryBtn.style.display = "none";
-      mysteryAnswerInput.value = "";
-      toggleButtons(currentValue != null);
-
-      topRow.classList.remove("hidden");
-      wordsRow.classList.remove("hidden");
-      expressionRow.classList.remove("hidden");
-      if (equivalenceRow) equivalenceRow.classList.remove("hidden");
-    }
-
-    function startNewMystery() {
-      const state = generateMysteryState(mysteryDifficulty);
-      mysteryOriginal = state.original;
-      mysteryFinal    = state.final;
-      mysteryOps      = state.operations;
-
-      currentValue  = mysteryOriginal;
-      originalValue = mysteryOriginal;
-
-      if (isInPlaceValueRange(mysteryOriginal)) {
-        renderPlaceValueGrid(mysteryOriginal);
-      } else {
-        const sci = toScientific(mysteryOriginal);
-        renderScientificView(mysteryOriginal);
-      }
-
-      mysteryFinalValue.textContent = formatStandard(mysteryOriginal, {
-        forGrid: true,
-        withSpaces: true
-      });
-
-      let htmlOps = '<div class="mystery-ops-container">';
-      mysteryOps.forEach((op, idx) => {
-        const cls = op.mult ? "mult" : "div";
-        htmlOps += `<span class="mystery-op ${cls}" data-idx="${idx}">${op.label}</span>`;
-      });
-      htmlOps += "</div>";
-      mysteryOperations.innerHTML = htmlOps;
-
-      mysteryFeedback.textContent = "";
-      mysteryFeedback.className = "";
-      mysteryAnswer.textContent = "";
-      mysteryAnswer.classList.add("hidden");
-      mysteryAnswerInput.value = "";
-    }
-
-    function pulseOperationBadge(index) {
-      const el = mysteryOperations.querySelector(`.mystery-op[data-idx="${index}"]`);
-      if (!el) return;
-      el.classList.add("pulse");
-      setTimeout(() => el.classList.remove("pulse"), 900);
-    }
-
-    function checkMysteryAnswer() {
-      const raw = mysteryAnswerInput.value;
-      const parsed = parseInput(raw);
-      if (parsed.status !== "ok") {
-        mysteryFeedback.textContent = "Please enter a positive number as your answer.";
-        mysteryFeedback.className = "error";
-        return;
-      }
-
-      const guess = normalizeValue(parsed.value);
-      const target = normalizeValue(mysteryFinal);
-      const diff = Math.abs(guess - target);
-
-      if (diff > 1e-10) {
-        mysteryFeedback.textContent = "Not quite. Try again!";
-        mysteryFeedback.className = "error";
-        return;
-      }
-
-      mysteryFeedback.textContent = "Correct! Watch how the number was transformed.";
-      mysteryFeedback.className = "ok";
-      launchConfetti();
-
-      currentValue  = mysteryOriginal;
-      originalValue = mysteryOriginal;
-
-      if (isInPlaceValueRange(currentValue)) {
-        renderPlaceValueGrid(currentValue);
-      } else {
-        const sci = toScientific(currentValue);
-        renderScientificView(currentValue);
-      }
-
-      function playStep(index) {
-        if (index >= mysteryOps.length) return;
-        const op = mysteryOps[index];
-        pulseOperationBadge(index);
-        applyPowerOfTen(op.steps, op.mult, () => playStep(index + 1));
-      }
-      playStep(0);
-    }
-
-    function revealAnswer() {
-      if (mysteryFinal == null) return;
-      const text = `Final number: ${formatStandard(mysteryFinal, {
-        forGrid: true,
-        withSpaces: true
-      })}`;
-      if (mysteryAnswer.classList.contains("hidden")) {
-        mysteryAnswer.textContent = text;
-        mysteryAnswer.classList.remove("hidden");
-      } else {
-        mysteryAnswer.textContent = "";
-        mysteryAnswer.classList.add("hidden");
-      }
-    }
-
-    const createOpMap = {
-      x10:   { steps: 1, mult: true,  label: "×10"   },
-      d10:   { steps: 1, mult: false, label: "÷10"   },
-      x100:  { steps: 2, mult: true,  label: "×100"  },
-      d100:  { steps: 2, mult: false, label: "÷100"  },
-      x1000: { steps: 3, mult: true,  label: "×1000" },
-      d1000: { steps: 3, mult: false, label: "÷1000" }
-    };
-
-    function updateCreateOpsDisplay() {
-      if (!createOps.length) {
-        createOpsDisplay.innerHTML = "<em>No operations chosen yet.</em>";
-        return;
-      }
-      let html = '<div class="mystery-ops-container">';
-      createOps.forEach((op, idx) => {
-        const cls = op.mult ? "mult" : "div";
-        html += `<span class="mystery-op ${cls}" data-idx="${idx}">${op.label}</span>`;
-      });
-      html += "</div>";
-      createOpsDisplay.innerHTML = html;
-    }
-
-    function clearCreateOps() {
-      createOps = [];
-      updateCreateOpsDisplay();
-    }
-
-    function handleCreateOpClick(code) {
-      if (!createOpMap[code]) return;
-      if (createOps.length >= 4) {
-        createMysteryFeedback.textContent = "Limit of 4 operations. Clear some if you want to add more.";
-        createMysteryFeedback.className = "error";
-        return;
-      }
-      createOps.push({ ...createOpMap[code] });
-      createMysteryFeedback.textContent = "";
-      createMysteryFeedback.className = "";
-      updateCreateOpsDisplay();
-    }
-
-    function checkCreateMystery() {
-      createMysteryFeedback.textContent = "";
-      createMysteryFeedback.className = "";
-
-      const origParsed = parseInput(createOrigInput.value);
-      const finalParsed = parseInput(createFinalInput.value);
-
-      if (origParsed.status !== "ok" || finalParsed.status !== "ok") {
-        createMysteryFeedback.textContent = "Check both numbers are positive and written correctly.";
-        createMysteryFeedback.className = "error";
-        return;
-      }
-
-      if (!createOps.length) {
-        createMysteryFeedback.textContent = "Add at least one operation to your mystery.";
-        createMysteryFeedback.className = "error";
-        return;
-      }
-
-      let value = normalizeValue(origParsed.value);
-      for (const op of createOps) {
-        const factor = Math.pow(10, op.steps);
-        value = normalizeValue(op.mult ? value * factor : value / factor);
-      }
-
-      const target = normalizeValue(finalParsed.value);
-      const diff = Math.abs(value - target);
-
-      if (diff > 1e-10) {
-        createMysteryFeedback.textContent =
-          "Something doesn't quite match. Try your calculation again.";
-        createMysteryFeedback.className = "error";
-        return;
-      }
-
-      if (!isInPlaceValueRange(origParsed.value) || !isInPlaceValueRange(finalParsed.value)) {
-        createMysteryFeedback.textContent =
-          "Your numbers go beyond the grid. Try choosing smaller or simpler values.";
-        createMysteryFeedback.className = "error";
-        return;
-      }
-
-      createMysteryFeedback.textContent = "Well done!";
-      createMysteryFeedback.className = "ok";
-
-      const origVal = normalizeValue(origParsed.value);
-      currentValue  = origVal;
-      originalValue = origVal;
-
-      renderPlaceValueGrid(origVal);
-
-      function playCreateStep(index) {
-        if (index >= createOps.length) return;
-        const op = createOps[index];
-        applyPowerOfTen(op.steps, op.mult, () => playCreateStep(index + 1));
-      }
-      playCreateStep(0);
-
-      launchConfetti();
-    }
+    // NEW: worksheet generator navigation
+    toolWorksheet.addEventListener("click", () => { window.location.href = "teacher-worksheet.html"; });
 
     inputEl.addEventListener("input", () => updateFromInput(true));
 
@@ -1951,97 +1155,35 @@
     timesThousandBtn.addEventListener("click", () => applyPowerOfTen(3, true));
     divideThousandBtn.addEventListener("click",() => applyPowerOfTen(3, false));
 
-    resetBtn.addEventListener("click", () => {
-      if (originalValue == null || mysteryMode) return;
-      let v = normalizeValue(originalValue);
-      currentValue = v;
-
-      if (isInPlaceValueRange(v)) {
-        inputEl.value = formatStandard(v, { forGrid: true, withSpaces: true });
-        renderPlaceValueGrid(v);
-      } else {
-        const sci = toScientific(v);
-        inputEl.value = sciToText(sci);
-        renderScientificView(v);
-      }
-
+    function setToDefaultState() {
       clearError();
       wordsBox.classList.add("hidden");
       wordsBox.textContent = "";
+
+      currentValue  = DEFAULT_VALUE;
+      originalValue = DEFAULT_VALUE;
+
+      inputEl.value = formatStandard(DEFAULT_VALUE, { forGrid: true, withSpaces: true });
+
+      if (isInPlaceValueRange(DEFAULT_VALUE)) {
+        renderPlaceValueGrid(DEFAULT_VALUE);
+      } else {
+        renderScientificView(DEFAULT_VALUE);
+      }
+
       toggleButtons(true);
       updateExpressionBox();
+    }
+
+    resetTopBtn.addEventListener("click", () => {
+      setToDefaultState();
+      closeToolsMenu();
     });
 
     wordsBtn.addEventListener("click", updateWordsBox);
 
-    mysteryBtn.addEventListener("click", enterMysteryMode);
-    exitMysteryBtn.addEventListener("click", exitMysteryMode);
-    createBackBtn.addEventListener("click", exitMysteryMode);
-    newMysteryBtn.addEventListener("click", startNewMystery);
-    checkMysteryBtn.addEventListener("click", checkMysteryAnswer);
-    revealAnswerBtn.addEventListener("click", revealAnswer);
-
-    // NEW: go to the flash-card page
-    flashCardBtn.addEventListener("click", () => {
-      // change filename here if your flash-card file has a different name
-      window.location.href = "flash-cards.html";
-    });
-// NEW: go to the student flash-card practice page
-studentFlashBtn.addEventListener("click", () => {
-  window.location.href = "student-flash.html";
-});
-
-
-    levelButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const level = parseInt(btn.dataset.level, 10);
-        setDifficulty(level);
-        playDetails.classList.remove("hidden");
-        checkMysteryBtn.style.display = "inline-flex";
-        startNewMystery();
-        mysteryAnswerInput.focus();
-      });
-    });
-
-    modePlayBtn.addEventListener("click", () => {
-      setMysterySubMode("play");
-      playDifficultyRow.classList.remove("hidden");
-      playDetails.classList.add("hidden");
-      checkMysteryBtn.style.display = "none";
-      clearDifficultySelection();
-      mysteryAnswerInput.value = "";
-    });
-
-    modeCreateBtn.addEventListener("click", () => {
-      setMysterySubMode("create");
-      playDifficultyRow.classList.add("hidden");
-      playDetails.classList.add("hidden");
-      checkMysteryBtn.style.display = "none";
-      mysteryAnswerInput.value = "";
-      createOrigInput.focus();
-    });
-
-    mysteryAnswerInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkMysteryAnswer();
-      }
-    });
-
-    createOpsPalette.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-op]");
-      if (!btn) return;
-      const code = btn.getAttribute("data-op");
-      handleCreateOpClick(code);
-    });
-
-    clearCreateOpsBtn.addEventListener("click", clearCreateOps);
-    checkCreateMysteryBtn.addEventListener("click", checkCreateMystery);
-
-    clearViews();
-    toggleButtons(false);
-    updateExpressionBox();
-    updateCreateOpsDisplay();
+    /* ---------- init: default load is 1 ---------- */
+    setToDefaultState();
   </script>
 </body>
 </html>
