@@ -27,13 +27,18 @@
       --shadow: 0 10px 25px rgba(0,0,0,.08);
       --radius: 18px;
 
-      /* Level colours (banner + menu highlights) */
-      --lvl1: #16a34a;      /* green */
-      --lvl2: #f59e0b;      /* amber/yellow */
-      --lvl3: #f97316;      /* orange */
-      --lvl4: #ef4444;      /* red */
+      /* Level colours (banner + menu highlights)
+         Sweet = green
+         Mild  = blue
+         Medium/Spicy/Extra hot unchanged (amber/orange/red) */
+      --lvl0: #16a34a;      /* Sweet (green) */
+      --lvl1: #2563eb;      /* Mild (blue) */
+      --lvl2: #f59e0b;      /* Medium (amber/yellow) */
+      --lvl3: #f97316;      /* Spicy (orange) */
+      --lvl4: #ef4444;      /* Extra hot (red) */
 
-      --lvl1Soft: #dcfce7;
+      --lvl0Soft: #dcfce7;  /* green soft */
+      --lvl1Soft: #dbeafe;  /* blue soft */
       --lvl2Soft: #fef9c3;
       --lvl3Soft: #ffedd5;
       --lvl4Soft: #fee2e2;
@@ -353,8 +358,9 @@
       font-size: 14px;
     }
 
-    /* Level menu highlights (as per your Image 3) */
-    .levelCard.level1{ background: var(--lvl1Soft); border-color: rgba(22,163,74,.25); }
+    /* Level menu highlights */
+    .levelCard.level0{ background: var(--lvl0Soft); border-color: rgba(22,163,74,.25); }
+    .levelCard.level1{ background: var(--lvl1Soft); border-color: rgba(37,99,235,.25); }
     .levelCard.level2{ background: var(--lvl2Soft); border-color: rgba(245,158,11,.25); }
     .levelCard.level3{ background: var(--lvl3Soft); border-color: rgba(249,115,22,.25); }
     .levelCard.level4{ background: var(--lvl4Soft); border-color: rgba(239,68,68,.25); }
@@ -528,20 +534,24 @@
       </div>
       <div class="modalBody">
         <div class="levelGrid">
+          <div class="levelCard level0">
+            <div class="levelName">Sweet</div>
+            <button class="primary small" data-level="0">Start</button>
+          </div>
           <div class="levelCard level1">
-            <div class="levelName">Level 1 Mild</div>
+            <div class="levelName">Mild</div>
             <button class="primary small" data-level="1">Start</button>
           </div>
           <div class="levelCard level2">
-            <div class="levelName">Level 2 Medium</div>
+            <div class="levelName">Medium</div>
             <button class="primary small" data-level="2">Start</button>
           </div>
           <div class="levelCard level3">
-            <div class="levelName">Level 3 Spicy</div>
+            <div class="levelName">Spicy</div>
             <button class="primary small" data-level="3">Start</button>
           </div>
           <div class="levelCard level4">
-            <div class="levelName">Level 4 Extra hot</div>
+            <div class="levelName">Extra hot</div>
             <button class="primary small" data-level="4">Start</button>
           </div>
         </div>
@@ -559,7 +569,7 @@
             <div class="trophyBox" aria-hidden="true">🏆</div>
             <div style="flex:1 1 320px;">
               <div class="certMain" id="certMainText">
-                You completed Level 2 and got 0 out of 20. Paste a screenshot into Google Classroom.
+                You completed Medium and got 0 out of 20. Paste a screenshot into Google Classroom.
               </div>
               <div class="certSub">
                 Screenshot this and paste into Google Classroom.
@@ -596,9 +606,21 @@
   const toS2 = (n) => Math.round(n * 2);
 
   // Level definitions
+  // 0 = Sweet (new)
+  // 1 = Mild (blue)
+  // 2 = Medium
+  // 3 = Spicy
+  // 4 = Extra hot
   const LEVELS = {
+    0: {
+      label: "Sweet",
+      name: "Sweet",
+      midMin: -20, midMax: 20,
+      fixedStep: 1,
+      guaranteeNeg: false
+    },
     1: {
-      label: "Level 1",
+      label: "Mild",
       name: "Mild",
       midMin: -10, midMax: 5,
       stepsFirst10: [1],
@@ -606,21 +628,21 @@
       guaranteeNeg: false
     },
     2: {
-      label: "Level 2",
+      label: "Medium",
       name: "Medium",
       midMin: -100, midMax: 50,
       stepsAll: [1,2,5,10],
       guaranteeNeg: true
     },
     3: {
-      label: "Level 3",
+      label: "Spicy",
       name: "Spicy",
       midMin: -200, midMax: 100,
       stepsAll: [1,2,3,4,5,10],
       guaranteeNeg: true
     },
     4: {
-      label: "Level 4",
+      label: "Extra hot",
       name: "Extra hot",
       midMin: -200, midMax: 100,
       // step sizes can be halves
@@ -631,10 +653,11 @@
 
   // Level colours (banner gradient)
   const LEVEL_COLOURS = {
-    1: { a: "#16a34a", b: "#15803d" }, // green
-    2: { a: "#f59e0b", b: "#d97706" }, // yellow/amber
-    3: { a: "#f97316", b: "#ea580c" }, // orange
-    4: { a: "#ef4444", b: "#dc2626" }  // red
+    0: { a: "#16a34a", b: "#15803d" }, // Sweet (green)
+    1: { a: "#2563eb", b: "#1d4ed8" }, // Mild (blue)
+    2: { a: "#f59e0b", b: "#d97706" }, // Medium (yellow/amber)
+    3: { a: "#f97316", b: "#ea580c" }, // Spicy (orange)
+    4: { a: "#ef4444", b: "#dc2626" }  // Extra hot (red)
   };
 
   // --------------------
@@ -709,7 +732,7 @@
     // Convert to scaled2 int
     const neg = t.startsWith("-");
     const cleaned = t.replace(/^\+/, "");
-    const parts = cleaned.replace(/^-/, "").split(".");
+    const parts = cleaned.replace(/^\-/, "").split(".");
     const whole = parseInt(parts[0], 10);
     const hasHalf = parts.length === 2;
     let s2 = whole * 2 + (hasHalf ? 1 : 0);
@@ -790,8 +813,12 @@
       attempts++;
 
       const qIndex = out.length;
+
+      // Step selection
       let step;
-      if (lvl === 1){
+      if (cfg.fixedStep != null){
+        step = cfg.fixedStep;
+      } else if (lvl === 1){
         step = (qIndex < 10) ? choice(cfg.stepsFirst10) : choice(cfg.stepsLast10);
       } else {
         step = choice(cfg.stepsAll);
@@ -832,9 +859,14 @@
 
     // Fallback if needed: still produce 20
     while (out.length < QUESTIONS_PER_LEVEL){
-      const step = (lvl === 1)
-        ? (out.length < 10 ? 1 : choice([1,2]))
-        : choice(cfg.stepsAll);
+      let step;
+      if (cfg.fixedStep != null){
+        step = cfg.fixedStep;
+      } else if (lvl === 1){
+        step = (out.length < 10 ? 1 : choice([1,2]));
+      } else {
+        step = choice(cfg.stepsAll);
+      }
       const stepS2 = toS2(step);
 
       let midS2 = randInt(cfg.midMin, cfg.midMax) * 2;
@@ -1381,7 +1413,7 @@
   nextBtn.addEventListener('click', () => loadQuestion(current + 1));
 
   hintBtn.addEventListener('click', () => {
-    if (!level) return;
+    if (level === null) return;
     if (hintsUsed[current] >= MAX_HINTS) return;
 
     const q = currentQuestion();
