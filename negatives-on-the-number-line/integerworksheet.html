@@ -249,45 +249,42 @@
       .wrap{ max-width:none; margin:0; padding:0; }
       .card{ box-shadow:none; border-radius:0; padding:0; }
 
-      /* ✅ hide ALL screen-only header so Page 1 matches Page 2 */
       .topUi{ display:none !important; }
-
       .controls, .sub{ display:none !important; }
       .preview{ border:none; border-radius:0; }
       .pages{ padding: 0; }
 
       .page{
-  border:none; border-radius:0;
-  padding: 0 0 3mm;        /* ✅ safe bottom buffer */
-  margin: 0;
-  display:flex;
-  flex-direction:column;
-  page-break-after: always;
-  /* ❌ remove min-height: 273mm; (this can cause overflow on some printers) */
-}
-
+        border:none; border-radius:0;
+        padding: 0 0 3mm;
+        margin: 0;
+        display:flex;
+        flex-direction:column;
+        page-break-after: always;
+      }
       .page:last-child{ page-break-after: auto; }
 
-      @page{ size: A4; margin: 12mm; }
+      /* ✅ Your working print margins */
+      @page{ size: A4; margin: 18mm; }
 
       .pageBrandRow{ margin: 0 0 3mm; font-size: 11px; }
       .pageHeaderTitle{ font-size: 13px; }
       .pageMetaRow{ padding-bottom: 4mm; margin-bottom: 5mm; }
 
-  .grid{
-  flex: 1;
-  gap: 5mm 7mm;            /* was 6mm 7mm */
-  align-content: start;     /* safer than stretch */
-}
+      .grid{
+        flex: 1;
+        gap: 5mm 7mm;
+        align-content: start;
+      }
 
-.qcard{
-  border:1px solid #000;
-  border-radius:10px;
-  padding: 3.6mm 4mm 3mm;   /* slightly smaller */
-  min-height: 42mm;         /* was 44mm */
-}
+      .qcard{
+        border:1px solid #000;
+        border-radius:10px;
+        padding: 3.6mm 4mm 3mm;
+        min-height: 42mm;
+      }
 
-svg{ height: 26mm; }        /* was 28mm */
+      svg{ height: 26mm; }
 
       .ansSquare{ border:2px solid #000; width: 10mm; height: 10mm; }
       .answerSide{ flex-basis: 18mm; }
@@ -351,8 +348,6 @@ svg{ height: 26mm; }        /* was 28mm */
 
   const TICKS = 7;
   const MID_INDEX = 3; // for 7 ticks
-
-  // ✅ 2×5 per page
   const PAGE_COUNT = 10;
 
   const LEVELS = {
@@ -362,8 +357,23 @@ svg{ height: 26mm; }        /* was 28mm */
     4: { name:"Level 4 Extra hot", midMin:-200, midMax:100, stepsAll:[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,10] }
   };
 
+  // =========================
+  // ✅ "Ideal" display tuning (easy to tweak)
+  // =========================
+  const SVG_W = 620;              // was 600 (more breathing room at ends)
+  const SVG_H = 120;
+  const SVG_PAD = 26;             // bigger left/right inset prevents end clipping
+  const LABEL_FONT_STUDENT = 23;  // balanced vs your screenshot
+  const LABEL_FONT_KEY = 22;
+  const ANSWER_FONT_KEY = 24;
+  const QMARK_FONT = 22;
+
+  const BOX_W = 48;
+  const BOX_H = 30;
+  const BOX_EDGE_PAD = 6;         // keeps ? box inside viewbox if target at an end
+
   function isNiceAnchorS2(s2){
-    if (s2 % 2 !== 0) return false; // halves not treated as "nice"
+    if (s2 % 2 !== 0) return false;
     const v = s2/2;
     const av = Math.abs(v);
     if (av >= 100) return v % 100 === 0 || v % 10 === 0;
@@ -371,7 +381,6 @@ svg{ height: 26mm; }        /* was 28mm */
     return true;
   }
 
-  // ✅ adjacent pair + far one (avoid target)
   function pickAnchors(valuesS2, targetIndex){
     const pairs = [];
     for (let i=0; i<TICKS-1; i++){
@@ -511,8 +520,8 @@ svg{ height: 26mm; }        /* was 28mm */
   function makeSVGQuestion(q, mode){
     const showAllLabels = (mode === "key");
 
-    const W = 520, H = 120;
-    const left = 18, right = W - 18;
+    const W = SVG_W, H = SVG_H;
+    const left = SVG_PAD, right = W - SVG_PAD;
     const yLine = 42;
     const tickTop = yLine - 11, tickBot = yLine + 11;
     const labelY = 96;
@@ -556,25 +565,38 @@ svg{ height: 26mm; }        /* was 28mm */
 
     const shouldLabel = (i) => showAllLabels ? true : q.anchors.has(i);
 
+    // ✅ Labels (with end-safe anchoring so digits never clip)
     for (let i=0;i<TICKS;i++){
       if (!showAllLabels && i === q.targetIndex) continue;
       if (!shouldLabel(i)) continue;
 
       const txt = document.createElementNS(ns, "text");
       txt.textContent = fmtS2(q.valuesS2[i]);
-      txt.setAttribute("x", x(i));
+
+      // end-safe anchoring
+      let anchor = "middle";
+      let xi = x(i);
+      if (i === 0) { anchor = "start"; xi = left; }
+      if (i === TICKS-1) { anchor = "end"; xi = right; }
+
+      txt.setAttribute("x", xi);
       txt.setAttribute("y", labelY);
-      txt.setAttribute("text-anchor", "middle");
-      txt.setAttribute("font-size", "17");
-      txt.setAttribute("font-weight", "900");
+      txt.setAttribute("text-anchor", anchor);
+      txt.setAttribute("font-size", String(showAllLabels ? LABEL_FONT_KEY : LABEL_FONT_STUDENT));
+      txt.setAttribute("font-weight", "950");
       txt.setAttribute("fill", "#374151");
       svg.appendChild(txt);
     }
 
-    const tx = x(q.targetIndex);
-    const boxW = 42, boxH = 30;
-    const boxX = tx - boxW/2;
-    const boxY = labelY - 24;
+    // ✅ Missing/answer at target (with box clamped inside viewBox)
+    const rawTx = x(q.targetIndex);
+
+    // Clamp the box so it always stays inside the SVG viewbox
+    const boxW = BOX_W, boxH = BOX_H;
+    const boxY = labelY - 26;
+    const unclampedX = rawTx - boxW/2;
+    const boxX = Math.max(BOX_EDGE_PAD, Math.min(W - boxW - BOX_EDGE_PAD, unclampedX));
+    const tx = boxX + boxW/2; // recenter content inside the clamped box
 
     if (!showAllLabels){
       const rect = document.createElementNS(ns, "rect");
@@ -589,19 +611,19 @@ svg{ height: 26mm; }        /* was 28mm */
       const qm = document.createElementNS(ns, "text");
       qm.textContent = "?";
       qm.setAttribute("x", tx);
-      qm.setAttribute("y", boxY + 21);
+      qm.setAttribute("y", boxY + 22);
       qm.setAttribute("text-anchor", "middle");
-      qm.setAttribute("font-size", "19");
+      qm.setAttribute("font-size", String(QMARK_FONT));
       qm.setAttribute("font-weight", "950");
       qm.setAttribute("fill", "#ffffff");
       svg.appendChild(qm);
     } else {
       const ans = document.createElementNS(ns, "text");
       ans.textContent = fmtS2(q.valuesS2[q.targetIndex]);
-      ans.setAttribute("x", tx);
+      ans.setAttribute("x", rawTx);   // answer label can sit on the tick precisely
       ans.setAttribute("y", labelY);
       ans.setAttribute("text-anchor", "middle");
-      ans.setAttribute("font-size", "20");
+      ans.setAttribute("font-size", String(ANSWER_FONT_KEY));
       ans.setAttribute("font-weight", "950");
       ans.setAttribute("fill", "var(--ans)");
       svg.appendChild(ans);
@@ -648,6 +670,7 @@ svg{ height: 26mm; }        /* was 28mm */
       sq.style.fontWeight = "950";
       sq.style.color = "var(--ans)";
       sq.style.borderColor = "var(--ans)";
+      sq.style.fontSize = "18px";
       sq.textContent = fmtS2(q.valuesS2[q.targetIndex]);
     }
 
@@ -713,7 +736,7 @@ svg{ height: 26mm; }        /* was 28mm */
     return row;
   }
 
-  function buildSectionPages(container, titleText, questions, mode){
+  function buildSectionPages(container, titleText, questions, mode, levelName){
     const totalPages = computeTotalPages(questions.length);
 
     for (let p=1; p<=totalPages; p++){
@@ -725,9 +748,10 @@ svg{ height: 26mm; }        /* was 28mm */
 
       page.appendChild(makeBrandRow());
 
-      const titleForPage = (mode === "key") ? "Answer key (completed version)" : titleText;
-      page.appendChild(makeWorksheetHeaderRow(titleForPage, `Page ${p} of ${totalPages}`));
+      const baseTitle = (mode === "key") ? "Answer key (completed version)" : titleText;
+      const titleForPage = `${baseTitle} \u2013 ${levelName}`;
 
+      page.appendChild(makeWorksheetHeaderRow(titleForPage, `Page ${p} of ${totalPages}`));
       page.appendChild(makeMetaRow());
 
       const grid = document.createElement('div');
@@ -763,8 +787,9 @@ svg{ height: 26mm; }        /* was 28mm */
   function renderWorksheet(level, n){
     pagesEl.innerHTML = "";
     const qs = generateQuestions(level, n);
+    const levelName = (LEVELS[level] && LEVELS[level].name) ? LEVELS[level].name : "Level";
 
-    buildSectionPages(pagesEl, "Number line practice", qs, "student");
+    buildSectionPages(pagesEl, "Number line practice", qs, "student", levelName);
 
     const spacer = document.createElement('div');
     spacer.style.height = "18px";
@@ -772,7 +797,7 @@ svg{ height: 26mm; }        /* was 28mm */
 
     const keyWrap = document.createElement('div');
     keyWrap.style.marginTop = "18px";
-    buildSectionPages(keyWrap, "Number line practice", qs, "key");
+    buildSectionPages(keyWrap, "Number line practice", qs, "key", levelName);
     pagesEl.appendChild(keyWrap);
   }
 
