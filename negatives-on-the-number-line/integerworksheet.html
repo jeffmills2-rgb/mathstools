@@ -12,10 +12,12 @@
       --muted:#6b7280;
       --border:#e5e7eb;
 
-      --lvl1:#16a34a; --lvl1Soft:#dcfce7;
-      --lvl2:#f59e0b; --lvl2Soft:#fef9c3;
-      --lvl3:#f97316; --lvl3Soft:#ffedd5;
-      --lvl4:#ef4444; --lvl4Soft:#fee2e2;
+      /* Levels (now 1–5) */
+      --lvl1:#16a34a; --lvl1Soft:#dcfce7;  /* Sweet (green) */
+      --lvl2:#2563eb; --lvl2Soft:#dbeafe;  /* Mild (blue) */
+      --lvl3:#f59e0b; --lvl3Soft:#fef9c3;  /* Medium (amber) */
+      --lvl4:#f97316; --lvl4Soft:#ffedd5;  /* Spicy (orange) */
+      --lvl5:#ef4444; --lvl5Soft:#fee2e2;  /* Extra hot (red) */
 
       --line:#1f2937;
       --dot:#111827;
@@ -304,10 +306,11 @@
         <div>
           <label for="levelSel">Level</label>
           <select id="levelSel">
-            <option value="1">Level 1 Mild</option>
-            <option value="2">Level 2 Medium</option>
-            <option value="3">Level 3 Spicy</option>
-            <option value="4">Level 4 Extra hot</option>
+            <option value="1">Level 1 Sweet</option>
+            <option value="2">Level 2 Mild</option>
+            <option value="3">Level 3 Medium</option>
+            <option value="4">Level 4 Spicy</option>
+            <option value="5">Level 5 Extra hot</option>
           </select>
         </div>
 
@@ -350,11 +353,18 @@
   const MID_INDEX = 3; // for 7 ticks
   const PAGE_COUNT = 10;
 
+  // Levels updated:
+  // 1 Sweet (fixed step 1, midpoint -20..20)
+  // 2 Mild  (old L1)
+  // 3 Medium(old L2)
+  // 4 Spicy (old L3)
+  // 5 Extra hot (old L4)
   const LEVELS = {
-    1: { name:"Level 1 Mild",   midMin:-10,  midMax:5,   stepsFirstHalf:[1], stepsSecondHalf:[1,2] },
-    2: { name:"Level 2 Medium", midMin:-100, midMax:50,  stepsAll:[1,2,5,10] },
-    3: { name:"Level 3 Spicy",  midMin:-200, midMax:100, stepsAll:[1,2,3,4,5,10] },
-    4: { name:"Level 4 Extra hot", midMin:-200, midMax:100, stepsAll:[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,10] }
+    1: { name:"Level 1 Sweet",   midMin:-20,  midMax:20,  fixedStep:1 },
+    2: { name:"Level 2 Mild",    midMin:-10,  midMax:5,   stepsFirstHalf:[1], stepsSecondHalf:[1,2] },
+    3: { name:"Level 3 Medium",  midMin:-100, midMax:50,  stepsAll:[1,2,5,10] },
+    4: { name:"Level 4 Spicy",   midMin:-200, midMax:100, stepsAll:[1,2,3,4,5,10] },
+    5: { name:"Level 5 Extra hot", midMin:-200, midMax:100, stepsAll:[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,10] }
   };
 
   // =========================
@@ -438,8 +448,11 @@
       const idx = out.length;
       const mustBeNegative = (idx < halfNegNeeded);
 
+      // pick step
       let step;
-      if (level === 1){
+      if (cfg.fixedStep != null){
+        step = cfg.fixedStep; // Sweet always step 1
+      } else if (level === 2){
         const firstHalf = Math.ceil(n/2);
         step = (idx < firstHalf) ? choice(cfg.stepsFirstHalf) : choice(cfg.stepsSecondHalf);
       } else {
@@ -474,7 +487,9 @@
       const mustBeNegative = (idx < Math.ceil(n/2));
 
       let step;
-      if (level === 1){
+      if (cfg.fixedStep != null){
+        step = cfg.fixedStep;
+      } else if (level === 2){
         const firstHalf = Math.ceil(n/2);
         step = (idx < firstHalf) ? 1 : choice([1,2]);
       } else {
@@ -565,7 +580,7 @@
 
     const shouldLabel = (i) => showAllLabels ? true : q.anchors.has(i);
 
-    // ✅ Labels (with end-safe anchoring so digits never clip)
+    // Labels
     for (let i=0;i<TICKS;i++){
       if (!showAllLabels && i === q.targetIndex) continue;
       if (!shouldLabel(i)) continue;
@@ -588,15 +603,14 @@
       svg.appendChild(txt);
     }
 
-    // ✅ Missing/answer at target (with box clamped inside viewBox)
+    // Missing/answer at target
     const rawTx = x(q.targetIndex);
 
-    // Clamp the box so it always stays inside the SVG viewbox
     const boxW = BOX_W, boxH = BOX_H;
     const boxY = labelY - 26;
     const unclampedX = rawTx - boxW/2;
     const boxX = Math.max(BOX_EDGE_PAD, Math.min(W - boxW - BOX_EDGE_PAD, unclampedX));
-    const tx = boxX + boxW/2; // recenter content inside the clamped box
+    const tx = boxX + boxW/2;
 
     if (!showAllLabels){
       const rect = document.createElementNS(ns, "rect");
@@ -620,7 +634,7 @@
     } else {
       const ans = document.createElementNS(ns, "text");
       ans.textContent = fmtS2(q.valuesS2[q.targetIndex]);
-      ans.setAttribute("x", rawTx);   // answer label can sit on the tick precisely
+      ans.setAttribute("x", rawTx);
       ans.setAttribute("y", labelY);
       ans.setAttribute("text-anchor", "middle");
       ans.setAttribute("font-size", String(ANSWER_FONT_KEY));
@@ -737,10 +751,11 @@
   }
 
   function buildSectionPages(container, titleText, questions, mode, levelName){
-    const totalPages = computeTotalPages(questions.length);
+    const totalPages = Math.ceil(questions.length / PAGE_COUNT);
 
     for (let p=1; p<=totalPages; p++){
-      const { start, end } = sliceForPage(questions, p);
+      const start = (p - 1) * PAGE_COUNT;
+      const end = Math.min(start + PAGE_COUNT, questions.length);
       const pageQs = questions.slice(start, end);
 
       const page = document.createElement('div');
