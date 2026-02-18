@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integer Add/Subtract – Explore</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --line:#111827;
+      --accent:#2563eb;   /* arrows */
+      --ok:#16a34a;       /* final answer */
+      --border:#e5e7eb;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 18px;
+
+      --tick:#111827;
+      --dot:#111827;
+
+      --footer-h: 44px;
+
+      --animMs: 2000; /* arrow draw duration */
+      --easeOut: cubic-bezier(.16,.84,.21,1);
+
+      /* dotted arrow look */
+      --arrowW: 7;                /* ~2/3 of previous 10 */
+      --dash: 16;
+      --gap: 14;
+
+      --panelW: 340px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1100px; margin: 22px auto 40px; padding: 0 16px; }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      position: relative;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .brandBack{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      text-decoration:none;
+      color: var(--ink);
+      font-weight: 950;
+      border: 1px solid var(--border);
+      background:#fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      transition: transform .04s ease, filter .15s ease;
+      user-select:none;
+      white-space: nowrap;
+    }
+    .brandBack:active{ transform: scale(.98); }
+    .brandBack:hover{ filter: brightness(0.99); }
+    .brandBack img{ height: 26px; width:auto; display:block; }
+    .brandBack span{ font-size: 13px; letter-spacing:.1px; }
+
+    .qRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex: 1 1 420px;
+      min-width: 260px;
+    }
+    .qLabel{
+      font-weight: 950;
+      color: var(--ink);
+      margin-right: 12px;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .qBox{
+      border: 2px solid #111827;
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-weight: 950;
+      font-size: 22px;
+      letter-spacing: .2px;
+      background:#fff;
+      min-width: 170px;
+      text-align:center;
+    }
+
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    button{
+      border:none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background: var(--accent); color:#fff; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .stage{
+      margin-top: 14px;
+      padding: 12px 12px 18px;
+      border-radius: 16px;
+      background: linear-gradient(180deg,#ffffff, #f9fafb);
+      border: 1px solid #e5e7eb;
+      overflow:hidden;
+      position: relative;
+      min-height: 420px;
+    }
+    .svgwrap{ width:100%; height: 360px; }
+
+    .stageActions{
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display:flex;
+      justify-content:center;
+      gap: 18px;
+      pointer-events:none;
+    }
+    .navBtn{
+      pointer-events:auto;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight: 950;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+      min-width: 56px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+    }
+    .navBtn[disabled]{
+      opacity: .45;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .hintRow{
+      margin-top: 10px;
+      text-align:center;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+    .mmtFooter a{
+      color: var(--accent);
+      text-decoration:none;
+      font-weight: 950;
+    }
+    .mmtFooter a:hover{ text-decoration: underline; }
+
+    /* Teacher settings drawer */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.35);
+      backdrop-filter: blur(2px);
+      z-index: 900;
+      display: none;
+    }
+    .overlay.show{ display:block; }
+
+    .drawer{
+      position: fixed;
+      top: 0; right: 0;
+      height: 100%;
+      width: min(var(--panelW), 92vw);
+      background: rgba(255,255,255,.98);
+      border-left: 1px solid rgba(229,231,235,.95);
+      box-shadow: -18px 0 40px rgba(0,0,0,.12);
+      z-index: 950;
+      transform: translateX(102%);
+      transition: transform .22s ease;
+      display:flex;
+      flex-direction:column;
+    }
+    .drawer.show{ transform: translateX(0); }
+
+    .drawerHeader{
+      padding: 16px 16px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(229,231,235,.95);
+    }
+    .drawerTitle{
+      font-weight: 950;
+      font-size: 14px;
+      letter-spacing: .2px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .drawerTitle .pill{
+      font-size: 12px;
+      font-weight: 900;
+      color: #1f2937;
+      background:#f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .drawerClose{
+      border-radius: 999px;
+      padding: 8px 12px;
+      background:#f3f4f6;
+      font-weight: 950;
+    }
+
+    .drawerBody{
+      padding: 14px 16px 16px;
+      overflow:auto;
+      flex:1;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .field label{
+      font-size: 12px;
+      font-weight: 950;
+      color:#111827;
+    }
+    select{
+      appearance:none;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 900;
+      background:#fff;
+      color:#111827;
+      cursor:pointer;
+      outline:none;
+    }
+    .help{
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.35;
+      font-weight: 750;
+      margin-top: 10px;
+    }
+    .drawerFooter{
+      padding: 12px 16px 16px;
+      border-top: 1px solid rgba(229,231,235,.95);
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+    }
+
+    /* SVG */
+    .baseline{ stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 6; stroke-linecap: round; }
+
+    .tickUnit{
+      stroke: rgba(17,24,39,.55);
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+
+    .dot{ fill: var(--dot); opacity: 0.92; }
+    .dot.zero{ opacity: 0.85; }
+    .dot.end{ fill: var(--ok); opacity: 0.95; }
+
+    .label{
+      font-size: 26px;
+      font-weight: 950;
+      fill: #111827;
+    }
+    .label.end{ fill: var(--ok); }
+
+    /* DOTTED arrow */
+    .arrowPath{
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: var(--arrowW);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: var(--dash) var(--gap);
+    }
+    .arrowLabel{
+      font-size: 30px;
+      font-weight: 950;
+      fill: var(--accent);
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(0.92); opacity: 0; }
+      60%  { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .pop { animation: pop .22s ease-out both; transform-origin:center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <a class="brandBack" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
+          <img src="mmt.png" alt="MMT logo">
+          <span>Back to Mills Maths Tools</span>
+        </a>
+
+        <div class="qRow" aria-label="Question">
+          <div class="qLabel">Question:</div>
+          <div id="qBox" class="qBox">—</div>
+        </div>
+
+        <div class="btnrow">
+          <button id="settingsBtn" title="Teacher settings">Teacher settings</button>
+          <button id="resetBtn" class="danger" title="Reset this question (R)">Reset</button>
+          <button id="newBtn" class="primary" title="New question (Space)">New Q</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <svg id="svg" class="svgwrap" viewBox="0 0 1000 360" role="img" aria-label="number line"></svg>
+
+        <div class="stageActions">
+          <button id="backBtn" class="navBtn" title="Back (←)" aria-label="Back">◀</button>
+          <button id="fwdBtn" class="navBtn primary" title="Forward (→)" aria-label="Forward">▶</button>
+        </div>
+      </div>
+
+      <div class="hintRow">
+        Shortcuts: ← / → step · Space = New Q · R = Reset
+      </div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+  <!-- Teacher settings UI -->
+  <div id="overlay" class="overlay" aria-hidden="true"></div>
+  <aside id="drawer" class="drawer" aria-label="Teacher settings" aria-hidden="true">
+    <div class="drawerHeader">
+      <div class="drawerTitle">
+        Teacher settings
+        <span id="levelPill" class="pill">Mild</span>
+      </div>
+      <button id="closeDrawerBtn" class="drawerClose" aria-label="Close settings">✕</button>
+    </div>
+
+    <div class="drawerBody">
+      <div class="field">
+        <label for="levelSelect">Difficulty</label>
+        <select id="levelSelect">
+          <option value="sweet">Sweet</option>
+          <option value="mild">Mild</option>
+          <option value="medium">Medium</option>
+          <option value="spicy">Spicy</option>
+          <option value="extraHot">Extra Hot</option>
+        </select>
+      </div>
+
+      <div class="help" id="settingsHelp">
+        Sweet/Mild keep the “single unit tick” animation. Medium/Spicy/Extra Hot show only start, 0, and end markers.
+      </div>
+    </div>
+
+    <div class="drawerFooter">
+      <button id="cancelSettingsBtn">Cancel</button>
+      <button id="applySettingsBtn" class="primary">Apply</button>
+    </div>
+  </aside>
+
+<script>
+(() => {
+  // -----------------------------
+  // Settings
+  // -----------------------------
+  const SETTINGS_KEY = "mmt_int_addsub_explore_level";
+
+  const LEVELS = {
+    sweet:    { name:"Sweet",     min:-10,  max: 10,  step:1,   showUnitTicks:true  },
+    mild:     { name:"Mild",      min:-20,  max: 10,  step:1,   showUnitTicks:true  }, // original design
+    medium:   { name:"Medium",    min:-100, max: 50,  step:1,   showUnitTicks:false },
+    spicy:    { name:"Spicy",     min:-100, max: 50,  step:0.5, showUnitTicks:false },
+    extraHot: { name:"Extra Hot", min:-100, max: 50,  step:0.1, showUnitTicks:false }
+  };
+
+  function clampLevelKey(k){
+    return LEVELS[k] ? k : "mild";
+  }
+
+  function loadLevelKey(){
+    try { return clampLevelKey(localStorage.getItem(SETTINGS_KEY) || "mild"); }
+    catch { return "mild"; }
+  }
+
+  function saveLevelKey(k){
+    try { localStorage.setItem(SETTINGS_KEY, k); } catch {}
+  }
+
+  let levelKey = loadLevelKey();
+  let cfg = LEVELS[levelKey];
+
+  // -----------------------------
+  // DOM
+  // -----------------------------
+  const svg = document.getElementById('svg');
+  const qBox = document.getElementById('qBox');
+
+  const newBtn = document.getElementById('newBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const backBtn = document.getElementById('backBtn');
+  const fwdBtn = document.getElementById('fwdBtn');
+
+  const settingsBtn = document.getElementById('settingsBtn');
+  const overlay = document.getElementById('overlay');
+  const drawer = document.getElementById('drawer');
+  const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+  const applySettingsBtn = document.getElementById('applySettingsBtn');
+  const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+  const levelSelect = document.getElementById('levelSelect');
+  const levelPill = document.getElementById('levelPill');
+  const settingsHelp = document.getElementById('settingsHelp');
+
+  function syncSettingsUI(){
+    levelSelect.value = levelKey;
+    levelPill.textContent = LEVELS[levelKey].name;
+
+    const s = LEVELS[levelKey];
+    const stepTxt = (s.step === 1) ? "integers only"
+                  : (s.step === 0.5) ? "steps of 0.5"
+                  : "1 decimal place";
+    const tickTxt = s.showUnitTicks ? "Unit ticks animate between values." : "No unit ticks between values (start/0/end only).";
+
+    settingsHelp.textContent =
+      `${s.name}: range ${s.min} to ${s.max}, ${stepTxt}. ${tickTxt}`;
+  }
+
+  function openDrawer(){
+    syncSettingsUI();
+    overlay.classList.add("show");
+    drawer.classList.add("show");
+    overlay.setAttribute("aria-hidden","false");
+    drawer.setAttribute("aria-hidden","false");
+  }
+  function closeDrawer(){
+    overlay.classList.remove("show");
+    drawer.classList.remove("show");
+    overlay.setAttribute("aria-hidden","true");
+    drawer.setAttribute("aria-hidden","true");
+  }
+
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+  function clearSVG(){ while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function el(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNode(str, attrs={}){
+    const t = el('text', attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  // Numeric formatting (avoid ugly floating artefacts)
+  function fmtNum(n){
+    if (cfg.step === 1) return String(Math.round(n));
+    if (cfg.step === 0.5){
+      const s = (Math.round(n * 2) / 2).toFixed(1);
+      return s.endsWith(".0") ? s.slice(0,-2) : s;
+    }
+    const s = (Math.round(n * 10) / 10).toFixed(1);
+    return s.endsWith(".0") ? s.slice(0,-2) : s;
+  }
+
+  function signed(n){
+    const v = (cfg.step === 1) ? Math.round(n)
+            : (cfg.step === 0.5) ? (Math.round(n*2)/2)
+            : (Math.round(n*10)/10);
+    const s = fmtNum(Math.abs(v));
+    return (v > 0) ? `+${s}` : (v < 0 ? `-${s}` : "0");
+  }
+
+  function crossesZero(a, e){
+    if (a === 0 || e === 0) return false;
+    return (a > 0 && e < 0) || (a < 0 && e > 0);
+  }
+
+  function formatQuestion(a, e){
+    const d = e - a;
+    const b = Math.abs(d);
+    const op = (d >= 0) ? "+" : "−";
+    return `${fmtNum(a)} ${op} ${fmtNum(b)}`;
+  }
+
+  function scaledRandom(min, max, step){
+    const scale = (step === 1) ? 1 : (step === 0.5 ? 2 : 10);
+    const imin = Math.round(min * scale);
+    const imax = Math.round(max * scale);
+    const v = randInt(imin, imax) / scale;
+
+    if (scale === 2) return Math.round(v*2)/2;
+    if (scale === 10) return Math.round(v*10)/10;
+    return Math.round(v);
+  }
+
+  // -----------------------------
+  // State
+  // -----------------------------
+  let Q = null;
+  let stepState = 0;
+  let refs = null;
+
+  function generateQuestion(){
+    for (let tries=0; tries<1200; tries++){
+      const a = scaledRandom(cfg.min, cfg.max, cfg.step);
+      const e = scaledRandom(cfg.min, cfg.max, cfg.step);
+      if (e === a) continue;
+
+      const aa = (cfg.step === 1) ? Math.round(a)
+               : (cfg.step === 0.5) ? (Math.round(a*2)/2)
+               : (Math.round(a*10)/10);
+      const ee = (cfg.step === 1) ? Math.round(e)
+               : (cfg.step === 0.5) ? (Math.round(e*2)/2)
+               : (Math.round(e*10)/10);
+
+      const dd = ee - aa;
+      const bb = Math.abs(dd);
+      if (bb === 0) continue;
+
+      return { a: aa, e: ee, d: dd, b: bb, crossing: crossesZero(aa, ee) };
+    }
+    return { a: 5, e: -8, d: -13, b: 13, crossing: true };
+  }
+
+  function computeViewRange(a, e){
+    const lo = Math.min(a, 0, e);
+    const hi = Math.max(a, 0, e);
+    const span = Math.max(1, hi - lo);
+
+    const basePad = (cfg.step === 1) ? 0.25 : 0.30;
+    const pad = Math.min(10, Math.max(3, Math.ceil(span * basePad)));
+
+    let vmin = Math.max(cfg.min, lo - pad);
+    let vmax = Math.min(cfg.max, hi + pad);
+
+    if (vmax - vmin < 2){
+      vmin = Math.max(cfg.min, vmin - 1);
+      vmax = Math.min(cfg.max, vmax + 1);
+    }
+
+    return { vmin, vmax };
+  }
+
+  function makeUnitTick(xi, yLine){
+    const h = 10;
+    return el('line', {
+      x1: xi, y1: yLine - h,
+      x2: xi, y2: yLine + h,
+      class: "tickUnit"
+    });
+  }
+
+  function animatePathDrawDashed(path){
+    const len = path.getTotalLength();
+    path.style.strokeDashoffset = String(len);
+    path.style.transition = "none";
+    path.getBoundingClientRect();
+    path.style.transition = `stroke-dashoffset var(--animMs) var(--easeOut)`;
+    path.style.strokeDashoffset = "0";
+  }
+
+  function scheduleProgressiveTicks(valuesInOrder, tickMap, durationMs){
+    const N = valuesInOrder.length;
+    if (N <= 0) return;
+
+    for (let i=0; i<N; i++){
+      const v = valuesInOrder[i];
+      const tick = tickMap.get(v);
+      if (!tick) continue;
+
+      const t = (i + 1) / (N + 1);
+      const easeOut = 1 - Math.pow(1 - t, 2);
+      const delay = Math.round(easeOut * durationMs);
+
+      tick.style.opacity = "0";
+      tick.style.transitionDelay = `${delay}ms`;
+
+      requestAnimationFrame(() => { tick.style.opacity = "1"; });
+    }
+  }
+
+  function buildScene(){
+    clearSVG();
+    refs = null;
+
+    const { a, e } = Q;
+    const { vmin, vmax } = computeViewRange(a, e);
+
+    const left = 90, right = 910;
+    const yLine = 236;
+    const tickTop = yLine - 22;
+    const tickBot = yLine + 22;
+    const dotR = 10;
+    const labelY = 318;
+
+    const x = (v) => {
+      const t = (v - vmin) / (vmax - vmin);
+      return left + t * (right - left);
+    };
+
+    function arcPath(x1, x2, yBase, lift){
+      const mx = (x1 + x2) / 2;
+      const yPeak = yBase - lift;
+      return `M ${x1} ${yBase} Q ${mx} ${yPeak} ${x2} ${yBase}`;
+    }
+
+    svg.appendChild(textNode("Use the arrows to reveal the movement on the number line.", {
+      x: 500, y: 34, "text-anchor":"middle",
+      "font-size":"14", "font-weight":"850", fill:"#9ca3af"
+    }));
+
+    svg.appendChild(el('line', {
+      x1:left, y1:yLine, x2:right, y2:yLine,
+      class: "baseline"
+    }));
+
+    const defs = el('defs', {});
+    const marker = el('marker', {
+      id: "arrowHeadTiny",
+      markerWidth: "4",
+      markerHeight: "4",
+      refX: "3.6",
+      refY: "2",
+      orient: "auto",
+      markerUnits: "strokeWidth",
+      viewBox: "0 0 10 4"
+    }, [
+      el('path', { d: "M 0 0 L 10 2 L 0 4 z", fill: "var(--accent)" })
+    ]);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    const gUnitTicks = el('g', { id: "unitTicks" });
+    const gArrows = el('g', { id: "arrows" });
+    const gMajor = el('g', { id: "major" });
+
+    const unitTickMap = new Map();
+
+    function ensureUnitTickForValue(v){
+      if (!cfg.showUnitTicks) return;
+      if (v === 0) return;
+      if (v === a) return;
+      if (v === e) return;
+      if (v < vmin || v > vmax) return;
+      if (unitTickMap.has(v)) return;
+
+      const tick = makeUnitTick(x(v), yLine);
+      gUnitTicks.appendChild(tick);
+      unitTickMap.set(v, tick);
+    }
+
+    function addMajor(val, dotClass){
+      const xi = x(val);
+
+      const tick = el('line', {
+        x1: xi, y1: tickTop, x2: xi, y2: tickBot,
+        class: "tickMajor"
+      });
+
+      const dot = el('circle', {
+        cx: xi, cy: yLine,
+        r: dotR,
+        class: `dot ${dotClass || ""}`.trim()
+      });
+
+      const label = textNode(fmtNum(val), {
+        x: xi, y: labelY,
+        "text-anchor":"middle",
+        class: "label"
+      });
+
+      gMajor.appendChild(tick);
+      gMajor.appendChild(dot);
+      gMajor.appendChild(label);
+
+      return { tick, dot, label, x: xi, val };
+    }
+
+    const start = addMajor(a, "");
+    const zero  = addMajor(0, "zero");
+
+    const endDot = el('circle', {
+      cx: x(e), cy: yLine,
+      r: dotR,
+      class: "dot end"
+    });
+    endDot.style.display = "none";
+    gMajor.appendChild(endDot);
+
+    const endLabel = textNode(fmtNum(e), {
+      x: x(e), y: labelY,
+      "text-anchor":"middle",
+      class: "label end"
+    });
+    endLabel.style.display = "none";
+    gMajor.appendChild(endLabel);
+
+    const xA = start.x;
+    const x0 = zero.x;
+    const xE = x(e);
+
+    const liftA0 = Math.min(135, Math.max(70, Math.abs(x0 - xA) * 0.27));
+    const lift0E = Math.min(135, Math.max(70, Math.abs(xE - x0) * 0.27));
+    const liftAE = Math.min(150, Math.max(82, Math.abs(xE - xA) * 0.23));
+
+    function makeArrow(x1, x2, lift){
+      const path = el('path', {
+        d: arcPath(x1, x2, yLine, lift),
+        class: "arrowPath",
+        "marker-end": "url(#arrowHeadTiny)"
+      });
+      const label = textNode("", {
+        x: (x1 + x2)/2, y: yLine - lift - 12,
+        "text-anchor":"middle",
+        class: "arrowLabel"
+      });
+      path.style.display = "none";
+      label.style.display = "none";
+      gArrows.appendChild(path);
+      gArrows.appendChild(label);
+      return { path, label };
+    }
+
+    const arrowA0 = makeArrow(xA, x0, liftA0);
+    const arrow0E = makeArrow(x0, xE, lift0E);
+    const arrowAE = makeArrow(xA, xE, liftAE);
+
+    const moveA0 = 0 - a;
+    const move0E = e;
+    const moveAE = e - a;
+    arrowA0.label.textContent = signed(moveA0);
+    arrow0E.label.textContent = signed(move0E);
+    arrowAE.label.textContent = signed(moveAE);
+
+    if (cfg.showUnitTicks) svg.appendChild(gUnitTicks);
+    svg.appendChild(gArrows);
+    svg.appendChild(gMajor);
+
+    refs = {
+      vmin, vmax, xFn: x,
+      start, zero,
+      endDot, endLabel,
+      unitTickMap,
+      ensureUnitTickForValue,
+      arrowA0, arrow0E, arrowAE
+    };
+  }
+
+  function revealEndDot(){ refs.endDot.style.display = ""; }
+  function hideEndDot(){ refs.endDot.style.display = "none"; }
+
+  function revealAnswerLabel(){
+    refs.endLabel.style.display = "";
+    refs.endLabel.classList.remove("pop");
+    requestAnimationFrame(() => refs.endLabel.classList.add("pop"));
+  }
+  function hideAnswerLabel(){
+    refs.endLabel.style.display = "none";
+    refs.endLabel.classList.remove("pop");
+  }
+
+  function hideArrow(arrow){
+    arrow.path.style.display = "none";
+    arrow.label.style.display = "none";
+    arrow.path.style.opacity = "";
+    arrow.label.style.opacity = "";
+    arrow.path.style.transition = "";
+    arrow.label.style.transition = "";
+    arrow.path.style.strokeDashoffset = "";
+  }
+
+  function showArrowWithAnimation(arrow){
+    arrow.path.style.display = "";
+    arrow.label.style.display = "";
+    arrow.path.style.opacity = "1";
+    arrow.label.style.opacity = "1";
+    arrow.path.style.transition = "";
+    arrow.label.style.transition = "";
+    animatePathDrawDashed(arrow.path);
+  }
+
+  function fadeOutArrow(arrow){
+    arrow.path.style.display = "";
+    arrow.label.style.display = "";
+    arrow.path.style.transition = "opacity .28s ease";
+    arrow.label.style.transition = "opacity .28s ease";
+    arrow.path.style.opacity = "0";
+    arrow.label.style.opacity = "0";
+  }
+
+  function fadeInArrowNoDraw(arrow){
+    arrow.path.style.display = "";
+    arrow.label.style.display = "";
+    arrow.path.style.transition = "opacity .28s ease";
+    arrow.label.style.transition = "opacity .28s ease";
+    arrow.path.style.strokeDashoffset = "0";
+    arrow.path.style.opacity = "0";
+    arrow.label.style.opacity = "0";
+    requestAnimationFrame(() => {
+      arrow.path.style.opacity = "1";
+      arrow.label.style.opacity = "1";
+    });
+  }
+
+  function progressiveRevealUnitTicksBetween(a, b, durationMs){
+    if (!cfg.showUnitTicks) return;
+
+    const dir = (b >= a) ? 1 : -1;
+    const aa = Math.round(a);
+    const bb = Math.round(b);
+
+    const vals = [];
+    for (let v = aa + dir; v !== bb; v += dir){
+      if (v === 0) continue;
+      if (v === Q.e) continue;
+      vals.push(v);
+    }
+    for (const v of vals) refs.ensureUnitTickForValue(v);
+    scheduleProgressiveTicks(vals, refs.unitTickMap, durationMs);
+  }
+
+  function maxState(){ return Q.crossing ? 4 : 2; }
+
+  function updateNavButtons(){
+    backBtn.disabled = (stepState <= 0);
+    fwdBtn.disabled = (stepState >= maxState());
+  }
+
+  function applyState(){
+    hideArrow(refs.arrowA0);
+    hideArrow(refs.arrow0E);
+    hideArrow(refs.arrowAE);
+
+    hideEndDot();
+    hideAnswerLabel();
+
+    const crossing = Q.crossing;
+
+    if (stepState === 0){
+      updateNavButtons();
+      return;
+    }
+
+    if (!crossing){
+      if (stepState >= 1){
+        showArrowWithAnimation(refs.arrowAE);
+        revealEndDot();
+        progressiveRevealUnitTicksBetween(Q.a, Q.e, 2000);
+      }
+      if (stepState >= 2){
+        revealAnswerLabel();
+      }
+      updateNavButtons();
+      return;
+    }
+
+    if (stepState === 1){
+      showArrowWithAnimation(refs.arrowA0);
+      progressiveRevealUnitTicksBetween(Q.a, 0, 2000);
+      updateNavButtons();
+      return;
+    }
+
+    if (stepState === 2){
+      refs.arrowA0.path.style.display = "";
+      refs.arrowA0.label.style.display = "";
+      showArrowWithAnimation(refs.arrow0E);
+      revealEndDot();
+      progressiveRevealUnitTicksBetween(0, Q.e, 2000);
+      updateNavButtons();
+      return;
+    }
+
+    if (stepState === 3){
+      refs.arrowA0.path.style.display = "";
+      refs.arrowA0.label.style.display = "";
+      refs.arrow0E.path.style.display = "";
+      refs.arrow0E.label.style.display = "";
+      revealEndDot();
+      revealAnswerLabel();
+      updateNavButtons();
+      return;
+    }
+
+    if (stepState >= 4){
+      refs.arrowA0.path.style.display = "";
+      refs.arrowA0.label.style.display = "";
+      refs.arrow0E.path.style.display = "";
+      refs.arrow0E.label.style.display = "";
+      revealEndDot();
+      revealAnswerLabel();
+
+      fadeOutArrow(refs.arrowA0);
+      fadeOutArrow(refs.arrow0E);
+      fadeInArrowNoDraw(refs.arrowAE);
+
+      updateNavButtons();
+      return;
+    }
+  }
+
+  function setQuestionText(){
+    qBox.textContent = formatQuestion(Q.a, Q.e);
+  }
+
+  function newQuestion(){
+    Q = generateQuestion();
+    stepState = 0;
+    setQuestionText();
+    buildScene();
+    updateNavButtons();
+  }
+
+  function resetQuestion(){
+    stepState = 0;
+    buildScene();
+    updateNavButtons();
+  }
+
+  function stepForward(){
+    if (stepState < maxState()){
+      stepState++;
+      applyState();
+    }
+  }
+
+  function stepBack(){
+    if (stepState > 0){
+      const target = stepState - 1;
+      buildScene();
+      stepState = 0;
+      for (let s=1; s<=target; s++){
+        stepState = s;
+        applyState();
+      }
+      updateNavButtons();
+    }
+  }
+
+  // -----------------------------
+  // Settings handlers
+  // -----------------------------
+  function clampLevelKey(k){
+    return LEVELS[k] ? k : "mild";
+  }
+  function loadLevelKey(){
+    try { return clampLevelKey(localStorage.getItem(SETTINGS_KEY) || "mild"); }
+    catch { return "mild"; }
+  }
+  function saveLevelKey(k){
+    try { localStorage.setItem(SETTINGS_KEY, k); } catch {}
+  }
+
+  function syncSettingsUI(){
+    levelSelect.value = levelKey;
+    levelPill.textContent = LEVELS[levelKey].name;
+
+    const s = LEVELS[levelKey];
+    const stepTxt = (s.step === 1) ? "integers only"
+                  : (s.step === 0.5) ? "steps of 0.5"
+                  : "1 decimal place";
+    const tickTxt = s.showUnitTicks ? "Unit ticks animate between values." : "No unit ticks between values (start/0/end only).";
+
+    settingsHelp.textContent =
+      `${s.name}: range ${s.min} to ${s.max}, ${stepTxt}. ${tickTxt}`;
+  }
+
+  function openDrawer(){
+    syncSettingsUI();
+    overlay.classList.add("show");
+    drawer.classList.add("show");
+    overlay.setAttribute("aria-hidden","false");
+    drawer.setAttribute("aria-hidden","false");
+  }
+  function closeDrawer(){
+    overlay.classList.remove("show");
+    drawer.classList.remove("show");
+    overlay.setAttribute("aria-hidden","true");
+    drawer.setAttribute("aria-hidden","true");
+  }
+
+  function applyLevel(key){
+    levelKey = clampLevelKey(key);
+    cfg = LEVELS[levelKey];
+    saveLevelKey(levelKey);
+    syncSettingsUI();
+    newQuestion();
+  }
+
+  // -----------------------------
+  // Wire up events
+  // -----------------------------
+  newBtn.addEventListener('click', () => newQuestion());
+  resetBtn.addEventListener('click', () => resetQuestion());
+  document.getElementById('backBtn').addEventListener('click', () => stepBack());
+  document.getElementById('fwdBtn').addEventListener('click', () => stepForward());
+
+  settingsBtn.addEventListener("click", () => openDrawer());
+  closeDrawerBtn.addEventListener("click", () => closeDrawer());
+  overlay.addEventListener("click", () => closeDrawer());
+
+  cancelSettingsBtn.addEventListener("click", () => closeDrawer());
+
+  applySettingsBtn.addEventListener("click", () => {
+    applyLevel(levelSelect.value);
+    closeDrawer();
+  });
+
+  levelSelect.addEventListener("change", () => {
+    const k = clampLevelKey(levelSelect.value);
+    levelPill.textContent = LEVELS[k].name;
+
+    const s = LEVELS[k];
+    const stepTxt = (s.step === 1) ? "integers only"
+                  : (s.step === 0.5) ? "steps of 0.5"
+                  : "1 decimal place";
+    const tickTxt = s.showUnitTicks ? "Unit ticks animate between values." : "No unit ticks between values (start/0/end only).";
+    settingsHelp.textContent = `${s.name}: range ${s.min} to ${s.max}, ${stepTxt}. ${tickTxt}`;
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const drawerOpen = drawer.classList.contains("show");
+    if (drawerOpen){
+      if (e.key === "Escape"){ e.preventDefault(); closeDrawer(); }
+      return;
+    }
+
+    if (e.code === "Space"){ e.preventDefault(); newQuestion(); return; }
+    if (e.key === "ArrowRight"){ e.preventDefault(); stepForward(); return; }
+    if (e.key === "ArrowLeft"){ e.preventDefault(); stepBack(); return; }
+    if (e.key.toLowerCase() === "r"){ e.preventDefault(); resetQuestion(); return; }
+  });
+
+  // -----------------------------
+  // Init
+  // -----------------------------
+  levelKey = loadLevelKey();
+  cfg = LEVELS[levelKey];
+  syncSettingsUI();
+  newQuestion();
+})();
+</script>
+</body>
+</html>
