@@ -107,6 +107,15 @@
       text-align:center;
     }
 
+    /* NEW: question row moved under buttons */
+    .qRowUnder{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      margin: 8px 0 6px;
+    }
+
     .btnrow{
       display:flex;
       gap:10px;
@@ -128,6 +137,43 @@
     button:active{ transform: scale(.98); }
     button.primary{ background: var(--accent); color:#fff; }
     button.danger{ background:#fee2e2; color:#991b1b; }
+
+    /* -----------------------------
+       Tools dropdown (minimal add)
+       ----------------------------- */
+    .toolsWrap{ position: relative; display:inline-block; }
+    .toolsMenu{
+      position:absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      width: 260px;
+      max-width: 90vw;
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 18px 36px rgba(0,0,0,.12);
+      padding: 10px;
+      display:none;
+      z-index: 800;
+    }
+    .toolsMenu.show{ display:block; }
+    .toolsMenuTitle{
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+      padding: 6px 8px 8px;
+    }
+    .toolsMenuItem{
+      width:100%;
+      text-align:left;
+      background: transparent;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 10px;
+      font-weight: 950;
+      cursor:pointer;
+    }
+    .toolsMenuItem:hover{ background:#f3f4f6; }
 
     .stage{
       margin-top: 14px;
@@ -357,16 +403,27 @@
           <span>Back to Mills Maths Tools</span>
         </a>
 
-        <div class="qRow" aria-label="Question">
-          <div class="qLabel">Question:</div>
-          <div id="qBox" class="qBox">—</div>
-        </div>
-
         <div class="btnrow">
+          <!-- Tools dropdown (minimal add) -->
+          <div class="toolsWrap">
+            <button id="toolsBtn" title="Tools">Tools ▲</button>
+            <div id="toolsMenu" class="toolsMenu" role="menu" aria-label="Tools menu">
+              <div class="toolsMenuTitle">Open in a new tab</div>
+              <button class="toolsMenuItem" type="button" data-open="student-quiz.html">Student Quiz</button>
+              <button class="toolsMenuItem" type="button" data-open="student-worksheet.html">Worksheet Creator</button>
+            </div>
+          </div>
+
           <button id="settingsBtn" title="Teacher settings">Teacher settings</button>
           <button id="resetBtn" class="danger" title="Reset this question (R)">Reset</button>
           <button id="newBtn" class="primary" title="New question (Space)">New Q</button>
         </div>
+      </div>
+
+      <!-- MOVED: Question now centred below buttons, above diagram -->
+      <div class="qRowUnder" aria-label="Question">
+        <div class="qLabel">Question:</div>
+        <div id="qBox" class="qBox">—</div>
       </div>
 
       <div class="stage">
@@ -474,6 +531,22 @@
   const levelSelect = document.getElementById('levelSelect');
   const levelPill = document.getElementById('levelPill');
   const settingsHelp = document.getElementById('settingsHelp');
+
+  // Tools dropdown (minimal add)
+  const toolsBtn = document.getElementById('toolsBtn');
+  const toolsMenu = document.getElementById('toolsMenu');
+
+  function openTools(){
+    toolsMenu.classList.add("show");
+    toolsBtn.textContent = "Tools ▲";
+  }
+  function closeTools(){
+    toolsMenu.classList.remove("show");
+    toolsBtn.textContent = "Tools ▲";
+  }
+  function toggleTools(){
+    toolsMenu.classList.contains("show") ? closeTools() : openTools();
+  }
 
   function syncSettingsUI(){
     levelSelect.value = levelKey;
@@ -1065,6 +1138,26 @@
   document.getElementById('backBtn').addEventListener('click', () => stepBack());
   document.getElementById('fwdBtn').addEventListener('click', () => stepForward());
 
+  // Tools dropdown events (minimal add)
+  toolsBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleTools();
+  });
+
+  toolsMenu.addEventListener("click", (e) => {
+    const item = e.target.closest("[data-open]");
+    if (!item) return;
+    const href = item.getAttribute("data-open");
+    if (href) window.open(href, "_blank", "noopener,noreferrer");
+    closeTools();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!toolsMenu.classList.contains("show")) return;
+    if (!e.target.closest(".toolsWrap")) closeTools();
+  });
+
   settingsBtn.addEventListener("click", () => openDrawer());
   closeDrawerBtn.addEventListener("click", () => closeDrawer());
   overlay.addEventListener("click", () => closeDrawer());
@@ -1092,6 +1185,12 @@
     const drawerOpen = drawer.classList.contains("show");
     if (drawerOpen){
       if (e.key === "Escape"){ e.preventDefault(); closeDrawer(); }
+      return;
+    }
+
+    const toolsOpen = toolsMenu.classList.contains("show");
+    if (toolsOpen){
+      if (e.key === "Escape"){ e.preventDefault(); closeTools(); }
       return;
     }
 
