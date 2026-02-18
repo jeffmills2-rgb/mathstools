@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integer Add/Subtract – Student Quiz</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+
+      --accent:#2563eb;
+
+      --ok:#16a34a;
+      --bad:#dc2626;
+      --okSoft:#dcfce7;
+      --badSoft:#fee2e2;
+
+      --line:#111827;
+      --tick:#111827;
+      --dot:#111827;
+
+      /* arrows */
+      --arrowW: 7;
+      --dash: 16;
+      --gap: 14;
+      --animMs: 2000;
+      --easeOut: cubic-bezier(.16,.84,.21,1);
+
+      --footer-h: 44px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1100px; margin: 18px auto 38px; padding: 0 16px; }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      position: relative;
+    }
+
+    .topRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .backBtn{
+      border:none;
+      background: transparent;
+      font-weight: 950;
+      color: var(--ink);
+      cursor:pointer;
+      padding: 10px 10px;
+      border-radius: 12px;
+      transition: background .15s ease, transform .04s ease;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      user-select:none;
+    }
+    .backBtn:hover{ background:#eef2ff; }
+    .backBtn:active{ transform: scale(.98); }
+
+    .resetBtn{
+      border:none;
+      font-weight: 950;
+      cursor:pointer;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #fee2e2;
+      color:#991b1b;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .resetBtn:active{ transform: scale(.98); }
+
+    .levelBannerWrap{
+      flex: 1 1 380px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width: 240px;
+    }
+    .levelBanner{
+      width: min(720px, 100%);
+      border-radius: 16px;
+      padding: 10px 14px;
+      color: #fff;
+      font-weight: 1000;
+      font-size: 34px;
+      letter-spacing: .2px;
+      text-align:center;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+      user-select:none;
+      background: linear-gradient(180deg, #1d4ed8, #1e3a8a);
+    }
+
+    .progressRow{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      margin: 10px 6px 12px;
+    }
+    .progressTrack{
+      flex:1;
+      height: 10px;
+      border-radius: 999px;
+      background:#e5e7eb;
+      overflow:hidden;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.08);
+    }
+    .progressFill{
+      height: 100%;
+      width: 0%;
+      background:#2563eb;
+      border-radius: 999px;
+      transition: width .35s ease;
+    }
+    .qCounter{
+      font-weight: 950;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .stage{
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background: linear-gradient(180deg,#ffffff, #f9fafb);
+      min-height: 520px;
+      position: relative;
+      overflow:hidden;
+    }
+
+    .questionRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .qLabel{
+      font-weight: 950;
+      color: var(--ink);
+      font-size: 18px;
+    }
+    .qBox{
+      border: 2px solid #111827;
+      border-radius: 16px;
+      padding: 10px 16px;
+      font-weight: 1000;
+      font-size: 26px;
+      letter-spacing: .2px;
+      background:#fff;
+      min-width: 220px;
+      text-align:center;
+    }
+
+    .svgWrap{
+      width:100%;
+      height: 330px;
+      margin-top: 6px;
+    }
+
+    .answerRow{
+      margin-top: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      flex-wrap:wrap;
+      padding-bottom: 8px;
+    }
+    .answerLabel{
+      font-weight: 950;
+      font-size: 18px;
+    }
+    .answerInput{
+      width: 220px;
+      max-width: 80vw;
+      border: 2px solid #111827;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 18px;
+      font-weight: 950;
+      outline:none;
+      text-align:center;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      background:#fff;
+    }
+    .answerInput.ok{
+      border-color: var(--ok);
+      box-shadow: 0 0 0 4px rgba(22,163,74,.15);
+      background: var(--okSoft);
+    }
+    .answerInput.bad{
+      border-color: var(--bad);
+      box-shadow: 0 0 0 4px rgba(220,38,38,.12);
+      background: var(--badSoft);
+    }
+
+    .enterBtn{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 1000;
+      cursor:pointer;
+      background: #1d4ed8;
+      color:#fff;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .enterBtn:active{ transform: scale(.98); }
+    .enterBtn[disabled]{ opacity:.55; cursor:not-allowed; transform:none; }
+
+    .nextBtn{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      background: #111827;
+      color:#fff;
+      transition: transform .04s ease, opacity .2s ease;
+      user-select:none;
+      display:none;
+    }
+    .nextBtn:active{ transform: scale(.98); }
+    .nextBtn.show{ display:inline-block; }
+
+    .hintMini{
+      text-align:center;
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 850;
+      color: var(--muted);
+    }
+
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+    .mmtFooter a{
+      color: var(--accent);
+      text-decoration:none;
+      font-weight: 950;
+    }
+    .mmtFooter a:hover{ text-decoration: underline; }
+
+    /* MODALS */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.42);
+      backdrop-filter: blur(2px);
+      display:none;
+      z-index: 1000;
+    }
+    .overlay.show{ display:block; }
+
+    .modal{
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      width: min(820px, 92vw);
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.18);
+      z-index: 1100;
+      display:none;
+      overflow:hidden;
+    }
+    .modal.show{ display:block; }
+
+    .modalHead{
+      padding: 22px 24px 10px;
+      font-weight: 1000;
+      font-size: 24px;
+    }
+    .modalBody{
+      padding: 0 24px 22px;
+    }
+
+    /* Level chooser rows */
+    .levelList{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      padding: 6px 0 2px;
+    }
+    .levelRow{
+      border-radius: 18px;
+      padding: 18px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border: 2px solid rgba(17,24,39,.10);
+    }
+    .levelName{
+      font-weight: 1000;
+      font-size: 20px;
+    }
+    .startBtn{
+      border:none;
+      border-radius: 14px;
+      padding: 10px 16px;
+      font-weight: 1000;
+      background:#2563eb;
+      color:#fff;
+      cursor:pointer;
+      transition: transform .04s ease, filter .15s ease;
+      user-select:none;
+    }
+    .startBtn:active{ transform: scale(.98); }
+
+    .lvl-sweet{ background:#dcfce7; border-color: rgba(22,163,74,.25); }
+    .lvl-mild{ background:#dbeafe; border-color: rgba(37,99,235,.22); }
+    .lvl-medium{ background:#fef9c3; border-color: rgba(245,158,11,.25); }
+    .lvl-spicy{ background:#ffedd5; border-color: rgba(249,115,22,.25); }
+    .lvl-extra{ background:#ffe4e6; border-color: rgba(239,68,68,.25); }
+
+    /* Certificate modal */
+    .certWrap{
+      display:flex;
+      gap: 18px;
+      align-items:flex-start;
+      padding: 8px 0 8px;
+    }
+    .trophyBox{
+      width: 96px;
+      height: 96px;
+      border-radius: 20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 48px;
+      background:#fff7ed;
+      border: 2px solid rgba(249,115,22,.18);
+      flex: 0 0 auto;
+    }
+    .certText{
+      font-weight: 1000;
+      font-size: 38px;
+      margin: 0;
+      line-height: 1.1;
+    }
+    .certSub{
+      margin-top: 10px;
+      color:#6b7280;
+      font-weight: 950;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .modalActions{
+      padding: 18px 24px 22px;
+      display:flex;
+      gap: 12px;
+      justify-content:flex-start;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn.primary{ background:#2563eb; color:#fff; }
+    .btn.danger{ background:#fee2e2; color:#991b1b; }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; transform:none; }
+
+    /* SVG styles */
+    .baseline{ stroke: var(--line); stroke-width: 8; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 8; stroke-linecap: round; }
+
+    .tickUnit{
+      stroke: rgba(17,24,39,.35);
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+
+    .dot{ fill: var(--dot); opacity: 0.94; }
+    .dot.zero{ opacity: 0.84; }
+    .dot.end{ fill: var(--ok); opacity: 0.96; }
+
+    .label{
+      font-size: 34px;
+      font-weight: 1000;
+      fill: #111827;
+    }
+    .label.end{ fill: var(--ok); }
+
+    .arrowPath{
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: var(--arrowW);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: var(--dash) var(--gap);
+    }
+    .arrowLabel{
+      font-size: 36px;
+      font-weight: 1000;
+      fill: var(--accent);
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(0.92); opacity: 0; }
+      60%  { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .pop { animation: pop .22s ease-out both; transform-origin:center; }
+
+    @media (max-width: 520px){
+      .levelBanner{ font-size: 28px; }
+      .certText{ font-size: 30px; }
+      .certSub{ font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topRow">
+        <button id="backToLevelsBtn" class="backBtn" title="Back to level menu">← Back</button>
+
+        <div class="levelBannerWrap">
+          <div id="levelBanner" class="levelBanner">Level: —</div>
+        </div>
+
+        <button id="resetQuizBtn" class="resetBtn" title="Reset quiz">Reset</button>
+      </div>
+
+      <div class="progressRow">
+        <div class="progressTrack" aria-label="progress">
+          <div id="progressFill" class="progressFill"></div>
+        </div>
+        <div id="qCounter" class="qCounter">Question 1 / 15</div>
+      </div>
+
+      <div class="stage">
+        <div class="questionRow">
+          <div class="qLabel">Question:</div>
+          <div id="qBox" class="qBox">—</div>
+        </div>
+
+        <svg id="svg" class="svgWrap" viewBox="0 0 1000 360" role="img" aria-label="number line"></svg>
+
+        <div class="answerRow">
+          <div class="answerLabel">Answer:</div>
+          <input id="answerInput" class="answerInput" inputmode="decimal" autocomplete="off" placeholder="Type..." />
+          <button id="enterBtn" class="enterBtn">Enter</button>
+          <button id="nextBtn" class="nextBtn">Next →</button>
+        </div>
+
+        <div class="hintMini">
+          Tip: Press <b>Enter</b> to submit · If the reveal is playing, press <b>Enter</b> to skip it · Press <b>Enter</b> again to go next.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+  <!-- LEVEL CHOOSER MODAL -->
+  <div id="overlay" class="overlay"></div>
+
+  <div id="levelModal" class="modal" role="dialog" aria-modal="true" aria-label="Choose your level">
+    <div class="modalHead">Choose your level</div>
+    <div class="modalBody">
+      <div class="levelList">
+        <div class="levelRow lvl-sweet">
+          <div class="levelName">Sweet</div>
+          <button class="startBtn" data-level="sweet">Start</button>
+        </div>
+        <div class="levelRow lvl-mild">
+          <div class="levelName">Mild</div>
+          <button class="startBtn" data-level="mild">Start</button>
+        </div>
+        <div class="levelRow lvl-medium">
+          <div class="levelName">Medium</div>
+          <button class="startBtn" data-level="medium">Start</button>
+        </div>
+        <div class="levelRow lvl-spicy">
+          <div class="levelName">Spicy</div>
+          <button class="startBtn" data-level="spicy">Start</button>
+        </div>
+        <div class="levelRow lvl-extra">
+          <div class="levelName">Extra hot</div>
+          <button class="startBtn" data-level="extraHot">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATE MODAL -->
+  <div id="certModal" class="modal" role="dialog" aria-modal="true" aria-label="Certificate">
+    <div class="modalHead">Certificate</div>
+    <div class="modalBody">
+      <div class="certWrap">
+        <div class="trophyBox">🏆</div>
+        <div>
+          <div id="certLine1" class="certText">You completed Sweet and got 0 out of 15. Paste a screenshot into Google Classroom.</div>
+          <div class="certSub">Screenshot this and paste into Google Classroom.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modalActions">
+      <button id="copyBtn" class="btn primary">Copy to clipboard</button>
+      <button id="closeCertBtn" class="btn">Close</button>
+      <button id="backToMenuBtn" class="btn danger">Back to level menu</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // -----------------------------
+  // Levels + rules
+  // -----------------------------
+  const LEVELS = {
+    // NOTE: Sweet + Medium now show unit ticks (to match your request)
+    sweet:    { name:"Sweet",     min:-10,  max: 10,  step:1,   showUnitTicks:true,  banner:["#16a34a","#0f766e"] },
+    mild:     { name:"Mild",      min:-20,  max: 10,  step:1,   showUnitTicks:true,  banner:["#2563eb","#1e3a8a"] },
+    medium:   { name:"Medium",    min:-100, max: 50,  step:1,   showUnitTicks:true,  banner:["#f59e0b","#b45309"] },
+    spicy:    { name:"Spicy",     min:-100, max: 50,  step:0.5, showUnitTicks:false, banner:["#f97316","#c2410c"] },
+    extraHot: { name:"Extra hot", min:-100, max: 50,  step:0.1, showUnitTicks:false, banner:["#ef4444","#be123c"] }
+  };
+
+  const QUIZ_LEN = 15;
+
+  // -----------------------------
+  // DOM
+  // -----------------------------
+  const overlay = document.getElementById("overlay");
+  const levelModal = document.getElementById("levelModal");
+  const certModal = document.getElementById("certModal");
+
+  const levelBanner = document.getElementById("levelBanner");
+  const qCounter = document.getElementById("qCounter");
+  const progressFill = document.getElementById("progressFill");
+
+  const qBox = document.getElementById("qBox");
+  const svg = document.getElementById("svg");
+
+  const answerInput = document.getElementById("answerInput");
+  const enterBtn = document.getElementById("enterBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  const resetQuizBtn = document.getElementById("resetQuizBtn");
+  const backToLevelsBtn = document.getElementById("backToLevelsBtn");
+
+  const certLine1 = document.getElementById("certLine1");
+  const copyBtn = document.getElementById("copyBtn");
+  const closeCertBtn = document.getElementById("closeCertBtn");
+  const backToMenuBtn = document.getElementById("backToMenuBtn");
+
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+  function showModal(modal){
+    overlay.classList.add("show");
+    modal.classList.add("show");
+  }
+  function hideModal(modal){
+    modal.classList.remove("show");
+    if (![levelModal, certModal].some(m => m.classList.contains("show"))){
+      overlay.classList.remove("show");
+    }
+  }
+
+  function clearSVG(){ while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function el(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNode(str, attrs={}){
+    const t = el('text', attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  function scaledRandom(min, max, step){
+    const scale = (step === 1) ? 1 : (step === 0.5 ? 2 : 10);
+    const imin = Math.round(min * scale);
+    const imax = Math.round(max * scale);
+    const v = randInt(imin, imax) / scale;
+    if (scale === 2) return Math.round(v*2)/2;
+    if (scale === 10) return Math.round(v*10)/10;
+    return Math.round(v);
+  }
+
+  function fmtNum(n, cfg){
+    if (cfg.step === 1) return String(Math.round(n));
+    if (cfg.step === 0.5){
+      const s = (Math.round(n * 2) / 2).toFixed(1);
+      return s.endsWith(".0") ? s.slice(0,-2) : s;
+    }
+    const s = (Math.round(n * 10) / 10).toFixed(1);
+    return s.endsWith(".0") ? s.slice(0,-2) : s;
+  }
+
+  function signed(n, cfg){
+    const v = (cfg.step === 1) ? Math.round(n)
+            : (cfg.step === 0.5) ? (Math.round(n*2)/2)
+            : (Math.round(n*10)/10);
+    const s = fmtNum(Math.abs(v), cfg);
+    return (v > 0) ? `+${s}` : (v < 0 ? `-${s}` : "0");
+  }
+
+  function crossesZero(a, e){
+    if (a === 0 || e === 0) return false;
+    return (a > 0 && e < 0) || (a < 0 && e > 0);
+  }
+
+  function formatQuestion(a, e, cfg){
+    const d = e - a;
+    const b = Math.abs(d);
+    const op = (d >= 0) ? "+" : "−";
+    return `${fmtNum(a,cfg)} ${op} ${fmtNum(b,cfg)}`;
+  }
+
+  function parseStudentNumber(str){
+    const clean = String(str).trim().replace(/,/g,'');
+    if (!clean) return NaN;
+    return Number(clean);
+  }
+
+  function isCorrect(student, expected, cfg){
+    if (!Number.isFinite(student)) return false;
+    const tol = (cfg.step === 0.1) ? 0.05 : (cfg.step === 0.5 ? 0.001 : 0.0000001);
+    return Math.abs(student - expected) <= tol;
+  }
+
+  function nowStamp(){
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // -----------------------------
+  // Quiz state
+  // -----------------------------
+  let levelKey = null;
+  let cfg = null;
+
+  let qIndex = 0;
+  let score = 0;
+
+  // phases for Enter-key behaviour
+  // awaiting: user typing answer
+  // revealing: animation/reveal is playing
+  // revealed: reveal finished, ready for next
+  let phase = "awaiting";
+
+  let Q = null;
+  let stepState = 0;
+  let refs = null;
+
+  // reveal skipper
+  let skipRequested = false;
+  let sleepHandle = null;
+  let sleepResolver = null;
+
+  // -----------------------------
+  // Number line scene (with reveal steps)
+  // -----------------------------
+  function computeViewRange(a, e, cfg){
+    const lo = Math.min(a, 0, e);
+    const hi = Math.max(a, 0, e);
+    const span = Math.max(1, hi - lo);
+
+    const basePad = (cfg.step === 1) ? 0.25 : 0.30;
+    const pad = Math.min(12, Math.max(4, Math.ceil(span * basePad)));
+
+    let vmin = Math.max(cfg.min, lo - pad);
+    let vmax = Math.min(cfg.max, hi + pad);
+
+    if (vmax - vmin < 2){
+      vmin = Math.max(cfg.min, vmin - 1);
+      vmax = Math.min(cfg.max, vmax + 1);
+    }
+    return { vmin, vmax };
+  }
+
+  function animatePathDrawDashed(path){
+    const len = path.getTotalLength();
+    path.style.strokeDashoffset = String(len);
+    path.style.transition = "none";
+    path.getBoundingClientRect();
+    path.style.transition = `stroke-dashoffset var(--animMs) var(--easeOut)`;
+    path.style.strokeDashoffset = "0";
+  }
+
+  function buildScene(){
+    clearSVG();
+    refs = null;
+
+    const { a, e } = Q;
+    const { vmin, vmax } = computeViewRange(a, e, cfg);
+
+    const left = 90, right = 910;
+    const yLine = 230;
+    const tickTop = yLine - 26;
+    const tickBot = yLine + 26;
+    const dotR = 12;
+    const labelY = 325;
+
+    const x = (v) => {
+      const t = (v - vmin) / (vmax - vmin);
+      return left + t * (right - left);
+    };
+
+    function arcPath(x1, x2, yBase, lift){
+      const mx = (x1 + x2) / 2;
+      const yPeak = yBase - lift;
+      return `M ${x1} ${yBase} Q ${mx} ${yPeak} ${x2} ${yBase}`;
+    }
+
+    svg.appendChild(el('line', {
+      x1:left, y1:yLine, x2:right, y2:yLine,
+      class: "baseline"
+    }));
+
+    const defs = el('defs', {});
+    const marker = el('marker', {
+      id: "arrowHeadTiny",
+      markerWidth: "4",
+      markerHeight: "4",
+      refX: "3.6",
+      refY: "2",
+      orient: "auto",
+      markerUnits: "strokeWidth",
+      viewBox: "0 0 10 4"
+    }, [
+      el('path', { d: "M 0 0 L 10 2 L 0 4 z", fill: "var(--accent)" })
+    ]);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    const gTicks = el('g', { id: "ticks" });
+    const gArrows = el('g', { id: "arrows" });
+    const gMajor = el('g', { id: "major" });
+
+    // Unit ticks: for levels that show ticks, DO include the answer position too
+    // (so there's no "missing tick" giveaway).
+    if (cfg.showUnitTicks){
+      const startInt = Math.ceil(vmin);
+      const endInt = Math.floor(vmax);
+      for (let v = startInt; v <= endInt; v++){
+        // keep start and zero clean (they already have major ticks)
+        if (v === 0 || v === a) continue;
+
+        const xi = x(v);
+        gTicks.appendChild(el('line', {
+          x1: xi, y1: yLine - 12,
+          x2: xi, y2: yLine + 12,
+          class: "tickUnit"
+        }));
+      }
+    }
+
+    function addMajor(val, dotClass, labelClass){
+      const xi = x(val);
+
+      const tick = el('line', {
+        x1: xi, y1: tickTop, x2: xi, y2: tickBot,
+        class: "tickMajor"
+      });
+
+      const dot = el('circle', {
+        cx: xi, cy: yLine,
+        r: dotR,
+        class: `dot ${dotClass || ""}`.trim()
+      });
+
+      const label = textNode(fmtNum(val,cfg), {
+        x: xi, y: labelY,
+        "text-anchor":"middle",
+        class: `label ${labelClass || ""}`.trim()
+      });
+
+      gMajor.appendChild(tick);
+      gMajor.appendChild(dot);
+      gMajor.appendChild(label);
+
+      return { tick, dot, label, x: xi, val };
+    }
+
+    const start = addMajor(a, "", "");
+    const zero  = addMajor(0, "zero", "");
+
+    const endDot = el('circle', {
+      cx: x(e), cy: yLine,
+      r: dotR,
+      class: "dot end"
+    });
+    endDot.style.display = "none";
+    gMajor.appendChild(endDot);
+
+    const endLabel = textNode(fmtNum(e,cfg), {
+      x: x(e), y: labelY,
+      "text-anchor":"middle",
+      class: "label end"
+    });
+    endLabel.style.display = "none";
+    gMajor.appendChild(endLabel);
+
+    const xA = start.x;
+    const x0 = zero.x;
+    const xE = x(e);
+
+    const liftA0 = Math.min(140, Math.max(72, Math.abs(x0 - xA) * 0.28));
+    const lift0E = Math.min(140, Math.max(72, Math.abs(xE - x0) * 0.28));
+    const liftAE = Math.min(155, Math.max(85, Math.abs(xE - xA) * 0.24));
+
+    function makeArrow(x1, x2, lift){
+      const path = el('path', {
+        d: arcPath(x1, x2, yLine, lift),
+        class: "arrowPath",
+        "marker-end": "url(#arrowHeadTiny)"
+      });
+      const label = textNode("", {
+        x: (x1 + x2)/2, y: yLine - lift - 12,
+        "text-anchor":"middle",
+        class: "arrowLabel"
+      });
+      path.style.display = "none";
+      label.style.display = "none";
+      gArrows.appendChild(path);
+      gArrows.appendChild(label);
+      return { path, label };
+    }
+
+    const arrowA0 = makeArrow(xA, x0, liftA0);
+    const arrow0E = makeArrow(x0, xE, lift0E);
+    const arrowAE = makeArrow(xA, xE, liftAE);
+
+    arrowA0.label.textContent = signed(0 - a, cfg);
+    arrow0E.label.textContent = signed(e, cfg);
+    arrowAE.label.textContent = signed(e - a, cfg);
+
+    svg.appendChild(gTicks);
+    svg.appendChild(gArrows);
+    svg.appendChild(gMajor);
+
+    refs = {
+      start, zero,
+      endDot, endLabel,
+      arrowA0, arrow0E, arrowAE
+    };
+  }
+
+  function hideArrow(arrow){
+    arrow.path.style.display = "none";
+    arrow.label.style.display = "none";
+    arrow.path.style.opacity = "";
+    arrow.label.style.opacity = "";
+    arrow.path.style.transition = "";
+    arrow.label.style.transition = "";
+    arrow.path.style.strokeDashoffset = "";
+  }
+  function showArrowWithAnimation(arrow){
+    arrow.path.style.display = "";
+    arrow.label.style.display = "";
+    arrow.path.style.opacity = "1";
+    arrow.label.style.opacity = "1";
+    animatePathDrawDashed(arrow.path);
+  }
+  function fadeOutArrow(arrow){
+    arrow.path.style.display = "";
+    arrow.label.style.display = "";
+    arrow.path.style.transition = "opacity .28s ease";
+    arrow.label.style.transition = "opacity .28s ease";
+    arrow.path.style.opacity = "0";
+    arrow.label.style.opacity = "0";
+  }
+  function fadeInArrowNoDraw(arrow){
+    arrow.path.style.display = "";
+    arrow.label.style.display = "";
+    arrow.path.style.transition = "opacity .28s ease";
+    arrow.label.style.transition = "opacity .28s ease";
+    arrow.path.style.strokeDashoffset = "0";
+    arrow.path.style.opacity = "0";
+    arrow.label.style.opacity = "0";
+    requestAnimationFrame(() => {
+      arrow.path.style.opacity = "1";
+      arrow.label.style.opacity = "1";
+    });
+  }
+
+  function revealEnd(){
+    refs.endDot.style.display = "";
+    refs.endLabel.style.display = "";
+    refs.endLabel.classList.remove("pop");
+    requestAnimationFrame(() => refs.endLabel.classList.add("pop"));
+  }
+  function hideEnd(){
+    refs.endDot.style.display = "none";
+    refs.endLabel.style.display = "none";
+    refs.endLabel.classList.remove("pop");
+  }
+
+  function maxState(){
+    return Q.crossing ? 4 : 2;
+  }
+
+  function applyState(){
+    hideArrow(refs.arrowA0);
+    hideArrow(refs.arrow0E);
+    hideArrow(refs.arrowAE);
+    hideEnd();
+
+    const crossing = Q.crossing;
+
+    if (stepState === 0) return;
+
+    if (!crossing){
+      if (stepState >= 1){
+        showArrowWithAnimation(refs.arrowAE);
+        refs.endDot.style.display = "";
+      }
+      if (stepState >= 2){
+        revealEnd();
+      }
+      return;
+    }
+
+    if (stepState === 1){
+      showArrowWithAnimation(refs.arrowA0);
+      return;
+    }
+
+    if (stepState === 2){
+      refs.arrowA0.path.style.display = "";
+      refs.arrowA0.label.style.display = "";
+      showArrowWithAnimation(refs.arrow0E);
+      refs.endDot.style.display = "";
+      return;
+    }
+
+    if (stepState === 3){
+      refs.arrowA0.path.style.display = "";
+      refs.arrowA0.label.style.display = "";
+      refs.arrow0E.path.style.display = "";
+      refs.arrow0E.label.style.display = "";
+      refs.endDot.style.display = "";
+      revealEnd();
+      return;
+    }
+
+    if (stepState >= 4){
+      refs.arrowA0.path.style.display = "";
+      refs.arrowA0.label.style.display = "";
+      refs.arrow0E.path.style.display = "";
+      refs.arrow0E.label.style.display = "";
+      refs.endDot.style.display = "";
+      revealEnd();
+
+      fadeOutArrow(refs.arrowA0);
+      fadeOutArrow(refs.arrow0E);
+      fadeInArrowNoDraw(refs.arrowAE);
+      return;
+    }
+  }
+
+  function sleep(ms){
+    return new Promise(resolve => {
+      sleepResolver = resolve;
+      sleepHandle = setTimeout(() => {
+        sleepHandle = null;
+        sleepResolver = null;
+        resolve();
+      }, ms);
+    });
+  }
+
+  function requestSkipReveal(){
+    skipRequested = true;
+    if (sleepHandle){
+      clearTimeout(sleepHandle);
+      sleepHandle = null;
+    }
+    if (sleepResolver){
+      const r = sleepResolver;
+      sleepResolver = null;
+      r();
+    }
+  }
+
+  async function autoReveal(){
+    phase = "revealing";
+    skipRequested = false;
+
+    const m = maxState();
+    for (let s = 1; s <= m; s++){
+      if (skipRequested) break;
+      stepState = s;
+      applyState();
+      await sleep(1000);
+    }
+
+    // If skipped mid-way: jump to final state immediately
+    if (skipRequested){
+      stepState = m;
+      applyState();
+    }
+
+    phase = "revealed";
+  }
+
+  // -----------------------------
+  // Question generation
+  // -----------------------------
+  function generateQuestion(){
+    for (let tries=0; tries<1600; tries++){
+      const a = scaledRandom(cfg.min, cfg.max, cfg.step);
+      const e = scaledRandom(cfg.min, cfg.max, cfg.step);
+      if (e === a) continue;
+
+      const aa = (cfg.step === 1) ? Math.round(a)
+               : (cfg.step === 0.5) ? (Math.round(a*2)/2)
+               : (Math.round(a*10)/10);
+      const ee = (cfg.step === 1) ? Math.round(e)
+               : (cfg.step === 0.5) ? (Math.round(e*2)/2)
+               : (Math.round(e*10)/10);
+
+      const b = Math.abs(ee - aa);
+      if (b === 0) continue;
+
+      return { a: aa, e: ee, crossing: crossesZero(aa, ee) };
+    }
+    return { a: 5, e: -8, crossing: true };
+  }
+
+  // -----------------------------
+  // UI updates
+  // -----------------------------
+  function setBanner(){
+    const L = LEVELS[levelKey];
+    levelBanner.textContent = `Level: ${L.name}`;
+    levelBanner.style.background = `linear-gradient(180deg, ${L.banner[0]}, ${L.banner[1]})`;
+    progressFill.style.background = L.banner[0];
+  }
+
+  function setProgress(){
+    const shown = Math.min(QUIZ_LEN, qIndex + 1);
+    qCounter.textContent = `Question ${shown} / ${QUIZ_LEN}`;
+    const pct = (qIndex / QUIZ_LEN) * 100;
+    progressFill.style.width = `${pct}%`;
+  }
+
+  function setQuestionText(){
+    qBox.textContent = formatQuestion(Q.a, Q.e, cfg);
+  }
+
+  function resetInputStyles(){
+    answerInput.classList.remove("ok","bad");
+  }
+
+  function lockForReveal(){
+    enterBtn.disabled = true;
+    answerInput.disabled = true;
+    resetQuizBtn.disabled = true;
+    backToLevelsBtn.disabled = true;
+  }
+  function unlockAfterReveal(){
+    resetQuizBtn.disabled = false;
+    backToLevelsBtn.disabled = false;
+  }
+
+  function showNext(show){
+    nextBtn.classList.toggle("show", !!show);
+  }
+
+  // -----------------------------
+  // Quiz flow
+  // -----------------------------
+  function loadQuestion(){
+    // stop any reveal timers
+    requestSkipReveal();
+    skipRequested = false;
+    phase = "awaiting";
+
+    resetInputStyles();
+    answerInput.value = "";
+    answerInput.placeholder = "Type...";
+    answerInput.disabled = false;
+
+    enterBtn.disabled = false;
+
+    stepState = 0;
+    Q = generateQuestion();
+    setQuestionText();
+
+    buildScene();
+    applyState();
+
+    showNext(false);
+    nextBtn.classList.remove("show");
+
+    answerInput.focus();
+  }
+
+  function startQuiz(key){
+    levelKey = key;
+    cfg = LEVELS[levelKey];
+
+    qIndex = 0;
+    score = 0;
+
+    setBanner();
+    setProgress();
+
+    hideModal(levelModal);
+    loadQuestion();
+  }
+
+  function resetQuizSameLevel(){
+    if (!levelKey) return;
+    qIndex = 0;
+    score = 0;
+    setProgress();
+    loadQuestion();
+  }
+
+  async function submitAnswer(){
+    if (phase !== "awaiting") return;
+
+    const student = parseStudentNumber(answerInput.value);
+    const expected = Q.e;
+
+    const correct = isCorrect(student, expected, cfg);
+
+    resetInputStyles();
+    answerInput.classList.add(correct ? "ok" : "bad");
+
+    if (correct) score++;
+
+    // lock input while revealing
+    lockForReveal();
+
+    // reveal
+    await autoReveal();
+
+    // ready for next
+    unlockAfterReveal();
+    showNext(true);
+    enterBtn.disabled = false;      // Enter now used for "next"
+  }
+
+  function nextQuestion(){
+    if (phase !== "revealed") return;
+
+    if (qIndex >= QUIZ_LEN - 1){
+      progressFill.style.width = "100%";
+      showCertificate();
+      return;
+    }
+    qIndex++;
+    setProgress();
+    loadQuestion();
+  }
+
+  function showCertificate(){
+    const L = LEVELS[levelKey].name;
+    certLine1.textContent = `You completed ${L} and got ${score} out of ${QUIZ_LEN}. Paste a screenshot into Google Classroom.`;
+    showModal(certModal);
+  }
+
+  async function copyCertificate(){
+    const L = LEVELS[levelKey].name;
+    const text =
+`🏆 Mills Maths Tools – Integer Add/Subtract Quiz
+Level: ${L}
+Score: ${score} / ${QUIZ_LEN}
+Completed: ${nowStamp()}
+
+(Submit a screenshot or paste this into Google Classroom.)`;
+
+    try{
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => copyBtn.textContent = "Copy to clipboard", 1200);
+    }catch{
+      window.prompt("Copy this text:", text);
+    }
+  }
+
+  function backToLevelMenu(){
+    requestSkipReveal();
+    hideModal(certModal);
+    showModal(levelModal);
+
+    levelKey = null;
+    cfg = null;
+    phase = "awaiting";
+
+    levelBanner.textContent = "Level: —";
+    levelBanner.style.background = "linear-gradient(180deg, #1d4ed8, #1e3a8a)";
+    qBox.textContent = "—";
+    qCounter.textContent = `Question 1 / ${QUIZ_LEN}`;
+    progressFill.style.width = "0%";
+    progressFill.style.background = "#2563eb";
+    clearSVG();
+
+    answerInput.value = "";
+    resetInputStyles();
+    showNext(false);
+  }
+
+  // -----------------------------
+  // Events
+  // -----------------------------
+  document.querySelectorAll(".startBtn").forEach(btn => {
+    btn.addEventListener("click", () => startQuiz(btn.dataset.level));
+  });
+
+  resetQuizBtn.addEventListener("click", () => {
+    // only allow reset if not mid-reveal
+    if (!levelKey) return;
+    if (phase === "revealing") return;
+    resetQuizSameLevel();
+  });
+
+  backToLevelsBtn.addEventListener("click", () => {
+    if (phase === "revealing") return;
+    backToLevelMenu();
+  });
+
+  enterBtn.addEventListener("click", () => {
+    if (phase === "awaiting") submitAnswer();
+    else if (phase === "revealing") requestSkipReveal();
+    else if (phase === "revealed") nextQuestion();
+  });
+
+  nextBtn.addEventListener("click", () => nextQuestion());
+
+  // BIG CHANGE: Enter key now handles submit/skip/next depending on phase.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+
+    // don't interfere with modals
+    if (levelModal.classList.contains("show") || certModal.classList.contains("show")) return;
+
+    e.preventDefault();
+
+    if (phase === "awaiting"){
+      submitAnswer();
+      return;
+    }
+    if (phase === "revealing"){
+      requestSkipReveal();   // first Enter during reveal = skip to end
+      return;
+    }
+    if (phase === "revealed"){
+      nextQuestion();        // next Enter = next question
+      return;
+    }
+  });
+
+  // Certificate buttons
+  copyBtn.addEventListener("click", copyCertificate);
+
+  closeCertBtn.addEventListener("click", () => {
+    hideModal(certModal);
+  });
+
+  backToMenuBtn.addEventListener("click", () => {
+    hideModal(certModal);
+    backToLevelMenu();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      if (certModal.classList.contains("show")){
+        hideModal(certModal);
+      } else if (!levelModal.classList.contains("show")){
+        if (phase !== "revealing") backToLevelMenu();
+      }
+    }
+  });
+
+  // -----------------------------
+  // Init
+  // -----------------------------
+  showModal(levelModal);
+  clearSVG();
+})();
+</script>
+</body>
+</html>
