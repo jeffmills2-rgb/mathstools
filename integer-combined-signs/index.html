@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integer Add/Subtract – Vectors</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 18px;
+
+      --line:#111827;
+      --tick:#111827;
+
+      --pos:#16a34a; /* green */
+      --neg:#dc2626; /* red  */
+      --eq:#2563eb;  /* blue for = result */
+      --hi:#fde68a;  /* yellow highlight */
+
+      --footer-h: 44px;
+
+      --animMs: 2000;
+      --easeOut: cubic-bezier(.16,.84,.21,1);
+
+      /* ↓ 50% smaller */
+      --arrowW: 4;
+      --dash: 16;
+      --gap: 14;
+
+      /* smaller arrowheads */
+      --headW: 6;
+      --headH: 6;
+
+      --pad: 3;     /* autoscale padding */
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1100px; margin: 22px auto 40px; padding: 0 16px; }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      position: relative;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .brandBack{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      text-decoration:none;
+      color: var(--ink);
+      font-weight: 950;
+      border: 1px solid var(--border);
+      background:#fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      user-select:none;
+      white-space: nowrap;
+    }
+    .brandBack img{ height: 26px; width:auto; display:block; }
+    .brandBack span{ font-size: 13px; letter-spacing:.1px; }
+
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    button{
+      border:none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background: #2563eb; color:#fff; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .qRowUnder{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      margin: 8px 0 10px;
+      flex-wrap:wrap;
+    }
+    .qLabel{
+      font-weight: 950;
+      color: var(--ink);
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .qBox{
+      border: 2px solid #111827;
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-weight: 950;
+      font-size: 26px;
+      letter-spacing: .2px;
+      background:#fff;
+      min-width: 240px;
+      text-align:center;
+      line-height: 1.15;
+    }
+
+    .qLine{ display:block; margin: 0; }
+    .qLine.small{
+      margin-top: 8px;
+      font-size: 22px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity .18s ease, transform .18s ease;
+      font-weight: 950;
+    }
+    .qLine.small.show{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hl{
+      background: var(--hi);
+      border-radius: 10px;
+      padding: 2px 6px;
+      display:inline-block;
+    }
+    .eq{ color: var(--eq); font-weight: 950; }
+    .ansPill{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(37,99,235,.18);
+      color: var(--eq);
+      font-weight: 950;
+    }
+
+    .stage{
+      margin-top: 8px;
+      padding: 12px 12px 18px;
+      border-radius: 16px;
+      background: linear-gradient(180deg,#ffffff, #f9fafb);
+      border: 1px solid #e5e7eb;
+      overflow:hidden;
+      position: relative;
+      min-height: 540px; /* a touch taller */
+    }
+
+    .svgwrap{ width:100%; height: 440px; display:block; }
+
+    /* person overlay */
+    .personLayer{
+      position:absolute;
+      left:0; top:0; right:0; bottom:0;
+      pointer-events:none;
+    }
+    .person{
+      position:absolute;
+      width: 96px;          /* slightly smaller */
+      height: auto;
+      transform: translate(-50%, -50%);
+      top: 135px;           /* sits ABOVE vector 2 now */
+      left: 50%;
+      image-rendering: auto;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));
+    }
+
+    .stageActions{
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display:flex;
+      justify-content:center;
+      gap: 18px;
+      pointer-events:none;
+    }
+    .navBtn{
+      pointer-events:auto;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 950;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+      min-width: 60px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+    }
+    .navBtn[disabled]{ opacity: .45; cursor:not-allowed; transform:none; }
+
+    .hintRow{
+      margin-top: 10px;
+      text-align:center;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+    .mmtFooter a{ color: #2563eb; text-decoration:none; font-weight: 950; }
+    .mmtFooter a:hover{ text-decoration: underline; }
+
+    /* SVG styles */
+    .baseline{ stroke: var(--line); stroke-width: 7; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 7; stroke-linecap: round; }
+
+    .tickUnit{
+      stroke: rgba(17,24,39,.40);
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: 1;
+    }
+
+    .dot{ fill: #111827; opacity: 0.92; }
+    .dot.zero{ opacity: 0.85; }
+
+    .label{
+      font-size: 26px;
+      font-weight: 950;
+      fill: #111827;
+    }
+
+    .arrowPath{
+      fill: none;
+      stroke-width: var(--arrowW);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: var(--dash) var(--gap);
+    }
+    .arrowLabel{
+      font-size: 30px;
+      font-weight: 950;
+    }
+
+    .trackerDot{
+      fill: #111827;
+      opacity: 0;
+      transition: opacity .12s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <a class="brandBack" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
+          <img src="mmt.png" alt="MMT logo">
+          <span>Back to Mills Maths Tools</span>
+        </a>
+
+        <div class="btnrow">
+          <button id="resetBtn" class="danger" title="Reset (R)">Reset</button>
+          <button id="newBtn" class="primary" title="New question (Space)">New Q</button>
+        </div>
+      </div>
+
+      <div class="qRowUnder" aria-label="Question">
+        <div class="qLabel">Question:</div>
+        <div id="qBox" class="qBox">
+          <span id="qMain" class="qLine">—</span>
+          <span id="qSimpl" class="qLine small">—</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <svg id="svg" class="svgwrap" viewBox="0 0 1000 440" role="img" aria-label="number line"></svg>
+
+        <div class="personLayer">
+          <img id="personImg" class="person" src="still.png" alt="person">
+        </div>
+
+        <div class="stageActions">
+          <button id="backBtn" class="navBtn" title="Back (←)" aria-label="Back">◀</button>
+          <button id="fwdBtn" class="navBtn primary" title="Forward (→)" aria-label="Forward">▶</button>
+        </div>
+      </div>
+
+      <div class="hintRow">
+        Shortcuts: ← / → step · Space = New Q · R = Reset
+      </div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------
+  // Config (single difficulty)
+  // ------------------------------------------------------------
+  const MIN = -20;
+  const MAX =  20;
+  const PAD =  3;
+
+  const ANIM_MS = 2000;
+
+  const SPRITES = {
+    still: "still.png",
+    right: ["walk-right-1.png", "walk-right-2.png"],
+    left:  ["walk-left-1.png",  "walk-left-2.png"]
+  };
+
+  // ------------------------------------------------------------
+  // DOM
+  // ------------------------------------------------------------
+  const svg = document.getElementById("svg");
+  const qMain = document.getElementById("qMain");
+  const qSimpl = document.getElementById("qSimpl");
+
+  const personImg = document.getElementById("personImg");
+
+  const newBtn = document.getElementById("newBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const backBtn = document.getElementById("backBtn");
+  const fwdBtn  = document.getElementById("fwdBtn");
+
+  // ------------------------------------------------------------
+  // Helpers
+  // ------------------------------------------------------------
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+  function nonZeroRand(min,max){
+    for (let i=0;i<2000;i++){
+      const v = randInt(min,max);
+      if (v !== 0) return v;
+    }
+    return 1;
+  }
+
+  function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+
+  function el(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNode(str, attrs={}){
+    const t = el("text", attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  const abs = Math.abs;
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
+  function fmtSignedVector(n){
+    // labels on vectors: "-3" for negatives, "7" for positives (no +)
+    return (n < 0) ? String(n) : String(abs(n));
+  }
+
+  function questionHTML(a, op, b, highlightPart){
+    // highlightPart: "a" | "op" | "b" | null
+    const opChar = (op === "+") ? "+" : "−";
+    const aStr = String(a);
+    const bStr = (b < 0) ? `(${b})` : `(+${b})`;
+    const wrap = (txt, which) => (highlightPart === which) ? `<span class="hl">${txt}</span>` : txt;
+    return `${wrap(aStr,"a")} ${wrap(opChar,"op")} ${wrap(bStr,"b")}`;
+  }
+
+  function simplifiedLine(a, op, b, res){
+    // clean second line: remove parentheses and combine signs
+    let cleanOp = op;
+    let cleanB  = b;
+
+    if (op === "+" && b < 0){
+      cleanOp = "−";
+      cleanB  = abs(b);
+    } else if (op === "−"){
+      if (b < 0){
+        cleanOp = "+";
+        cleanB  = abs(b);
+      } else {
+        cleanOp = "−";
+        cleanB  = b;
+      }
+    } else if (op === "+" && b > 0){
+      cleanOp = "+";
+      cleanB  = b;
+    }
+
+    const opChar = (cleanOp === "+") ? "+" : "−";
+    return `${a} ${opChar} ${cleanB} = <span class="ansPill">${res}</span>`;
+  }
+
+  function setPersonStill(){
+    personImg.src = SPRITES.still;
+  }
+  function setPersonStaticFacingByOp(op){
+    // reveal 2: show a static first-frame facing based on separating sign
+    personImg.src = (op === "+") ? SPRITES.right[0] : SPRITES.left[0];
+  }
+
+  function spriteFramesForDirection(dir){
+    // dir: "+" (right frames) or "−" (left frames)
+    return (dir === "+") ? SPRITES.right : SPRITES.left;
+  }
+
+  function setPersonX(viewX){
+    const pct = (viewX / 1000) * 100;
+    personImg.style.left = pct + "%";
+  }
+
+  // ------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------
+  let Q = null;          // {a, b, op, res}
+  let stepState = 0;     // 0 load, 1 reveal a, 2 reveal op, 3 reveal b+answer
+  let refs = null;
+
+  let walkingTimer = null;
+  function stopWalking(){
+    if (walkingTimer) { clearInterval(walkingTimer); walkingTimer = null; }
+  }
+  function startWalking(dir){
+    stopWalking();
+    const frames = spriteFramesForDirection(dir);
+    let i = 0;
+    personImg.src = frames[0];
+    walkingTimer = setInterval(() => {
+      i = (i + 1) % frames.length;
+      personImg.src = frames[i];
+    }, 220);
+  }
+
+  // ------------------------------------------------------------
+  // Question generation (keep EVERYTHING on-page)
+  // ------------------------------------------------------------
+  function generateQuestion(){
+    // Keep a, b, res all within [-20, 20] to avoid falling off.
+    for (let tries=0; tries<5000; tries++){
+      const a = nonZeroRand(MIN, MAX);
+      const b = nonZeroRand(MIN, MAX);
+      const op = (Math.random() < 0.5) ? "+" : "−";
+      const res = (op === "+") ? (a + b) : (a - b);
+      if (res < MIN || res > MAX) continue;
+      return { a, b, op, res };
+    }
+    // fallback (should never hit)
+    return { a: 5, b: -3, op: "+", res: 2 };
+  }
+
+  // ------------------------------------------------------------
+  // Autoscale range
+  // ------------------------------------------------------------
+  function computeViewRange(a, res){
+    const lo = Math.min(0, a, res) - PAD;
+    const hi = Math.max(0, a, res) + PAD;
+    // No clamp needed now (res guaranteed inside), but keep safe:
+    return {
+      vmin: clamp(lo, MIN, MAX),
+      vmax: clamp(hi, MIN, MAX)
+    };
+  }
+
+  // ------------------------------------------------------------
+  // Build SVG scene (ONCE per question)
+  // ------------------------------------------------------------
+  function buildScene(){
+    clearSVG();
+    refs = null;
+
+    const { a, b, op, res } = Q;
+    const { vmin, vmax } = computeViewRange(a, res);
+
+    const left = 80, right = 920;
+    const yLine = 325;
+    const yArrow1 = yLine;
+    const yArrow2 = 215;   // moved DOWN so the person sits above it
+    const tickTop = yLine - 22;
+    const tickBot = yLine + 22;
+    const dotR = 10;
+    const labelY = 405;
+
+    const x = (v) => {
+      const t = (v - vmin) / (vmax - vmin);
+      return left + t * (right - left);
+    };
+
+    // defs: small arrowhead marker
+    const defs = el("defs");
+    const mk = el("marker",{
+      id:"arrowHeadSmall",
+      markerWidth:"6",
+      markerHeight:"6",
+      refX:"6",
+      refY:"3",
+      orient:"auto",
+      markerUnits:"strokeWidth",
+      viewBox:"0 0 6 6"
+    },[
+      el("path",{ d:"M 0 0 L 6 3 L 0 6 z", fill:"currentColor" })
+    ]);
+    defs.appendChild(mk);
+    svg.appendChild(defs);
+
+    // baseline
+    svg.appendChild(el("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
+
+    const gTicks = el("g");
+    const gUnit  = el("g");
+    const gArrows= el("g");
+
+    function addMajor(val, dotClass){
+      const xi = x(val);
+      gTicks.appendChild(el("line",{ x1:xi, y1:tickTop, x2:xi, y2:tickBot, class:"tickMajor" }));
+      gTicks.appendChild(el("circle",{ cx:xi, cy:yLine, r:dotR, class:`dot ${dotClass||""}`.trim() }));
+      gTicks.appendChild(textNode(String(val), { x:xi, y:labelY, "text-anchor":"middle", class:"label" }));
+      return { x: xi, val };
+    }
+
+    // unit ticks across visible range
+    for (let v = Math.ceil(vmin); v <= Math.floor(vmax); v++){
+      if (v === 0) continue;
+      const xi = x(v);
+      gUnit.appendChild(el("line", { x1:xi, y1:yLine-12, x2:xi, y2:yLine+12, class:"tickUnit" }));
+    }
+
+    svg.appendChild(gUnit);
+    svg.appendChild(gTicks);
+
+    const zero = addMajor(0, "zero");
+
+    function makeArrow(x1, x2, y, color, labelText){
+      const path = el("line",{
+        x1, y1:y, x2:x1, y2:y,
+        class:"arrowPath",
+        "marker-end":"url(#arrowHeadSmall)"
+      });
+      path.style.stroke = color;
+      path.style.color  = color; // marker uses currentColor
+      path.style.display = "none";
+
+      const lx = (x1 + x2) / 2;
+      const ly = y - 18;
+      const label = textNode(labelText, { x:lx, y:ly, "text-anchor":"middle", class:"arrowLabel" });
+      label.style.fill = color;
+      label.style.display = "none";
+
+      const tip = el("circle",{ cx:x1, cy:y, r:"6", class:"trackerDot" });
+      tip.style.display = "none";
+
+      gArrows.appendChild(path);
+      gArrows.appendChild(label);
+      gArrows.appendChild(tip);
+
+      return { path, label, tip, x1, x2, y, color };
+    }
+
+    const x0 = x(0);
+    const xA = x(a);
+    const xR = x(res);
+
+    const colA = (a >= 0) ? "var(--pos)" : "var(--neg)";
+    const colB = (b >= 0) ? "var(--pos)" : "var(--neg)";
+
+    // displacement on number line for second move:
+    // + : a -> a+b
+    // − : a -> a-b  (disp = -b)
+    const disp2 = (op === "+") ? b : -b;
+    const xEnd2 = x(a + disp2); // should match xR
+
+    const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a));
+    const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b));
+
+    svg.appendChild(gArrows);
+
+    // major ticks for a and res (hidden initially)
+    const aTick = addMajor(a, "");
+    const resTick = addMajor(res, "");
+
+    // Hide a & res triplets initially (0 already visible)
+    const tickNodes = Array.from(gTicks.childNodes);
+    for (let i=3; i<tickNodes.length; i++){
+      tickNodes[i].style.display = "none";
+    }
+
+    refs = {
+      vmin, vmax,
+      xFn: x,
+      x0, xA, xR, xEnd2,
+      arrowA, arrowB,
+      tickNodes,
+      showA: () => { for (let i=3; i<6; i++) tickNodes[i].style.display = ""; },
+      showRes: () => { for (let i=6; i<9; i++) tickNodes[i].style.display = ""; }
+    };
+
+    setPersonX(x0);
+  }
+
+  // ------------------------------------------------------------
+  // Arrow / person animations
+  // ------------------------------------------------------------
+  function showArrowLabel(arrow){
+    arrow.label.style.display = "";
+  }
+  function hideArrow(arrow){
+    arrow.path.style.display = "none";
+    arrow.label.style.display = "none";
+    arrow.tip.style.display = "none";
+    arrow.tip.style.opacity = "0";
+  }
+
+  function animateLineArrow(arrow, durationMs){
+    return new Promise((resolve) => {
+      const { path, tip, x1, x2, y } = arrow;
+
+      path.style.display = "";
+      tip.style.display  = "";
+      tip.style.opacity  = "1";
+
+      const start = performance.now();
+
+      function frame(now){
+        const t = clamp((now - start) / durationMs, 0, 1);
+        const eased = 1 - Math.pow(1 - t, 2);
+
+        const cx = x1 + (x2 - x1) * eased;
+
+        path.setAttribute("x1", String(x1));
+        path.setAttribute("y1", String(y));
+        path.setAttribute("x2", String(cx));
+        path.setAttribute("y2", String(y));
+
+        tip.setAttribute("cx", String(cx));
+        tip.setAttribute("cy", String(y));
+
+        if (t < 1){
+          requestAnimationFrame(frame);
+        } else {
+          path.setAttribute("x2", String(x2));
+          tip.setAttribute("cx", String(x2));
+          resolve();
+        }
+      }
+
+      // reset
+      path.setAttribute("x2", String(x1));
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function showArrowInstant(arrow){
+    arrow.path.style.display = "";
+    arrow.path.setAttribute("x2", String(arrow.x2));
+    arrow.tip.style.display = "";
+    arrow.tip.setAttribute("cx", String(arrow.x2));
+    arrow.tip.setAttribute("cy", String(arrow.y));
+  }
+
+  function movePerson(fromX, toX, dir, durationMs){
+    return new Promise((resolve) => {
+      startWalking(dir);
+      const start = performance.now();
+
+      function frame(now){
+        const t = clamp((now - start) / durationMs, 0, 1);
+        const eased = 1 - Math.pow(1 - t, 2);
+        const cx = fromX + (toX - fromX) * eased;
+        setPersonX(cx);
+
+        if (t < 1){
+          requestAnimationFrame(frame);
+        } else {
+          stopWalking();
+          setPersonStill(); // ✅ end of movement returns to still.png
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Question text
+  // ------------------------------------------------------------
+  function setQuestionText(highlightPart=null){
+    const { a, b, op } = Q;
+    qMain.innerHTML = questionHTML(a, op, b, highlightPart);
+  }
+
+  function setSimplified(show){
+    const { a, b, op, res } = Q;
+    if (!show){
+      qSimpl.classList.remove("show");
+      qSimpl.innerHTML = "";
+      return;
+    }
+    const orig = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill">${res}</span></span>`;
+    qMain.innerHTML = orig;
+    qSimpl.innerHTML = simplifiedLine(a, op, b, res);
+    qSimpl.classList.add("show");
+  }
+
+  // ------------------------------------------------------------
+  // Step machine (NO full re-animation on each step)
+  // ------------------------------------------------------------
+  function updateNavButtons(){
+    backBtn.disabled = (stepState <= 0);
+    fwdBtn.disabled  = (stepState >= 3);
+  }
+
+  function goToStep0(){
+    stepState = 0;
+    setSimplified(false);
+    setQuestionText(null);
+    setPersonStill();
+    setPersonX(refs.x0);
+    hideArrow(refs.arrowA);
+    hideArrow(refs.arrowB);
+
+    // hide a/res ticks
+    for (let i=3; i<refs.tickNodes.length; i++){
+      refs.tickNodes[i].style.display = "none";
+    }
+    updateNavButtons();
+  }
+
+  async function doStep1(){
+    // reveal a: walking direction depends on sign of FIRST TERM (a)
+    stepState = 1;
+    setSimplified(false);
+    setQuestionText("a");
+    refs.showA();
+
+    showArrowLabel(refs.arrowA);
+
+    const dir1 = (Q.a >= 0) ? "+" : "−";
+    await Promise.all([
+      animateLineArrow(refs.arrowA, ANIM_MS),
+      movePerson(refs.x0, refs.xA, dir1, ANIM_MS)
+    ]);
+
+    updateNavButtons();
+  }
+
+  async function doStep2(){
+    // reveal operator only: STATIC facing based on separating sign
+    stepState = 2;
+    setQuestionText("op");
+
+    // ✅ quick flip (no re-animation)
+    setPersonStaticFacingByOp(Q.op);
+
+    updateNavButtons();
+  }
+
+  async function doStep3(){
+    stepState = 3;
+    setQuestionText("b");
+
+    showArrowLabel(refs.arrowB);
+    refs.showRes();
+
+    // reveal 3: movement uses separating sign for walking sprite,
+    // but actual motion is along number line to the result.
+    const dir2 = (Q.op === "+") ? "+" : "−";
+
+    await Promise.all([
+      animateLineArrow(refs.arrowB, ANIM_MS),
+      movePerson(refs.xA, refs.xR, dir2, ANIM_MS)
+    ]);
+
+    setSimplified(true);
+    updateNavButtons();
+  }
+
+  async function stepForward(){
+    if (stepState >= 3) return;
+    if (stepState === 0) return doStep1();
+    if (stepState === 1) return doStep2();
+    if (stepState === 2) return doStep3();
+  }
+
+  function stepBack(){
+    if (stepState <= 0) return;
+    // easiest + stable: rebuild and fast-forward instantly to previous step
+    const target = stepState - 1;
+
+    buildScene();
+    goToStep0();
+
+    if (target >= 1){
+      // show step1 instantly
+      setQuestionText("a");
+      refs.showA();
+      showArrowLabel(refs.arrowA);
+      refs.arrowA.path.style.display = "";
+      refs.arrowA.path.setAttribute("x2", String(refs.arrowA.x2));
+      refs.arrowA.tip.style.display = "";
+      refs.arrowA.tip.setAttribute("cx", String(refs.arrowA.x2));
+      setPersonX(refs.xA);
+      setPersonStill();
+      stepState = 1;
+    }
+    if (target >= 2){
+      setQuestionText("op");
+      setPersonStaticFacingByOp(Q.op);
+      stepState = 2;
+    }
+    // never include step3 when stepping back
+    setSimplified(false);
+    qSimpl.classList.remove("show");
+    updateNavButtons();
+  }
+
+  // ------------------------------------------------------------
+  // New / reset
+  // ------------------------------------------------------------
+  function newQuestion(){
+    Q = generateQuestion();
+    buildScene();
+    goToStep0();
+  }
+
+  function resetQuestion(){
+    buildScene();
+    goToStep0();
+  }
+
+  // ------------------------------------------------------------
+  // Events
+  // ------------------------------------------------------------
+  newBtn.addEventListener("click", () => newQuestion());
+  resetBtn.addEventListener("click", () => resetQuestion());
+  backBtn.addEventListener("click", () => stepBack());
+  fwdBtn.addEventListener("click", () => stepForward());
+
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space"){ e.preventDefault(); newQuestion(); return; }
+    if (e.key === "ArrowRight"){ e.preventDefault(); stepForward(); return; }
+    if (e.key === "ArrowLeft"){ e.preventDefault(); stepBack(); return; }
+    if (e.key.toLowerCase() === "r"){ e.preventDefault(); resetQuestion(); return; }
+  });
+
+  // ------------------------------------------------------------
+  // Init
+  // ------------------------------------------------------------
+  newQuestion();
+})();
+</script>
+</body>
+</html>
