@@ -22,6 +22,9 @@
       --eq:#2563eb;  /* blue for = result */
       --hi:#fde68a;  /* yellow highlight */
 
+      --ok:#16a34a;
+      --okSoft: rgba(22,163,74,.22);
+
       --footer-h: 44px;
 
       --animMs: 2000;
@@ -146,6 +149,7 @@
       display:inline-block;
     }
     .eq{ color: var(--eq); font-weight: 950; }
+
     .ansPill{
       display:inline-block;
       padding: 2px 8px;
@@ -153,14 +157,15 @@
       background: rgba(37,99,235,.18);
       color: var(--eq);
       font-weight: 950;
+      border: 2px solid transparent;
     }
-
-    /* ✅ Final answer emphasis (green + slightly bigger) */
-    .ansPill.finalAns{
-      background: #dcfce7;
-      color: #166534;
-      font-size: 1.15em;
-      box-shadow: inset 0 0 0 2px rgba(22,101,52,.18);
+    /* final reveal styling */
+    .ansPill.final{
+      background: rgba(22,163,74,.18);
+      color: #0f5132;
+      border-color: rgba(22,163,74,.28);
+      font-size: 1.12em;
+      padding: 2px 10px;
     }
 
     .stage{
@@ -183,7 +188,7 @@
     }
     .person{
       position:absolute;
-      width: 92px;
+      width: 92px;              /* 👈 easiest place to experiment (change this number) */
       height: auto;
       transform: translate(-50%, -50%);
       top: 120px; /* moved up a bit to reduce clash with arrow 2 */
@@ -277,6 +282,19 @@
       fill: #111827;
       opacity: 0;
       transition: opacity .12s ease;
+    }
+
+    /* number line answer highlight (hidden until final reveal) */
+    .ansHalo{
+      fill: var(--okSoft);
+      stroke: rgba(22,163,74,.35);
+      stroke-width: 3;
+      display:none;
+    }
+    .ansGlowDot{
+      fill: rgba(22,163,74,.9);
+      opacity: .14;
+      display:none;
     }
   </style>
 </head>
@@ -390,7 +408,7 @@
     return `${wrap(aStr,"a")} ${wrap(opChar,"op")} ${wrap(bStr,"b")}`;
   }
 
-  function simplifiedLine(a, op, b, res){
+  function simplifiedLine(a, op, b, res, finalPill=false){
     let cleanOp = op;
     let cleanB  = b;
 
@@ -411,7 +429,8 @@
     }
 
     const opChar = (cleanOp === "+") ? "+" : "−";
-    return `${a} ${opChar} ${cleanB} = <span class="ansPill">${res}</span>`;
+    const pillClass = finalPill ? "ansPill final" : "ansPill";
+    return `${a} ${opChar} ${cleanB} = <span class="${pillClass}">${res}</span>`;
   }
 
   function setPersonStill(){ personImg.src = SPRITES.still; }
@@ -427,7 +446,7 @@
   }
 
   let Q = null;
-  let stepState = 0;
+  let stepState = 0; // now 0..4
   let refs = null;
 
   // ---- Enter-to-skip animation ----
@@ -541,6 +560,7 @@
     const gTicks = el("g");
     const gUnit  = el("g");
     const gArrows= el("g");
+    const gHL    = el("g"); // highlights
 
     function addMajor(val, dotClass){
       const xi = x(val);
@@ -557,6 +577,7 @@
     }
 
     svg.appendChild(gUnit);
+    svg.appendChild(gHL);
     svg.appendChild(gTicks);
 
     addMajor(0, "zero");
@@ -599,15 +620,20 @@
 
     const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a), "end");
 
-    // ✅ subtraction ALWAYS reverses the arrowhead (walk back along the vector)
-    let headSideB = (op === "-") ? "start" : "end";
-
+    // subtraction ALWAYS reverses the arrowhead (walk back along the vector)
+    const headSideB = (op === "-") ? "start" : "end";
     const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b), headSideB);
 
     svg.appendChild(gArrows);
 
     addMajor(a, "");
     addMajor(res, "");
+
+    // result highlight on number line (HIDDEN until final reveal)
+    const resHalo = el("circle", { cx:xR, cy:labelY-16, r:"22", class:"ansHalo" });
+    const resGlowDot = el("circle", { cx:xR, cy:yLine, r:"22", class:"ansGlowDot" });
+    gHL.appendChild(resGlowDot);
+    gHL.appendChild(resHalo);
 
     const tickNodes = Array.from(gTicks.childNodes);
     for (let i=3; i<tickNodes.length; i++){
@@ -618,10 +644,15 @@
       x0, xA, xR,
       arrowA, arrowB,
       tickNodes,
+      resHalo,
+      resGlowDot,
       showA: () => { for (let i=3; i<6; i++) tickNodes[i].style.display = ""; },
-      showRes: () => { for (let i=6; i<9; i++) tickNodes[i].style.display = ""; }
+      showRes: () => { for (let i=6; i<9; i++) tickNodes[i].style.display = ""; },
+      showResHighlight: () => { refs.resHalo.style.display = ""; refs.resGlowDot.style.display = ""; },
+      hideResHighlight: () => { refs.resHalo.style.display = "none"; refs.resGlowDot.style.display = "none"; }
     };
 
+    refs.hideResHighlight();
     setPersonX(x0);
   }
 
@@ -730,12 +761,7 @@
     qMain.innerHTML = questionHTML(a, op, b, highlightPart);
   }
 
-  function applyFinalAnswerHighlight(){
-    // add green emphasis to BOTH answer pills (main line + simplified line)
-    const pills = document.querySelectorAll(".ansPill");
-    pills.forEach(p => p.classList.add("finalAns"));
-  }
-
+  // final reveal only (step 4) should call this with show=true
   function setSimplified(show){
     const { a, b, op, res } = Q;
     if (!show){
@@ -743,18 +769,16 @@
       qSimpl.innerHTML = "";
       return;
     }
-    const orig = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill">${res}</span></span>`;
+    const pillClass = "ansPill final";
+    const orig = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="${pillClass}">${res}</span></span>`;
     qMain.innerHTML = orig;
-    qSimpl.innerHTML = simplifiedLine(a, op, b, res);
+    qSimpl.innerHTML = simplifiedLine(a, op, b, res, true);
     qSimpl.classList.add("show");
-
-    // ✅ final answer emphasis
-    applyFinalAnswerHighlight();
   }
 
   function updateNavButtons(){
     backBtn.disabled = (stepState <= 0);
-    fwdBtn.disabled  = (stepState >= 3);
+    fwdBtn.disabled  = (stepState >= 4);
   }
 
   function goToStep0(){
@@ -765,6 +789,8 @@
     setPersonX(refs.x0);
     hideArrow(refs.arrowA);
     hideArrow(refs.arrowB);
+
+    refs.hideResHighlight();
 
     for (let i=3; i<refs.tickNodes.length; i++){
       refs.tickNodes[i].style.display = "none";
@@ -780,8 +806,8 @@
 
     showArrowLabel(refs.arrowA);
 
-    const moveDir1 = (Q.a >= 0) ? "+" : "−";  // movement depends on sign
-    const spriteDir1 = "+";                  // ALWAYS walk-right for first vector
+    const moveDir1   = (Q.a >= 0) ? "+" : "−";  // movement still depends on sign
+    const spriteDir1 = "+";                     // ALWAYS walk-right for first vector
 
     const token = beginAnimToken();
     try{
@@ -803,14 +829,18 @@
     updateNavButtons();
   }
 
+  // ✅ Step 3: show/animate second vector + move person, BUT NO ANSWERS/LABELS YET
   async function doStep3(){
     stepState = 3;
+    setSimplified(false);
+    qSimpl.classList.remove("show");
     setQuestionText("b");
 
     showArrowLabel(refs.arrowB);
-    refs.showRes();
+    // IMPORTANT: do NOT show result tick/labels here
+    // refs.showRes();  <-- moved to step 4
+    refs.hideResHighlight();
 
-    // actual movement direction (where the person travels)
     const step2 = (Q.op === "+") ? Q.b : -Q.b;
     const moveDir  = (step2 >= 0) ? "+" : "−";
 
@@ -827,15 +857,29 @@
       endAnimToken();
     }
 
+    updateNavButtons();
+  }
+
+  // ✅ Step 4: reveal ALL answers (box + number line label/highlight)
+  function doStep4(){
+    stepState = 4;
+
+    // reveal result tick/label and highlight on the number line
+    refs.showRes();
+    refs.showResHighlight();
+
+    // reveal top answers/simplified line
     setSimplified(true);
+
     updateNavButtons();
   }
 
   async function stepForward(){
-    if (stepState >= 3) return;
+    if (stepState >= 4) return;
     if (stepState === 0) return doStep1();
     if (stepState === 1) return doStep2();
     if (stepState === 2) return doStep3();
+    if (stepState === 3) return doStep4();
   }
 
   function stepBack(){
@@ -859,9 +903,32 @@
       setPersonStaticFacingByOp(Q.op);
       stepState = 2;
     }
+    if (target >= 3){
+      // reconstruct step 3 state: second arrow + person at result, but NO answer labels
+      setQuestionText("b");
+      showArrowLabel(refs.arrowB);
+      snapArrowToEnd(refs.arrowB);
+      setPersonX(refs.xR);
+      setPersonStill();
+      refs.hideResHighlight();
+      // keep result tick/labels hidden
+      for (let i=6; i<9; i++) refs.tickNodes[i].style.display = "none";
+      stepState = 3;
+    }
+    if (target >= 4){
+      // step 4 state (shouldn't happen here because target=stepState-1, but safe)
+      refs.showRes();
+      refs.showResHighlight();
+      setSimplified(true);
+      stepState = 4;
+    }
 
-    setSimplified(false);
-    qSimpl.classList.remove("show");
+    // ensure simplified hidden unless we're exactly at step 4
+    if (stepState !== 4){
+      setSimplified(false);
+      qSimpl.classList.remove("show");
+    }
+
     updateNavButtons();
   }
 
