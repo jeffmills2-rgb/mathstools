@@ -25,18 +25,16 @@
       --footer-h: 44px;
 
       --animMs: 2000;
-      --easeOut: cubic-bezier(.16,.84,.21,1);
 
-      /* ↓ 50% smaller */
+      /* arrows */
       --arrowW: 4;
       --dash: 16;
       --gap: 14;
 
-      /* smaller arrowheads */
       --headW: 6;
       --headH: 6;
 
-      --pad: 3;     /* autoscale padding */
+      --pad: 3;
     }
 
     *{ box-sizing:border-box; }
@@ -157,6 +155,14 @@
       font-weight: 950;
     }
 
+    /* ✅ Final answer emphasis (green + slightly bigger) */
+    .ansPill.finalAns{
+      background: #dcfce7;
+      color: #166534;
+      font-size: 1.15em;
+      box-shadow: inset 0 0 0 2px rgba(22,101,52,.18);
+    }
+
     .stage{
       margin-top: 8px;
       padding: 12px 12px 18px;
@@ -165,12 +171,11 @@
       border: 1px solid #e5e7eb;
       overflow:hidden;
       position: relative;
-      min-height: 540px; /* a touch taller */
+      min-height: 540px;
     }
 
     .svgwrap{ width:100%; height: 440px; display:block; }
 
-    /* person overlay */
     .personLayer{
       position:absolute;
       left:0; top:0; right:0; bottom:0;
@@ -178,12 +183,11 @@
     }
     .person{
       position:absolute;
-      width: 96px;          /* slightly smaller */
+      width: 92px;
       height: auto;
       transform: translate(-50%, -50%);
-      top: 135px;           /* sits ABOVE vector 2 now */
+      top: 120px; /* moved up a bit to reduce clash with arrow 2 */
       left: 50%;
-      image-rendering: auto;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));
     }
 
@@ -239,10 +243,8 @@
     .mmtFooter a{ color: #2563eb; text-decoration:none; font-weight: 950; }
     .mmtFooter a:hover{ text-decoration: underline; }
 
-    /* SVG styles */
     .baseline{ stroke: var(--line); stroke-width: 7; stroke-linecap: round; }
     .tickMajor{ stroke: var(--tick); stroke-width: 7; stroke-linecap: round; }
-
     .tickUnit{
       stroke: rgba(17,24,39,.40);
       stroke-width: 3;
@@ -310,12 +312,12 @@
 
         <div class="stageActions">
           <button id="backBtn" class="navBtn" title="Back (←)" aria-label="Back">◀</button>
-          <button id="fwdBtn" class="navBtn primary" title="Forward (→)" aria-label="Forward">▶</button>
+          <button id="fwdBtn" class="navBtn primary" title="Forward (→ / Enter)" aria-label="Forward">▶</button>
         </div>
       </div>
 
       <div class="hintRow">
-        Shortcuts: ← / → step · Space = New Q · R = Reset
+        Shortcuts: ← / → step · Enter = skip/next · Space = New Q · R = Reset
       </div>
     </div>
   </div>
@@ -327,9 +329,6 @@
 
 <script>
 (() => {
-  // ------------------------------------------------------------
-  // Config (single difficulty)
-  // ------------------------------------------------------------
   const MIN = -20;
   const MAX =  20;
   const PAD =  3;
@@ -342,9 +341,6 @@
     left:  ["walk-left-1.png",  "walk-left-2.png"]
   };
 
-  // ------------------------------------------------------------
-  // DOM
-  // ------------------------------------------------------------
   const svg = document.getElementById("svg");
   const qMain = document.getElementById("qMain");
   const qSimpl = document.getElementById("qSimpl");
@@ -356,10 +352,9 @@
   const backBtn = document.getElementById("backBtn");
   const fwdBtn  = document.getElementById("fwdBtn");
 
-  // ------------------------------------------------------------
-  // Helpers
-  // ------------------------------------------------------------
   const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const abs = Math.abs;
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
   function nonZeroRand(min,max){
     for (let i=0;i<2000;i++){
@@ -383,16 +378,11 @@
     return t;
   }
 
-  const abs = Math.abs;
-  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-
   function fmtSignedVector(n){
-    // labels on vectors: "-3" for negatives, "7" for positives (no +)
     return (n < 0) ? String(n) : String(abs(n));
   }
 
   function questionHTML(a, op, b, highlightPart){
-    // highlightPart: "a" | "op" | "b" | null
     const opChar = (op === "+") ? "+" : "−";
     const aStr = String(a);
     const bStr = (b < 0) ? `(${b})` : `(+${b})`;
@@ -401,19 +391,18 @@
   }
 
   function simplifiedLine(a, op, b, res){
-    // clean second line: remove parentheses and combine signs
     let cleanOp = op;
     let cleanB  = b;
 
     if (op === "+" && b < 0){
-      cleanOp = "−";
+      cleanOp = "-";
       cleanB  = abs(b);
-    } else if (op === "−"){
+    } else if (op === "-"){
       if (b < 0){
         cleanOp = "+";
         cleanB  = abs(b);
       } else {
-        cleanOp = "−";
+        cleanOp = "-";
         cleanB  = b;
       }
     } else if (op === "+" && b > 0){
@@ -425,38 +414,45 @@
     return `${a} ${opChar} ${cleanB} = <span class="ansPill">${res}</span>`;
   }
 
-  function setPersonStill(){
-    personImg.src = SPRITES.still;
-  }
+  function setPersonStill(){ personImg.src = SPRITES.still; }
   function setPersonStaticFacingByOp(op){
-    // reveal 2: show a static first-frame facing based on separating sign
     personImg.src = (op === "+") ? SPRITES.right[0] : SPRITES.left[0];
   }
-
   function spriteFramesForDirection(dir){
-    // dir: "+" (right frames) or "−" (left frames)
     return (dir === "+") ? SPRITES.right : SPRITES.left;
   }
-
   function setPersonX(viewX){
     const pct = (viewX / 1000) * 100;
     personImg.style.left = pct + "%";
   }
 
-  // ------------------------------------------------------------
-  // State
-  // ------------------------------------------------------------
-  let Q = null;          // {a, b, op, res}
-  let stepState = 0;     // 0 load, 1 reveal a, 2 reveal op, 3 reveal b+answer
+  let Q = null;
+  let stepState = 0;
   let refs = null;
+
+  // ---- Enter-to-skip animation ----
+  let isAnimating = false;
+  let animToken = null;
+  function beginAnimToken(){
+    animToken = { skip:false };
+    isAnimating = true;
+    return animToken;
+  }
+  function endAnimToken(){
+    isAnimating = false;
+    animToken = null;
+  }
+  function requestSkip(){
+    if (animToken) animToken.skip = true;
+  }
 
   let walkingTimer = null;
   function stopWalking(){
     if (walkingTimer) { clearInterval(walkingTimer); walkingTimer = null; }
   }
-  function startWalking(dir){
+  function startWalking(spriteDir){
     stopWalking();
-    const frames = spriteFramesForDirection(dir);
+    const frames = spriteFramesForDirection(spriteDir);
     let i = 0;
     personImg.src = frames[0];
     walkingTimer = setInterval(() => {
@@ -465,39 +461,24 @@
     }, 220);
   }
 
-  // ------------------------------------------------------------
-  // Question generation (keep EVERYTHING on-page)
-  // ------------------------------------------------------------
   function generateQuestion(){
-    // Keep a, b, res all within [-20, 20] to avoid falling off.
     for (let tries=0; tries<5000; tries++){
       const a = nonZeroRand(MIN, MAX);
       const b = nonZeroRand(MIN, MAX);
-      const op = (Math.random() < 0.5) ? "+" : "−";
+      const op = (Math.random() < 0.5) ? "+" : "-";
       const res = (op === "+") ? (a + b) : (a - b);
       if (res < MIN || res > MAX) continue;
       return { a, b, op, res };
     }
-    // fallback (should never hit)
     return { a: 5, b: -3, op: "+", res: 2 };
   }
 
-  // ------------------------------------------------------------
-  // Autoscale range
-  // ------------------------------------------------------------
   function computeViewRange(a, res){
     const lo = Math.min(0, a, res) - PAD;
     const hi = Math.max(0, a, res) + PAD;
-    // No clamp needed now (res guaranteed inside), but keep safe:
-    return {
-      vmin: clamp(lo, MIN, MAX),
-      vmax: clamp(hi, MIN, MAX)
-    };
+    return { vmin: clamp(lo, MIN, MAX), vmax: clamp(hi, MIN, MAX) };
   }
 
-  // ------------------------------------------------------------
-  // Build SVG scene (ONCE per question)
-  // ------------------------------------------------------------
   function buildScene(){
     clearSVG();
     refs = null;
@@ -506,10 +487,12 @@
     const { vmin, vmax } = computeViewRange(a, res);
 
     const left = 80, right = 920;
+
     const yLine = 325;
-    const yArrow1 = yLine;
-    const yArrow2 = 215;   // moved DOWN so the person sits above it
     const tickTop = yLine - 22;
+    const yArrow1 = tickTop - 42;
+    const yArrow2 = yArrow1 - 58; // leave as master
+
     const tickBot = yLine + 22;
     const dotR = 10;
     const labelY = 405;
@@ -519,9 +502,10 @@
       return left + t * (right - left);
     };
 
-    // defs: small arrowhead marker
     const defs = el("defs");
-    const mk = el("marker",{
+
+    // end marker (points along the path direction)
+    const mkEnd = el("marker",{
       id:"arrowHeadSmall",
       markerWidth:"6",
       markerHeight:"6",
@@ -533,10 +517,25 @@
     },[
       el("path",{ d:"M 0 0 L 6 3 L 0 6 z", fill:"currentColor" })
     ]);
-    defs.appendChild(mk);
+
+    // start marker (FLIPPED so it points opposite)
+    const mkStart = el("marker",{
+      id:"arrowHeadStart",
+      markerWidth:"6",
+      markerHeight:"6",
+      refX:"0",
+      refY:"3",
+      orient:"auto",
+      markerUnits:"strokeWidth",
+      viewBox:"0 0 6 6"
+    },[
+      el("path",{ d:"M 6 0 L 0 3 L 6 6 z", fill:"currentColor" })
+    ]);
+
+    defs.appendChild(mkEnd);
+    defs.appendChild(mkStart);
     svg.appendChild(defs);
 
-    // baseline
     svg.appendChild(el("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
 
     const gTicks = el("g");
@@ -551,7 +550,6 @@
       return { x: xi, val };
     }
 
-    // unit ticks across visible range
     for (let v = Math.ceil(vmin); v <= Math.floor(vmax); v++){
       if (v === 0) continue;
       const xi = x(v);
@@ -561,16 +559,16 @@
     svg.appendChild(gUnit);
     svg.appendChild(gTicks);
 
-    const zero = addMajor(0, "zero");
+    addMajor(0, "zero");
 
-    function makeArrow(x1, x2, y, color, labelText){
-      const path = el("line",{
-        x1, y1:y, x2:x1, y2:y,
-        class:"arrowPath",
-        "marker-end":"url(#arrowHeadSmall)"
-      });
+    function makeArrow(x1, x2, y, color, labelText, headSide="end"){
+      const attrs = { x1, y1:y, x2:x1, y2:y, class:"arrowPath" };
+      if (headSide === "start") attrs["marker-start"] = "url(#arrowHeadStart)";
+      else attrs["marker-end"] = "url(#arrowHeadSmall)";
+
+      const path = el("line", attrs);
       path.style.stroke = color;
-      path.style.color  = color; // marker uses currentColor
+      path.style.color  = color;
       path.style.display = "none";
 
       const lx = (x1 + x2) / 2;
@@ -586,7 +584,7 @@
       gArrows.appendChild(label);
       gArrows.appendChild(tip);
 
-      return { path, label, tip, x1, x2, y, color };
+      return { path, label, tip, x1, x2, y, color, headSide };
     }
 
     const x0 = x(0);
@@ -596,31 +594,28 @@
     const colA = (a >= 0) ? "var(--pos)" : "var(--neg)";
     const colB = (b >= 0) ? "var(--pos)" : "var(--neg)";
 
-    // displacement on number line for second move:
-    // + : a -> a+b
-    // − : a -> a-b  (disp = -b)
     const disp2 = (op === "+") ? b : -b;
-    const xEnd2 = x(a + disp2); // should match xR
+    const xEnd2 = x(a + disp2);
 
-    const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a));
-    const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b));
+    const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a), "end");
+
+    // ✅ subtraction ALWAYS reverses the arrowhead (walk back along the vector)
+    let headSideB = (op === "-") ? "start" : "end";
+
+    const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b), headSideB);
 
     svg.appendChild(gArrows);
 
-    // major ticks for a and res (hidden initially)
-    const aTick = addMajor(a, "");
-    const resTick = addMajor(res, "");
+    addMajor(a, "");
+    addMajor(res, "");
 
-    // Hide a & res triplets initially (0 already visible)
     const tickNodes = Array.from(gTicks.childNodes);
     for (let i=3; i<tickNodes.length; i++){
       tickNodes[i].style.display = "none";
     }
 
     refs = {
-      vmin, vmax,
-      xFn: x,
-      x0, xA, xR, xEnd2,
+      x0, xA, xR,
       arrowA, arrowB,
       tickNodes,
       showA: () => { for (let i=3; i<6; i++) tickNodes[i].style.display = ""; },
@@ -630,12 +625,7 @@
     setPersonX(x0);
   }
 
-  // ------------------------------------------------------------
-  // Arrow / person animations
-  // ------------------------------------------------------------
-  function showArrowLabel(arrow){
-    arrow.label.style.display = "";
-  }
+  function showArrowLabel(arrow){ arrow.label.style.display = ""; }
   function hideArrow(arrow){
     arrow.path.style.display = "none";
     arrow.label.style.display = "none";
@@ -643,7 +633,20 @@
     arrow.tip.style.opacity = "0";
   }
 
-  function animateLineArrow(arrow, durationMs){
+  function snapArrowToEnd(arrow){
+    const { path, tip, x1, x2, y } = arrow;
+    path.style.display = "";
+    tip.style.display  = "";
+    tip.style.opacity  = "1";
+    path.setAttribute("x1", String(x1));
+    path.setAttribute("y1", String(y));
+    path.setAttribute("x2", String(x2));
+    path.setAttribute("y2", String(y));
+    tip.setAttribute("cx", String(x2));
+    tip.setAttribute("cy", String(y));
+  }
+
+  function animateLineArrow(arrow, durationMs, token){
     return new Promise((resolve) => {
       const { path, tip, x1, x2, y } = arrow;
 
@@ -654,6 +657,12 @@
       const start = performance.now();
 
       function frame(now){
+        if (token && token.skip){
+          snapArrowToEnd(arrow);
+          resolve();
+          return;
+        }
+
         const t = clamp((now - start) / durationMs, 0, 1);
         const eased = 1 - Math.pow(1 - t, 2);
 
@@ -670,32 +679,35 @@
         if (t < 1){
           requestAnimationFrame(frame);
         } else {
-          path.setAttribute("x2", String(x2));
-          tip.setAttribute("cx", String(x2));
+          snapArrowToEnd(arrow);
           resolve();
         }
       }
 
-      // reset
       path.setAttribute("x2", String(x1));
       requestAnimationFrame(frame);
     });
   }
 
-  function showArrowInstant(arrow){
-    arrow.path.style.display = "";
-    arrow.path.setAttribute("x2", String(arrow.x2));
-    arrow.tip.style.display = "";
-    arrow.tip.setAttribute("cx", String(arrow.x2));
-    arrow.tip.setAttribute("cy", String(arrow.y));
+  function snapPersonTo(toX){
+    stopWalking();
+    setPersonX(toX);
+    setPersonStill();
   }
 
-  function movePerson(fromX, toX, dir, durationMs){
+  // moveDir controls motion, spriteDir controls which walk frames play.
+  function movePerson(fromX, toX, moveDir, spriteDir, durationMs, token){
     return new Promise((resolve) => {
-      startWalking(dir);
+      startWalking(spriteDir);
       const start = performance.now();
 
       function frame(now){
+        if (token && token.skip){
+          snapPersonTo(toX);
+          resolve();
+          return;
+        }
+
         const t = clamp((now - start) / durationMs, 0, 1);
         const eased = 1 - Math.pow(1 - t, 2);
         const cx = fromX + (toX - fromX) * eased;
@@ -705,7 +717,7 @@
           requestAnimationFrame(frame);
         } else {
           stopWalking();
-          setPersonStill(); // ✅ end of movement returns to still.png
+          setPersonStill();
           resolve();
         }
       }
@@ -713,12 +725,15 @@
     });
   }
 
-  // ------------------------------------------------------------
-  // Question text
-  // ------------------------------------------------------------
   function setQuestionText(highlightPart=null){
     const { a, b, op } = Q;
     qMain.innerHTML = questionHTML(a, op, b, highlightPart);
+  }
+
+  function applyFinalAnswerHighlight(){
+    // add green emphasis to BOTH answer pills (main line + simplified line)
+    const pills = document.querySelectorAll(".ansPill");
+    pills.forEach(p => p.classList.add("finalAns"));
   }
 
   function setSimplified(show){
@@ -732,11 +747,11 @@
     qMain.innerHTML = orig;
     qSimpl.innerHTML = simplifiedLine(a, op, b, res);
     qSimpl.classList.add("show");
+
+    // ✅ final answer emphasis
+    applyFinalAnswerHighlight();
   }
 
-  // ------------------------------------------------------------
-  // Step machine (NO full re-animation on each step)
-  // ------------------------------------------------------------
   function updateNavButtons(){
     backBtn.disabled = (stepState <= 0);
     fwdBtn.disabled  = (stepState >= 3);
@@ -751,7 +766,6 @@
     hideArrow(refs.arrowA);
     hideArrow(refs.arrowB);
 
-    // hide a/res ticks
     for (let i=3; i<refs.tickNodes.length; i++){
       refs.tickNodes[i].style.display = "none";
     }
@@ -759,7 +773,6 @@
   }
 
   async function doStep1(){
-    // reveal a: walking direction depends on sign of FIRST TERM (a)
     stepState = 1;
     setSimplified(false);
     setQuestionText("a");
@@ -767,23 +780,26 @@
 
     showArrowLabel(refs.arrowA);
 
-    const dir1 = (Q.a >= 0) ? "+" : "−";
-    await Promise.all([
-      animateLineArrow(refs.arrowA, ANIM_MS),
-      movePerson(refs.x0, refs.xA, dir1, ANIM_MS)
-    ]);
+    const moveDir1 = (Q.a >= 0) ? "+" : "−";  // movement depends on sign
+    const spriteDir1 = "+";                  // ALWAYS walk-right for first vector
+
+    const token = beginAnimToken();
+    try{
+      await Promise.all([
+        animateLineArrow(refs.arrowA, ANIM_MS, token),
+        movePerson(refs.x0, refs.xA, moveDir1, spriteDir1, ANIM_MS, token)
+      ]);
+    } finally {
+      endAnimToken();
+    }
 
     updateNavButtons();
   }
 
   async function doStep2(){
-    // reveal operator only: STATIC facing based on separating sign
     stepState = 2;
     setQuestionText("op");
-
-    // ✅ quick flip (no re-animation)
-    setPersonStaticFacingByOp(Q.op);
-
+    setPersonStaticFacingByOp(Q.op); // "-" turns left
     updateNavButtons();
   }
 
@@ -794,14 +810,22 @@
     showArrowLabel(refs.arrowB);
     refs.showRes();
 
-    // reveal 3: movement uses separating sign for walking sprite,
-    // but actual motion is along number line to the result.
-    const dir2 = (Q.op === "+") ? "+" : "−";
+    // actual movement direction (where the person travels)
+    const step2 = (Q.op === "+") ? Q.b : -Q.b;
+    const moveDir  = (step2 >= 0) ? "+" : "−";
 
-    await Promise.all([
-      animateLineArrow(refs.arrowB, ANIM_MS),
-      movePerson(refs.xA, refs.xR, dir2, ANIM_MS)
-    ]);
+    // sprite direction depends ONLY on the operator (not the vector)
+    const spriteDir = (Q.op === "+") ? "+" : "−";
+
+    const token = beginAnimToken();
+    try{
+      await Promise.all([
+        animateLineArrow(refs.arrowB, ANIM_MS, token),
+        movePerson(refs.xA, refs.xR, moveDir, spriteDir, ANIM_MS, token)
+      ]);
+    } finally {
+      endAnimToken();
+    }
 
     setSimplified(true);
     updateNavButtons();
@@ -816,21 +840,16 @@
 
   function stepBack(){
     if (stepState <= 0) return;
-    // easiest + stable: rebuild and fast-forward instantly to previous step
     const target = stepState - 1;
 
     buildScene();
     goToStep0();
 
     if (target >= 1){
-      // show step1 instantly
       setQuestionText("a");
       refs.showA();
       showArrowLabel(refs.arrowA);
-      refs.arrowA.path.style.display = "";
-      refs.arrowA.path.setAttribute("x2", String(refs.arrowA.x2));
-      refs.arrowA.tip.style.display = "";
-      refs.arrowA.tip.setAttribute("cx", String(refs.arrowA.x2));
+      snapArrowToEnd(refs.arrowA);
       setPersonX(refs.xA);
       setPersonStill();
       stepState = 1;
@@ -840,15 +859,12 @@
       setPersonStaticFacingByOp(Q.op);
       stepState = 2;
     }
-    // never include step3 when stepping back
+
     setSimplified(false);
     qSimpl.classList.remove("show");
     updateNavButtons();
   }
 
-  // ------------------------------------------------------------
-  // New / reset
-  // ------------------------------------------------------------
   function newQuestion(){
     Q = generateQuestion();
     buildScene();
@@ -860,24 +876,28 @@
     goToStep0();
   }
 
-  // ------------------------------------------------------------
-  // Events
-  // ------------------------------------------------------------
   newBtn.addEventListener("click", () => newQuestion());
   resetBtn.addEventListener("click", () => resetQuestion());
   backBtn.addEventListener("click", () => stepBack());
-  fwdBtn.addEventListener("click", () => stepForward());
+  fwdBtn.addEventListener("click", () => {
+    if (isAnimating) requestSkip();
+    else stepForward();
+  });
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter"){
+      e.preventDefault();
+      if (isAnimating) requestSkip();
+      else stepForward();
+      return;
+    }
+
     if (e.code === "Space"){ e.preventDefault(); newQuestion(); return; }
     if (e.key === "ArrowRight"){ e.preventDefault(); stepForward(); return; }
     if (e.key === "ArrowLeft"){ e.preventDefault(); stepBack(); return; }
     if (e.key.toLowerCase() === "r"){ e.preventDefault(); resetQuestion(); return; }
   });
 
-  // ------------------------------------------------------------
-  // Init
-  // ------------------------------------------------------------
   newQuestion();
 })();
 </script>
