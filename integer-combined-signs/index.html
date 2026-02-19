@@ -21,11 +21,11 @@
       --neg:#dc2626; /* red  */
       --eq:#2563eb;  /* blue for = result */
       --hi:#fde68a;  /* yellow highlight */
-      --hiAns:#dcfce7; /* green highlight for answers */
-      --hiAnsBorder:#86efac;
+
+      --haloFill: rgba(22,163,74,.18);
+      --haloStroke: rgba(22,163,74,.45);
 
       --footer-h: 44px;
-
       --animMs: 2000;
 
       /* arrows */
@@ -37,6 +37,9 @@
       --headH: 6;
 
       --pad: 3;
+
+      /* quick dial for PNG size */
+      --personW: 92px;
     }
 
     *{ box-sizing:border-box; }
@@ -100,6 +103,94 @@
     button.primary{ background: #2563eb; color:#fff; }
     button.danger{ background:#fee2e2; color:#991b1b; }
 
+    /* tools dropdown */
+    .menuWrap{ position:relative; display:inline-block; }
+    .menuBtn{
+      background:#f3f4f6;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 950;
+    }
+    .menuBtn:after{ content:""; }
+    .menu{
+      position:absolute;
+      right:0;
+      top: calc(100% + 10px);
+      width: 260px;
+      background:#fff;
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.12);
+      padding: 10px;
+      display:none;
+      z-index: 50;
+    }
+    .menu.show{ display:block; }
+    .menu .hint{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+      padding: 8px 10px 4px;
+    }
+    .menu a{
+      display:block;
+      padding: 12px 10px;
+      border-radius: 12px;
+      text-decoration:none;
+      color: var(--ink);
+      font-weight: 950;
+    }
+    .menu a:hover{ background:#f3f4f6; }
+
+    /* teacher settings */
+    .settingsWrap{ position:relative; display:inline-block; }
+    .settingsBtn{
+      background:#f3f4f6;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 950;
+    }
+    .settingsPanel{
+      position:absolute;
+      right:0;
+      top: calc(100% + 10px);
+      width: 320px;
+      background:#fff;
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.12);
+      padding: 12px;
+      display:none;
+      z-index: 60;
+    }
+    .settingsPanel.show{ display:block; }
+    .settingsTitle{
+      font-size: 13px;
+      font-weight: 950;
+      color: var(--muted);
+      margin: 2px 0 10px;
+    }
+    .radioRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .radioRow:hover{ background:#f3f4f6; }
+    .radioRow input{ transform: scale(1.05); }
+    .radioRow .name{ font-weight: 950; }
+    .radioRow .desc{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 850;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+    .radioCol{ display:flex; flex-direction:column; gap:2px; }
+
     .qRowUnder{
       display:flex;
       align-items:center;
@@ -148,19 +239,18 @@
       display:inline-block;
     }
     .eq{ color: var(--eq); font-weight: 950; }
-
     .ansPill{
       display:inline-block;
       padding: 2px 8px;
       border-radius: 999px;
-      background: rgba(37,99,235,.18);
-      color: var(--eq);
+      background: var(--haloFill);
+      color: #065f2c;
       font-weight: 950;
+      border: 2px solid var(--haloStroke);
     }
-    .ansPill.ok{
-      background: var(--hiAns);
-      color: #14532d;
-      box-shadow: 0 0 0 2px rgba(134,239,172,.6) inset;
+    .ansPill.big{
+      font-size: 30px;
+      padding: 4px 10px;
     }
 
     .stage{
@@ -183,12 +273,13 @@
     }
     .person{
       position:absolute;
-      width: 92px; /* change this to experiment with PNG size */
+      width: var(--personW);
       height: auto;
       transform: translate(-50%, -50%);
       top: 120px;
       left: 50%;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));
+      image-rendering: auto;
     }
 
     .stageActions{
@@ -260,6 +351,10 @@
       font-weight: 950;
       fill: #111827;
     }
+    .label.answer{
+      font-size: 28px;
+      fill: #0b3b1a;
+    }
 
     .arrowPath{
       fill: none;
@@ -279,70 +374,15 @@
       transition: opacity .12s ease;
     }
 
-    /* answer highlight on number line (must sit BEHIND text) */
+    /* SVG halo */
     .ansHalo{
-      fill: var(--hiAns);
-      stroke: var(--hiAnsBorder);
-      stroke-width: 5;
-      opacity: 0;
-      transition: opacity .18s ease;
-      pointer-events: none;
-    }
-    .ansHalo.show{ opacity: 1; }
-
-    /* loading overlay */
-    .loadingOverlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(245,247,251,.96);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index: 2000;
-    }
-    .loadingCard{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: 0 14px 28px rgba(0,0,0,.10);
-      padding: 18px 18px 14px;
-      width: min(420px, calc(100vw - 32px));
-      text-align:center;
-      font-weight: 950;
-    }
-    .loadingSmall{
-      margin-top: 8px;
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 850;
-    }
-    .bar{
-      height: 10px;
-      background:#eef2ff;
-      border-radius: 999px;
-      overflow:hidden;
-      margin-top: 12px;
-      border: 1px solid rgba(229,231,235,.8);
-    }
-    .bar > div{
-      height: 100%;
-      width: 0%;
-      background: #2563eb;
-      border-radius: 999px;
-      transition: width .18s ease;
+      fill: var(--haloFill);
+      stroke: var(--haloStroke);
+      stroke-width: 6;
     }
   </style>
 </head>
 <body>
-
-  <div id="loadingOverlay" class="loadingOverlay" aria-label="Loading">
-    <div class="loadingCard">
-      Loading…
-      <div class="bar"><div id="loadingBar"></div></div>
-      <div class="loadingSmall">Preloading sprite images for smooth walking animation</div>
-    </div>
-  </div>
-
   <div class="wrap">
     <div class="card">
       <div class="topbar">
@@ -352,6 +392,54 @@
         </a>
 
         <div class="btnrow">
+          <div class="menuWrap">
+            <button id="toolsBtn" class="menuBtn" title="Tools">Tools ▲</button>
+            <div id="toolsMenu" class="menu" role="menu" aria-label="Tools menu">
+              <div class="hint">Open in a new tab</div>
+              <a id="studentQuizLink" href="student-quiz.html" target="_blank" rel="noopener">Student Quiz</a>
+              <a id="worksheetLink" href="worksheet-creator.html" target="_blank" rel="noopener">Worksheet Creator</a>
+            </div>
+          </div>
+
+          <div class="settingsWrap">
+            <button id="settingsBtn" class="settingsBtn" title="Teacher settings">Teacher settings</button>
+            <div id="settingsPanel" class="settingsPanel" aria-label="Teacher settings panel">
+              <div class="settingsTitle">Difficulty</div>
+
+              <label class="radioRow">
+                <input type="radio" name="diff" value="sweet" checked />
+                <div class="radioCol">
+                  <div class="name">Sweet</div>
+                  <div class="desc">Default range (−20 to 20)</div>
+                </div>
+              </label>
+
+              <label class="radioRow">
+                <input type="radio" name="diff" value="mild" />
+                <div class="radioCol">
+                  <div class="name">Mild</div>
+                  <div class="desc">Extend range (−50 to 50)</div>
+                </div>
+              </label>
+
+              <label class="radioRow">
+                <input type="radio" name="diff" value="medium" />
+                <div class="radioCol">
+                  <div class="name">Medium</div>
+                  <div class="desc">Extend range (−100 to 100)</div>
+                </div>
+              </label>
+
+              <label class="radioRow">
+                <input type="radio" name="diff" value="spicy" />
+                <div class="radioCol">
+                  <div class="name">Spicy</div>
+                  <div class="desc">Range (−100 to 100), 0.5 steps (1dp display)</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <button id="resetBtn" class="danger" title="Reset (R)">Reset</button>
           <button id="newBtn" class="primary" title="New question (Space)">New Q</button>
         </div>
@@ -391,44 +479,29 @@
 
 <script>
 (() => {
-  let MIN = -20;
-  let MAX =  20;
+  // ----- difficulty presets -----
+  const PRESETS = {
+    sweet:  { min:-20,  max: 20,  spicy:false },
+    mild:   { min:-50,  max: 50,  spicy:false },
+    medium: { min:-100, max:100,  spicy:false },
+    spicy:  { min:-100, max:100,  spicy:true  } // 0.5 steps, 1dp display
+  };
+
+  let presetKey = "sweet";
+  let MIN = PRESETS[presetKey].min;
+  let MAX = PRESETS[presetKey].max;
   const PAD = 3;
 
   const ANIM_MS = 2000;
 
+  // Cache-bust querystring to help with "live but stale" sprite loads
+  const ASSET_V = "v=1";
+
   const SPRITES = {
-    still: "still.png",
-    right: ["walk-right-1.png", "walk-right-2.png"],
-    left:  ["walk-left-1.png",  "walk-left-2.png"],
-    logo: "mmt.png"
+    still: `still.png?${ASSET_V}`,
+    right: [`walk-right-1.png?${ASSET_V}`, `walk-right-2.png?${ASSET_V}`],
+    left:  [`walk-left-1.png?${ASSET_V}`,  `walk-left-2.png?${ASSET_V}`]
   };
-
-  const ASSET_VER = "1";
-  function withVer(url){ return url.includes("?") ? url : (url + "?v=" + ASSET_VER); }
-
-  async function preloadSprites(){
-    const urls = [
-      SPRITES.logo,
-      SPRITES.still,
-      ...SPRITES.right,
-      ...SPRITES.left
-    ].map(withVer);
-
-    const bar = document.getElementById("loadingBar");
-    let done = 0;
-
-    await Promise.all(urls.map((u) => new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => { done++; bar.style.width = Math.round((done/urls.length)*100) + "%"; resolve(); };
-      img.onerror = () => { done++; bar.style.width = Math.round((done/urls.length)*100) + "%"; resolve(); };
-      img.src = u;
-    })));
-
-    SPRITES.still = withVer(SPRITES.still);
-    SPRITES.right = SPRITES.right.map(withVer);
-    SPRITES.left  = SPRITES.left.map(withVer);
-  }
 
   const svg = document.getElementById("svg");
   const qMain = document.getElementById("qMain");
@@ -441,17 +514,13 @@
   const backBtn = document.getElementById("backBtn");
   const fwdBtn  = document.getElementById("fwdBtn");
 
-  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const toolsBtn = document.getElementById("toolsBtn");
+  const toolsMenu = document.getElementById("toolsMenu");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsPanel = document.getElementById("settingsPanel");
+
   const abs = Math.abs;
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-
-  function nonZeroRand(min,max){
-    for (let i=0;i<2000;i++){
-      const v = randInt(min,max);
-      if (v !== 0) return v;
-    }
-    return 1;
-  }
 
   function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
 
@@ -468,33 +537,28 @@
   }
 
   function fmtSignedVector(n){
+    // keep negative sign on negatives; positives shown without "+"
+    // NOTE: when spicy, n will be in 0.5 steps; display 1dp
+    if (PRESETS[presetKey].spicy){
+      const s = (Math.round(n*2)/2).toFixed(1);
+      return (n < 0) ? String(s) : String(abs(n).toFixed(1));
+    }
     return (n < 0) ? String(n) : String(abs(n));
+  }
+
+  function fmtNumber(n){
+    if (PRESETS[presetKey].spicy){
+      return (Math.round(n*2)/2).toFixed(1);
+    }
+    return String(n);
   }
 
   function questionHTML(a, op, b, highlightPart){
     const opChar = (op === "+") ? "+" : "−";
-    const aStr = String(a);
-    const bStr = (b < 0) ? `(${b})` : `(+${b})`;
+    const aStr = fmtNumber(a);
+    const bStr = (b < 0) ? `(${fmtNumber(b)})` : `(+${fmtNumber(b)})`;
     const wrap = (txt, which) => (highlightPart === which) ? `<span class="hl">${txt}</span>` : txt;
     return `${wrap(aStr,"a")} ${wrap(opChar,"op")} ${wrap(bStr,"b")}`;
-  }
-
-  function setQuestionText(highlightPart=null){
-    const { a, b, op } = Q;
-    qMain.innerHTML = questionHTML(a, op, b, highlightPart);
-  }
-
-  function setSimplified(show){
-    const { a, b, op, res } = Q;
-    if (!show){
-      qSimpl.classList.remove("show");
-      qSimpl.innerHTML = "";
-      return;
-    }
-    const orig = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill ok">${res}</span></span>`;
-    qMain.innerHTML = orig;
-    qSimpl.innerHTML = "";
-    qSimpl.classList.remove("show");
   }
 
   function setPersonStill(){ personImg.src = SPRITES.still; }
@@ -509,10 +573,13 @@
     personImg.style.left = pct + "%";
   }
 
-  let Q = null;
-  let stepState = 0;
-  let refs = null;
+  // pre-load sprites to reduce "sliding still" / missing alternation on first run
+  function preloadSprites(){
+    const urls = [SPRITES.still, ...SPRITES.right, ...SPRITES.left];
+    urls.forEach(u => { const im = new Image(); im.src = u; });
+  }
 
+  // ---- Enter-to-skip animation ----
   let isAnimating = false;
   let animToken = null;
   function beginAnimToken(){
@@ -543,10 +610,30 @@
     }, 220);
   }
 
+  // ----- question + scene state -----
+  let Q = null;
+  let stepState = 0;  // 0,1,2,3,4
+  let refs = null;
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function randHalf(min,max){
+    // multiples of 0.5
+    const a = Math.round(min*2);
+    const b = Math.round(max*2);
+    return (randInt(a,b))/2;
+  }
+  function nonZeroRand(){
+    for (let i=0;i<5000;i++){
+      const v = PRESETS[presetKey].spicy ? randHalf(MIN,MAX) : randInt(MIN,MAX);
+      if (v !== 0) return v;
+    }
+    return PRESETS[presetKey].spicy ? 0.5 : 1;
+  }
+
   function generateQuestion(){
-    for (let tries=0; tries<5000; tries++){
-      const a = nonZeroRand(MIN, MAX);
-      const b = nonZeroRand(MIN, MAX);
+    for (let tries=0; tries<8000; tries++){
+      const a = nonZeroRand();
+      const b = nonZeroRand();
       const op = (Math.random() < 0.5) ? "+" : "-";
       const res = (op === "+") ? (a + b) : (a - b);
       if (res < MIN || res > MAX) continue;
@@ -578,6 +665,9 @@
     const tickBot = yLine + 22;
     const dotR = 10;
     const labelY = 405;
+
+    // ✅ halo + label centering "dial"
+    const HALO_Y = labelY - 18;
 
     const x = (v) => {
       const t = (v - vmin) / (vmax - vmin);
@@ -621,18 +711,30 @@
     const gTicks = el("g");
     const gUnit  = el("g");
     const gArrows= el("g");
+    const gHalo  = el("g");
 
-    function addMajor(val, dotClass){
+    function addMajor(val, dotClass, extraTextClass=""){
       const xi = x(val);
       gTicks.appendChild(el("line",{ x1:xi, y1:tickTop, x2:xi, y2:tickBot, class:"tickMajor" }));
       gTicks.appendChild(el("circle",{ cx:xi, cy:yLine, r:dotR, class:`dot ${dotClass||""}`.trim() }));
-      const lbl = textNode(String(val), { x:xi, y:labelY, "text-anchor":"middle", class:"label" });
-      gTicks.appendChild(lbl);
-      return { x: xi, val, lbl };
+
+      // ✅ label is vertically centered now
+      const t = textNode(fmtNumber(val), {
+        x: xi,
+        y: HALO_Y,
+        "text-anchor":"middle",
+        "dominant-baseline":"middle",
+        class: ("label " + extraTextClass).trim()
+      });
+      gTicks.appendChild(t);
+
+      return { x: xi, val, textNode: t };
     }
 
-    for (let v = Math.ceil(vmin); v <= Math.floor(vmax); v++){
-      if (v === 0) continue;
+    // unit ticks
+    const step = PRESETS[presetKey].spicy ? 0.5 : 1;
+    for (let v = Math.ceil(vmin/step)*step; v <= Math.floor(vmax/step)*step + 1e-9; v += step){
+      if (Math.abs(v) < 1e-9) continue;
       const xi = x(v);
       gUnit.appendChild(el("line", { x1:xi, y1:yLine-12, x2:xi, y2:yLine+12, class:"tickUnit" }));
     }
@@ -640,7 +742,7 @@
     svg.appendChild(gUnit);
     svg.appendChild(gTicks);
 
-    addMajor(0, "zero");
+    const zeroNode = addMajor(0, "zero");
 
     function makeArrow(x1, x2, y, color, labelText, headSide="end"){
       const attrs = { x1, y1:y, x2:x1, y2:y, class:"arrowPath" };
@@ -680,35 +782,52 @@
 
     const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a), "end");
 
+    // subtraction ALWAYS reverses the arrowhead
     const headSideB = (op === "-") ? "start" : "end";
     const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b), headSideB);
 
     svg.appendChild(gArrows);
 
-    addMajor(a, "");
-    const resNode = addMajor(res, "");
+    // majors for a and result
+    const aNode  = addMajor(a, "", "");
+    const resNode = addMajor(res, "", "answer");
 
-    // ✅ FIX: insert halo *BEFORE* the result label so label is always on top
-    const halo = el("circle", { cx: resNode.x, cy: (labelY - 18), r: 24, class: "ansHalo" });
-    gTicks.insertBefore(halo, resNode.lbl);
+    // ✅ halo around answer label (hidden until final reveal)
+    const halo = el("circle", {
+      cx: xR,
+      cy: HALO_Y,
+      r: 26,
+      class: "ansHalo"
+    });
+    halo.style.display = "none";
+    gHalo.appendChild(halo);
+    svg.insertBefore(gHalo, gTicks); // behind labels
 
-    // hide everything except 0 initially
+    // hide everything except 0 by default (we’ll reveal via steps)
     const tickNodes = Array.from(gTicks.childNodes);
     for (let i=3; i<tickNodes.length; i++){
       tickNodes[i].style.display = "none";
     }
 
+    // also hide the result label itself until step 4
+    resNode.textNode.style.display = "none";
+
     refs = {
       x0, xA, xR,
       arrowA, arrowB,
       tickNodes,
+      aNode, resNode,
       halo,
+      HALO_Y,
       showA: () => { for (let i=3; i<6; i++) tickNodes[i].style.display = ""; },
-      showRes: () => { for (let i=6; i<10; i++) tickNodes[i].style.display = ""; } // halo adds one extra node
+      showResTicksOnly: () => { for (let i=6; i<9; i++) tickNodes[i].style.display = ""; },
+      showAnswerLabelAndHalo: () => {
+        refs.resNode.textNode.style.display = "";
+        refs.halo.style.display = "";
+      }
     };
 
     setPersonX(x0);
-    refs.halo.classList.remove("show");
   }
 
   function showArrowLabel(arrow){ arrow.label.style.display = ""; }
@@ -781,6 +900,7 @@
     setPersonStill();
   }
 
+  // moveDir controls motion, spriteDir controls which walk frames play.
   function movePerson(fromX, toX, moveDir, spriteDir, durationMs, token){
     return new Promise((resolve) => {
       startWalking(spriteDir);
@@ -810,6 +930,25 @@
     });
   }
 
+  function setQuestionText(highlightPart=null){
+    const { a, b, op } = Q;
+    qMain.innerHTML = questionHTML(a, op, b, highlightPart);
+  }
+
+  // ✅ only one line now (no second equation line)
+  function setFinalLine(show){
+    if (!show){
+      qSimpl.classList.remove("show");
+      qSimpl.innerHTML = "";
+      return;
+    }
+    const { a, b, op, res } = Q;
+    const orig = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill big">${fmtNumber(res)}</span></span>`;
+    qMain.innerHTML = orig;
+    qSimpl.classList.remove("show");
+    qSimpl.innerHTML = "";
+  }
+
   function updateNavButtons(){
     backBtn.disabled = (stepState <= 0);
     fwdBtn.disabled  = (stepState >= 4);
@@ -817,31 +956,37 @@
 
   function goToStep0(){
     stepState = 0;
-    setSimplified(false);
+    setFinalLine(false);
     setQuestionText(null);
+
     setPersonStill();
     setPersonX(refs.x0);
+
     hideArrow(refs.arrowA);
     hideArrow(refs.arrowB);
 
-    refs.halo.classList.remove("show");
-
+    // hide ticks beyond 0
     for (let i=3; i<refs.tickNodes.length; i++){
       refs.tickNodes[i].style.display = "none";
     }
+
+    // hide answer label + halo
+    refs.resNode.textNode.style.display = "none";
+    refs.halo.style.display = "none";
+
     updateNavButtons();
   }
 
   async function doStep1(){
     stepState = 1;
-    setSimplified(false);
+    setFinalLine(false);
     setQuestionText("a");
     refs.showA();
 
     showArrowLabel(refs.arrowA);
 
     const moveDir1   = (Q.a >= 0) ? "+" : "−";
-    const spriteDir1 = "+";
+    const spriteDir1 = "+"; // ALWAYS walk-right for first vector
 
     const token = beginAnimToken();
     try{
@@ -869,8 +1014,13 @@
 
     showArrowLabel(refs.arrowB);
 
+    // ✅ reveal the RESULT TICK/POINT, but NOT the answer label/halo yet
+    refs.showResTicksOnly();
+
     const step2 = (Q.op === "+") ? Q.b : -Q.b;
     const moveDir  = (step2 >= 0) ? "+" : "−";
+
+    // sprite direction depends ONLY on operator
     const spriteDir = (Q.op === "+") ? "+" : "−";
 
     const token = beginAnimToken();
@@ -883,16 +1033,17 @@
       endAnimToken();
     }
 
-    setSimplified(false);
     updateNavButtons();
   }
 
   function doStep4(){
     stepState = 4;
 
-    refs.showRes();
-    refs.halo.classList.add("show");
-    setSimplified(true);
+    // ✅ show answer label + halo on the number line
+    refs.showAnswerLabelAndHalo();
+
+    // ✅ show final equation with big green answer pill
+    setFinalLine(true);
 
     updateNavButtons();
   }
@@ -932,11 +1083,18 @@
       snapArrowToEnd(refs.arrowB);
       setPersonX(refs.xR);
       setPersonStill();
-      setSimplified(false);
+      refs.showResTicksOnly();
       stepState = 3;
     }
+    if (target >= 4){
+      // not possible here since target = stepState-1, but keep safe
+      stepState = 4;
+      refs.showAnswerLabelAndHalo();
+      setFinalLine(true);
+    } else {
+      setFinalLine(false);
+    }
 
-    refs.halo.classList.remove("show");
     updateNavButtons();
   }
 
@@ -951,6 +1109,43 @@
     goToStep0();
   }
 
+  // ----- menus -----
+  function closeMenus(){
+    toolsMenu.classList.remove("show");
+    settingsPanel.classList.remove("show");
+  }
+
+  toolsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willShow = !toolsMenu.classList.contains("show");
+    closeMenus();
+    if (willShow) toolsMenu.classList.add("show");
+  });
+
+  settingsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willShow = !settingsPanel.classList.contains("show");
+    closeMenus();
+    if (willShow) settingsPanel.classList.add("show");
+  });
+
+  document.addEventListener("click", () => closeMenus());
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });
+
+  // difficulty radio handling
+  settingsPanel.addEventListener("change", (e) => {
+    const t = e.target;
+    if (!t || t.name !== "diff") return;
+    presetKey = t.value;
+
+    MIN = PRESETS[presetKey].min;
+    MAX = PRESETS[presetKey].max;
+
+    // rebuild a fresh question under new constraints
+    newQuestion();
+  });
+
+  // ----- buttons / keys -----
   newBtn.addEventListener("click", () => newQuestion());
   resetBtn.addEventListener("click", () => resetQuestion());
   backBtn.addEventListener("click", () => stepBack());
@@ -966,25 +1161,15 @@
       else stepForward();
       return;
     }
-
     if (e.code === "Space"){ e.preventDefault(); newQuestion(); return; }
     if (e.key === "ArrowRight"){ e.preventDefault(); stepForward(); return; }
     if (e.key === "ArrowLeft"){ e.preventDefault(); stepBack(); return; }
     if (e.key.toLowerCase() === "r"){ e.preventDefault(); resetQuestion(); return; }
   });
 
-  async function init(){
-    await preloadSprites();
-
-    const overlay = document.getElementById("loadingOverlay");
-    if (overlay) overlay.remove();
-
-    personImg.src = SPRITES.still;
-
-    newQuestion();
-  }
-
-  init();
+  // init
+  preloadSprites();
+  newQuestion();
 })();
 </script>
 </body>
