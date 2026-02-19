@@ -21,10 +21,8 @@
       --neg:#dc2626; /* red  */
       --eq:#2563eb;  /* blue for = result */
       --hi:#fde68a;  /* yellow highlight */
-
-      --ansGreen:#16a34a;
-      --ansGreenSoft: rgba(22,163,74,.16);
-      --ansGreenBorder: rgba(22,163,74,.35);
+      --hiAns:#dcfce7; /* green highlight for answers */
+      --hiAnsBorder:#86efac;
 
       --footer-h: 44px;
 
@@ -39,10 +37,6 @@
       --headH: 6;
 
       --pad: 3;
-
-      /* ✅ EASY PNG SIZE TWEAK:
-         Change this one value to resize the stick figure quickly. */
-      --personW: 92px;
     }
 
     *{ box-sizing:border-box; }
@@ -105,7 +99,6 @@
     button:active{ transform: scale(.98); }
     button.primary{ background: #2563eb; color:#fff; }
     button.danger{ background:#fee2e2; color:#991b1b; }
-    button.ghost{ background:#f3f4f6; color:#111827; }
 
     .qRowUnder{
       display:flex;
@@ -135,6 +128,18 @@
     }
 
     .qLine{ display:block; margin: 0; }
+    .qLine.small{
+      margin-top: 8px;
+      font-size: 22px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity .18s ease, transform .18s ease;
+      font-weight: 950;
+    }
+    .qLine.small.show{
+      opacity: 1;
+      transform: translateY(0);
+    }
 
     .hl{
       background: var(--hi);
@@ -146,19 +151,16 @@
 
     .ansPill{
       display:inline-block;
-      padding: 2px 10px;
+      padding: 2px 8px;
       border-radius: 999px;
       background: rgba(37,99,235,.18);
       color: var(--eq);
       font-weight: 950;
-      border: 2px solid transparent;
     }
-    .ansPill.final{
-      background: var(--ansGreenSoft);
-      color: #0f3d22;
-      border-color: var(--ansGreenBorder);
-      font-size: 30px;           /* slightly larger */
-      padding: 4px 12px;
+    .ansPill.ok{
+      background: var(--hiAns);
+      color: #14532d;
+      box-shadow: 0 0 0 2px rgba(134,239,172,.6) inset;
     }
 
     .stage{
@@ -181,7 +183,7 @@
     }
     .person{
       position:absolute;
-      width: var(--personW);
+      width: 92px; /* change this to experiment with PNG size */
       height: auto;
       transform: translate(-50%, -50%);
       top: 120px;
@@ -258,17 +260,6 @@
       font-weight: 950;
       fill: #111827;
     }
-    .label.final{
-      fill: #0f3d22;
-    }
-
-    /* green highlight behind the RESULT label (number line) */
-    .resHalo{
-      fill: rgba(34,197,94,.20);
-      stroke: rgba(34,197,94,.35);
-      stroke-width: 3;
-      display: none;
-    }
 
     .arrowPath{
       fill: none;
@@ -288,65 +279,70 @@
       transition: opacity .12s ease;
     }
 
-    /* ---------- Teacher settings modal ---------- */
-    .modalOverlay{
+    /* answer highlight on number line (must sit BEHIND text) */
+    .ansHalo{
+      fill: var(--hiAns);
+      stroke: var(--hiAnsBorder);
+      stroke-width: 5;
+      opacity: 0;
+      transition: opacity .18s ease;
+      pointer-events: none;
+    }
+    .ansHalo.show{ opacity: 1; }
+
+    /* loading overlay */
+    .loadingOverlay{
       position: fixed;
       inset: 0;
-      background: rgba(17,24,39,.45);
-      backdrop-filter: blur(6px);
-      display:none;
+      background: rgba(245,247,251,.96);
+      display:flex;
       align-items:center;
       justify-content:center;
-      z-index: 999;
-      padding: 18px;
+      z-index: 2000;
     }
-    .modal{
-      width: min(520px, 100%);
+    .loadingCard{
       background:#fff;
+      border:1px solid var(--border);
       border-radius: 18px;
-      box-shadow: 0 22px 60px rgba(0,0,0,.22);
-      border: 1px solid rgba(229,231,235,.9);
-      overflow:hidden;
-    }
-    .modalHeader{
-      padding: 14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      border-bottom: 1px solid rgba(229,231,235,.9);
-      background: linear-gradient(180deg,#fff,#f9fafb);
-    }
-    .modalTitle{
+      box-shadow: 0 14px 28px rgba(0,0,0,.10);
+      padding: 18px 18px 14px;
+      width: min(420px, calc(100vw - 32px));
+      text-align:center;
       font-weight: 950;
-      font-size: 16px;
     }
-    .modalBody{
-      padding: 14px 16px 6px;
+    .loadingSmall{
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 850;
     }
-    .opt{
-      display:flex;
-      gap: 10px;
-      padding: 10px 10px;
-      border: 1px solid rgba(229,231,235,.9);
-      border-radius: 14px;
-      margin-bottom: 10px;
-      align-items:flex-start;
+    .bar{
+      height: 10px;
+      background:#eef2ff;
+      border-radius: 999px;
+      overflow:hidden;
+      margin-top: 12px;
+      border: 1px solid rgba(229,231,235,.8);
     }
-    .opt input{ margin-top: 3px; }
-    .opt b{ display:block; font-weight: 950; }
-    .opt small{ color: var(--muted); font-weight: 800; display:block; margin-top: 2px; line-height: 1.25; }
-    .modalFooter{
-      padding: 12px 16px 14px;
-      display:flex;
-      justify-content:flex-end;
-      gap: 10px;
-      border-top: 1px solid rgba(229,231,235,.9);
-      background:#fff;
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      border-radius: 999px;
+      transition: width .18s ease;
     }
   </style>
 </head>
 <body>
+
+  <div id="loadingOverlay" class="loadingOverlay" aria-label="Loading">
+    <div class="loadingCard">
+      Loading…
+      <div class="bar"><div id="loadingBar"></div></div>
+      <div class="loadingSmall">Preloading sprite images for smooth walking animation</div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="card">
       <div class="topbar">
@@ -356,7 +352,6 @@
         </a>
 
         <div class="btnrow">
-          <button id="teacherBtn" class="ghost" title="Teacher settings">Teacher settings</button>
           <button id="resetBtn" class="danger" title="Reset (R)">Reset</button>
           <button id="newBtn" class="primary" title="New question (Space)">New Q</button>
         </div>
@@ -365,8 +360,8 @@
       <div class="qRowUnder" aria-label="Question">
         <div class="qLabel">Question:</div>
         <div id="qBox" class="qBox">
-          <!-- ✅ simplified second line removed -->
           <span id="qMain" class="qLine">—</span>
+          <span id="qSimpl" class="qLine small">—</span>
         </div>
       </div>
 
@@ -394,77 +389,51 @@
     <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
   </div>
 
-  <!-- Teacher settings modal -->
-  <div id="modalOverlay" class="modalOverlay" role="dialog" aria-modal="true" aria-label="Teacher settings">
-    <div class="modal">
-      <div class="modalHeader">
-        <div class="modalTitle">Teacher settings</div>
-        <button id="closeModalBtn" class="ghost" aria-label="Close">✕</button>
-      </div>
-
-      <div class="modalBody">
-        <div class="opt">
-          <input type="radio" name="mode" id="modeSweet" value="sweet">
-          <label for="modeSweet">
-            <b>Sweet (default)</b>
-            <small>Integers from −20 to 20</small>
-          </label>
-        </div>
-
-        <div class="opt">
-          <input type="radio" name="mode" id="modeMild" value="mild">
-          <label for="modeMild">
-            <b>Mild</b>
-            <small>Integers from −50 to 50</small>
-          </label>
-        </div>
-
-        <div class="opt">
-          <input type="radio" name="mode" id="modeMedium" value="medium">
-          <label for="modeMedium">
-            <b>Medium</b>
-            <small>Integers from −100 to 100</small>
-          </label>
-        </div>
-
-        <div class="opt">
-          <input type="radio" name="mode" id="modeSpicy" value="spicy">
-          <label for="modeSpicy">
-            <b>Spicy</b>
-            <small>Range −100 to 100, values to 1dp in 0.5 steps (… −2.5, −2.0, −1.5, …)</small>
-          </label>
-        </div>
-      </div>
-
-      <div class="modalFooter">
-        <button id="cancelModalBtn" class="ghost">Cancel</button>
-        <button id="applyModalBtn" class="primary">Apply</button>
-      </div>
-    </div>
-  </div>
-
 <script>
 (() => {
+  let MIN = -20;
+  let MAX =  20;
   const PAD = 3;
+
   const ANIM_MS = 2000;
 
   const SPRITES = {
     still: "still.png",
     right: ["walk-right-1.png", "walk-right-2.png"],
-    left:  ["walk-left-1.png",  "walk-left-2.png"]
+    left:  ["walk-left-1.png",  "walk-left-2.png"],
+    logo: "mmt.png"
   };
 
-  const MODES = {
-    sweet:  { min:-20,  max: 20,  step:1,   decimals:false },
-    mild:   { min:-50,  max: 50,  step:1,   decimals:false },
-    medium: { min:-100, max:100,  step:1,   decimals:false },
-    spicy:  { min:-100, max:100,  step:0.5, decimals:true  }
-  };
+  const ASSET_VER = "1";
+  function withVer(url){ return url.includes("?") ? url : (url + "?v=" + ASSET_VER); }
 
-  const LS_KEY = "mmt_vectors_mode_v1";
+  async function preloadSprites(){
+    const urls = [
+      SPRITES.logo,
+      SPRITES.still,
+      ...SPRITES.right,
+      ...SPRITES.left
+    ].map(withVer);
+
+    const bar = document.getElementById("loadingBar");
+    let done = 0;
+
+    await Promise.all(urls.map((u) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => { done++; bar.style.width = Math.round((done/urls.length)*100) + "%"; resolve(); };
+      img.onerror = () => { done++; bar.style.width = Math.round((done/urls.length)*100) + "%"; resolve(); };
+      img.src = u;
+    })));
+
+    SPRITES.still = withVer(SPRITES.still);
+    SPRITES.right = SPRITES.right.map(withVer);
+    SPRITES.left  = SPRITES.left.map(withVer);
+  }
 
   const svg = document.getElementById("svg");
   const qMain = document.getElementById("qMain");
+  const qSimpl = document.getElementById("qSimpl");
+
   const personImg = document.getElementById("personImg");
 
   const newBtn = document.getElementById("newBtn");
@@ -472,36 +441,16 @@
   const backBtn = document.getElementById("backBtn");
   const fwdBtn  = document.getElementById("fwdBtn");
 
-  const teacherBtn = document.getElementById("teacherBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const cancelModalBtn = document.getElementById("cancelModalBtn");
-  const applyModalBtn = document.getElementById("applyModalBtn");
-
   const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
   const abs = Math.abs;
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
-  let settings = { mode: "sweet" };
-
-  function loadSettings(){
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return;
-    try{
-      const s = JSON.parse(raw);
-      if (s && MODES[s.mode]) settings.mode = s.mode;
-    }catch(_){}
-  }
-  function saveSettings(){
-    localStorage.setItem(LS_KEY, JSON.stringify(settings));
-  }
-
-  function cfg(){ return MODES[settings.mode] || MODES.sweet; }
-
-  function fmtNum(n){
-    // avoid "-0" visual noise
-    const z = (Math.abs(n) < 1e-9) ? 0 : n;
-    return cfg().decimals ? z.toFixed(1) : String(Math.trunc(z));
+  function nonZeroRand(min,max){
+    for (let i=0;i<2000;i++){
+      const v = randInt(min,max);
+      if (v !== 0) return v;
+    }
+    return 1;
   }
 
   function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
@@ -519,31 +468,51 @@
   }
 
   function fmtSignedVector(n){
-    // label on arrow: negatives show "-", positives show without "+"
-    return (n < 0) ? fmtNum(n) : fmtNum(abs(n));
+    return (n < 0) ? String(n) : String(abs(n));
   }
 
   function questionHTML(a, op, b, highlightPart){
     const opChar = (op === "+") ? "+" : "−";
-    const aStr = fmtNum(a);
-    const bStr = (b < 0) ? `(${fmtNum(b)})` : `(+${fmtNum(b)})`;
+    const aStr = String(a);
+    const bStr = (b < 0) ? `(${b})` : `(+${b})`;
     const wrap = (txt, which) => (highlightPart === which) ? `<span class="hl">${txt}</span>` : txt;
     return `${wrap(aStr,"a")} ${wrap(opChar,"op")} ${wrap(bStr,"b")}`;
+  }
+
+  function setQuestionText(highlightPart=null){
+    const { a, b, op } = Q;
+    qMain.innerHTML = questionHTML(a, op, b, highlightPart);
+  }
+
+  function setSimplified(show){
+    const { a, b, op, res } = Q;
+    if (!show){
+      qSimpl.classList.remove("show");
+      qSimpl.innerHTML = "";
+      return;
+    }
+    const orig = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill ok">${res}</span></span>`;
+    qMain.innerHTML = orig;
+    qSimpl.innerHTML = "";
+    qSimpl.classList.remove("show");
   }
 
   function setPersonStill(){ personImg.src = SPRITES.still; }
   function setPersonStaticFacingByOp(op){
     personImg.src = (op === "+") ? SPRITES.right[0] : SPRITES.left[0];
   }
-  function spriteFramesForDirection(spriteDir){
-    return (spriteDir === "+") ? SPRITES.right : SPRITES.left;
+  function spriteFramesForDirection(dir){
+    return (dir === "+") ? SPRITES.right : SPRITES.left;
   }
   function setPersonX(viewX){
     const pct = (viewX / 1000) * 100;
     personImg.style.left = pct + "%";
   }
 
-  // ---- Enter-to-skip animation ----
+  let Q = null;
+  let stepState = 0;
+  let refs = null;
+
   let isAnimating = false;
   let animToken = null;
   function beginAnimToken(){
@@ -574,60 +543,23 @@
     }, 220);
   }
 
-  function nonZeroRandStepped(){
-    const { min, max, step } = cfg();
-    const kMin = Math.round(min / step);
-    const kMax = Math.round(max / step);
-    for (let i=0;i<5000;i++){
-      const k = randInt(kMin, kMax);
-      if (k === 0) continue;
-      const v = k * step;
-      // guard against float weirdness
-      return Math.round(v / step) * step;
-    }
-    return step;
-  }
-
   function generateQuestion(){
-    const { min, max } = cfg();
-    for (let tries=0; tries<12000; tries++){
-      const a = nonZeroRandStepped();
-      const b = nonZeroRandStepped();
+    for (let tries=0; tries<5000; tries++){
+      const a = nonZeroRand(MIN, MAX);
+      const b = nonZeroRand(MIN, MAX);
       const op = (Math.random() < 0.5) ? "+" : "-";
       const res = (op === "+") ? (a + b) : (a - b);
-      if (res < min || res > max) continue;
+      if (res < MIN || res > MAX) continue;
       return { a, b, op, res };
     }
     return { a: 5, b: -3, op: "+", res: 2 };
   }
 
-  function snapToStep(v, step, dir){
-    // dir: "down" => floor, "up" => ceil
-    const k = v / step;
-    const snapped = (dir === "down") ? Math.floor(k) * step : Math.ceil(k) * step;
-    return Math.round(snapped / step) * step;
-  }
-
   function computeViewRange(a, res){
-    const { min, max, step } = cfg();
     const lo = Math.min(0, a, res) - PAD;
     const hi = Math.max(0, a, res) + PAD;
-    const vmin = clamp(snapToStep(lo, step, "down"), min, max);
-    const vmax = clamp(snapToStep(hi, step, "up"),   min, max);
-    // ensure span
-    if (Math.abs(vmax - vmin) < step*2){
-      const mid = (vmin + vmax)/2;
-      return {
-        vmin: clamp(snapToStep(mid - PAD, step, "down"), min, max),
-        vmax: clamp(snapToStep(mid + PAD, step, "up"),   min, max)
-      };
-    }
-    return { vmin, vmax };
+    return { vmin: clamp(lo, MIN, MAX), vmax: clamp(hi, MIN, MAX) };
   }
-
-  let Q = null;
-  let stepState = 0; // 0..4 now
-  let refs = null;
 
   function buildScene(){
     clearSVG();
@@ -635,14 +567,13 @@
 
     const { a, b, op, res } = Q;
     const { vmin, vmax } = computeViewRange(a, res);
-    const { step: tickStep } = cfg();
 
     const left = 80, right = 920;
 
     const yLine = 325;
     const tickTop = yLine - 22;
     const yArrow1 = tickTop - 42;
-    const yArrow2 = yArrow1 - 58; // master
+    const yArrow2 = yArrow1 - 58;
 
     const tickBot = yLine + 22;
     const dotR = 10;
@@ -655,7 +586,6 @@
 
     const defs = el("defs");
 
-    // end marker (points along the path direction)
     const mkEnd = el("marker",{
       id:"arrowHeadSmall",
       markerWidth:"6",
@@ -669,7 +599,6 @@
       el("path",{ d:"M 0 0 L 6 3 L 0 6 z", fill:"currentColor" })
     ]);
 
-    // start marker (FLIPPED)
     const mkStart = el("marker",{
       id:"arrowHeadStart",
       markerWidth:"6",
@@ -695,30 +624,15 @@
 
     function addMajor(val, dotClass){
       const xi = x(val);
-
-      const line = el("line",{ x1:xi, y1:tickTop, x2:xi, y2:tickBot, class:"tickMajor" });
-      const dot  = el("circle",{ cx:xi, cy:yLine, r:dotR, class:`dot ${dotClass||""}`.trim() });
-
-      // halo for result (drawn behind)
-      const halo = el("circle",{ cx:xi, cy:labelY-18, r:"26", class:"resHalo" });
-
-      const lbl = textNode(fmtNum(val), { x:xi, y:labelY, "text-anchor":"middle", class:"label" });
-
-      gTicks.appendChild(line);
-      gTicks.appendChild(dot);
-      gTicks.appendChild(halo);
+      gTicks.appendChild(el("line",{ x1:xi, y1:tickTop, x2:xi, y2:tickBot, class:"tickMajor" }));
+      gTicks.appendChild(el("circle",{ cx:xi, cy:yLine, r:dotR, class:`dot ${dotClass||""}`.trim() }));
+      const lbl = textNode(String(val), { x:xi, y:labelY, "text-anchor":"middle", class:"label" });
       gTicks.appendChild(lbl);
-
-      return { x: xi, line, dot, halo, lbl, val };
+      return { x: xi, val, lbl };
     }
 
-    // unit ticks (respect step: 1 or 0.5)
-    const span = vmax - vmin;
-    const nSteps = Math.round(span / tickStep);
-
-    for (let i=0; i<=nSteps; i++){
-      const v = vmin + i * tickStep;
-      if (Math.abs(v) < 1e-9) continue; // skip 0
+    for (let v = Math.ceil(vmin); v <= Math.floor(vmax); v++){
+      if (v === 0) continue;
       const xi = x(v);
       gUnit.appendChild(el("line", { x1:xi, y1:yLine-12, x2:xi, y2:yLine+12, class:"tickUnit" }));
     }
@@ -726,9 +640,7 @@
     svg.appendChild(gUnit);
     svg.appendChild(gTicks);
 
-    const major0  = addMajor(0, "zero");
-    const majorA  = addMajor(a, "");
-    const majorR  = addMajor(res, "");
+    addMajor(0, "zero");
 
     function makeArrow(x1, x2, y, color, labelText, headSide="end"){
       const attrs = { x1, y1:y, x2:x1, y2:y, class:"arrowPath" };
@@ -756,9 +668,9 @@
       return { path, label, tip, x1, x2, y, color, headSide };
     }
 
-    const x0 = major0.x;
-    const xA = majorA.x;
-    const xR = majorR.x;
+    const x0 = x(0);
+    const xA = x(a);
+    const xR = x(res);
 
     const colA = (a >= 0) ? "var(--pos)" : "var(--neg)";
     const colB = (b >= 0) ? "var(--pos)" : "var(--neg)";
@@ -768,19 +680,21 @@
 
     const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a), "end");
 
-    // subtraction ALWAYS reverses the arrowhead (walk back along the vector)
     const headSideB = (op === "-") ? "start" : "end";
     const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b), headSideB);
 
     svg.appendChild(gArrows);
 
-    // Hide ALL major stuff except 0 initially
-    // We’ll control reveal manually (and now we can reveal result tick WITHOUT its label).
-    const tickNodes = Array.from(gTicks.childNodes);
+    addMajor(a, "");
+    const resNode = addMajor(res, "");
 
-    // Order: for each addMajor: line, dot, halo, label  (4 nodes each)
-    // major0: 0..3, majorA: 4..7, majorR: 8..11
-    for (let i=4; i<tickNodes.length; i++){
+    // ✅ FIX: insert halo *BEFORE* the result label so label is always on top
+    const halo = el("circle", { cx: resNode.x, cy: (labelY - 18), r: 24, class: "ansHalo" });
+    gTicks.insertBefore(halo, resNode.lbl);
+
+    // hide everything except 0 initially
+    const tickNodes = Array.from(gTicks.childNodes);
+    for (let i=3; i<tickNodes.length; i++){
       tickNodes[i].style.display = "none";
     }
 
@@ -788,31 +702,13 @@
       x0, xA, xR,
       arrowA, arrowB,
       tickNodes,
-      majorA, majorR,
-      showA: () => { for (let i=4; i<8; i++) tickNodes[i].style.display = ""; }, // show a line/dot/halo/label (halo unused unless you turn it on)
-      showResTickOnly: () => { // show result line + dot ONLY
-        tickNodes[8].style.display  = ""; // line
-        tickNodes[9].style.display  = ""; // dot
-        tickNodes[10].style.display = "none"; // halo
-        tickNodes[11].style.display = "none"; // label
-      },
-      showResLabelAndHalo: () => {
-        tickNodes[8].style.display  = "";
-        tickNodes[9].style.display  = "";
-        tickNodes[10].style.display = ""; // halo
-        tickNodes[11].style.display = ""; // label
-      },
-      hideResLabelAndHalo: () => {
-        tickNodes[10].style.display = "none";
-        tickNodes[11].style.display = "none";
-      }
+      halo,
+      showA: () => { for (let i=3; i<6; i++) tickNodes[i].style.display = ""; },
+      showRes: () => { for (let i=6; i<10; i++) tickNodes[i].style.display = ""; } // halo adds one extra node
     };
 
-    // start position at 0
     setPersonX(x0);
-
-    // ensure halo off until final
-    majorR.halo.style.display = "none";
+    refs.halo.classList.remove("show");
   }
 
   function showArrowLabel(arrow){ arrow.label.style.display = ""; }
@@ -885,7 +781,6 @@
     setPersonStill();
   }
 
-  // moveDir controls motion, spriteDir controls which walk frames play.
   function movePerson(fromX, toX, moveDir, spriteDir, durationMs, token){
     return new Promise((resolve) => {
       startWalking(spriteDir);
@@ -915,31 +810,6 @@
     });
   }
 
-  function setQuestionText(highlightPart=null){
-    const { a, b, op } = Q;
-    qMain.innerHTML = questionHTML(a, op, b, highlightPart);
-  }
-
-  function setAnswerShown(show){
-    const { a, b, op, res } = Q;
-    if (!show){
-      qMain.innerHTML = questionHTML(a, op, b, null);
-      return;
-    }
-    qMain.innerHTML = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill final">${fmtNum(res)}</span></span>`;
-  }
-
-  function highlightResultOnNumberLine(show){
-    if (!refs) return;
-    if (!show){
-      refs.majorR.halo.style.display = "none";
-      refs.majorR.lbl.classList.remove("final");
-      return;
-    }
-    refs.majorR.halo.style.display = "";
-    refs.majorR.lbl.classList.add("final");
-  }
-
   function updateNavButtons(){
     backBtn.disabled = (stepState <= 0);
     fwdBtn.disabled  = (stepState >= 4);
@@ -947,33 +817,31 @@
 
   function goToStep0(){
     stepState = 0;
-    setAnswerShown(false);
+    setSimplified(false);
     setQuestionText(null);
     setPersonStill();
     setPersonX(refs.x0);
     hideArrow(refs.arrowA);
     hideArrow(refs.arrowB);
 
-    // hide A and R
-    for (let i=4; i<refs.tickNodes.length; i++){
+    refs.halo.classList.remove("show");
+
+    for (let i=3; i<refs.tickNodes.length; i++){
       refs.tickNodes[i].style.display = "none";
     }
-
-    // halo/label off
-    highlightResultOnNumberLine(false);
     updateNavButtons();
   }
 
   async function doStep1(){
     stepState = 1;
-    setAnswerShown(false);
+    setSimplified(false);
     setQuestionText("a");
     refs.showA();
 
     showArrowLabel(refs.arrowA);
 
-    const moveDir1   = (Q.a >= 0) ? "+" : "−";  // movement depends on sign
-    const spriteDir1 = "+";                     // ALWAYS walk-right for first vector
+    const moveDir1   = (Q.a >= 0) ? "+" : "−";
+    const spriteDir1 = "+";
 
     const token = beginAnimToken();
     try{
@@ -990,7 +858,6 @@
 
   async function doStep2(){
     stepState = 2;
-    setAnswerShown(false);
     setQuestionText("op");
     setPersonStaticFacingByOp(Q.op);
     updateNavButtons();
@@ -998,18 +865,12 @@
 
   async function doStep3(){
     stepState = 3;
-    setAnswerShown(false);
     setQuestionText("b");
 
     showArrowLabel(refs.arrowB);
 
-    // show result tick ONLY (no label/halo yet)
-    refs.showResTickOnly();
-
     const step2 = (Q.op === "+") ? Q.b : -Q.b;
     const moveDir  = (step2 >= 0) ? "+" : "−";
-
-    // sprite direction depends ONLY on the operator (not the vector)
     const spriteDir = (Q.op === "+") ? "+" : "−";
 
     const token = beginAnimToken();
@@ -1022,20 +883,16 @@
       endAnimToken();
     }
 
-    // IMPORTANT: still NO answer labels here (you asked reveal 3 stays clean)
-    refs.hideResLabelAndHalo();
-    highlightResultOnNumberLine(false);
-
+    setSimplified(false);
     updateNavButtons();
   }
 
   function doStep4(){
     stepState = 4;
 
-    // now reveal answer in box and on number line
-    setAnswerShown(true);
-    refs.showResLabelAndHalo();
-    highlightResultOnNumberLine(true);
+    refs.showRes();
+    refs.halo.classList.add("show");
+    setSimplified(true);
 
     updateNavButtons();
   }
@@ -1055,7 +912,6 @@
     buildScene();
     goToStep0();
 
-    // rebuild to target state (snapped, no animations)
     if (target >= 1){
       setQuestionText("a");
       refs.showA();
@@ -1076,20 +932,11 @@
       snapArrowToEnd(refs.arrowB);
       setPersonX(refs.xR);
       setPersonStill();
-
-      refs.showResTickOnly();
-      refs.hideResLabelAndHalo();
-      highlightResultOnNumberLine(false);
-
+      setSimplified(false);
       stepState = 3;
     }
-    if (target >= 4){
-      setAnswerShown(true);
-      refs.showResLabelAndHalo();
-      highlightResultOnNumberLine(true);
-      stepState = 4;
-    }
 
+    refs.halo.classList.remove("show");
     updateNavButtons();
   }
 
@@ -1104,40 +951,6 @@
     goToStep0();
   }
 
-  // ---------- Teacher settings ----------
-  function openModal(){
-    modalOverlay.style.display = "flex";
-    // set current checked
-    const m = settings.mode;
-    document.getElementById("modeSweet").checked  = (m === "sweet");
-    document.getElementById("modeMild").checked   = (m === "mild");
-    document.getElementById("modeMedium").checked = (m === "medium");
-    document.getElementById("modeSpicy").checked  = (m === "spicy");
-  }
-  function closeModal(){
-    modalOverlay.style.display = "none";
-  }
-  function getSelectedModeFromModal(){
-    const picked = document.querySelector('input[name="mode"]:checked');
-    return (picked && MODES[picked.value]) ? picked.value : settings.mode;
-  }
-  function applyModal(){
-    const chosen = getSelectedModeFromModal();
-    settings.mode = chosen;
-    saveSettings();
-    closeModal();
-    newQuestion();
-  }
-
-  teacherBtn.addEventListener("click", openModal);
-  closeModalBtn.addEventListener("click", closeModal);
-  cancelModalBtn.addEventListener("click", closeModal);
-  applyModalBtn.addEventListener("click", applyModal);
-  modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) closeModal();
-  });
-
-  // ---------- controls ----------
   newBtn.addEventListener("click", () => newQuestion());
   resetBtn.addEventListener("click", () => resetQuestion());
   backBtn.addEventListener("click", () => stepBack());
@@ -1158,12 +971,20 @@
     if (e.key === "ArrowRight"){ e.preventDefault(); stepForward(); return; }
     if (e.key === "ArrowLeft"){ e.preventDefault(); stepBack(); return; }
     if (e.key.toLowerCase() === "r"){ e.preventDefault(); resetQuestion(); return; }
-    if (e.key === "Escape" && modalOverlay.style.display === "flex"){ closeModal(); return; }
   });
 
-  // init
-  loadSettings();
-  newQuestion();
+  async function init(){
+    await preloadSprites();
+
+    const overlay = document.getElementById("loadingOverlay");
+    if (overlay) overlay.remove();
+
+    personImg.src = SPRITES.still;
+
+    newQuestion();
+  }
+
+  init();
 })();
 </script>
 </body>
