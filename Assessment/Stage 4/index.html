@@ -1,1 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integers – Basic Worksheet Generator</title>
 
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+
+      --line:#111827;
+      --tick:#111827;
+      --unitTick: rgba(17,24,39,.38);
+
+      --ok:#16a34a;
+      --accent:#2563eb;
+
+      --footer-h: 44px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1200px; margin: 18px auto 40px; padding: 0 16px; }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .title{
+      font-size: 28px;
+      font-weight: 1000;
+      margin: 0 0 6px;
+    }
+    .subtitle{
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-weight: 850;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .controls{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+
+    .fieldRow{
+      display:flex;
+      gap: 14px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+    }
+
+    label{
+      display:block;
+      font-weight: 950;
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    input[type="number"], input[type="text"]{
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 950;
+      font-size: 16px;
+      background:#fff;
+      min-width: 220px;
+      outline:none;
+    }
+
+    .checks{
+      display:flex;
+      gap: 12px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding-top: 6px;
+    }
+    .check{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      font-weight: 900;
+      font-size: 13px;
+      user-select:none;
+    }
+    .check input{ transform: scale(1.1); }
+
+    .btnRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    button{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+      font-size: 16px;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.ghost{ background:#eef2ff; color:#1d4ed8; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .outWrap{ margin-top: 16px; }
+
+    /* ---- Page (border background like PDF) ---- */
+    .page{
+      margin-top: 16px;
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      overflow:hidden;
+      position: relative;
+    }
+
+    /* Border image layer */
+    .page::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: url("border_page0.png"); /* place this file next to the HTML */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 1;
+      pointer-events:none;
+    }
+
+    /* Inner white “paper” panel */
+    .pageInner{
+      position: relative;
+      margin: 16mm;
+      background:#fff;
+      border: 2px solid rgba(17,24,39,.55);
+      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      padding: 12mm 12mm 10mm;
+      min-height: calc(297mm - 32mm);
+    }
+
+    .pageHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin-bottom: 8mm;
+    }
+
+    .hdrTitle{
+      font-weight: 1000;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+    .hdrSub{
+      color: var(--muted);
+      font-weight: 850;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .nameDate{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      justify-content:flex-end;
+      margin-left:auto;
+    }
+    .lineField{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      min-width: 150px;
+    }
+    .lineLabel{
+      font-size: 11px;
+      font-weight: 950;
+      color: var(--muted);
+    }
+    .lineBox{
+      height: 28px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10mm 10mm;
+    }
+
+    .qCard{
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 10px 10px 12px;
+      background:#fff;
+      min-height: 168px;
+      break-inside: avoid;
+    }
+
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .qLab{
+      font-weight: 1000;
+      font-size: 14px;
+      color: var(--ink);
+      min-width: 38px;
+    }
+    .qPrompt{
+      font-weight: 950;
+      font-size: 14px;
+      line-height: 1.2;
+      flex: 1;
+    }
+
+    .svg{
+      width:100%;
+      height: 86px;
+      display:block;
+      margin-top: 4px;
+    }
+
+    /* Answer line used only for calc questions */
+    .ansRow{
+      margin-top: 8px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .ansLabel{
+      font-weight: 950;
+      font-size: 13px;
+      min-width: 56px;
+    }
+    .ansBox{
+      flex:1;
+      height: 32px;
+      border: 2px solid #111827;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      font-size: 16px;
+      background:#fff;
+      color:#111827;
+    }
+    .ansBox.key{
+      color: var(--ok);
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+    }
+
+    /* Compare integers row */
+    .cmpRow{
+      margin-top: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      font-weight: 1000;
+      font-size: 18px;
+    }
+    .cmpNum{
+      min-width: 54px;
+      text-align:center;
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 2px solid rgba(17,24,39,.18);
+      background:#fff;
+    }
+    .cmpBox{
+      width: 46px;
+      height: 36px;
+      border-radius: 10px;
+      border: 2px solid #111827;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      background:#fff;
+    }
+    .cmpBox.key{
+      color: var(--ok);
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+    }
+
+    /* SVG styles (match your Explore look + more label spacing) */
+    .baseline{ stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 6; stroke-linecap: round; }
+    .tickUnit{ stroke: var(--unitTick); stroke-width: 3; stroke-linecap: round; }
+    .dot{ fill: #111827; opacity: 0.92; }
+    .dot.zero{ opacity: 0.85; }
+    .dot.answer{ fill: var(--ok); opacity: 0.95; }
+    .label{ font-size: 24px; font-weight: 950; fill:#111827; }
+    .label.answer{ fill: var(--ok); }
+
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+
+    /* Print */
+    @media print{
+      body{ background:#fff; padding-bottom: 0; }
+      .wrap{ max-width: none; margin: 0; padding: 0; }
+      .card{ box-shadow:none; border-radius:0; padding: 0; }
+      .controls, .title, .subtitle, .mmtFooter{ display:none !important; }
+
+      .page{
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      .page:last-child{ page-break-after: auto; }
+
+      /* Keep question cards together */
+      .qCard{ break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">Integers – Basic (D/E) worksheet generator</h1>
+      <p class="subtitle">
+        A4 printable worksheet + completed answer key. Randomised sets. 8 questions per page (2×4).<br>
+        Note: Put <strong>border_page0.png</strong> in the same folder as this HTML for the border to appear.
+      </p>
+
+      <div class="controls">
+        <div class="fieldRow">
+          <div>
+            <label for="outcomeInp">Outcome (code)</label>
+            <input id="outcomeInp" type="text" value="Stage 4 – Integers" />
+          </div>
+
+          <div>
+            <label for="descInp">Basic descriptor</label>
+            <input id="descInp" type="text" value="Grades D/E – friendly numbers + diagrams" />
+          </div>
+
+          <div>
+            <label for="countInp">Total questions (multiple of 8 recommended)</label>
+            <input id="countInp" type="number" min="8" max="64" step="1" value="16" />
+          </div>
+
+          <div class="checks" aria-label="Question types">
+            <label class="check" title="Place integers on a number line (dot only on answer key)">
+              <input id="chkPlace" type="checkbox" checked />
+              Place integer on number line
+            </label>
+
+            <label class="check" title="Add/subtract without combining signs: a+b, a−b, −a+b, −a−b">
+              <input id="chkCalc" type="checkbox" checked />
+              Add/Sub on number line
+            </label>
+
+            <label class="check" title="Compare integers with a box for < > =">
+              <input id="chkCompare" type="checkbox" checked />
+              Compare integers
+            </label>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button id="genBtn" class="primary">Generate</button>
+          <button id="printBtn" class="ghost">Print / Save as PDF</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    Tip: Use your browser’s Print → “Save as PDF”
+  </div>
+
+<script>
+(() => {
+  const PER_PAGE = 8;
+
+  // Sweet + Mild combo for "basic" integer work
+  const PLACE_RANGE = { min:-10, max:10 };
+  const CALC_RANGE  = { min:-20, max:10 }; // your mild-ish flavour
+  const DOT_R = 10;
+
+  const outcomeInp = document.getElementById("outcomeInp");
+  const descInp = document.getElementById("descInp");
+  const countInp = document.getElementById("countInp");
+
+  const chkPlace = document.getElementById("chkPlace");
+  const chkCalc = document.getElementById("chkCalc");
+  const chkCompare = document.getElementById("chkCompare");
+
+  const genBtn = document.getElementById("genBtn");
+  const printBtn = document.getElementById("printBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const out = document.getElementById("out");
+
+  const randInt = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const choice = (arr)=>arr[randInt(0, arr.length-1)];
+
+  function clearOut(){ out.innerHTML=""; }
+
+  // ---------- SVG helpers ----------
+  function elNS(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNS(str, attrs={}){
+    const t = elNS("text", attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  // ---------- NUMBER LINE: Place integer (Sweet/Mild look) ----------
+  function placeLineSVG(value, showAnswer){
+    const { min:vmin, max:vmax } = PLACE_RANGE;
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"svg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 92;
+    const tickMajTop = yLine - 26;
+    const tickMajBot = yLine + 26;
+    const tickUnitTop = yLine - 12;
+    const tickUnitBot = yLine + 12;
+
+    const labelY = 184; // more spacing underneath ticks + values
+
+    const x = (v) => left + ((v - vmin) / (vmax - vmin)) * (right - left);
+
+    svg.appendChild(elNS("line",{ x1:left,y1:yLine,x2:right,y2:yLine, class:"baseline" }));
+
+    // unit ticks across full range
+    for(let v=vmin; v<=vmax; v++){
+      const xi = x(v);
+      svg.appendChild(elNS("line",{
+        x1:xi, y1:tickUnitTop,
+        x2:xi, y2:tickUnitBot,
+        class:"tickUnit"
+      }));
+    }
+
+    // major ticks at min, 0, max
+    [vmin,0,vmax].forEach(v=>{
+      const xi=x(v);
+      svg.appendChild(elNS("line",{ x1:xi,y1:tickMajTop,x2:xi,y2:tickMajBot, class:"tickMajor" }));
+      svg.appendChild(elNS("circle",{ cx:xi,cy:yLine,r:DOT_R, class:`dot ${v===0?'zero':''}`.trim() }));
+      svg.appendChild(textNS(String(v),{ x:xi,y:labelY,"text-anchor":"middle", class:"label" }));
+    });
+
+    if(showAnswer){
+      const xi=x(value);
+      svg.appendChild(elNS("circle",{ cx:xi,cy:yLine,r:DOT_R, class:"dot answer" }));
+      svg.appendChild(textNS(String(value),{ x:xi,y:labelY+16,"text-anchor":"middle", class:"label answer" }));
+    }
+
+    return svg;
+  }
+
+  // ---------- NUMBER LINE: Calc (match Explore look; show a and 0 ticks; unit ticks shown) ----------
+  function computeViewRange(a, e, cfg){
+    const lo = Math.min(a, 0, e);
+    const hi = Math.max(a, 0, e);
+    const span = Math.max(1, hi - lo);
+    const pad = Math.min(12, Math.max(4, Math.ceil(span * 0.25)));
+
+    let vmin = Math.max(cfg.min, lo - pad);
+    let vmax = Math.min(cfg.max, hi + pad);
+    if (vmax - vmin < 8){
+      vmin = Math.max(cfg.min, vmin - 2);
+      vmax = Math.min(cfg.max, vmax + 2);
+    }
+    return { vmin, vmax };
+  }
+
+  function calcLineSVG(a, b, showAnswer){
+    const e = a + b;
+    const cfg = CALC_RANGE;
+    const { vmin, vmax } = computeViewRange(a, e, cfg);
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"svg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 92;
+    const tickMajTop = yLine - 26;
+    const tickMajBot = yLine + 26;
+    const labelY = 184; // increased spacing
+
+    const x = (v) => left + ((v - vmin) / (vmax - vmin)) * (right - left);
+
+    // baseline
+    svg.appendChild(elNS("line",{ x1:left,y1:yLine,x2:right,y2:yLine, class:"baseline" }));
+
+    // unit ticks across view range
+    const startInt = Math.ceil(vmin);
+    const endInt = Math.floor(vmax);
+    for(let v=startInt; v<=endInt; v++){
+      if (v === a || v === 0) continue;
+      const xi = x(v);
+      svg.appendChild(elNS("line",{
+        x1:xi, y1:yLine-12,
+        x2:xi, y2:yLine+12,
+        class:"tickUnit"
+      }));
+    }
+
+    function major(val, dotClass){
+      const xi = x(val);
+      svg.appendChild(elNS("line",{ x1:xi,y1:tickMajTop,x2:xi,y2:tickMajBot, class:"tickMajor" }));
+      svg.appendChild(elNS("circle",{ cx:xi,cy:yLine,r:DOT_R, class:`dot ${dotClass||""}`.trim() }));
+      svg.appendChild(textNS(String(val),{ x:xi,y:labelY,"text-anchor":"middle", class:"label" }));
+    }
+
+    // show a and 0 like Explore tool
+    major(a, "");
+    major(0, "zero");
+
+    // answer dot + label (answer key only)
+    if(showAnswer){
+      const xi = x(e);
+      svg.appendChild(elNS("circle",{ cx:xi,cy:yLine,r:DOT_R, class:"dot answer" }));
+      svg.appendChild(textNS(String(e),{ x:xi,y:labelY+16,"text-anchor":"middle", class:"label answer" }));
+    }
+
+    return svg;
+  }
+
+  // ---------- Question generators ----------
+  function genPlace(){
+    const v = randInt(PLACE_RANGE.min, PLACE_RANGE.max);
+    return {
+      kind: "place",
+      prompt: `Place <strong>${v}</strong> on the number line.`,
+      value: v
+    };
+  }
+
+  // STRICT formats only:
+  // a + b, a − b, −a + b, −a − b   (no combining signs in text)
+  function genCalc(){
+    for (let tries=0; tries<600; tries++){
+      let a = randInt(-10, 10);
+      let b = randInt(-10, 10);
+      if (b === 0) continue;
+
+      const e = a + b;
+      if (e < -20 || e > 20) continue;
+
+      const op = (b >= 0) ? "+" : "−";
+      const txt = `${a} ${op} ${Math.abs(b)}`; // never shows + -b
+      return {
+        kind: "calc",
+        prompt: `Use the number line to calculate: <strong>${txt}</strong>`,
+        a, b, value: e
+      };
+    }
+    return { kind:"calc", prompt:`Use the number line to calculate: <strong>-2 − 6</strong>`, a:-2, b:-6, value:-8 };
+  }
+
+  function cmpSymbol(a,b){
+    if (a < b) return "<";
+    if (a > b) return ">";
+    return "=";
+  }
+
+  function genCompare(){
+    const a = randInt(-20, 20);
+    const b = randInt(-20, 20);
+    return {
+      kind: "compare",
+      prompt: `Insert either <strong>&lt;</strong>, <strong>&gt;</strong> or <strong>=</strong> to make the statement true.`,
+      a, b, value: cmpSymbol(a,b)
+    };
+  }
+
+  // ---------- Cards ----------
+  function makeCard(q, idx, showAnswer){
+    const wrap = document.createElement("div");
+    wrap.className = "qCard";
+
+    const top = document.createElement("div");
+    top.className = "qTop";
+    top.innerHTML = `<div class="qLab">Q${idx}</div><div class="qPrompt">${q.prompt}</div>`;
+    wrap.appendChild(top);
+
+    if (q.kind === "place"){
+      wrap.appendChild(placeLineSVG(q.value, showAnswer));
+      // no answer box (per your instruction)
+      return wrap;
+    }
+
+    if (q.kind === "calc"){
+      wrap.appendChild(calcLineSVG(q.a, q.b, showAnswer));
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `
+        <div class="ansLabel">Answer:</div>
+        <div class="ansBox ${showAnswer ? "key" : ""}">${showAnswer ? q.value : ""}</div>
+      `;
+      wrap.appendChild(ansRow);
+      return wrap;
+    }
+
+    if (q.kind === "compare"){
+      const row = document.createElement("div");
+      row.className = "cmpRow";
+      row.innerHTML = `
+        <div class="cmpNum">${q.a}</div>
+        <div class="cmpBox ${showAnswer ? "key" : ""}">${showAnswer ? q.value : ""}</div>
+        <div class="cmpNum">${q.b}</div>
+      `;
+      wrap.appendChild(row);
+      return wrap;
+    }
+
+    return wrap;
+  }
+
+  // ---------- Pages ----------
+  function buildPage(title, showAnswer, questions){
+    const page = document.createElement("div");
+    page.className = "page";
+
+    const inner = document.createElement("div");
+    inner.className = "pageInner";
+
+    inner.innerHTML = `
+      <div class="pageHeader">
+        <div>
+          <div class="hdrTitle">${title}</div>
+          <div class="hdrSub">${escapeHTML(outcomeInp.value)} · ${escapeHTML(descInp.value)}</div>
+        </div>
+
+        <div class="nameDate">
+          <div class="lineField"><div class="lineLabel">Name</div><div class="lineBox"></div></div>
+          <div class="lineField"><div class="lineLabel">Class</div><div class="lineBox"></div></div>
+          <div class="lineField"><div class="lineLabel">Date</div><div class="lineBox"></div></div>
+        </div>
+      </div>
+    `;
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    questions.forEach((q,i)=>grid.appendChild(makeCard(q, i+1, showAnswer)));
+    inner.appendChild(grid);
+
+    page.appendChild(inner);
+    return page;
+  }
+
+  function escapeHTML(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  // ---------- Generate worksheet ----------
+  function generate(){
+    clearOut();
+
+    let n = Number(countInp.value);
+    if (!Number.isFinite(n)) n = 16;
+    n = Math.max(8, Math.min(64, Math.round(n)));
+    countInp.value = String(n);
+
+    const enabled = [];
+    if (chkPlace.checked) enabled.push("place");
+    if (chkCalc.checked) enabled.push("calc");
+    if (chkCompare.checked) enabled.push("compare");
+
+    if (enabled.length === 0){
+      alert("Select at least one question type.");
+      return;
+    }
+
+    // build exactly n questions by cycling types (keeps mix fairly even)
+    const qs = [];
+    for (let i=0; i<n; i++){
+      const kind = enabled[i % enabled.length];
+      if (kind === "place") qs.push(genPlace());
+      if (kind === "calc") qs.push(genCalc());
+      if (kind === "compare") qs.push(genCompare());
+    }
+
+    // chunk into pages of 8
+    const pages = [];
+    for (let i=0; i<qs.length; i+=PER_PAGE){
+      pages.push(qs.slice(i, i+PER_PAGE));
+    }
+
+    // render: worksheet pages then answer key pages
+    pages.forEach((slice, pIdx)=>{
+      out.appendChild(buildPage(`Worksheet — Page ${pIdx+1} of ${pages.length}`, false, slice));
+    });
+    pages.forEach((slice, pIdx)=>{
+      out.appendChild(buildPage(`Answer Key — Page ${pIdx+1} of ${pages.length}`, true, slice));
+    });
+
+    if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+
+  function resetAll(){
+    clearOut();
+    outcomeInp.value = "Stage 4 – Integers";
+    descInp.value = "Grades D/E – friendly numbers + diagrams";
+    countInp.value = "16";
+    chkPlace.checked = true;
+    chkCalc.checked = true;
+    chkCompare.checked = true;
+  }
+
+  genBtn.addEventListener("click", generate);
+  printBtn.addEventListener("click", () => window.print());
+  resetBtn.addEventListener("click", resetAll);
+
+  // start blank (you can auto-generate if you want)
+  // generate();
+})();
+</script>
+</body>
+</html>
