@@ -1,1 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MMT Worksheet Generator — Master Template</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
 
+      --line:#111827;
+      --tick:#111827;
+
+      --box:#0f172a;
+      --ok:#16a34a;
+
+      --footer-h: 44px;
+      --pagePad: 12mm;          /* safe padding so nothing falls off with default print margins */
+      --innerRadius: 14px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1100px; margin: 18px auto 40px; padding: 0 16px; }
+    .panel{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .titleRow{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .title{
+      font-size: 28px;
+      font-weight: 1000;
+      letter-spacing: .2px;
+      margin: 0;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border: 1px solid rgba(229,231,235,.95);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 1000;
+      font-size: 12px;
+      color:#111827;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      user-select:none;
+      white-space: nowrap;
+    }
+    .subtitle{
+      margin: 6px 0 16px;
+      color: var(--muted);
+      font-weight: 850;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .controls{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+
+    label{
+      display:block;
+      font-weight: 950;
+      color: var(--ink);
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+
+    select, input[type="number"]{
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 950;
+      font-size: 16px;
+      background:#fff;
+      min-width: 260px;
+      outline:none;
+    }
+    input[type="number"]{ min-width: 220px; }
+
+    .checks{
+      display:flex;
+      gap: 12px 14px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding: 6px 0 0;
+    }
+    .chk{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      border: 1px solid rgba(229,231,235,.95);
+      background:#fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+      user-select:none;
+    }
+    .chk input{ width: 18px; height: 18px; }
+    .chk span{
+      font-weight: 950;
+      font-size: 13px;
+      color:#111827;
+      white-space: nowrap;
+    }
+
+    .btnRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+      font-size: 16px;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.ghost{ background:#eef2ff; color:#1d4ed8; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .outWrap{ margin-top: 16px; }
+
+    /* Pages */
+    .page{
+      margin-top: 16px;
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      overflow:hidden;
+      position: relative;
+    }
+
+    /* Border image layer */
+    .pageBorder{
+      position:absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events:none;
+      opacity: 1;
+    }
+
+    .pageInner{
+      position: relative;
+      z-index: 1;
+      padding: 0; /* padding moved to pageContent so border stays clean */
+    }
+
+    .pageContent{
+      margin: var(--pagePad);
+      background:#fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 0 0 1px rgba(229,231,235,.9) inset;
+    }
+
+    .pageHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .hdrLeft{ min-width: 240px; }
+    .hdrTitle{
+      font-weight: 1000;
+      font-size: 18px;
+      line-height: 1.15;
+      margin-bottom: 2px;
+    }
+    .hdrSub{
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .nameRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items:end;
+      min-width: min(420px, 100%);
+    }
+    .lineField{ display:flex; flex-direction:column; gap: 6px; min-width: 0; }
+    .lineLabel{ font-size: 12px; font-weight: 950; color: var(--muted); }
+    .lineBox{
+      height: 30px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+      width: 100%;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      margin-top: 10px;
+    }
+
+    .qCard{
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 12px 12px 12px;
+      background:#fff;
+      min-height: 190px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      gap: 12px;
+    }
+    .qNum{
+      font-weight: 1000;
+      font-size: 18px;
+      min-width: 44px;
+      color:#111827;
+    }
+    .qText{
+      font-weight: 1000;
+      font-size: 16px;
+      line-height: 1.15;
+      color:#111827;
+    }
+
+    .workArea{
+      margin-top: 2px;
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 10px 10px;
+      background: #fff;
+      flex: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .svg{
+      width: 100%;
+      height: 86px;
+      display:block;
+    }
+
+    .ansRow{
+      margin-top: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 10px;
+    }
+    .ansLabel{
+      font-weight: 1000;
+      font-size: 14px;
+    }
+    .ansBox{
+      flex: 1;
+      min-width: 0;
+      height: 34px;
+      border: 2px solid #111827;
+      border-radius: 12px;
+      background:#fff;
+    }
+    .ansBox.key{
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      color: var(--ok);
+      font-size: 16px;
+    }
+
+    /* Example comparator row (optional) */
+    .ineqRow{
+      margin-top: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      width: 100%;
+    }
+    .pill{
+      border: 2px solid rgba(17,24,39,.25);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-weight: 1000;
+      font-size: 18px;
+      min-width: 54px;
+      text-align:center;
+      background:#fff;
+    }
+    .symBox{
+      width: 46px;
+      height: 40px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      font-size: 20px;
+    }
+    .symBox.key{
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+      color: var(--ok);
+    }
+
+    /* SVG styles (kept consistent across generators) */
+    .baseline{ stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 6; stroke-linecap: round; }
+    .tickUnit{ stroke: rgba(17,24,39,.45); stroke-width: 3; stroke-linecap: round; }
+    .dot{ fill: #111827; opacity: 0.92; }
+    .dot.zero{ opacity: 0.85; }
+    .dot.answer{ fill: var(--ok); opacity: 0.95; }
+    .label{ font-size: 24px; font-weight: 1000; fill:#111827; }
+    .label.answer{ fill: var(--ok); }
+
+    /* Bottom fixed footer (screen only) */
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+    .mmtFooter a{ color:#2563eb; text-decoration:none; font-weight: 950; }
+    .mmtFooter a:hover{ text-decoration: underline; }
+
+    /* Print */
+    @media print{
+      @page{ size: A4; margin: 12mm; }
+
+      body{ background:#fff !important; padding:0 !important; }
+      .controls, .screenOnly, .mmtFooter{ display:none !important; }
+      .wrap{ max-width:none !important; margin:0 !important; padding:0 !important; }
+
+      :root{ --pagePad: 6mm; }
+
+      .page{
+        width: 186mm;           /* A4 minus 12mm margins on both sides */
+        height: 273mm;          /* A4 minus 12mm margins top/bottom */
+        margin: 0 auto;
+        border: none;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      .page:last-child{ page-break-after: auto; }
+
+      .pageContent{ margin: var(--pagePad); padding: 12px; }
+
+      /* keep header tidy in print */
+      .pageHeader{ flex-wrap: nowrap !important; gap: 10px !important; }
+
+      /* tighten question cards so 8 fit comfortably */
+      .grid{ gap: 12px !important; }
+      .qCard{ break-inside: avoid; padding: 12px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="titleRow">
+        <h1 id="uiTitle" class="title">Worksheet Generator (Template)</h1>
+        <div class="badge">MMT Master Template · v1</div>
+      </div>
+      <p id="uiSubtitle" class="subtitle">Swap the topic + question types in the CONFIG block. Then build your generators + renderers in the QUESTION_TYPES array.</p>
+
+      <div class="controls" aria-label="Worksheet controls">
+        <div style="min-width:320px; flex:1 1 420px;">
+          <label for="outcomeSel">Topic / outcome (optional)</label>
+          <select id="outcomeSel"></select>
+
+          <div class="checks" aria-label="Question types">
+            <label style="margin:0; font-size:13px; font-weight:950; color:var(--muted); width:100%;">Question types (checkboxes)</label>
+            <div id="chkWrap" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+          <div>
+            <label for="countInp">Total questions (multiples of 8 recommended)</label>
+            <input id="countInp" type="number" min="8" max="96" step="8" value="16" />
+          </div>
+
+          <div class="btnRow">
+            <button id="genBtn" class="primary">Generate</button>
+            <button id="printBtn" class="ghost">Print / Save as PDF</button>
+            <button id="resetBtn" class="danger">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  // ============================================================
+  // ✅ CONFIG — edit these for each new topic
+  // ============================================================
+  const CONFIG = {
+    title: "Worksheet Generator — Master Template",
+    subtitle: "Blank starter file (no question types yet). For each new project, add outcomes + question types in this file.",
+
+    perPage: 8,                  // 2x4 grid per page
+    borderSrc: "border_page0.png", // keep this file beside the HTML
+
+    // Shown on each printed page
+    pageHeaderTitle: "Worksheet",
+    pageHeaderSubtitle: "Stage / Topic (set per project)",
+
+    // Answer key title
+    answerKeyTitle: "Answer key",
+
+    // Optional dropdown (can be one option)
+    outcomes: [
+      { value:"placeholder", label:"— Select stage/outcome (add options in code) —" }
+    ],
+
+    // Total questions defaults
+    defaultCount: 16,
+    minCount: 8,
+    maxCount: 96,
+  };
+
+  // ============================================================
+  // ✅ QUESTION TYPES — add/remove as needed per topic
+  // Each item needs:
+  //  - id, label, defaultOn
+  //  - gen(): returns { type: id, ...data }
+  //  - key(q): returns a string for de-dup (optional but recommended)
+  //  - render(q, idx1, showAnswers): returns a DOM element (.qCard)
+  // ============================================================
+  // Blank-by-default: start with no question types.
+  // For each new project, add items to this array.
+  const QUESTION_TYPES = [];
+
+  // ============================================================
+  // ✅ ENGINE (generic) — you generally don't touch this
+  // ============================================================
+
+  // DOM
+  const outcomeSel = document.getElementById('outcomeSel');
+  const chkWrap    = document.getElementById('chkWrap');
+  const countInp   = document.getElementById('countInp');
+  const genBtn     = document.getElementById('genBtn');
+  const printBtn   = document.getElementById('printBtn');
+  const resetBtn   = document.getElementById('resetBtn');
+  const out        = document.getElementById('out');
+
+  // Helpers
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice  = (arr) => arr[randInt(0, arr.length-1)];
+  const clamp   = (n,a,b) => Math.max(a, Math.min(b, n));
+
+  function clearOut(){ out.innerHTML = ""; }
+
+  function elNS(name, attrs={}, children=[]){
+    const n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNS(str, attrs={}){
+    const t = elNS('text', attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  // Card shell used by question types
+  function makeCardShell(idx1, promptText){
+    const card = document.createElement('div');
+    card.className = 'qCard';
+
+    const top = document.createElement('div');
+    top.className = 'qTop';
+
+    const num = document.createElement('div');
+    num.className = 'qNum';
+    num.textContent = `Q${idx1}`;
+
+    const text = document.createElement('div');
+    text.className = 'qText';
+    text.textContent = promptText;
+
+    top.appendChild(num);
+    top.appendChild(text);
+    card.appendChild(top);
+
+    const work = document.createElement('div');
+    work.className = 'workArea';
+    card.appendChild(work);
+
+    return card;
+  }
+
+  function makeAnswerRow(answerText, isKey){
+    const ansRow = document.createElement('div');
+    ansRow.className = 'ansRow';
+
+    const lab = document.createElement('div');
+    lab.className = 'ansLabel';
+    lab.textContent = 'Answer:';
+
+    const box = document.createElement('div');
+    box.className = 'ansBox' + (isKey ? ' key' : '');
+    box.textContent = isKey ? (answerText ?? '') : '';
+
+    ansRow.appendChild(lab);
+    ansRow.appendChild(box);
+    return ansRow;
+  }
+
+  // Build controls UI from CONFIG + QUESTION_TYPES
+  function initUI(){
+    document.title = CONFIG.title;
+    document.getElementById('uiTitle').textContent = CONFIG.title;
+    document.getElementById('uiSubtitle').textContent = CONFIG.subtitle;
+
+    outcomeSel.innerHTML = '';
+    for (const o of (CONFIG.outcomes || [{value:'default', label:'Default'}])){
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      outcomeSel.appendChild(opt);
+    }
+
+    chkWrap.innerHTML = '';
+
+    if (!QUESTION_TYPES.length){
+      const note = document.createElement('div');
+      note.style.marginTop = '8px';
+      note.style.color = 'var(--muted)';
+      note.style.fontWeight = '850';
+      note.style.fontSize = '13px';
+      note.textContent = '(No question types yet — add them in the QUESTION_TYPES array.)';
+      chkWrap.appendChild(note);
+    }
+
+    for (const qt of QUESTION_TYPES){
+      const lab = document.createElement('label');
+      lab.className = 'chk';
+
+      const inp = document.createElement('input');
+      inp.type = 'checkbox';
+      inp.id = `chk_${qt.id}`;
+      inp.checked = !!qt.defaultOn;
+
+      const span = document.createElement('span');
+      span.textContent = qt.label;
+
+      lab.appendChild(inp);
+      lab.appendChild(span);
+      chkWrap.appendChild(lab);
+    }
+
+    countInp.min = String(CONFIG.minCount);
+    countInp.max = String(CONFIG.maxCount);
+    countInp.step = String(CONFIG.perPage);
+    countInp.value = String(CONFIG.defaultCount);
+  }
+
+  function activeTypes(){
+    const ids = new Set();
+    for (const qt of QUESTION_TYPES){
+      const el = document.getElementById(`chk_${qt.id}`);
+      if (el && el.checked) ids.add(qt.id);
+    }
+    return QUESTION_TYPES.filter(qt => ids.has(qt.id));
+  }
+
+  // De-dup helper
+  function uniqPush(arr, item, keyFn){
+    const k = keyFn(item);
+    if (arr.some(x => keyFn(x) === k)) return false;
+    arr.push(item);
+    return true;
+  }
+
+  function generateQuestions(n){
+    const types = activeTypes();
+    if (!types.length) return [];
+
+    const qs = [];
+    let safety = 0;
+
+    while (qs.length < n && safety < 15000){
+      safety++;
+      const qt = choice(types);
+      const q = qt.gen();
+      if (!q) continue;
+
+      const keyFn = (x) => {
+        const t = types.find(tt => tt.id === x.type);
+        if (!t) return JSON.stringify(x);
+        return (t.key ? t.key(x) : JSON.stringify(x));
+      };
+
+      if (!uniqPush(qs, q, keyFn)) continue;
+    }
+
+    return qs;
+  }
+
+  function pageHTML(pageTitle, pageIndex, pageCount){
+    const page = document.createElement('div');
+    page.className = 'page';
+
+    const border = document.createElement('img');
+    border.className = 'pageBorder';
+    border.alt = '';
+    border.src = CONFIG.borderSrc;
+    page.appendChild(border);
+
+    const inner = document.createElement('div');
+    inner.className = 'pageInner';
+    page.appendChild(inner);
+
+    const content = document.createElement('div');
+    content.className = 'pageContent';
+    inner.appendChild(content);
+
+    const header = document.createElement('div');
+    header.className = 'pageHeader';
+    header.innerHTML = `
+      <div class="hdrLeft">
+        <div class="hdrTitle">${pageTitle} — Page ${pageIndex} of ${pageCount}</div>
+        <div class="hdrSub">${CONFIG.pageHeaderSubtitle}</div>
+      </div>
+      <div class="nameRow">
+        <div class="lineField"><div class="lineLabel">Name</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">Class</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">Date</div><div class="lineBox"></div></div>
+      </div>
+    `;
+    content.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    content.appendChild(grid);
+
+    return { page, grid };
+  }
+
+  function buildPages(questions, pageTitle, showAnswers){
+    const pages = [];
+    const totalPages = Math.ceil(questions.length / CONFIG.perPage);
+    let qNum = 1;
+
+    for (let p=0; p<totalPages; p++){
+      const { page, grid } = pageHTML(pageTitle, p+1, totalPages);
+      const slice = questions.slice(p*CONFIG.perPage, p*CONFIG.perPage + CONFIG.perPage);
+
+      for (const q of slice){
+        const qt = QUESTION_TYPES.find(t => t.id === q.type);
+        if (!qt) continue;
+        grid.appendChild(qt.render(q, qNum, showAnswers));
+        qNum++;
+      }
+
+      pages.push(page);
+    }
+
+    return pages;
+  }
+
+  function generate(){
+    clearOut();
+
+    let n = Number(countInp.value);
+    if (!Number.isFinite(n)) n = CONFIG.defaultCount;
+    n = clamp(Math.round(n), CONFIG.minCount, CONFIG.maxCount);
+    countInp.value = String(n);
+
+    const qs = generateQuestions(n);
+    if (!qs.length){
+      out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">Please tick at least one question type.</div>`;
+      return;
+    }
+
+    const ws  = buildPages(qs, CONFIG.pageHeaderTitle, false);
+    const key = buildPages(qs, CONFIG.answerKeyTitle, true);
+
+    for (const pg of ws) out.appendChild(pg);
+    for (const pg of key) out.appendChild(pg);
+
+    if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function reset(){
+    clearOut();
+    // restore defaults
+    for (const qt of QUESTION_TYPES){
+      const el = document.getElementById(`chk_${qt.id}`);
+      if (el) el.checked = !!qt.defaultOn;
+    }
+    countInp.value = String(CONFIG.defaultCount);
+    outcomeSel.selectedIndex = 0;
+  }
+
+  // Wire up
+  genBtn.addEventListener('click', generate);
+  printBtn.addEventListener('click', () => window.print());
+  resetBtn.addEventListener('click', reset);
+
+  // Init
+  initUI();
+})();
+</script>
+</body>
+</html>
