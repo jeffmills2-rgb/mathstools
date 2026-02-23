@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integers — Worksheet Generator</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+
+      --line:#111827;
+      --tick:#111827;
+
+      --box:#0f172a;
+      --ok:#16a34a;
+
+      --footer-h: 44px;
+      --pagePad: 12mm;          /* safe padding so nothing falls off with default print margins */
+      --innerRadius: 14px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1100px; margin: 18px auto 40px; padding: 0 16px; }
+    .panel{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .seedHint{ margin-top:6px; color: var(--muted); font-weight: 850; font-size: 12px; }
+
+    .controls{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+
+    label{
+      display:block;
+      font-weight: 950;
+      color: var(--ink);
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+
+    select, input[type="number"], input[type="text"]{
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 950;
+      font-size: 16px;
+      background:#fff;
+      min-width: 260px;
+      outline:none;
+    }
+    input[type="number"]{ min-width: 220px; }
+
+    .checks{
+      display:flex;
+      gap: 12px 14px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding: 6px 0 0;
+    }
+    .chk{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      border: 1px solid rgba(229,231,235,.95);
+      background:#fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+      user-select:none;
+    }
+    .chk input{ width: 18px; height: 18px; }
+    .chk span{
+      font-weight: 950;
+      font-size: 13px;
+      color:#111827;
+      white-space: nowrap;
+    }
+
+    .btnRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+      font-size: 16px;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.ghost{ background:#eef2ff; color:#1d4ed8; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .outWrap{ margin-top: 16px; }
+
+    /* Pages */
+    .page{
+      margin-top: 16px;
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      overflow:hidden;
+      position: relative;
+    }
+
+    /* Border image layer */
+    .pageBorder{
+      position:absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events:none;
+      opacity: 1;
+    }
+
+    .pageInner{
+      position: relative;
+      z-index: 1;
+      padding: 0;
+    }
+
+    .pageContent{
+      margin: var(--pagePad);
+      background:#fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 0 0 1px rgba(229,231,235,.9) inset;
+    }
+
+    .pageHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .hdrLeft{ min-width: 240px; }
+    .hdrTitle{
+      font-weight: 1000;
+      font-size: 18px;
+      line-height: 1.15;
+      margin-bottom: 2px;
+    }
+    .hdrSub{
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .nameRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items:end;
+      min-width: min(420px, 100%);
+    }
+    .lineField{ display:flex; flex-direction:column; gap: 6px; min-width: 0; }
+    .lineLabel{ font-size: 12px; font-weight: 950; color: var(--muted); }
+    .lineBox{
+      height: 30px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+      width: 100%;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      margin-top: 10px;
+    }
+
+    .qCard{
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 12px 12px 12px;
+      background:#fff;
+      min-height: 190px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      gap: 12px;
+    }
+    .qNum{
+      font-weight: 1000;
+      font-size: 18px;
+      min-width: 44px;
+      color:#111827;
+    }
+    .qText{
+      font-weight: 1000;
+      font-size: 16px;
+      line-height: 1.15;
+      color:#111827;
+    }
+
+    .workArea{
+      margin-top: 2px;
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 10px 10px;
+      background: #fff;
+      flex: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .svg{
+      width: 100%;
+      height: 86px;
+      display:block;
+    }
+
+    .ansRow{
+      margin-top: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 10px;
+    }
+    .ansLabel{ font-weight: 1000; font-size: 14px; }
+    .ansBox{
+      flex: 1;
+      min-width: 0;
+      height: 34px;
+      border: 2px solid #111827;
+      border-radius: 12px;
+      background:#fff;
+    }
+    .ansBox.key{
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      color: var(--ok);
+      font-size: 16px;
+    }
+
+    .ineqRow{
+      margin-top: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .pill{
+      border: 2px solid rgba(17,24,39,.25);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-weight: 1000;
+      font-size: 18px;
+      min-width: 54px;
+      text-align:center;
+      background:#fff;
+      white-space: nowrap;
+    }
+    .symBox{
+      width: 46px;
+      height: 40px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      font-size: 20px;
+    }
+    .symBox.key{
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+      color: var(--ok);
+    }
+
+    /* Ordering */
+    .orderRow{ margin-top: 6px; display:flex; justify-content:center; gap: 10px; flex-wrap:wrap; }
+    .orderAns{ margin-top: 10px; display:flex; justify-content:center; gap: 8px; }
+    .orderBox{ width: 42px; height: 38px; border: 2px solid #111827; border-radius: 10px; background:#fff; }
+    .orderBox.key{ border-color: var(--ok); background: rgba(22,163,74,.08); color: var(--ok); display:flex; align-items:center; justify-content:center; font-weight:1000; font-size: 16px; }
+
+    /* SVG styles */
+    .baseline{ stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 6; stroke-linecap: round; }
+    .tickUnit{ stroke: rgba(17,24,39,.45); stroke-width: 3; stroke-linecap: round; }
+    .dot{ fill: #111827; opacity: 0.92; }
+    .dot.zero{ opacity: 0.85; }
+    .dot.answer{ fill: var(--ok); opacity: 0.95; }
+    .label{ font-size: 24px; font-weight: 1000; fill:#111827; }
+    .label.answer{ fill: var(--ok); }
+
+    /* Print */
+    @media print{
+      @page{ size: A4; margin: 12mm; }
+
+      body{ background:#fff !important; padding:0 !important; }
+      .controls{ display:none !important; }
+
+      .wrap{ max-width:none !important; margin:0 !important; padding:0 !important; }
+
+      :root{ --pagePad: 6mm; }
+
+      .page{
+        width: 186mm;
+        height: 273mm;
+        margin: 0 auto;
+        border: none;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      .page:last-child{ page-break-after: auto; }
+
+      .pageContent{ margin: var(--pagePad); padding: 12px; }
+      .pageHeader{ flex-wrap: nowrap !important; gap: 10px !important; }
+      .grid{ gap: 12px !important; }
+      .qCard{ break-inside: avoid; padding: 12px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="controls">
+        <div>
+          <label for="outcomeSel">Stage outcome</label>
+          <select id="outcomeSel">
+            <option value="basic_de">Stage 4 — Integers (D/E basic)</option>
+            <option value="c_expected">Stage 4 — Integers (C-Expected)</option>
+          </select>
+
+          <div class="checks" aria-label="Question types">
+            <label style="margin:0; font-size:13px; font-weight:950; color:var(--muted); width:100%;">Question types (checkboxes)</label>
+            <div id="checksHost" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center; width:100%;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+          <div>
+            <label for="countInp">Total questions (multiples of 8 recommended)</label>
+            <input id="countInp" type="number" min="8" max="48" step="8" value="16" />
+          </div>
+          <div>
+            <label for="seedInp">Seed (optional)</label>
+            <input id="seedInp" type="text" inputmode="numeric" placeholder="random" />
+            <div class="seedHint">Use the same seed to regenerate the exact same worksheet.</div>
+          </div>
+
+          <div class="btnRow">
+            <button id="newSeedBtn" class="ghost" type="button" title="Pick a new seed">New seed</button>
+            <button id="genBtn" class="primary">Generate</button>
+            <button id="printBtn" class="ghost">Print / Save as PDF</button>
+            <button id="resetBtn" class="danger">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------
+  // Config
+  // ------------------------------------------------------------
+  const PER_PAGE = 8; // 2x4
+  const BORDER_SRC = "border_page0.png"; // must sit beside this HTML
+
+  // Basic ranges (UNCHANGED)
+  const PLACE_RANGE = { min:-10, max: 10 };
+  const CALC_A_RANGE = { min:-12, max: 12 };
+  const CALC_B_RANGE = { min: 1, max: 12 };
+  const ORDER_RANGE = { min:-100, max: 50 };
+  const MULT_RANGE = { min:-10, max: 10 };
+  const DIV_FACT = { min:1, max:10 };
+
+  // C-Expected checkbox 1 rules
+  const CE_STEPS = [1,2,3,4,5,10];
+  const CE_MAX_ABS = 100;
+
+  // C-Expected checkbox 2 rules
+  const CE_ADD_A = { min:-50, max:50 };
+  const CE_ADD_B = { min:1, max:50 };      // positive only
+  const CE_MULT_ABS = { min:2, max:12 };   // avoid trivial
+  const CE_DIV_ABS  = { min:1, max:12 };   // times-table style
+
+  // C-Expected checkbox 3 rules (Comparing expressions)
+  const CE_C_RANGE = { min:-50, max:50 };
+  const CE_EXPR_CAP = 100;
+  const CE_EQ_RATE = 0.20;
+
+  // C-Expected checkbox 4 rules (Combining signs)
+  const CS_RANGE = { min:-50, max:50 };
+  const CS_CAP = 100; // result naturally within ±100, but keep for safety
+
+  // Distribution: 10% a+(+b), 30% each of the others
+  const CS_FORMS = [
+    { id:"pp_add", w: 10 }, // a + b
+    { id:"pn_add", w: 30 }, // a + (-b)
+    { id:"pp_sub", w: 30 }, // a - b
+    { id:"pn_sub", w: 30 }, // a - (-b)
+  ];
+
+  // DOM
+  const outcomeSel = document.getElementById("outcomeSel");
+  const checksHost = document.getElementById("checksHost");
+  const countInp = document.getElementById("countInp");
+  const seedInp  = document.getElementById("seedInp");
+  const newSeedBtn = document.getElementById("newSeedBtn");
+  const genBtn   = document.getElementById("genBtn");
+  const printBtn = document.getElementById("printBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const out      = document.getElementById("out");
+
+  // Outcome checkbox sets
+  const OUTCOMES = {
+    basic_de: {
+      header: "Stage 4 — Integers · Grades D/E — friendly numbers + diagrams",
+      boxes: [
+        { id:"place", label:"Place an integer on a number line", checked:true },
+        { id:"calc",  label:"Use a number line to calculate", checked:true },
+        { id:"ineq",  label:"Compare integers ( < > = )", checked:true },
+        { id:"order", label:"Ordering integers", checked:false },
+        { id:"mult",  label:"Multiplying integers", checked:false },
+        { id:"div",   label:"Dividing integers", checked:false },
+      ]
+    },
+    c_expected: {
+      header: "Stage 4 - Integers - Grade C - Expected",
+      boxes: [
+        { id:"place_ce", label:"Place an integer on a number line", checked:true },
+        { id:"calc_ce",  label:"Integer calculations", checked:true },
+        { id:"comp_ce",  label:"Comparing integers (<>=)", checked:true },
+        { id:"signs_ce", label:"Combining signs", checked:true },  // ✅ Checkbox 4
+      ]
+    }
+  };
+
+  let activeCbs = [];
+
+  function renderCheckboxes(){
+    checksHost.innerHTML = "";
+    activeCbs = [];
+    const cfg = OUTCOMES[outcomeSel.value];
+
+    for (const b of cfg.boxes){
+      const lab = document.createElement("label");
+      lab.className = "chk";
+      const inp = document.createElement("input");
+      inp.type = "checkbox";
+      inp.checked = !!b.checked;
+      inp.dataset.id = b.id;
+
+      const span = document.createElement("span");
+      span.textContent = b.label;
+
+      lab.appendChild(inp);
+      lab.appendChild(span);
+      checksHost.appendChild(lab);
+
+      activeCbs.push(inp);
+    }
+  }
+
+  function enabledTypes(){
+    return activeCbs.filter(x => x.checked).map(x => x.dataset.id);
+  }
+
+  // Helpers
+  function xmur3(str){
+    let h = 1779033703 ^ str.length;
+    for (let i=0; i<str.length; i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= (h >>> 16);
+      return h >>> 0;
+    };
+  }
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let rng = Math.random;
+
+  const randInt = (a,b) => Math.floor(rng()*(b-a+1))+a;
+  const choice = (arr) => arr[randInt(0, arr.length-1)];
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const clearOut = () => { out.innerHTML = ""; };
+  const fmtInt = (n) => String(Math.trunc(n));
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i=a.length-1; i>0; i--){
+      const j = Math.floor(rng()*(i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  function uniqPush(arr, item, keyFn){
+    const k = keyFn(item);
+    if (arr.some(x => keyFn(x) === k)) return false;
+    arr.push(item);
+    return true;
+  }
+
+  // Parentheses for negatives (and only negatives)
+  function tok(n){
+    return n < 0 ? `(${fmtInt(n)})` : fmtInt(n);
+  }
+  function randSign(){ return rng() < 0.5 ? -1 : 1; }
+
+  // Balanced distribution (default)
+  function makeBalancedList(typeIds, n){
+    const ids = typeIds.slice();
+    if (!ids.length) return [];
+    const list = [];
+    let i = 0;
+    while (list.length < n){
+      list.push(ids[i % ids.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
+  // ------------------------------------------------------------
+  // Weighted + balanced helpers
+  // ------------------------------------------------------------
+  function expandWeighted(forms){
+    const bag = [];
+    for (const f of forms){
+      for (let i=0;i<f.w;i++) bag.push(f.id);
+    }
+    return bag;
+  }
+
+  function makeWeightedBalancedList(forms, m){
+    // Create a bag matching weights (10/30/30/30) then repeat as needed, shuffle
+    const bag = expandWeighted(forms); // length 100
+    const out = [];
+    while (out.length < m){
+      // take whole bag chunks to preserve proportions; then shuffle
+      const chunk = shuffle(bag);
+      for (const id of chunk){
+        out.push(id);
+        if (out.length >= m) break;
+      }
+    }
+    return out;
+  }
+
+  function makeBalancedOpList(m){
+    const ops = ["+","−","×","÷"];
+    if (m<=0) return [];
+    const list = [];
+    let i=0;
+    while (list.length < m){
+      list.push(ops[i % ops.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
+  function makeBalancedFormList(m){
+    const forms = ["ab_c_add","ab_c_sub","c_ab_add","c_ab_sub"];
+    if (m<=0) return [];
+    const list = [];
+    let i=0;
+    while (list.length < m){
+      list.push(forms[i % forms.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
+  // ------------------------------------------------------------
+  // SVG builders (Basic UNCHANGED)
+  // ------------------------------------------------------------
+  function elNS(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNS(str, attrs={}){
+    const t = elNS("text", attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  function buildFixedNumberLineSVG(answerVal, showAnswer){
+    const vmin = -10, vmax = 10;
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"svg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 86;
+    const tickMajorTop = yLine - 22;
+    const tickMajorBot = yLine + 22;
+    const tickUnitTop  = yLine - 12;
+    const tickUnitBot  = yLine + 12;
+
+    const dotR = 9;
+    const labelY = 170;
+
+    const x = (v) => {
+      const t = (v - vmin) / (vmax - vmin);
+      return left + t * (right - left);
+    };
+
+    svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
+
+    for (let v = vmin; v <= vmax; v++){
+      if (v === vmin || v === 0 || v === vmax) continue;
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickUnitTop, x2: xi, y2: tickUnitBot, class:"tickUnit" }));
+    }
+
+    function major(v, clsDot="", clsLabel=""){
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickMajorTop, x2: xi, y2: tickMajorBot, class:"tickMajor" }));
+      svg.appendChild(elNS("circle", { cx: xi, cy: yLine, r: dotR, class:`dot ${clsDot}`.trim() }));
+      svg.appendChild(textNS(fmtInt(v), { x: xi, y: labelY, "text-anchor":"middle", class:`label ${clsLabel}`.trim() }));
+    }
+
+    major(-10);
+    major(0, "zero");
+    major(10);
+
+    if (showAnswer){
+      const xa = x(answerVal);
+      svg.appendChild(elNS("circle", { cx: xa, cy: yLine, r: dotR, class:"dot answer" }));
+      if (answerVal !== -10 && answerVal !== 0 && answerVal !== 10){
+        svg.appendChild(textNS(fmtInt(answerVal), { x: xa, y: labelY, "text-anchor":"middle", class:"label answer" }));
+      }
+    }
+    return svg;
+  }
+
+  function buildCalcLineSVG(a){
+    const lo = Math.min(a, 0);
+    const hi = Math.max(a, 0);
+    const span = Math.max(1, hi - lo);
+    const pad = clamp(Math.ceil(span * 0.35), 4, 10);
+
+    let vmin = clamp(lo - pad, -20, 20);
+    let vmax = clamp(hi + pad, -20, 20);
+    if (vmax - vmin < 10){
+      vmin = clamp(vmin - 2, -20, 20);
+      vmax = clamp(vmax + 2, -20, 20);
+    }
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"svg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 86;
+    const tickMajorTop = yLine - 22;
+    const tickMajorBot = yLine + 22;
+    const tickUnitTop  = yLine - 11;
+    const tickUnitBot  = yLine + 11;
+
+    const dotR = 9;
+    const labelY = 176;
+
+    const x = (v) => {
+      const t = (v - vmin) / (vmax - vmin);
+      return left + t * (right - left);
+    };
+
+    svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
+
+    const start = Math.ceil(vmin);
+    const end = Math.floor(vmax);
+    for (let v = start; v <= end; v++){
+      if (v === 0 || v === a) continue;
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickUnitTop, x2: xi, y2: tickUnitBot, class:"tickUnit" }));
+    }
+
+    function major(v, clsDot="", clsLabel=""){
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickMajorTop, x2: xi, y2: tickMajorBot, class:"tickMajor" }));
+      svg.appendChild(elNS("circle", { cx: xi, cy: yLine, r: dotR, class:`dot ${clsDot}`.trim() }));
+      svg.appendChild(textNS(fmtInt(v), { x: xi, y: labelY, "text-anchor":"middle", class:`label ${clsLabel}`.trim() }));
+    }
+
+    major(a);
+    major(0, "zero");
+    return svg;
+  }
+
+  // ------------------------------------------------------------
+  // C-Expected number line (checkbox 1)
+  // ------------------------------------------------------------
+  function tooClose(a,b,step){ return Math.abs(a-b) < 2*step; }
+
+  function buildPlaceLineCE({ step, labels, answer }, showAnswer){
+    const vmax = clamp(step * 10, 1, CE_MAX_ABS);
+    const vmin = -vmax;
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"svg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 86;
+    const tickMajorTop = yLine - 22;
+    const tickMajorBot = yLine + 22;
+    const tickUnitTop  = yLine - 12;
+    const tickUnitBot  = yLine + 12;
+
+    const dotR = 9;
+    const labelY = 170;
+
+    const x = (v) => left + ((v - vmin) / (vmax - vmin)) * (right - left);
+
+    svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
+
+    const labelSet = new Set(labels.map(Number));
+    for (let v = vmin; v <= vmax; v += step){
+      if (labelSet.has(v)) continue;
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickUnitTop, x2: xi, y2: tickUnitBot, class:"tickUnit" }));
+    }
+
+    function major(v, clsDot="", clsLabel=""){
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickMajorTop, x2: xi, y2: tickMajorBot, class:"tickMajor" }));
+      svg.appendChild(elNS("circle", { cx: xi, cy: yLine, r: dotR, class:`dot ${clsDot}`.trim() }));
+      svg.appendChild(textNS(fmtInt(v), { x: xi, y: labelY, "text-anchor":"middle", class:`label ${clsLabel}`.trim() }));
+    }
+
+    const majors = labels.slice().sort((a,b)=>a-b);
+    for (const v of majors){
+      if (v === 0) major(v, "zero");
+      else major(v);
+    }
+
+    if (showAnswer){
+      const xa = x(answer);
+      svg.appendChild(elNS("circle", { cx: xa, cy: yLine, r: dotR, class:"dot answer" }));
+      if (!labelSet.has(answer)){
+        svg.appendChild(textNS(fmtInt(answer), { x: xa, y: labelY, "text-anchor":"middle", class:"label answer" }));
+      }
+    }
+    return svg;
+  }
+
+  // ------------------------------------------------------------
+  // Question generators
+  // ------------------------------------------------------------
+  // BASIC (UNCHANGED)
+  function genPlace(){ return { type:"place", v: randInt(PLACE_RANGE.min, PLACE_RANGE.max) }; }
+
+  function genCalc(){
+    const a = randInt(CALC_A_RANGE.min, CALC_A_RANGE.max);
+    const b = randInt(CALC_B_RANGE.min, CALC_B_RANGE.max);
+    const op = rng() < 0.5 ? "+" : "−";
+    const ans = (op === "+") ? (a + b) : (a - b);
+    if (ans < -20 || ans > 20) return genCalc();
+    return { type:"calc", a, b, op, ans };
+  }
+
+  function genIneq(){
+    const a = randInt(-20, 20);
+    const b = randInt(-20, 20);
+    const sym = (a < b) ? "<" : (a > b ? ">" : "=");
+    return { type:"ineq", a, b, sym };
+  }
+
+  function genOrder(){
+    const dir = rng() < 0.5 ? "ascending" : "descending";
+    const set = new Set();
+    while (set.size < 5) set.add(randInt(ORDER_RANGE.min, ORDER_RANGE.max));
+    const nums = Array.from(set);
+    const answer = nums.slice().sort((x,y) => dir === "ascending" ? x-y : y-x);
+
+    let shown = shuffle(nums);
+    let tries = 0;
+    while (tries < 6){
+      if (!shown.every((v,i) => v === answer[i])) break;
+      shown = shuffle(nums);
+      tries++;
+    }
+    return { type:"order", dir, shown, answer };
+  }
+
+  function genMult(){
+    const a = randInt(MULT_RANGE.min, MULT_RANGE.max);
+    const b = randInt(MULT_RANGE.min, MULT_RANGE.max);
+    if (a === 0 && b === 0) return genMult();
+    return { type:"mult", a, b, ans: a*b };
+  }
+
+  function genDiv(){
+    const bAbs = randInt(DIV_FACT.min, DIV_FACT.max);
+    const cAbs = randInt(DIV_FACT.min, DIV_FACT.max);
+    const b = rng() < 0.5 ? -bAbs : bAbs;
+    const c = rng() < 0.5 ? -cAbs : cAbs;
+    const a = b * c;
+    return { type:"div", a, b, ans: c };
+  }
+
+  // C-Expected checkbox 1
+  function genPlaceCE(){
+    const step = choice(CE_STEPS);
+    const vmax = step * 10;
+    const vmin = -vmax;
+
+    const labels = [vmin, 0, vmax];
+
+    const ticks = [];
+    for (let v=vmin; v<=vmax; v+=step){
+      if (v===vmin || v===0 || v===vmax) continue;
+      ticks.push(v);
+    }
+
+    let answer = choice(ticks);
+    let tries = 0;
+    while (tries++ < 300){
+      answer = choice(ticks);
+      if (tooClose(answer, 0, step)) continue;
+      if (tooClose(answer, vmin, step)) continue;
+      if (tooClose(answer, vmax, step)) continue;
+      break;
+    }
+
+    const extras = [];
+    tries = 0;
+    while (extras.length < 2 && tries++ < 1200){
+      const cand = choice(ticks);
+      if (cand === answer) continue;
+      if (labels.some(l => tooClose(cand, l, step))) continue;
+      if (extras.some(e => tooClose(cand, e, step))) continue;
+      if (tooClose(answer, cand, step)) continue;
+      extras.push(cand);
+    }
+
+    if (extras.length < 2) return genPlaceCE();
+    labels.push(...extras);
+    return { type:"place_ce", step, labels, answer };
+  }
+
+  // C-Expected checkbox 2
+  function genCalcCE(opForced=null){
+    const op = opForced ?? choice(["+","−","×","÷"]);
+
+    if (op === "+" || op === "−"){
+      let a=0,b=0,ans=0,tries=0;
+      while (tries++ < 600){
+        a = randInt(CE_ADD_A.min, CE_ADD_A.max);
+        b = randInt(CE_ADD_B.min, CE_ADD_B.max); // positive
+        ans = (op === "+") ? a+b : a-b;
+        if (ans < -100 || ans > 100) continue;
+        break;
+      }
+      return { type:"calc_ce", op, a, b, ans };
+    }
+
+    if (op === "×"){
+      const aAbs = randInt(CE_MULT_ABS.min, CE_MULT_ABS.max);
+      const bAbs = randInt(CE_MULT_ABS.min, CE_MULT_ABS.max);
+      const a = aAbs * randSign();
+      const b = bAbs * randSign();
+      return { type:"calc_ce", op:"×", a, b, ans: a*b };
+    }
+
+    const dAbs = randInt(CE_DIV_ABS.min, CE_DIV_ABS.max);
+    const qAbs = randInt(CE_DIV_ABS.min, CE_DIV_ABS.max);
+    const divisor = dAbs * randSign();
+    const quotient = qAbs * randSign();
+    const dividend = divisor * quotient;
+    return { type:"calc_ce", op:"÷", a: dividend, b: divisor, ans: quotient };
+  }
+
+  // C-Expected checkbox 3 (Comparing expressions)
+  function dynBand(E){
+    return clamp(4 + Math.floor(Math.abs(E)/6), 4, 14);
+  }
+
+  function fmtExpr(a, op, b){
+    return `${tok(a)} ${op} ${tok(b)}`;
+  }
+
+  function genCompareCE(form){
+    let tries = 0;
+    while (tries++ < 5000){
+      const a = randInt(-50, 50);
+      let b = randInt(-50, 50);
+      const op = form.includes("_sub") ? "−" : "+";
+      if (b === 0) continue;
+
+      const E = (op === "+") ? (a + b) : (a - b);
+      if (Math.abs(E) > CE_EXPR_CAP) continue;
+      if (E < CE_C_RANGE.min || E > CE_C_RANGE.max) continue;
+
+      const band = dynBand(E);
+      let c;
+
+      const wantEq = rng() < CE_EQ_RATE;
+      if (wantEq){
+        c = E;
+      } else {
+        let deltaTries = 0;
+        while (deltaTries++ < 200){
+          const delta = randInt(-band, band);
+          if (delta === 0) continue;
+          const cand = E + delta;
+          if (cand < CE_C_RANGE.min || cand > CE_C_RANGE.max) continue;
+          c = cand;
+          break;
+        }
+        if (typeof c !== "number") continue;
+      }
+
+      const exprStr = fmtExpr(a, op, b);
+      let leftText, rightText, leftVal, rightVal;
+
+      if (form.startsWith("ab_c")){
+        leftText = exprStr;
+        rightText = tok(c);
+        leftVal = E;
+        rightVal = c;
+      } else {
+        leftText = tok(c);
+        rightText = exprStr;
+        leftVal = c;
+        rightVal = E;
+      }
+
+      const sym = (leftVal < rightVal) ? "<" : (leftVal > rightVal ? ">" : "=");
+      if (Math.abs(leftVal - rightVal) > band) continue;
+
+      return { type:"comp_ce", leftText, rightText, sym, form };
+    }
+    return genCompareCE(form);
+  }
+
+  // C-Expected checkbox 4 (Combining signs)
+  function makeCombiningSignsForms(m){
+    return makeWeightedBalancedList(CS_FORMS, m);
+  }
+
+  function exprKey(a, op, b){
+    return `${a}${op}${b}`;
+  }
+
+  function genCombiningSignsCE(form){
+    // forms:
+    // pp_add: a + b     (b positive)
+    // pn_add: a + (-b)  (b negative)
+    // pp_sub: a - b     (b positive)
+    // pn_sub: a - (-b)  (b negative)
+    let tries = 0;
+    while (tries++ < 6000){
+      let a = randInt(CS_RANGE.min, CS_RANGE.max);
+      if (a === 0) continue; // avoid trivial a=0
+
+      let bAbs = randInt(1, 50); // b != 0 always
+      let b = bAbs;
+
+      if (form === "pn_add" || form === "pn_sub"){
+        b = -bAbs;
+      } else {
+        b = bAbs;
+      }
+
+      const op = (form === "pp_sub" || form === "pn_sub") ? "−" : "+";
+      const ans = (op === "+") ? (a + b) : (a - b);
+
+      if (Math.abs(ans) > CS_CAP) continue;
+
+      // Occasionally allow "zero result" patterns; don't filter them out.
+      // But still avoid b=0 and a=0 (already done).
+
+      const exprStr = `${tok(a)} ${op} ${tok(b)}`;
+      return { type:"signs_ce", a, b, op, exprStr, ans, form };
+    }
+
+    return genCombiningSignsCE(form);
+  }
+
+  // ------------------------------------------------------------
+  // Planning + generation
+  // ------------------------------------------------------------
+  function generateQuestions(n){
+    const pool = enabledTypes();
+    if (!pool.length) return [];
+
+    const plan = makeBalancedList(pool, n);
+
+    // calc_ce: balance ops inside it
+    const calcPositions = [];
+    for (let i=0;i<plan.length;i++){
+      if (plan[i] === "calc_ce") calcPositions.push(i);
+    }
+    const opPlan = makeBalancedOpList(calcPositions.length);
+    const opByIdx = new Map();
+    calcPositions.forEach((pos,j)=>opByIdx.set(pos, opPlan[j]));
+
+    // comp_ce: balance four forms
+    const compPositions = [];
+    for (let i=0;i<plan.length;i++){
+      if (plan[i] === "comp_ce") compPositions.push(i);
+    }
+    const formPlan = (() => {
+      const forms = ["ab_c_add","ab_c_sub","c_ab_add","c_ab_sub"];
+      if (compPositions.length<=0) return [];
+      const list = [];
+      let i=0;
+      while (list.length < compPositions.length){
+        list.push(forms[i % forms.length]);
+        i++;
+      }
+      return shuffle(list);
+    })();
+    const formByIdx = new Map();
+    compPositions.forEach((pos,j)=>formByIdx.set(pos, formPlan[j]));
+
+    // signs_ce: weighted distribution internal to that checkbox
+    const signsPositions = [];
+    for (let i=0;i<plan.length;i++){
+      if (plan[i] === "signs_ce") signsPositions.push(i);
+    }
+    const signsFormPlan = makeCombiningSignsForms(signsPositions.length);
+    const signsFormByIdx = new Map();
+    signsPositions.forEach((pos,j)=>signsFormByIdx.set(pos, signsFormPlan[j]));
+
+    const qs = [];
+    let safety = 0;
+
+    while (qs.length < n && safety++ < 50000){
+      const t = plan[qs.length];
+      let q=null;
+
+      if (t==="place") q=genPlace();
+      if (t==="calc")  q=genCalc();
+      if (t==="ineq")  q=genIneq();
+      if (t==="order") q=genOrder();
+      if (t==="mult")  q=genMult();
+      if (t==="div")   q=genDiv();
+
+      if (t==="place_ce") q=genPlaceCE();
+      if (t==="calc_ce")  q=genCalcCE(opByIdx.get(qs.length) ?? null);
+      if (t==="comp_ce")  q=genCompareCE(formByIdx.get(qs.length) ?? "ab_c_add");
+      if (t==="signs_ce") q=genCombiningSignsCE(signsFormByIdx.get(qs.length) ?? "pn_sub");
+
+      if (!q) continue;
+
+      // De-dup rules:
+      // - calc_ce: you previously allowed repeats, but for checkbox 4 you want NO repeats.
+      // We'll still keep a key for calc_ce; it helps reduce accidental duplicates.
+      const ok = uniqPush(qs, q, (x) => {
+        if (x.type==="place") return `p:${x.v}`;
+        if (x.type==="calc")  return `c:${x.a}${x.op}${x.b}`;
+        if (x.type==="ineq")  return `i:${x.a}?${x.b}`;
+        if (x.type==="order") return `o:${x.dir}:${x.shown.join(',')}`;
+        if (x.type==="mult")  return `m:${x.a}x${x.b}`;
+        if (x.type==="div")   return `d:${x.a}÷${x.b}`;
+        if (x.type==="place_ce") return `pce:s${x.step}:a${x.answer}:L${x.labels.slice().sort((a,b)=>a-b).join('|')}`;
+        if (x.type==="calc_ce") return `cce:${x.op}:${x.a},${x.b}`;
+        if (x.type==="comp_ce") return `cmp:${x.leftText}?${x.rightText}`;
+        return `sig:${exprKey(x.a, x.op, x.b)}`;
+      });
+      if (!ok) continue;
+    }
+
+    return qs;
+  }
+
+  // ------------------------------------------------------------
+  // Rendering cards (Basic unchanged; C-Expected additions)
+  // ------------------------------------------------------------
+  function makeCard(q, idx1, showAnswers){
+    const card = document.createElement("div");
+    card.className = "qCard";
+
+    const top = document.createElement("div");
+    top.className = "qTop";
+
+    const num = document.createElement("div");
+    num.className = "qNum";
+    num.textContent = `Q${idx1}`;
+
+    const text = document.createElement("div");
+    text.className = "qText";
+
+    top.appendChild(num);
+    top.appendChild(text);
+    card.appendChild(top);
+
+    const work = document.createElement("div");
+    work.className = "workArea";
+
+    // BASIC (UNCHANGED)
+    if (q.type === "place"){
+      text.textContent = `Place ${fmtInt(q.v)} on the number line.`;
+      work.appendChild(buildFixedNumberLineSVG(q.v, showAnswers));
+
+    } else if (q.type === "calc"){
+      text.textContent = `Use the number line to calculate: ${fmtInt(q.a)} ${q.op} ${fmtInt(q.b)}`;
+      work.appendChild(buildCalcLineSVG(q.a));
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+
+    } else if (q.type === "ineq"){
+      text.textContent = `Insert either <, > or = to make the statement true.`;
+
+      const row = document.createElement("div");
+      row.className = "ineqRow";
+      const left = document.createElement("div");
+      left.className = "pill";
+      left.textContent = fmtInt(q.a);
+      const mid = document.createElement("div");
+      mid.className = "symBox" + (showAnswers ? " key" : "");
+      mid.textContent = showAnswers ? q.sym : "";
+      const right = document.createElement("div");
+      right.className = "pill";
+      right.textContent = fmtInt(q.b);
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+
+      work.style.border = "none";
+      work.style.padding = "0";
+      work.appendChild(row);
+
+    } else if (q.type === "order"){
+      text.textContent = `Place the integers ${q.shown.map(fmtInt).join(', ')} in ${q.dir} order.`;
+
+      work.style.border = "none";
+      work.style.padding = "0";
+
+      const row = document.createElement('div');
+      row.className = 'orderRow';
+      for (const n of q.shown){
+        const p = document.createElement('div');
+        p.className = 'pill';
+        p.textContent = fmtInt(n);
+        row.appendChild(p);
+      }
+
+      const ans = document.createElement('div');
+      ans.className = 'orderAns';
+      for (let i=0;i<5;i++){
+        const b = document.createElement('div');
+        b.className = 'orderBox' + (showAnswers ? ' key' : '');
+        b.textContent = showAnswers ? fmtInt(q.answer[i]) : '';
+        ans.appendChild(b);
+      }
+
+      const wrap = document.createElement('div');
+      wrap.style.width = '100%';
+      wrap.style.display = 'flex';
+      wrap.style.flexDirection = 'column';
+      wrap.style.alignItems = 'center';
+      wrap.style.justifyContent = 'center';
+      wrap.appendChild(row);
+      wrap.appendChild(ans);
+
+      work.appendChild(wrap);
+
+    } else if (q.type === "mult"){
+      text.textContent = `Calculate: ${fmtInt(q.a)} × ${fmtInt(q.b)}`;
+
+      work.style.alignItems = 'flex-start';
+      work.style.justifyContent = 'flex-start';
+      work.innerHTML = '';
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+
+    } else if (q.type === "div"){
+      text.textContent = `Calculate: ${fmtInt(q.a)} ÷ ${fmtInt(q.b)}`;
+
+      work.style.alignItems = 'flex-start';
+      work.style.justifyContent = 'flex-start';
+      work.innerHTML = '';
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+
+    // C-EXPECTED
+    } else if (q.type === "place_ce"){
+      text.textContent = `Place ${fmtInt(q.answer)} on the number line.`;
+      work.appendChild(buildPlaceLineCE(q, showAnswers));
+
+    } else if (q.type === "calc_ce"){
+      text.textContent = `Calculate: ${tok(q.a)} ${q.op} ${tok(q.b)}`;
+
+      work.style.alignItems = 'flex-start';
+      work.style.justifyContent = 'flex-start';
+      work.innerHTML = '';
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+
+    } else if (q.type === "comp_ce"){
+      text.textContent = `Insert either <, > or = to make the statement true.`;
+
+      const row = document.createElement("div");
+      row.className = "ineqRow";
+
+      const left = document.createElement("div");
+      left.className = "pill";
+      left.textContent = q.leftText;
+
+      const mid = document.createElement("div");
+      mid.className = "symBox" + (showAnswers ? " key" : "");
+      mid.textContent = showAnswers ? q.sym : "";
+
+      const right = document.createElement("div");
+      right.className = "pill";
+      right.textContent = q.rightText;
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+
+      work.style.border = "none";
+      work.style.padding = "0";
+      work.appendChild(row);
+
+    } else if (q.type === "signs_ce"){
+      // ✅ Checkbox 4 render: single pill, calculate, answer bubble
+      text.textContent = `Calculate:`;
+
+      work.style.border = "none";
+      work.style.padding = "0";
+      work.style.background = "transparent";
+
+      const row = document.createElement("div");
+      row.className = "ineqRow";
+      row.style.marginTop = "0";
+
+      const p = document.createElement("div");
+      p.className = "pill";
+      p.style.fontSize = "20px";
+      p.textContent = q.exprStr;
+
+      row.appendChild(p);
+      work.appendChild(row);
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+    }
+
+    card.appendChild(work);
+    return card;
+  }
+
+  function pageHTML(pageTitle, pageIndex, pageCount){
+    const page = document.createElement("div");
+    page.className = "page";
+
+    const border = document.createElement("img");
+    border.className = "pageBorder";
+    border.alt = "";
+    border.src = BORDER_SRC;
+    page.appendChild(border);
+
+    const inner = document.createElement("div");
+    inner.className = "pageInner";
+    page.appendChild(inner);
+
+    const content = document.createElement('div');
+    content.className = 'pageContent';
+    inner.appendChild(content);
+
+    const header = document.createElement("div");
+    header.className = "pageHeader";
+    header.innerHTML = `
+      <div class="hdrLeft">
+        <div class="hdrTitle">${pageTitle} — Page ${pageIndex} of ${pageCount}</div>
+        <div class="hdrSub">${OUTCOMES[outcomeSel.value].header}</div>
+      </div>
+      <div class="nameRow">
+        <div class="lineField"><div class="lineLabel">Name</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">Class</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">Date</div><div class="lineBox"></div></div>
+      </div>
+    `;
+    content.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    content.appendChild(grid);
+
+    return { page, grid };
+  }
+
+  function buildPages(questions, pageTitle, showAnswers){
+    const pages = [];
+    const totalPages = Math.ceil(questions.length / PER_PAGE);
+    let qNum = 1;
+
+    for (let p=0; p<totalPages; p++){
+      const { page, grid } = pageHTML(pageTitle, p+1, totalPages);
+
+      const slice = questions.slice(p*PER_PAGE, p*PER_PAGE + PER_PAGE);
+      for (const q of slice){
+        grid.appendChild(makeCard(q, qNum, showAnswers));
+        qNum++;
+      }
+      pages.push(page);
+    }
+    return pages;
+  }
+
+  function generate(){
+    clearOut();
+
+    let seed = (seedInp?.value ?? "").trim();
+    if (!seed){
+      seed = String(Date.now());
+      seedInp.value = seed;
+    }
+    const seedHash = xmur3(seed)();
+    rng = mulberry32(seedHash);
+
+    let n = Number(countInp.value);
+    if (!Number.isFinite(n)) n = 16;
+    n = clamp(Math.round(n), 8, 48);
+    countInp.value = String(n);
+
+    const qs = generateQuestions(n);
+    if (!qs.length){
+      out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">Please tick at least one question type.</div>`;
+      return;
+    }
+
+    const ws = buildPages(qs, "Worksheet", false);
+    const key = buildPages(qs, "Answer key", true);
+
+    ws.forEach(pg => out.appendChild(pg));
+    key.forEach(pg => out.appendChild(pg));
+
+    if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+
+  function reset(){
+    clearOut();
+    renderCheckboxes();
+    countInp.value = "16";
+    seedInp.value = "";
+  }
+
+  function applyOutcomeChange(){
+    clearOut();
+    renderCheckboxes();
+    seedInp.value = "";
+  }
+
+  // init
+  renderCheckboxes();
+
+  outcomeSel.addEventListener("change", applyOutcomeChange);
+  newSeedBtn.addEventListener("click", () => seedInp.value = String(Date.now()));
+  genBtn.addEventListener("click", generate);
+  printBtn.addEventListener("click", () => window.print());
+  resetBtn.addEventListener("click", reset);
+})();
+</script>
+</body>
+</html>
