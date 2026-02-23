@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integer Add/Subtract – Student Quiz</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 18px;
+
+      --line:#111827;
+      --tick:#111827;
+
+      --pos:#16a34a; /* green */
+      --neg:#dc2626; /* red  */
+      --eq:#2563eb;  /* blue */
+      --hi:#fde68a;  /* yellow highlight */
+
+      --ok:#16a34a;
+      --bad:#dc2626;
+
+      --haloFill: rgba(22,163,74,.18);
+      --haloStroke: rgba(22,163,74,.45);
+
+      --footer-h: 44px;
+      --animMs: 2000;
+
+      --arrowW: 4;
+      --dash: 16;
+      --gap: 14;
+
+      --pad: 3;
+      --personW: 92px;
+
+      --blue:#2563eb;
+      --hintPurple:#7c3aed;
+      --hintPurple2:#6d28d9;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1200px; margin: 18px auto 40px; padding: 0 16px; }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    /* Back now resets/reloads the quiz (does not go to MMT) */
+    .backBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      border:none;
+      background:transparent;
+      color: var(--ink);
+      font-weight: 950;
+      cursor:pointer;
+      user-select:none;
+      padding: 8px 10px;
+      border-radius: 12px;
+    }
+    .backBtn:hover{ background:#eef2f7; }
+    .backBtn .arrow{ font-size: 18px; opacity:.9; }
+    .backBtn span{ font-size: 16px; }
+
+    .levelPill{
+      flex:1 1 280px;
+      display:flex;
+      justify-content:center;
+    }
+    .levelBanner{
+      width:min(720px, 100%);
+      border-radius: 18px;
+      padding: 16px 18px;
+      text-align:center;
+      font-weight: 1000;
+      color:#fff;
+      letter-spacing:.2px;
+      font-size: 44px;
+      line-height:1.05;
+      background: linear-gradient(180deg,#1fb255,#0f7a57);
+      box-shadow: 0 14px 35px rgba(0,0,0,.12);
+    }
+    @media (max-width: 700px){
+      .levelBanner{ font-size: 34px; }
+    }
+
+    .resetBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 950;
+      cursor:pointer;
+      background:#fee2e2;
+      color:#991b1b;
+      box-shadow: 0 10px 22px rgba(0,0,0,.08);
+      user-select:none;
+    }
+    .resetBtn:active{ transform: scale(.98); }
+
+    .progressRow{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin: 10px 0 14px;
+    }
+    .barWrap{
+      flex:1;
+      height: 12px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow:hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+    }
+    /* moving portion now BLUE and more visible */
+    .barFill{
+      height: 100%;
+      width: 0%;
+      background: var(--blue);
+      transition: width .25s ease;
+    }
+    .qCount{
+      font-weight: 950;
+      color: var(--ink);
+      white-space:nowrap;
+      font-size: 18px;
+    }
+
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(229,231,235,.9);
+      padding: 18px;
+      position: relative;
+      overflow:hidden;
+    }
+
+    .questionRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 14px;
+      margin: 6px 0 10px;
+      flex-wrap:wrap;
+    }
+    .qLabel{
+      font-weight: 950;
+      font-size: 18px;
+      color: var(--ink);
+    }
+    .qBox{
+      border: 3px solid #111827;
+      border-radius: 18px;
+      padding: 12px 18px;
+      font-weight: 1000;
+      font-size: 34px;
+      letter-spacing: .2px;
+      background:#fff;
+      min-width: 260px;
+      text-align:center;
+      line-height: 1.1;
+    }
+    .hl{
+      background: var(--hi);
+      border-radius: 10px;
+      padding: 2px 6px;
+      display:inline-block;
+    }
+    .eq{ color: var(--eq); font-weight: 950; }
+    .ansPill{
+      display:inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: var(--haloFill);
+      color: #065f2c;
+      font-weight: 1000;
+      border: 2px solid var(--haloStroke);
+    }
+    .ansPill.big{
+      font-size: 34px;
+      padding: 4px 12px;
+    }
+
+    .stage{
+      margin-top: 12px;
+      padding: 14px 14px 14px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid rgba(229,231,235,.95);
+      min-height: 520px;
+      position: relative;
+    }
+
+    /* Hint bubble: larger + purple (like your other project) */
+    .hintBtn{
+      position:absolute;
+      right: 18px;
+      top: 18px;
+      border:none;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font-weight: 1000;
+      font-size: 18px;
+      cursor:pointer;
+      color:#fff;
+      background: linear-gradient(180deg, var(--hintPurple), var(--hintPurple2));
+      box-shadow: 0 14px 28px rgba(124,58,237,.25);
+      user-select:none;
+    }
+    .hintBtn:hover{ filter: brightness(1.03); }
+    .hintBtn:active{ transform: scale(.98); }
+    .hintBtn[disabled]{
+      opacity:.35;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow: none;
+    }
+
+    .svgwrap{ width:100%; height: 420px; display:block; }
+
+    .personLayer{
+      position:absolute;
+      left:0; top:0; right:0; bottom:0;
+      pointer-events:none;
+    }
+    .person{
+      position:absolute;
+      width: var(--personW);
+      height: auto;
+      transform: translate(-50%, -50%);
+      top: 140px;
+      left: 50%;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));
+      image-rendering: auto;
+    }
+
+    .answerRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap:wrap;
+    }
+    .ansLabel{
+      font-weight: 950;
+      font-size: 20px;
+      color: var(--ink);
+    }
+    .ansInput{
+      width: min(420px, 70vw);
+      max-width: 520px;
+      border-radius: 16px;
+      border: 3px solid #111827;
+      padding: 14px 16px;
+      font-size: 22px;
+      font-weight: 900;
+      outline:none;
+      background:#fff;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      text-align:center;
+    }
+    .ansInput.good{
+      border-color: var(--ok);
+      box-shadow: 0 0 0 6px rgba(22,163,74,.18);
+      background: #ecfdf3;
+    }
+    .ansInput.bad{
+      border-color: var(--bad);
+      box-shadow: 0 0 0 6px rgba(220,38,38,.16);
+      background: #fef2f2;
+    }
+
+    .btn{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      user-select:none;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+    }
+    .btn.primary{ background:#2563eb; color:#fff; }
+    .btn.dark{ background:#111827; color:#fff; }
+    .btn[disabled]{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    .tip{
+      margin-top: 10px;
+      text-align:center;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+    .mmtFooter a{ color: #2563eb; text-decoration:none; font-weight: 950; }
+    .mmtFooter a:hover{ text-decoration: underline; }
+
+    /* SVG styles */
+    .baseline{ stroke: var(--line); stroke-width: 7; stroke-linecap: round; }
+    .tickMajor{ stroke: var(--tick); stroke-width: 7; stroke-linecap: round; }
+    .tickUnit{
+      stroke: rgba(17,24,39,.40);
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: 1;
+    }
+    .dot{ fill: #111827; opacity: 0.92; }
+    .dot.zero{ opacity: 0.85; }
+    .label{
+      font-size: 26px;
+      font-weight: 950;
+      fill: #111827;
+    }
+    .label.answer{
+      font-size: 28px;
+      fill: #0b3b1a;
+    }
+    .arrowPath{
+      fill: none;
+      stroke-width: var(--arrowW);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: var(--dash) var(--gap);
+    }
+    .arrowLabel{
+      font-size: 30px;
+      font-weight: 950;
+    }
+    .trackerDot{
+      fill: #111827;
+      opacity: 0;
+      transition: opacity .12s ease;
+    }
+    .ansHalo{
+      fill: var(--haloFill);
+      stroke: var(--haloStroke);
+      stroke-width: 6;
+    }
+
+    /* Generic overlay modal */
+    .modalOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.42);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .modal{
+      width: min(980px, 100%);
+      background:#fff;
+      border-radius: 22px;
+      box-shadow: 0 22px 80px rgba(0,0,0,.25);
+      border: 1px solid rgba(229,231,235,.95);
+      padding: 22px;
+    }
+    .modal h2{
+      margin: 0 0 14px;
+      font-size: 34px;
+      letter-spacing:.1px;
+    }
+
+    /* Level chooser */
+    .levelList{ display:flex; flex-direction:column; gap:14px; }
+    .levelRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 18px 18px;
+      border-radius: 18px;
+      border: 2px solid rgba(229,231,235,.9);
+      user-select:none;
+    }
+    .levelRow .name{
+      font-size: 26px;
+      font-weight: 1000;
+    }
+    .levelRow .meta{
+      font-size: 13px;
+      font-weight: 900;
+      color: rgba(17,24,39,.72);
+      margin-top: 4px;
+      line-height: 1.2;
+    }
+    .levelRow .col{ display:flex; flex-direction:column; }
+    .startBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#2563eb;
+      color:#fff;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+      user-select:none;
+    }
+    .startBtn:active{ transform: scale(.98); }
+    .lvlSweet{ background:#dcfce7; border-color: rgba(22,163,74,.25); }
+    .lvlMild{ background:#dbeafe; border-color: rgba(37,99,235,.22); }
+    .lvlMedium{ background:#fef9c3; border-color: rgba(245,158,11,.22); }
+    .lvlSpicy{ background:#ffedd5; border-color: rgba(249,115,22,.22); }
+    .lvlXHot{ background:#ffe4e6; border-color: rgba(244,63,94,.22); }
+
+    /* Certificate modal (match your “end screen” vibe) */
+    .certGrid{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 18px;
+      align-items:start;
+      margin-top: 8px;
+    }
+    @media (max-width: 720px){
+      .certGrid{ grid-template-columns: 1fr; }
+    }
+    .certIcon{
+      width: 120px;
+      height: 120px;
+      border-radius: 22px;
+      border: 2px solid rgba(245,158,11,.25);
+      background: #fff7ed;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 56px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.08);
+    }
+    .certBig{
+      font-size: 44px;
+      line-height: 1.05;
+      font-weight: 1000;
+      margin: 6px 0 10px;
+      color:#111827;
+    }
+    .certSub{
+      font-size: 34px;
+      font-weight: 900;
+      color: rgba(17,24,39,.62);
+      margin: 0;
+      line-height: 1.1;
+    }
+    .certActions{
+      display:flex;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin-top: 18px;
+    }
+    .ghostBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      box-shadow: 0 12px 24px rgba(0,0,0,.08);
+    }
+    .pinkBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#fee2e2;
+      color:#991b1b;
+      box-shadow: 0 12px 24px rgba(0,0,0,.08);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEVEL CHOOSER -->
+  <div id="levelOverlay" class="modalOverlay" aria-label="Choose your level">
+    <div class="modal">
+      <h2>Choose your level</h2>
+
+      <div class="levelList">
+        <div class="levelRow lvlSweet">
+          <div class="col">
+            <div class="name">Sweet</div>
+            <div class="meta">Range −20 to 20 · Hints: 3</div>
+          </div>
+          <button class="startBtn" data-level="sweet">Start</button>
+        </div>
+
+        <div class="levelRow lvlMild">
+          <div class="col">
+            <div class="name">Mild</div>
+            <div class="meta">Range −20 to 20 · Hints: 2</div>
+          </div>
+          <button class="startBtn" data-level="mild">Start</button>
+        </div>
+
+        <div class="levelRow lvlMedium">
+          <div class="col">
+            <div class="name">Medium</div>
+            <div class="meta">Range −20 to 20 · Hints: 1</div>
+          </div>
+          <button class="startBtn" data-level="medium">Start</button>
+        </div>
+
+        <div class="levelRow lvlSpicy">
+          <div class="col">
+            <div class="name">Spicy</div>
+            <div class="meta">Range −50 to 50 · Hints: 0</div>
+          </div>
+          <button class="startBtn" data-level="spicy">Start</button>
+        </div>
+
+        <div class="levelRow lvlXHot">
+          <div class="col">
+            <div class="name">Extra hot</div>
+            <div class="meta">Range −100 to 100 · 0.5 steps · Hints: 0</div>
+          </div>
+          <button class="startBtn" data-level="xhot">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATE / END SCREEN -->
+  <div id="certOverlay" class="modalOverlay" style="display:none" aria-label="Certificate">
+    <div class="modal">
+      <h2>Certificate</h2>
+
+      <div class="certGrid">
+        <div class="certIcon" aria-hidden="true">🏆</div>
+
+        <div>
+          <div id="certBig" class="certBig">You completed Sweet and got 0 out of 15.</div>
+          <p class="certSub">Screenshot this and paste into Google Classroom.</p>
+
+          <div class="certActions">
+            <button id="copyBtn" class="startBtn">Copy to clipboard</button>
+            <button id="closeCertBtn" class="ghostBtn">Close</button>
+            <button id="backToMenuBtn" class="pinkBtn">Back to level menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="top">
+      <button id="backBtn" class="backBtn" aria-label="Back to level menu">
+        <span class="arrow">←</span><span>Back</span>
+      </button>
+
+      <div class="levelPill">
+        <div id="levelBanner" class="levelBanner">Level: —</div>
+      </div>
+
+      <button id="resetBtn" class="resetBtn" title="Reset">Reset</button>
+    </div>
+
+    <div class="progressRow">
+      <div class="barWrap" aria-label="Progress">
+        <div id="barFill" class="barFill"></div>
+      </div>
+      <div id="qCount" class="qCount">Question 1 / 15</div>
+    </div>
+
+    <div class="card">
+      <div class="questionRow" aria-label="Question">
+        <div class="qLabel">Question:</div>
+        <div id="qBox" class="qBox">—</div>
+      </div>
+
+      <div class="stage">
+        <button id="hintBtn" class="hintBtn">Hint 0/0</button>
+
+        <svg id="svg" class="svgwrap" viewBox="0 0 1000 440" role="img" aria-label="number line"></svg>
+
+        <div class="personLayer">
+          <img id="personImg" class="person" src="still.png" alt="person">
+        </div>
+
+        <div class="answerRow">
+          <div class="ansLabel">Answer:</div>
+          <input id="ansInput" class="ansInput" inputmode="decimal" autocomplete="off" placeholder="Type..." />
+          <button id="enterBtn" class="btn primary">Enter</button>
+          <button id="nextBtn" class="btn dark" disabled>Next →</button>
+        </div>
+
+        <div class="tip">
+          Tip: Use Hint if available · Enter to submit · After submitting, Enter again (or Next) to go next
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  // --------------------------
+  //  LEVELS (per your spec)
+  // --------------------------
+  const LEVELS = {
+    sweet:  { key:"sweet",  label:"Sweet",     min:-20,  max: 20,  spicy:false, hints:3, allowZeroOperands:false },
+    mild:   { key:"mild",   label:"Mild",      min:-20,  max: 20,  spicy:false, hints:2, allowZeroOperands:false },
+    medium: { key:"medium", label:"Medium",    min:-20,  max: 20,  spicy:false, hints:1, allowZeroOperands:false },
+    spicy:  { key:"spicy",  label:"Spicy",     min:-50,  max: 50,  spicy:false, hints:0, allowZeroOperands:false },
+    xhot:   { key:"xhot",   label:"Extra hot", min:-100, max:100,  spicy:true,  hints:0, allowZeroOperands:true  } // includes 0.5s + allow 0
+  };
+
+  const TOTAL_Q = 15;
+  const PAD = 3;
+  const ANIM_MS = 2000;
+
+  // Cache-bust querystring to help with stale sprite loads
+  const ASSET_V = "v=1";
+  const SPRITES = {
+    still: `still.png?${ASSET_V}`,
+    right: [`walk-right-1.png?${ASSET_V}`, `walk-right-2.png?${ASSET_V}`],
+    left:  [`walk-left-1.png?${ASSET_V}`,  `walk-left-2.png?${ASSET_V}`]
+  };
+
+  // --------------------------
+  //  DOM
+  // --------------------------
+  const levelOverlay = document.getElementById("levelOverlay");
+
+  const certOverlay = document.getElementById("certOverlay");
+  const certBig = document.getElementById("certBig");
+  const copyBtn = document.getElementById("copyBtn");
+  const closeCertBtn = document.getElementById("closeCertBtn");
+  const backToMenuBtn = document.getElementById("backToMenuBtn");
+
+  const levelBanner = document.getElementById("levelBanner");
+  const backBtn = document.getElementById("backBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const barFill = document.getElementById("barFill");
+  const qCount = document.getElementById("qCount");
+
+  const qBox = document.getElementById("qBox");
+
+  const hintBtn = document.getElementById("hintBtn");
+
+  const svg = document.getElementById("svg");
+  const personImg = document.getElementById("personImg");
+
+  const ansInput = document.getElementById("ansInput");
+  const enterBtn = document.getElementById("enterBtn");
+  const nextBtn  = document.getElementById("nextBtn");
+
+  // --------------------------
+  //  Helpers
+  // --------------------------
+  const abs = Math.abs;
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+  function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+
+  function el(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNode(str, attrs={}){
+    const t = el("text", attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  // --------------------------
+  //  Quiz state
+  // --------------------------
+  let LEVEL = null;
+  let qIndex = 0;
+  let score = 0;
+  let answered = false;
+
+  let Q = null;
+  let stepState = 0;    // 0..4
+  let hintsUsed = 0;
+
+  // scene refs
+  let refs = null;
+
+  // anim control
+  let isAnimating = false;
+  let animToken = null;
+  let walkingTimer = null;
+
+  function beginAnimToken(){
+    animToken = { skip:false };
+    isAnimating = true;
+    return animToken;
+  }
+  function endAnimToken(){
+    isAnimating = false;
+    animToken = null;
+  }
+  function requestSkip(){
+    if (animToken) animToken.skip = true;
+  }
+
+  function stopWalking(){
+    if (walkingTimer) { clearInterval(walkingTimer); walkingTimer = null; }
+  }
+  function spriteFramesForDirection(dir){
+    return (dir === "+") ? SPRITES.right : SPRITES.left;
+  }
+  function setPersonStill(){ personImg.src = SPRITES.still; }
+  function setPersonStaticFacingByOp(op){
+    personImg.src = (op === "+") ? SPRITES.right[0] : SPRITES.left[0];
+  }
+  function startWalking(spriteDir){
+    stopWalking();
+    const frames = spriteFramesForDirection(spriteDir);
+    let i = 0;
+    personImg.src = frames[0];
+    walkingTimer = setInterval(() => {
+      i = (i + 1) % frames.length;
+      personImg.src = frames[i];
+    }, 220);
+  }
+  function setPersonX(viewX){
+    const pct = (viewX / 1000) * 100;
+    personImg.style.left = pct + "%";
+  }
+  function snapPersonTo(toX){
+    stopWalking();
+    setPersonX(toX);
+    setPersonStill();
+  }
+
+  function preloadSprites(){
+    const urls = [SPRITES.still, ...SPRITES.right, ...SPRITES.left];
+    urls.forEach(u => { const im = new Image(); im.src = u; });
+  }
+
+  // --------------------------
+  //  Formatting
+  // --------------------------
+  function fmtNumber(n){
+    if (LEVEL && LEVEL.spicy){
+      return (Math.round(n*2)/2).toFixed(1);
+    }
+    return String(n);
+  }
+
+  function fmtSignedVector(n){
+    if (LEVEL && LEVEL.spicy){
+      const s = (Math.round(n*2)/2).toFixed(1);
+      return (n < 0) ? String(s) : String(abs(n).toFixed(1));
+    }
+    return (n < 0) ? String(n) : String(abs(n));
+  }
+
+  function questionHTML(a, op, b, highlightPart){
+    const opChar = (op === "+") ? "+" : "−";
+    const aStr = fmtNumber(a);
+    const bStr = (b < 0) ? `(${fmtNumber(b)})` : `(+${fmtNumber(b)})`;
+    const wrap = (txt, which) => (highlightPart === which) ? `<span class="hl">${txt}</span>` : txt;
+    return `${wrap(aStr,"a")} ${wrap(opChar,"op")} ${wrap(bStr,"b")}`;
+  }
+
+  function setQuestionText(highlightPart=null){
+    const { a, b, op } = Q;
+    qBox.innerHTML = questionHTML(a, op, b, highlightPart);
+  }
+
+  function setFinalLine(){
+    const { a, b, op, res } = Q;
+    qBox.innerHTML = `${questionHTML(a, op, b, null)} <span class="eq">= <span class="ansPill big">${fmtNumber(res)}</span></span>`;
+  }
+
+  // --------------------------
+  //  Random generation
+  // --------------------------
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function randHalf(min,max){
+    const a = Math.round(min*2);
+    const b = Math.round(max*2);
+    return (randInt(a,b))/2;
+  }
+
+  function nonZeroInt(min,max){
+    for (let i=0;i<6000;i++){
+      const v = randInt(min,max);
+      if (v !== 0) return v;
+    }
+    return 1;
+  }
+  function nonZeroHalf(min,max){
+    for (let i=0;i<9000;i++){
+      const v = randHalf(min,max);
+      if (abs(v) > 1e-9) return v;
+    }
+    return 0.5;
+  }
+
+  function randOperand(){
+    if (LEVEL.spicy){
+      return LEVEL.allowZeroOperands ? randHalf(LEVEL.min, LEVEL.max) : nonZeroHalf(LEVEL.min, LEVEL.max);
+    }
+    return LEVEL.allowZeroOperands ? randInt(LEVEL.min, LEVEL.max) : nonZeroInt(LEVEL.min, LEVEL.max);
+  }
+
+  function generateQuestion(){
+    for (let tries=0; tries<14000; tries++){
+      const a = randOperand();
+      const b = randOperand();
+      const op = (Math.random() < 0.5) ? "+" : "-";
+      const res = (op === "+") ? (a + b) : (a - b);
+      if (res < LEVEL.min || res > LEVEL.max) continue;
+      return { a, b, op, res };
+    }
+    return { a: 5, b: -3, op: "+", res: 2 };
+  }
+
+  // --------------------------
+  //  SVG Scene build (fixed: show result dot/tick WITHOUT label until step 4)
+  // --------------------------
+  function computeViewRange(a, res){
+    const lo = Math.min(0, a, res) - PAD;
+    const hi = Math.max(0, a, res) + PAD;
+    return { vmin: clamp(lo, LEVEL.min, LEVEL.max), vmax: clamp(hi, LEVEL.min, LEVEL.max) };
+  }
+
+  function buildScene(){
+    clearSVG();
+    refs = null;
+
+    const { a, b, op, res } = Q;
+    const { vmin, vmax } = computeViewRange(a, res);
+
+    const left = 80, right = 920;
+
+    const yLine = 325;
+    const tickTop = yLine - 22;
+    const yArrow1 = tickTop - 42;
+    const yArrow2 = yArrow1 - 58;
+
+    const tickBot = yLine + 22;
+    const dotR = 10;
+    const labelY = 405;
+    const HALO_Y = labelY - 18;
+
+    const x = (v) => {
+      const t = (v - vmin) / (vmax - vmin);
+      return left + t * (right - left);
+    };
+
+    const defs = el("defs");
+
+    const mkEnd = el("marker",{
+      id:"arrowHeadSmall",
+      markerWidth:"6",
+      markerHeight:"6",
+      refX:"6",
+      refY:"3",
+      orient:"auto",
+      markerUnits:"strokeWidth",
+      viewBox:"0 0 6 6"
+    },[
+      el("path",{ d:"M 0 0 L 6 3 L 0 6 z", fill:"currentColor" })
+    ]);
+
+    const mkStart = el("marker",{
+      id:"arrowHeadStart",
+      markerWidth:"6",
+      markerHeight:"6",
+      refX:"0",
+      refY:"3",
+      orient:"auto",
+      markerUnits:"strokeWidth",
+      viewBox:"0 0 6 6"
+    },[
+      el("path",{ d:"M 6 0 L 0 3 L 6 6 z", fill:"currentColor" })
+    ]);
+
+    defs.appendChild(mkEnd);
+    defs.appendChild(mkStart);
+    svg.appendChild(defs);
+
+    svg.appendChild(el("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
+
+    const gUnit  = el("g");
+    const gTicks = el("g");
+    const gArrows= el("g");
+    const gHalo  = el("g");
+
+    function addMajor(val, dotClass, extraTextClass=""){
+      const xi = x(val);
+
+      const tickLine = el("line",{ x1:xi, y1:tickTop, x2:xi, y2:tickBot, class:"tickMajor" });
+      const dot = el("circle",{ cx:xi, cy:yLine, r:dotR, class:`dot ${dotClass||""}`.trim() });
+      const label = textNode(fmtNumber(val), {
+        x: xi,
+        y: HALO_Y,
+        "text-anchor":"middle",
+        "dominant-baseline":"middle",
+        class: ("label " + extraTextClass).trim()
+      });
+
+      gTicks.appendChild(tickLine);
+      gTicks.appendChild(dot);
+      gTicks.appendChild(label);
+
+      return { x: xi, val, tickLine, dot, label };
+    }
+
+    // unit ticks
+    const step = LEVEL.spicy ? 0.5 : 1;
+    for (let v = Math.ceil(vmin/step)*step; v <= Math.floor(vmax/step)*step + 1e-9; v += step){
+      if (Math.abs(v) < 1e-9) continue;
+      const xi = x(v);
+      gUnit.appendChild(el("line", { x1:xi, y1:yLine-12, x2:xi, y2:yLine+12, class:"tickUnit" }));
+    }
+
+    svg.appendChild(gUnit);
+    svg.appendChild(gTicks);
+
+    const zeroNode = addMajor(0, "zero", "");
+
+    function makeArrow(x1, x2, y, color, labelText, headSide="end"){
+      const attrs = { x1, y1:y, x2:x1, y2:y, class:"arrowPath" };
+      if (headSide === "start") attrs["marker-start"] = "url(#arrowHeadStart)";
+      else attrs["marker-end"] = "url(#arrowHeadSmall)";
+
+      const path = el("line", attrs);
+      path.style.stroke = color;
+      path.style.color  = color;
+      path.style.display = "none";
+
+      const lx = (x1 + x2) / 2;
+      const ly = y - 18;
+      const label = textNode(labelText, { x:lx, y:ly, "text-anchor":"middle", class:"arrowLabel" });
+      label.style.fill = color;
+      label.style.display = "none";
+
+      const tip = el("circle",{ cx:x1, cy:y, r:"6", class:"trackerDot" });
+      tip.style.display = "none";
+
+      gArrows.appendChild(path);
+      gArrows.appendChild(label);
+      gArrows.appendChild(tip);
+
+      return { path, label, tip, x1, x2, y, color, headSide };
+    }
+
+    const x0 = x(0);
+    const xA = x(a);
+    const xR = x(res);
+
+    const colA = (a >= 0) ? "var(--pos)" : "var(--neg)";
+    const colB = (b >= 0) ? "var(--pos)" : "var(--neg)";
+
+    const disp2 = (op === "+") ? b : -b;
+    const xEnd2 = x(a + disp2);
+
+    const arrowA = makeArrow(x0, xA, yArrow1, colA, fmtSignedVector(a), "end");
+    const headSideB = (op === "-") ? "start" : "end";
+    const arrowB = makeArrow(xA, xEnd2, yArrow2, colB, fmtSignedVector(b), headSideB);
+
+    svg.appendChild(gArrows);
+
+    const aNode   = addMajor(a, "", "");
+    const resNode = addMajor(res, "", "answer");
+
+    // halo behind answer label (hidden until step 4)
+    const halo = el("circle", { cx:xR, cy:HALO_Y, r:26, class:"ansHalo" });
+    halo.style.display = "none";
+    gHalo.appendChild(halo);
+    svg.insertBefore(gHalo, gTicks);
+
+    // Hide A and Result nodes initially (only show 0)
+    // 0 is already visible
+    [aNode.tickLine, aNode.dot, aNode.label].forEach(n => n.style.display = "none");
+    [resNode.tickLine, resNode.dot, resNode.label].forEach(n => n.style.display = "none");
+    resNode.label.style.display = "none"; // extra safety
+
+    refs = {
+      x0, xA, xR,
+      arrowA, arrowB,
+      aNode, resNode,
+      halo,
+      showA: () => {
+        refs.aNode.tickLine.style.display = "";
+        refs.aNode.dot.style.display = "";
+        refs.aNode.label.style.display = "";
+      },
+      // IMPORTANT: show ONLY tick + dot for result, NOT the label/halo
+      showResTickDotOnly: () => {
+        refs.resNode.tickLine.style.display = "";
+        refs.resNode.dot.style.display = "";
+        refs.resNode.label.style.display = "none";
+      },
+      showAnswerLabelAndHalo: () => {
+        refs.resNode.label.style.display = "";
+        refs.halo.style.display = "";
+      }
+    };
+
+    setPersonX(x0);
+  }
+
+  function hideArrow(arrow){
+    arrow.path.style.display = "none";
+    arrow.label.style.display = "none";
+    arrow.tip.style.display = "none";
+    arrow.tip.style.opacity = "0";
+  }
+  function showArrowLabel(arrow){ arrow.label.style.display = ""; }
+
+  function snapArrowToEnd(arrow){
+    const { path, tip, x1, x2, y } = arrow;
+    path.style.display = "";
+    tip.style.display  = "";
+    tip.style.opacity  = "1";
+    path.setAttribute("x1", String(x1));
+    path.setAttribute("y1", String(y));
+    path.setAttribute("x2", String(x2));
+    path.setAttribute("y2", String(y));
+    tip.setAttribute("cx", String(x2));
+    tip.setAttribute("cy", String(y));
+  }
+
+  function animateLineArrow(arrow, durationMs, token){
+    return new Promise((resolve) => {
+      const { path, tip, x1, x2, y } = arrow;
+
+      path.style.display = "";
+      tip.style.display  = "";
+      tip.style.opacity  = "1";
+
+      const start = performance.now();
+
+      function frame(now){
+        if (token && token.skip){
+          snapArrowToEnd(arrow);
+          resolve();
+          return;
+        }
+
+        const t = clamp((now - start) / durationMs, 0, 1);
+        const eased = 1 - Math.pow(1 - t, 2);
+        const cx = x1 + (x2 - x1) * eased;
+
+        path.setAttribute("x1", String(x1));
+        path.setAttribute("y1", String(y));
+        path.setAttribute("x2", String(cx));
+        path.setAttribute("y2", String(y));
+
+        tip.setAttribute("cx", String(cx));
+        tip.setAttribute("cy", String(y));
+
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          snapArrowToEnd(arrow);
+          resolve();
+        }
+      }
+
+      path.setAttribute("x2", String(x1));
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function movePerson(fromX, toX, spriteDir, durationMs, token){
+    return new Promise((resolve) => {
+      startWalking(spriteDir);
+      const start = performance.now();
+
+      function frame(now){
+        if (token && token.skip){
+          snapPersonTo(toX);
+          resolve();
+          return;
+        }
+
+        const t = clamp((now - start) / durationMs, 0, 1);
+        const eased = 1 - Math.pow(1 - t, 2);
+        const cx = fromX + (toX - fromX) * eased;
+        setPersonX(cx);
+
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          stopWalking();
+          setPersonStill();
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // --------------------------
+  //  Steps (0..4)
+  // --------------------------
+  function goToStep0(){
+    stepState = 0;
+    setQuestionText(null);
+
+    setPersonStill();
+    setPersonX(refs.x0);
+
+    hideArrow(refs.arrowA);
+    hideArrow(refs.arrowB);
+
+    // hide A and Result
+    [refs.aNode.tickLine, refs.aNode.dot, refs.aNode.label].forEach(n => n.style.display = "none");
+    [refs.resNode.tickLine, refs.resNode.dot, refs.resNode.label].forEach(n => n.style.display = "none");
+
+    refs.halo.style.display = "none";
+  }
+
+  async function doStep1(){
+    stepState = 1;
+    setQuestionText("a");
+    refs.showA();
+    showArrowLabel(refs.arrowA);
+
+    const token = beginAnimToken();
+    try{
+      await Promise.all([
+        animateLineArrow(refs.arrowA, ANIM_MS, token),
+        movePerson(refs.x0, refs.xA, "+", ANIM_MS, token)
+      ]);
+    } finally {
+      endAnimToken();
+    }
+  }
+
+  async function doStep2(){
+    stepState = 2;
+    setQuestionText("op");
+    setPersonStaticFacingByOp(Q.op);
+  }
+
+  async function doStep3(){
+    stepState = 3;
+    setQuestionText("b");
+
+    showArrowLabel(refs.arrowB);
+
+    // show landing tick/dot ONLY (NO label/halo) — fixes “Sweet hint 3 shows answer”
+    refs.showResTickDotOnly();
+
+    const spriteDir = (Q.op === "+") ? "+" : "−";
+    const token = beginAnimToken();
+    try{
+      await Promise.all([
+        animateLineArrow(refs.arrowB, ANIM_MS, token),
+        movePerson(refs.xA, refs.xR, spriteDir, ANIM_MS, token)
+      ]);
+    } finally {
+      endAnimToken();
+    }
+  }
+
+  function doStep4(){
+    stepState = 4;
+    refs.showAnswerLabelAndHalo();
+    setFinalLine();
+  }
+
+  async function runToStep3IfNeeded(){
+    if (stepState < 1) await doStep1();
+    if (stepState < 2) await doStep2();
+    if (stepState < 3) await doStep3();
+  }
+
+  async function playFullSolutionAfterAnswer(){
+    await runToStep3IfNeeded();
+    doStep4();
+  }
+
+  // --------------------------
+  //  Hints
+  // --------------------------
+  function updateHintUI(){
+    const max = LEVEL.hints;
+    hintBtn.textContent = `Hint ${Math.min(hintsUsed, max)}/${max}`;
+    const canHint = (!answered) && (hintsUsed < max);
+    hintBtn.disabled = !canHint;
+    hintBtn.style.display = (max > 0) ? "" : "none";
+  }
+
+  async function useHint(){
+    if (answered) return;
+    if (hintsUsed >= LEVEL.hints) return;
+
+    const targetStep = hintsUsed + 1;
+
+    if (isAnimating){
+      requestSkip();
+      return;
+    }
+
+    if (targetStep === 1 && stepState < 1) await doStep1();
+    if (targetStep === 2 && stepState < 2) await doStep2();
+    if (targetStep === 3 && stepState < 3) await doStep3();
+
+    hintsUsed++;
+    updateHintUI();
+  }
+
+  // --------------------------
+  //  Answer checking
+  // --------------------------
+  function parseStudentNumber(str){
+    const cleaned = String(str).trim().replace(/,/g,"");
+    if (!cleaned) return null;
+    const v = Number(cleaned);
+    if (!Number.isFinite(v)) return null;
+    return v;
+  }
+
+  function isCorrect(student, correct){
+    if (LEVEL.spicy){
+      return Math.abs(student - correct) < 1e-9;
+    }
+    return student === correct;
+  }
+
+  function lockAnswerUI(correct){
+    ansInput.classList.remove("good","bad");
+    ansInput.classList.add(correct ? "good" : "bad");
+    ansInput.disabled = true;
+    enterBtn.disabled = true;
+    nextBtn.disabled = false;
+    answered = true;
+
+    updateHintUI();
+  }
+
+  async function submitAnswer(){
+    if (answered) return;
+    if (isAnimating){
+      requestSkip();
+      return;
+    }
+
+    const student = parseStudentNumber(ansInput.value);
+    if (student === null){
+      ansInput.focus();
+      return;
+    }
+
+    const correct = isCorrect(student, Q.res);
+    if (correct) score++;
+
+    lockAnswerUI(correct);
+    await playFullSolutionAfterAnswer();
+  }
+
+  function nextQuestion(){
+    if (!answered) return;
+
+    qIndex++;
+    if (qIndex >= TOTAL_Q){
+      showCertificate();
+      return;
+    }
+    loadQuestion();
+  }
+
+  // --------------------------
+  //  Quiz flow
+  // --------------------------
+  function updateProgress(){
+    qCount.textContent = `Question ${qIndex + 1} / ${TOTAL_Q}`;
+    const pct = (qIndex / TOTAL_Q) * 100;
+    barFill.style.width = `${pct}%`;
+  }
+
+  function resetAnswerUI(){
+    answered = false;
+    ansInput.disabled = false;
+    ansInput.value = "";
+    ansInput.classList.remove("good","bad");
+    enterBtn.disabled = false;
+    nextBtn.disabled = true;
+  }
+
+  function loadQuestion(){
+    updateProgress();
+    resetAnswerUI();
+
+    hintsUsed = 0;
+    updateHintUI();
+
+    Q = generateQuestion();
+    buildScene();
+    goToStep0();
+    setQuestionText(null);
+
+    ansInput.focus();
+  }
+
+  function startQuiz(levelKey){
+    LEVEL = LEVELS[levelKey];
+    if (!LEVEL) return;
+
+    levelOverlay.style.display = "none";
+    certOverlay.style.display = "none";
+
+    levelBanner.textContent = `Level: ${LEVEL.label}`;
+
+    qIndex = 0;
+    score = 0;
+
+    loadQuestion();
+  }
+
+  function showCertificate(){
+    barFill.style.width = `100%`;
+
+    const line1 = `You completed ${LEVEL.label} and got ${score} out of ${TOTAL_Q}.`;
+    certBig.textContent = line1;
+
+    certOverlay.style.display = "";
+  }
+
+  function closeCertificate(){
+    certOverlay.style.display = "none";
+  }
+
+  function resetToChooser(){
+    stopWalking();
+    isAnimating = false;
+    animToken = null;
+
+    LEVEL = null;
+    Q = null;
+    refs = null;
+
+    levelBanner.textContent = "Level: —";
+    qBox.textContent = "—";
+    barFill.style.width = "0%";
+    qCount.textContent = `Question 1 / ${TOTAL_Q}`;
+
+    hintBtn.style.display = "none";
+    hintBtn.disabled = true;
+
+    resetAnswerUI();
+
+    certOverlay.style.display = "none";
+    levelOverlay.style.display = "";
+  }
+
+  // --------------------------
+  //  Events
+  // --------------------------
+  document.querySelectorAll(".startBtn[data-level]").forEach(btn => {
+    btn.addEventListener("click", () => startQuiz(btn.getAttribute("data-level")));
+  });
+
+  hintBtn.addEventListener("click", useHint);
+
+  enterBtn.addEventListener("click", submitAnswer);
+  nextBtn.addEventListener("click", nextQuestion);
+
+  ansInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter"){
+      e.preventDefault();
+      if (!answered) submitAnswer();
+      else nextQuestion();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (levelOverlay.style.display !== "none") return;
+    if (certOverlay.style.display !== "none") return;
+
+    if (e.key === "Enter"){
+      e.preventDefault();
+      if (isAnimating) requestSkip();
+      else if (!answered) submitAnswer();
+      else nextQuestion();
+    }
+  });
+
+  // Reset goes back to chooser so student can re-choose level
+  resetBtn.addEventListener("click", resetToChooser);
+
+  // Back also returns to chooser (fresh state)
+  backBtn.addEventListener("click", () => {
+    // “fresh reload” behaviour without leaving page
+    resetToChooser();
+  });
+
+  // Certificate actions
+  copyBtn.addEventListener("click", async () => {
+    const text =
+      `Certificate: I completed ${LEVEL ? LEVEL.label : "the quiz"} and got ${score} out of ${TOTAL_Q}. ` +
+      `millsmathstools.au`;
+    try{
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => (copyBtn.textContent = "Copy to clipboard"), 1200);
+    } catch {
+      // fallback: select in prompt
+      window.prompt("Copy this:", text);
+    }
+  });
+
+  closeCertBtn.addEventListener("click", closeCertificate);
+  backToMenuBtn.addEventListener("click", resetToChooser);
+
+  // --------------------------
+  // Init
+  // --------------------------
+  preloadSprites();
+  resetToChooser();
+})();
+</script>
+</body>
+</html>
