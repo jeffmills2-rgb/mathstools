@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Integers (Basic) — Worksheet Generator</title>
+  <title>Integers — Worksheet Generator</title>
   <style>
     :root{
       --bg:#f6f7fb;
@@ -42,20 +42,6 @@
       padding: 18px;
     }
 
-    .title{
-      font-size: 28px;
-      font-weight: 1000;
-      letter-spacing: .2px;
-      margin: 0 0 6px;
-    }
-    .subtitle{
-      margin: 0 0 16px;
-      color: var(--muted);
-      font-weight: 850;
-      font-size: 14px;
-      line-height: 1.3;
-    }
-
     .seedHint{ margin-top:6px; color: var(--muted); font-weight: 850; font-size: 12px; }
 
     .controls{
@@ -78,7 +64,7 @@
       font-size: 13px;
     }
 
-    select, input[type="number"]{
+    select, input[type="number"], input[type="text"]{
       border: 2px solid #e5e7eb;
       border-radius: 14px;
       padding: 12px 12px;
@@ -169,7 +155,7 @@
     .pageInner{
       position: relative;
       z-index: 1;
-      padding: 0; /* padding moved to pageContent so border stays clean */
+      padding: 0;
     }
 
     .pageContent{
@@ -189,9 +175,7 @@
       margin-bottom: 10px;
     }
 
-    .hdrLeft{
-      min-width: 240px;
-    }
+    .hdrLeft{ min-width: 240px; }
     .hdrTitle{
       font-weight: 1000;
       font-size: 18px;
@@ -284,10 +268,7 @@
       justify-content:flex-start;
       gap: 10px;
     }
-    .ansLabel{
-      font-weight: 1000;
-      font-size: 14px;
-    }
+    .ansLabel{ font-weight: 1000; font-size: 14px; }
     .ansBox{
       flex: 1;
       min-width: 0;
@@ -325,6 +306,7 @@
       min-width: 54px;
       text-align:center;
       background:#fff;
+      white-space: nowrap;
     }
     .symBox{
       width: 46px;
@@ -350,7 +332,7 @@
     .orderBox{ width: 42px; height: 38px; border: 2px solid #111827; border-radius: 10px; background:#fff; }
     .orderBox.key{ border-color: var(--ok); background: rgba(22,163,74,.08); color: var(--ok); display:flex; align-items:center; justify-content:center; font-weight:1000; font-size: 16px; }
 
-    /* SVG styles (match your look) */
+    /* SVG styles */
     .baseline{ stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
     .tickMajor{ stroke: var(--tick); stroke-width: 6; stroke-linecap: round; }
     .tickUnit{ stroke: rgba(17,24,39,.45); stroke-width: 3; stroke-linecap: round; }
@@ -360,39 +342,20 @@
     .label{ font-size: 24px; font-weight: 1000; fill:#111827; }
     .label.answer{ fill: var(--ok); }
 
-    /* Bottom fixed footer (screen only) */
-    .mmtFooter{
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      height: var(--footer-h);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 0 12px;
-      background: rgba(255,255,255,.92);
-      border-top: 1px solid rgba(229,231,235,.95);
-      backdrop-filter: blur(8px);
-      z-index: 500;
-      font-weight: 900;
-      color: #111827;
-      text-align:center;
-      font-size: 13px;
-    }
-
     /* Print */
     @media print{
       @page{ size: A4; margin: 12mm; }
 
       body{ background:#fff !important; padding:0 !important; }
-      .controls, .screenOnly, .mmtFooter, .printTip{ display:none !important; }
+      .controls{ display:none !important; }
 
       .wrap{ max-width:none !important; margin:0 !important; padding:0 !important; }
 
       :root{ --pagePad: 6mm; }
 
       .page{
-        width: 186mm;           /* A4 minus 12mm margins on both sides */
-        height: 273mm;          /* A4 minus 12mm margins top/bottom */
+        width: 186mm;
+        height: 273mm;
         margin: 0 auto;
         border: none;
         box-shadow: none;
@@ -401,11 +364,7 @@
       .page:last-child{ page-break-after: auto; }
 
       .pageContent{ margin: var(--pagePad); padding: 12px; }
-
-      /* keep header tidy in print */
       .pageHeader{ flex-wrap: nowrap !important; gap: 10px !important; }
-
-      /* tighten question cards so 8 fit comfortably */
       .grid{ gap: 12px !important; }
       .qCard{ break-inside: avoid; padding: 12px !important; }
     }
@@ -416,19 +375,15 @@
     <div class="panel">
       <div class="controls">
         <div>
-          <label for="outcomeSel">Stage outcome (one for now)</label>
+          <label for="outcomeSel">Stage outcome</label>
           <select id="outcomeSel">
-            <option value="stage4_int">Stage 4 — Integers (D/E basic)</option>
+            <option value="basic_de">Stage 4 — Integers (D/E basic)</option>
+            <option value="c_expected">Stage 4 — Integers (C-Expected)</option>
           </select>
 
           <div class="checks" aria-label="Question types">
             <label style="margin:0; font-size:13px; font-weight:950; color:var(--muted); width:100%;">Question types (checkboxes)</label>
-            <label class="chk"><input id="chkPlace" type="checkbox" checked /><span>Place an integer on a number line</span></label>
-            <label class="chk"><input id="chkCalc" type="checkbox" checked /><span>Use a number line to calculate</span></label>
-            <label class="chk"><input id="chkIneq" type="checkbox" checked /><span>Compare integers ( &lt; &gt; = )</span></label>
-            <label class="chk"><input id="chkOrder" type="checkbox" /><span>Ordering integers</span></label>
-            <label class="chk"><input id="chkMult" type="checkbox" /><span>Multiplying integers</span></label>
-            <label class="chk"><input id="chkDiv" type="checkbox" /><span>Dividing integers</span></label>
+            <div id="checksHost" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center; width:100%;"></div>
           </div>
         </div>
 
@@ -464,28 +419,44 @@
   const PER_PAGE = 8; // 2x4
   const BORDER_SRC = "border_page0.png"; // must sit beside this HTML
 
-  // "Basic" friendly ranges
+  // Basic ranges (UNCHANGED)
   const PLACE_RANGE = { min:-10, max: 10 };
   const CALC_A_RANGE = { min:-12, max: 12 };
-  const CALC_B_RANGE = { min: 1, max: 12 }; // always positive (so no a+-b)
-
-  // Ordering range
+  const CALC_B_RANGE = { min: 1, max: 12 };
   const ORDER_RANGE = { min:-100, max: 50 };
-
-  // Multiply range
   const MULT_RANGE = { min:-10, max: 10 };
-
-  // Divide facts up to 10 times tables
   const DIV_FACT = { min:1, max:10 };
 
-  // DOM
-  const chkPlace = document.getElementById("chkPlace");
-  const chkCalc  = document.getElementById("chkCalc");
-  const chkIneq  = document.getElementById("chkIneq");
-  const chkOrder = document.getElementById("chkOrder");
-  const chkMult  = document.getElementById("chkMult");
-  const chkDiv   = document.getElementById("chkDiv");
+  // C-Expected checkbox 1 rules
+  const CE_STEPS = [1,2,3,4,5,10];
+  const CE_MAX_ABS = 100;
 
+  // C-Expected checkbox 2 rules
+  const CE_ADD_A = { min:-50, max:50 };
+  const CE_ADD_B = { min:1, max:50 };      // positive only
+  const CE_MULT_ABS = { min:2, max:12 };   // avoid trivial
+  const CE_DIV_ABS  = { min:1, max:12 };   // times-table style
+
+  // C-Expected checkbox 3 rules (Comparing expressions)
+  const CE_C_RANGE = { min:-50, max:50 };
+  const CE_EXPR_CAP = 100;
+  const CE_EQ_RATE = 0.20;
+
+  // C-Expected checkbox 4 rules (Combining signs)
+  const CS_RANGE = { min:-50, max:50 };
+  const CS_CAP = 100; // result naturally within ±100, but keep for safety
+
+  // Distribution: 10% a+(+b), 30% each of the others
+  const CS_FORMS = [
+    { id:"pp_add", w: 10 }, // a + b
+    { id:"pn_add", w: 30 }, // a + (-b)
+    { id:"pp_sub", w: 30 }, // a - b
+    { id:"pn_sub", w: 30 }, // a - (-b)
+  ];
+
+  // DOM
+  const outcomeSel = document.getElementById("outcomeSel");
+  const checksHost = document.getElementById("checksHost");
   const countInp = document.getElementById("countInp");
   const seedInp  = document.getElementById("seedInp");
   const newSeedBtn = document.getElementById("newSeedBtn");
@@ -494,9 +465,61 @@
   const resetBtn = document.getElementById("resetBtn");
   const out      = document.getElementById("out");
 
+  // Outcome checkbox sets
+  const OUTCOMES = {
+    basic_de: {
+      header: "Stage 4 — Integers · Grades D/E — friendly numbers + diagrams",
+      boxes: [
+        { id:"place", label:"Place an integer on a number line", checked:true },
+        { id:"calc",  label:"Use a number line to calculate", checked:true },
+        { id:"ineq",  label:"Compare integers ( < > = )", checked:true },
+        { id:"order", label:"Ordering integers", checked:false },
+        { id:"mult",  label:"Multiplying integers", checked:false },
+        { id:"div",   label:"Dividing integers", checked:false },
+      ]
+    },
+    c_expected: {
+      header: "Stage 4 - Integers - Grade C - Expected",
+      boxes: [
+        { id:"place_ce", label:"Place an integer on a number line", checked:true },
+        { id:"calc_ce",  label:"Integer calculations", checked:true },
+        { id:"comp_ce",  label:"Comparing integers (<>=)", checked:true },
+        { id:"signs_ce", label:"Combining signs", checked:true },  // ✅ Checkbox 4
+      ]
+    }
+  };
+
+  let activeCbs = [];
+
+  function renderCheckboxes(){
+    checksHost.innerHTML = "";
+    activeCbs = [];
+    const cfg = OUTCOMES[outcomeSel.value];
+
+    for (const b of cfg.boxes){
+      const lab = document.createElement("label");
+      lab.className = "chk";
+      const inp = document.createElement("input");
+      inp.type = "checkbox";
+      inp.checked = !!b.checked;
+      inp.dataset.id = b.id;
+
+      const span = document.createElement("span");
+      span.textContent = b.label;
+
+      lab.appendChild(inp);
+      lab.appendChild(span);
+      checksHost.appendChild(lab);
+
+      activeCbs.push(inp);
+    }
+  }
+
+  function enabledTypes(){
+    return activeCbs.filter(x => x.checked).map(x => x.dataset.id);
+  }
+
   // Helpers
-  // Seeded RNG (so worksheets can be reproduced)
-  // If no seed is provided, we generate one.
   function xmur3(str){
     let h = 1779033703 ^ str.length;
     for (let i=0; i<str.length; i++){
@@ -518,7 +541,7 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-  let rng = Math.random; // will be swapped to seeded RNG on Generate
+  let rng = Math.random;
 
   const randInt = (a,b) => Math.floor(rng()*(b-a+1))+a;
   const choice = (arr) => arr[randInt(0, arr.length-1)];
@@ -534,7 +557,6 @@
     return a;
   };
 
-  // Avoid duplicates (simple)
   function uniqPush(arr, item, keyFn){
     const k = keyFn(item);
     if (arr.some(x => keyFn(x) === k)) return false;
@@ -542,10 +564,77 @@
     return true;
   }
 
+  // Parentheses for negatives (and only negatives)
+  function tok(n){
+    return n < 0 ? `(${fmtInt(n)})` : fmtInt(n);
+  }
+  function randSign(){ return rng() < 0.5 ? -1 : 1; }
+
+  // Balanced distribution (default)
+  function makeBalancedList(typeIds, n){
+    const ids = typeIds.slice();
+    if (!ids.length) return [];
+    const list = [];
+    let i = 0;
+    while (list.length < n){
+      list.push(ids[i % ids.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
   // ------------------------------------------------------------
-  // SVG builder (matches "Missing value" look)
-  // -10 ... 0 ... 10 with unit ticks and labels at -10, 0, 10
-  // Optionally show an answer dot and label in green
+  // Weighted + balanced helpers
+  // ------------------------------------------------------------
+  function expandWeighted(forms){
+    const bag = [];
+    for (const f of forms){
+      for (let i=0;i<f.w;i++) bag.push(f.id);
+    }
+    return bag;
+  }
+
+  function makeWeightedBalancedList(forms, m){
+    // Create a bag matching weights (10/30/30/30) then repeat as needed, shuffle
+    const bag = expandWeighted(forms); // length 100
+    const out = [];
+    while (out.length < m){
+      // take whole bag chunks to preserve proportions; then shuffle
+      const chunk = shuffle(bag);
+      for (const id of chunk){
+        out.push(id);
+        if (out.length >= m) break;
+      }
+    }
+    return out;
+  }
+
+  function makeBalancedOpList(m){
+    const ops = ["+","−","×","÷"];
+    if (m<=0) return [];
+    const list = [];
+    let i=0;
+    while (list.length < m){
+      list.push(ops[i % ops.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
+  function makeBalancedFormList(m){
+    const forms = ["ab_c_add","ab_c_sub","c_ab_add","c_ab_sub"];
+    if (m<=0) return [];
+    const list = [];
+    let i=0;
+    while (list.length < m){
+      list.push(forms[i % forms.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
+  // ------------------------------------------------------------
+  // SVG builders (Basic UNCHANGED)
   // ------------------------------------------------------------
   function elNS(name, attrs={}, children=[]){
     const n = document.createElementNS("http://www.w3.org/2000/svg", name);
@@ -581,7 +670,6 @@
 
     svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
 
-    // unit ticks at each integer except major points
     for (let v = vmin; v <= vmax; v++){
       if (v === vmin || v === 0 || v === vmax) continue;
       const xi = x(v);
@@ -602,18 +690,14 @@
     if (showAnswer){
       const xa = x(answerVal);
       svg.appendChild(elNS("circle", { cx: xa, cy: yLine, r: dotR, class:"dot answer" }));
-      // only label answer if it's not already one of the majors
       if (answerVal !== -10 && answerVal !== 0 && answerVal !== 10){
         svg.appendChild(textNS(fmtInt(answerVal), { x: xa, y: labelY, "text-anchor":"middle", class:"label answer" }));
       }
     }
-
     return svg;
   }
 
-  // A "calc line" that shows major ticks at a and 0
   function buildCalcLineSVG(a){
-    // view range padded but clamped to [-20, 20] for basic
     const lo = Math.min(a, 0);
     const hi = Math.max(a, 0);
     const span = Math.max(1, hi - lo);
@@ -645,7 +729,6 @@
 
     svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
 
-    // unit ticks at each integer in range (skip majors)
     const start = Math.ceil(vmin);
     const end = Math.floor(vmax);
     for (let v = start; v <= end; v++){
@@ -663,17 +746,69 @@
 
     major(a);
     major(0, "zero");
+    return svg;
+  }
 
+  // ------------------------------------------------------------
+  // C-Expected number line (checkbox 1)
+  // ------------------------------------------------------------
+  function tooClose(a,b,step){ return Math.abs(a-b) < 2*step; }
+
+  function buildPlaceLineCE({ step, labels, answer }, showAnswer){
+    const vmax = clamp(step * 10, 1, CE_MAX_ABS);
+    const vmin = -vmax;
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"svg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 86;
+    const tickMajorTop = yLine - 22;
+    const tickMajorBot = yLine + 22;
+    const tickUnitTop  = yLine - 12;
+    const tickUnitBot  = yLine + 12;
+
+    const dotR = 9;
+    const labelY = 170;
+
+    const x = (v) => left + ((v - vmin) / (vmax - vmin)) * (right - left);
+
+    svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, class:"baseline" }));
+
+    const labelSet = new Set(labels.map(Number));
+    for (let v = vmin; v <= vmax; v += step){
+      if (labelSet.has(v)) continue;
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickUnitTop, x2: xi, y2: tickUnitBot, class:"tickUnit" }));
+    }
+
+    function major(v, clsDot="", clsLabel=""){
+      const xi = x(v);
+      svg.appendChild(elNS("line", { x1: xi, y1: tickMajorTop, x2: xi, y2: tickMajorBot, class:"tickMajor" }));
+      svg.appendChild(elNS("circle", { cx: xi, cy: yLine, r: dotR, class:`dot ${clsDot}`.trim() }));
+      svg.appendChild(textNS(fmtInt(v), { x: xi, y: labelY, "text-anchor":"middle", class:`label ${clsLabel}`.trim() }));
+    }
+
+    const majors = labels.slice().sort((a,b)=>a-b);
+    for (const v of majors){
+      if (v === 0) major(v, "zero");
+      else major(v);
+    }
+
+    if (showAnswer){
+      const xa = x(answer);
+      svg.appendChild(elNS("circle", { cx: xa, cy: yLine, r: dotR, class:"dot answer" }));
+      if (!labelSet.has(answer)){
+        svg.appendChild(textNS(fmtInt(answer), { x: xa, y: labelY, "text-anchor":"middle", class:"label answer" }));
+      }
+    }
     return svg;
   }
 
   // ------------------------------------------------------------
   // Question generators
   // ------------------------------------------------------------
-  function genPlace(){
-    const v = randInt(PLACE_RANGE.min, PLACE_RANGE.max);
-    return { type:"place", v };
-  }
+  // BASIC (UNCHANGED)
+  function genPlace(){ return { type:"place", v: randInt(PLACE_RANGE.min, PLACE_RANGE.max) }; }
 
   function genCalc(){
     const a = randInt(CALC_A_RANGE.min, CALC_A_RANGE.max);
@@ -693,90 +828,297 @@
 
   function genOrder(){
     const dir = rng() < 0.5 ? "ascending" : "descending";
-
     const set = new Set();
-    while (set.size < 5){
-      set.add(randInt(ORDER_RANGE.min, ORDER_RANGE.max));
-    }
+    while (set.size < 5) set.add(randInt(ORDER_RANGE.min, ORDER_RANGE.max));
     const nums = Array.from(set);
-
     const answer = nums.slice().sort((x,y) => dir === "ascending" ? x-y : y-x);
 
-    // Present shuffled (so it isn't already ordered)
     let shown = shuffle(nums);
-    // (very rarely) could end up ordered; reshuffle a couple of times
     let tries = 0;
     while (tries < 6){
-      const isAlready = shown.every((v,i) => v === answer[i]);
-      if (!isAlready) break;
+      if (!shown.every((v,i) => v === answer[i])) break;
       shown = shuffle(nums);
       tries++;
     }
-
     return { type:"order", dir, shown, answer };
   }
 
   function genMult(){
     const a = randInt(MULT_RANGE.min, MULT_RANGE.max);
     const b = randInt(MULT_RANGE.min, MULT_RANGE.max);
-    // keep it from being too trivial too often
     if (a === 0 && b === 0) return genMult();
     return { type:"mult", a, b, ans: a*b };
   }
 
   function genDiv(){
-    // pick a times-table fact |b| in 1..10, |c| in 1..10
     const bAbs = randInt(DIV_FACT.min, DIV_FACT.max);
     const cAbs = randInt(DIV_FACT.min, DIV_FACT.max);
-
-    // signs can vary
     const b = rng() < 0.5 ? -bAbs : bAbs;
     const c = rng() < 0.5 ? -cAbs : cAbs;
-
     const a = b * c;
     return { type:"div", a, b, ans: c };
   }
 
-  function buildPool(){
-    const pool = [];
-    if (chkPlace.checked) pool.push("place");
-    if (chkCalc.checked)  pool.push("calc");
-    if (chkIneq.checked)  pool.push("ineq");
-    if (chkOrder.checked) pool.push("order");
-    if (chkMult.checked)  pool.push("mult");
-    if (chkDiv.checked)   pool.push("div");
-    return pool;
+  // C-Expected checkbox 1
+  function genPlaceCE(){
+    const step = choice(CE_STEPS);
+    const vmax = step * 10;
+    const vmin = -vmax;
+
+    const labels = [vmin, 0, vmax];
+
+    const ticks = [];
+    for (let v=vmin; v<=vmax; v+=step){
+      if (v===vmin || v===0 || v===vmax) continue;
+      ticks.push(v);
+    }
+
+    let answer = choice(ticks);
+    let tries = 0;
+    while (tries++ < 300){
+      answer = choice(ticks);
+      if (tooClose(answer, 0, step)) continue;
+      if (tooClose(answer, vmin, step)) continue;
+      if (tooClose(answer, vmax, step)) continue;
+      break;
+    }
+
+    const extras = [];
+    tries = 0;
+    while (extras.length < 2 && tries++ < 1200){
+      const cand = choice(ticks);
+      if (cand === answer) continue;
+      if (labels.some(l => tooClose(cand, l, step))) continue;
+      if (extras.some(e => tooClose(cand, e, step))) continue;
+      if (tooClose(answer, cand, step)) continue;
+      extras.push(cand);
+    }
+
+    if (extras.length < 2) return genPlaceCE();
+    labels.push(...extras);
+    return { type:"place_ce", step, labels, answer };
   }
 
+  // C-Expected checkbox 2
+  function genCalcCE(opForced=null){
+    const op = opForced ?? choice(["+","−","×","÷"]);
+
+    if (op === "+" || op === "−"){
+      let a=0,b=0,ans=0,tries=0;
+      while (tries++ < 600){
+        a = randInt(CE_ADD_A.min, CE_ADD_A.max);
+        b = randInt(CE_ADD_B.min, CE_ADD_B.max); // positive
+        ans = (op === "+") ? a+b : a-b;
+        if (ans < -100 || ans > 100) continue;
+        break;
+      }
+      return { type:"calc_ce", op, a, b, ans };
+    }
+
+    if (op === "×"){
+      const aAbs = randInt(CE_MULT_ABS.min, CE_MULT_ABS.max);
+      const bAbs = randInt(CE_MULT_ABS.min, CE_MULT_ABS.max);
+      const a = aAbs * randSign();
+      const b = bAbs * randSign();
+      return { type:"calc_ce", op:"×", a, b, ans: a*b };
+    }
+
+    const dAbs = randInt(CE_DIV_ABS.min, CE_DIV_ABS.max);
+    const qAbs = randInt(CE_DIV_ABS.min, CE_DIV_ABS.max);
+    const divisor = dAbs * randSign();
+    const quotient = qAbs * randSign();
+    const dividend = divisor * quotient;
+    return { type:"calc_ce", op:"÷", a: dividend, b: divisor, ans: quotient };
+  }
+
+  // C-Expected checkbox 3 (Comparing expressions)
+  function dynBand(E){
+    return clamp(4 + Math.floor(Math.abs(E)/6), 4, 14);
+  }
+
+  function fmtExpr(a, op, b){
+    return `${tok(a)} ${op} ${tok(b)}`;
+  }
+
+  function genCompareCE(form){
+    let tries = 0;
+    while (tries++ < 5000){
+      const a = randInt(-50, 50);
+      let b = randInt(-50, 50);
+      const op = form.includes("_sub") ? "−" : "+";
+      if (b === 0) continue;
+
+      const E = (op === "+") ? (a + b) : (a - b);
+      if (Math.abs(E) > CE_EXPR_CAP) continue;
+      if (E < CE_C_RANGE.min || E > CE_C_RANGE.max) continue;
+
+      const band = dynBand(E);
+      let c;
+
+      const wantEq = rng() < CE_EQ_RATE;
+      if (wantEq){
+        c = E;
+      } else {
+        let deltaTries = 0;
+        while (deltaTries++ < 200){
+          const delta = randInt(-band, band);
+          if (delta === 0) continue;
+          const cand = E + delta;
+          if (cand < CE_C_RANGE.min || cand > CE_C_RANGE.max) continue;
+          c = cand;
+          break;
+        }
+        if (typeof c !== "number") continue;
+      }
+
+      const exprStr = fmtExpr(a, op, b);
+      let leftText, rightText, leftVal, rightVal;
+
+      if (form.startsWith("ab_c")){
+        leftText = exprStr;
+        rightText = tok(c);
+        leftVal = E;
+        rightVal = c;
+      } else {
+        leftText = tok(c);
+        rightText = exprStr;
+        leftVal = c;
+        rightVal = E;
+      }
+
+      const sym = (leftVal < rightVal) ? "<" : (leftVal > rightVal ? ">" : "=");
+      if (Math.abs(leftVal - rightVal) > band) continue;
+
+      return { type:"comp_ce", leftText, rightText, sym, form };
+    }
+    return genCompareCE(form);
+  }
+
+  // C-Expected checkbox 4 (Combining signs)
+  function makeCombiningSignsForms(m){
+    return makeWeightedBalancedList(CS_FORMS, m);
+  }
+
+  function exprKey(a, op, b){
+    return `${a}${op}${b}`;
+  }
+
+  function genCombiningSignsCE(form){
+    // forms:
+    // pp_add: a + b     (b positive)
+    // pn_add: a + (-b)  (b negative)
+    // pp_sub: a - b     (b positive)
+    // pn_sub: a - (-b)  (b negative)
+    let tries = 0;
+    while (tries++ < 6000){
+      let a = randInt(CS_RANGE.min, CS_RANGE.max);
+      if (a === 0) continue; // avoid trivial a=0
+
+      let bAbs = randInt(1, 50); // b != 0 always
+      let b = bAbs;
+
+      if (form === "pn_add" || form === "pn_sub"){
+        b = -bAbs;
+      } else {
+        b = bAbs;
+      }
+
+      const op = (form === "pp_sub" || form === "pn_sub") ? "−" : "+";
+      const ans = (op === "+") ? (a + b) : (a - b);
+
+      if (Math.abs(ans) > CS_CAP) continue;
+
+      // Occasionally allow "zero result" patterns; don't filter them out.
+      // But still avoid b=0 and a=0 (already done).
+
+      const exprStr = `${tok(a)} ${op} ${tok(b)}`;
+      return { type:"signs_ce", a, b, op, exprStr, ans, form };
+    }
+
+    return genCombiningSignsCE(form);
+  }
+
+  // ------------------------------------------------------------
+  // Planning + generation
+  // ------------------------------------------------------------
   function generateQuestions(n){
-    const pool = buildPool();
-    if (pool.length === 0) return [];
+    const pool = enabledTypes();
+    if (!pool.length) return [];
+
+    const plan = makeBalancedList(pool, n);
+
+    // calc_ce: balance ops inside it
+    const calcPositions = [];
+    for (let i=0;i<plan.length;i++){
+      if (plan[i] === "calc_ce") calcPositions.push(i);
+    }
+    const opPlan = makeBalancedOpList(calcPositions.length);
+    const opByIdx = new Map();
+    calcPositions.forEach((pos,j)=>opByIdx.set(pos, opPlan[j]));
+
+    // comp_ce: balance four forms
+    const compPositions = [];
+    for (let i=0;i<plan.length;i++){
+      if (plan[i] === "comp_ce") compPositions.push(i);
+    }
+    const formPlan = (() => {
+      const forms = ["ab_c_add","ab_c_sub","c_ab_add","c_ab_sub"];
+      if (compPositions.length<=0) return [];
+      const list = [];
+      let i=0;
+      while (list.length < compPositions.length){
+        list.push(forms[i % forms.length]);
+        i++;
+      }
+      return shuffle(list);
+    })();
+    const formByIdx = new Map();
+    compPositions.forEach((pos,j)=>formByIdx.set(pos, formPlan[j]));
+
+    // signs_ce: weighted distribution internal to that checkbox
+    const signsPositions = [];
+    for (let i=0;i<plan.length;i++){
+      if (plan[i] === "signs_ce") signsPositions.push(i);
+    }
+    const signsFormPlan = makeCombiningSignsForms(signsPositions.length);
+    const signsFormByIdx = new Map();
+    signsPositions.forEach((pos,j)=>signsFormByIdx.set(pos, signsFormPlan[j]));
 
     const qs = [];
     let safety = 0;
 
-    while (qs.length < n && safety < 8000){
-      safety++;
-      const t = choice(pool);
+    while (qs.length < n && safety++ < 50000){
+      const t = plan[qs.length];
+      let q=null;
 
-      let q = null;
-      if (t === "place") q = genPlace();
-      if (t === "calc")  q = genCalc();
-      if (t === "ineq")  q = genIneq();
-      if (t === "order") q = genOrder();
-      if (t === "mult")  q = genMult();
-      if (t === "div")   q = genDiv();
+      if (t==="place") q=genPlace();
+      if (t==="calc")  q=genCalc();
+      if (t==="ineq")  q=genIneq();
+      if (t==="order") q=genOrder();
+      if (t==="mult")  q=genMult();
+      if (t==="div")   q=genDiv();
+
+      if (t==="place_ce") q=genPlaceCE();
+      if (t==="calc_ce")  q=genCalcCE(opByIdx.get(qs.length) ?? null);
+      if (t==="comp_ce")  q=genCompareCE(formByIdx.get(qs.length) ?? "ab_c_add");
+      if (t==="signs_ce") q=genCombiningSignsCE(signsFormByIdx.get(qs.length) ?? "pn_sub");
 
       if (!q) continue;
 
-      // de-dup lightly
+      // De-dup rules:
+      // - calc_ce: you previously allowed repeats, but for checkbox 4 you want NO repeats.
+      // We'll still keep a key for calc_ce; it helps reduce accidental duplicates.
       const ok = uniqPush(qs, q, (x) => {
-        if (x.type === "place") return `p:${x.v}`;
-        if (x.type === "calc")  return `c:${x.a}${x.op}${x.b}`;
-        if (x.type === "ineq")  return `i:${x.a}?${x.b}`;
-        if (x.type === "order") return `o:${x.dir}:${x.shown.join(',')}`;
-        if (x.type === "mult")  return `m:${x.a}x${x.b}`;
-        return `d:${x.a}÷${x.b}`;
+        if (x.type==="place") return `p:${x.v}`;
+        if (x.type==="calc")  return `c:${x.a}${x.op}${x.b}`;
+        if (x.type==="ineq")  return `i:${x.a}?${x.b}`;
+        if (x.type==="order") return `o:${x.dir}:${x.shown.join(',')}`;
+        if (x.type==="mult")  return `m:${x.a}x${x.b}`;
+        if (x.type==="div")   return `d:${x.a}÷${x.b}`;
+        if (x.type==="place_ce") return `pce:s${x.step}:a${x.answer}:L${x.labels.slice().sort((a,b)=>a-b).join('|')}`;
+        if (x.type==="calc_ce") return `cce:${x.op}:${x.a},${x.b}`;
+        if (x.type==="comp_ce") return `cmp:${x.leftText}?${x.rightText}`;
+        return `sig:${exprKey(x.a, x.op, x.b)}`;
       });
       if (!ok) continue;
     }
@@ -785,7 +1127,7 @@
   }
 
   // ------------------------------------------------------------
-  // Rendering cards
+  // Rendering cards (Basic unchanged; C-Expected additions)
   // ------------------------------------------------------------
   function makeCard(q, idx1, showAnswers){
     const card = document.createElement("div");
@@ -808,6 +1150,7 @@
     const work = document.createElement("div");
     work.className = "workArea";
 
+    // BASIC (UNCHANGED)
     if (q.type === "place"){
       text.textContent = `Place ${fmtInt(q.v)} on the number line.`;
       work.appendChild(buildFixedNumberLineSVG(q.v, showAnswers));
@@ -886,7 +1229,6 @@
     } else if (q.type === "mult"){
       text.textContent = `Calculate: ${fmtInt(q.a)} × ${fmtInt(q.b)}`;
 
-      // keep a big blank work area
       work.style.alignItems = 'flex-start';
       work.style.justifyContent = 'flex-start';
       work.innerHTML = '';
@@ -900,12 +1242,88 @@
       ansRow.appendChild(box);
       card.appendChild(ansRow);
 
-    } else { // div
+    } else if (q.type === "div"){
       text.textContent = `Calculate: ${fmtInt(q.a)} ÷ ${fmtInt(q.b)}`;
 
       work.style.alignItems = 'flex-start';
       work.style.justifyContent = 'flex-start';
       work.innerHTML = '';
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+
+    // C-EXPECTED
+    } else if (q.type === "place_ce"){
+      text.textContent = `Place ${fmtInt(q.answer)} on the number line.`;
+      work.appendChild(buildPlaceLineCE(q, showAnswers));
+
+    } else if (q.type === "calc_ce"){
+      text.textContent = `Calculate: ${tok(q.a)} ${q.op} ${tok(q.b)}`;
+
+      work.style.alignItems = 'flex-start';
+      work.style.justifyContent = 'flex-start';
+      work.innerHTML = '';
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      card.appendChild(ansRow);
+
+    } else if (q.type === "comp_ce"){
+      text.textContent = `Insert either <, > or = to make the statement true.`;
+
+      const row = document.createElement("div");
+      row.className = "ineqRow";
+
+      const left = document.createElement("div");
+      left.className = "pill";
+      left.textContent = q.leftText;
+
+      const mid = document.createElement("div");
+      mid.className = "symBox" + (showAnswers ? " key" : "");
+      mid.textContent = showAnswers ? q.sym : "";
+
+      const right = document.createElement("div");
+      right.className = "pill";
+      right.textContent = q.rightText;
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+
+      work.style.border = "none";
+      work.style.padding = "0";
+      work.appendChild(row);
+
+    } else if (q.type === "signs_ce"){
+      // ✅ Checkbox 4 render: single pill, calculate, answer bubble
+      text.textContent = `Calculate:`;
+
+      work.style.border = "none";
+      work.style.padding = "0";
+      work.style.background = "transparent";
+
+      const row = document.createElement("div");
+      row.className = "ineqRow";
+      row.style.marginTop = "0";
+
+      const p = document.createElement("div");
+      p.className = "pill";
+      p.style.fontSize = "20px";
+      p.textContent = q.exprStr;
+
+      row.appendChild(p);
+      work.appendChild(row);
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
@@ -944,7 +1362,7 @@
     header.innerHTML = `
       <div class="hdrLeft">
         <div class="hdrTitle">${pageTitle} — Page ${pageIndex} of ${pageCount}</div>
-        <div class="hdrSub">Stage 4 — Integers · Grades D/E — friendly numbers + diagrams</div>
+        <div class="hdrSub">${OUTCOMES[outcomeSel.value].header}</div>
       </div>
       <div class="nameRow">
         <div class="lineField"><div class="lineLabel">Name</div><div class="lineBox"></div></div>
@@ -974,23 +1392,18 @@
         grid.appendChild(makeCard(q, qNum, showAnswers));
         qNum++;
       }
-
       pages.push(page);
     }
     return pages;
   }
 
-  // ------------------------------------------------------------
-  // Actions
-  // ------------------------------------------------------------
   function generate(){
     clearOut();
 
-    // Build RNG from seed (so you can reproduce a worksheet later)
     let seed = (seedInp?.value ?? "").trim();
     if (!seed){
       seed = String(Date.now());
-      if (seedInp) seedInp.value = seed;
+      seedInp.value = seed;
     }
     const seedHash = xmur3(seed)();
     rng = mulberry32(seedHash);
@@ -1001,7 +1414,7 @@
     countInp.value = String(n);
 
     const qs = generateQuestions(n);
-    if (qs.length === 0){
+    if (!qs.length){
       out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">Please tick at least one question type.</div>`;
       return;
     }
@@ -1009,28 +1422,30 @@
     const ws = buildPages(qs, "Worksheet", false);
     const key = buildPages(qs, "Answer key", true);
 
-    for (const pg of ws) out.appendChild(pg);
-    for (const pg of key) out.appendChild(pg);
+    ws.forEach(pg => out.appendChild(pg));
+    key.forEach(pg => out.appendChild(pg));
 
     if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
   function reset(){
     clearOut();
-    chkPlace.checked = true;
-    chkCalc.checked = true;
-    chkIneq.checked = true;
-    chkOrder.checked = false;
-    chkMult.checked = false;
-    chkDiv.checked = false;
+    renderCheckboxes();
     countInp.value = "16";
-    if (seedInp) seedInp.value = "";
+    seedInp.value = "";
   }
 
-  newSeedBtn.addEventListener("click", () => {
-    if (seedInp) seedInp.value = String(Date.now());
-  });
+  function applyOutcomeChange(){
+    clearOut();
+    renderCheckboxes();
+    seedInp.value = "";
+  }
 
+  // init
+  renderCheckboxes();
+
+  outcomeSel.addEventListener("change", applyOutcomeChange);
+  newSeedBtn.addEventListener("click", () => seedInp.value = String(Date.now()));
   genBtn.addEventListener("click", generate);
   printBtn.addEventListener("click", () => window.print());
   resetBtn.addEventListener("click", reset);
