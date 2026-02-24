@@ -86,6 +86,15 @@
       filter:drop-shadow(0 8px 16px rgba(0,0,0,.15));
     }
 
+    /* Section label (handwritten look) */
+    .section-title{
+      font-family:"Gloria Hallelujah", system-ui, sans-serif;
+      font-size:clamp(1.8rem,4vw,2.6rem);
+      letter-spacing:-.02em;
+      margin:1.1rem .2rem .6rem;
+      color:#0f172a;
+    }
+
     /* Card */
     .card{
       background:var(--card-bg);
@@ -208,6 +217,10 @@
     }
     .btn:disabled:hover{background:#fff;color:var(--accent);}
 
+    .spacer{
+      height:1.15rem;
+    }
+
     .footer{
       text-align:center;
       font-size:.78rem;
@@ -242,14 +255,19 @@
       <img src="../../mmt.png" alt="MMT logo">
     </div>
 
-    <section class="card" aria-label="Stage selection">
+    <!-- =========================
+         SECTION 1: WORKSHEET MAKER
+         ========================= -->
+    <div class="section-title">Worksheet Maker</div>
+
+    <section class="card" aria-label="Worksheet Maker stage selection">
       <h2>Choose a stage</h2>
       <p>Select a set from the dropdown, then open it.</p>
 
       <div class="cols">
 
-        <!-- Stage 4 -->
-        <div class="stage" aria-label="Stage 4">
+        <!-- Worksheet Maker • Stage 4 -->
+        <div class="stage" aria-label="Worksheet Maker Stage 4">
           <div class="stage-head">
             <div class="left">
               <div class="pill">4</div>
@@ -259,19 +277,19 @@
 
           <p class="hint">Currently available:</p>
 
-          <select id="stage4Select" aria-label="Stage 4 fluency sets">
+          <select id="wmStage4Select" aria-label="Worksheet Maker Stage 4 sets">
             <option value="" selected disabled>Choose a set…</option>
-            <!-- Space in folder name must be encoded as %20 -->
+            <!-- Keeping your existing working structure for worksheet sets -->
             <option value="./Stage%204/computation-with-integers/index.html">Computation with Integers</option>
           </select>
 
           <div class="actions">
-            <button id="stage4Btn" class="btn" disabled type="button">Open →</button>
+            <button id="wmStage4Btn" class="btn" disabled type="button">Open →</button>
           </div>
         </div>
 
-        <!-- Stage 5 -->
-        <div class="stage" aria-label="Stage 5">
+        <!-- Worksheet Maker • Stage 5 -->
+        <div class="stage" aria-label="Worksheet Maker Stage 5">
           <div class="stage-head">
             <div class="left">
               <div class="pill">5</div>
@@ -281,8 +299,67 @@
 
           <p class="hint">Coming soon.</p>
 
-          <select id="stage5Select" aria-label="Stage 5 fluency sets" disabled>
+          <select id="wmStage5Select" aria-label="Worksheet Maker Stage 5 sets" disabled>
             <option selected>No sets yet</option>
+          </select>
+
+          <div class="actions">
+            <button class="btn" disabled type="button">Open →</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- ======================
+         SECTION 2: STUDENT QUIZ
+         ====================== -->
+    <div class="section-title">Student Quiz</div>
+
+    <section class="card" aria-label="Student Quiz stage selection">
+      <h2>Choose a stage</h2>
+      <p>Select a quiz from the dropdown, then open it.</p>
+
+      <div class="cols">
+
+        <!-- Student Quiz • Stage 4 -->
+        <div class="stage" aria-label="Student Quiz Stage 4">
+          <div class="stage-head">
+            <div class="left">
+              <div class="pill">4</div>
+              <h3>Stage 4</h3>
+            </div>
+          </div>
+
+          <p class="hint">Currently available:</p>
+
+          <select id="sqStage4Select" aria-label="Student Quiz Stage 4 quizzes">
+            <option value="" selected disabled>Choose a quiz…</option>
+            <!-- From: mathstools/fluency-portal/student-practice/Stage-4/computation-with-integers/index.html -->
+            <!-- This file is fluency-portal/index.html, so we use a relative link: -->
+            <option value="./student-practice/Stage-4/computation-with-integers/index.html">Computation with Integers</option>
+          </select>
+
+          <div class="actions">
+            <button id="sqStage4Btn" class="btn" disabled type="button">Open →</button>
+          </div>
+        </div>
+
+        <!-- Student Quiz • Stage 5 -->
+        <div class="stage" aria-label="Student Quiz Stage 5">
+          <div class="stage-head">
+            <div class="left">
+              <div class="pill">5</div>
+              <h3>Stage 5</h3>
+            </div>
+          </div>
+
+          <p class="hint">Coming soon.</p>
+
+          <select id="sqStage5Select" aria-label="Student Quiz Stage 5 quizzes" disabled>
+            <option selected>No quizzes yet</option>
           </select>
 
           <div class="actions">
@@ -301,25 +378,29 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    const stage4Select = document.getElementById("stage4Select");
-    const stage4Btn = document.getElementById("stage4Btn");
+    function wire(selectId, buttonId){
+      const sel = document.getElementById(selectId);
+      const btn = document.getElementById(buttonId);
+      if(!sel || !btn) return;
 
-    function openSelected(selectEl){
-      const url = selectEl.value;
-      if(!url) return;
-      window.location.href = url; // same tab
-      // If you prefer new tab, replace with:
-      // window.open(url, "_blank", "noopener");
+      function openSelected(){
+        const url = sel.value;
+        if(!url) return;
+        window.location.href = url; // same tab
+      }
+
+      sel.addEventListener("change", () => {
+        btn.disabled = !sel.value;
+      });
+
+      btn.addEventListener("click", openSelected);
     }
 
-    stage4Select.addEventListener("change", () => {
-      stage4Btn.disabled = !stage4Select.value;
+    // Worksheet Maker
+    wire("wmStage4Select", "wmStage4Btn");
 
-      // ✅ Auto-open on selection (comment out next line if you want "select then click")
-      openSelected(stage4Select);
-    });
-
-    stage4Btn.addEventListener("click", () => openSelected(stage4Select));
+    // Student Quiz
+    wire("sqStage4Select", "sqStage4Btn");
   </script>
 </body>
 </html>
