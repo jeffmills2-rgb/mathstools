@@ -1,0 +1,1870 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integers — Practice Quiz</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+
+      --blue:#2563eb;
+
+      /* Level colors */
+      --basic:#16a34a;     /* green */
+      --expected:#eab308;  /* yellow */
+
+      --ok:#16a34a;
+      --bad:#dc2626;
+
+      --nlLine:#111827;
+      --nlTick:#111827;
+      --nlTickMinor: rgba(17,24,39,.35);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+    }
+    body.modalOpen{ overflow:hidden; }
+
+    .wrap{ max-width: 1180px; margin: 18px auto 40px; padding: 0 16px; }
+    .panel{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    /* --- Top chrome (Back / Reset) --- */
+    .topRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 2px 2px 12px;
+    }
+    .topLeft{ display:flex; align-items:center; gap: 10px; }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(229,231,235,.95);
+      background:#fff;
+      font-weight: 950;
+      color:#111827;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+    }
+    .dot{ width: 12px; height:12px; border-radius: 999px; background: #cbd5e1; }
+
+    .linkBtn{
+      border:none;
+      background:transparent;
+      color:#111827;
+      font-weight: 950;
+      cursor:pointer;
+      padding: 10px 10px;
+      border-radius: 10px;
+    }
+    .linkBtn:hover{ background:#eef2ff; }
+
+    .resetBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 950;
+      cursor:pointer;
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    /* --- Banner --- */
+    .banner{
+      background: linear-gradient(180deg,#2f64f5,#1d4ed8);
+      color:#fff;
+      border-radius: 18px;
+      padding: 18px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 14px;
+      position: relative;
+      overflow:hidden;
+    }
+    .banner .logo{
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .banner .logo img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 6px;
+    }
+    .bannerTitle{
+      font-weight: 1000;
+      font-size: 46px;
+      letter-spacing: .2px;
+      line-height: 1;
+      text-align:center;
+    }
+    @media (max-width: 720px){
+      .bannerTitle{ font-size: 34px; }
+    }
+
+    /* --- Progress row --- */
+    .progressRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin: 12px 4px 10px;
+    }
+    .bar{
+      flex: 1;
+      height: 14px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow:hidden;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+    }
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg,#60a5fa,#2563eb);
+      border-radius: 999px;
+      transition: width .25s ease;
+    }
+    .qCounter{
+      font-weight: 1000;
+      font-size: 20px;
+      color:#111827;
+      white-space: nowrap;
+    }
+
+    /* --- Main question card --- */
+    .stage{
+      background:#fff;
+      border-radius: 22px;
+      border: 1px solid rgba(229,231,235,.95);
+      box-shadow: 0 10px 26px rgba(15,23,42,.06);
+      padding: 18px;
+      min-height: 420px;
+    }
+    .qArea{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 18px;
+      min-height: 380px;
+      text-align:center;
+    }
+    .qLabel{
+      font-weight: 1000;
+      font-size: 26px;
+      color:#111827;
+    }
+    .qBox{
+      border: 3px solid #111827;
+      border-radius: 18px;
+      padding: 14px 22px;
+      font-weight: 1000;
+      font-size: 36px;
+      background:#fff;
+      width: min(740px, 94vw);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 90px;
+    }
+    .qBox.small{ font-size: 30px; }
+
+    .muted{ color: var(--muted); font-weight: 900; }
+
+    .btn{
+      border:none;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+      font-size: 18px;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn.primary{ background:#2563eb; color:#fff; }
+    .btn.ghost{ background:#eef2ff; color:#1d4ed8; }
+    .btn.dark{ background:#111827; color:#fff; }
+
+    .answerRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      flex-wrap:wrap;
+      width: min(740px, 94vw);
+    }
+    .answerRow .ansLabel{ font-weight: 1000; font-size: 22px; }
+    .ansInput{
+      border: 2.5px solid #111827;
+      border-radius: 16px;
+      padding: 14px 14px;
+      font-weight: 950;
+      font-size: 20px;
+      min-width: min(360px, 86vw);
+      outline:none;
+      background:#fff;
+    }
+    .ansInput:disabled{ background:#f9fafb; color:#6b7280; }
+
+    /* Choice row for < > = */
+    .choiceRow{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+      width: min(740px, 94vw);
+    }
+    .choiceBtn{
+      border: 2px solid rgba(17,24,39,.25);
+      background:#fff;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 1000;
+      font-size: 22px;
+      cursor:pointer;
+      min-width: 72px;
+      transition: transform .04s ease, background .15s ease, border-color .15s ease;
+    }
+    .choiceBtn:active{ transform: scale(.98); }
+    .choiceBtn.sel{
+      border-color: rgba(37,99,235,.7);
+      background: rgba(37,99,235,.08);
+    }
+
+    /* Number line */
+    .nlWrap{
+      width: min(900px, 96vw);
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 18px;
+      padding: 16px 16px 14px;
+      background: linear-gradient(180deg,#ffffff,#f9fafb);
+      box-shadow: 0 10px 26px rgba(15,23,42,.06);
+    }
+    .nlSvg{ width:100%; height: 140px; display:block; }
+    .nlHelp{
+      margin-top: 10px;
+      font-weight: 900;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Ordering drag/drop */
+    .orderWrap{
+      width: min(900px, 96vw);
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(180deg,#ffffff,#f9fafb);
+      box-shadow: 0 10px 26px rgba(15,23,42,.06);
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .tokenRow{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed rgba(229,231,235,.95);
+    }
+    .token{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(17,24,39,.2);
+      background:#fff;
+      font-weight: 1000;
+      cursor: grab;
+      user-select:none;
+      min-width: 62px;
+      text-align:center;
+    }
+    .token:active{ cursor: grabbing; }
+    .slots{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      align-items:center;
+      padding-top: 6px;
+    }
+    .slot{
+      width: 78px;
+      height: 54px;
+      border: 2px dashed rgba(17,24,39,.35);
+      border-radius: 14px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      font-size: 18px;
+    }
+    .slot.over{
+      border-color: rgba(37,99,235,.8);
+      background: rgba(37,99,235,.06);
+    }
+
+    /* Feedback */
+    .feedback{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      font-weight: 1000;
+      margin-top: 6px;
+      min-height: 28px;
+    }
+    .badge{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(17,24,39,.25);
+      background:#fff;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      opacity:0;
+      transform: translateY(6px);
+      transition: opacity .15s ease, transform .15s ease;
+    }
+    .badge.show{ opacity:1; transform: translateY(0); }
+    .badge.ok{ border-color: rgba(22,163,74,.45); background: rgba(22,163,74,.08); color: var(--ok); }
+    .badge.bad{ border-color: rgba(220,38,38,.45); background: rgba(220,38,38,.08); color: var(--bad); }
+
+    /* --- Overlays / Modals --- */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(15,23,42,.45);
+      backdrop-filter: blur(3px);
+      z-index: 9999;
+      pointer-events:none;
+    }
+    .overlay.show{ display:flex; pointer-events:auto; }
+
+    .modal{
+      width: min(980px, 96vw);
+      background:#fff;
+      border-radius: 26px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.20);
+      border: 1px solid rgba(229,231,235,.95);
+      padding: 22px;
+    }
+    .modal h2{
+      margin: 0 0 14px;
+      font-size: 44px;
+      letter-spacing: .2px;
+      font-weight: 1000;
+    }
+
+    .levelList{ display:flex; flex-direction:column; gap: 14px; }
+    .levelItem{
+      border-radius: 22px;
+      border: 3px solid rgba(0,0,0,.10);
+      padding: 22px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+    }
+    .levelName{ font-size: 34px; font-weight: 1000; }
+    .levelItem.basic{ background: rgba(22,163,74,.12); border-color: rgba(22,163,74,.30); }
+    .levelItem.expected{ background: rgba(234,179,8,.16); border-color: rgba(234,179,8,.35); }
+
+    .startPill{
+      border:none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#1d4ed8;
+      color:#fff;
+      font-size: 18px;
+      min-width: 110px;
+    }
+
+    /* Types modal */
+    .typesGrid{
+      display:flex;
+      gap: 12px 14px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding-top: 10px;
+    }
+    .chk{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      border: 1px solid rgba(229,231,235,.95);
+      background:#fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+      user-select:none;
+      font-weight: 950;
+      font-size: 14px;
+    }
+    .chk input{ width: 18px; height: 18px; }
+    .row{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .field label{
+      display:block;
+      font-weight: 1000;
+      font-size: 13px;
+      margin: 0 0 8px;
+      color: var(--muted);
+    }
+    .field input[type="number"]{
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 950;
+      font-size: 18px;
+      background:#fff;
+      min-width: 240px;
+      outline:none;
+    }
+    .warn{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 2px solid rgba(220,38,38,.35);
+      background: rgba(220,38,38,.08);
+      color:#991b1b;
+      font-weight: 950;
+      display:none;
+    }
+    .warn.show{ display:block; }
+
+    /* Results modal */
+    .resultsTop{
+      display:flex;
+      align-items:flex-start;
+      gap: 14px;
+      flex-wrap:wrap;
+    }
+    .trophy{
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      border: 2px solid rgba(234,179,8,.35);
+      background: rgba(234,179,8,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 40px;
+      flex: 0 0 auto;
+    }
+    .resultsText{ flex: 1; min-width: 240px; }
+    .bigLine{ font-size: 28px; font-weight: 1000; margin: 4px 0 8px; }
+    .breakdown{
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .breakdownRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(229,231,235,.95);
+      font-weight: 950;
+    }
+    .breakdownRow:last-child{ border-bottom:none; }
+
+    .modalBtns{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      justify-content:flex-start;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="panel">
+
+      <div class="topRow">
+        <div class="topLeft">
+          <button id="backBtn" class="linkBtn" type="button">← Back</button>
+          <div class="chip">
+            <span id="levelDot" class="dot"></span>
+            <span id="levelChipText">Level: —</span>
+          </div>
+        </div>
+        <button id="resetBtn" class="resetBtn" type="button">Reset</button>
+      </div>
+
+      <div class="banner">
+        <div class="logo" aria-hidden="true">
+          <img src="mmt.png" alt="">
+        </div>
+        <div id="bannerTitle" class="bannerTitle">Level: —</div>
+      </div>
+
+      <div class="progressRow">
+        <div class="bar"><div id="barFill"></div></div>
+        <div id="qCounter" class="qCounter">Question 0/0</div>
+      </div>
+
+      <div class="stage">
+        <div class="qArea">
+          <div class="qLabel">Question:</div>
+          <div id="qBox" class="qBox">—</div>
+
+          <!-- dynamic interaction host -->
+          <div id="interactionHost" style="width:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px;"></div>
+
+          <div class="feedback">
+            <div id="badge" class="badge"> </div>
+          </div>
+
+          <div id="tipLine" class="muted" style="margin-top:2px;">
+            Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
+            <button id="skipBtn" class="btn ghost" type="button">Skip</button>
+            <button id="retryBtn" class="btn dark" type="button" style="display:none;">Retry</button>
+            <button id="nextBtn" class="btn dark" type="button" style="display:none;">Next →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Level modal -->
+  <div id="levelOverlay" class="overlay">
+    <div class="modal">
+      <h2>Choose your level</h2>
+      <div class="levelList">
+        <div class="levelItem basic">
+          <div class="levelName">Basic</div>
+          <button class="startPill" type="button" data-level="basic">Start</button>
+        </div>
+        <div class="levelItem expected">
+          <div class="levelName">Expected</div>
+          <button class="startPill" type="button" data-level="expected">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Types modal -->
+  <div id="typeOverlay" class="overlay">
+    <div class="modal">
+      <h2>Select question types</h2>
+      <div class="muted">All boxes are ticked by default. Untick any you don’t want.</div>
+
+      <div id="typesGrid" class="typesGrid" aria-label="Question types"></div>
+
+      <div class="row">
+        <div class="field">
+          <label for="countInp">Total questions (min 10, max 60)</label>
+          <input id="countInp" type="number" min="10" max="60" step="1" value="10" />
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="typesBackBtn" class="btn ghost" type="button">← Back</button>
+          <button id="beginBtn" class="btn primary" type="button">Begin</button>
+        </div>
+      </div>
+
+      <div id="typesWarn" class="warn">
+        Please select at least one question type.
+      </div>
+    </div>
+  </div>
+
+  <!-- Results modal -->
+  <div id="resultOverlay" class="overlay">
+    <div class="modal">
+      <div class="resultsTop">
+        <div class="trophy">🏆</div>
+        <div class="resultsText">
+          <div class="bigLine" id="scoreLine">You completed — and achieved a score of —/—.</div>
+          <div class="muted">Score breakdown:</div>
+        </div>
+      </div>
+
+      <div id="breakdown" class="breakdown"></div>
+
+      <div class="modalBtns">
+        <button id="copyBtn" class="btn primary" type="button">Copy to clipboard</button>
+        <button id="closeBtn" class="btn" type="button">Close</button>
+        <button id="menuBtn" class="btn" type="button" style="background:#fee2e2;color:#991b1b;">Back to level menu</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------
+  // INIT GUARD (prevents double listeners if Chrome reuses page)
+  // ------------------------------------------------------------
+  if (window.__mmtIntegersQuizInit) return;
+  window.__mmtIntegersQuizInit = true;
+
+  // ------------------------------------------------------------
+  // RNG + helpers (ported style from worksheet)
+  // ------------------------------------------------------------
+  function xmur3(str){
+    let h = 1779033703 ^ str.length;
+    for (let i=0; i<str.length; i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= (h >>> 16);
+      return h >>> 0;
+    };
+  }
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Seed per run (so Reset genuinely rebuilds a new set)
+  let rng = Math.random;
+  function reseed(){
+    let seed = String(Date.now());
+    try{
+      // more entropy
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      seed += "-" + String(a[0]);
+    }catch(e){}
+    rng = mulberry32(xmur3(seed)());
+  }
+  reseed();
+
+  const randInt = (a,b) => Math.floor(rng()*(b-a+1))+a;
+  const choice = (arr) => arr[randInt(0, arr.length-1)];
+  const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i=a.length-1; i>0; i--){
+      const j = Math.floor(rng()*(i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const fmtInt = (n) => String(Math.trunc(n));
+  const tok = (n) => (n < 0 ? `(${fmtInt(n)})` : fmtInt(n));
+  const randSign = () => (rng() < 0.5 ? -1 : 1);
+
+  function uniqPush(arr, item, keyFn){
+    const k = keyFn(item);
+    if (arr.some(x => keyFn(x) === k)) return false;
+    arr.push(item);
+    return true;
+  }
+
+  // balanced distribution (same idea as worksheet)
+  function makeBalancedList(typeIds, n){
+    const ids = typeIds.slice();
+    if (!ids.length) return [];
+    const list = [];
+    let i = 0;
+    while (list.length < n){
+      list.push(ids[i % ids.length]);
+      i++;
+    }
+    return shuffle(list);
+  }
+
+  // ------------------------------------------------------------
+  // Generators (copied/trimmed from worksheet)
+  // ------------------------------------------------------------
+  // BASIC ranges
+  const PLACE_RANGE = { min:-10, max: 10 };
+  const CALC_A_RANGE = { min:-12, max: 12 };
+  const CALC_B_RANGE = { min: 1, max: 12 };
+  const ORDER_RANGE = { min:-100, max: 50 };
+  const MULT_RANGE = { min:-10, max: 10 };
+  const DIV_FACT = { min:1, max:10 };
+
+  // C-Expected checkbox 1 rules
+  const CE_STEPS = [1,2,3,4,5,10];
+  const CE_MAX_ABS = 100;
+
+  // C-Expected checkbox 2 rules
+  const CE_ADD_A = { min:-50, max:50 };
+  const CE_ADD_B = { min:1, max:50 };      // positive only
+  const CE_MULT_ABS = { min:2, max:12 };
+  const CE_DIV_ABS  = { min:1, max:12 };
+
+  // C-Expected checkbox 3 rules (Comparing expressions)
+  const CE_C_RANGE = { min:-50, max:50 };
+  const CE_EXPR_CAP = 100;
+  const CE_EQ_RATE = 0.20;
+
+  // C-Expected checkbox 4 rules (Combining signs)
+  const CS_RANGE = { min:-50, max:50 };
+  const CS_CAP = 100;
+  const CS_FORMS = [
+    { id:"pp_add", w: 10 },
+    { id:"pn_add", w: 30 },
+    { id:"pp_sub", w: 30 },
+    { id:"pn_sub", w: 30 },
+  ];
+  function expandWeighted(forms){
+    const bag = [];
+    for (const f of forms){
+      for (let i=0;i<f.w;i++) bag.push(f.id);
+    }
+    return bag;
+  }
+  function makeWeightedBalancedList(forms, m){
+    const bag = expandWeighted(forms);
+    const out = [];
+    while (out.length < m){
+      const chunk = shuffle(bag);
+      for (const id of chunk){
+        out.push(id);
+        if (out.length >= m) break;
+      }
+    }
+    return out;
+  }
+
+  // BASIC
+  function genPlace(){ return { type:"place", mode:"numberline", v: randInt(PLACE_RANGE.min, PLACE_RANGE.max) }; }
+
+  function genCalc(){
+    const a = randInt(CALC_A_RANGE.min, CALC_A_RANGE.max);
+    const b = randInt(CALC_B_RANGE.min, CALC_B_RANGE.max);
+    const op = rng() < 0.5 ? "+" : "−";
+    const ans = (op === "+") ? (a + b) : (a - b);
+    if (ans < -20 || ans > 20) return genCalc();
+    return { type:"calc", mode:"input", prompt:`${fmtInt(a)} ${op} ${fmtInt(b)}`, answer: fmtInt(ans) };
+  }
+
+  function genIneq(){
+    const a = randInt(-20, 20);
+    const b = randInt(-20, 20);
+    const sym = (a < b) ? "<" : (a > b ? ">" : "=");
+    return { type:"ineq", mode:"choice", a, b, sym };
+  }
+
+  function genOrder(){
+    const dir = rng() < 0.5 ? "ascending" : "descending";
+    const set = new Set();
+    while (set.size < 5) set.add(randInt(ORDER_RANGE.min, ORDER_RANGE.max));
+    const nums = Array.from(set);
+    const answer = nums.slice().sort((x,y) => dir === "ascending" ? x-y : y-x);
+    let shown = shuffle(nums);
+    let tries = 0;
+    while (tries < 6){
+      if (!shown.every((v,i) => v === answer[i])) break;
+      shown = shuffle(nums);
+      tries++;
+    }
+    return { type:"order", mode:"order", dir, shown, answer };
+  }
+
+  function genMult(){
+    const a = randInt(MULT_RANGE.min, MULT_RANGE.max);
+    const b = randInt(MULT_RANGE.min, MULT_RANGE.max);
+    if (a === 0 && b === 0) return genMult();
+    return { type:"mult", mode:"input", prompt:`${fmtInt(a)} × ${fmtInt(b)}`, answer: fmtInt(a*b) };
+  }
+
+  function genDiv(){
+    const bAbs = randInt(DIV_FACT.min, DIV_FACT.max);
+    const cAbs = randInt(DIV_FACT.min, DIV_FACT.max);
+    const b = rng() < 0.5 ? -bAbs : bAbs;
+    const c = rng() < 0.5 ? -cAbs : cAbs;
+    const a = b * c;
+    return { type:"div", mode:"input", prompt:`${fmtInt(a)} ÷ ${fmtInt(b)}`, answer: fmtInt(c) };
+  }
+
+  // C-Expected checkbox 1 (number line)
+  function tooClose(a,b,step){ return Math.abs(a-b) < 2*step; }
+  function genPlaceCE(){
+    const step = choice(CE_STEPS);
+    const vmax = step * 10;
+    const vmin = -vmax;
+
+    const labels = [vmin, 0, vmax];
+
+    const ticks = [];
+    for (let v=vmin; v<=vmax; v+=step){
+      if (v===vmin || v===0 || v===vmax) continue;
+      ticks.push(v);
+    }
+
+    let answer = choice(ticks);
+    let tries = 0;
+    while (tries++ < 300){
+      answer = choice(ticks);
+      if (tooClose(answer, 0, step)) continue;
+      if (tooClose(answer, vmin, step)) continue;
+      if (tooClose(answer, vmax, step)) continue;
+      break;
+    }
+
+    const extras = [];
+    tries = 0;
+    while (extras.length < 2 && tries++ < 1200){
+      const cand = choice(ticks);
+      if (cand === answer) continue;
+      if (labels.some(l => tooClose(cand, l, step))) continue;
+      if (extras.some(e => tooClose(cand, e, step))) continue;
+      if (tooClose(answer, cand, step)) continue;
+      extras.push(cand);
+    }
+
+    if (extras.length < 2) return genPlaceCE();
+    labels.push(...extras);
+
+    return { type:"place_ce", mode:"numberline_ce", step, labels, answer };
+  }
+
+  // C-Expected checkbox 2
+  function genCalcCE(opForced=null){
+    const op = opForced ?? choice(["+","−","×","÷"]);
+
+    if (op === "+" || op === "−"){
+      let a=0,b=0,ans=0,tries=0;
+      while (tries++ < 600){
+        a = randInt(CE_ADD_A.min, CE_ADD_A.max);
+        b = randInt(CE_ADD_B.min, CE_ADD_B.max); // positive
+        ans = (op === "+") ? a+b : a-b;
+        if (ans < -100 || ans > 100) continue;
+        break;
+      }
+      return { type:"calc_ce", mode:"input", prompt:`${tok(a)} ${op} ${tok(b)}`, answer: fmtInt(ans) };
+    }
+
+    if (op === "×"){
+      const aAbs = randInt(CE_MULT_ABS.min, CE_MULT_ABS.max);
+      const bAbs = randInt(CE_MULT_ABS.min, CE_MULT_ABS.max);
+      const a = aAbs * randSign();
+      const b = bAbs * randSign();
+      return { type:"calc_ce", mode:"input", prompt:`${tok(a)} × ${tok(b)}`, answer: fmtInt(a*b) };
+    }
+
+    const dAbs = randInt(CE_DIV_ABS.min, CE_DIV_ABS.max);
+    const qAbs = randInt(CE_DIV_ABS.min, CE_DIV_ABS.max);
+    const divisor = dAbs * randSign();
+    const quotient = qAbs * randSign();
+    const dividend = divisor * quotient;
+    return { type:"calc_ce", mode:"input", prompt:`${tok(dividend)} ÷ ${tok(divisor)}`, answer: fmtInt(quotient) };
+  }
+
+  // C-Expected checkbox 3 (comparing expressions)
+  function dynBand(E){ return clamp(4 + Math.floor(Math.abs(E)/6), 4, 14); }
+  function fmtExpr(a, op, b){ return `${tok(a)} ${op} ${tok(b)}`; }
+
+  function genCompareCE(form){
+    let tries = 0;
+    while (tries++ < 5000){
+      const a = randInt(-50, 50);
+      let b = randInt(-50, 50);
+      const op = form.includes("_sub") ? "−" : "+";
+      if (b === 0) continue;
+
+      const E = (op === "+") ? (a + b) : (a - b);
+      if (Math.abs(E) > CE_EXPR_CAP) continue;
+      if (E < CE_C_RANGE.min || E > CE_C_RANGE.max) continue;
+
+      const band = dynBand(E);
+      let c;
+
+      const wantEq = rng() < CE_EQ_RATE;
+      if (wantEq){
+        c = E;
+      } else {
+        let deltaTries = 0;
+        while (deltaTries++ < 200){
+          const delta = randInt(-band, band);
+          if (delta === 0) continue;
+          const cand = E + delta;
+          if (cand < CE_C_RANGE.min || cand > CE_C_RANGE.max) continue;
+          c = cand;
+          break;
+        }
+        if (typeof c !== "number") continue;
+      }
+
+      const exprStr = fmtExpr(a, op, b);
+      let leftText, rightText, leftVal, rightVal;
+
+      if (form.startsWith("ab_c")){
+        leftText = exprStr;
+        rightText = tok(c);
+        leftVal = E;
+        rightVal = c;
+      } else {
+        leftText = tok(c);
+        rightText = exprStr;
+        leftVal = c;
+        rightVal = E;
+      }
+
+      const sym = (leftVal < rightVal) ? "<" : (leftVal > rightVal ? ">" : "=");
+      if (Math.abs(leftVal - rightVal) > band) continue;
+
+      return { type:"comp_ce", mode:"choice_expr", leftText, rightText, sym };
+    }
+    return genCompareCE(form);
+  }
+
+  // C-Expected checkbox 4 (combining signs)
+  function genCombiningSignsCE(form){
+    let tries = 0;
+    while (tries++ < 6000){
+      let a = randInt(CS_RANGE.min, CS_RANGE.max);
+      if (a === 0) continue;
+
+      let bAbs = randInt(1, 50);
+      let b = bAbs;
+
+      if (form === "pn_add" || form === "pn_sub") b = -bAbs;
+      else b = bAbs;
+
+      const op = (form === "pp_sub" || form === "pn_sub") ? "−" : "+";
+      const ans = (op === "+") ? (a + b) : (a - b);
+      if (Math.abs(ans) > CS_CAP) continue;
+
+      const bStr = b >= 0 ? `(+${fmtInt(b)})` : `(${fmtInt(b)})`;
+      const aStr = a >= 0 ? fmtInt(a) : `(${fmtInt(a)})`;
+      const exprStr = `${aStr} ${op} ${bStr}`;
+
+      return { type:"signs_ce", mode:"input", prompt: exprStr, answer: fmtInt(ans) };
+    }
+    return genCombiningSignsCE(form);
+  }
+
+  // ------------------------------------------------------------
+  // DOM refs
+  // ------------------------------------------------------------
+  const body = document.body;
+  const levelOverlay  = document.getElementById("levelOverlay");
+  const typeOverlay   = document.getElementById("typeOverlay");
+  const resultOverlay = document.getElementById("resultOverlay");
+  const levelDot = document.getElementById("levelDot");
+  const levelChipText = document.getElementById("levelChipText");
+  const bannerTitle = document.getElementById("bannerTitle");
+  const barFill = document.getElementById("barFill");
+  const qCounter = document.getElementById("qCounter");
+  const qBox = document.getElementById("qBox");
+  const interactionHost = document.getElementById("interactionHost");
+  const tipLine = document.getElementById("tipLine");
+
+  const badge = document.getElementById("badge");
+  const skipBtn  = document.getElementById("skipBtn");
+  const retryBtn = document.getElementById("retryBtn");
+  const nextBtn  = document.getElementById("nextBtn");
+  const backBtn = document.getElementById("backBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const typesGrid = document.getElementById("typesGrid");
+  const countInp = document.getElementById("countInp");
+  const beginBtn = document.getElementById("beginBtn");
+  const typesBackBtn = document.getElementById("typesBackBtn");
+  const typesWarn = document.getElementById("typesWarn");
+
+  const scoreLine = document.getElementById("scoreLine");
+  const breakdown = document.getElementById("breakdown");
+  const copyBtn = document.getElementById("copyBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const menuBtn = document.getElementById("menuBtn");
+
+  // ------------------------------------------------------------
+  // Overlay state
+  // ------------------------------------------------------------
+  function setModalState(which){
+    const showLevel  = which === "level";
+    const showTypes  = which === "types";
+    const showResult = which === "result";
+
+    levelOverlay.classList.toggle("show", showLevel);
+    typeOverlay.classList.toggle("show", showTypes);
+    resultOverlay.classList.toggle("show", showResult);
+
+    const any = showLevel || showTypes || showResult;
+    body.classList.toggle("modalOpen", any);
+  }
+
+  // ------------------------------------------------------------
+  // Level config
+  // ------------------------------------------------------------
+  const LEVELS = {
+    basic: {
+      label: "Basic",
+      color: "var(--basic)",
+      types: [
+        { id:"place", label:"Place an integer on a number line" },
+        { id:"calc",  label:"Use a number line to calculate" },
+        { id:"ineq",  label:"Compare integers (< > =)" },
+        { id:"order", label:"Ordering integers" },
+        { id:"mult",  label:"Multiplying integers" },
+        { id:"div",   label:"Dividing integers" },
+      ]
+    },
+    expected: {
+      label: "Expected",
+      color: "var(--expected)",
+      types: [
+        { id:"place_ce", label:"Place an integer on a number line" },
+        { id:"calc_ce",  label:"Integer calculations" },
+        { id:"comp_ce",  label:"Comparing integers (< > =)" },
+        { id:"signs_ce", label:"Combining signs" },
+      ]
+    }
+  };
+
+  let currentLevel = null;
+  let selectedTypes = [];
+  let totalQuestions = 0;
+
+  // quiz state
+  let questions = [];
+  let idx = 0;
+  let hasMarked = false;
+  let scoreByType = new Map();
+
+  // current interaction state
+  let currentAnswer = null; // what student selected/typed for current Q
+  let lastBuiltMode = null;
+
+  function labelForType(typeId){
+    const cfg = LEVELS[currentLevel];
+    const found = cfg.types.find(x => x.id === typeId);
+    return found ? found.label : typeId;
+  }
+
+  // ------------------------------------------------------------
+  // UI helpers
+  // ------------------------------------------------------------
+  function resetShell(){
+    levelDot.style.background = "#cbd5e1";
+    levelChipText.textContent = "Level: —";
+    bannerTitle.textContent = "Level: —";
+    qCounter.textContent = "Question 0/0";
+    barFill.style.width = "0%";
+    qBox.textContent = "—";
+    interactionHost.innerHTML = "";
+    hideActionButtons();
+    clearBadge();
+  }
+
+  function setLevelUI(levelKey){
+    const cfg = LEVELS[levelKey];
+    levelDot.style.background = cfg.color;
+    levelChipText.textContent = `Level: ${cfg.label}`;
+    bannerTitle.textContent = `Level: ${cfg.label}`;
+  }
+
+  function clearBadge(){
+    badge.className = "badge";
+    badge.textContent = "";
+  }
+
+  function showBadge(kind, text){
+    badge.className = `badge ${kind}`;
+    badge.textContent = text;
+    requestAnimationFrame(() => badge.classList.add("show"));
+  }
+
+  function hideActionButtons(){
+    retryBtn.style.display = "none";
+    nextBtn.style.display = "none";
+  }
+
+  function showPostMarkButtons(){
+    retryBtn.style.display = "inline-flex";
+    nextBtn.style.display = "inline-flex";
+  }
+
+  function initScoreMap(){
+    scoreByType = new Map();
+    for (const t of selectedTypes){
+      scoreByType.set(t, { correct:0, total:0, skipped:0 });
+    }
+  }
+
+  function bump(type, field){
+    const o = scoreByType.get(type);
+    if (!o) return;
+    o[field] += 1;
+  }
+
+  // ------------------------------------------------------------
+  // Types modal
+  // ------------------------------------------------------------
+  function renderTypesForLevel(levelKey){
+    typesGrid.innerHTML = "";
+    typesWarn.classList.remove("show");
+
+    const cfg = LEVELS[levelKey];
+    selectedTypes = cfg.types.map(t => t.id); // all checked
+
+    for (const t of cfg.types){
+      const lab = document.createElement("label");
+      lab.className = "chk";
+
+      const inp = document.createElement("input");
+      inp.type = "checkbox";
+      inp.checked = true;
+      inp.dataset.id = t.id;
+
+      const span = document.createElement("span");
+      span.textContent = t.label;
+
+      inp.addEventListener("change", () => {
+        const checked = [...typesGrid.querySelectorAll('input[type="checkbox"]')]
+          .filter(x => x.checked)
+          .map(x => x.dataset.id);
+        selectedTypes = checked;
+        typesWarn.classList.toggle("show", selectedTypes.length === 0);
+      });
+
+      lab.appendChild(inp);
+      lab.appendChild(span);
+      typesGrid.appendChild(lab);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Question generation: now uses the real worksheet generators
+  // ------------------------------------------------------------
+  function buildQuestions(){
+    const pool = selectedTypes.slice();
+    const plan = makeBalancedList(pool, totalQuestions);
+
+    // calc_ce balance ops
+    const calcPos = [];
+    for (let i=0;i<plan.length;i++) if (plan[i]==="calc_ce") calcPos.push(i);
+    const ops = ["+","−","×","÷"];
+    const opPlan = (() => {
+      const list=[]; let k=0;
+      while (list.length < calcPos.length){ list.push(ops[k % ops.length]); k++; }
+      return shuffle(list);
+    })();
+    const opByIdx = new Map();
+    calcPos.forEach((pos,j)=>opByIdx.set(pos, opPlan[j]));
+
+    // comp_ce balance forms
+    const compPos = [];
+    for (let i=0;i<plan.length;i++) if (plan[i]==="comp_ce") compPos.push(i);
+    const forms = ["ab_c_add","ab_c_sub","c_ab_add","c_ab_sub"];
+    const formPlan = (() => {
+      const list=[]; let k=0;
+      while (list.length < compPos.length){ list.push(forms[k % forms.length]); k++; }
+      return shuffle(list);
+    })();
+    const formByIdx = new Map();
+    compPos.forEach((pos,j)=>formByIdx.set(pos, formPlan[j]));
+
+    // signs_ce weighted distribution
+    const signsPos = [];
+    for (let i=0;i<plan.length;i++) if (plan[i]==="signs_ce") signsPos.push(i);
+    const signsFormPlan = makeWeightedBalancedList(CS_FORMS, signsPos.length);
+    const signsByIdx = new Map();
+    signsPos.forEach((pos,j)=>signsByIdx.set(pos, signsFormPlan[j]));
+
+    const qs = [];
+    let safety = 0;
+
+    while (qs.length < totalQuestions && safety++ < 50000){
+      const t = plan[qs.length];
+      let q = null;
+
+      if (t==="place") q = genPlace();
+      if (t==="calc")  q = genCalc();
+      if (t==="ineq")  q = genIneq();
+      if (t==="order") q = genOrder();
+      if (t==="mult")  q = genMult();
+      if (t==="div")   q = genDiv();
+
+      if (t==="place_ce") q = genPlaceCE();
+      if (t==="calc_ce")  q = genCalcCE(opByIdx.get(qs.length) ?? null);
+      if (t==="comp_ce")  q = genCompareCE(formByIdx.get(qs.length) ?? "ab_c_add");
+      if (t==="signs_ce") q = genCombiningSignsCE(signsByIdx.get(qs.length) ?? "pn_sub");
+
+      if (!q) continue;
+
+      const ok = uniqPush(qs, q, (x) => {
+        if (x.type==="place") return `p:${x.v}`;
+        if (x.type==="calc")  return `c:${x.prompt}`;
+        if (x.type==="ineq")  return `i:${x.a}?${x.b}`;
+        if (x.type==="order") return `o:${x.dir}:${x.shown.join(",")}`;
+        if (x.type==="mult")  return `m:${x.prompt}`;
+        if (x.type==="div")   return `d:${x.prompt}`;
+
+        if (x.type==="place_ce") return `pce:s${x.step}:a${x.answer}:L${x.labels.slice().sort((a,b)=>a-b).join("|")}`;
+        if (x.type==="calc_ce")  return `cce:${x.prompt}`;
+        if (x.type==="comp_ce")  return `cmp:${x.leftText}?${x.rightText}`;
+        if (x.type==="signs_ce") return `sig:${x.prompt}`;
+        return JSON.stringify(x);
+      });
+      if (!ok) continue;
+    }
+
+    return qs;
+  }
+
+  // ------------------------------------------------------------
+  // Interaction builders
+  // ------------------------------------------------------------
+  function clearInteraction(){
+    interactionHost.innerHTML = "";
+    currentAnswer = null;
+    lastBuiltMode = null;
+  }
+
+  function buildInputInteraction(){
+    const row = document.createElement("div");
+    row.className = "answerRow";
+
+    const lab = document.createElement("div");
+    lab.className = "ansLabel";
+    lab.textContent = "Answer:";
+
+    const inp = document.createElement("input");
+    inp.className = "ansInput";
+    inp.placeholder = "Type...";
+    inp.inputMode = "numeric";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+
+    const btn = document.createElement("button");
+    btn.className = "btn primary";
+    btn.type = "button";
+    btn.textContent = "Enter";
+
+    inp.addEventListener("input", () => { currentAnswer = inp.value; });
+    btn.addEventListener("click", () => handleEnter());
+
+    row.appendChild(lab);
+    row.appendChild(inp);
+    row.appendChild(btn);
+
+    interactionHost.appendChild(row);
+
+    // focus
+    setTimeout(() => inp.focus(), 0);
+
+    return { setDisabled(dis){ inp.disabled = dis; }, focus(){ inp.focus(); }, setValue(v){ inp.value=v; currentAnswer=v; } };
+  }
+
+  function buildChoiceInteraction(symbols=["<",">","="]){
+    const row = document.createElement("div");
+    row.className = "choiceRow";
+
+    const btn = document.createElement("button");
+    btn.className = "btn primary";
+    btn.type = "button";
+    btn.textContent = "Enter";
+    btn.addEventListener("click", () => handleEnter());
+
+    const btns = [];
+    for (const s of symbols){
+      const b = document.createElement("button");
+      b.className = "choiceBtn";
+      b.type = "button";
+      b.textContent = s;
+      b.addEventListener("click", () => {
+        currentAnswer = s;
+        for (const x of btns) x.classList.toggle("sel", x === b);
+      });
+      btns.push(b);
+      row.appendChild(b);
+    }
+
+    interactionHost.appendChild(row);
+    interactionHost.appendChild(btn);
+
+    return { setDisabled(dis){
+      for (const b of btns) b.disabled = dis;
+      btn.disabled = dis;
+    }};
+  }
+
+  // SVG helper
+  function elNS(name, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+  function textNS(str, attrs={}){
+    const t = elNS("text", attrs);
+    t.textContent = str;
+    return t;
+  }
+
+  // Number line click (Basic)
+  function buildNumberLineInteraction({ vmin=-10, vmax=10, step=1, labelMajors=[-10,0,10] }){
+    const wrap = document.createElement("div");
+    wrap.className = "nlWrap";
+
+    const svg = elNS("svg", { viewBox:"0 0 1000 200", class:"nlSvg", role:"img", "aria-label":"number line" });
+
+    const left = 85, right = 915;
+    const yLine = 86;
+    const tickMajorTop = yLine - 22;
+    const tickMajorBot = yLine + 22;
+    const tickUnitTop  = yLine - 12;
+    const tickUnitBot  = yLine + 12;
+
+    const dotR = 9;
+    const labelY = 170;
+
+    const x = (v) => left + ((v - vmin) / (vmax - vmin)) * (right - left);
+
+    svg.appendChild(elNS("line", { x1:left, y1:yLine, x2:right, y2:yLine, stroke:"var(--nlLine)", "stroke-width":"6", "stroke-linecap":"round" }));
+
+    const majorSet = new Set(labelMajors.map(Number));
+
+    // ticks: ONLY tick marks are clickable (not between), so we draw a click-target per tick
+    let dot = null;
+
+    function setDot(v){
+      currentAnswer = v;
+      const xi = x(v);
+      if (!dot){
+        dot = elNS("circle", { cx: xi, cy: yLine, r: dotR, fill:"#111827", opacity:"0.92" });
+        svg.appendChild(dot);
+      } else {
+        dot.setAttribute("cx", String(xi));
+      }
+    }
+
+    function drawTick(v, isMajor){
+      const xi = x(v);
+
+      const line = elNS("line", {
+        x1: xi, y1: isMajor ? tickMajorTop : tickUnitTop,
+        x2: xi, y2: isMajor ? tickMajorBot : tickUnitBot,
+        stroke: isMajor ? "var(--nlTick)" : "var(--nlTickMinor)",
+        "stroke-width": isMajor ? "6" : "3",
+        "stroke-linecap":"round"
+      });
+      svg.appendChild(line);
+
+      // click target (fat transparent line)
+      const hit = elNS("line", {
+        x1: xi, y1: yLine - 34,
+        x2: xi, y2: yLine + 34,
+        stroke:"transparent",
+        "stroke-width":"22",
+        "stroke-linecap":"round",
+        cursor:"pointer"
+      });
+      hit.addEventListener("click", () => setDot(v));
+      svg.appendChild(hit);
+
+      if (isMajor){
+        svg.appendChild(textNS(fmtInt(v), { x: xi, y: labelY, "text-anchor":"middle", fill:"#111827", "font-size":"24", "font-weight":"1000" }));
+      }
+    }
+
+    // draw all tick marks at step
+    for (let v=vmin; v<=vmax; v+=step){
+      drawTick(v, majorSet.has(v));
+    }
+
+    wrap.appendChild(svg);
+
+    const help = document.createElement("div");
+    help.className = "nlHelp";
+    help.textContent = "Click a tick mark to place a dot, then press Enter.";
+    wrap.appendChild(help);
+
+    const enterBtn = document.createElement("button");
+    enterBtn.className = "btn primary";
+    enterBtn.type = "button";
+    enterBtn.textContent = "Enter";
+    enterBtn.addEventListener("click", () => handleEnter());
+
+    interactionHost.appendChild(wrap);
+    interactionHost.appendChild(enterBtn);
+
+    return { setDisabled(dis){
+      enterBtn.disabled = dis;
+      // disable pointer events on SVG targets
+      svg.style.pointerEvents = dis ? "none" : "auto";
+    }};
+  }
+
+  // Ordering drag/drop into 5 slots (reorder by dragging between slots)
+  function buildOrderInteraction({ shown, dir }){
+    const wrap = document.createElement("div");
+    wrap.className = "orderWrap";
+
+    const title = document.createElement("div");
+    title.className = "muted";
+    title.style.fontSize = "14px";
+    title.textContent = `Drag the numbers into the 5 boxes in ${dir} order.`;
+    wrap.appendChild(title);
+
+    const tokenRow = document.createElement("div");
+    tokenRow.className = "tokenRow";
+
+    // tokens in a pool + in slots; we store by text
+    let pool = shown.map(n => String(n));
+    let slots = Array(5).fill(null);
+
+    function render(){
+      tokenRow.innerHTML = "";
+      // pool tokens (not in slots)
+      const inSlots = new Set(slots.filter(Boolean));
+      const poolNow = pool.filter(v => !inSlots.has(v));
+
+      for (const v of poolNow){
+        const t = document.createElement("div");
+        t.className = "token";
+        t.textContent = v;
+        t.draggable = true;
+        t.dataset.val = v;
+        t.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", v);
+          e.dataTransfer.effectAllowed = "move";
+        });
+        tokenRow.appendChild(t);
+      }
+
+      slotRow.innerHTML = "";
+      for (let i=0;i<5;i++){
+        const s = document.createElement("div");
+        s.className = "slot";
+        s.dataset.idx = String(i);
+        s.textContent = slots[i] ?? "";
+        s.addEventListener("dragover", (e) => { e.preventDefault(); s.classList.add("over"); });
+        s.addEventListener("dragleave", () => s.classList.remove("over"));
+        s.addEventListener("drop", (e) => {
+          e.preventDefault();
+          s.classList.remove("over");
+          const val = e.dataTransfer.getData("text/plain");
+          if (!val) return;
+
+          // If val already in a slot, move it (swap logic: replace target)
+          const from = slots.indexOf(val);
+          const to = i;
+
+          if (from !== -1){
+            const tmp = slots[to];
+            slots[to] = val;
+            slots[from] = tmp || null;
+          } else {
+            // from pool -> slot (replace if occupied, push replaced back into pool)
+            const replaced = slots[to];
+            slots[to] = val;
+            if (replaced && !pool.includes(replaced)) pool.push(replaced);
+          }
+          currentAnswer = slots.slice(); // array
+          render();
+        });
+
+        // allow dragging from slot too (reorder)
+        if (slots[i] !== null){
+          s.draggable = true;
+          s.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", slots[i]);
+            e.dataTransfer.effectAllowed = "move";
+          });
+        }
+        slotRow.appendChild(s);
+      }
+
+      currentAnswer = slots.slice();
+    }
+
+    const slotRow = document.createElement("div");
+    slotRow.className = "slots";
+
+    wrap.appendChild(tokenRow);
+    wrap.appendChild(slotRow);
+
+    interactionHost.appendChild(wrap);
+
+    const enterBtn = document.createElement("button");
+    enterBtn.className = "btn primary";
+    enterBtn.type = "button";
+    enterBtn.textContent = "Enter";
+    enterBtn.addEventListener("click", () => handleEnter());
+    interactionHost.appendChild(enterBtn);
+
+    render();
+
+    return { setDisabled(dis){
+      enterBtn.disabled = dis;
+      wrap.style.pointerEvents = dis ? "none" : "auto";
+      wrap.style.opacity = dis ? "0.8" : "1";
+    }};
+  }
+
+  // ------------------------------------------------------------
+  // Render question (build appropriate interaction)
+  // ------------------------------------------------------------
+  let interactionApi = null;
+
+  function renderQuestion(){
+    clearBadge();
+    hideActionButtons();
+    hasMarked = false;
+    clearInteraction();
+
+    const q = questions[idx];
+    if (!q){
+      qBox.textContent = "—";
+      return;
+    }
+
+    // Progress
+    const done = idx;
+    const pct = totalQuestions ? (done/totalQuestions)*100 : 0;
+    barFill.style.width = `${pct}%`;
+    qCounter.textContent = `Question ${idx+1}/${totalQuestions}`;
+
+    // Question display
+    // Use more descriptive prompts for non-input modes
+    if (q.mode === "numberline"){
+      qBox.classList.remove("small");
+      qBox.textContent = `Place ${fmtInt(q.v)} on the number line.`;
+      interactionApi = buildNumberLineInteraction({ vmin:-10, vmax:10, step:1, labelMajors:[-10,0,10] });
+      tipLine.textContent = "Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.";
+      lastBuiltMode = q.mode;
+      return;
+    }
+
+    if (q.mode === "numberline_ce"){
+      qBox.classList.remove("small");
+      qBox.textContent = `Place ${fmtInt(q.answer)} on the number line.`;
+      // majors are the labeled ticks (vmin,0,vmax plus 2 extras)
+      const vmax = clamp(q.step * 10, 1, CE_MAX_ABS);
+      const vmin = -vmax;
+      interactionApi = buildNumberLineInteraction({
+        vmin, vmax, step:q.step,
+        labelMajors: q.labels.slice().sort((a,b)=>a-b)
+      });
+      tipLine.textContent = "Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.";
+      lastBuiltMode = q.mode;
+      return;
+    }
+
+    if (q.mode === "choice"){
+      qBox.classList.add("small");
+      qBox.textContent = `Choose <, >, or = to make this true:  ${fmtInt(q.a)}  __  ${fmtInt(q.b)}`;
+      interactionApi = buildChoiceInteraction(["<",">","="]);
+      tipLine.textContent = "Select a symbol • Press Enter to submit • Enter again to move on.";
+      lastBuiltMode = q.mode;
+      return;
+    }
+
+    if (q.mode === "choice_expr"){
+      qBox.classList.add("small");
+      qBox.textContent = `Choose <, >, or = :  ${q.leftText}  __  ${q.rightText}`;
+      interactionApi = buildChoiceInteraction(["<",">","="]);
+      tipLine.textContent = "Select a symbol • Press Enter to submit • Enter again to move on.";
+      lastBuiltMode = q.mode;
+      return;
+    }
+
+    if (q.mode === "order"){
+      qBox.classList.add("small");
+      qBox.textContent = `Order these integers (${q.dir}): ${q.shown.map(fmtInt).join(", ")}`;
+      interactionApi = buildOrderInteraction(q);
+      tipLine.textContent = "Drag the numbers into the 5 boxes • Press Enter to submit • Enter again to move on.";
+      lastBuiltMode = q.mode;
+      return;
+    }
+
+    // input
+    qBox.classList.remove("small");
+    qBox.textContent = `Calculate: ${q.prompt}`;
+    interactionApi = buildInputInteraction();
+    tipLine.textContent = "Type your answer • Press Enter to submit • Enter again to move on.";
+    lastBuiltMode = q.mode;
+  }
+
+  // ------------------------------------------------------------
+  // Marking
+  // ------------------------------------------------------------
+  function normalizeAns(a){
+    if (a === null || a === undefined) return "";
+    if (Array.isArray(a)) return a.map(String);
+    return String(a).trim();
+  }
+
+  function markCurrent(isSkip=false){
+    const q = questions[idx];
+    const type = q.type;
+
+    bump(type, "total");
+
+    let correct = false;
+
+    if (isSkip){
+      bump(type, "skipped");
+      showBadge("bad", "Skipped (counts as wrong)");
+    } else {
+      if (q.mode === "numberline"){
+        correct = normalizeAns(currentAnswer) === fmtInt(q.v);
+      } else if (q.mode === "numberline_ce"){
+        correct = normalizeAns(currentAnswer) === fmtInt(q.answer);
+      } else if (q.mode === "choice"){
+        correct = normalizeAns(currentAnswer) === q.sym;
+      } else if (q.mode === "choice_expr"){
+        correct = normalizeAns(currentAnswer) === q.sym;
+      } else if (q.mode === "order"){
+        const arr = Array.isArray(currentAnswer) ? currentAnswer : [];
+        const filled = arr.every(v => v !== null && v !== "");
+        if (!filled){
+          correct = false;
+        } else {
+          const want = q.answer.map(String);
+          correct = arr.map(String).join("|") === want.join("|");
+        }
+      } else {
+        // input
+        correct = normalizeAns(currentAnswer) === normalizeAns(q.answer);
+      }
+
+      if (correct){
+        bump(type, "correct");
+        showBadge("ok", "Correct ✓");
+      } else {
+        showBadge("bad", "Incorrect ✕");
+      }
+    }
+
+    // disable interaction
+    if (interactionApi && typeof interactionApi.setDisabled === "function") interactionApi.setDisabled(true);
+
+    hasMarked = true;
+    showPostMarkButtons();
+  }
+
+  function goNext(){
+    if (!hasMarked) return;
+    idx++;
+    if (idx >= questions.length){
+      finish();
+      return;
+    }
+    renderQuestion();
+  }
+
+  function retry(){
+    if (!hasMarked) return;
+    clearBadge();
+    hideActionButtons();
+    hasMarked = false;
+
+    // rebuild the same question interaction cleanly
+    renderQuestion();
+  }
+
+  function finish(){
+    let total=0, correct=0;
+    for (const [, o] of scoreByType.entries()){
+      total += o.total;
+      correct += o.correct;
+    }
+    scoreLine.textContent = `You completed ${LEVELS[currentLevel].label} and achieved a score of ${correct}/${total}.`;
+
+    breakdown.innerHTML = "";
+    for (const cfg of LEVELS[currentLevel].types){
+      if (!scoreByType.has(cfg.id)) continue;
+      const o = scoreByType.get(cfg.id);
+      const row = document.createElement("div");
+      row.className = "breakdownRow";
+      row.innerHTML = `
+        <div>${cfg.label}</div>
+        <div>${o.correct}/${o.total}${o.skipped ? ` <span class="muted">(skipped: ${o.skipped})</span>` : ""}</div>
+      `;
+      breakdown.appendChild(row);
+    }
+
+    barFill.style.width = "100%";
+    setModalState("result");
+  }
+
+  function copyResults(){
+    let lines = [];
+    let total=0, correct=0;
+    lines.push(`Integers Practice — ${LEVELS[currentLevel].label}`);
+    for (const cfg of LEVELS[currentLevel].types){
+      if (!scoreByType.has(cfg.id)) continue;
+      const o = scoreByType.get(cfg.id);
+      lines.push(`${cfg.label}: ${o.correct}/${o.total} (skipped: ${o.skipped})`);
+      total += o.total;
+      correct += o.correct;
+    }
+    lines.unshift(`Score: ${correct}/${total}`);
+    const text = lines.join("\n");
+    navigator.clipboard?.writeText(text).catch(()=>{});
+  }
+
+  // ------------------------------------------------------------
+  // Enter handling (button + keyboard)
+  // ------------------------------------------------------------
+  function handleEnter(){
+    if (!questions.length) return;
+    if (!hasMarked){
+      markCurrent(false);
+    } else {
+      goNext();
+    }
+  }
+
+  // Keyboard Enter (blocked when modal open)
+  function keyHandler(e){
+    if (e.key !== "Enter") return;
+
+    const modalOpen =
+      levelOverlay.classList.contains("show") ||
+      typeOverlay.classList.contains("show") ||
+      resultOverlay.classList.contains("show");
+    if (modalOpen) return;
+
+    if (e.repeat) return;
+    e.preventDefault();
+    handleEnter();
+  }
+  window.addEventListener("keydown", keyHandler, true);
+
+  // ------------------------------------------------------------
+  // Run control
+  // ------------------------------------------------------------
+  function hardBackToMenu(){
+    currentLevel = null;
+    selectedTypes = [];
+    questions = [];
+    idx = 0;
+    totalQuestions = 0;
+    resetShell();
+    setModalState("level");
+  }
+
+  function resetRun(){
+    if (!currentLevel) return hardBackToMenu();
+
+    // new question set
+    reseed();
+    idx = 0;
+    questions = buildQuestions();
+    initScoreMap();
+    setModalState(null);
+    renderQuestion();
+  }
+
+  // Level start buttons
+  document.querySelectorAll('.startPill[data-level]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      const levelKey = btn.dataset.level;
+      currentLevel = levelKey;
+      setLevelUI(levelKey);
+
+      renderTypesForLevel(levelKey);
+      countInp.value = "10";
+
+      setModalState("types");
+    });
+  });
+
+  // Types modal actions
+  typesBackBtn.addEventListener("click", () => setModalState("level"));
+
+  beginBtn.addEventListener("click", () => {
+    typesWarn.classList.toggle("show", selectedTypes.length === 0);
+    if (!selectedTypes.length) return;
+
+    let n = Number(countInp.value);
+    if (!Number.isFinite(n)) n = 10;
+    n = clamp(Math.round(n), 10, 60);
+    countInp.value = String(n);
+    totalQuestions = n;
+
+    reseed();
+    questions = buildQuestions();
+    idx = 0;
+    initScoreMap();
+
+    setModalState(null);
+    renderQuestion();
+  });
+
+  // Quiz buttons
+  skipBtn.addEventListener("click", () => {
+    if (!questions.length) return;
+    if (!hasMarked){
+      markCurrent(true);
+    }
+  });
+  retryBtn.addEventListener("click", retry);
+  nextBtn.addEventListener("click", goNext);
+
+  // Back / Reset top buttons
+  backBtn.addEventListener("click", hardBackToMenu);
+  resetBtn.addEventListener("click", resetRun);
+
+  // Results modal buttons
+  copyBtn.addEventListener("click", copyResults);
+  closeBtn.addEventListener("click", () => setModalState(null));
+  menuBtn.addEventListener("click", hardBackToMenu);
+
+  // boot
+  hardBackToMenu();
+})();
+</script>
+</body>
+</html>
