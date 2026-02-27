@@ -1,1 +1,1356 @@
-k
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MMT Worksheet Generator — Algebraic Techniques</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+      --ok:#16a34a;
+
+      --footer-h: 44px;
+      --pagePad: 12mm;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: var(--footer-h);
+    }
+
+    .wrap{ max-width: 1100px; margin: 18px auto 40px; padding: 0 16px; }
+    .panel{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+
+    label{
+      display:block;
+      font-weight: 950;
+      color: var(--ink);
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+
+    select, input[type="number"]{
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 950;
+      font-size: 16px;
+      background:#fff;
+      min-width: 320px;
+      outline:none;
+    }
+    input[type="number"]{ min-width: 220px; }
+
+    .checks{
+      display:flex;
+      gap: 12px 14px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding: 6px 0 0;
+    }
+    .chk{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      border: 1px solid rgba(229,231,235,.95);
+      background:#fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+      user-select:none;
+    }
+    .chk input{ width: 18px; height: 18px; }
+    .chk span{
+      font-weight: 950;
+      font-size: 13px;
+      color:#111827;
+      white-space: nowrap;
+    }
+
+    .btnRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+      font-size: 16px;
+    }
+    button:active{ transform: scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.ghost{ background:#eef2ff; color:#1d4ed8; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .outWrap{ margin-top: 16px; }
+
+    /* Pages */
+    .page{
+      margin-top: 16px;
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      overflow:hidden;
+      position: relative;
+    }
+
+    .pageBorder{
+      position:absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events:none;
+      opacity: 1;
+    }
+
+    .pageInner{
+      position: relative;
+      z-index: 1;
+      padding: 0;
+    }
+
+    .pageContent{
+      margin: var(--pagePad);
+      background:#fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 0 0 1px rgba(229,231,235,.9) inset;
+    }
+
+    .pageHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .hdrLeft{ min-width: 240px; }
+    .hdrTitle{
+      font-weight: 1000;
+      font-size: 18px;
+      line-height: 1.15;
+      margin-bottom: 2px;
+    }
+    .hdrSub{
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .nameRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items:end;
+      min-width: min(420px, 100%);
+    }
+    .lineField{ display:flex; flex-direction:column; gap: 6px; min-width: 0; }
+    .lineLabel{ font-size: 12px; font-weight: 950; color: var(--muted); }
+    .lineBox{
+      height: 30px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+      width: 100%;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      margin-top: 10px;
+    }
+
+    .qCard{
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 12px 12px 12px;
+      background:#fff;
+      min-height: 190px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      gap: 12px;
+    }
+    .qNum{
+      font-weight: 1000;
+      font-size: 18px;
+      min-width: 44px;
+      color:#111827;
+    }
+    .qText{
+      font-weight: 1000;
+      font-size: 16px;
+      line-height: 1.15;
+      color:#111827;
+    }
+
+    /* Like-terms layout: prompt on one line, expression on its own line */
+    .qText.splitExpr{ display:block; }
+    .qText .qPrompt{ display:block; font-weight: 1000; }
+    .qText .qExprLine{
+      display:block;
+      margin-top: 6px;
+      font-weight: 1000;
+      text-align: center;
+      overflow-wrap: anywhere;
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    /* Blank gap workspace */
+    .workArea{
+      margin-top: 2px;
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 16px;
+      padding: 10px 10px;
+      background: #fff;
+      flex: 1;
+      min-height: 78px;
+    }
+
+    /* Table-only: table is the workspace */
+    .workArea.tableOnly{
+      border:none;
+      padding: 0;
+      background: transparent;
+      min-height: 0;
+    }
+
+    .ansRow{
+      margin-top: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 10px;
+    }
+    .ansLabel{
+      font-weight: 1000;
+      font-size: 14px;
+    }
+    .ansBox{
+      flex: 1;
+      min-width: 0;
+      height: 34px;
+      border: 2px solid #111827;
+      border-radius: 12px;
+      background:#fff;
+    }
+    .ansBox.key{
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      color: var(--ok);
+      font-size: 16px;
+      padding: 0 10px;
+      text-align:center;
+    }
+
+    /* Math-style variables */
+    .var{
+      font-family: "Cambria Math","STIX Two Math","Times New Roman",serif;
+      font-style: italic;
+      font-weight: 650;
+    }
+
+    /* Fraction with PRINT-SAFE bar */
+    .frac{
+      display:inline-flex;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:center;
+      vertical-align:middle;
+      line-height:1.05;
+      transform: translateY(-1px);
+      margin: 0 2px;
+      min-width: 42px;
+    }
+    .frac .top,
+    .frac .bottom{
+      text-align:center;
+      padding: 0 4px;
+      white-space: nowrap;
+    }
+    .frac .bar{
+      height: 0;
+      border-top: 2px solid #111827;
+      margin: 2px 0;
+      border-radius: 999px;
+    }
+
+    /* Table styling */
+    .tinyTbl{
+      width:100%;
+      border-collapse: collapse;
+      font-weight: 950;
+      font-size: 14px;
+      table-layout: fixed;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(229,231,235,.95) inset;
+      background:#fff;
+    }
+    .tinyTbl td, .tinyTbl th{
+      border:1px solid rgba(229,231,235,.95);
+      padding: 8px 6px;
+      text-align:center;
+    }
+    .tinyTbl th{
+      background:#f9fafb;
+      font-weight: 1000;
+    }
+    .cellBlank{
+      height: 34px;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .cellKey{
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(22,163,74,.08);
+      color: var(--ok);
+      font-weight: 1000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Footer */
+    .mmtFooter{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 12px;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid rgba(229,231,235,.95);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      font-weight: 900;
+      color: #111827;
+      text-align:center;
+      font-size: 13px;
+    }
+    .mmtFooter a{ color:#2563eb; text-decoration:none; font-weight: 950; }
+    .mmtFooter a:hover{ text-decoration: underline; }
+
+    /* Print */
+    @media print{
+      @page{ size: A4; margin: 12mm; }
+
+      body{
+        background:#fff !important;
+        padding:0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .controls, .mmtFooter{ display:none !important; }
+      .wrap{ max-width:none !important; margin:0 !important; padding:0 !important; }
+
+      :root{ --pagePad: 6mm; }
+
+      .page{
+        width: 186mm;
+        height: 273mm;
+        margin: 0 auto;
+        border: none;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      .page:last-child{ page-break-after: auto; }
+
+      .pageContent{ margin: var(--pagePad); padding: 12px; }
+      .pageHeader{ flex-wrap: nowrap !important; gap: 10px !important; }
+
+      .grid{ gap: 12px !important; }
+      .qCard{ break-inside: avoid; padding: 12px !important; }
+
+      .frac .bar{ border-top-width: 2px !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="controls" aria-label="Worksheet controls">
+        <div style="min-width:320px; flex:1 1 560px;">
+          <label for="outcomeSel">Stage outcome</label>
+          <select id="outcomeSel"></select>
+
+          <div class="checks" aria-label="Question types">
+            <label style="margin:0; font-size:13px; font-weight:950; color:var(--muted); width:100%;">Question types (checkboxes)</label>
+            <div id="chkWrap" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+          <div>
+            <label for="countInp">Total questions (multiples of 8 recommended)</label>
+            <input id="countInp" type="number" min="8" max="96" step="8" value="16" />
+          </div>
+
+          <div class="btnRow">
+            <button id="genBtn" class="primary">Generate</button>
+            <button id="printBtn" class="ghost">Print / Save as PDF</button>
+            <button id="resetBtn" class="danger">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  // ============================================================
+  // CONFIG
+  // ============================================================
+  const CONFIG = {
+    title: "Worksheet Generator — Algebraic Techniques",
+    perPage: 8,
+    borderSrc: "border_page0.png",
+    pageHeaderTitle: "Algebraic Techniques",
+    answerKeyTitle: "Answer key",
+    outcomes: [
+      { value:"s4_de", label:"Stage 4 — Algebraic Techniques (D/E basic)", level:"DE" },
+      { value:"s4_c",  label:"Stage 4 — Algebraic Techniques (C expected)", level:"C"  },
+    ],
+    defaultCount: 16,
+    minCount: 8,
+    maxCount: 96,
+  };
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice  = (arr) => arr[randInt(0, arr.length-1)];
+  const clamp   = (n,a,b) => Math.max(a, Math.min(b, n));
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  };
+  function stripHTML(html){ return String(html).replace(/<[^>]*>/g,''); }
+
+  // Variables: 30% x, others evenly
+  const OTHER_VARS = ["a","b","c","d","e","f","y","p","w"];
+  function pickVar(){
+    if (Math.random() < 0.30) return "x";
+    return OTHER_VARS[Math.floor(Math.random() * OTHER_VARS.length)];
+  }
+  const vHTML = (v) => `<span class="var">${v}</span>`;
+  const fmtInt = (n) => (n < 0 ? `−${Math.abs(n)}` : `${n}`);
+
+  function fracHTML(topHTML, bottomHTML){
+    return `<span class="frac"><span class="top">${topHTML}</span><span class="bar"></span><span class="bottom">${bottomHTML}</span></span>`;
+  }
+
+  function termHTML(coeff, v){
+    if (v == null) return String(Math.abs(coeff));
+    const abs = Math.abs(coeff);
+    if (abs === 1) return vHTML(v);
+    return `${abs}${vHTML(v)}`;
+  }
+
+  function buildExpressionHTML(terms){
+    const parts = [];
+    terms.forEach((t, i) => {
+      const isNeg = t.coeff < 0;
+      const sign = (i === 0) ? (isNeg ? "− " : "") : (isNeg ? " − " : " + ");
+      parts.push(sign + (t.v ? termHTML(t.coeff, t.v) : String(Math.abs(t.coeff))));
+    });
+    return parts.join("");
+  }
+
+  function simplifyTerms(terms){
+    const map = new Map();
+    let csum = 0;
+    for (const t of terms){
+      if (t.v == null) csum += t.coeff;
+      else map.set(t.v, (map.get(t.v)||0) + t.coeff);
+    }
+    for (const [k,v] of map.entries()){
+      if (v === 0) map.delete(k);
+    }
+    return { map, csum };
+  }
+
+  function buildSimplifiedHTML(map, csum){
+    const vars = Array.from(map.keys()).sort((a,b)=>a.localeCompare(b));
+    const terms = [];
+    for (const v of vars) terms.push({ coeff: map.get(v), v });
+    if (csum !== 0 || terms.length === 0) terms.push({ coeff: csum, v: null });
+    return buildExpressionHTML(terms);
+  }
+
+  // ============================================================
+  // DOM helpers
+  // ============================================================
+  const outcomeSel = document.getElementById('outcomeSel');
+  const chkWrap    = document.getElementById('chkWrap');
+  const countInp   = document.getElementById('countInp');
+  const genBtn     = document.getElementById('genBtn');
+  const printBtn   = document.getElementById('printBtn');
+  const resetBtn   = document.getElementById('resetBtn');
+  const out        = document.getElementById('out');
+
+  function clearOut(){ out.innerHTML = ""; }
+
+  function makeCardShell(idx1, promptHTML){
+    const card = document.createElement('div');
+    card.className = 'qCard';
+
+    const top = document.createElement('div');
+    top.className = 'qTop';
+
+    const num = document.createElement('div');
+    num.className = 'qNum';
+    num.textContent = `Q${idx1}`;
+
+    const text = document.createElement('div');
+    text.className = 'qText';
+    text.innerHTML = promptHTML;
+
+    top.appendChild(num);
+    top.appendChild(text);
+    card.appendChild(top);
+
+    const work = document.createElement('div');
+    work.className = 'workArea';
+    card.appendChild(work);
+
+    return card;
+  }
+
+  function makeAnswerRowHTML(htmlAnswer, plainFallback, isKey){
+    const ansRow = document.createElement('div');
+    ansRow.className = 'ansRow';
+
+    const lab = document.createElement('div');
+    lab.className = 'ansLabel';
+    lab.textContent = 'Answer:';
+
+    const box = document.createElement('div');
+    box.className = 'ansBox' + (isKey ? ' key' : '');
+    if (isKey){
+      box.innerHTML = htmlAnswer ?? '';
+      if (!box.textContent.trim() && plainFallback) box.textContent = plainFallback;
+    } else {
+      box.textContent = '';
+    }
+
+    ansRow.appendChild(lab);
+    ansRow.appendChild(box);
+    return ansRow;
+  }
+
+  function makeAnswerRowPlain(text, isKey){
+    const ansRow = document.createElement('div');
+    ansRow.className = 'ansRow';
+
+    const lab = document.createElement('div');
+    lab.className = 'ansLabel';
+    lab.textContent = 'Answer:';
+
+    const box = document.createElement('div');
+    box.className = 'ansBox' + (isKey ? ' key' : '');
+    box.textContent = isKey ? (text ?? '') : '';
+
+    ansRow.appendChild(lab);
+    ansRow.appendChild(box);
+    return ansRow;
+  }
+
+  // ============================================================
+  // QUESTION TYPES (D/E and C)
+  // ============================================================
+  const WORD_STEMS_DE = [
+    () => ({ prompt:"5 more than VAR", build:(v)=>`${vHTML(v)} + 5` }),
+    () => ({ prompt:"VAR increased by 7", build:(v)=>`${vHTML(v)} + 7` }),
+    () => ({ prompt:"3 less than VAR", build:(v)=>`${vHTML(v)} − 3` }),
+    () => ({ prompt:"VAR decreased by 4", build:(v)=>`${vHTML(v)} − 4` }),
+    () => ({ prompt:"twice VAR", build:(v)=>`2${vHTML(v)}` }),
+    () => ({ prompt:"three times VAR", build:(v)=>`3${vHTML(v)}` }),
+    () => ({ prompt:"VAR divided by 2", build:(v)=>fracHTML(vHTML(v), "2") }),
+    () => ({ prompt:"half of VAR", build:(v)=>fracHTML(vHTML(v), "2") }),
+  ];
+
+  const WORD_STEMS_C = [
+    () => ({ prompt:"three more than twice VAR", build:(v)=>`2${vHTML(v)} + 3` }),
+    () => ({ prompt:"five less than three times VAR", build:(v)=>`3${vHTML(v)} − 5` }),
+    () => ({ prompt:"the sum of VAR and 7, multiplied by 2", build:(v)=>`2(${vHTML(v)} + 7)` }),
+    () => ({ prompt:"half of (VAR + 6)", build:(v)=>fracHTML(`(${vHTML(v)} + 6)`, "2") }),
+    () => ({ prompt:"the difference between 10 and VAR", build:(v)=>`10 − ${vHTML(v)}` }),
+  ];
+
+  const ALL_TYPES = [
+    // ---------------- D/E ----------------
+    {
+      level:"DE", id:"identify_part",
+      label:"Identify coefficient / pronumeral / constant",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const a = randInt(2,9);
+        const b = randInt(1,9);
+        const part = choice(["coefficient","pronumeral","constant"]);
+        return { type:this.id, v, a, b, part };
+      },
+      key:q => `${q.v}_${q.a}_${q.b}_${q.part}`,
+      render(q, idx1, showAnswers){
+        const expr = `${q.a}${vHTML(q.v)} + ${q.b}`;
+        const card = makeCardShell(idx1, `In ${expr}, identify the ${q.part}.`);
+        const answer =
+          q.part === "coefficient" ? String(q.a) :
+          q.part === "pronumeral" ? q.v :
+          String(q.b);
+        card.appendChild(makeAnswerRowPlain(answer, showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"notation",
+      label:"Rewrite using correct algebraic notation",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const a = randInt(2,9);
+        const c = randInt(1,9);
+        const kind = choice(["mult", "power", "bracket"]);
+        return { type:this.id, v, a, c, kind };
+      },
+      key:q => `${q.kind}_${q.v}_${q.a}_${q.c}`,
+      render(q, idx1, showAnswers){
+        let prompt, answer;
+        if (q.kind === "mult"){
+          prompt = `Rewrite ${q.a} × ${vHTML(q.v)} using algebraic notation.`;
+          answer = `${q.a}${q.v}`;
+        } else if (q.kind === "power"){
+          prompt = `Rewrite ${vHTML(q.v)} × ${vHTML(q.v)} using algebraic notation.`;
+          answer = `${q.v}²`;
+        } else {
+          prompt = `Rewrite ${q.a} × (${vHTML(q.v)} + ${q.c}) using algebraic notation.`;
+          answer = `${q.a}(${q.v} + ${q.c})`;
+        }
+        const card = makeCardShell(idx1, prompt);
+        card.appendChild(makeAnswerRowPlain(answer, showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"words_to_expr",
+      label:"Translate words → algebraic expression",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const stem = choice(WORD_STEMS_DE)();
+        return { type:this.id, v, prompt: stem.prompt.replaceAll("VAR", v), exprHTML: stem.build(v) };
+      },
+      key:q => `w2e_${q.v}_${q.prompt}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Write an expression for: “${q.prompt}”.`);
+        card.appendChild(makeAnswerRowHTML(q.exprHTML, stripHTML(q.exprHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"sub_one",
+      label:"Substitute and evaluate (one step)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const val = randInt(-5,10);
+        const kind = choice(["av", "vplus", "vminus"]);
+        const a = randInt(2,9);
+        const b = randInt(1,9);
+
+        let exprHTML, value;
+        if (kind === "av"){
+          exprHTML = `${a}${vHTML(v)}`;
+          value = a * val;
+        } else if (kind === "vplus"){
+          exprHTML = `${vHTML(v)} + ${b}`;
+          value = val + b;
+        } else {
+          exprHTML = `${vHTML(v)} − ${b}`;
+          value = val - b;
+        }
+        return { type:this.id, v, val, exprHTML, value };
+      },
+      key:q => `sub_${q.v}_${q.val}_${q.value}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Evaluate ${q.exprHTML} when ${vHTML(q.v)} = ${fmtInt(q.val)}.`);
+        card.appendChild(makeAnswerRowPlain(String(q.value), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"like_terms",
+      label:"Collect like terms (simple)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const a = randInt(1,9);
+        const b = randInt(1,9);
+        const op = choice(["+", "-"]);
+        const value = op === "+" ? (a + b) : (a - b);
+        return { type:this.id, v, a, b, op, value };
+      },
+      key:q => `lt_${q.v}_${q.a}${q.op}${q.b}`,
+      render(q, idx1, showAnswers){
+        const exprHTML = (q.op === "+")
+          ? `${q.a}${vHTML(q.v)} + ${q.b}${vHTML(q.v)}`
+          : `${q.a}${vHTML(q.v)} − ${q.b}${vHTML(q.v)}`;
+        const ansHTML = buildExpressionHTML([{coeff:q.value, v:q.v}]);
+        const card = makeCardShell(idx1, `Simplify: ${exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"mul_div_term",
+      label:"Multiply or divide a single term",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const a = randInt(2,9);
+        const b = randInt(2,9);
+        const kind = choice(["times", "divide"]);
+
+        if (kind === "times"){
+          const exprHTML = `${a}${vHTML(v)} × ${b}`;
+          const ansHTML = buildExpressionHTML([{coeff:a*b, v}]);
+          return { type:this.id, kind, exprHTML, ansHTML };
+        } else {
+          const prod = a*b;
+          const top = `${prod}${vHTML(v)}`;
+          const bottom = `${b}`;
+          const exprHTML = fracHTML(top, bottom);
+          const ansHTML = buildExpressionHTML([{coeff:a, v}]);
+          return { type:this.id, kind, exprHTML, ansHTML };
+        }
+      },
+      key:q => `md_${q.kind}_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Simplify: ${q.exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"expand_bracket",
+      label:"Expand a single bracket (distributive law)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const k = randInt(2,9);
+        const c = randInt(1,9);
+        const sign = choice(["+", "-"]);
+        return { type:this.id, v, k, c, sign };
+      },
+      key:q => `exp_${q.v}_${q.k}_${q.sign}_${q.c}`,
+      render(q, idx1, showAnswers){
+        const exprHTML = (q.sign === "+")
+          ? `${q.k}(${vHTML(q.v)} + ${q.c})`
+          : `${q.k}(${vHTML(q.v)} − ${q.c})`;
+
+        const left = { coeff:q.k, v:q.v };
+        const right = { coeff: (q.sign === "+") ? q.k*q.c : -(q.k*q.c), v: null };
+
+        const ansHTML = buildExpressionHTML([left, right]);
+
+        const card = makeCardShell(idx1, `Expand: ${exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"factorise_number",
+      label:"Factorise by common number (HCF)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const g = randInt(2,6);
+        const a = randInt(1,9);
+        const b = randInt(1,9);
+        const A = g*a;
+        const B = g*b;
+        return { type:this.id, v, g,a,b,A,B };
+      },
+      key:q => `fac_${q.v}_${q.A}_${q.B}`,
+      render(q, idx1, showAnswers){
+        const exprHTML = `${q.A}${vHTML(q.v)} + ${q.B}`;
+        const ansHTML  = `${q.g}(${q.a}${vHTML(q.v)} + ${q.b})`;
+        const card = makeCardShell(idx1, `Factorise: ${exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    // ---------------- C EXPECTED ----------------
+    {
+      level:"C", id:"translate_rich",
+      label:"Translate words → expression (multi-step)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const stem = choice(WORD_STEMS_C)();
+        return { type:this.id, v, prompt: stem.prompt.replaceAll("VAR", v), exprHTML: stem.build(v) };
+      },
+      key:q => `tr_${q.v}_${q.prompt}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Write an expression for: “${q.prompt}”.`);
+        card.appendChild(makeAnswerRowHTML(q.exprHTML, stripHTML(q.exprHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"C", id:"sub_two",
+      label:"Substitute and evaluate (two-step)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const xVal = randInt(-4,8);
+        const a = randInt(2,5);
+        const b = randInt(1,9);
+        const kind = choice(["a(v+b)", "a(v-b)", "av+b"]);
+        let exprHTML, val;
+        if (kind === "a(v+b)"){
+          exprHTML = `${a}(${vHTML(v)} + ${b})`;
+          val = a * (xVal + b);
+        } else if (kind === "a(v-b)"){
+          exprHTML = `${a}(${vHTML(v)} − ${b})`;
+          val = a * (xVal - b);
+        } else {
+          exprHTML = `${a}${vHTML(v)} + ${b}`;
+          val = a * xVal + b;
+        }
+        return { type:this.id, v, xVal, exprHTML, val };
+      },
+      key:q => `s2_${q.v}_${q.xVal}_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Evaluate ${q.exprHTML} when ${vHTML(q.v)} = ${fmtInt(q.xVal)}.`);
+        card.appendChild(makeAnswerRowPlain(String(q.val), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"C", id:"simplify_mixed",
+      label:"Simplify (collect like terms — mixed order)",
+      defaultOn:true,
+      gen(){
+        // Guarantee: every pronumeral used appears at least twice
+        const totalTerms = randInt(2,6);
+
+        // constants 0–2, but must leave >=2 var terms
+        let constTerms = randInt(0,2);
+        constTerms = Math.min(constTerms, Math.max(0, totalTerms - 2));
+
+        const varTerms = totalTerms - constTerms; // at least 2
+
+        const maxGroups = Math.min(3, Math.floor(varTerms / 2));
+        const groupCount = randInt(1, Math.max(1, maxGroups));
+
+        const vars = [];
+        while (vars.length < groupCount){
+          const v = pickVar();
+          if (!vars.includes(v)) vars.push(v);
+        }
+
+        // each group starts with 2 terms
+        const counts = Array(groupCount).fill(2);
+        let remaining = varTerms - (2 * groupCount);
+        while (remaining > 0){
+          counts[randInt(0, groupCount-1)]++;
+          remaining--;
+        }
+
+        const terms = [];
+
+        for (let gi=0; gi<groupCount; gi++){
+          const v = vars[gi];
+          const ct = counts[gi];
+          for (let k=0; k<ct; k++){
+            const mag = randInt(1,9);
+            const sgn = choice([1,-1]);
+            terms.push({ coeff: sgn*mag, v });
+          }
+        }
+
+        for (let k=0; k<constTerms; k++){
+          const mag = randInt(1,15);
+          const sgn = choice([1,-1]);
+          terms.push({ coeff: sgn*mag, v: null });
+        }
+
+        const mixed = shuffle(terms);
+        const exprHTML = buildExpressionHTML(mixed);
+        const { map, csum } = simplifyTerms(mixed);
+        const ansHTML = buildSimplifiedHTML(map, csum);
+
+        return { type:this.id, exprHTML, ansHTML };
+      },
+      key:q => `sm_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const promptHTML = `
+          <span class="qPrompt">Simplify</span>
+          <span class="qExprLine">${q.exprHTML}</span>
+        `;
+        const card = makeCardShell(idx1, promptHTML);
+        card.querySelector('.qText').classList.add('splitExpr');
+        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"C", id:"expand_simplify",
+      label:"Expand and simplify (varied structures)",
+      defaultOn:true,
+      gen(){
+        const template = choice(["c_plus_k_bracket", "k_bracket_plus_var", "two_var_bracket_plus", "two_var_big"]);
+        let exprHTML = "";
+        let finalTerms = [];
+
+        if (template === "c_plus_k_bracket"){
+          // 5 + 3(x + 5)
+          const v = pickVar();
+          const c0 = randInt(1,9);
+          const k = randInt(2,6);
+          const b = randInt(1,9);
+          const sign = choice([+1,-1]);
+
+          exprHTML = `${c0} + ${k}(${vHTML(v)} ${sign>0?"+":"−"} ${b})`;
+          finalTerms = [
+            { coeff: k, v },
+            { coeff: c0 + k*(sign*b), v: null }
+          ];
+        }
+
+        if (template === "k_bracket_plus_var"){
+          // 3(x + 4) − 2x + 5
+          const v = pickVar();
+          const k = randInt(2,6);
+          const b = randInt(1,9);
+          const m = randInt(1,6);
+          const addC = randInt(0,9);
+          const signB = choice([+1,-1]);
+          const signM = choice([+1,-1]);
+
+          exprHTML = `${k}(${vHTML(v)} ${signB>0?"+":"−"} ${b}) ${signM>0?"+":"−"} ${m}${vHTML(v)}${addC?` + ${addC}`:""}`;
+          finalTerms = [
+            { coeff: k + signM*m, v },
+            { coeff: k*(signB*b) + addC, v: null }
+          ];
+        }
+
+        if (template === "two_var_bracket_plus"){
+          // 5(2x + 3y) + 4y + 5x
+          let v1 = pickVar(), v2 = pickVar();
+          while (v2 === v1) v2 = pickVar();
+
+          const k = randInt(2,5);
+          const a = randInt(1,4);
+          const b = randInt(1,4);
+          const extra1 = randInt(0,6);
+          const extra2 = randInt(0,6);
+
+          exprHTML = `${k}(${a}${vHTML(v1)} + ${b}${vHTML(v2)})${extra2?` + ${extra2}${vHTML(v2)}`:""}${extra1?` + ${extra1}${vHTML(v1)}`:""}`;
+          finalTerms = [
+            { coeff: k*a + extra1, v: v1 },
+            { coeff: k*b + extra2, v: v2 }
+          ];
+        }
+
+        if (template === "two_var_big"){
+          // 2(3x − y + 4) + x − 5y
+          let v1 = pickVar(), v2 = pickVar();
+          while (v2 === v1) v2 = pickVar();
+
+          const k = randInt(2,4);
+          const a = randInt(1,5);
+          const b = randInt(1,5);
+          const c0 = randInt(1,9);
+
+          const outsideA = randInt(0,5);
+          const outsideB = randInt(0,5);
+
+          exprHTML = `${k}(${a}${vHTML(v1)} − ${b}${vHTML(v2)} + ${c0})${outsideA?` + ${outsideA}${vHTML(v1)}`:""}${outsideB?` − ${outsideB}${vHTML(v2)}`:""}`;
+          finalTerms = [
+            { coeff: k*a + outsideA, v: v1 },
+            { coeff: -(k*b + outsideB), v: v2 },
+            { coeff: k*c0, v: null }
+          ];
+        }
+
+        const { map, csum } = simplifyTerms(finalTerms);
+        const ansHTML = buildSimplifiedHTML(map, csum);
+
+        return { type:this.id, exprHTML, ansHTML };
+      },
+      key:q => `es_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Expand and simplify: ${q.exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"C", id:"alg_frac",
+      label:"Simplify algebraic fractions (simple)",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const kind = choice(["numCancel", "varCancel"]);
+        if (kind === "numCancel"){
+          const a = randInt(2,9);
+          const b = randInt(2,9);
+          const top = `${a*b}${vHTML(v)}`;
+          const bot = `${b}`;
+          const exprHTML = fracHTML(top, bot);
+          const ansHTML = `${a}${vHTML(v)}`;
+          return { type:this.id, exprHTML, ansHTML };
+        } else {
+          const a = randInt(2,9);
+          const b = randInt(2,9);
+          const top = `${a*b}${vHTML(v)}`;
+          const bot = `${b}${vHTML(v)}`;
+          const exprHTML = fracHTML(top, bot);
+          const ansHTML = `${a}`;
+          return { type:this.id, exprHTML, ansHTML };
+        }
+      },
+      key:q => `af_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Simplify: ${q.exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"C", id:"pattern_table",
+      label:"Complete a table of values (from an expression)",
+      defaultOn:true,
+      gen(){
+        const m = randInt(2,6);
+        let b = randInt(-8,8);
+        if (b === 0) b = choice([-6,-4,-2,2,4,6]);
+
+        const exprHTML =
+          `${m}<span class="var">n</span>` +
+          (b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`);
+
+        const ns = [1,2,3,4];
+        const vals = ns.map(n => m*n + b);
+        return { type:this.id, exprHTML, ns, vals };
+      },
+      key:q => `pt_${stripHTML(q.exprHTML)}_${q.vals.join(",")}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Complete the table for: ${q.exprHTML}`);
+
+        const work = card.querySelector('.workArea');
+        work.classList.add('tableOnly');
+
+        const headerRow = `<tr><th><span class="var">n</span></th>${q.ns.map(n=>`<th>${n}</th>`).join("")}</tr>`;
+        const valueCells = showAnswers
+          ? q.vals.map(v => `<td><div class="cellKey">${v}</div></td>`).join("")
+          : q.vals.map(_ => `<td><div class="cellBlank"></div></td>`).join("");
+
+        work.innerHTML = `
+          <table class="tinyTbl">
+            ${headerRow}
+            <tr><th>value</th>${valueCells}</tr>
+          </table>
+        `;
+
+        // no answer bubble for table questions
+        return card;
+      }
+    },
+  ];
+
+  // ============================================================
+  // UI / ENGINE
+  // ============================================================
+  function currentOutcome(){
+    const val = outcomeSel.value;
+    return CONFIG.outcomes.find(o => o.value === val) || CONFIG.outcomes[0];
+  }
+
+  function typesForCurrentLevel(){
+    const lvl = currentOutcome().level;
+    return ALL_TYPES.filter(t => t.level === lvl);
+  }
+
+  function initUI(){
+    document.title = CONFIG.title;
+
+    outcomeSel.innerHTML = '';
+    for (const o of CONFIG.outcomes){
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      outcomeSel.appendChild(opt);
+    }
+
+    countInp.min = String(CONFIG.minCount);
+    countInp.max = String(CONFIG.maxCount);
+    countInp.step = String(CONFIG.perPage);
+    countInp.value = String(CONFIG.defaultCount);
+
+    rebuildCheckboxes();
+  }
+
+  function rebuildCheckboxes(){
+    chkWrap.innerHTML = '';
+    const types = typesForCurrentLevel();
+
+    for (const qt of types){
+      const lab = document.createElement('label');
+      lab.className = 'chk';
+
+      const inp = document.createElement('input');
+      inp.type = 'checkbox';
+      inp.id = `chk_${qt.id}`;
+      inp.checked = !!qt.defaultOn;
+
+      const span = document.createElement('span');
+      span.textContent = qt.label;
+
+      lab.appendChild(inp);
+      lab.appendChild(span);
+      chkWrap.appendChild(lab);
+    }
+  }
+
+  function activeTypes(){
+    const types = typesForCurrentLevel();
+    const ids = new Set();
+    for (const qt of types){
+      const el = document.getElementById(`chk_${qt.id}`);
+      if (el && el.checked) ids.add(qt.id);
+    }
+    return types.filter(qt => ids.has(qt.id));
+  }
+
+  function uniqPush(arr, item, keyFn){
+    const k = keyFn(item);
+    if (arr.some(x => keyFn(x) === k)) return false;
+    arr.push(item);
+    return true;
+  }
+
+  function generateQuestions(n){
+    const types = activeTypes();
+    if (!types.length) return [];
+
+    const qs = [];
+    let safety = 0;
+
+    while (qs.length < n && safety < 15000){
+      safety++;
+      const qt = choice(types);
+      const q = qt.gen();
+      if (!q) continue;
+
+      const keyFn = (x) => {
+        const t = types.find(tt => tt.id === x.type);
+        if (!t) return JSON.stringify(x);
+        return (t.key ? t.key(x) : JSON.stringify(x));
+      };
+
+      if (!uniqPush(qs, q, keyFn)) continue;
+    }
+
+    return qs;
+  }
+
+  function pageHTML(pageTitle, pageSubtitle, pageIndex, pageCount){
+    const page = document.createElement('div');
+    page.className = 'page';
+
+    const border = document.createElement('img');
+    border.className = 'pageBorder';
+    border.alt = '';
+    border.src = CONFIG.borderSrc;
+    page.appendChild(border);
+
+    const inner = document.createElement('div');
+    inner.className = 'pageInner';
+    page.appendChild(inner);
+
+    const content = document.createElement('div');
+    content.className = 'pageContent';
+    inner.appendChild(content);
+
+    const header = document.createElement('div');
+    header.className = 'pageHeader';
+    header.innerHTML = `
+      <div class="hdrLeft">
+        <div class="hdrTitle">${pageTitle} — Page ${pageIndex} of ${pageCount}</div>
+        <div class="hdrSub">${pageSubtitle}</div>
+      </div>
+      <div class="nameRow">
+        <div class="lineField"><div class="lineLabel">Name</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">Class</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">Date</div><div class="lineBox"></div></div>
+      </div>
+    `;
+    content.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    content.appendChild(grid);
+
+    return { page, grid };
+  }
+
+  function buildPages(questions, pageTitle, pageSubtitle, showAnswers){
+    const pages = [];
+    const totalPages = Math.ceil(questions.length / CONFIG.perPage);
+    let qNum = 1;
+
+    const typeMap = new Map(ALL_TYPES.map(t => [t.id, t]));
+
+    for (let p=0; p<totalPages; p++){
+      const { page, grid } = pageHTML(pageTitle, pageSubtitle, p+1, totalPages);
+      const slice = questions.slice(p*CONFIG.perPage, p*CONFIG.perPage + CONFIG.perPage);
+
+      for (const q of slice){
+        const qt = typeMap.get(q.type);
+        if (!qt) continue;
+        grid.appendChild(qt.render(q, qNum, showAnswers));
+        qNum++;
+      }
+
+      pages.push(page);
+    }
+
+    return pages;
+  }
+
+  function generate(){
+    clearOut();
+
+    let n = Number(countInp.value);
+    if (!Number.isFinite(n)) n = CONFIG.defaultCount;
+    n = clamp(Math.round(n), CONFIG.minCount, CONFIG.maxCount);
+    countInp.value = String(n);
+
+    const qs = generateQuestions(n);
+    if (!qs.length){
+      out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">Please tick at least one question type.</div>`;
+      return;
+    }
+
+    const outcome = currentOutcome();
+    const subtitle = outcome.label;
+
+    const ws  = buildPages(qs, CONFIG.pageHeaderTitle, subtitle, false);
+    const key = buildPages(qs, CONFIG.answerKeyTitle, subtitle, true);
+
+    for (const pg of ws) out.appendChild(pg);
+    for (const pg of key) out.appendChild(pg);
+
+    if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function reset(){
+    clearOut();
+    countInp.value = String(CONFIG.defaultCount);
+    outcomeSel.selectedIndex = 0;
+    rebuildCheckboxes();
+  }
+
+  outcomeSel.addEventListener('change', () => {
+    clearOut();
+    rebuildCheckboxes();
+  });
+
+  genBtn.addEventListener('click', generate);
+  printBtn.addEventListener('click', () => window.print());
+  resetBtn.addEventListener('click', reset);
+
+  initUI();
+})();
+</script>
+</body>
+</html>
