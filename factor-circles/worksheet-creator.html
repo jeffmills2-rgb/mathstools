@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MMT — Factors Worksheet Creator</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+
+      --blue:#2563eb;
+
+      /* Print sizing */
+      --pagePad: 12mm;
+      --pillBorder:#111827;
+      --pillBg:#ffffff;
+      --qCardBorder:#e5e7eb;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:var(--bg);
+      color:var(--ink);
+    }
+
+    .wrap{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 14px 30px;
+    }
+
+    .hero{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      padding: 22px 22px 18px;
+    }
+    .hero h1{
+      margin: 0;
+      font-size: 44px;
+      letter-spacing: -.3px;
+      line-height: 1.05;
+    }
+    .hero p{
+      margin: 8px 0 0;
+      font-size: 26px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .controls{
+      margin-top: 18px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius: 22px;
+      padding: 16px;
+      display:grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 14px;
+      align-items:end;
+    }
+
+    .field label{
+      display:block;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 1000;
+      margin: 0 0 8px;
+    }
+    select, input{
+      width:100%;
+      border: 2px solid var(--border);
+      background:#fff;
+      border-radius: 18px;
+      padding: 16px 16px;
+      font-size: 28px;
+      font-weight: 1000;
+      outline:none;
+    }
+    select:focus, input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 6px rgba(37,99,235,.12);
+    }
+
+    .btnRow{
+      display:flex;
+      gap: 12px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border: 2px solid var(--border);
+      background:#fff;
+      border-radius: 20px;
+      padding: 16px 18px;
+      font-weight: 1000;
+      cursor:pointer;
+      box-shadow: 0 14px 30px rgba(0,0,0,.08);
+      font-size: 24px;
+      white-space:nowrap;
+    }
+    .btn.primary{
+      background: var(--blue);
+      border-color: #1d4ed8;
+      color:#fff;
+      box-shadow: 0 18px 34px rgba(37,99,235,.22);
+      padding-left: 26px;
+      padding-right: 26px;
+    }
+    .btn.print{
+      background: rgba(37,99,235,.08);
+      border-color: rgba(37,99,235,.15);
+      color:#1d4ed8;
+    }
+    .btn.reset{
+      background: #fee2e2;
+      border-color: #fecaca;
+      color:#991b1b;
+    }
+
+    .miniRow{
+      grid-column: 1 / -1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      padding-top: 6px;
+    }
+    .tick{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .tick input{
+      width: 20px;
+      height: 20px;
+      accent-color: var(--blue);
+    }
+
+    .out{ margin-top: 18px; }
+
+    .sheet{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin: 16px 0;
+    }
+
+    /* ===== Printable page ===== */
+    .page{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius: 22px;
+      padding: var(--pagePad);
+    }
+
+    .pageHeader{
+      display:grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items:center;
+      margin-bottom: 40px;
+    }
+    .logo{
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+    .titleBlock{
+      display:grid;
+      gap: 2px;
+    }
+    .titleBlock .title{
+      font-size: 20px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+    .titleBlock .sub{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .nameDate{
+      display:flex;
+      align-items:flex-start;
+      gap: 12px;
+      justify-content:flex-end;
+    }
+    .nd{
+      display:grid;
+      gap: 6px;
+    }
+    .nd label{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 1000;
+    }
+    .nd .line{
+      width: 170px;
+      height: 26px;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      background:#fff;
+    }
+
+    /* 2×5 grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+
+    .qCard{
+      border: 2px solid var(--qCardBorder);
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 168px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    /* moved up + simplified */
+    .qTop{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top: -2px;
+      margin-bottom: 0;
+    }
+    .qPill{
+      border: 3px solid var(--pillBorder);
+      border-radius: 14px;
+      padding: 8px 14px;
+      font-weight: 1000;
+      font-size: 18px;
+      min-width: 240px;
+      text-align:center;
+      background: var(--pillBg);
+    }
+
+    .bigAnswer{
+      flex: 1;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      background: #fbfdff;
+      padding: 10px 12px;
+      font-weight: 900;
+      color:#111827;
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      line-height: 1.25;
+      font-size: 16px;
+      overflow:hidden;
+      min-height: 86px;
+    }
+    .bigAnswer.key{
+      border-style: solid;
+      border-color: rgba(22,163,74,.35);
+      background: rgba(22,163,74,.06);
+    }
+
+    .keyBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(22,163,74,.10);
+      border: 1px solid rgba(22,163,74,.25);
+      color:#065f46;
+      font-weight: 1000;
+      font-size: 12px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .hr{
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    @media print{
+      body{ background:#fff; }
+      .hero, .controls{ display:none !important; }
+      .wrap{ max-width:none; padding:0; }
+      .sheet{
+        border:none;
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+        margin:0;
+      }
+      .page{
+        border:none;
+        box-shadow:none;
+        border-radius:0;
+        padding: var(--pagePad);
+        page-break-after: always;
+      }
+      .page:last-child{ page-break-after: auto; }
+      a{ color:#111827; text-decoration:none; }
+    }
+
+    @media (max-width: 980px){
+      .controls{ grid-template-columns: 1fr; }
+      .btnRow{ justify-content:flex-start; }
+      .hero h1{ font-size: 34px; }
+      .hero p{ font-size: 20px; }
+      select, input{ font-size: 22px; }
+      .btn{ font-size: 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Factors worksheet maker</h1>
+      <p>Printable A4 worksheets + completed answer key. 10 questions per page (2×5).</p>
+
+      <div class="controls">
+        <div class="field">
+          <label for="levelSel">Level</label>
+          <select id="levelSel">
+            <option value="mild">Mild</option>
+            <option value="medium">Medium</option>
+            <option value="spicy">Spicy</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="countInp">Number of questions (1–60)</label>
+          <input id="countInp" type="number" min="1" max="60" step="1" value="20" />
+        </div>
+
+        <div class="btnRow">
+          <button class="btn primary" id="genBtn" type="button">Generate worksheet</button>
+          <button class="btn print" id="printBtn" type="button">Print (Ctrl+P)</button>
+          <button class="btn reset" id="resetBtn" type="button">Reset</button>
+        </div>
+
+        <div class="miniRow">
+          <div class="tick">
+            <input id="keyToggle" type="checkbox" checked />
+            <label for="keyToggle">Include answer key</label>
+          </div>
+          <div class="tick" style="opacity:.9;">
+            Tip: choose multiples of 10 for neat pages.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="out" id="out"></div>
+  </div>
+
+<script>
+(() => {
+  const levelSel = document.getElementById('levelSel');
+  const countInp = document.getElementById('countInp');
+  const genBtn   = document.getElementById('genBtn');
+  const printBtn = document.getElementById('printBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const keyToggle= document.getElementById('keyToggle');
+  const out      = document.getElementById('out');
+
+  const LEVELS = {
+    mild:   { name: "Mild",   min: 2, max: 32 },
+    medium: { name: "Medium", min: 2, max: 120 },
+    spicy:  { name: "Spicy",  min: 2, max: 360 },
+  };
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function factorsOf(n){
+    const set = new Set();
+    for(let i=1;i*i<=n;i++){
+      if(n%i===0){
+        set.add(i);
+        set.add(n/i);
+      }
+    }
+    return [...set].sort((a,b)=>a-b);
+  }
+
+  function randInt(a,b){
+    return a + Math.floor(Math.random()*(b-a+1));
+  }
+
+  function makeQuestions(levelKey, count){
+    const L = LEVELS[levelKey];
+    const qs = [];
+    for(let i=0;i<count;i++){
+      const n = randInt(L.min, L.max);
+      qs.push({ n, factors: factorsOf(n) });
+    }
+    return qs;
+  }
+
+  function pageHeaderHTML({levelName, pageNo, pageCount, isKey}){
+    const keyTag = isKey ? `<span class="keyBadge">Answer key</span>` : '';
+    return `
+      <div class="pageHeader">
+        <img class="logo" src="mmt.png" alt="MMT logo" />
+        <div class="titleBlock">
+          <div class="title">Factors — Worksheet (${levelName}) ${keyTag}</div>
+          <div class="sub">${isKey ? 'Answer key' : 'Worksheet'} — Page ${pageNo} of ${pageCount}</div>
+        </div>
+        <div class="nameDate">
+          <div class="nd">
+            <label>Name</label>
+            <div class="line"></div>
+          </div>
+          <div class="nd">
+            <label>Date</label>
+            <div class="line"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function questionCardHTML(q, {isKey}){
+    const pill = `List the factors of ${q.n}`;
+    const ansText = isKey ? q.factors.join(', ') : '';
+    return `
+      <div class="qCard">
+        <div class="qTop">
+          <div class="qPill">${pill}</div>
+        </div>
+        <div class="bigAnswer ${isKey ? 'key' : ''}">${ansText}</div>
+      </div>
+    `;
+  }
+
+  function renderPages(qs, levelKey, {isKey}){
+    const levelName = LEVELS[levelKey].name;
+    const perPage = 10;
+    const pageCount = Math.max(1, Math.ceil(qs.length / perPage));
+    let html = '';
+
+    for(let p=0;p<pageCount;p++){
+      const start = p*perPage;
+      const chunk = qs.slice(start, start+perPage);
+
+      html += `
+        <div class="page">
+          ${pageHeaderHTML({levelName, pageNo: p+1, pageCount, isKey})}
+          <div class="grid">
+            ${chunk.map(q => questionCardHTML(q, {isKey})).join('')}
+          </div>
+        </div>
+      `;
+    }
+    return html;
+  }
+
+  function generate(){
+    const levelKey = levelSel.value;
+    const count = clamp(parseInt(countInp.value || '20', 10), 1, 60);
+    countInp.value = String(count);
+
+    const qs = makeQuestions(levelKey, count);
+
+    out.innerHTML = `
+      <div class="sheet">
+        ${renderPages(qs, levelKey, {isKey:false})}
+        ${keyToggle.checked ? `<div class="hr"></div>${renderPages(qs, levelKey, {isKey:true})}` : ''}
+      </div>
+    `;
+
+    out.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function reset(){
+    levelSel.value = 'mild';
+    countInp.value = '20';
+    keyToggle.checked = true;
+    out.innerHTML = '';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  genBtn.addEventListener('click', generate);
+  printBtn.addEventListener('click', () => window.print());
+  resetBtn.addEventListener('click', reset);
+
+  countInp.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      generate();
+    }
+  });
+})();
+</script>
+</body>
+</html>
