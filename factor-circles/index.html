@@ -1,1 +1,576 @@
-k
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Factor Circles — Teacher Explore</title>
+
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --ink:#111827;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --shadow:0 14px 40px rgba(0,0,0,.10);
+  --radius:18px;
+
+  --blue:#2563eb;
+  --blue2:#1d4ed8;
+  --purple:#7c3aed;
+
+  --chipBg:#eaf2ff;
+  --chipBd:#c7dcff;
+
+  --circle-scale:0.70;   /* 🔥 EXPERIMENT HERE */
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:var(--bg);
+  color:var(--ink);
+}
+
+/* ===== Topbar ===== */
+.topbar{
+  position:sticky;
+  top:0;
+  background:linear-gradient(180deg,rgba(246,247,251,.98),rgba(246,247,251,.92));
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.topbarInner{
+  max-width:1180px;
+  margin:0 auto;
+  padding:12px 14px;
+  display:grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items:center;
+  gap:10px;
+}
+
+.leftTop{display:flex;align-items:center;gap:10px;justify-content:flex-start}
+.centerTop{display:flex;justify-content:center}
+.rightTop{display:flex;align-items:center;justify-content:flex-end;gap:10px} /* ✅ far right */
+
+.btnGhost{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:14px;
+  padding:8px 12px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
+  text-decoration:none;
+  color:inherit;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.mmtLogo{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+.banner{
+  background:linear-gradient(180deg,#2563eb,#1d4ed8);
+  color:#fff;
+  border-radius:18px;
+  padding:10px 20px;
+  font-weight:1000;
+  box-shadow:0 16px 30px rgba(37,99,235,.25);
+}
+
+/* ===== Tools dropdown ===== */
+.menuWrap{position:relative}
+.menuBtn{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:14px;
+  padding:8px 12px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
+}
+.menu{
+  position:absolute;
+  right:0;
+  top:calc(100% + 8px);
+  width:230px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:0 18px 50px rgba(0,0,0,.14);
+  padding:6px;
+  display:none;
+}
+.menu.show{display:block}
+.menu a{
+  display:block;
+  padding:8px 10px;
+  border-radius:10px;
+  text-decoration:none;
+  color:var(--ink);
+  font-weight:900;
+}
+.menu a:hover{background:#f3f4f6}
+
+/* ===== Main ===== */
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:16px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+/* Top row inside panel */
+.panelTopRow{
+  display:grid;
+  grid-template-columns: 1fr auto; /* left spacer + New button */
+  align-items:center;
+  margin-bottom:14px;
+}
+.btn{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:16px;
+  padding:9px 14px;
+  cursor:pointer;
+  font-weight:1000;
+}
+.btn.primary{
+  background:var(--blue);
+  color:#fff;
+  border-color:#1d4ed8;
+}
+
+/* ===== Split image row (80/20) ===== */
+.splitRow{
+  display:grid;
+  grid-template-columns: 4fr 1fr; /* 80/20 */
+  gap:18px;
+  align-items:start;
+}
+
+/* LEFT side wraps and centers the image box */
+.leftPane{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+
+/* RIGHT side: controls + logo */
+.rightPane{
+  display:flex;
+  align-items:flex-start;
+}
+.sideCard{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+  box-shadow: 0 14px 40px rgba(0,0,0,.06);
+  padding:14px;
+  display:grid;
+  gap:12px;
+}
+
+/* Number display in right panel */
+.sideTitle{
+  font-weight:1000;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.sideTitle .eq{ opacity:.6; }
+.sideNum{
+  width:74px;
+  text-align:center;
+  font-weight:1000;
+  font-size:18px;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fbfdff;
+}
+
+/* Helper textbox (looks like a label box) */
+.hintBox{
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#f9fafb;
+  padding:10px 12px;
+  color:var(--muted);
+  font-weight:900;
+  text-align:center;
+  font-size:13px;
+}
+
+/* ✅ Green bubble select */
+.pickWrap{
+  display:inline-flex;
+  align-items:center;
+  position:relative;
+  justify-content:center;
+}
+.pickSel{
+  width:100%;
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+
+  border:2px solid rgba(22,163,74,.35);
+  background:linear-gradient(180deg, rgba(22,163,74,.18), rgba(22,163,74,.10));
+  color:#065f46;
+  font-weight:1000;
+
+  border-radius:999px;
+  padding:10px 46px 10px 16px;
+  box-shadow:0 12px 26px rgba(22,163,74,.16);
+  cursor:pointer;
+  min-width:120px;
+  text-align:left;
+}
+.pickWrap:after{
+  content:"▾";
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-52%);
+  color:#065f46;
+  font-weight:1000;
+  pointer-events:none;
+}
+.pickSel:focus{
+  outline:none;
+  border-color: rgba(22,163,74,.55);
+  box-shadow: 0 0 0 4px rgba(22,163,74,.16), 0 12px 26px rgba(22,163,74,.16);
+}
+
+/* Logo */
+.logoBox{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#fff;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.logoBox img{
+  width:min(180px, 100%);
+  height:auto;
+  display:block;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));
+  opacity:.98;
+}
+
+/* ===== Image box ===== */
+.imgbox{
+  width:calc(100% * var(--circle-scale));
+  max-width:900px;
+  aspect-ratio:1/1;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(37,99,235,.06), transparent 45%),
+    radial-gradient(circle at 70% 80%, rgba(34,197,94,.06), transparent 45%),
+    #fbfcff;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  position:relative;
+}
+.imgbox img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.imgFallback{
+  position:absolute;
+  inset:0;
+  display:none;
+  padding:14px;
+  color:#7f1d1d;
+  background:rgba(220,38,38,.06);
+}
+
+.reorderBtn{
+  position:absolute;
+  right:14px;
+  bottom:14px;
+  border:1px solid rgba(124,58,237,.35);
+  background:rgba(124,58,237,.15);
+  color:#4c1d95;
+  border-radius:16px;
+  padding:9px 14px;
+  font-weight:1000;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.reorderBtn[disabled]{opacity:.4;cursor:not-allowed}
+
+/* Shortcut chips */
+.chipsRow{
+  display:flex;
+  justify-content:space-between;
+  margin-top:14px;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:#fff;
+}
+.chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--chipBd);
+  background:var(--chipBg);
+  font-weight:1000;
+  color:#1d4ed8;
+}
+.kbdKey{
+  font-family:monospace;
+  padding:3px 8px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  background:#fff;
+}
+
+/* Attribution bigger */
+.attribution{
+  font-size:24px;
+  color:var(--muted);
+  text-align:center;
+  margin-top:14px;
+  font-weight:800;
+}
+.attribution a{
+  color:#1d4ed8;
+  text-decoration:none;
+  font-weight:1000;
+}
+.attribution a:hover{ text-decoration:underline; }
+
+/* Responsive: stack right panel under image */
+@media (max-width: 900px){
+  .splitRow{ grid-template-columns: 1fr; }
+  .attribution{ font-size:18px; }
+}
+@media (max-width: 700px){
+  .topbarInner{ grid-template-columns:1fr; }
+  .leftTop,.rightTop,.centerTop{ justify-content:center; }
+  .panelTopRow{ grid-template-columns: 1fr; gap:10px; }
+  .btn.primary{ width:100%; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="topbarInner">
+    <div class="leftTop">
+      <a class="btnGhost" href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">
+        <img class="mmtLogo" src="mmt.png" alt="">
+        Back to Mills Maths Tools
+      </a>
+    </div>
+
+    <div class="centerTop">
+      <div class="banner">Factor Circles — Teacher Explore</div>
+    </div>
+
+    <!-- ✅ Tools is now far right -->
+    <div class="rightTop">
+      <div class="menuWrap">
+        <button class="menuBtn" id="toolsBtn">Tools ▾</button>
+        <div class="menu" id="toolsMenu">
+          <a href="student-quiz.html">Student Quiz</a>
+          <a href="worksheet-creator.html">Worksheet Creator</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+
+    <div class="panelTopRow">
+      <div></div>
+      <div style="text-align:right">
+        <button class="btn primary" id="newBtn">New</button>
+      </div>
+    </div>
+
+    <div class="splitRow">
+      <!-- LEFT: image only -->
+      <div class="leftPane">
+        <div class="imgbox">
+          <img id="dotImg" alt="Dot circle image">
+          <div class="imgFallback" id="imgFallback">Image not found.</div>
+          <button class="reorderBtn" id="reorderBtn">Reorder (R)</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: number + hint + dropdown + logo -->
+      <div class="rightPane">
+        <div class="sideCard">
+
+          <div class="sideTitle">
+            <span>Number</span>
+            <span class="eq">=</span>
+            <input id="numBox" class="sideNum" readonly value="—" aria-label="Current number">
+          </div>
+
+          <div class="hintBox">Click to select a value</div>
+
+          <div class="pickWrap">
+            <select id="pickSel" class="pickSel" aria-label="Select a number"></select>
+          </div>
+
+          <div class="logoBox">
+            <img id="amplifyLogo" src="amplifylogo.png" alt="Amplify logo">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="chipsRow">
+      <div class="chip"><span class="kbdKey">Space</span> New circle</div>
+      <div class="chip"><span class="kbdKey">R</span> Reorder (if available)</div>
+    </div>
+
+    <div class="attribution">
+      All dot circle images generated from
+      <a href="https://polypad.amplify.com/" target="_blank" rel="noopener noreferrer">
+        https://polypad.amplify.com/
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const REORDERS={18:3,15:2,14:2,6:2,10:2,30:3,12:2,20:3,28:3,24:4,21:2,26:2,22:2};
+
+const dotImg=document.getElementById('dotImg');
+const reorderBtn=document.getElementById('reorderBtn');
+const pickSel=document.getElementById('pickSel');
+const newBtn=document.getElementById('newBtn');
+const numBox=document.getElementById('numBox');
+const toolsBtn=document.getElementById('toolsBtn');
+const toolsMenu=document.getElementById('toolsMenu');
+const imgFallback=document.getElementById('imgFallback');
+const amplifyLogo=document.getElementById('amplifyLogo');
+
+let currentN=2;
+let variant=0;
+let variantCount=1;
+
+function numberToWord(n){
+  const ones=["zero","one","two","three","four","five","six","seven","eight","nine"];
+  const teens=["ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  if(n<10)return ones[n];
+  if(n<20)return teens[n-10];
+  if(n<30)return "twenty"+(n===20?"":ones[n-20]);
+  return "thirty"+(n===30?"":ones[n-30]);
+}
+function filename(n,v){
+  const word=numberToWord(n);
+  if(REORDERS[n]) return `${word}-${v}.png`;
+  return `${word}.png`;
+}
+function updateReorder(){
+  variantCount=REORDERS[currentN]||1;
+  variant=0;
+  reorderBtn.style.display=variantCount>1?'flex':'none';
+}
+function loadImage(){
+  const src = filename(currentN,variant);
+  imgFallback.style.display='none';
+  dotImg.style.display='block';
+  dotImg.src=src;
+
+  dotImg.onerror = () => {
+    dotImg.style.display='none';
+    imgFallback.style.display='block';
+    imgFallback.innerHTML = `Image not found: <b>${src}</b>`;
+  };
+
+  numBox.value=currentN;
+  pickSel.value=currentN;
+}
+function show(n){
+  currentN=n;
+  updateReorder();
+  loadImage();
+}
+function newRandom(){
+  const n=Math.floor(Math.random()*31)+2;
+  show(n);
+}
+function reorder(){
+  if(variantCount<=1)return;
+  variant=(variant+1)%variantCount;
+  loadImage();
+}
+
+pickSel.addEventListener('change',()=>show(Number(pickSel.value)));
+newBtn.addEventListener('click',newRandom);
+reorderBtn.addEventListener('click',reorder);
+
+document.addEventListener('keydown',e=>{
+  const tag = document.activeElement?.tagName?.toLowerCase() || "";
+  const typing = tag === "input" || tag === "textarea" || tag === "select";
+
+  if(e.code==="Space"){
+    if(typing) return;
+    e.preventDefault();
+    newRandom();
+  }
+  if(e.key==="r"||e.key==="R"){
+    if(typing) return;
+    reorder();
+  }
+});
+
+toolsBtn.addEventListener('click',()=>toolsMenu.classList.toggle('show'));
+document.addEventListener('click',e=>{
+  if(!toolsMenu.contains(e.target)&&e.target!==toolsBtn) toolsMenu.classList.remove('show');
+});
+
+// If amplify logo missing, hide it gracefully
+amplifyLogo.onerror = () => { amplifyLogo.style.display = 'none'; };
+
+for(let i=2;i<=32;i++){
+  const opt=document.createElement('option');
+  opt.value=i;
+  opt.textContent=i;
+  pickSel.appendChild(opt);
+}
+
+show(2);
+</script>
+
+</body>
+</html>
