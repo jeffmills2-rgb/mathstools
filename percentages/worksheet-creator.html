@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Percentage Number Line Worksheet Generator</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+
+      --pagePad: 12mm;
+
+      --line:#111827;
+      --tick:#111827;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background: radial-gradient(1200px 600px at 20% -10%, #dbeafe 0%, rgba(219,234,254,0) 60%),
+                  radial-gradient(900px 500px at 80% 0%, #ede9fe 0%, rgba(237,233,254,0) 55%),
+                  var(--bg);
+    }
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:18px;
+      padding:18px;
+      max-width: 1400px;
+      margin:0 auto;
+    }
+
+    .panel, .stage{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .panel header{
+      padding:16px 16px 12px;
+      border-bottom:1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:16px;
+      line-height:1.1;
+    }
+    .brand p{
+      margin:2px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .panel .content{
+      padding:14px 16px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .group{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding:12px;
+      background:#fff;
+    }
+    .group h3{
+      margin:0 0 10px;
+      font-size:13px;
+      letter-spacing:.2px;
+    }
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--ink);
+      margin:10px 0 6px;
+    }
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      font-size:14px;
+      background:#fff;
+    }
+    input[type="number"]{ padding-right: 8px; }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .small{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      line-height:1.35;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:6px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      font-size:13px;
+      background:#fff;
+      user-select:none;
+    }
+    .chip input{ transform: translateY(1px); }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:4px;
+    }
+    button{
+      border:0;
+      cursor:pointer;
+      border-radius: 14px;
+      padding:12px 12px;
+      font-weight:700;
+      font-size:14px;
+      transition: transform .06s ease, filter .2s ease;
+    }
+    button:active{ transform: translateY(1px); }
+    .btn-primary{
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color:#fff;
+      flex:1;
+    }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color:var(--ink);
+    }
+    .btn-warn{
+      background:#111827;
+      color:#fff;
+    }
+
+    .stage header{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+    .stage header .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .stage header .title strong{
+      font-size:14px;
+    }
+    .stage header .title span{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .preview{
+      padding:16px;
+    }
+
+    /* Worksheet pages */
+    .page{
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 18px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      overflow:hidden;
+      position:relative;
+    }
+    .page-inner{
+      padding: var(--pagePad);
+    }
+
+    .ws-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 6mm; /* tighter so 3 tasks fits comfortably */
+    }
+    .ws-title{
+      flex:1;
+      text-align:center;
+    }
+    .ws-title h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .ws-title p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .ws-meta{
+      display:grid;
+      gap:6px;
+      min-width: 190px;
+      font-size:12px;
+      color:var(--ink);
+    }
+    .meta-line{
+      display:flex;
+      gap:8px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    .meta-line b{ font-weight:700; }
+    .line{
+      flex:1;
+      border-bottom:1px solid #9ca3af;
+      height: 14px;
+      transform: translateY(-2px);
+    }
+
+    .tasks{
+      display:flex;
+      flex-direction:column;
+      gap: 6mm; /* tighter */
+    }
+
+    .task{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 7mm; /* tighter */
+    }
+    .task .qhead{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:4mm;
+    }
+    .task .qhead strong{
+      font-size:14px;
+    }
+    .task .qhead span{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .nl{
+      width:100%;
+      margin: 1mm 0 4mm; /* tighter */
+    }
+
+    .subqs{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px 18px;
+      font-size:13px;
+    }
+    .subqs .item{
+      display:flex;
+      gap:8px;
+      align-items:baseline;
+    }
+    .subqs .item .lbl{
+      width:18px;
+      font-weight:700;
+    }
+    .ans{
+      flex:1;
+      border-bottom:1px solid #9ca3af;
+      height: 14px;
+      transform: translateY(-2px);
+    }
+
+    /* Print */
+    @media print{
+      body{ background:#fff; }
+      .wrap{ display:block; padding:0; }
+      .panel, .stage header{ display:none !important; }
+      .stage{ border:0; box-shadow:none; }
+      .preview{ padding:0; }
+      .page{
+        box-shadow:none;
+        border:0;
+        border-radius:0;
+        margin:0;
+        page-break-after: always;
+        width: auto;
+        min-height: auto;
+      }
+      .page:last-child{ page-break-after:auto; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1020px){
+      .wrap{ grid-template-columns: 1fr; }
+      .page{ width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- LEFT PANEL -->
+    <aside class="panel">
+      <header>
+        <div class="brand">
+          <div>
+            <h1>Percentage Number Line</h1>
+            <p>Worksheet Generator</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="group">
+          <h3>Worksheet details</h3>
+
+          <label for="wsTitle">Task title</label>
+          <input id="wsTitle" type="text" value="Percentage calculations" />
+
+          <div class="row">
+            <div>
+              <label for="pagesMode">Tasks per page</label>
+              <select id="pagesMode">
+                <option value="2">2 tasks per page</option>
+                <option value="3" selected>3 tasks per page</option>
+                <option value="4">4 tasks per page</option>
+              </select>
+            </div>
+            <div>
+              <label for="numTasks">Number of tasks</label>
+              <input id="numTasks" type="number" min="1" max="40" value="6" />
+            </div>
+          </div>
+
+          <div class="small">
+            Task = one number line (0%–100%) plus 6 percentage questions.
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Totals (100%)</h3>
+
+          <label>Rule for Questions 1–3</label>
+          <div class="small">
+            Questions 1–3 will be random totals that are <b>multiples of 10</b> from <b>10 to 120</b> (inclusive).
+          </div>
+
+          <label for="after3Mode" style="margin-top:12px;">After Question 3</label>
+          <select id="after3Mode">
+            <option value="same" selected>Keep using 10–120 multiples of 10</option>
+            <option value="wide">Use wider random totals (multiples of 10)</option>
+          </select>
+
+          <div id="wideOpts" style="display:none; margin-top:10px;">
+            <div class="row">
+              <div>
+                <label for="minAmt">Min</label>
+                <input id="minAmt" type="number" value="10" min="10" step="10" />
+              </div>
+              <div>
+                <label for="maxAmt">Max</label>
+                <input id="maxAmt" type="number" value="600" min="20" step="10" />
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label for="currency">Currency symbol</label>
+              <input id="currency" type="text" value="$" maxlength="3" />
+            </div>
+            <div>
+              <label for="seed">Optional seed</label>
+              <input id="seed" type="text" placeholder="leave blank for random" />
+            </div>
+          </div>
+
+          <div class="small">
+            Seed lets you reproduce the same worksheet later (e.g., “class7A”).
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Percent questions</h3>
+
+          <label for="percentPreset">Preset</label>
+          <select id="percentPreset">
+            <option value="pdf" selected>PDF style (randomised from selected ticks)</option>
+            <option value="easy">Easy (randomised from selected ticks)</option>
+            <option value="mixed">Mixed (randomised from selected ticks)</option>
+            <option value="custom">Custom (randomised from selected ticks)</option>
+          </select>
+
+          <div class="small" style="margin-bottom:8px;">
+            Tick the pool of percentages you want available. Each question will randomly choose <b>6</b> (no repeats within a question).
+            If you tick fewer than 6, it will pad using the PDF-style set.
+          </div>
+
+          <div class="chips" id="percentChips"></div>
+
+          <div class="small" id="pdfNote" style="margin-top:8px;">
+            If the pool is empty, or needs padding, PDF-style uses 85% for totals ≤100 and 95% for totals &gt;100.
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" id="btnGen">Generate</button>
+          <button class="btn-ghost" id="btnPrint">Print</button>
+        </div>
+
+        <button class="btn-warn" id="btnClear" title="Clears the preview">Clear preview</button>
+      </div>
+    </aside>
+
+    <!-- RIGHT STAGE -->
+    <main class="stage">
+      <header>
+        <div class="title">
+          <strong>Preview</strong>
+          <span>Generate → check layout → Print to PDF</span>
+        </div>
+      </header>
+
+      <div class="preview" id="preview"></div>
+    </main>
+  </div>
+
+<script>
+(function(){
+  // ---------- Seeded RNG (optional) ----------
+  function xmur3(str){
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function() {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return h >>> 0;
+    }
+  }
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+  }
+
+  // ---------- Percent options ----------
+  const ALL_PERCENTS = [1,2,3,4,5,6,7,8,9,10,12.5,15,20,25,30,33.3,35,40,45,50,60,65,70,75,80,85,90,95,99,100];
+
+  const percentChips = document.getElementById('percentChips');
+  function makeChips(){
+    percentChips.innerHTML = '';
+    ALL_PERCENTS.forEach(p=>{
+      const id = 'p_' + String(p).replace('.','_');
+      const wrap = document.createElement('label');
+      wrap.className = 'chip';
+      wrap.innerHTML = `
+        <input type="checkbox" id="${id}" data-p="${p}">
+        <span>${p}%</span>
+      `;
+      percentChips.appendChild(wrap);
+    });
+  }
+  makeChips();
+
+  // ---------- UI elements ----------
+  const wsTitle = document.getElementById('wsTitle');
+  const pagesMode = document.getElementById('pagesMode');
+  const numTasks = document.getElementById('numTasks');
+
+  const after3Mode = document.getElementById('after3Mode');
+  const wideOpts = document.getElementById('wideOpts');
+  const minAmt = document.getElementById('minAmt');
+  const maxAmt = document.getElementById('maxAmt');
+  const currency = document.getElementById('currency');
+  const seed = document.getElementById('seed');
+
+  const percentPreset = document.getElementById('percentPreset');
+  const pdfNote = document.getElementById('pdfNote');
+
+  const preview = document.getElementById('preview');
+
+  function toggleWide(){
+    wideOpts.style.display = (after3Mode.value === 'wide') ? 'block' : 'none';
+  }
+  toggleWide();
+  after3Mode.addEventListener('change', toggleWide);
+
+  // ---------- Helpers ----------
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+  function stripTrailingZeros(n){
+    const s = String(n);
+    if(!s.includes('.')) return s;
+    return s.replace(/\.?0+$/,'');
+  }
+  function money(currSym, n){
+    return `${currSym}${stripTrailingZeros(n)}`;
+  }
+  function escapeHTML(str){
+    return String(str)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'","&#039;");
+  }
+
+  function getSelectedPercents(){
+    const boxes = [...percentChips.querySelectorAll('input[type="checkbox"]')];
+    return boxes.filter(b=>b.checked).map(b=>Number(b.dataset.p));
+  }
+
+  function setPercentsChecked(list){
+    const set = new Set(list.map(String));
+    [...percentChips.querySelectorAll('input[type="checkbox"]')].forEach(b=>{
+      b.checked = set.has(String(b.dataset.p));
+    });
+  }
+
+  // PDF-style fallback (also used for padding)
+  function presetPercentsForTotal(total){
+    const last = (total <= 100) ? 85 : 95;
+    return [10,20,80,5,35,last];
+  }
+
+  // Preset behaviour now means: pre-tick a helpful pool
+  function applyPreset(){
+    const v = percentPreset.value;
+    pdfNote.style.display = 'block';
+
+    if(v === 'pdf'){
+      // Pool includes both 85 and 95 so either could be drawn if ticked
+      setPercentsChecked([5,10,20,35,80,85,95]);
+    }else if(v === 'easy'){
+      setPercentsChecked([5,10,20,25,50,75]);
+    }else if(v === 'mixed'){
+      setPercentsChecked([10,15,30,35,60,85]);
+    }else{
+      // custom: keep whatever user has
+    }
+  }
+  applyPreset();
+  percentPreset.addEventListener('change', applyPreset);
+
+  // ---------- Random total rules ----------
+  function pickMultipleOf10(rng, lo, hi){
+    lo = Math.ceil(lo/10)*10;
+    hi = Math.floor(hi/10)*10;
+    if(hi < lo) return lo;
+    const steps = ((hi - lo) / 10) | 0;
+    const k = Math.floor(rng() * (steps + 1));
+    return lo + 10*k;
+  }
+
+  function buildTotals(count, rng){
+    const totals = [];
+    for(let i=0;i<count;i++){
+      if(i < 3){
+        totals.push(pickMultipleOf10(rng, 10, 120));
+        continue;
+      }
+      if(after3Mode.value === 'wide'){
+        const lo = Number(minAmt.value)||10;
+        const hi = Number(maxAmt.value)||600;
+        totals.push(pickMultipleOf10(rng, lo, hi));
+      }else{
+        totals.push(pickMultipleOf10(rng, 10, 120));
+      }
+    }
+    return totals;
+  }
+
+  // ---------- Randomise percents per task ----------
+  function shuffleInPlace(arr, rng){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function pickRandomUnique(arr, k, rng){
+    const copy = arr.slice();
+    shuffleInPlace(copy, rng);
+    return copy.slice(0, k);
+  }
+
+  function percentsForTask(total, rng){
+    // Pool: what is ticked (always)
+    let pool = getSelectedPercents();
+
+    // If nothing ticked, use PDF-style set
+    if(pool.length === 0){
+      pool = presetPercentsForTotal(total).slice();
+    }
+
+    // If fewer than 6 ticked, pad with PDF-style values (prefer unique)
+    const fallback = presetPercentsForTotal(total);
+    const combined = pool.slice();
+
+    for(const p of fallback){
+      if(combined.length >= 6) break;
+      if(!combined.includes(p)) combined.push(p);
+    }
+
+    // Still fewer than 6? allow repeats by padding from fallback
+    while(combined.length < 6){
+      combined.push(fallback[combined.length % fallback.length]);
+    }
+
+    // Randomly select 6 unique from combined
+    // (If combined contains repeats due to padding, uniqueness isn't guaranteed, but will be rare.)
+    return pickRandomUnique(combined, 6, rng);
+  }
+
+  // ---------- Number line SVG ----------
+  function numberLineSVG(total, currSym){
+    const W = 760, H = 90;
+    const padL = 48, padR = 48;
+    const y = 40;
+    const x0 = padL, x1 = W - padR;
+    const tickTop = y - 8, tickBot = y + 8;
+
+    const ticks = [];
+    for(let i=0;i<=10;i++){
+      const pct = i*10;
+      const x = x0 + (x1-x0)*(i/10);
+      ticks.push({pct, x});
+    }
+
+    const fmtTotal = `${currSym}${stripTrailingZeros(total)}`;
+
+    const lines = [];
+    lines.push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="var(--line)" stroke-width="2"/>`);
+    lines.push(`<line x1="${x0}" y1="${y-12}" x2="${x0}" y2="${y+12}" stroke="var(--line)" stroke-width="2"/>`);
+    lines.push(`<line x1="${x1}" y1="${y-12}" x2="${x1}" y2="${y+12}" stroke="var(--line)" stroke-width="2"/>`);
+
+    lines.push(`<text x="${x0-6}" y="${y-18}" font-size="14" text-anchor="end" fill="var(--ink)">${currSym}0</text>`);
+    lines.push(`<text x="${x1+6}" y="${y-18}" font-size="14" text-anchor="start" fill="var(--ink)">${fmtTotal}</text>`);
+
+    ticks.forEach(t=>{
+      lines.push(`<line x1="${t.x}" y1="${tickTop}" x2="${t.x}" y2="${tickBot}" stroke="var(--tick)" stroke-width="2"/>`);
+      lines.push(`<text x="${t.x}" y="${y+34}" font-size="12" text-anchor="middle" fill="var(--ink)">${t.pct}%</text>`);
+    });
+
+    return `
+      <svg class="nl" viewBox="0 0 ${W} ${H}" width="100%" height="auto" role="img" aria-label="Number line from 0% to 100%">
+        ${lines.join('')}
+      </svg>
+    `;
+  }
+
+  // ---------- Task builder ----------
+  function buildTask(index, total, currSym, rng){
+    const pcts = percentsForTask(total, rng);
+    const labels = ['a','b','c','d','e','f'];
+
+    const sub = pcts.map((p,i)=>{
+      const pctText = (String(p).endsWith('.3') ? '33.3' : stripTrailingZeros(p));
+      return `
+        <div class="item">
+          <div class="lbl">${labels[i]}.</div>
+          <div>${pctText}% of ${money(currSym,total)} =</div>
+          <div class="ans"></div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <section class="task">
+        <div class="qhead">
+          <strong>Question ${index+1}</strong>
+          <span>Use the number line to work out each percentage.</span>
+        </div>
+
+        ${numberLineSVG(total, currSym)}
+
+        <div class="subqs">
+          ${sub}
+        </div>
+      </section>
+    `;
+  }
+
+  function buildPages(){
+    preview.innerHTML = '';
+
+    const title = wsTitle.value.trim() || 'Percentage calculations';
+    const tasksPerPage = Number(pagesMode.value);
+    const count = clamp(Number(numTasks.value)||6, 1, 40);
+
+    const currSym = (currency.value || '$').trim() || '$';
+
+    // RNG setup
+    const seedStr = seed.value.trim();
+    const rng = seedStr ? mulberry32(xmur3(seedStr)()) : Math.random;
+
+    const totals = buildTotals(count, rng);
+
+    for(let i=0;i<count;i+=tasksPerPage){
+      const chunk = totals.slice(i, i+tasksPerPage);
+      const tasksHTML = chunk.map((amt, j)=>buildTask(i+j, amt, currSym, rng)).join('');
+
+      const page = document.createElement('div');
+      page.className = 'page';
+      page.innerHTML = `
+        <div class="page-inner">
+          <div class="ws-head">
+            <div style="width:1px;"></div>
+
+            <div class="ws-title">
+              <h2>${escapeHTML(title)}</h2>
+              <p>Percentage number line (0% → 100%)</p>
+            </div>
+
+            <div class="ws-meta">
+              <div class="meta-line"><b>Name</b><span class="line"></span></div>
+              <div class="meta-line"><b>Date</b><span class="line"></span></div>
+            </div>
+          </div>
+
+          <div class="tasks">
+            ${tasksHTML}
+          </div>
+        </div>
+      `;
+      preview.appendChild(page);
+    }
+  }
+
+  // ---- Buttons
+  document.getElementById('btnGen').addEventListener('click', buildPages);
+  document.getElementById('btnPrint').addEventListener('click', ()=>{
+    if(!preview.children.length) buildPages();
+    window.print();
+  });
+  document.getElementById('btnClear').addEventListener('click', ()=>{
+    preview.innerHTML = '';
+  });
+
+  // Generate once on load
+  buildPages();
+})();
+</script>
+</body>
+</html>
