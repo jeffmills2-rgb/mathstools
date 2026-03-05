@@ -171,6 +171,7 @@
       padding: 8px 4px 4px;
     }
     .termChip{
+      position: relative; /* ✅ needed for close button */
       display:flex;
       align-items:center;
       gap:8px;
@@ -180,6 +181,41 @@
       border: 2px solid #dbeafe;
       box-shadow: 0 12px 26px rgba(0,0,0,.06);
     }
+
+    /* ✅ close "x" button */
+    .closeTerm{
+      position:absolute;
+      top:-9px;
+      right:-9px;
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      border:2px solid rgba(139,92,246,.45);
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 8px 16px rgba(0,0,0,.10);
+      color:#6d28d9;
+      font-weight: 1000;
+      line-height: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      padding:0;
+    }
+    .closeTerm:hover{
+      transform: scale(1.06);
+      border-color: rgba(139,92,246,.70);
+    }
+    .closeTerm:active{
+      transform: scale(.98);
+    }
+    .closeTerm:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+    }
+
     .termChip .seg{
       display:flex;
       align-items:center;
@@ -467,7 +503,6 @@
           </select>
         </div>
 
-        <!-- ✅ optional middot toggle -->
         <label class="pillToggle" title="Use · instead of ×">
           <input id="mulToggle" type="checkbox" />
           <span>Use ·</span>
@@ -546,7 +581,6 @@
 
   function pulseSimplify(){
     simplifyBtn.classList.remove('pulse');
-    // restart animation
     void simplifyBtn.offsetWidth;
     simplifyBtn.classList.add('pulse');
   }
@@ -575,7 +609,6 @@
   el('mulToggle').addEventListener('change', (e) => {
     useDot = !!e.target.checked;
     try{ localStorage.setItem('mmt_collect_mulDot', useDot ? '1' : '0'); }catch(_){}
-    // re-render working text to update symbols
     computeSimplifyLines();
     renderWorkBox();
   });
@@ -616,7 +649,7 @@
     }
   }, { passive: false });
 
-  // ✅ keyboard flow:
+  // Keyboard flow:
   // N = Random
   // R or S = Reveal/Simplify
   // Backspace twice = Reset
@@ -661,7 +694,7 @@
     renderAll();
   });
 
-  // ✅ reveal logic: animate per like-term group on first reveal,
+  // reveal logic: animate per like-term group on first reveal,
   // but only increment the simplify counter when the line is COMPLETE.
   simplifyBtn.addEventListener('click', async () => {
     if (busyReveal) return;
@@ -669,17 +702,14 @@
 
     const nextLine = cachedLines[simplifyStep + 1];
 
-    // First reveal: collected like terms, animate group-by-group
     if (simplifyStep === 0 && nextLine && nextLine.anim === 'collect'){
       busyReveal = true;
       simplifyBtn.disabled = true;
       pulseSimplify();
 
-      // Render a preview of the next line (tokens hidden), then animate into it
       const eqEl = renderWorkBoxPreviewEq(nextLine);
       await animateCollectSequential(eqEl);
 
-      // Now count this reveal as complete
       simplifyStep++;
       busyReveal = false;
       renderWorkBox();
@@ -688,7 +718,6 @@
       return;
     }
 
-    // Other reveals: normal
     pulseSimplify();
     simplifyStep++;
     renderWorkBox();
@@ -829,7 +858,7 @@
     terms = terms.map((t, idx) => {
       const groups = sanitizeGroups(t.groups);
       const unit = sanitizeUnit(t.unit);
-      const op = (idx === 0) ? '+' : (t.op === '-' ? '-' : '+');
+      const op = (idx === 0) ? '+' : (t.op === '-' ? '-' : '+'); // first term always positive
       return { op, groups, unit };
     });
 
@@ -850,6 +879,34 @@
       const chip = document.createElement('div');
       chip.className = 'termChip';
 
+      // ✅ close button (remove this term)
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'closeTerm';
+      closeBtn.type = 'button';
+      closeBtn.textContent = '×';
+      closeBtn.title = 'Remove this term';
+
+      // Keep at least 1 term (disable when only one remains)
+      closeBtn.disabled = (terms.length <= 1);
+
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (terms.length <= 1){
+          showToast('You need at least 1 term', 1100);
+          return;
+        }
+
+        terms.splice(idx, 1);
+        simplifyStep = 0;
+        busyReveal = false;
+        renderAll();
+      });
+
+      chip.appendChild(closeBtn);
+
+      // op selector (skip for first term)
       if (idx !== 0){
         const op = document.createElement('select');
         op.className = 'opSelect';
@@ -948,7 +1005,6 @@
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
 
-      // ✅ bubble clarity: slightly smaller halo chips for dense 8/9 patterns
       bubble.style.setProperty('--dotScale', (t.groups >= 8 ? '0.92' : '1'));
 
       const signNeg = (t.op === '-');
@@ -1200,7 +1256,6 @@
     }
   }
 
-  // Preview renderer used ONLY for the first animated reveal (step 0 -> step 1)
   function renderWorkBoxPreviewEq(line){
     workLines.innerHTML = '';
 
@@ -1243,7 +1298,6 @@
       s.className = 'eqTok ' + (tok.neg ? 'neg' : 'pos');
       s.dataset.key = tok.key;
       s.textContent = tok.text;
-      // start hidden; animation will pop them in
       s.style.opacity = '0';
       s.style.transform = 'scale(0.98)';
       holder.appendChild(s);
@@ -1275,7 +1329,6 @@
       .replaceAll('>','&gt;');
   }
 
-  /* Animation layer helpers */
   function ensureAnimLayer(){
     let layer = document.querySelector('.animLayer');
     if (!layer){
@@ -1290,7 +1343,6 @@
     return new Promise(res => setTimeout(res, ms));
   }
 
-  // ✅ Sequential: each like-term "group" animates, then the next group.
   async function animateCollectSequential(eqLineEl){
     const layer = ensureAnimLayer();
 
@@ -1301,7 +1353,6 @@
       const t = targets[ti];
       const key = t.dataset.key;
 
-      // ignore placeholders
       if (!key || key === '__0__') {
         t.style.opacity = '1';
         t.style.transform = 'scale(1)';
@@ -1345,11 +1396,9 @@
         driftPromises.push(drift.finished.then(() => ghost.remove()));
       }
 
-      // wait until the last ghost is basically there, then pop the target
       const lastDelay = 40 * Math.max(0, sources.length - 1);
       await wait(520 + lastDelay - 140);
 
-      // pop target in
       t.animate([
         { opacity: 0, transform: 'scale(0.98)' },
         { opacity: 1, transform: 'scale(1.12)' },
@@ -1362,12 +1411,10 @@
 
       t.style.opacity = '1';
 
-      // finish this group cleanly before the next group begins
       await Promise.allSettled(driftPromises);
       await wait(120);
     }
 
-    // micro-feedback on completion
     eqLineEl.classList.remove('flash');
     void eqLineEl.offsetWidth;
     eqLineEl.classList.add('flash');
