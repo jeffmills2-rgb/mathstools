@@ -13,26 +13,21 @@
       --muted:#6b7280;
       --border:#e5e7eb;
       --shadow: 0 14px 40px rgba(0,0,0,.10);
-      --radius: 18px;
 
       --blue:#2563eb;
       --blue2:#1d4ed8;
 
       --purple:#8b5cf6;
-      --purple2:#7c3aed;
 
       --ok:#16a34a;
       --bad:#dc2626;
 
       --bubbleStroke:#8b5cf6;
-
-      /* circles */
       --bubbleDia:220px;
 
       /* 🔧 TUNER: bubble text size ONLY (adjust this) */
       --bubbleFont: 20px;
 
-      --exprFont: 64px;
       --exprFontSmall: 54px;
 
       --termChipBg:#eef2ff;
@@ -56,7 +51,6 @@
       backdrop-filter: blur(10px);
       border-bottom:1px solid rgba(229,231,235,.6);
     }
-    /* ✅ widened to give more horizontal space overall */
     .topbar-inner{
       max-width: 1480px;
       margin: 0 auto;
@@ -106,7 +100,7 @@
       gap:10px;
     }
 
-    .pillBtn, .pillSelect{
+    .pillBtn, .pillSelect, .pillToggle{
       border:1px solid var(--border);
       background:#fff;
       padding:10px 14px;
@@ -116,6 +110,9 @@
       cursor:pointer;
       white-space:nowrap;
       color:var(--ink);
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
     .pillBtn.blue{
       border-color:#bfdbfe;
@@ -138,8 +135,18 @@
       cursor:pointer;
       outline:none;
     }
+    .pillToggle{
+      padding: 10px 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .pillToggle input{
+      width:18px;
+      height:18px;
+      accent-color: var(--purple);
+      cursor:pointer;
+    }
 
-    /* ✅ widened + reduced side padding so 5 circles fit */
     .wrap{
       max-width: 1480px;
       margin: 14px auto 0;
@@ -151,7 +158,6 @@
       border:1px solid rgba(229,231,235,.9);
       border-radius: 24px;
       box-shadow: var(--shadow);
-      /* ✅ slightly reduced inner padding to gain width */
       padding: 14px;
     }
 
@@ -239,7 +245,6 @@
     .bubblesRow{
       margin-top: 14px;
       display:flex;
-      /* ✅ slightly tighter gap helps 5 fit without feeling cramped */
       gap:14px;
       justify-content:center;
       flex-wrap:wrap;
@@ -254,10 +259,11 @@
       box-shadow: 0 14px 35px rgba(0,0,0,.08);
       position:relative;
       overflow:hidden;
+      --dotScale: 1;
     }
     .bubble .dot{
       position:absolute;
-      transform: translate(-50%,-50%);
+      transform: translate(-50%,-50%) scale(var(--dotScale));
       font-weight: 1000;
       font-size: var(--bubbleFont);
       line-height: 1;
@@ -265,7 +271,6 @@
       user-select:none;
       white-space:nowrap;
 
-      /* halo bubbles */
       padding: 6px 10px;
       border-radius: 999px;
       background: rgba(255,255,255,.95);
@@ -299,8 +304,18 @@
       cursor:pointer;
       box-shadow: 0 10px 20px rgba(0,0,0,.06);
       z-index: 5;
+      transform: translateZ(0);
     }
-    .simplifyBtn:disabled{ opacity:.45; cursor:not-allowed; }
+    .simplifyBtn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    @keyframes pulseBtn {
+      0%   { transform: translateZ(0) scale(1); }
+      40%  { transform: translateZ(0) scale(1.06); }
+      100% { transform: translateZ(0) scale(1); }
+    }
+    .simplifyBtn.pulse{
+      animation: pulseBtn 260ms cubic-bezier(.2,.9,.2,1);
+    }
 
     .workBox{
       background:#fff;
@@ -354,7 +369,15 @@
     }
     .eqLine .eq{ font-weight:1000; opacity:.9; }
 
-    /* tokenised eq line (for animation + colour) */
+    @keyframes flashLine {
+      0%   { transform: translateY(-2px); filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }
+      60%  { transform: translateY(0);   filter: drop-shadow(0 10px 18px rgba(37,99,235,.14)); }
+      100% { transform: translateY(0);   filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }
+    }
+    .eqLine.flash{
+      animation: flashLine 320ms cubic-bezier(.2,.9,.2,1);
+    }
+
     .eqTokens{
       display:inline-flex;
       align-items:baseline;
@@ -364,6 +387,7 @@
     .eqTok{
       display:inline-block;
       white-space: pre;
+      transform: translateZ(0);
     }
     .eqTok.pos{ color: var(--ok); }
     .eqTok.neg{ color: var(--bad); }
@@ -384,6 +408,25 @@
       pointer-events: none;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.18));
     }
+
+    /* tiny toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(17,24,39,.92);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      box-shadow: 0 16px 30px rgba(0,0,0,.20);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      z-index: 10000;
+    }
+    .toast.show{ opacity: 1; }
 
     .footerLink{
       margin: 18px auto 22px;
@@ -424,6 +467,12 @@
           </select>
         </div>
 
+        <!-- ✅ optional middot toggle -->
+        <label class="pillToggle" title="Use · instead of ×">
+          <input id="mulToggle" type="checkbox" />
+          <span>Use ·</span>
+        </label>
+
         <button class="pillBtn red" id="resetBtn" type="button">Reset</button>
         <button class="pillBtn blue" id="randomBtn" type="button">Random</button>
       </div>
@@ -452,6 +501,8 @@
     </div>
   </div>
 
+  <div class="toast" id="toast"></div>
+
 <script>
 (() => {
   const MAX_TERMS = 5;
@@ -468,8 +519,12 @@
   let simplifyTotal = 1; // computed
   let cachedLines = [];  // [{type:'line0', items:[...]} , {type:'eq', text:'...'}]
 
-  // prevent re-playing animation when re-rendering
-  let lastAnimatedStep = 0;
+  // Animation / flow control
+  let busyReveal = false;
+  let lastResetArmAt = 0;
+
+  // Multiplication symbol toggle
+  let useDot = false; // "·" when true, otherwise "×"
 
   const el = (id) => document.getElementById(id);
 
@@ -478,6 +533,23 @@
   const addTermBtn = el('addTermBtn');
   const simplifyBtn = el('simplifyBtn');
   const workLines = el('workLines');
+  const toastEl = el('toast');
+
+  const MUL = () => (useDot ? '·' : '×');
+
+  function showToast(msg, ms=1200){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(() => toastEl.classList.remove('show'), ms);
+  }
+
+  function pulseSimplify(){
+    simplifyBtn.classList.remove('pulse');
+    // restart animation
+    void simplifyBtn.offsetWidth;
+    simplifyBtn.classList.add('pulse');
+  }
 
   // navigation
   el('toolsMenu').addEventListener('change', (e) => {
@@ -490,50 +562,94 @@
     mode = e.target.value;
     if (mode !== 'single' && mode !== 'two') mode = 'single';
     simplifyStep = 0;
-    lastAnimatedStep = 0;
+    busyReveal = false;
     renderAll();
   });
 
-  el('resetBtn').addEventListener('click', () => {
+  // remember middot choice
+  try{
+    const saved = localStorage.getItem('mmt_collect_mulDot');
+    if (saved === '1') useDot = true;
+  }catch(_){}
+  el('mulToggle').checked = useDot;
+  el('mulToggle').addEventListener('change', (e) => {
+    useDot = !!e.target.checked;
+    try{ localStorage.setItem('mmt_collect_mulDot', useDot ? '1' : '0'); }catch(_){}
+    // re-render working text to update symbols
+    computeSimplifyLines();
+    renderWorkBox();
+  });
+
+  function doReset(){
     terms = [
       { op: '+', groups: 5, unit: '8' },
       { op: '+', groups: 4, unit: 'x' },
       { op: '-', groups: 7, unit: 'x' }
     ];
     simplifyStep = 0;
-    lastAnimatedStep = 0;
+    busyReveal = false;
     renderAll();
+  }
+
+  el('resetBtn').addEventListener('click', () => {
+    doReset();
   });
 
   el('randomBtn').addEventListener('click', () => {
     makeRandomQuestion();
     simplifyStep = 0;
-    lastAnimatedStep = 0;
+    busyReveal = false;
     renderAll();
   });
 
   // Spacebar shortcut for Random
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
+      const a = document.activeElement;
+      const tag = a ? a.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
       e.preventDefault();
       makeRandomQuestion();
       simplifyStep = 0;
-      lastAnimatedStep = 0;
+      busyReveal = false;
       renderAll();
     }
   }, { passive: false });
 
-  // ✅ NEW: R key shortcut for reveal/simplify
+  // ✅ keyboard flow:
+  // N = Random
+  // R or S = Reveal/Simplify
+  // Backspace twice = Reset
   window.addEventListener('keydown', (e) => {
-    if (e.key !== 'r' && e.key !== 'R') return;
-
     const a = document.activeElement;
     const tag = a ? a.tagName.toLowerCase() : '';
-    if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+    const inInput = (tag === 'input' || tag === 'select' || tag === 'textarea');
 
-    if (!simplifyBtn.disabled) {
+    if (inInput) return;
+
+    if (e.key === 'n' || e.key === 'N'){
       e.preventDefault();
-      simplifyBtn.click();
+      el('randomBtn').click();
+      return;
+    }
+
+    if (e.key === 'r' || e.key === 'R' || e.key === 's' || e.key === 'S'){
+      e.preventDefault();
+      if (!simplifyBtn.disabled) simplifyBtn.click();
+      return;
+    }
+
+    if (e.key === 'Backspace'){
+      e.preventDefault();
+      const now = Date.now();
+      if (now - lastResetArmAt < 1500){
+        doReset();
+        showToast('Reset ✓', 900);
+        lastResetArmAt = 0;
+      } else {
+        lastResetArmAt = now;
+        showToast('Press Backspace again to reset', 1200);
+      }
     }
   });
 
@@ -541,15 +657,43 @@
     if (terms.length >= MAX_TERMS) return;
     terms.push({ op: '+', groups: 1, unit: (mode === 'single' ? 'x' : 'x') });
     simplifyStep = 0;
-    lastAnimatedStep = 0;
+    busyReveal = false;
     renderAll();
   });
 
-  simplifyBtn.addEventListener('click', () => {
+  // ✅ reveal logic: animate per like-term group on first reveal,
+  // but only increment the simplify counter when the line is COMPLETE.
+  simplifyBtn.addEventListener('click', async () => {
+    if (busyReveal) return;
     if (simplifyStep >= simplifyTotal) return;
+
+    const nextLine = cachedLines[simplifyStep + 1];
+
+    // First reveal: collected like terms, animate group-by-group
+    if (simplifyStep === 0 && nextLine && nextLine.anim === 'collect'){
+      busyReveal = true;
+      simplifyBtn.disabled = true;
+      pulseSimplify();
+
+      // Render a preview of the next line (tokens hidden), then animate into it
+      const eqEl = renderWorkBoxPreviewEq(nextLine);
+      await animateCollectSequential(eqEl);
+
+      // Now count this reveal as complete
+      simplifyStep++;
+      busyReveal = false;
+      renderWorkBox();
+      renderSimplifyBtn();
+      flashNewestEq();
+      return;
+    }
+
+    // Other reveals: normal
+    pulseSimplify();
     simplifyStep++;
     renderWorkBox();
     renderSimplifyBtn();
+    flashNewestEq();
   });
 
   function clampInt(v, min, max, fallback){
@@ -619,10 +763,6 @@
     return normalizeUnit(u);
   }
 
-  function termToDisplayToken(groups, unit){
-    return unit;
-  }
-
   function termToExpression(groups, unit, signForText){
     const g = groups;
     const u = normalizeUnit(unit);
@@ -638,7 +778,7 @@
       return signPrefix + String(g) + u;
     }
 
-    return signPrefix + String(g) + '×' + u;
+    return signPrefix + String(g) + MUL() + u;
   }
 
   function termToExpressionFirst(groups, unit){
@@ -647,7 +787,7 @@
 
     if (g === 1) return u;
     if (!hasLeadingDigit(u) && !isNumericUnit(u)) return String(g) + u;
-    return String(g) + '×' + u;
+    return String(g) + MUL() + u;
   }
 
   function makeRandomQuestion(){
@@ -694,7 +834,7 @@
     });
 
     simplifyStep = 0;
-    lastAnimatedStep = 0;
+    busyReveal = false;
 
     renderTermsUI();
     renderBubbles();
@@ -721,7 +861,7 @@
         op.addEventListener('change', () => {
           t.op = op.value;
           simplifyStep = 0;
-          lastAnimatedStep = 0;
+          busyReveal = false;
           renderBubbles();
           computeSimplifyLines();
           renderWorkBox();
@@ -742,7 +882,7 @@
         t.groups = sanitizeGroups(gInp.value);
         gInp.value = String(t.groups);
         simplifyStep = 0;
-        lastAnimatedStep = 0;
+        busyReveal = false;
         renderBubbles();
         computeSimplifyLines();
         renderWorkBox();
@@ -767,7 +907,7 @@
           uInp.value = cleaned;
         }
         simplifyStep = 0;
-        lastAnimatedStep = 0;
+        busyReveal = false;
         renderBubbles();
         computeSimplifyLines();
         renderWorkBox();
@@ -783,6 +923,7 @@
     });
   }
 
+  // Dice-like positions (percent coords) for 1..9
   const DOTS = {
     1: [[50,50]],
     2: [[30,35],[70,65]],
@@ -807,10 +948,13 @@
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
 
+      // ✅ bubble clarity: slightly smaller halo chips for dense 8/9 patterns
+      bubble.style.setProperty('--dotScale', (t.groups >= 8 ? '0.92' : '1'));
+
       const signNeg = (t.op === '-');
       const cls = signNeg ? 'neg' : 'pos';
-      const token = termToDisplayToken(t.groups, t.unit);
-      const shownToken = signNeg ? ('-' + normalizeUnit(token)) : normalizeUnit(token);
+      const token = normalizeUnit(t.unit);
+      const shownToken = signNeg ? ('-' + token) : token;
 
       const pos = positionsForCount(t.groups);
       pos.forEach(([x,y]) => {
@@ -843,35 +987,6 @@
     return { map, order };
   }
 
-  function stringifyCollected(map, order){
-    const parts = [];
-    for (const u of order){
-      const c = map.get(u);
-      if (!c) continue;
-      const abs = Math.abs(c);
-      const neg = c < 0;
-
-      let body;
-      if (abs === 1){
-        body = u;
-      } else {
-        if (!hasLeadingDigit(u) && !isNumericUnit(u)){
-          body = String(abs) + u;
-        } else {
-          body = String(abs) + '×' + u;
-        }
-      }
-
-      if (parts.length === 0){
-        parts.push((neg ? '− ' : '') + body);
-      } else {
-        parts.push((neg ? ' − ' : ' + ') + body);
-      }
-    }
-    if (parts.length === 0) return '0';
-    return parts.join('');
-  }
-
   function buildCollectedTokens(map, order){
     const tokens = [];
     for (const u of order){
@@ -886,7 +1001,7 @@
         body = u;
       } else {
         if (!hasLeadingDigit(u) && !isNumericUnit(u)) body = String(abs) + u;
-        else body = String(abs) + '×' + u;
+        else body = String(abs) + MUL() + u;
       }
 
       const text = (tokens.length === 0)
@@ -895,7 +1010,12 @@
 
       tokens.push({ key: u, text, neg });
     }
+    if (!tokens.length) tokens.push({ key:'__0__', text:'0', neg:false });
     return tokens;
+  }
+
+  function stringifyFromTokens(tokens){
+    return tokens.map(t => t.text).join('');
   }
 
   function evaluateNumericAndCoeffAlgebra(map, order){
@@ -940,50 +1060,18 @@
     return { constSum, newMap, newOrder };
   }
 
-  function stringifyFinal(constSum, map, order){
-    const parts = [];
-
-    if (constSum !== 0){
-      parts.push(String(constSum));
-    }
-
-    for (const u of order){
-      const c = map.get(u);
-      if (!c) continue;
-      const abs = Math.abs(c);
-      const neg = c < 0;
-
-      let body;
-      if (abs === 1){
-        body = u;
-      } else {
-        body = String(abs) + u;
-      }
-
-      if (parts.length === 0){
-        parts.push((neg ? '− ' : '') + body);
-      } else {
-        parts.push((neg ? ' − ' : ' + ') + body);
-      }
-    }
-
-    if (parts.length === 0) return '0';
-    return parts.join('');
-  }
-
-  // ✅ NEW: token builder for final line so it can be coloured too
   function buildFinalTokens(constSum, map, order){
     const tokens = [];
-    const pushTok = (neg, body) => {
+    const pushTok = (neg, body, key) => {
       const text = (tokens.length === 0)
         ? ((neg ? '− ' : '') + body)
         : ((neg ? ' − ' : ' + ') + body);
-      tokens.push({ key: '__final__', text, neg });
+      tokens.push({ key: key || '__final__', text, neg });
     };
 
     if (constSum !== 0){
       const neg = constSum < 0;
-      pushTok(neg, String(Math.abs(constSum)));
+      pushTok(neg, String(Math.abs(constSum)), '__const__');
     }
 
     for (const u of order){
@@ -996,10 +1084,10 @@
       if (abs === 1) body = u;
       else body = String(abs) + u;
 
-      pushTok(neg, body);
+      pushTok(neg, body, u);
     }
 
-    if (tokens.length === 0){
+    if (!tokens.length){
       tokens.push({ key:'__final__', text:'0', neg:false });
     }
     return tokens;
@@ -1015,12 +1103,12 @@
     });
 
     const { map, order } = collectedMap();
-    const collectedExpr = stringifyCollected(map, order);
     const collectedTokens = buildCollectedTokens(map, order);
+    const collectedExpr = stringifyFromTokens(collectedTokens);
 
     const { constSum, newMap, newOrder } = evaluateNumericAndCoeffAlgebra(map, order);
-    const finalExpr = stringifyFinal(constSum, newMap, newOrder);
     const finalTokens = buildFinalTokens(constSum, newMap, newOrder);
+    const finalExpr = stringifyFromTokens(finalTokens);
 
     const line0Text = originalItems.join(' ');
     const line1Text = collectedExpr;
@@ -1036,7 +1124,6 @@
       cachedLines.push({ type:'eq', text: line1Text, tokens: collectedTokens, anim: 'collect' });
     }
     if (needLine2){
-      // ✅ final line now uses tokens too (colouring)
       cachedLines.push({ type:'eq', text: line2Text, tokens: finalTokens });
     }
 
@@ -1049,13 +1136,14 @@
 
   function renderSimplifyBtn(){
     simplifyBtn.textContent = `Simplify ${Math.min(simplifyStep, simplifyTotal)}/${simplifyTotal}`;
-    simplifyBtn.disabled = simplifyStep >= simplifyTotal;
+    simplifyBtn.disabled = busyReveal || (simplifyStep >= simplifyTotal);
   }
 
   function renderWorkBox(){
     workLines.innerHTML = '';
 
     const l0 = cachedLines.find(x => x.type === 'line0');
+
     const grid = document.createElement('div');
     grid.className = 'line0';
 
@@ -1068,12 +1156,10 @@
 
     (l0?.items || ['']).forEach((txt, idx) => {
       const cell = document.createElement('div');
-
       const trimmed = String(txt).trim();
       const isNeg = trimmed.startsWith('−') || trimmed.startsWith('-');
       cell.className = 'termCell ' + (isNeg ? 'neg' : 'pos');
 
-      // tag source cells for animation
       const key = termKey(terms[idx]?.unit ?? 'x');
       cell.dataset.key = key;
       cell.dataset.idx = String(idx);
@@ -1086,11 +1172,7 @@
     workLines.appendChild(grid);
     workLines.appendChild(ruleEl());
 
-    // reveal eq lines up to simplifyStep
     let shown = 0;
-    let firstEqEl = null;
-    let firstEqLine = null;
-
     for (let i=1;i<cachedLines.length;i++){
       if (shown >= simplifyStep) break;
 
@@ -1114,20 +1196,70 @@
       }
 
       workLines.appendChild(eq);
-
-      if (!firstEqEl){
-        firstEqEl = eq;
-        firstEqLine = line;
-      }
-
       shown++;
     }
+  }
 
-    // run the gather & pop animation ONLY the first time we reveal step 1
-    if (simplifyStep >= 1 && lastAnimatedStep < 1 && firstEqEl && firstEqLine && firstEqLine.anim === 'collect'){
-      lastAnimatedStep = 1;
-      requestAnimationFrame(() => animateCollectTo(firstEqEl));
-    }
+  // Preview renderer used ONLY for the first animated reveal (step 0 -> step 1)
+  function renderWorkBoxPreviewEq(line){
+    workLines.innerHTML = '';
+
+    const l0 = cachedLines.find(x => x.type === 'line0');
+
+    const grid = document.createElement('div');
+    grid.className = 'line0';
+    const n = (l0?.items?.length || 1);
+    grid.style.gridTemplateColumns = `repeat(${n}, var(--bubbleDia))`;
+    grid.style.columnGap = '14px';
+    grid.style.width = 'fit-content';
+    grid.style.margin = '0 auto';
+    grid.style.justifyContent = 'center';
+
+    (l0?.items || ['']).forEach((txt, idx) => {
+      const cell = document.createElement('div');
+      const trimmed = String(txt).trim();
+      const isNeg = trimmed.startsWith('−') || trimmed.startsWith('-');
+      cell.className = 'termCell ' + (isNeg ? 'neg' : 'pos');
+
+      const key = termKey(terms[idx]?.unit ?? 'x');
+      cell.dataset.key = key;
+      cell.dataset.idx = String(idx);
+      cell.dataset.neg = isNeg ? '1' : '0';
+
+      cell.textContent = txt;
+      grid.appendChild(cell);
+    });
+
+    workLines.appendChild(grid);
+    workLines.appendChild(ruleEl());
+
+    const eq = document.createElement('div');
+    eq.className = 'eqLine';
+    eq.innerHTML = `<span class="eq">=</span><span class="eqTokens"></span>`;
+    const holder = eq.querySelector('.eqTokens');
+
+    (line.tokens || []).forEach(tok => {
+      const s = document.createElement('span');
+      s.className = 'eqTok ' + (tok.neg ? 'neg' : 'pos');
+      s.dataset.key = tok.key;
+      s.textContent = tok.text;
+      // start hidden; animation will pop them in
+      s.style.opacity = '0';
+      s.style.transform = 'scale(0.98)';
+      holder.appendChild(s);
+    });
+
+    workLines.appendChild(eq);
+    return eq;
+  }
+
+  function flashNewestEq(){
+    const lines = [...workLines.querySelectorAll('.eqLine')];
+    if (!lines.length) return;
+    const last = lines[lines.length - 1];
+    last.classList.remove('flash');
+    void last.offsetWidth;
+    last.classList.add('flash');
   }
 
   function ruleEl(){
@@ -1143,7 +1275,7 @@
       .replaceAll('>','&gt;');
   }
 
-  /* Gather & pop animation */
+  /* Animation layer helpers */
   function ensureAnimLayer(){
     let layer = document.querySelector('.animLayer');
     if (!layer){
@@ -1154,39 +1286,37 @@
     return layer;
   }
 
-  function animateCollectTo(eqLineEl){
+  function wait(ms){
+    return new Promise(res => setTimeout(res, ms));
+  }
+
+  // ✅ Sequential: each like-term "group" animates, then the next group.
+  async function animateCollectSequential(eqLineEl){
     const layer = ensureAnimLayer();
 
     const targets = [...eqLineEl.querySelectorAll('.eqTok[data-key]')];
-    if (!targets.length) return;
-
-    // Hide targets until ghosts arrive, then pop them in
-    targets.forEach(t => {
-      t.style.opacity = '0';
-      t.style.transform = 'scale(0.98)';
-    });
-
     const sourceCells = [...document.querySelectorAll('.termCell[data-key]')];
-    const allAnims = [];
 
-    targets.forEach((t) => {
+    for (let ti = 0; ti < targets.length; ti++){
+      const t = targets[ti];
       const key = t.dataset.key;
-      const sources = sourceCells.filter(s => s.dataset.key === key);
-      if (!sources.length){
-        const a = t.animate([
-          { opacity: 0, transform: 'scale(0.98)' },
-          { opacity: 1, transform: 'scale(1.08)' },
-          { opacity: 1, transform: 'scale(1)' }
-        ], { duration: 420, easing: 'cubic-bezier(.2,.9,.2,1)', fill:'forwards' });
-        allAnims.push(a.finished);
-        return;
+
+      // ignore placeholders
+      if (!key || key === '__0__') {
+        t.style.opacity = '1';
+        t.style.transform = 'scale(1)';
+        continue;
       }
 
+      const sources = sourceCells.filter(s => s.dataset.key === key);
       const tRect = t.getBoundingClientRect();
       const tx = tRect.left + tRect.width/2;
       const ty = tRect.top + tRect.height/2;
 
-      sources.forEach((s, si) => {
+      const driftPromises = [];
+
+      for (let si=0; si<sources.length; si++){
+        const s = sources[si];
         const sRect = s.getBoundingClientRect();
         const sx = sRect.left + sRect.width/2;
         const sy = sRect.top + sRect.height/2;
@@ -1202,41 +1332,45 @@
         const dx = tx - sx;
         const dy = ty - sy;
 
-        const delay = 40 * si;
         const drift = ghost.animate([
           { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.02)`, opacity: 1 }
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.03)`, opacity: 1 }
         ], {
           duration: 520,
-          delay,
+          delay: 40 * si,
           easing: 'cubic-bezier(.2,.9,.2,1)',
           fill: 'forwards'
         });
 
-        allAnims.push(drift.finished.then(() => ghost.remove()));
-      });
+        driftPromises.push(drift.finished.then(() => ghost.remove()));
+      }
 
-      const lastDelay = 40 * (sources.length - 1);
-      const pop = t.animate([
+      // wait until the last ghost is basically there, then pop the target
+      const lastDelay = 40 * Math.max(0, sources.length - 1);
+      await wait(520 + lastDelay - 140);
+
+      // pop target in
+      t.animate([
         { opacity: 0, transform: 'scale(0.98)' },
-        { opacity: 1, transform: 'scale(1.10)' },
+        { opacity: 1, transform: 'scale(1.12)' },
         { opacity: 1, transform: 'scale(1)' }
       ], {
         duration: 420,
-        delay: 520 + lastDelay - 120,
         easing: 'cubic-bezier(.2,.9,.2,1)',
         fill: 'forwards'
       });
 
-      allAnims.push(pop.finished);
-    });
+      t.style.opacity = '1';
 
-    Promise.allSettled(allAnims).then(() => {
-      targets.forEach(t => {
-        t.style.opacity = '';
-        t.style.transform = '';
-      });
-    });
+      // finish this group cleanly before the next group begins
+      await Promise.allSettled(driftPromises);
+      await wait(120);
+    }
+
+    // micro-feedback on completion
+    eqLineEl.classList.remove('flash');
+    void eqLineEl.offsetWidth;
+    eqLineEl.classList.add('flash');
   }
 
   // init
