@@ -1,1 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number Pattern</title>
 
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --green:#16a34a;
+      --greenSoft:#dcfce7;
+      --red:#dc2626;
+      --redSoft:#fee2e2;
+      --purple:#7c3aed;
+      --purpleSoft:#f3e8ff;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+
+    .page{
+      max-width:1440px;
+      margin:0 auto;
+      padding:16px;
+      min-height:100vh;
+    }
+
+    .card{
+      min-height:calc(100vh - 32px);
+      background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.92));
+      border:1px solid var(--border);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      text-decoration:none;
+      color:var(--ink);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:12px 18px;
+      font-weight:800;
+      font-size:18px;
+      box-shadow:0 6px 18px rgba(0,0,0,.05);
+    }
+
+    .back-btn img{
+      width:32px;
+      height:32px;
+      object-fit:contain;
+      border-radius:8px;
+      flex:0 0 auto;
+    }
+
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      font-weight:800;
+      font-size:17px;
+      padding:14px 20px;
+      transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow:0 8px 20px rgba(0,0,0,.08);
+    }
+
+    button:hover{ transform:translateY(-1px); }
+    button:active{ transform:translateY(0); }
+
+    .btn-settings{
+      background:#ffffff;
+      color:var(--ink);
+      border:1px solid var(--border);
+    }
+
+    .btn-reset{
+      background:var(--redSoft);
+      color:#9f1239;
+    }
+
+    .btn-reveal{
+      background:var(--purpleSoft);
+      color:#6d28d9;
+    }
+
+    .btn-new{
+      background:var(--blue);
+      color:#fff;
+    }
+
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding:28px 8px 18px;
+    }
+
+    .question-stage{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      padding:16px 16px 52px;
+      min-height:220px;
+    }
+
+    .expression{
+      font-size:clamp(40px, 5.6vw, 84px);
+      font-weight:800;
+      line-height:1.12;
+      color:#000;
+      letter-spacing:-.03em;
+      word-break:break-word;
+    }
+
+    .coef{ color:var(--blue); }
+    .times{ color:#000; }
+    .factor{ color:#000; }
+    .factor.reveal-groups{ color:var(--green); }
+    .op{ color:#000; }
+
+    .answer-stage{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      padding:0 16px 6px;
+    }
+
+    .answer-box{
+      min-width:min(420px, 82vw);
+      min-height:120px;
+      border:6px solid #000;
+      border-radius:24px;
+      background:#fff;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px 20px;
+    }
+
+    .answer-value{
+      font-size:clamp(34px, 4vw, 60px);
+      font-weight:900;
+      color:#000;
+      letter-spacing:-.03em;
+      opacity:0;
+      transform:translateY(10px) scale(.98);
+      transition:opacity .22s ease, transform .22s ease;
+      text-align:center;
+    }
+
+    .answer-value.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+
+    .status-row{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:34px;
+      margin-top:18px;
+    }
+
+    .status{
+      font-size:16px;
+      font-weight:800;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    .footer{
+      margin-top:auto;
+      padding-top:10px;
+      border-top:1px solid rgba(229,231,235,.8);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .footer strong{
+      color:var(--ink);
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(17,24,39,.35);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease;
+      z-index:50;
+    }
+
+    .overlay.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .side-panel{
+      position:fixed;
+      top:0;
+      right:0;
+      width:min(380px, 92vw);
+      height:100vh;
+      background:#fff;
+      border-left:1px solid var(--border);
+      box-shadow:-10px 0 30px rgba(0,0,0,.12);
+      transform:translateX(100%);
+      transition:transform .24s ease;
+      z-index:60;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .side-panel.open{
+      transform:translateX(0);
+    }
+
+    .panel-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 18px 14px;
+      border-bottom:1px solid var(--border);
+    }
+
+    .panel-head h2{
+      margin:0;
+      font-size:22px;
+      font-weight:900;
+      color:var(--ink);
+    }
+
+    .close-btn{
+      background:#fff;
+      color:var(--ink);
+      border:1px solid var(--border);
+      box-shadow:none;
+      padding:10px 14px;
+      font-size:15px;
+    }
+
+    .panel-body{
+      padding:18px;
+      overflow:auto;
+      display:grid;
+      gap:18px;
+      align-content:start;
+    }
+
+    .field{
+      display:grid;
+      gap:8px;
+    }
+
+    .field label,
+    .check-label{
+      font-size:15px;
+      font-weight:800;
+      color:var(--ink);
+    }
+
+    .field select:disabled{
+      background:#f3f4f6;
+      color:#9ca3af;
+      cursor:not-allowed;
+    }
+
+    .field select{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      font:inherit;
+      font-weight:700;
+      color:var(--ink);
+      outline:none;
+      cursor:pointer;
+      min-width:120px;
+      padding:12px 14px;
+    }
+
+    .help{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .check-row-main{
+      background:#fff;
+      padding:10px 14px;
+      align-items:center;
+    }
+
+    .check-row-main .check-label{
+      font-size:15px;
+      white-space:nowrap;
+    }
+
+    .check-row{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fafafa;
+    }
+
+    .check-row input{
+      margin-top:3px;
+      transform:scale(1.2);
+    }
+
+    @media (max-width:900px){
+      .question-stage{ min-height:180px; }
+    }
+
+    @media (max-width:720px){
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .controls{
+        justify-content:stretch;
+      }
+
+      .controls button{
+        flex:1 1 auto;
+      }
+
+      .question-stage{
+        padding-bottom:36px;
+      }
+
+      .answer-box{
+        min-width:min(340px, 88vw);
+        min-height:100px;
+      }
+
+      .footer{
+        flex-direction:column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="topbar">
+        <a class="back-btn" href="../index.html" aria-label="Back to Mills Maths Tools">
+          <img src="../logo.png" alt="Mills Maths Tools logo" onerror="this.style.display='none'" />
+          <span>Back to Mills Maths Tools</span>
+        </a>
+
+        <div class="controls">
+          <div class="check-row check-row-main">
+            <input id="revealGroupsCheck" type="checkbox" />
+            <label class="check-label" for="revealGroupsCheck">Reveal groups</label>
+          </div>
+          <button id="settingsBtn" class="btn-settings" type="button">Teacher settings</button>
+          <button id="resetBtn" class="btn-reset" type="button">Reset</button>
+          <button id="revealBtn" class="btn-reveal" type="button">Reveal</button>
+          <button id="newBtn" class="btn-new" type="button">New Q</button>
+        </div>
+      </div>
+
+      <main class="main">
+        <section class="question-stage" aria-label="Question area">
+          <div id="expression" class="expression"></div>
+        </section>
+
+        <section class="answer-stage" aria-label="Answer area">
+          <div class="answer-box">
+            <div id="answerValue" class="answer-value">&nbsp;</div>
+          </div>
+        </section>
+
+        <div class="status-row">
+          <div id="status" class="status" aria-live="polite">Press Enter to reveal. Press Space for a new question.</div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <div><strong>Pattern:</strong> add the coefficients first, then multiply by the common factor.</div>
+        <div><strong>Shortcuts:</strong> Enter = reveal, Space = new question.</div>
+      </footer>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay"></div>
+
+  <aside id="sidePanel" class="side-panel" aria-hidden="true">
+    <div class="panel-head">
+      <h2>Teacher settings</h2>
+      <button id="closePanelBtn" class="close-btn" type="button">Close</button>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <label for="totalSelect">Total</label>
+        <select id="totalSelect" aria-label="Select total"></select>
+        <div class="help">Choose the combined total of the coefficients.</div>
+      </div>
+
+      <div class="field">
+        <label for="termCountSelect">Number of terms</label>
+        <select id="termCountSelect" aria-label="Select number of terms">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <div class="help">For example, if 2 terms is selected and total is 10, the two coefficients will add to 10.</div>
+      </div>
+
+      <div class="check-row">
+        <input id="randomTotalCheck" type="checkbox" />
+        <label class="check-label" for="randomTotalCheck">
+          Randomise total
+          <div class="help">Choose a new total each time. The total dropdown will be disabled while this is on.</div>
+        </label>
+      </div>
+
+      <div class="check-row">
+        <input id="randomTermsCheck" type="checkbox" />
+        <label class="check-label" for="randomTermsCheck">
+          Randomise Number of Terms
+          <div class="help">Choose a new number of terms each time. The terms dropdown will be disabled while this is on.</div>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const expressionEl = document.getElementById('expression');
+    const answerValueEl = document.getElementById('answerValue');
+    const statusEl = document.getElementById('status');
+    const newBtn = document.getElementById('newBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const revealBtn = document.getElementById('revealBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closePanelBtn = document.getElementById('closePanelBtn');
+    const overlay = document.getElementById('overlay');
+    const sidePanel = document.getElementById('sidePanel');
+    const totalSelect = document.getElementById('totalSelect');
+    const termCountSelect = document.getElementById('termCountSelect');
+    const revealGroupsCheck = document.getElementById('revealGroupsCheck');
+    const randomTotalCheck = document.getElementById('randomTotalCheck');
+    const randomTermsCheck = document.getElementById('randomTermsCheck');
+
+    let current = null;
+    let isRevealed = false;
+
+    function randInt(min, max){
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffle(arr){
+      const copy = [...arr];
+      for(let i = copy.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function fillTotalOptions(){
+      let html = '';
+      for(let i = 5; i <= 20; i++){
+        html += `<option value="${i}" ${i === 10 ? 'selected' : ''}>${i}</option>`;
+      }
+      totalSelect.innerHTML = html;
+    }
+
+    function randomComposition(total, parts, minValue = 1){
+      const values = [];
+      let remaining = total;
+      for(let i = 0; i < parts - 1; i++){
+        const minRemaining = (parts - i - 1) * minValue;
+        const maxForThis = remaining - minRemaining;
+        const value = randInt(minValue, maxForThis);
+        values.push(value);
+        remaining -= value;
+      }
+      values.push(remaining);
+      return shuffle(values);
+    }
+
+    function buildTerms(total, termCount){
+      return randomComposition(total, termCount, 1);
+    }
+
+    function renderExpression(terms, commonFactor, revealGroups){
+      return terms.map((term, index) => {
+        const coefClass = revealGroups ? 'coef' : '';
+        const factorClass = revealGroups ? 'factor reveal-groups' : 'factor';
+        const op = index === 0 ? '' : ' <span class="op">+</span> ';
+        return `${op}<span class="${coefClass}">${term}</span><span class="times"> × </span><span class="${factorClass}">${commonFactor}</span>`;
+      }).join('');
+    }
+
+    function simplifyDisplay(value, commonFactor, total){
+      return `${total} × ${commonFactor} = ${value}`;
+    }
+
+    function generateQuestion(){
+      let total = Number(totalSelect.value);
+      let termCount = Number(termCountSelect.value);
+
+      if(randomTotalCheck.checked){
+        total = randInt(5, 20);
+        totalSelect.value = String(total);
+      }
+
+      if(randomTermsCheck.checked){
+        termCount = randInt(2, 5);
+        termCountSelect.value = String(termCount);
+      }
+      const commonFactor = randInt(4, 10);
+      const terms = buildTerms(total, termCount);
+      const coefficientTotal = terms.reduce((sum, n) => sum + n, 0);
+      const value = coefficientTotal * commonFactor;
+
+      return {
+        total: coefficientTotal,
+        chosenTotal: total,
+        termCount,
+        commonFactor,
+        terms,
+        value,
+        answer: simplifyDisplay(value, commonFactor, coefficientTotal)
+      };
+    }
+
+    function renderQuestion(){
+      current = generateQuestion();
+      isRevealed = false;
+      expressionEl.innerHTML = renderExpression(current.terms, current.commonFactor, revealGroupsCheck.checked);
+      answerValueEl.innerHTML = '&nbsp;';
+      answerValueEl.classList.remove('show');
+      statusEl.textContent = 'Press Enter to reveal. Press Space for a new question.';
+    }
+
+    function revealAnswer(){
+      if(!current || isRevealed) return;
+      answerValueEl.textContent = current.answer;
+      answerValueEl.classList.add('show');
+      isRevealed = true;
+      statusEl.textContent = 'Press Space for a new question.';
+    }
+
+    function resetCurrent(){
+      isRevealed = false;
+      answerValueEl.innerHTML = '&nbsp;';
+      answerValueEl.classList.remove('show');
+      statusEl.textContent = 'Press Enter to reveal. Press Space for a new question.';
+      if(current){
+        expressionEl.innerHTML = renderExpression(current.terms, current.commonFactor, revealGroupsCheck.checked);
+      }
+    }
+
+    function openPanel(){
+      sidePanel.classList.add('open');
+      overlay.classList.add('show');
+      sidePanel.setAttribute('aria-hidden', 'false');
+    }
+
+    function closePanel(){
+      sidePanel.classList.remove('open');
+      overlay.classList.remove('show');
+      sidePanel.setAttribute('aria-hidden', 'true');
+    }
+
+    settingsBtn.addEventListener('click', openPanel);
+    closePanelBtn.addEventListener('click', closePanel);
+    overlay.addEventListener('click', closePanel);
+
+    revealBtn.addEventListener('click', revealAnswer);
+    newBtn.addEventListener('click', renderQuestion);
+    resetBtn.addEventListener('click', resetCurrent);
+    totalSelect.addEventListener('change', renderQuestion);
+    termCountSelect.addEventListener('change', renderQuestion);
+    revealGroupsCheck.addEventListener('change', () => {
+      if(current){
+        expressionEl.innerHTML = renderExpression(current.terms, current.commonFactor, revealGroupsCheck.checked);
+      }
+    });
+
+    randomTotalCheck.addEventListener('change', () => {
+      totalSelect.disabled = randomTotalCheck.checked;
+      renderQuestion();
+    });
+
+    randomTermsCheck.addEventListener('change', () => {
+      termCountSelect.disabled = randomTermsCheck.checked;
+      renderQuestion();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if(tag === 'SELECT') return;
+
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        revealAnswer();
+      }
+
+      if(e.code === 'Space' || e.key === ' '){
+        e.preventDefault();
+        renderQuestion();
+      }
+
+      if(e.key === 'Escape'){
+        closePanel();
+      }
+    });
+
+    fillTotalOptions();
+    totalSelect.disabled = false;
+    termCountSelect.disabled = false;
+    renderQuestion();
+  </script>
+</body>
+</html>
