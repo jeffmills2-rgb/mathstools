@@ -171,7 +171,7 @@
       padding: 8px 4px 4px;
     }
     .termChip{
-      position: relative; /* ✅ needed for close button */
+      position: relative;
       display:flex;
       align-items:center;
       gap:8px;
@@ -182,7 +182,6 @@
       box-shadow: 0 12px 26px rgba(0,0,0,.06);
     }
 
-    /* ✅ close "x" button */
     .closeTerm{
       position:absolute;
       top:-9px;
@@ -284,7 +283,7 @@
       gap:14px;
       justify-content:center;
       flex-wrap:wrap;
-      padding-bottom: 28px; /* space for Simplify button */
+      padding-bottom: 28px;
     }
     .bubble{
       width: var(--bubbleDia);
@@ -294,9 +293,15 @@
       background: rgba(255,255,255,.92);
       box-shadow: 0 14px 35px rgba(0,0,0,.08);
       position:relative;
-      overflow:hidden;
+      overflow:visible;
       --dotScale: 1;
+      transition: box-shadow 140ms ease, transform 140ms ease;
     }
+    .bubble.dropTarget{
+      box-shadow: 0 0 0 6px rgba(139,92,246,.10), 0 18px 40px rgba(0,0,0,.10);
+      transform: scale(1.015);
+    }
+
     .bubble .dot{
       position:absolute;
       transform: translate(-50%,-50%) scale(var(--dotScale));
@@ -312,9 +317,59 @@
       background: rgba(255,255,255,.95);
       border: 2px solid rgba(139,92,246,.55);
       box-shadow: 0 6px 14px rgba(0,0,0,.10);
+      cursor: grab;
+      touch-action: none;
+      transition: box-shadow 120ms ease, transform 120ms ease;
+    }
+    .bubble .dot:active{
+      cursor: grabbing;
     }
     .dot.pos{ color: var(--ok); }
     .dot.neg{ color: var(--bad); }
+    .dot.dragOrigin{
+      opacity: .18;
+    }
+    .dot.shake{
+      animation: shakeDot 260ms ease;
+    }
+    @keyframes shakeDot{
+      0%{ transform: translate(-50%,-50%) scale(var(--dotScale)) translateX(0); }
+      25%{ transform: translate(-50%,-50%) scale(var(--dotScale)) translateX(-5px); }
+      50%{ transform: translate(-50%,-50%) scale(var(--dotScale)) translateX(5px); }
+      75%{ transform: translate(-50%,-50%) scale(var(--dotScale)) translateX(-4px); }
+      100%{ transform: translate(-50%,-50%) scale(var(--dotScale)) translateX(0); }
+    }
+
+    .dragGhost{
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 10050;
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+      font-weight: 1000;
+      font-size: var(--bubbleFont);
+      line-height: 1;
+      letter-spacing: .2px;
+      white-space:nowrap;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.98);
+      border: 2px solid rgba(139,92,246,.70);
+      box-shadow: 0 14px 28px rgba(0,0,0,.18);
+    }
+    .dragGhost.pos{ color: var(--ok); }
+    .dragGhost.neg{ color: var(--bad); }
+
+    .pop{
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 10060;
+      opacity: 1;
+    }
 
     /* simplify + box */
     .belowRow{
@@ -428,7 +483,6 @@
     .eqTok.pos{ color: var(--ok); }
     .eqTok.neg{ color: var(--bad); }
 
-    /* animation overlay */
     .animLayer{
       position: fixed;
       inset: 0;
@@ -445,7 +499,6 @@
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.18));
     }
 
-    /* tiny toast */
     .toast{
       position: fixed;
       left: 50%;
@@ -493,8 +546,7 @@
             <option value="lesson-plan.html">Lesson plan</option>
             <option value="worksheet-creator.html">Worksheet Creator</option>
             <option value="student-quiz.html">Student Quiz</option>
-  <option value="number-group.html">Number Activity</option>
-
+            <option value="number-group.html">Number Activity</option>
           </select>
         </div>
 
@@ -544,24 +596,32 @@
 (() => {
   const MAX_TERMS = 5;
 
-  // term model: {op:'+'|'-', groups:1..9, unit:'x'}
   let terms = [
     { op: '+', groups: 5, unit: '8' },
     { op: '+', groups: 4, unit: 'x' },
     { op: '-', groups: 7, unit: 'x' }
   ];
 
-  let mode = 'single'; // 'single' | 'two'
+  let mode = 'single';
   let simplifyStep = 0;
-  let simplifyTotal = 1; // computed
-  let cachedLines = [];  // [{type:'line0', items:[...]} , {type:'eq', text:'...'}]
+  let simplifyTotal = 1;
+  let cachedLines = [];
 
-  // Animation / flow control
   let busyReveal = false;
   let lastResetArmAt = 0;
+  let useDot = false;
 
-  // Multiplication symbol toggle
-  let useDot = false; // "·" when true, otherwise "×"
+  const dragState = {
+    active: false,
+    sourceIdx: -1,
+    sourceTokenIdx: -1,
+    originEl: null,
+    ghostEl: null,
+    pointerId: null,
+    currentX: 0,
+    currentY: 0,
+    hoveredBubble: null
+  };
 
   const el = (id) => document.getElementById(id);
 
@@ -587,7 +647,6 @@
     simplifyBtn.classList.add('pulse');
   }
 
-  // navigation
   el('toolsMenu').addEventListener('change', (e) => {
     const v = e.target.value;
     if (v) window.location.href = v;
@@ -599,10 +658,10 @@
     if (mode !== 'single' && mode !== 'two') mode = 'single';
     simplifyStep = 0;
     busyReveal = false;
+    endDragCleanup();
     renderAll();
   });
 
-  // remember middot choice
   try{
     const saved = localStorage.getItem('mmt_collect_mulDot');
     if (saved === '1') useDot = true;
@@ -616,6 +675,7 @@
   });
 
   function doReset(){
+    endDragCleanup();
     terms = [
       { op: '+', groups: 5, unit: '8' },
       { op: '+', groups: 4, unit: 'x' },
@@ -631,14 +691,15 @@
   });
 
   el('randomBtn').addEventListener('click', () => {
+    endDragCleanup();
     makeRandomQuestion();
     simplifyStep = 0;
     busyReveal = false;
     renderAll();
   });
 
-  // Spacebar shortcut for Random
   window.addEventListener('keydown', (e) => {
+    if (dragState.active) return;
     if (e.code === 'Space') {
       const a = document.activeElement;
       const tag = a ? a.tagName.toLowerCase() : '';
@@ -651,11 +712,9 @@
     }
   }, { passive: false });
 
-  // Keyboard flow:
-  // N = Random
-  // R or S = Reveal/Simplify
-  // Backspace twice = Reset
   window.addEventListener('keydown', (e) => {
+    if (dragState.active) return;
+
     const a = document.activeElement;
     const tag = a ? a.tagName.toLowerCase() : '';
     const inInput = (tag === 'input' || tag === 'select' || tag === 'textarea');
@@ -696,9 +755,8 @@
     renderAll();
   });
 
-  // reveal logic: animate per like-term group on first reveal,
-  // but only increment the simplify counter when the line is COMPLETE.
   simplifyBtn.addEventListener('click', async () => {
+    if (dragState.active) return;
     if (busyReveal) return;
     if (simplifyStep >= simplifyTotal) return;
 
@@ -794,6 +852,10 @@
     return normalizeUnit(u);
   }
 
+  function termSignAtIndex(idx){
+    return idx === 0 ? +1 : (terms[idx]?.op === '-' ? -1 : +1);
+  }
+
   function termToExpression(groups, unit, signForText){
     const g = groups;
     const u = normalizeUnit(unit);
@@ -860,7 +922,7 @@
     terms = terms.map((t, idx) => {
       const groups = sanitizeGroups(t.groups);
       const unit = sanitizeUnit(t.unit);
-      const op = (idx === 0) ? '+' : (t.op === '-' ? '-' : '+'); // first term always positive
+      const op = (idx === 0) ? '+' : (t.op === '-' ? '-' : '+');
       return { op, groups, unit };
     });
 
@@ -881,14 +943,11 @@
       const chip = document.createElement('div');
       chip.className = 'termChip';
 
-      // ✅ close button (remove this term)
       const closeBtn = document.createElement('button');
       closeBtn.className = 'closeTerm';
       closeBtn.type = 'button';
       closeBtn.textContent = '×';
       closeBtn.title = 'Remove this term';
-
-      // Keep at least 1 term (disable when only one remains)
       closeBtn.disabled = (terms.length <= 1);
 
       closeBtn.addEventListener('click', (e) => {
@@ -903,12 +962,12 @@
         terms.splice(idx, 1);
         simplifyStep = 0;
         busyReveal = false;
+        endDragCleanup();
         renderAll();
       });
 
       chip.appendChild(closeBtn);
 
-      // op selector (skip for first term)
       if (idx !== 0){
         const op = document.createElement('select');
         op.className = 'opSelect';
@@ -921,6 +980,7 @@
           t.op = op.value;
           simplifyStep = 0;
           busyReveal = false;
+          endDragCleanup();
           renderBubbles();
           computeSimplifyLines();
           renderWorkBox();
@@ -942,6 +1002,7 @@
         gInp.value = String(t.groups);
         simplifyStep = 0;
         busyReveal = false;
+        endDragCleanup();
         renderBubbles();
         computeSimplifyLines();
         renderWorkBox();
@@ -967,6 +1028,7 @@
         }
         simplifyStep = 0;
         busyReveal = false;
+        endDragCleanup();
         renderBubbles();
         computeSimplifyLines();
         renderWorkBox();
@@ -982,7 +1044,6 @@
     });
   }
 
-  // Dice-like positions (percent coords) for 1..9
   const DOTS = {
     1: [[50,50]],
     2: [[30,35],[70,65]],
@@ -1003,24 +1064,32 @@
   function renderBubbles(){
     bubblesRow.innerHTML = '';
 
-    terms.forEach((t) => {
+    terms.forEach((t, termIdx) => {
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
+      bubble.dataset.termIdx = String(termIdx);
+      bubble.dataset.key = termKey(t.unit);
+      bubble.dataset.sign = String(termSignAtIndex(termIdx));
 
       bubble.style.setProperty('--dotScale', (t.groups >= 8 ? '0.92' : '1'));
 
-      const signNeg = (t.op === '-');
+      const signNeg = (termSignAtIndex(termIdx) < 0);
       const cls = signNeg ? 'neg' : 'pos';
       const token = normalizeUnit(t.unit);
       const shownToken = signNeg ? ('-' + token) : token;
 
       const pos = positionsForCount(t.groups);
-      pos.forEach(([x,y]) => {
+      pos.forEach(([x,y], tokenIdx) => {
         const d = document.createElement('div');
         d.className = 'dot ' + cls;
         d.style.left = x + '%';
         d.style.top = y + '%';
         d.textContent = shownToken;
+        d.dataset.termIdx = String(termIdx);
+        d.dataset.tokenIdx = String(tokenIdx);
+        d.dataset.key = termKey(t.unit);
+        d.dataset.sign = String(termSignAtIndex(termIdx));
+        d.addEventListener('pointerdown', onDotPointerDown);
         bubble.appendChild(d);
       });
 
@@ -1194,7 +1263,7 @@
 
   function renderSimplifyBtn(){
     simplifyBtn.textContent = `Simplify ${Math.min(simplifyStep, simplifyTotal)}/${simplifyTotal}`;
-    simplifyBtn.disabled = busyReveal || (simplifyStep >= simplifyTotal);
+    simplifyBtn.disabled = dragState.active || busyReveal || (simplifyStep >= simplifyTotal);
   }
 
   function renderWorkBox(){
@@ -1422,7 +1491,269 @@
     eqLineEl.classList.add('flash');
   }
 
-  // init
+  function onDotPointerDown(e){
+    if (busyReveal) return;
+    if (dragState.active) return;
+
+    const dot = e.currentTarget;
+    const sourceIdx = parseInt(dot.dataset.termIdx, 10);
+    const sourceTokenIdx = parseInt(dot.dataset.tokenIdx, 10);
+
+    if (!Number.isFinite(sourceIdx) || !terms[sourceIdx]) return;
+
+    e.preventDefault();
+
+    const rect = dot.getBoundingClientRect();
+    const ghost = document.createElement('div');
+    ghost.className = 'dragGhost ' + ((dot.dataset.sign === '-1') ? 'neg' : 'pos');
+    ghost.textContent = dot.textContent;
+    ghost.style.left = (rect.left + rect.width/2) + 'px';
+    ghost.style.top = (rect.top + rect.height/2) + 'px';
+    document.body.appendChild(ghost);
+
+    dragState.active = true;
+    dragState.sourceIdx = sourceIdx;
+    dragState.sourceTokenIdx = sourceTokenIdx;
+    dragState.originEl = dot;
+    dragState.ghostEl = ghost;
+    dragState.pointerId = e.pointerId;
+    dragState.currentX = e.clientX;
+    dragState.currentY = e.clientY;
+    dragState.hoveredBubble = null;
+
+    dot.classList.add('dragOrigin');
+    dot.setPointerCapture?.(e.pointerId);
+
+    document.addEventListener('pointermove', onGlobalPointerMove, { passive:false });
+    document.addEventListener('pointerup', onGlobalPointerUp, { passive:false });
+    document.addEventListener('pointercancel', onGlobalPointerCancel, { passive:false });
+
+    updateGhostPosition(e.clientX, e.clientY);
+    highlightHoveredBubble(e.clientX, e.clientY);
+    renderSimplifyBtn();
+  }
+
+  function onGlobalPointerMove(e){
+    if (!dragState.active) return;
+    if (e.pointerId !== dragState.pointerId) return;
+    e.preventDefault();
+    dragState.currentX = e.clientX;
+    dragState.currentY = e.clientY;
+    updateGhostPosition(e.clientX, e.clientY);
+    highlightHoveredBubble(e.clientX, e.clientY);
+  }
+
+  async function onGlobalPointerUp(e){
+    if (!dragState.active) return;
+    if (e.pointerId !== dragState.pointerId) return;
+    e.preventDefault();
+
+    const targetBubble = findBubbleUnderPoint(e.clientX, e.clientY);
+    const sourceIdx = dragState.sourceIdx;
+
+    if (isValidZeroPairDrop(sourceIdx, targetBubble)){
+      const targetIdx = parseInt(targetBubble.dataset.termIdx, 10);
+      await commitZeroPair(sourceIdx, targetIdx, e.clientX, e.clientY);
+    } else {
+      await snapBackInvalidDrop();
+    }
+
+    endDragCleanup();
+    renderSimplifyBtn();
+  }
+
+  function onGlobalPointerCancel(e){
+    if (!dragState.active) return;
+    if (e.pointerId !== dragState.pointerId) return;
+    snapBackInvalidDrop().finally(() => {
+      endDragCleanup();
+      renderSimplifyBtn();
+    });
+  }
+
+  function updateGhostPosition(x, y){
+    if (!dragState.ghostEl) return;
+    dragState.ghostEl.style.left = x + 'px';
+    dragState.ghostEl.style.top = y + 'px';
+  }
+
+  function clearBubbleHighlights(){
+    document.querySelectorAll('.bubble.dropTarget').forEach(b => b.classList.remove('dropTarget'));
+  }
+
+  function highlightHoveredBubble(x, y){
+    clearBubbleHighlights();
+    const bubble = findBubbleUnderPoint(x, y);
+    dragState.hoveredBubble = bubble || null;
+    if (bubble && isValidZeroPairDrop(dragState.sourceIdx, bubble)){
+      bubble.classList.add('dropTarget');
+    }
+  }
+
+  function findBubbleUnderPoint(x, y){
+    const els = document.elementsFromPoint(x, y);
+    for (const node of els){
+      if (node instanceof Element){
+        const bubble = node.closest('.bubble');
+        if (bubble) return bubble;
+      }
+    }
+    return null;
+  }
+
+  function isValidZeroPairDrop(sourceIdx, bubbleEl){
+    if (!bubbleEl) return false;
+    const targetIdx = parseInt(bubbleEl.dataset.termIdx, 10);
+    if (!Number.isFinite(targetIdx)) return false;
+    if (sourceIdx === targetIdx) return false;
+    if (!terms[sourceIdx] || !terms[targetIdx]) return false;
+
+    const sourceKey = termKey(terms[sourceIdx].unit);
+    const targetKey = termKey(terms[targetIdx].unit);
+    if (sourceKey !== targetKey) return false;
+
+    const sourceSign = termSignAtIndex(sourceIdx);
+    const targetSign = termSignAtIndex(targetIdx);
+    if (sourceSign === targetSign) return false;
+
+    return true;
+  }
+
+  async function snapBackInvalidDrop(){
+    const origin = dragState.originEl;
+    const ghost = dragState.ghostEl;
+    if (!origin || !ghost) return;
+
+    const rect = origin.getBoundingClientRect();
+    const tx = rect.left + rect.width/2;
+    const ty = rect.top + rect.height/2;
+
+    const dx = tx - dragState.currentX;
+    const dy = ty - dragState.currentY;
+
+    const anim = ghost.animate([
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.98)`, opacity: 1 }
+    ], {
+      duration: 180,
+      easing: 'cubic-bezier(.2,.9,.2,1)',
+      fill: 'forwards'
+    });
+
+    try{ await anim.finished; }catch(_){}
+
+    origin.classList.remove('dragOrigin');
+    origin.classList.remove('shake');
+    void origin.offsetWidth;
+    origin.classList.add('shake');
+  }
+
+  async function commitZeroPair(sourceIdx, targetIdx, x, y){
+    const origin = dragState.originEl;
+    const ghost = dragState.ghostEl;
+    if (!origin || !ghost) return;
+
+    const destDot = document.querySelector(`.dot[data-term-idx="${targetIdx}"], .dot[data-termIdx="${targetIdx}"]`);
+    let tx = x;
+    let ty = y;
+    if (destDot){
+      const r = destDot.getBoundingClientRect();
+      tx = r.left + r.width/2;
+      ty = r.top + r.height/2;
+    }
+
+    const dx = tx - dragState.currentX;
+    const dy = ty - dragState.currentY;
+
+    const anim = ghost.animate([
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.02)`, opacity: 1 }
+    ], {
+      duration: 140,
+      easing: 'cubic-bezier(.2,.9,.2,1)',
+      fill: 'forwards'
+    });
+
+    try{ await anim.finished; }catch(_){}
+
+    createPopBurst(tx, ty);
+
+    if (terms[sourceIdx]) terms[sourceIdx].groups = Math.max(0, terms[sourceIdx].groups - 1);
+    if (terms[targetIdx]) terms[targetIdx].groups = Math.max(0, terms[targetIdx].groups - 1);
+
+    removeZeroTerms();
+    simplifyStep = 0;
+    busyReveal = false;
+    renderAll();
+  }
+
+  function removeZeroTerms(){
+    terms = terms.filter(t => t.groups > 0);
+    if (!terms.length){
+      terms = [{ op: '+', groups: 1, unit: 'x' }];
+    }
+    terms = terms.map((t, idx) => ({
+      op: idx === 0 ? '+' : (t.op === '-' ? '-' : '+'),
+      groups: t.groups,
+      unit: t.unit
+    }));
+  }
+
+  function createPopBurst(x, y){
+    const layer = ensureAnimLayer();
+    const count = 10;
+    for (let i=0;i<count;i++){
+      const p = document.createElement('div');
+      p.className = 'pop';
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      p.style.background = (i % 2 === 0) ? 'rgba(139,92,246,.92)' : 'rgba(37,99,235,.88)';
+      layer.appendChild(p);
+
+      const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.35);
+      const dist = 14 + Math.random() * 24;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+
+      const a = p.animate([
+        { transform: 'translate(-50%,-50%) scale(.6)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1)`, opacity: .95 },
+        { transform: `translate(calc(-50% + ${dx*1.25}px), calc(-50% + ${dy*1.25}px)) scale(.2)`, opacity: 0 }
+      ], {
+        duration: 300 + Math.random() * 120,
+        easing: 'cubic-bezier(.2,.9,.2,1)',
+        fill: 'forwards'
+      });
+
+      a.finished.finally(() => p.remove());
+    }
+  }
+
+  function endDragCleanup(){
+    clearBubbleHighlights();
+
+    if (dragState.originEl){
+      dragState.originEl.classList.remove('dragOrigin');
+    }
+    if (dragState.ghostEl){
+      dragState.ghostEl.remove();
+    }
+
+    document.removeEventListener('pointermove', onGlobalPointerMove, { passive:false });
+    document.removeEventListener('pointerup', onGlobalPointerUp, { passive:false });
+    document.removeEventListener('pointercancel', onGlobalPointerCancel, { passive:false });
+
+    dragState.active = false;
+    dragState.sourceIdx = -1;
+    dragState.sourceTokenIdx = -1;
+    dragState.originEl = null;
+    dragState.ghostEl = null;
+    dragState.pointerId = null;
+    dragState.currentX = 0;
+    dragState.currentY = 0;
+    dragState.hoveredBubble = null;
+  }
+
   renderAll();
 })();
 </script>
