@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number Pattern – Worksheet Creator</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+
+      --blue:#2563eb;
+      --green:#16a34a;
+
+      --footer-h:44px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      padding-bottom:var(--footer-h);
+    }
+
+    .wrap{
+      max-width:1200px;
+      margin:18px auto 40px;
+      padding:0 16px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    .title{
+      font-size:30px;
+      font-weight:1000;
+      margin:0 0 6px;
+    }
+
+    .subtitle{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-weight:850;
+      font-size:18px;
+    }
+
+    .controls{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+
+    .fieldRow{
+      display:flex;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    label{
+      display:block;
+      font-weight:950;
+      margin-bottom:8px;
+    }
+
+    select,input{
+      border:2px solid #e5e7eb;
+      border-radius:16px;
+      padding:12px;
+      font-weight:900;
+      font-size:16px;
+      background:#fff;
+      outline:none;
+    }
+
+    select{ min-width:260px; }
+    input{ min-width:220px; }
+
+    .btnRow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      border:none;
+      border-radius:16px;
+      padding:12px 18px;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+    }
+    button:active{ transform:scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.ghost{ background:#eef2ff; color:#1d4ed8; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .outWrap{ margin-top:16px; }
+
+    .page{
+      margin-top:16px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 10px 26px rgba(15,23,42,.08);
+    }
+
+    .pageHeader{
+      padding:12px 16px 10px;
+      border-bottom:1px solid rgba(229,231,235,.95);
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto auto;
+      align-items:center;
+      gap:16px;
+    }
+
+    .hdrLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .hdrLeft img{
+      width:34px;
+      height:34px;
+      object-fit:contain;
+      display:block;
+      flex:0 0 auto;
+    }
+
+    .hdrText{
+      min-width:0;
+    }
+
+    .hdrTitle{
+      font-weight:1000;
+      font-size:16px;
+      line-height:1.15;
+    }
+
+    .hdrSub{
+      color:var(--ink);
+      font-weight:850;
+      font-size:13px;
+      margin-top:2px;
+      line-height:1.1;
+    }
+
+    .lineField{
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      min-width:210px;
+    }
+
+    .lineLabel{
+      font-size:12px;
+      font-weight:950;
+      color:var(--ink);
+    }
+
+    .lineBox{
+      height:34px;
+      border:2px solid #111827;
+      border-radius:12px;
+      background:#fff;
+    }
+
+    .grid{
+      padding:10px 14px 12px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px 14px;
+    }
+
+    .qCard{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:8px 10px 10px;
+      background:#fff;
+      min-height:82px;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+    }
+
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:6px;
+    }
+
+    .qNum{
+      font-weight:950;
+      font-size:13px;
+      color:var(--ink);
+      flex:0 0 auto;
+      padding-top:1px;
+      min-width:22px;
+    }
+
+    .qExpr{
+      flex:1;
+      text-align:center;
+      font-weight:900;
+      font-size:16px;
+      line-height:1.12;
+      color:#000;
+      letter-spacing:-.02em;
+      word-break:break-word;
+      min-height:34px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 2px;
+    }
+
+    .qExpr.tight{ font-size:14px; }
+    .qExpr.tighter{ font-size:12px; }
+    .qExpr.mega-tight{ font-size:11px; }
+
+    .coef{ color:#2563eb; }
+    .times,.op{ color:#000; }
+    .factor{ color:#000; }
+    .factor.reveal-groups{ color:#16a34a; }
+
+    .ansRow{
+      margin-top:auto;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .ansLabel{
+      font-weight:950;
+      font-size:12px;
+      color:var(--ink);
+    }
+
+    .ansBox{
+      width:100%;
+      height:28px;
+      border:2px solid #111827;
+      border-radius:10px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:1000;
+      font-size:15px;
+      color:#111827;
+    }
+
+    .ansBox.key{
+      color:var(--green);
+      border-color:var(--green);
+      background:rgba(22,163,74,.08);
+    }
+
+    .pageFooter{
+      padding:8px 16px;
+      border-top:1px solid rgba(229,231,235,.95);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      font-weight:950;
+      color:#111827;
+      font-size:12px;
+      background:rgba(255,255,255,.96);
+    }
+
+    .pageFooter a{
+      color:#2563eb;
+      text-decoration:none;
+      font-weight:1000;
+    }
+    .pageFooter a:hover{ text-decoration:underline; }
+
+    .mmtFooter{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      height:var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 12px;
+      background:rgba(255,255,255,.92);
+      border-top:1px solid rgba(229,231,235,.95);
+      backdrop-filter:blur(8px);
+      z-index:500;
+      font-weight:900;
+      color:#111827;
+      text-align:center;
+      font-size:13px;
+    }
+
+    .mmtFooter a{
+      color:#2563eb;
+      text-decoration:none;
+      font-weight:950;
+    }
+    .mmtFooter a:hover{ text-decoration:underline; }
+
+    @media (max-width:900px){
+      .pageHeader{
+        grid-template-columns:1fr;
+        align-items:start;
+      }
+
+      .lineField{
+        min-width:180px;
+      }
+    }
+
+    @media print{
+      @page{
+        size:A4;
+        margin:12.7mm;
+      }
+
+      body{
+        background:#fff;
+        padding-bottom:0;
+      }
+
+      .wrap{
+        max-width:none;
+        margin:0;
+        padding:0;
+      }
+
+      .card{
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+      }
+
+      .controls,
+      .title,
+      .subtitle,
+      .mmtFooter{
+        display:none !important;
+      }
+
+      .page{
+        margin:0;
+        border:none;
+        border-radius:0;
+        box-shadow:none;
+        page-break-after:always;
+      }
+
+      .page:last-child{ page-break-after:auto; }
+
+      .pageHeader{
+        padding:4mm 5mm 3mm;
+        gap:12px;
+        grid-template-columns:minmax(0,1fr) auto auto !important;
+        align-items:center !important;
+      }
+
+      .lineField{
+        min-width:150px !important;
+      }
+
+      .hdrTitle{ font-size:14px; }
+      .hdrSub{ font-size:12px; }
+
+      .grid{
+        padding:3mm 5mm 4mm;
+        gap:8px 10px;
+      }
+
+      .pageFooter{
+        padding:3mm 5mm 4mm;
+      }
+
+      .qCard{
+        break-inside:avoid;
+        min-height:78px;
+        padding:7px 9px 9px;
+      }
+
+      .qExpr{
+        font-size:14px;
+        min-height:30px;
+      }
+
+      .qExpr.tight{ font-size:12px; }
+      .qExpr.tighter{ font-size:11px; }
+      .qExpr.mega-tight{ font-size:10px; }
+
+      .ansBox{
+        height:26px;
+        font-size:13px;
+      }
+
+      .lineBox{
+        height:30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">Number Pattern worksheet creator</h1>
+      <p class="subtitle">Printable A4 worksheets + answer key. 16 questions per page (2×8).</p>
+
+      <div class="controls">
+        <div class="fieldRow">
+          <div>
+            <label for="levelSel">Level</label>
+            <select id="levelSel">
+              <option value="sweet">Sweet</option>
+              <option value="mild" selected>Mild</option>
+              <option value="medium">Medium</option>
+              <option value="spicy">Spicy</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="countInp">Number of questions (1–96)</label>
+            <input id="countInp" type="number" min="1" max="96" value="32" />
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button id="genBtn" class="primary">Generate worksheet</button>
+          <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  const LEVELS = {
+    sweet: {
+      name: 'Sweet',
+      revealGroups: true,
+      totalMin: 2,
+      totalMax: 10,
+      termOptions: [2,3],
+      numericChance: 0.60,
+      singleLetterOnly: true
+    },
+    mild: {
+      name: 'Mild',
+      revealGroups: false,
+      totalMin: 2,
+      totalMax: 10,
+      termOptions: [2,3],
+      numericChance: 0.60,
+      singleLetterOnly: true
+    },
+    medium: {
+      name: 'Medium',
+      revealGroups: false,
+      totalMin: 5,
+      totalMax: 12,
+      termOptions: [3,4],
+      numericChance: 0.50,
+      singleLetterOnly: false
+    },
+    spicy: {
+      name: 'Spicy',
+      revealGroups: false,
+      totalMin: 2,
+      totalMax: 20,
+      termOptions: [5],
+      numericChance: 0.50,
+      singleLetterOnly: false
+    }
+  };
+
+  const PER_PAGE = 16;
+  const SITE = 'https://www.millsmathstools.au';
+
+  const levelSel = document.getElementById('levelSel');
+  const countInp = document.getElementById('countInp');
+  const genBtn = document.getElementById('genBtn');
+  const printBtn = document.getElementById('printBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const out = document.getElementById('out');
+
+  function randInt(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function choice(arr){
+    return arr[randInt(0, arr.length - 1)];
+  }
+
+  function shuffle(arr){
+    const copy = [...arr];
+    for(let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function randomComposition(total, parts, minValue = 1){
+    const values = [];
+    let remaining = total;
+    for(let i = 0; i < parts - 1; i++){
+      const minRemaining = (parts - i - 1) * minValue;
+      const maxForThis = remaining - minRemaining;
+      const value = randInt(minValue, maxForThis);
+      values.push(value);
+      remaining -= value;
+    }
+    values.push(remaining);
+    return shuffle(values);
+  }
+
+  function randomLetterFactor(singleLetterOnly = false){
+    const singleLetters = 'abcdefghijkmnpqrstuvwxyz'.split('');
+    if(singleLetterOnly){
+      return choice(singleLetters);
+    }
+    if(Math.random() < 0.2){
+      let first = choice(singleLetters);
+      let second = choice(singleLetters);
+      while(second === first){
+        second = choice(singleLetters);
+      }
+      return first + second;
+    }
+    return choice(singleLetters);
+  }
+
+  function renderExpressionHTML(terms, commonFactor, revealGroups){
+    return terms.map((term, index) => {
+      const coefClass = revealGroups ? 'coef' : '';
+      const factorClass = revealGroups ? 'factor reveal-groups' : 'factor';
+      const op = index === 0 ? '' : ' <span class="op">+</span> ';
+      return `${op}<span class="${coefClass}">${term}</span><span class="times"> × </span><span class="${factorClass}">${escapeHtml(commonFactor)}</span>`;
+    }).join('');
+  }
+
+  function answerText(question){
+    if(question.kind === 'numeric'){
+      return String(question.numericValue);
+    }
+    return `${question.total}${question.commonFactor}`;
+  }
+
+  function buildQuestion(cfg){
+    const isNumeric = Math.random() < cfg.numericChance;
+    const total = randInt(cfg.totalMin, cfg.totalMax);
+    const termCount = choice(cfg.termOptions);
+    const terms = randomComposition(total, termCount, 1);
+    const commonFactor = isNumeric
+      ? randInt(4, 10)
+      : randomLetterFactor(cfg.singleLetterOnly);
+
+    const question = {
+      kind: isNumeric ? 'numeric' : 'algebra',
+      revealGroups: cfg.revealGroups,
+      total,
+      termCount,
+      terms,
+      commonFactor
+    };
+
+    if(isNumeric){
+      question.numericValue = total * commonFactor;
+    }
+
+    return question;
+  }
+
+  function expressionClass(question){
+    const count = question.terms.length;
+    const factorLength = String(question.commonFactor).length;
+    const rawLen = question.terms.join('').length + String(question.commonFactor).length * question.terms.length + (question.terms.length - 1);
+
+    if(rawLen >= 18 || count >= 5) return 'qExpr mega-tight';
+    if((count >= 5 && factorLength >= 2) || count >= 6) return 'qExpr tighter';
+    if(count >= 4 || factorLength >= 2 || rawLen >= 13) return 'qExpr tight';
+    return 'qExpr';
+  }
+
+  function pageHeaderHTML(levelName, pageLabel){
+    return `
+      <div class="pageHeader">
+        <div class="hdrLeft">
+          <img src="mmt.png" alt="MMT logo" onerror="this.style.display='none'">
+          <div class="hdrText">
+            <div class="hdrTitle">Number Pattern Worksheet (${levelName})</div>
+            <div class="hdrSub">${pageLabel}</div>
+          </div>
+        </div>
+
+        <div class="lineField">
+          <div class="lineLabel">Name</div>
+          <div class="lineBox"></div>
+        </div>
+
+        <div class="lineField">
+          <div class="lineLabel">Date</div>
+          <div class="lineBox"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function pageFooterHTML(){
+    return `
+      <div class="pageFooter">
+        This tool and more can be found at <a href="${SITE}" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
+      </div>
+    `;
+  }
+
+  function makeQuestionCard(question, indexOnPage, showAnswer){
+    const wrap = document.createElement('div');
+    wrap.className = 'qCard';
+
+    const top = document.createElement('div');
+    top.className = 'qTop';
+
+    const qNum = document.createElement('div');
+    qNum.className = 'qNum';
+    qNum.textContent = `${indexOnPage}.`;
+
+    const expr = document.createElement('div');
+    expr.className = expressionClass(question);
+    expr.innerHTML = renderExpressionHTML(question.terms, question.commonFactor, question.revealGroups);
+
+    top.appendChild(qNum);
+    top.appendChild(expr);
+    wrap.appendChild(top);
+
+    const ansRow = document.createElement('div');
+    ansRow.className = 'ansRow';
+    ansRow.innerHTML = `
+      <div class="ansLabel">Answer:</div>
+      <div class="ansBox ${showAnswer ? 'key' : ''}">${showAnswer ? escapeHtml(answerText(question)) : ''}</div>
+    `;
+    wrap.appendChild(ansRow);
+
+    return wrap;
+  }
+
+  function buildPages(questions, cfg, titleLabel, showAnswers){
+    const pages = [];
+    const totalPages = Math.ceil(questions.length / PER_PAGE);
+
+    for(let p = 0; p < totalPages; p++){
+      const page = document.createElement('div');
+      page.className = 'page';
+
+      const pageLabel = `${titleLabel} — Page ${p + 1} of ${totalPages}`;
+      page.innerHTML = pageHeaderHTML(cfg.name, pageLabel);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      const start = p * PER_PAGE;
+      const slice = questions.slice(start, start + PER_PAGE);
+
+      slice.forEach((question, idx) => {
+        grid.appendChild(makeQuestionCard(question, start + idx + 1, showAnswers));
+      });
+
+      page.appendChild(grid);
+
+      const footerWrap = document.createElement('div');
+      footerWrap.innerHTML = pageFooterHTML();
+      page.appendChild(footerWrap.firstElementChild);
+
+      pages.push(page);
+    }
+
+    return pages;
+  }
+
+  function clearOut(){
+    out.innerHTML = '';
+  }
+
+  function generate(){
+    clearOut();
+
+    const key = levelSel.value;
+    const cfg = LEVELS[key];
+
+    let n = Number(countInp.value);
+    if(!Number.isFinite(n)) n = 32;
+    n = Math.max(1, Math.min(96, Math.round(n)));
+    countInp.value = String(n);
+
+    const questions = Array.from({ length:n }, () => buildQuestion(cfg));
+
+    const wsPages = buildPages(questions, cfg, 'Worksheet', false);
+    const keyPages = buildPages(questions, cfg, 'Answer key', true);
+
+    for(const pg of wsPages) out.appendChild(pg);
+    for(const pg of keyPages) out.appendChild(pg);
+
+    if(out.firstElementChild){
+      out.firstElementChild.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  }
+
+  function resetAll(){
+    clearOut();
+    levelSel.value = 'mild';
+    countInp.value = '32';
+  }
+
+  genBtn.addEventListener('click', generate);
+  printBtn.addEventListener('click', () => window.print());
+  resetBtn.addEventListener('click', resetAll);
+})();
+</script>
+</body>
+</html>
