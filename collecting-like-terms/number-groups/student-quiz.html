@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number Pattern – Student Quiz</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+
+      --blue:#2563eb;
+      --blueDeep:#1e3a8a;
+      --green:#16a34a;
+      --greenSoft:#dcfce7;
+      --red:#dc2626;
+      --redSoft:#fee2e2;
+      --orange:#ea580c;
+      --orangeSoft:#ffedd5;
+      --purple:#6d28d9;
+      --purpleSoft:#ede9fe;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+
+    .wrap{
+      max-width:1560px;
+      margin:18px auto 38px;
+      padding:0 16px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      padding:16px 18px 14px;
+      min-height:calc(100vh - 80px);
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .topRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .backBtn{
+      border:none;
+      background:transparent;
+      color:var(--ink);
+      cursor:pointer;
+      padding:10px 10px;
+      border-radius:12px;
+      font-weight:950;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      transition:background .15s ease, transform .04s ease;
+      user-select:none;
+    }
+    .backBtn:hover{ background:#eef2ff; }
+    .backBtn:active{ transform:scale(.98); }
+
+    .resetBtn{
+      border:none;
+      font-weight:950;
+      cursor:pointer;
+      padding:10px 14px;
+      border-radius:14px;
+      background:#fee2e2;
+      color:#991b1b;
+      transition:transform .04s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .resetBtn:active{ transform:scale(.98); }
+    .resetBtn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .levelBannerWrap{
+      flex:1 1 420px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width:260px;
+    }
+
+    .levelBanner{
+      width:min(760px,100%);
+      border-radius:18px;
+      padding:10px 14px;
+      color:#fff;
+      font-weight:1000;
+      font-size:34px;
+      text-align:center;
+      background:linear-gradient(180deg,#1d4ed8,#1e3a8a);
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+      user-select:none;
+    }
+
+    .progressRow{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin:10px 6px 14px;
+    }
+
+    .progressTrack{
+      flex:1;
+      height:10px;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+      box-shadow:inset 0 1px 2px rgba(0,0,0,.08);
+    }
+
+    .progressFill{
+      height:100%;
+      width:0%;
+      background:#2563eb;
+      border-radius:999px;
+      transition:width .35s ease;
+    }
+
+    .qCounter{
+      font-weight:950;
+      white-space:nowrap;
+      color:var(--ink);
+    }
+
+    .stage{
+      flex:1;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+      min-height:580px;
+      position:relative;
+      padding:14px 14px 18px;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .revealBadgeWrap{
+      min-height:60px;
+      display:flex;
+      justify-content:flex-end;
+      align-items:flex-start;
+      margin-bottom:2px;
+    }
+
+    .revealBadge{
+      display:none;
+      align-items:center;
+      gap:10px;
+      padding:12px 20px;
+      border-radius:999px;
+      background:var(--purpleSoft);
+      border:1px solid #c4b5fd;
+      color:var(--purple);
+      font-weight:950;
+      box-shadow:0 8px 20px rgba(0,0,0,.06);
+      user-select:none;
+    }
+
+    .revealBadge.show{ display:inline-flex; }
+
+    .revealDot{
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:var(--purple);
+      position:relative;
+      flex:0 0 auto;
+    }
+
+    .revealDot::after{
+      content:"✓";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-56%);
+      color:#fff;
+      font-size:12px;
+      font-weight:1000;
+    }
+
+    .questionStage{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      text-align:center;
+      padding:0 12px 0;
+    }
+
+    .expression{
+      margin-top:4px;
+      font-size:clamp(42px,5.4vw,104px);
+      font-weight:900;
+      line-height:1.12;
+      letter-spacing:-.04em;
+      color:#000;
+      word-break:break-word;
+      transition:font-size .18s ease;
+    }
+
+    .expression.tight{ font-size:clamp(34px,4.4vw,82px); }
+    .expression.tighter{ font-size:clamp(28px,3.6vw,66px); }
+
+    .coef{ color:#2563eb; }
+    .times,.op{ color:#000; }
+    .factor{ color:#000; }
+    .factor.reveal-groups{ color:#16a34a; }
+
+    .answerRow{
+      margin-top:72px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .answerLabel{
+      font-weight:950;
+      font-size:18px;
+    }
+
+    .answerInput{
+      width:320px;
+      max-width:84vw;
+      border:3px solid #111827;
+      border-radius:20px;
+      padding:14px 16px;
+      font-size:18px;
+      font-weight:950;
+      outline:none;
+      text-align:center;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      background:#fff;
+    }
+
+    .answerInput.ok{
+      border-color:var(--green);
+      box-shadow:0 0 0 4px rgba(22,163,74,.15);
+      background:var(--greenSoft);
+    }
+
+    .answerInput.bad{
+      border-color:var(--red);
+      box-shadow:0 0 0 4px rgba(220,38,38,.12);
+      background:var(--redSoft);
+    }
+
+    .answerInput.close{
+      border-color:var(--orange);
+      box-shadow:0 0 0 4px rgba(234,88,12,.12);
+      background:var(--orangeSoft);
+    }
+
+    .enterBtn,
+    .nextBtn,
+    .prevBtn{
+      border:none;
+      border-radius:14px;
+      padding:12px 18px;
+      font-weight:1000;
+      cursor:pointer;
+      transition:transform .04s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .enterBtn:active,
+    .nextBtn:active,
+    .prevBtn:active{ transform:scale(.98); }
+
+    .enterBtn{
+      background:#1d4ed8;
+      color:#fff;
+    }
+
+    .nextBtn{
+      background:#111827;
+      color:#fff;
+      display:none;
+    }
+    .nextBtn.show{ display:inline-block; }
+
+    .prevBtn{
+      background:#f3f4f6;
+      color:#111827;
+      padding:9px 14px;
+      font-size:14px;
+      display:none;
+      margin-top:6px;
+    }
+    .prevBtn.show{ display:inline-block; }
+
+    .enterBtn[disabled],
+    .nextBtn[disabled],
+    .prevBtn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .navRow{
+      min-height:38px;
+      margin-top:6px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .feedbackWrap{
+      min-height:88px;
+      margin-top:14px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:10px;
+    }
+
+    .feedback{
+      display:none;
+      padding:12px 16px;
+      border-radius:16px;
+      font-weight:900;
+      font-size:16px;
+      line-height:1.35;
+      max-width:min(700px, 90vw);
+      text-align:center;
+      box-shadow:0 8px 20px rgba(0,0,0,.05);
+    }
+
+    .feedback.show{ display:block; }
+
+    .feedback.correct{
+      background:var(--greenSoft);
+      border:1px solid #86efac;
+      color:#166534;
+    }
+
+    .feedback.incorrect{
+      background:var(--redSoft);
+      border:1px solid #fca5a5;
+      color:#991b1b;
+    }
+
+    .feedback.close{
+      background:var(--orangeSoft);
+      border:1px solid #fdba74;
+      color:#9a3412;
+    }
+
+    .revealAnswer{
+      display:none;
+      font-size:clamp(28px,3vw,46px);
+      font-weight:950;
+      color:#000;
+      letter-spacing:-.03em;
+      word-break:break-word;
+      text-align:center;
+    }
+
+    .revealAnswer.show{ display:block; }
+
+    .siteBanner{
+      width:100%;
+      text-align:center;
+      margin-top:auto;
+      padding:14px 10px;
+      font-weight:800;
+      background:#f3f4f6;
+      border-radius:14px;
+      color:#111827;
+      font-size:16px;
+    }
+
+    .siteBanner a{
+      color:#2563eb;
+      text-decoration:none;
+      font-weight:950;
+    }
+    .siteBanner a:hover{ text-decoration:underline; }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.42);
+      backdrop-filter:blur(2px);
+      display:none;
+      z-index:1000;
+    }
+    .overlay.show{ display:block; }
+
+    .modal{
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:min(880px,92vw);
+      background:#fff;
+      border-radius:22px;
+      box-shadow:0 18px 60px rgba(0,0,0,.18);
+      z-index:1100;
+      display:none;
+      overflow:hidden;
+    }
+    .modal.show{ display:block; }
+
+    .modalHead{
+      padding:22px 24px 10px;
+      font-weight:1000;
+      font-size:24px;
+    }
+
+    .modalBody{
+      padding:0 24px 22px;
+    }
+
+    .levelList{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding:6px 0 2px;
+    }
+
+    .levelRow{
+      border-radius:18px;
+      padding:18px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border:2px solid rgba(17,24,39,.10);
+    }
+
+    .levelName{
+      font-weight:1000;
+      font-size:20px;
+    }
+
+    .startBtn{
+      border:none;
+      border-radius:14px;
+      padding:10px 16px;
+      font-weight:1000;
+      background:#2563eb;
+      color:#fff;
+      cursor:pointer;
+      transition:transform .04s ease, filter .15s ease;
+      user-select:none;
+    }
+    .startBtn:active{ transform:scale(.98); }
+
+    .lvl-sweet{ background:#dcfce7; border-color:rgba(22,163,74,.25); }
+    .lvl-mild{ background:#dbeafe; border-color:rgba(37,99,235,.22); }
+    .lvl-medium{ background:#fef9c3; border-color:rgba(245,158,11,.25); }
+    .lvl-spicy{ background:#ffedd5; border-color:rgba(249,115,22,.25); }
+
+    .certWrap{
+      display:flex;
+      gap:18px;
+      align-items:flex-start;
+      padding:8px 0 8px;
+    }
+
+    .trophyBox{
+      width:96px;
+      height:96px;
+      border-radius:20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:48px;
+      background:#fff7ed;
+      border:2px solid rgba(249,115,22,.18);
+      flex:0 0 auto;
+    }
+
+    .certText{
+      font-weight:1000;
+      font-size:38px;
+      margin:0;
+      line-height:1.1;
+    }
+
+    .certSub{
+      margin-top:10px;
+      color:#6b7280;
+      font-weight:950;
+      font-size:30px;
+      line-height:1.1;
+    }
+
+    .modalActions{
+      padding:18px 24px 22px;
+      display:flex;
+      gap:12px;
+      justify-content:flex-start;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition:transform .04s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .btn:active{ transform:scale(.98); }
+
+    .btn.primary{ background:#2563eb; color:#fff; }
+    .btn.danger{ background:#fee2e2; color:#991b1b; }
+
+    @media (max-width:900px){
+      .stage{ min-height:620px; }
+    }
+
+    @media (max-width:720px){
+      .topRow{ align-items:stretch; }
+      .levelBanner{ font-size:28px; }
+      .answerRow{ margin-top:42px; }
+      .certText{ font-size:30px; }
+      .certSub{ font-size:22px; }
+      .levelRow{ flex-wrap:wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topRow">
+        <button id="backToLevelsBtn" class="backBtn" title="Back to level menu">← Back</button>
+
+        <div class="levelBannerWrap">
+          <div id="levelBanner" class="levelBanner">Level: —</div>
+        </div>
+
+        <button id="resetQuizBtn" class="resetBtn" title="Reset quiz">Reset</button>
+      </div>
+
+      <div class="progressRow">
+        <div class="progressTrack" aria-label="progress">
+          <div id="progressFill" class="progressFill"></div>
+        </div>
+        <div id="qCounter" class="qCounter">Question 1 / 15</div>
+      </div>
+
+      <div class="stage">
+        <div class="revealBadgeWrap">
+          <div id="revealBadge" class="revealBadge">
+            <span class="revealDot" aria-hidden="true"></span>
+            <span>Reveal groups</span>
+          </div>
+        </div>
+
+        <div class="questionStage">
+          <div id="expression" class="expression">—</div>
+
+          <div class="answerRow">
+            <div class="answerLabel">Answer:</div>
+            <input id="answerInput" class="answerInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type..." />
+            <button id="enterBtn" class="enterBtn">Enter</button>
+            <button id="nextBtn" class="nextBtn">Next →</button>
+          </div>
+
+          <div class="navRow">
+            <button id="prevBtn" class="prevBtn">↩ Back to previous question</button>
+          </div>
+
+          <div class="feedbackWrap">
+            <div id="feedbackCorrect" class="feedback correct">Correct!</div>
+            <div id="feedbackIncorrect" class="feedback incorrect">Not quite.</div>
+            <div id="feedbackClose" class="feedback close">Close, this answer just needs to be simplified.</div>
+            <div id="revealAnswer" class="revealAnswer"></div>
+          </div>
+        </div>
+
+        <div class="siteBanner">
+          This tool and more can be found at <strong><a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a></strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay"></div>
+
+  <div id="levelModal" class="modal" role="dialog" aria-modal="true" aria-label="Choose your level">
+    <div class="modalHead">Choose your level</div>
+    <div class="modalBody">
+      <div class="levelList">
+        <div class="levelRow lvl-sweet">
+          <div class="levelName">Sweet</div>
+          <button class="startBtn" data-level="sweet">Start</button>
+        </div>
+        <div class="levelRow lvl-mild">
+          <div class="levelName">Mild</div>
+          <button class="startBtn" data-level="mild">Start</button>
+        </div>
+        <div class="levelRow lvl-medium">
+          <div class="levelName">Medium</div>
+          <button class="startBtn" data-level="medium">Start</button>
+        </div>
+        <div class="levelRow lvl-spicy">
+          <div class="levelName">Spicy</div>
+          <button class="startBtn" data-level="spicy">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="certModal" class="modal" role="dialog" aria-modal="true" aria-label="Certificate">
+    <div class="modalHead">Certificate</div>
+    <div class="modalBody">
+      <div class="certWrap">
+        <div class="trophyBox">🏆</div>
+        <div>
+          <div id="certLine1" class="certText">You completed Sweet and got 0 out of 15. Paste a screenshot into Google Classroom.</div>
+          <div class="certSub">Screenshot this and paste into Google Classroom.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modalActions">
+      <button id="copyBtn" class="btn primary">Copy to clipboard</button>
+      <button id="closeCertBtn" class="btn">Close</button>
+      <button id="backToMenuBtn" class="btn danger">Back to level menu</button>
+    </div>
+  </div>
+
+  <script>
+(() => {
+  const QUIZ_LEN = 15;
+
+  const LEVELS = {
+    sweet: {
+      name: 'Sweet',
+      banner: ['#16a34a','#0f766e'],
+      revealGroups: true,
+      totalMin: 2,
+      totalMax: 10,
+      termOptions: [2,3],
+      numericChance: 0.60,
+      singleLetterOnly: true
+    },
+    mild: {
+      name: 'Mild',
+      banner: ['#2563eb','#1e3a8a'],
+      revealGroups: false,
+      totalMin: 2,
+      totalMax: 10,
+      termOptions: [2,3],
+      numericChance: 0.60,
+      singleLetterOnly: true
+    },
+    medium: {
+      name: 'Medium',
+      banner: ['#f59e0b','#b45309'],
+      revealGroups: false,
+      totalMin: 5,
+      totalMax: 12,
+      termOptions: [3,4],
+      numericChance: 0.50,
+      singleLetterOnly: false
+    },
+    spicy: {
+      name: 'Spicy',
+      banner: ['#f97316','#c2410c'],
+      revealGroups: false,
+      totalMin: 2,
+      totalMax: 20,
+      termOptions: [5],
+      numericChance: 0.50,
+      singleLetterOnly: false
+    }
+  };
+
+  const overlay = document.getElementById('overlay');
+  const levelModal = document.getElementById('levelModal');
+  const certModal = document.getElementById('certModal');
+
+  const levelBanner = document.getElementById('levelBanner');
+  const qCounter = document.getElementById('qCounter');
+  const progressFill = document.getElementById('progressFill');
+
+  const expressionEl = document.getElementById('expression');
+  const answerInput = document.getElementById('answerInput');
+  const enterBtn = document.getElementById('enterBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const resetQuizBtn = document.getElementById('resetQuizBtn');
+  const backToLevelsBtn = document.getElementById('backToLevelsBtn');
+  const revealBadge = document.getElementById('revealBadge');
+
+  const feedbackCorrect = document.getElementById('feedbackCorrect');
+  const feedbackIncorrect = document.getElementById('feedbackIncorrect');
+  const feedbackClose = document.getElementById('feedbackClose');
+  const revealAnswerEl = document.getElementById('revealAnswer');
+
+  const certLine1 = document.getElementById('certLine1');
+  const copyBtn = document.getElementById('copyBtn');
+  const closeCertBtn = document.getElementById('closeCertBtn');
+  const backToMenuBtn = document.getElementById('backToMenuBtn');
+
+  let levelKey = null;
+  let qIndex = 0;
+  let score = 0;
+  let phase = 'awaiting'; // awaiting, checked
+  let questions = [];
+
+  function showModal(modal){
+    overlay.classList.add('show');
+    modal.classList.add('show');
+  }
+
+  function hideModal(modal){
+    modal.classList.remove('show');
+    if (![levelModal, certModal].some(m => m.classList.contains('show'))){
+      overlay.classList.remove('show');
+    }
+  }
+
+  function randInt(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function choice(arr){
+    return arr[randInt(0, arr.length - 1)];
+  }
+
+  function shuffle(arr){
+    const copy = [...arr];
+    for(let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function randomComposition(total, parts, minValue = 1){
+    const values = [];
+    let remaining = total;
+    for(let i = 0; i < parts - 1; i++){
+      const minRemaining = (parts - i - 1) * minValue;
+      const maxForThis = remaining - minRemaining;
+      const value = randInt(minValue, maxForThis);
+      values.push(value);
+      remaining -= value;
+    }
+    values.push(remaining);
+    return shuffle(values);
+  }
+
+  function randomLetterFactor(singleLetterOnly = false){
+    const singleLetters = 'abcdefghijkmnpqrstuvwxyz'.split('');
+    if(singleLetterOnly) return choice(singleLetters);
+
+    if(Math.random() < 0.2){
+      let first = choice(singleLetters);
+      let second = choice(singleLetters);
+      while(second === first){
+        second = choice(singleLetters);
+      }
+      return first + second;
+    }
+    return choice(singleLetters);
+  }
+
+  function renderExpression(terms, commonFactor, revealGroups){
+    return terms.map((term, index) => {
+      const coefClass = revealGroups ? 'coef' : '';
+      const factorClass = revealGroups ? 'factor reveal-groups' : 'factor';
+      const op = index === 0 ? '' : ' <span class="op">+</span> ';
+      return `${op}<span class="${coefClass}">${term}</span><span class="times"> × </span><span class="${factorClass}">${escapeHtml(commonFactor)}</span>`;
+    }).join('');
+  }
+
+  function applyExpressionSizing(question){
+    expressionEl.classList.remove('tight', 'tighter');
+    const count = question.terms.length;
+    const factorLength = String(question.commonFactor).length;
+    if(count >= 5 || factorLength >= 2) expressionEl.classList.add('tight');
+    if((count >= 5 && factorLength >= 2) || count >= 6) expressionEl.classList.add('tighter');
+  }
+
+  function canonicalLetters(str){
+    return str.split('').sort().join('');
+  }
+
+  function parseAlgebraResponse(raw){
+    if(raw == null) return null;
+    let s = String(raw)
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[×*·]/g, '');
+
+    if(!s) return null;
+    if(/[^0-9a-z]/.test(s)) return null;
+
+    const digitMatches = s.match(/\d+/g) || [];
+    const letterMatches = s.match(/[a-z]/g) || [];
+
+    if(letterMatches.length === 0) return null;
+    if(digitMatches.length > 1) return null;
+
+    const coefficient = digitMatches.length === 1 ? Number(digitMatches[0]) : 1;
+    if(!Number.isFinite(coefficient)) return null;
+
+    return {
+      coefficient,
+      letters: canonicalLetters(letterMatches.join(''))
+    };
+  }
+
+  function checkAlgebraEquivalent(studentRaw, expectedCoefficient, expectedFactor){
+    const parsed = parseAlgebraResponse(studentRaw);
+    if(!parsed) return false;
+    return parsed.coefficient === expectedCoefficient
+      && parsed.letters === canonicalLetters(String(expectedFactor).toLowerCase());
+  }
+
+  function checkNumericEquivalent(studentRaw, expectedValue){
+    if(studentRaw == null) return false;
+    const cleaned = String(studentRaw).trim().replace(/,/g, '');
+    if(cleaned === '') return false;
+    const value = Number(cleaned);
+    return Number.isFinite(value) && value === expectedValue;
+  }
+
+  function evalNumericExpression(raw){
+    if(raw == null) return { valid:false };
+    let s = String(raw).trim().toLowerCase().replace(/\s+/g, '');
+    if(!s) return { valid:false };
+
+    s = s.replace(/×/g, '*').replace(/x/g, '*').replace(/÷/g, '/');
+
+    if(/[^0-9+\-*/().]/.test(s)) return { valid:false };
+
+    try{
+      const value = Function('"use strict"; return (' + s + ')')();
+      if(typeof value !== 'number' || !Number.isFinite(value)) return { valid:false };
+      return { valid:true, value };
+    }catch{
+      return { valid:false };
+    }
+  }
+
+  function isUnsimplifiedNumericEquivalent(studentRaw, expectedValue){
+    const raw = String(studentRaw || '').trim();
+    if(!raw) return false;
+
+    const cleaned = raw.replace(/\s+/g, '');
+    if(/^[+-]?\d+(\.\d+)?$/.test(cleaned)) return false;
+
+    const evaluated = evalNumericExpression(raw);
+    if(!evaluated.valid) return false;
+
+    return evaluated.value === expectedValue;
+  }
+
+  function formatRevealAnswer(question){
+    if(question.kind === 'numeric'){
+      return `${question.total} × ${question.commonFactor} = ${question.numericValue}`;
+    }
+    return `${question.total}${question.commonFactor}`;
+  }
+
+  function buildQuestion(){
+    const cfg = LEVELS[levelKey];
+    const isNumeric = Math.random() < cfg.numericChance;
+    const total = randInt(cfg.totalMin, cfg.totalMax);
+    const termCount = choice(cfg.termOptions);
+    const terms = randomComposition(total, termCount, 1);
+    const commonFactor = isNumeric
+      ? randInt(4, 10)
+      : randomLetterFactor(cfg.singleLetterOnly);
+
+    const question = {
+      kind: isNumeric ? 'numeric' : 'algebra',
+      revealGroups: cfg.revealGroups,
+      total,
+      termCount,
+      terms,
+      commonFactor,
+      answerText: '',
+      status: 'unseen',
+      solved: false,
+      attempts: 0,
+      countedCorrect: false
+    };
+
+    if(isNumeric){
+      question.numericValue = total * commonFactor;
+    }
+
+    question.revealAnswer = formatRevealAnswer(question);
+    return question;
+  }
+
+  function ensureQuestionExists(index){
+    while(questions.length <= index){
+      questions.push(buildQuestion());
+    }
+  }
+
+  function currentQuestion(){
+    return questions[qIndex];
+  }
+
+  function hideFeedback(){
+    feedbackCorrect.classList.remove('show');
+    feedbackIncorrect.classList.remove('show');
+    feedbackClose.classList.remove('show');
+    revealAnswerEl.classList.remove('show');
+    revealAnswerEl.textContent = '';
+  }
+
+  function updateFeedbackFromQuestion(question){
+    hideFeedback();
+
+    if(question.status === 'correct'){
+      feedbackCorrect.classList.add('show');
+      revealAnswerEl.textContent = question.revealAnswer;
+      revealAnswerEl.classList.add('show');
+    }else if(question.status === 'incorrect'){
+      feedbackIncorrect.classList.add('show');
+    }else if(question.status === 'close'){
+      feedbackClose.classList.add('show');
+    }
+  }
+
+  function updateInputStateFromQuestion(question){
+    answerInput.classList.remove('ok', 'bad', 'close');
+
+    if(question.status === 'correct'){
+      answerInput.classList.add('ok');
+    }else if(question.status === 'incorrect'){
+      answerInput.classList.add('bad');
+    }else if(question.status === 'close'){
+      answerInput.classList.add('close');
+    }
+
+    answerInput.disabled = !!question.solved;
+  }
+
+  function renderCurrentQuestion(){
+    const question = currentQuestion();
+
+    expressionEl.innerHTML = renderExpression(question.terms, question.commonFactor, question.revealGroups);
+    applyExpressionSizing(question);
+
+    revealBadge.classList.toggle('show', !!question.revealGroups);
+
+    answerInput.value = question.answerText || '';
+    answerInput.placeholder = question.kind === 'numeric' ? 'Type the final value' : 'Type the simplified term';
+
+    updateInputStateFromQuestion(question);
+    updateFeedbackFromQuestion(question);
+
+    nextBtn.classList.toggle('show', question.status !== 'unseen');
+    prevBtn.classList.toggle('show', qIndex > 0);
+
+    phase = question.status === 'unseen' ? 'awaiting' : 'checked';
+
+   setTimeout(() => {
+  if(!question.solved){
+    answerInput.focus();
+  }else{
+    answerInput.blur();
+    enterBtn.focus();
+  }
+}, 0);
+  }
+
+  function setBanner(){
+    const cfg = LEVELS[levelKey];
+    levelBanner.textContent = `Level: ${cfg.name}`;
+    levelBanner.style.background = `linear-gradient(180deg, ${cfg.banner[0]}, ${cfg.banner[1]})`;
+    progressFill.style.background = cfg.banner[0];
+  }
+
+  function setProgress(){
+    const shown = Math.min(QUIZ_LEN, qIndex + 1);
+    qCounter.textContent = `Question ${shown} / ${QUIZ_LEN}`;
+    progressFill.style.width = `${(qIndex / QUIZ_LEN) * 100}%`;
+  }
+
+  function loadQuestion(){
+    ensureQuestionExists(qIndex);
+    renderCurrentQuestion();
+  }
+
+  function startQuiz(key){
+    levelKey = key;
+    qIndex = 0;
+    score = 0;
+    questions = [];
+    ensureQuestionExists(0);
+    setBanner();
+    setProgress();
+    hideModal(levelModal);
+    loadQuestion();
+  }
+
+  function resetQuizSameLevel(){
+    if(!levelKey) return;
+    qIndex = 0;
+    score = 0;
+    questions = [];
+    ensureQuestionExists(0);
+    setProgress();
+    loadQuestion();
+  }
+
+  function showCertificate(){
+    const cfg = LEVELS[levelKey];
+    certLine1.textContent = `You completed ${cfg.name} and got ${score} out of ${QUIZ_LEN}. Paste a screenshot into Google Classroom.`;
+    progressFill.style.width = '100%';
+    showModal(certModal);
+  }
+
+  function nextQuestion(){
+    if(phase !== 'checked') return;
+
+    if(qIndex >= QUIZ_LEN - 1){
+      showCertificate();
+      return;
+    }
+
+    qIndex++;
+    ensureQuestionExists(qIndex);
+    setProgress();
+    loadQuestion();
+  }
+
+  function previousQuestion(){
+    if(qIndex <= 0) return;
+    qIndex--;
+    setProgress();
+    loadQuestion();
+  }
+
+  function markCorrect(question){
+    question.status = 'correct';
+    question.solved = true;
+    if(!question.countedCorrect){
+      question.countedCorrect = true;
+      score++;
+    }
+  }
+
+  function markIncorrect(question){
+    question.status = 'incorrect';
+    question.solved = false;
+  }
+
+  function markClose(question){
+    question.status = 'close';
+    question.solved = false;
+  }
+
+  function submitAnswer(){
+    if(phase !== 'awaiting') return;
+
+    const question = currentQuestion();
+    question.attempts++;
+    question.answerText = answerInput.value;
+
+    let correct = false;
+    let closeNeedsSimplifying = false;
+
+    if(question.kind === 'numeric'){
+      correct = checkNumericEquivalent(question.answerText, question.numericValue);
+      if(!correct){
+        closeNeedsSimplifying = isUnsimplifiedNumericEquivalent(question.answerText, question.numericValue);
+      }
+    }else{
+      correct = checkAlgebraEquivalent(question.answerText, question.total, question.commonFactor);
+    }
+
+    if(correct){
+      markCorrect(question);
+    }else if(closeNeedsSimplifying){
+      markClose(question);
+    }else{
+      markIncorrect(question);
+    }
+
+    renderCurrentQuestion();
+    phase = 'checked';
+  }
+
+  function handleEnter(){
+    if(phase === 'awaiting'){
+      submitAnswer();
+      return;
+    }
+    if(phase === 'checked'){
+      nextQuestion();
+    }
+  }
+
+  function nowStamp(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function copyCertificate(){
+    const cfg = LEVELS[levelKey];
+    const text =
+`🏆 Mills Maths Tools – Number Pattern Quiz
+Level: ${cfg.name}
+Score: ${score} / ${QUIZ_LEN}
+Completed: ${nowStamp()}
+
+(Submit a screenshot or paste this into Google Classroom.)`;
+
+    try{
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 1200);
+    }catch{
+      window.prompt('Copy this text:', text);
+    }
+  }
+
+  function backToLevelMenu(){
+    hideModal(certModal);
+    showModal(levelModal);
+
+    levelKey = null;
+    qIndex = 0;
+    score = 0;
+    phase = 'awaiting';
+    questions = [];
+
+    levelBanner.textContent = 'Level: —';
+    levelBanner.style.background = 'linear-gradient(180deg, #1d4ed8, #1e3a8a)';
+    qCounter.textContent = 'Question 1 / 15';
+    progressFill.style.width = '0%';
+    progressFill.style.background = '#2563eb';
+
+    expressionEl.textContent = '—';
+    expressionEl.classList.remove('tight', 'tighter');
+    revealBadge.classList.remove('show');
+
+    answerInput.value = '';
+    answerInput.classList.remove('ok', 'bad', 'close');
+    answerInput.disabled = false;
+    nextBtn.classList.remove('show');
+    prevBtn.classList.remove('show');
+    enterBtn.disabled = false;
+    resetQuizBtn.disabled = false;
+    backToLevelsBtn.disabled = false;
+    hideFeedback();
+  }
+
+  document.querySelectorAll('.startBtn').forEach(btn => {
+    btn.addEventListener('click', () => startQuiz(btn.dataset.level));
+  });
+
+  resetQuizBtn.addEventListener('click', () => {
+    if(!levelKey) return;
+    if(levelModal.classList.contains('show') || certModal.classList.contains('show')) return;
+    resetQuizSameLevel();
+  });
+
+  backToLevelsBtn.addEventListener('click', () => {
+    if(levelModal.classList.contains('show')) return;
+    backToLevelMenu();
+  });
+
+  enterBtn.addEventListener('click', handleEnter);
+  nextBtn.addEventListener('click', nextQuestion);
+  prevBtn.addEventListener('click', previousQuestion);
+
+  answerInput.addEventListener('input', () => {
+    const question = currentQuestion();
+    if(!question || question.solved) return;
+
+    question.answerText = answerInput.value;
+
+    if(question.status !== 'unseen'){
+      question.status = 'unseen';
+      renderCurrentQuestion();
+      answerInput.value = question.answerText;
+      answerInput.focus();
+      answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
+      phase = 'awaiting';
+    }
+  });
+
+answerInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    e.stopPropagation();
+    handleEnter();
+  }
+});
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key !== 'Enter') return;
+    if(levelModal.classList.contains('show') || certModal.classList.contains('show')) return;
+
+    e.preventDefault();
+    handleEnter();
+  });
+
+  copyBtn.addEventListener('click', copyCertificate);
+
+  closeCertBtn.addEventListener('click', () => hideModal(certModal));
+
+  backToMenuBtn.addEventListener('click', () => {
+    hideModal(certModal);
+    backToLevelMenu();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      if(certModal.classList.contains('show')){
+        hideModal(certModal);
+      }else if(!levelModal.classList.contains('show')){
+        backToLevelMenu();
+      }
+    }
+  });
+
+  showModal(levelModal);
+})();
+  </script>
+</body>
+</html>
