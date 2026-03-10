@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -22,14 +21,17 @@
       --ok:#16a34a;
 
       --footer-h: 44px;
-      --pagePad: 12mm;          /* safe padding so nothing falls off with default print margins */
+      --pagePad: 12mm;
       --innerRadius: 14px;
+
+      --mathFont: "Cambria Math", "STIX Two Math", "STIXGeneral", "Times New Roman", serif;
+      --uiFont: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
     *{ box-sizing:border-box; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family: var(--uiFont);
       background: var(--bg);
       color: var(--ink);
       padding-bottom: var(--footer-h);
@@ -130,7 +132,6 @@
 
     .outWrap{ margin-top: 16px; }
 
-    /* Pages */
     .page{
       margin-top: 16px;
       background:#fff;
@@ -141,7 +142,6 @@
       position: relative;
     }
 
-    /* Border image layer */
     .pageBorder{
       position:absolute;
       inset: 0;
@@ -238,10 +238,12 @@
       color:#111827;
     }
     .qText{
-      font-weight: 1000;
-      font-size: 16px;
-      line-height: 1.15;
+      font-family: var(--mathFont);
+      font-weight: 700;
+      font-size: 17px;
+      line-height: 1.2;
       color:#111827;
+      letter-spacing: 0;
     }
 
     .workArea{
@@ -269,7 +271,11 @@
       justify-content:flex-start;
       gap: 10px;
     }
-    .ansLabel{ font-weight: 1000; font-size: 14px; }
+    .ansLabel{
+      font-weight: 900;
+      font-size: 14px;
+      font-family: var(--uiFont);
+    }
     .ansBox{
       flex: 1;
       min-width: 0;
@@ -284,9 +290,10 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-weight: 1000;
+      font-family: var(--mathFont);
+      font-weight: 700;
       color: var(--ok);
-      font-size: 16px;
+      font-size: 18px;
     }
 
     .ineqRow{
@@ -302,8 +309,9 @@
       border: 2px solid rgba(17,24,39,.25);
       border-radius: 12px;
       padding: 8px 12px;
-      font-weight: 1000;
-      font-size: 18px;
+      font-family: var(--mathFont);
+      font-weight: 700;
+      font-size: 20px;
       min-width: 54px;
       text-align:center;
       background:#fff;
@@ -318,8 +326,9 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-weight: 1000;
-      font-size: 20px;
+      font-family: var(--mathFont);
+      font-weight: 700;
+      font-size: 22px;
     }
     .symBox.key{
       border-color: var(--ok);
@@ -327,23 +336,48 @@
       color: var(--ok);
     }
 
-    /* Ordering */
     .orderRow{ margin-top: 6px; display:flex; justify-content:center; gap: 10px; flex-wrap:wrap; }
     .orderAns{ margin-top: 10px; display:flex; justify-content:center; gap: 8px; }
     .orderBox{ width: 42px; height: 38px; border: 2px solid #111827; border-radius: 10px; background:#fff; }
-    .orderBox.key{ border-color: var(--ok); background: rgba(22,163,74,.08); color: var(--ok); display:flex; align-items:center; justify-content:center; font-weight:1000; font-size: 16px; }
+    .orderBox.key{
+      border-color: var(--ok);
+      background: rgba(22,163,74,.08);
+      color: var(--ok);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: var(--mathFont);
+      font-weight:700;
+      font-size: 18px;
+    }
 
-    /* SVG styles */
+    .opExpr{
+      font-family: var(--mathFont);
+      font-weight: 700;
+      font-size: 24px;
+      line-height: 1.2;
+      color:#111827;
+      text-align:center;
+      width:100%;
+    }
+
     .baseline{ stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
     .tickMajor{ stroke: var(--tick); stroke-width: 6; stroke-linecap: round; }
     .tickUnit{ stroke: rgba(17,24,39,.45); stroke-width: 3; stroke-linecap: round; }
     .dot{ fill: #111827; opacity: 0.92; }
     .dot.zero{ opacity: 0.85; }
     .dot.answer{ fill: var(--ok); opacity: 0.95; }
-    .label{ font-size: 24px; font-weight: 1000; fill:#111827; }
-    .label.answer{ fill: var(--ok); }
+    .label{
+      font-family: var(--mathFont);
+      font-size: 24px;
+      font-weight: 700;
+      fill:#111827;
+    }
+    .label.answer{
+      font-family: var(--mathFont);
+      fill: var(--ok);
+    }
 
-    /* Print */
     @media print{
       @page{ size: A4; margin: 12mm; }
 
@@ -420,7 +454,7 @@
   const PER_PAGE = 8; // 2x4
   const BORDER_SRC = "border_page0.png"; // must sit beside this HTML
 
-  // Basic ranges (UNCHANGED)
+  // Basic ranges
   const PLACE_RANGE = { min:-10, max: 10 };
   const CALC_A_RANGE = { min:-12, max: 12 };
   const CALC_B_RANGE = { min: 1, max: 12 };
@@ -434,25 +468,45 @@
 
   // C-Expected checkbox 2 rules
   const CE_ADD_A = { min:-50, max:50 };
-  const CE_ADD_B = { min:1, max:50 };      // positive only
-  const CE_MULT_ABS = { min:2, max:12 };   // avoid trivial
-  const CE_DIV_ABS  = { min:1, max:12 };   // times-table style
+  const CE_ADD_B = { min:1, max:50 };
+  const CE_MULT_ABS = { min:2, max:12 };
+  const CE_DIV_ABS  = { min:1, max:12 };
 
-  // C-Expected checkbox 3 rules (Comparing expressions)
+  // C-Expected checkbox 3 rules
   const CE_C_RANGE = { min:-50, max:50 };
   const CE_EXPR_CAP = 100;
   const CE_EQ_RATE = 0.20;
 
-  // C-Expected checkbox 4 rules (Combining signs)
+  // C-Expected checkbox 4 rules
   const CS_RANGE = { min:-50, max:50 };
-  const CS_CAP = 100; // result naturally within ±100, but keep for safety
+  const CS_CAP = 100;
 
-  // Distribution: 10% a+(+b), 30% each of the others
+  // C-Expected checkbox 5 rules
+  const OO_LIMIT = 144;
+
   const CS_FORMS = [
-    { id:"pp_add", w: 10 }, // a + b
-    { id:"pn_add", w: 30 }, // a + (-b)
-    { id:"pp_sub", w: 30 }, // a - b
-    { id:"pn_sub", w: 30 }, // a - (-b)
+    { id:"pp_add", w: 10 },
+    { id:"pn_add", w: 30 },
+    { id:"pp_sub", w: 30 },
+    { id:"pn_sub", w: 30 },
+  ];
+
+  const OO_FORMS = [
+    "a_plus_bxc",
+    "a_minus_bxc",
+    "ax_b_plus_c",
+    "ax_b_minus_c",
+    "a_times_paren_b_plus_c",
+    "a_times_paren_b_minus_c",
+    "paren_a_plus_b_div_c",
+    "paren_a_minus_b_div_c",
+    "paren_axb_div_c",
+    "paren_axb_plus_c",
+    "paren_axb_minus_c",
+    "paren_a_plus_b_times_c",
+    "paren_a_minus_b_times_c",
+    "paren_a_div_b_plus_c",
+    "paren_a_div_b_minus_c"
   ];
 
   // DOM
@@ -466,7 +520,6 @@
   const resetBtn = document.getElementById("resetBtn");
   const out      = document.getElementById("out");
 
-  // Outcome checkbox sets
   const OUTCOMES = {
     basic_de: {
       header: "Stage 4 — Integers · Grades D/E — friendly numbers + diagrams",
@@ -485,7 +538,8 @@
         { id:"place_ce", label:"Place an integer on a number line", checked:true },
         { id:"calc_ce",  label:"Integer calculations", checked:true },
         { id:"comp_ce",  label:"Comparing integers (<>=)", checked:true },
-        { id:"signs_ce", label:"Combining signs", checked:true },  // ✅ Checkbox 4
+        { id:"signs_ce", label:"Combining signs", checked:true },
+        { id:"oop_ce",   label:"Order of operations", checked:true },
       ]
     }
   };
@@ -565,13 +619,11 @@
     return true;
   }
 
-  // Parentheses for negatives (and only negatives)
   function tok(n){
     return n < 0 ? `(${fmtInt(n)})` : fmtInt(n);
   }
   function randSign(){ return rng() < 0.5 ? -1 : 1; }
 
-  // Balanced distribution (default)
   function makeBalancedList(typeIds, n){
     const ids = typeIds.slice();
     if (!ids.length) return [];
@@ -584,9 +636,6 @@
     return shuffle(list);
   }
 
-  // ------------------------------------------------------------
-  // Weighted + balanced helpers
-  // ------------------------------------------------------------
   function expandWeighted(forms){
     const bag = [];
     for (const f of forms){
@@ -596,11 +645,9 @@
   }
 
   function makeWeightedBalancedList(forms, m){
-    // Create a bag matching weights (10/30/30/30) then repeat as needed, shuffle
-    const bag = expandWeighted(forms); // length 100
+    const bag = expandWeighted(forms);
     const out = [];
     while (out.length < m){
-      // take whole bag chunks to preserve proportions; then shuffle
       const chunk = shuffle(bag);
       for (const id of chunk){
         out.push(id);
@@ -622,21 +669,6 @@
     return shuffle(list);
   }
 
-  function makeBalancedFormList(m){
-    const forms = ["ab_c_add","ab_c_sub","c_ab_add","c_ab_sub"];
-    if (m<=0) return [];
-    const list = [];
-    let i=0;
-    while (list.length < m){
-      list.push(forms[i % forms.length]);
-      i++;
-    }
-    return shuffle(list);
-  }
-
-  // ------------------------------------------------------------
-  // SVG builders (Basic UNCHANGED)
-  // ------------------------------------------------------------
   function elNS(name, attrs={}, children=[]){
     const n = document.createElementNS("http://www.w3.org/2000/svg", name);
     for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v));
@@ -649,6 +681,9 @@
     return t;
   }
 
+  // ------------------------------------------------------------
+  // SVG builders
+  // ------------------------------------------------------------
   function buildFixedNumberLineSVG(answerVal, showAnswer){
     const vmin = -10, vmax = 10;
 
@@ -751,7 +786,7 @@
   }
 
   // ------------------------------------------------------------
-  // C-Expected number line (checkbox 1)
+  // C-Expected number line
   // ------------------------------------------------------------
   function tooClose(a,b,step){ return Math.abs(a-b) < 2*step; }
 
@@ -808,7 +843,6 @@
   // ------------------------------------------------------------
   // Question generators
   // ------------------------------------------------------------
-  // BASIC (UNCHANGED)
   function genPlace(){ return { type:"place", v: randInt(PLACE_RANGE.min, PLACE_RANGE.max) }; }
 
   function genCalc(){
@@ -860,7 +894,6 @@
     return { type:"div", a, b, ans: c };
   }
 
-  // C-Expected checkbox 1
   function genPlaceCE(){
     const step = choice(CE_STEPS);
     const vmax = step * 10;
@@ -900,7 +933,6 @@
     return { type:"place_ce", step, labels, answer };
   }
 
-  // C-Expected checkbox 2
   function genCalcCE(opForced=null){
     const op = opForced ?? choice(["+","−","×","÷"]);
 
@@ -908,7 +940,7 @@
       let a=0,b=0,ans=0,tries=0;
       while (tries++ < 600){
         a = randInt(CE_ADD_A.min, CE_ADD_A.max);
-        b = randInt(CE_ADD_B.min, CE_ADD_B.max); // positive
+        b = randInt(CE_ADD_B.min, CE_ADD_B.max);
         ans = (op === "+") ? a+b : a-b;
         if (ans < -100 || ans > 100) continue;
         break;
@@ -932,7 +964,6 @@
     return { type:"calc_ce", op:"÷", a: dividend, b: divisor, ans: quotient };
   }
 
-  // C-Expected checkbox 3 (Comparing expressions)
   function dynBand(E){
     return clamp(4 + Math.floor(Math.abs(E)/6), 4, 14);
   }
@@ -995,7 +1026,6 @@
     return genCompareCE(form);
   }
 
-  // C-Expected checkbox 4 (Combining signs)
   function makeCombiningSignsForms(m){
     return makeWeightedBalancedList(CS_FORMS, m);
   }
@@ -1005,17 +1035,12 @@
   }
 
   function genCombiningSignsCE(form){
-    // forms:
-    // pp_add: a + b     (b positive)
-    // pn_add: a + (-b)  (b negative)
-    // pp_sub: a - b     (b positive)
-    // pn_sub: a - (-b)  (b negative)
     let tries = 0;
     while (tries++ < 6000){
       let a = randInt(CS_RANGE.min, CS_RANGE.max);
-      if (a === 0) continue; // avoid trivial a=0
+      if (a === 0) continue;
 
-      let bAbs = randInt(1, 50); // b != 0 always
+      let bAbs = randInt(1, 50);
       let b = bAbs;
 
       if (form === "pn_add" || form === "pn_sub"){
@@ -1029,18 +1054,180 @@
 
       if (Math.abs(ans) > CS_CAP) continue;
 
-      // Occasionally allow "zero result" patterns; don't filter them out.
-      // But still avoid b=0 and a=0 (already done).
+      const bStr = b >= 0 ? `(+${fmtInt(b)})` : `(${fmtInt(b)})`;
+      const aStr = a >= 0 ? fmtInt(a) : `(${fmtInt(a)})`;
 
-     // Always show explicit sign on b
-const bStr = b >= 0 ? `(+${fmtInt(b)})` : `(${fmtInt(b)})`;
-const aStr = a >= 0 ? fmtInt(a) : `(${fmtInt(a)})`;
-
-const exprStr = `${aStr} ${op} ${bStr}`;
+      const exprStr = `${aStr} ${op} ${bStr}`;
       return { type:"signs_ce", a, b, op, exprStr, ans, form };
     }
 
     return genCombiningSignsCE(form);
+  }
+
+  function pickNonZeroInt(min, max){
+    let v = 0;
+    let safety = 0;
+    while (v === 0 && safety++ < 200){
+      v = randInt(min, max);
+    }
+    return v || 1;
+  }
+
+  function withinOOLimit(n){
+    return Number.isInteger(n) && Math.abs(n) <= OO_LIMIT;
+  }
+
+  function genOrderOpsCE(){
+    let tries = 0;
+
+    while (tries++ < 10000){
+      const form = choice(OO_FORMS);
+
+      let expr = "";
+      let ans = null;
+
+      if (form === "a_plus_bxc"){
+        const a = randInt(-20,20);
+        const b = pickNonZeroInt(-12,12);
+        const c = pickNonZeroInt(-12,12);
+        ans = a + b * c;
+        expr = `${tok(a)} + ${tok(b)} × ${tok(c)}`;
+      }
+
+      else if (form === "a_minus_bxc"){
+        const a = randInt(-20,20);
+        const b = pickNonZeroInt(-12,12);
+        const c = pickNonZeroInt(-12,12);
+        ans = a - b * c;
+        expr = `${tok(a)} − ${tok(b)} × ${tok(c)}`;
+      }
+
+      else if (form === "ax_b_plus_c"){
+        const a = pickNonZeroInt(-12,12);
+        const b = pickNonZeroInt(-12,12);
+        const c = randInt(-20,20);
+        ans = a * b + c;
+        expr = `${tok(a)} × ${tok(b)} + ${tok(c)}`;
+      }
+
+      else if (form === "ax_b_minus_c"){
+        const a = pickNonZeroInt(-12,12);
+        const b = pickNonZeroInt(-12,12);
+        const c = randInt(-20,20);
+        ans = a * b - c;
+        expr = `${tok(a)} × ${tok(b)} − ${tok(c)}`;
+      }
+
+      else if (form === "a_times_paren_b_plus_c"){
+        const a = pickNonZeroInt(-12,12);
+        const b = randInt(-12,12);
+        const c = randInt(-12,12);
+        ans = a * (b + c);
+        expr = `${tok(a)} × (${tok(b)} + ${tok(c)})`;
+      }
+
+      else if (form === "a_times_paren_b_minus_c"){
+        const a = pickNonZeroInt(-12,12);
+        const b = randInt(-12,12);
+        const c = randInt(-12,12);
+        ans = a * (b - c);
+        expr = `${tok(a)} × (${tok(b)} − ${tok(c)})`;
+      }
+
+      else if (form === "paren_a_plus_b_div_c"){
+        const cAbs = randInt(2,12);
+        const c = cAbs * randSign();
+        const q = randInt(-12,12);
+        const sum = q * c;
+        const a = randInt(-12,12);
+        const b = sum - a;
+        ans = (a + b) / c;
+        expr = `(${tok(a)} + ${tok(b)}) ÷ ${tok(c)}`;
+      }
+
+      else if (form === "paren_a_minus_b_div_c"){
+        const cAbs = randInt(2,12);
+        const c = cAbs * randSign();
+        const q = randInt(-12,12);
+        const diff = q * c;
+        const a = randInt(-12,12);
+        const b = a - diff;
+        ans = (a - b) / c;
+        expr = `(${tok(a)} − ${tok(b)}) ÷ ${tok(c)}`;
+      }
+
+      else if (form === "paren_axb_div_c"){
+        const cAbs = randInt(2,12);
+        const c = cAbs * randSign();
+        const q = randInt(-12,12);
+        const a = q;
+        const b = c;
+        ans = (a * b) / c;
+        expr = `(${tok(a)} × ${tok(b)}) ÷ ${tok(c)}`;
+      }
+
+      else if (form === "paren_axb_plus_c"){
+        const a = pickNonZeroInt(-12,12);
+        const b = pickNonZeroInt(-12,12);
+        const c = randInt(-20,20);
+        ans = (a * b) + c;
+        expr = `(${tok(a)} × ${tok(b)}) + ${tok(c)}`;
+      }
+
+      else if (form === "paren_axb_minus_c"){
+        const a = pickNonZeroInt(-12,12);
+        const b = pickNonZeroInt(-12,12);
+        const c = randInt(-20,20);
+        ans = (a * b) - c;
+        expr = `(${tok(a)} × ${tok(b)}) − ${tok(c)}`;
+      }
+
+      else if (form === "paren_a_plus_b_times_c"){
+        const a = randInt(-12,12);
+        const b = randInt(-12,12);
+        const c = pickNonZeroInt(-12,12);
+        ans = (a + b) * c;
+        expr = `(${tok(a)} + ${tok(b)}) × ${tok(c)}`;
+      }
+
+      else if (form === "paren_a_minus_b_times_c"){
+        const a = randInt(-12,12);
+        const b = randInt(-12,12);
+        const c = pickNonZeroInt(-12,12);
+        ans = (a - b) * c;
+        expr = `(${tok(a)} − ${tok(b)}) × ${tok(c)}`;
+      }
+
+      else if (form === "paren_a_div_b_plus_c"){
+        const bAbs = randInt(2,12);
+        const b = bAbs * randSign();
+        const q = randInt(-12,12);
+        const a = q * b;
+        const c = randInt(-20,20);
+        ans = (a / b) + c;
+        expr = `(${tok(a)} ÷ ${tok(b)}) + ${tok(c)}`;
+      }
+
+      else if (form === "paren_a_div_b_minus_c"){
+        const bAbs = randInt(2,12);
+        const b = bAbs * randSign();
+        const q = randInt(-12,12);
+        const a = q * b;
+        const c = randInt(-20,20);
+        ans = (a / b) - c;
+        expr = `(${tok(a)} ÷ ${tok(b)}) − ${tok(c)}`;
+      }
+
+      if (!withinOOLimit(ans)) continue;
+      return { type:"oop_ce", expr, ans, form };
+    }
+
+    return {
+      type:"oop_ce",
+      expr:"3 + 4 × (−3)",
+      ans:-9,
+      form:"fallback"
+    };
   }
 
   // ------------------------------------------------------------
@@ -1052,7 +1239,6 @@ const exprStr = `${aStr} ${op} ${bStr}`;
 
     const plan = makeBalancedList(pool, n);
 
-    // calc_ce: balance ops inside it
     const calcPositions = [];
     for (let i=0;i<plan.length;i++){
       if (plan[i] === "calc_ce") calcPositions.push(i);
@@ -1061,7 +1247,6 @@ const exprStr = `${aStr} ${op} ${bStr}`;
     const opByIdx = new Map();
     calcPositions.forEach((pos,j)=>opByIdx.set(pos, opPlan[j]));
 
-    // comp_ce: balance four forms
     const compPositions = [];
     for (let i=0;i<plan.length;i++){
       if (plan[i] === "comp_ce") compPositions.push(i);
@@ -1080,7 +1265,6 @@ const exprStr = `${aStr} ${op} ${bStr}`;
     const formByIdx = new Map();
     compPositions.forEach((pos,j)=>formByIdx.set(pos, formPlan[j]));
 
-    // signs_ce: weighted distribution internal to that checkbox
     const signsPositions = [];
     for (let i=0;i<plan.length;i++){
       if (plan[i] === "signs_ce") signsPositions.push(i);
@@ -1107,12 +1291,10 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       if (t==="calc_ce")  q=genCalcCE(opByIdx.get(qs.length) ?? null);
       if (t==="comp_ce")  q=genCompareCE(formByIdx.get(qs.length) ?? "ab_c_add");
       if (t==="signs_ce") q=genCombiningSignsCE(signsFormByIdx.get(qs.length) ?? "pn_sub");
+      if (t==="oop_ce")   q=genOrderOpsCE();
 
       if (!q) continue;
 
-      // De-dup rules:
-      // - calc_ce: you previously allowed repeats, but for checkbox 4 you want NO repeats.
-      // We'll still keep a key for calc_ce; it helps reduce accidental duplicates.
       const ok = uniqPush(qs, q, (x) => {
         if (x.type==="place") return `p:${x.v}`;
         if (x.type==="calc")  return `c:${x.a}${x.op}${x.b}`;
@@ -1123,6 +1305,7 @@ const exprStr = `${aStr} ${op} ${bStr}`;
         if (x.type==="place_ce") return `pce:s${x.step}:a${x.answer}:L${x.labels.slice().sort((a,b)=>a-b).join('|')}`;
         if (x.type==="calc_ce") return `cce:${x.op}:${x.a},${x.b}`;
         if (x.type==="comp_ce") return `cmp:${x.leftText}?${x.rightText}`;
+        if (x.type==="oop_ce")  return `oop:${x.expr}`;
         return `sig:${exprKey(x.a, x.op, x.b)}`;
       });
       if (!ok) continue;
@@ -1132,7 +1315,7 @@ const exprStr = `${aStr} ${op} ${bStr}`;
   }
 
   // ------------------------------------------------------------
-  // Rendering cards (Basic unchanged; C-Expected additions)
+  // Rendering cards
   // ------------------------------------------------------------
   function makeCard(q, idx1, showAnswers){
     const card = document.createElement("div");
@@ -1155,7 +1338,8 @@ const exprStr = `${aStr} ${op} ${bStr}`;
     const work = document.createElement("div");
     work.className = "workArea";
 
-    // BASIC (UNCHANGED)
+    let deferredAnsRow = null;
+
     if (q.type === "place"){
       text.textContent = `Place ${fmtInt(q.v)} on the number line.`;
       work.appendChild(buildFixedNumberLineSVG(q.v, showAnswers));
@@ -1171,7 +1355,7 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
       ansRow.appendChild(box);
-      card.appendChild(ansRow);
+      deferredAnsRow = ansRow;
 
     } else if (q.type === "ineq"){
       text.textContent = `Insert either <, > or = to make the statement true.`;
@@ -1245,7 +1429,7 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
       ansRow.appendChild(box);
-      card.appendChild(ansRow);
+      deferredAnsRow = ansRow;
 
     } else if (q.type === "div"){
       text.textContent = `Calculate: ${fmtInt(q.a)} ÷ ${fmtInt(q.b)}`;
@@ -1261,9 +1445,8 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
       ansRow.appendChild(box);
-      card.appendChild(ansRow);
+      deferredAnsRow = ansRow;
 
-    // C-EXPECTED
     } else if (q.type === "place_ce"){
       text.textContent = `Place ${fmtInt(q.answer)} on the number line.`;
       work.appendChild(buildPlaceLineCE(q, showAnswers));
@@ -1282,7 +1465,7 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
       ansRow.appendChild(box);
-      card.appendChild(ansRow);
+      deferredAnsRow = ansRow;
 
     } else if (q.type === "comp_ce"){
       text.textContent = `Insert either <, > or = to make the statement true.`;
@@ -1311,7 +1494,6 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       work.appendChild(row);
 
     } else if (q.type === "signs_ce"){
-      // ✅ Checkbox 4 render: single pill, calculate, answer bubble
       text.textContent = `Calculate:`;
 
       work.style.border = "none";
@@ -1324,7 +1506,9 @@ const exprStr = `${aStr} ${op} ${bStr}`;
 
       const p = document.createElement("div");
       p.className = "pill";
-      p.style.fontSize = "20px";
+      p.style.fontSize = "22px";
+      p.style.fontFamily = 'var(--mathFont)';
+      p.style.fontWeight = '700';
       p.textContent = q.exprStr;
 
       row.appendChild(p);
@@ -1337,10 +1521,38 @@ const exprStr = `${aStr} ${op} ${bStr}`;
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
       ansRow.appendChild(box);
-      card.appendChild(ansRow);
+      deferredAnsRow = ansRow;
+
+    } else if (q.type === "oop_ce"){
+      text.textContent = `Use order of operations to calculate.`;
+
+      work.style.border = "none";
+      work.style.padding = "0";
+      work.style.background = "transparent";
+
+      const exprWrap = document.createElement("div");
+      exprWrap.className = "ineqRow";
+      exprWrap.style.marginTop = "0";
+
+      const expr = document.createElement("div");
+      expr.className = "opExpr";
+      expr.textContent = q.expr;
+
+      exprWrap.appendChild(expr);
+      work.appendChild(exprWrap);
+
+      const ansRow = document.createElement("div");
+      ansRow.className = "ansRow";
+      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      const box = document.createElement("div");
+      box.className = "ansBox" + (showAnswers ? " key" : "");
+      box.textContent = showAnswers ? fmtInt(q.ans) : "";
+      ansRow.appendChild(box);
+      deferredAnsRow = ansRow;
     }
 
     card.appendChild(work);
+    if (deferredAnsRow) card.appendChild(deferredAnsRow);
     return card;
   }
 
@@ -1446,7 +1658,6 @@ const exprStr = `${aStr} ${op} ${bStr}`;
     seedInp.value = "";
   }
 
-  // init
   renderCheckboxes();
 
   outcomeSel.addEventListener("change", applyOutcomeChange);
