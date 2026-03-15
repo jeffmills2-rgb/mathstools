@@ -1,0 +1,2232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Area Model Splitter</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --blue:#2563eb;
+      --green:#16a34a;
+      --yellow:#f2cb05;
+      --purple:#8b5cf6;
+      --teal:#169eaa;
+      --red:#dc2626;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+
+    .page{
+      min-height:100vh;
+      padding:10px;
+    }
+
+    .shell{
+      max-width:1800px;
+      margin:0 auto;
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      min-height:calc(100vh - 20px);
+      padding:18px 24px 22px;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:14px;
+      text-decoration:none;
+      color:#0f172a;
+      background:#f8fafc;
+      border:1px solid #d1d5db;
+      border-radius:999px;
+      padding:12px 20px 12px 16px;
+      font-weight:800;
+      font-size:18px;
+      box-shadow:0 4px 12px rgba(15,23,42,.06);
+    }
+
+    .back-logo{
+      width:38px;
+      height:38px;
+      border-radius:10px;
+      object-fit:contain;
+      flex:0 0 auto;
+    }
+
+    .top-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .chip,
+    .chip-select{
+      border:none;
+      border-radius:18px;
+      padding:12px 20px;
+      font-weight:800;
+      font-size:17px;
+      background:#f3f4f6;
+      color:#111827;
+      min-height:52px;
+      cursor:pointer;
+    }
+
+    .chip.blue{
+      background:#2563eb;
+      color:#fff;
+    }
+
+    .chip.red{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .chip.active{
+      outline:2px solid #2563eb;
+      background:#eff6ff;
+    }
+
+    .chip-select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      padding-right:46px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #111827 50%),
+        linear-gradient(135deg, #111827 50%, transparent 50%);
+      background-position:
+        calc(100% - 22px) calc(50% - 4px),
+        calc(100% - 16px) calc(50% - 4px);
+      background-size:6px 6px, 6px 6px;
+      background-repeat:no-repeat;
+    }
+
+    .tool-wrap{
+      flex:1;
+      display:grid;
+      grid-template-columns:320px minmax(0, 1fr);
+      grid-template-rows:auto auto 1fr;
+      gap:12px 22px;
+      padding:4px;
+      min-height:0;
+      align-items:stretch;
+    }
+
+    .side-panel{
+      grid-column:1;
+      grid-row:1 / span 3;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      justify-content:flex-start;
+      gap:18px;
+      padding-top:42px;
+      padding-right:4px;
+      position:relative;
+      z-index:2;
+    }
+
+    .dimension-panel{
+      width:290px;
+      background:#dbeafe;
+      border:2px solid #bfdbfe;
+      border-radius:30px;
+      box-shadow:0 10px 26px rgba(15,23,42,.08);
+      padding:22px 20px 24px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .dimension-badge{
+      align-self:flex-start;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.55);
+      color:#1d4ed8;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+
+    .dimension-title{
+      margin:0;
+      font-size:24px;
+      line-height:1.18;
+      font-weight:900;
+      color:#0f172a;
+    }
+
+    .dimension-input-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:18px;
+      flex-wrap:nowrap;
+      margin-top:6px;
+    }
+
+    .equation-bar{
+      grid-column:2;
+      grid-row:1;
+      width:100%;
+      display:grid;
+      grid-template-columns:1fr auto;
+      align-items:center;
+      gap:14px;
+      margin-top:0;
+      min-height:72px;
+      min-width:0;
+    }
+
+    .equation-row{
+      justify-self:start;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+      flex-wrap:wrap;
+      opacity:0;
+      pointer-events:none;
+      height:0;
+      overflow:hidden;
+    }
+
+    .fullscreen-wrap{
+      justify-self:end;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:3;
+    }
+
+    .input-box{
+      width:90px;
+      height:90px;
+      border:4px solid #111827;
+      border-radius:24px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 8px 18px rgba(15,23,42,.06);
+      position:relative;
+    }
+
+    .input-box input{
+      width:100%;
+      height:100%;
+      border:none;
+      outline:none;
+      background:transparent;
+      text-align:center;
+      font-family:var(--mathFont);
+      font-size:36px;
+      font-weight:700;
+      color:var(--blue);
+      padding:0 6px;
+    }
+
+    .times{
+      font-family:var(--mathFont);
+      font-size:60px;
+      line-height:1;
+      font-weight:700;
+      color:#111827;
+      user-select:none;
+    }
+
+    .status{
+      grid-column:2;
+      grid-row:2;
+      min-height:18px;
+      font-size:14px;
+      font-weight:700;
+      color:var(--red);
+      text-align:center;
+      margin-top:-2px;
+      min-width:0;
+    }
+
+    .metrics-panel{
+      width:290px;
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:18px;
+    }
+
+    .metric-box{
+      min-height:154px;
+      padding:18px;
+      border:none;
+      border-radius:30px;
+      box-shadow:0 8px 18px rgba(15,23,42,.06);
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:flex-start;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease, box-shadow .18s ease;
+      position:relative;
+      overflow:hidden;
+      text-align:left;
+    }
+
+    .metric-box:hover{
+      transform:translateY(-1px);
+    }
+
+    .metric-box.area-style{
+      background:#d9f99d;
+      border:2px solid #bef264;
+    }
+
+    .metric-box.perimeter-style{
+      background:#e9d5ff;
+      border:2px solid #d8b4fe;
+    }
+
+    .metric-heading{
+      font-size:24px;
+      line-height:1.1;
+      font-weight:900;
+      color:#111827;
+      margin-bottom:14px;
+    }
+
+    .metric-inner{
+      flex:1;
+      min-height:72px;
+      background:#fff;
+      border:4px solid #111827;
+      border-radius:20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      font-family:var(--mathFont);
+      font-size:54px;
+      font-weight:700;
+      color:#111827;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+
+    .metric-box.revealed-area .metric-inner{
+      color:#1d4ed8;
+      box-shadow:0 0 0 4px rgba(37,99,235,.10), inset 0 1px 0 rgba(255,255,255,.8);
+    }
+
+    .metric-box.revealed-perimeter .metric-inner{
+      color:#6d28d9;
+      box-shadow:0 0 0 4px rgba(139,92,246,.10), inset 0 1px 0 rgba(255,255,255,.8);
+    }
+
+    .metric-box.metric-flash{
+      transform:scale(1.02);
+    }
+
+    .metric-box.metric-count-pop .metric-inner{
+      animation: metricCountPop .54s cubic-bezier(.16,1,.3,1);
+    }
+
+    @keyframes metricCountPop{
+      0%{
+        transform:scale(1);
+        box-shadow:0 0 0 0 rgba(37,99,235,0), inset 0 1px 0 rgba(255,255,255,.8);
+      }
+      32%{
+        transform:scale(1.18);
+        box-shadow:0 0 0 8px rgba(37,99,235,.16), 0 10px 20px rgba(37,99,235,.18), inset 0 1px 0 rgba(255,255,255,.8);
+      }
+      62%{
+        transform:scale(.96);
+      }
+      100%{
+        transform:scale(1);
+      }
+    }
+
+    .metric-value{
+      display:inline-block;
+      min-width:1ch;
+    }
+
+    .array-stage{
+      grid-column:2;
+      grid-row:3;
+      width:100%;
+      min-width:0;
+      min-height:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:0 6px 8px;
+      position:relative;
+    }
+
+    .array-wrap{
+      display:grid;
+      grid-template-columns:auto auto auto;
+      grid-template-rows:auto auto auto;
+      align-items:center;
+      justify-items:center;
+      column-gap:10px;
+      row-gap:6px;
+      max-width:100%;
+      max-height:100%;
+      min-width:0;
+    }
+
+    .top-label{
+      grid-column:2;
+      grid-row:1;
+      position:relative;
+      min-height:32px;
+      font-family:var(--mathFont);
+      font-size:clamp(18px, 2vw, 34px);
+      font-weight:700;
+      color:var(--blue);
+      line-height:1;
+    }
+
+    .left-label{
+      grid-column:1;
+      grid-row:2;
+      position:relative;
+      min-width:58px;
+      align-self:stretch;
+      font-family:var(--mathFont);
+      font-size:clamp(18px, 2vw, 34px);
+      font-weight:700;
+      color:var(--blue);
+      line-height:1;
+    }
+
+    .right-label{
+      grid-column:3;
+      grid-row:2;
+      position:relative;
+      min-width:58px;
+      align-self:stretch;
+      font-family:var(--mathFont);
+      font-size:clamp(18px, 2vw, 34px);
+      font-weight:700;
+      color:#111827;
+      line-height:1;
+      display:none;
+    }
+
+    .bottom-label{
+      grid-column:2;
+      grid-row:3;
+      position:relative;
+      min-height:32px;
+      font-family:var(--mathFont);
+      font-size:clamp(18px, 2vw, 34px);
+      font-weight:700;
+      color:#111827;
+      line-height:1;
+      display:none;
+    }
+
+    .seg-label{
+      position:absolute;
+      white-space:nowrap;
+      transform:translate(-50%,-50%) scale(1);
+      transition:transform .18s ease, color .18s ease, text-shadow .18s ease, opacity .18s ease;
+      opacity:1;
+    }
+
+    .seg-label.hidden{
+      opacity:0;
+    }
+
+    .seg-label.perimeter-pulse{
+      animation: perimeterLabelPulse .9s ease;
+    }
+
+    @keyframes perimeterLabelPulse{
+      0%   { transform:translate(-50%,-50%) scale(1); }
+      35%  { transform:translate(-50%,-50%) scale(1.28); text-shadow:0 0 18px rgba(139,92,246,.35); }
+      100% { transform:translate(-50%,-50%) scale(1); }
+    }
+
+    .grid-shell{
+      grid-column:2;
+      grid-row:2;
+      position:relative;
+      display:inline-block;
+      max-width:100%;
+      max-height:100%;
+      min-width:0;
+      user-select:none;
+      touch-action:none;
+    }
+
+    .grid{
+      position:relative;
+      display:block;
+      border:2px solid rgba(255,255,255,.65);
+      box-shadow:0 12px 28px rgba(15,23,42,.10);
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .grid::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:rgba(255,255,255,.68);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .16s ease;
+      z-index:7;
+    }
+
+    .grid.perimeter-fade::after,
+    .grid.perimeter-hold::after{
+      opacity:.72;
+    }
+
+    .cell{
+      position:absolute;
+      border:1px solid rgba(255,255,255,.6);
+      transition:filter .18s ease, box-shadow .18s ease, transform .18s ease;
+      transform-origin:center;
+    }
+
+    .cell.area-cell-pulse{
+      animation: areaCellPulse var(--pulse-duration, .28s) ease;
+      z-index:2;
+    }
+
+    .cell.area-row-pulse{
+      animation: areaRowPulse var(--pulse-duration, .34s) ease;
+      z-index:2;
+    }
+
+    .quadrant-overlay{
+      position:absolute;
+      border-radius:12px;
+      pointer-events:none;
+      z-index:3;
+      opacity:0;
+      box-shadow:0 0 0 0 rgba(255,255,255,0);
+    }
+
+    .quadrant-overlay.pulse{
+      animation: quadrantOverlayPulse var(--pulse-duration, 1.2s) ease;
+    }
+
+    @keyframes quadrantOverlayPulse{
+      0%{
+        opacity:0;
+        transform:scale(1);
+        box-shadow:0 0 0 0 rgba(255,255,255,0);
+      }
+      18%{
+        opacity:.18;
+      }
+      50%{
+        opacity:.28;
+        transform:scale(1.01);
+        box-shadow:0 0 0 8px rgba(255,255,255,.18);
+      }
+      100%{
+        opacity:0;
+        transform:scale(1);
+        box-shadow:0 0 0 0 rgba(255,255,255,0);
+      }
+    }
+
+    @keyframes areaCellPulse{
+      0%{
+        transform:scale(1);
+        box-shadow:inset 0 0 0 0 rgba(255,255,255,0);
+        filter:brightness(1);
+      }
+      45%{
+        transform:scale(1.12);
+        box-shadow:inset 0 0 0 2px rgba(255,255,255,.55), 0 0 14px rgba(255,255,255,.55);
+        filter:brightness(1.28);
+      }
+      100%{
+        transform:scale(1);
+        box-shadow:inset 0 0 0 0 rgba(255,255,255,0);
+        filter:brightness(1);
+      }
+    }
+
+    @keyframes areaRowPulse{
+      0%{
+        filter:brightness(1);
+      }
+      45%{
+        filter:brightness(1.34);
+        box-shadow:inset 0 0 0 2px rgba(255,255,255,.5), 0 0 10px rgba(255,255,255,.35);
+      }
+      100%{
+        filter:brightness(1);
+      }
+    }
+
+    .region-labels,
+    .guide-lines{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .bubble{
+      position:absolute;
+      transform:translate(-50%,-50%) scale(1);
+      background:white;
+      border:1px solid #e5e7eb;
+      border-radius:999px;
+      box-shadow:0 4px 10px rgba(0,0,0,.12);
+      padding:3px 8px;
+      min-width:22px;
+      text-align:center;
+      font-family:var(--mathFont);
+      font-weight:700;
+      color:#111827;
+      z-index:4;
+      white-space:nowrap;
+      font-size:12px;
+      line-height:1.1;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .18s ease;
+      opacity:1;
+    }
+
+    .bubble.hidden{
+      opacity:0;
+      transform:translate(-50%,-50%) scale(.5);
+    }
+
+    .bubble.area-pop{
+      animation: areaBubblePop .82s cubic-bezier(.2,.9,.2,1);
+    }
+
+    @keyframes areaBubblePop{
+      0%{
+        transform:translate(-50%,-50%) scale(.55);
+        box-shadow:0 4px 10px rgba(0,0,0,.12);
+        border-color:#e5e7eb;
+      }
+      35%{
+        transform:translate(-50%,-50%) scale(1.42);
+        box-shadow:0 0 0 10px rgba(37,99,235,.16), 0 12px 28px rgba(37,99,235,.28);
+        border-color:#60a5fa;
+      }
+      58%{
+        transform:translate(-50%,-50%) scale(.9);
+        box-shadow:0 0 0 6px rgba(37,99,235,.10), 0 8px 18px rgba(37,99,235,.18);
+      }
+      78%{
+        transform:translate(-50%,-50%) scale(1.16);
+        box-shadow:0 0 0 7px rgba(37,99,235,.12), 0 10px 22px rgba(37,99,235,.20);
+      }
+      100%{
+        transform:translate(-50%,-50%) scale(1);
+        box-shadow:0 4px 10px rgba(0,0,0,.12);
+        border-color:#e5e7eb;
+      }
+    }
+
+    .guide{
+      position:absolute;
+      background:#1e293b;
+      opacity:0.85;
+      border-radius:999px;
+      box-shadow:0 2px 8px rgba(15,23,42,.18);
+      z-index:5;
+      pointer-events:none;
+    }
+
+    .guide.vertical{ width:5px; transform:translateX(-50%); }
+    .guide.horizontal{ height:5px; transform:translateY(-50%); }
+    .guide.secondary{
+      background:#1e293b;
+      opacity:0.7;
+    }
+
+    .guide.secondary.perimeter-light{
+      opacity:0.35;
+    }
+
+    .split-line{
+      position:absolute;
+      background:#1e293b;
+      border-radius:999px;
+      z-index:8;
+      box-shadow:0 2px 8px rgba(15,23,42,.18);
+      display:none;
+    }
+
+    .split-line.vertical{
+      width:4px;
+      transform:translateX(-50%);
+      cursor:ew-resize;
+    }
+
+    .split-line.horizontal{
+      height:4px;
+      transform:translateY(-50%);
+      cursor:ns-resize;
+    }
+
+    .split-line.active{ display:block; }
+
+    .split-handle{
+      position:absolute;
+      width:16px;
+      height:16px;
+      background:#fff;
+      border:3px solid #0f172a;
+      box-shadow:0 6px 14px rgba(15,23,42,.16);
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%) rotate(45deg);
+      border-radius:3px;
+    }
+
+    .perimeter-trace{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:9;
+      overflow:visible;
+    }
+
+    .trace-svg{
+      width:100%;
+      height:100%;
+      display:block;
+      overflow:visible;
+    }
+
+    .trace-path{
+      fill:none;
+      stroke:#8b5cf6;
+      stroke-width:6;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      opacity:0;
+    }
+
+    .trace-path.play{
+      opacity:1;
+      animation: drawPerimeter var(--perimeter-duration, 8000ms) linear forwards;
+    }
+
+    .trace-path.hold{
+      opacity:1;
+      stroke-dashoffset:0 !important;
+    }
+
+    @keyframes drawPerimeter{
+      from { stroke-dashoffset:var(--trace-length, 0); opacity:1; }
+      to   { stroke-dashoffset:0; opacity:1; }
+    }
+
+    .settings-panel{
+      position:absolute;
+      top:0;
+      right:0;
+      width:min(360px, calc(100vw - 24px));
+      height:100%;
+      background:#fff;
+      border-left:1px solid #e5e7eb;
+      box-shadow:-10px 0 30px rgba(15,23,42,.12);
+      padding:22px 20px;
+      transform:translateX(100%);
+      transition:transform .25s ease;
+      z-index:30;
+      overflow:auto;
+    }
+
+    .settings-panel.open{
+      transform:translateX(0);
+    }
+
+    .settings-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .settings-title{
+      margin:0;
+      font-size:24px;
+      font-weight:900;
+      color:#111827;
+    }
+
+    .close-panel{
+      border:none;
+      background:#f3f4f6;
+      border-radius:12px;
+      width:42px;
+      height:42px;
+      font-size:22px;
+      cursor:pointer;
+    }
+
+    .settings-block{
+      border:1px solid #e5e7eb;
+      border-radius:18px;
+      padding:16px;
+      margin-bottom:14px;
+      background:#fafafa;
+    }
+
+    .settings-block h3{
+      margin:0 0 12px;
+      font-size:18px;
+    }
+
+    .toggle-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:10px 0;
+      font-weight:700;
+    }
+
+    .toggle{
+      position:relative;
+      width:54px;
+      height:30px;
+      background:#d1d5db;
+      border-radius:999px;
+      cursor:pointer;
+      border:none;
+      flex:0 0 auto;
+    }
+
+    .toggle::after{
+      content:"";
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:24px;
+      height:24px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 2px 6px rgba(0,0,0,.16);
+      transition:transform .2s ease;
+    }
+
+    .toggle.on{
+      background:#2563eb;
+    }
+
+    .toggle.on::after{
+      transform:translateX(24px);
+    }
+
+    .panel-note{
+      color:#6b7280;
+      font-size:14px;
+      line-height:1.45;
+      margin:0;
+    }
+
+    .fullscreen-mode .shell{
+      max-width:none;
+      min-height:calc(100vh - 20px);
+    }
+
+    .fullscreen-mode .array-stage{
+      position:fixed;
+      top:108px;
+      right:22px;
+      bottom:22px;
+      left:390px;
+      background:rgba(246,247,251,.98);
+      z-index:40;
+      padding:34px 28px 28px;
+      border-radius:24px;
+      border:1px solid #dbe1ea;
+      box-shadow:0 18px 48px rgba(15,23,42,.18);
+    }
+
+    .fullscreen-close{
+      display:none;
+      position:fixed;
+      top:28px;
+      right:28px;
+      z-index:41;
+    }
+
+    .fullscreen-mode .fullscreen-close{
+      display:inline-flex;
+    }
+
+    @media (max-width: 1180px){
+      .tool-wrap{
+        grid-template-columns:1fr;
+        grid-template-rows:auto auto auto 1fr;
+      }
+
+      .side-panel{
+        grid-column:1;
+        grid-row:1;
+        align-items:center;
+        padding-top:0;
+        padding-right:0;
+        flex-direction:row;
+        flex-wrap:wrap;
+        justify-content:center;
+      }
+
+      .equation-bar{
+        grid-column:1;
+        grid-row:2;
+      }
+
+      .status{
+        grid-column:1;
+        grid-row:3;
+      }
+
+      .array-stage{
+        grid-column:1;
+        grid-row:4;
+      }
+
+      .fullscreen-mode .array-stage{
+        inset:130px 18px 18px 18px;
+      }
+    }
+
+    @media (max-width: 900px){
+      .shell{
+        padding:14px 14px 18px;
+        min-height:calc(100vh - 20px);
+      }
+
+      .back-btn{
+        font-size:16px;
+        padding:10px 16px 10px 13px;
+      }
+
+      .back-logo{
+        width:32px;
+        height:32px;
+      }
+
+      .chip,
+      .chip-select{
+        font-size:15px;
+        padding:10px 14px;
+        min-height:46px;
+      }
+
+      .chip-select{
+        padding-right:40px;
+        background-position:
+          calc(100% - 18px) calc(50% - 4px),
+          calc(100% - 12px) calc(50% - 4px);
+      }
+
+      .equation-bar{
+        grid-template-columns:1fr;
+      }
+
+      .fullscreen-wrap{
+        justify-self:center;
+      }
+
+      .dimension-panel,
+      .metrics-panel{
+        width:min(100%, 360px);
+      }
+
+      .input-box{
+        width:78px;
+        height:78px;
+      }
+
+      .input-box input{
+        font-size:30px;
+      }
+
+      .times{
+        font-size:46px;
+      }
+
+      .metric-box{
+        min-height:138px;
+      }
+
+      .split-line.vertical{ width:4px; }
+      .split-line.horizontal{ height:4px; }
+      .split-handle{ width:14px; height:14px; border-width:2px; }
+
+      .fullscreen-mode .array-stage{
+        inset:120px 18px 18px 18px;
+        padding:26px;
+      }
+
+      .fullscreen-close{
+        top:28px;
+        right:28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="pageRoot">
+    <div class="shell">
+      <div class="topbar">
+        <a class="back-btn" href="https://millsmathstools.au">
+          <img
+            class="back-logo"
+            src="https://millsmathstools.au/wp-content/uploads/2025/02/cropped-Mills-Maths-Tools-6-150x150.png"
+            alt="Mills Maths Tools logo"
+            onerror="this.style.display='none';"
+          />
+          <span>Back to Mills Maths Tools</span>
+        </a>
+
+        <div class="top-actions">
+          <button class="chip" type="button">Tools ▲</button>
+          <button class="chip" id="teacherSettingsBtn" type="button">Teacher settings</button>
+          <button class="chip red" id="resetBtn" type="button">Reset</button>
+          <button class="chip blue" id="newQBtn" type="button">New Q</button>
+        </div>
+      </div>
+
+      <main class="tool-wrap">
+        <aside class="side-panel">
+          <div class="dimension-panel">
+            <div class="dimension-badge">Dimensions</div>
+            <h2 class="dimension-title">Enter values to change dimensions</h2>
+
+            <div class="dimension-input-row">
+              <div class="input-box">
+                <input id="rowsInput" type="number" min="1" max="100" step="1" inputmode="numeric" value="10" />
+              </div>
+
+              <div class="times">×</div>
+
+              <div class="input-box">
+                <input id="colsInput" type="number" min="1" max="100" step="1" inputmode="numeric" value="10" />
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics-panel">
+            <button class="metric-box area-style" id="areaBox" type="button"></button>
+            <button class="metric-box perimeter-style" id="perimeterBox" type="button"></button>
+          </div>
+        </aside>
+
+        <div class="equation-bar">
+          <div class="equation-row" aria-hidden="true"></div>
+
+          <div class="fullscreen-wrap">
+            <button class="chip" id="revealValuesBtn" type="button">Show values</button>
+            <button class="chip" id="fullscreenBtn" type="button">Full screen</button>
+          </div>
+        </div>
+
+        <div class="status" id="statusMsg"></div>
+
+        <section class="array-stage" id="arrayStage">
+          <div class="array-wrap">
+            <div class="top-label" id="topLabel"></div>
+            <div class="left-label" id="leftLabel"></div>
+            <div class="right-label" id="rightLabel"></div>
+            <div class="bottom-label" id="bottomLabel"></div>
+
+            <div class="grid-shell" id="gridShell">
+              <div class="grid" id="grid"></div>
+              <div class="guide-lines" id="guideLines"></div>
+              <div class="region-labels" id="regionLabels"></div>
+              <div class="perimeter-trace" id="perimeterTrace"></div>
+
+              <div class="split-line vertical" id="vSplitLine">
+                <div class="split-handle"></div>
+              </div>
+
+              <div class="split-line horizontal" id="hSplitLine">
+                <div class="split-handle"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="settings-panel" id="settingsPanel" aria-hidden="true">
+        <div class="settings-header">
+          <h2 class="settings-title">Teacher settings</h2>
+          <button class="close-panel" id="closePanelBtn" type="button">×</button>
+        </div>
+
+        <div class="settings-block">
+          <h3>Split mode</h3>
+          <select id="splitMode" class="chip-select" aria-label="Split mode" style="width:100%;">
+            <option value="none">None</option>
+            <option value="vertical">Split vertically</option>
+            <option value="horizontal">Split horizontally</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+
+        <div class="settings-block">
+          <h3>Repeat partitions</h3>
+
+          <div class="toggle-row">
+            <span>Repeat horizontal</span>
+            <button class="toggle" id="repeatHorizontalBtn" type="button" aria-pressed="false"></button>
+          </div>
+
+          <div class="toggle-row">
+            <span>Repeat vertical</span>
+            <button class="toggle" id="repeatVerticalBtn" type="button" aria-pressed="false"></button>
+          </div>
+
+          <p class="panel-note">
+            Repeating uses the top-left quadrant dimensions as the repeat size. For example, if the top-left is 10 by 10, the tool repeats groups of 10 across or down, with any remainder shown at the end.
+          </p>
+        </div>
+      </aside>
+
+      <button class="chip fullscreen-close" id="fullscreenCloseBtn" type="button">Exit full screen</button>
+    </div>
+  </div>
+
+  <script>
+    const pageRoot = document.getElementById('pageRoot');
+    const rowsInput = document.getElementById('rowsInput');
+    const colsInput = document.getElementById('colsInput');
+    const splitMode = document.getElementById('splitMode');
+    const statusMsg = document.getElementById('statusMsg');
+    const resetBtn = document.getElementById('resetBtn');
+    const newQBtn = document.getElementById('newQBtn');
+    const teacherSettingsBtn = document.getElementById('teacherSettingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const closePanelBtn = document.getElementById('closePanelBtn');
+    const repeatHorizontalBtn = document.getElementById('repeatHorizontalBtn');
+    const repeatVerticalBtn = document.getElementById('repeatVerticalBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const fullscreenCloseBtn = document.getElementById('fullscreenCloseBtn');
+    const revealValuesBtn = document.getElementById('revealValuesBtn');
+
+    const arrayStage = document.getElementById('arrayStage');
+    const topLabel = document.getElementById('topLabel');
+    const leftLabel = document.getElementById('leftLabel');
+    const rightLabel = document.getElementById('rightLabel');
+    const bottomLabel = document.getElementById('bottomLabel');
+    const grid = document.getElementById('grid');
+    const guideLines = document.getElementById('guideLines');
+    const regionLabels = document.getElementById('regionLabels');
+    const perimeterTrace = document.getElementById('perimeterTrace');
+    const vSplitLine = document.getElementById('vSplitLine');
+    const hSplitLine = document.getElementById('hSplitLine');
+    const areaBox = document.getElementById('areaBox');
+    const perimeterBox = document.getElementById('perimeterBox');
+
+    const state = {
+      rows: 10,
+      cols: 10,
+      cellSize: 24,
+      splitMode: 'none',
+      vSplit: null,
+      hSplit: null,
+      dragging: null,
+      repeatHorizontal: false,
+      repeatVertical: false,
+      fullscreen: false,
+      revealValues: false,
+      showAreaTotal: false,
+      showPerimeterTotal: false,
+      areaAnimToken: 0,
+      perimeterAnimToken: 0,
+      areaAnimating: false,
+      perimeterAnimating: false,
+      perimeterHold: false,
+      areaRunningTotal: null,
+      perimeterRunningTotal: null,
+      revealedAreaQuadrants: new Set(),
+      revealedPerimeterLabels: new Set()
+    };
+
+    function clampWholeNumber(value){
+      if (value === '' || value == null) return null;
+      const n = Number(value);
+      if (!Number.isFinite(n)) return null;
+      return Math.min(100, Math.max(1, Math.round(n)));
+    }
+
+    function sanitiseInput(inputEl){
+      const cleaned = clampWholeNumber(inputEl.value);
+      if (cleaned === null) return null;
+      inputEl.value = cleaned;
+      return cleaned;
+    }
+
+    function defaultSplit(total){
+      if (total <= 1) return null;
+      return Math.max(1, Math.floor(total / 2));
+    }
+
+    function splitEnabled(mode, kind){
+      return mode === kind || mode === 'both';
+    }
+
+    function getCellSize(rows, cols){
+      const stageRect = arrayStage.getBoundingClientRect();
+      const availableWidth = stageRect.width * 0.9;
+      const availableHeight = stageRect.height * 0.9;
+      const sizeFromWidth = Math.floor(availableWidth / cols);
+      const sizeFromHeight = Math.floor(availableHeight / rows);
+
+      return Math.max(
+        4,
+        Math.min(
+          state.fullscreen ? 70 : 60,
+          sizeFromWidth,
+          sizeFromHeight
+        )
+      );
+    }
+
+    function getBubbleFontSize(w, h, cellSize){
+      const shortestSide = Math.min(w * cellSize, h * cellSize);
+      return Math.min(32, Math.max(9, shortestSide * 0.18));
+    }
+
+    function getBubblePadding(shortestSide){
+      if (shortestSide < 18) return {padY:1, padX:4, minW:14};
+      if (shortestSide < 28) return {padY:2, padX:6, minW:18};
+      if (shortestSide < 42) return {padY:3, padX:7, minW:20};
+      return {padY:4, padX:9, minW:24};
+    }
+
+    function ensureSplitsInRange(){
+      if (splitEnabled(state.splitMode, 'vertical') && state.cols > 1){
+        if (state.vSplit == null) state.vSplit = defaultSplit(state.cols);
+        state.vSplit = Math.max(1, Math.min(state.cols - 1, state.vSplit));
+      } else {
+        state.vSplit = null;
+      }
+
+      if (splitEnabled(state.splitMode, 'horizontal') && state.rows > 1){
+        if (state.hSplit == null) state.hSplit = defaultSplit(state.rows);
+        state.hSplit = Math.max(1, Math.min(state.rows - 1, state.hSplit));
+      } else {
+        state.hSplit = null;
+      }
+    }
+
+    function getSegments(total, primary, repeating){
+      if (primary == null || primary <= 0 || primary >= total){
+        return [{ size: total, kind: 'only' }];
+      }
+
+      if (!repeating){
+        return [
+          { size: primary, kind: 'full' },
+          { size: total - primary, kind: 'rem' }
+        ];
+      }
+
+      const segs = [];
+      let remaining = total;
+
+      while (remaining > 0){
+        if (remaining >= primary){
+          segs.push({ size: primary, kind: 'full' });
+          remaining -= primary;
+        } else {
+          segs.push({ size: remaining, kind: 'rem' });
+          remaining = 0;
+        }
+      }
+      return segs;
+    }
+
+    function getColumnSegments(){
+      const verticalOn = splitEnabled(state.splitMode, 'vertical') && state.vSplit != null;
+      return verticalOn
+        ? getSegments(state.cols, state.vSplit, state.repeatVertical)
+        : [{ size: state.cols, kind: 'only' }];
+    }
+
+    function getRowSegments(){
+      const horizontalOn = splitEnabled(state.splitMode, 'horizontal') && state.hSplit != null;
+      return horizontalOn
+        ? getSegments(state.rows, state.hSplit, state.repeatHorizontal)
+        : [{ size: state.rows, kind: 'only' }];
+    }
+
+    function getCellColor(rowKind, colKind){
+      const verticalOn = splitEnabled(state.splitMode, 'vertical') && state.vSplit != null;
+      const horizontalOn = splitEnabled(state.splitMode, 'horizontal') && state.hSplit != null;
+
+      if (!verticalOn && !horizontalOn) return '#169eaa';
+      if (verticalOn && !horizontalOn) return colKind === 'full' ? '#2563eb' : '#16a34a';
+      if (!verticalOn && horizontalOn) return rowKind === 'full' ? '#2563eb' : '#16a34a';
+      if (rowKind === 'full' && colKind === 'full') return '#2563eb';
+      if (rowKind === 'full' && colKind !== 'full') return '#16a34a';
+      if (rowKind !== 'full' && colKind === 'full') return '#f2cb05';
+      return '#8b5cf6';
+    }
+
+    function getQuadrants(){
+      const colSegs = getColumnSegments();
+      const rowSegs = getRowSegments();
+
+      const quadrants = [];
+      let yStart = 0;
+
+      rowSegs.forEach((rowSeg, rIndex) => {
+        let xStart = 0;
+        colSegs.forEach((colSeg, cIndex) => {
+          const key = `r${rIndex}-c${cIndex}`;
+          quadrants.push({
+            key,
+            rowIndex: rIndex,
+            colIndex: cIndex,
+            x: xStart,
+            y: yStart,
+            w: colSeg.size,
+            h: rowSeg.size,
+            area: rowSeg.size * colSeg.size
+          });
+          xStart += colSeg.size;
+        });
+        yStart += rowSeg.size;
+      });
+
+      return quadrants;
+    }
+
+    function getQuadrantOrder(){
+      const quadrants = getQuadrants();
+      const map = new Map(quadrants.map(q => [q.key, q]));
+      const preferred = ['r0-c0','r0-c1','r1-c0','r1-c1'];
+      const ordered = preferred.map(key => map.get(key)).filter(Boolean);
+      const leftovers = quadrants.filter(q => !preferred.includes(q.key));
+      return [...ordered, ...leftovers];
+    }
+
+    function buildGrid(){
+      const rows = state.rows;
+      const cols = state.cols;
+      const cellSize = state.cellSize;
+      const colSegs = getColumnSegments();
+      const rowSegs = getRowSegments();
+
+      grid.innerHTML = '';
+      guideLines.innerHTML = '';
+      regionLabels.innerHTML = '';
+      perimeterTrace.innerHTML = '';
+
+      grid.style.width = `${cols * cellSize}px`;
+      grid.style.height = `${rows * cellSize}px`;
+
+      const quadrants = getQuadrants();
+      quadrants.forEach(q => {
+        const overlay = document.createElement('div');
+        overlay.className = 'quadrant-overlay';
+        overlay.dataset.quadrantOverlay = q.key;
+        overlay.style.left = `${q.x * cellSize}px`;
+        overlay.style.top = `${q.y * cellSize}px`;
+        overlay.style.width = `${q.w * cellSize}px`;
+        overlay.style.height = `${q.h * cellSize}px`;
+        overlay.style.background = 'rgba(255,255,255,0.18)';
+        grid.appendChild(overlay);
+      });
+
+      let yStart = 0;
+      for (let rIndex = 0; rIndex < rowSegs.length; rIndex++){
+        const rowSeg = rowSegs[rIndex];
+        let xStart = 0;
+
+        for (let cIndex = 0; cIndex < colSegs.length; cIndex++){
+          const colSeg = colSegs[cIndex];
+          const bg = getCellColor(rowSeg.kind, colSeg.kind);
+          const quadrantKey = `r${rIndex}-c${cIndex}`;
+
+          for(let r = 0; r < rowSeg.size; r++){
+            for(let c = 0; c < colSeg.size; c++){
+              const cell = document.createElement('div');
+              cell.className = 'cell';
+              cell.dataset.quadrant = quadrantKey;
+              cell.dataset.rowInQuadrant = String(r);
+              cell.style.left = `${(xStart + c) * cellSize}px`;
+              cell.style.top = `${(yStart + r) * cellSize}px`;
+              cell.style.width = `${cellSize}px`;
+              cell.style.height = `${cellSize}px`;
+              cell.style.background = bg;
+              grid.appendChild(cell);
+            }
+          }
+
+          const shouldShowBubbleNormally = state.revealValues && !state.perimeterAnimating && !state.perimeterHold;
+          const shouldShowBubbleForAreaResult = state.showAreaTotal && state.revealedAreaQuadrants.has(quadrantKey);
+          const shouldShowBubble = shouldShowBubbleNormally || shouldShowBubbleForAreaResult;
+
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          bubble.dataset.quadrant = quadrantKey;
+          bubble.textContent = rowSeg.size * colSeg.size;
+          bubble.style.left = `${(xStart + colSeg.size / 2) * cellSize}px`;
+          bubble.style.top = `${(yStart + rowSeg.size / 2) * cellSize}px`;
+
+          const shortestSide = Math.min(colSeg.size * cellSize, rowSeg.size * cellSize);
+          const pad = getBubblePadding(shortestSide);
+          bubble.style.fontSize = `${getBubbleFontSize(colSeg.size, rowSeg.size, cellSize)}px`;
+          bubble.style.padding = `${pad.padY}px ${pad.padX}px`;
+          bubble.style.minWidth = `${pad.minW}px`;
+
+          if (!shouldShowBubble) bubble.classList.add('hidden');
+          regionLabels.appendChild(bubble);
+
+          xStart += colSeg.size;
+        }
+        yStart += rowSeg.size;
+      }
+
+      buildGuides(colSegs, rowSegs);
+      buildOuterLabels(colSegs, rowSegs);
+      buildPerimeterTrace();
+      updateMetricBoxes();
+    }
+
+    function buildGuides(colSegs, rowSegs){
+      const cellSize = state.cellSize;
+      const lighten = state.perimeterAnimating || state.perimeterHold;
+
+      let xCursor = 0;
+      colSegs.forEach((seg, i) => {
+        xCursor += seg.size;
+        if (i < colSegs.length - 1){
+          const line = document.createElement('div');
+          line.className = 'guide vertical secondary';
+          if (lighten) line.classList.add('perimeter-light');
+          line.style.left = `${xCursor * cellSize}px`;
+          line.style.top = '0px';
+          line.style.height = `${state.rows * cellSize}px`;
+          guideLines.appendChild(line);
+        }
+      });
+
+      let yCursor = 0;
+      rowSegs.forEach((seg, i) => {
+        yCursor += seg.size;
+        if (i < rowSegs.length - 1){
+          const line = document.createElement('div');
+          line.className = 'guide horizontal secondary';
+          if (lighten) line.classList.add('perimeter-light');
+          line.style.left = '0px';
+          line.style.top = `${yCursor * cellSize}px`;
+          line.style.width = `${state.cols * cellSize}px`;
+          guideLines.appendChild(line);
+        }
+      });
+    }
+
+    function buildOuterLabels(colSegs, rowSegs){
+      const cellSize = state.cellSize;
+      const gridWidth = state.cols * cellSize;
+      const gridHeight = state.rows * cellSize;
+      const suppressOppositeEdgesForAreaState = state.showAreaTotal && !state.revealValues && !state.perimeterAnimating && !state.perimeterHold;
+      const showOppositeEdges = !suppressOppositeEdgesForAreaState && (state.revealValues || state.perimeterAnimating || state.perimeterHold);
+
+      topLabel.innerHTML = '';
+      leftLabel.innerHTML = '';
+      rightLabel.innerHTML = '';
+      bottomLabel.innerHTML = '';
+
+      topLabel.style.width = `${gridWidth}px`;
+      bottomLabel.style.width = `${gridWidth}px`;
+      leftLabel.style.height = `${gridHeight}px`;
+      rightLabel.style.height = `${gridHeight}px`;
+
+      let xCursor = 0;
+      colSegs.forEach((seg, idx) => {
+        const topSpan = document.createElement('span');
+        topSpan.className = 'seg-label';
+        topSpan.dataset.perimKey = `top-${idx}`;
+        topSpan.textContent = seg.size;
+        topSpan.style.left = `${(xCursor + seg.size / 2) * cellSize}px`;
+        topSpan.style.top = '50%';
+        if (state.perimeterAnimating || state.perimeterHold){
+          if (!state.revealedPerimeterLabels.has(`top-${idx}`)) topSpan.classList.add('hidden');
+        }
+        topLabel.appendChild(topSpan);
+
+        if (showOppositeEdges){
+          const bottomSpan = document.createElement('span');
+          bottomSpan.className = 'seg-label';
+          bottomSpan.dataset.perimKey = `bottom-${idx}`;
+          bottomSpan.textContent = seg.size;
+          bottomSpan.style.left = `${(xCursor + seg.size / 2) * cellSize}px`;
+          bottomSpan.style.top = '50%';
+          if (state.perimeterAnimating || state.perimeterHold){
+            if (!state.revealedPerimeterLabels.has(`bottom-${idx}`)) bottomSpan.classList.add('hidden');
+          }
+          bottomLabel.appendChild(bottomSpan);
+        }
+
+        xCursor += seg.size;
+      });
+
+      let yCursor = 0;
+      rowSegs.forEach((seg, idx) => {
+        const leftSpan = document.createElement('span');
+        leftSpan.className = 'seg-label';
+        leftSpan.dataset.perimKey = `left-${idx}`;
+        leftSpan.textContent = seg.size;
+        leftSpan.style.left = '50%';
+        leftSpan.style.top = `${(yCursor + seg.size / 2) * cellSize}px`;
+        if (state.perimeterAnimating || state.perimeterHold){
+          if (!state.revealedPerimeterLabels.has(`left-${idx}`)) leftSpan.classList.add('hidden');
+        }
+        leftLabel.appendChild(leftSpan);
+
+        if (showOppositeEdges){
+          const rightSpan = document.createElement('span');
+          rightSpan.className = 'seg-label';
+          rightSpan.dataset.perimKey = `right-${idx}`;
+          rightSpan.textContent = seg.size;
+          rightSpan.style.left = '50%';
+          rightSpan.style.top = `${(yCursor + seg.size / 2) * cellSize}px`;
+          if (state.perimeterAnimating || state.perimeterHold){
+            if (!state.revealedPerimeterLabels.has(`right-${idx}`)) rightSpan.classList.add('hidden');
+          }
+          rightLabel.appendChild(rightSpan);
+        }
+
+        yCursor += seg.size;
+      });
+
+      rightLabel.style.display = showOppositeEdges ? 'block' : 'none';
+      bottomLabel.style.display = showOppositeEdges ? 'block' : 'none';
+    }
+
+    function buildPerimeterTrace(){
+      const w = state.cols * state.cellSize;
+      const h = state.rows * state.cellSize;
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('class', 'trace-svg');
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.setAttribute('preserveAspectRatio', 'none');
+
+      const path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('class', 'trace-path');
+      path.setAttribute('d', `M 4 4 H ${w-4} V ${h-4} H 4 V 4`);
+
+      const length = 2 * ((w - 8) + (h - 8));
+      path.style.strokeDasharray = length;
+      path.style.strokeDashoffset = length;
+      path.style.setProperty('--trace-length', length);
+
+      if (state.perimeterHold){
+        path.classList.add('hold');
+      }
+
+      svg.appendChild(path);
+      perimeterTrace.appendChild(svg);
+    }
+
+    function updateSplitLines(){
+      const cellSize = state.cellSize;
+      const w = state.cols * cellSize;
+      const h = state.rows * cellSize;
+
+      const verticalOn = splitEnabled(state.splitMode, 'vertical') && state.vSplit != null;
+      const horizontalOn = splitEnabled(state.splitMode, 'horizontal') && state.hSplit != null;
+
+      vSplitLine.classList.toggle('active', verticalOn);
+      hSplitLine.classList.toggle('active', horizontalOn);
+
+      if (verticalOn){
+        const x = state.vSplit * cellSize;
+        vSplitLine.style.left = `${x}px`;
+        vSplitLine.style.top = '0px';
+        vSplitLine.style.height = `${h}px`;
+      }
+
+      if (horizontalOn){
+        const y = state.hSplit * cellSize;
+        hSplitLine.style.left = '0px';
+        hSplitLine.style.top = `${y}px`;
+        hSplitLine.style.width = `${w}px`;
+      }
+    }
+
+    function getMetricDisplayValue(kind){
+      if (kind === 'area'){
+        if (state.areaAnimating) return state.areaRunningTotal == null ? '' : state.areaRunningTotal;
+        if (state.showAreaTotal) return state.rows * state.cols;
+        return '';
+      }
+
+      if (state.perimeterAnimating) return state.perimeterRunningTotal == null ? '' : state.perimeterRunningTotal;
+      if (state.showPerimeterTotal) return 2 * (state.rows + state.cols);
+      return '';
+    }
+
+    function updateMetricBoxes(){
+      const areaVal = getMetricDisplayValue('area');
+      const perimeterVal = getMetricDisplayValue('perimeter');
+
+      areaBox.innerHTML = `
+        <div class="metric-heading">Area</div>
+        <div class="metric-inner"><span class="metric-value">${areaVal}</span></div>
+      `;
+      perimeterBox.innerHTML = `
+        <div class="metric-heading">Perimeter</div>
+        <div class="metric-inner"><span class="metric-value">${perimeterVal}</span></div>
+      `;
+
+      areaBox.classList.toggle('revealed-area', state.showAreaTotal || state.areaAnimating);
+      perimeterBox.classList.toggle('revealed-perimeter', state.showPerimeterTotal || state.perimeterAnimating || state.perimeterHold);
+    }
+
+    function animateMetricCount(boxEl){
+      boxEl.classList.remove('metric-count-pop');
+      void boxEl.offsetWidth;
+      boxEl.classList.add('metric-count-pop');
+      setTimeout(() => boxEl.classList.remove('metric-count-pop'), 560);
+    }
+
+    function updateDisplay(){
+      const rows = clampWholeNumber(rowsInput.value);
+      const cols = clampWholeNumber(colsInput.value);
+
+      if (rows === null || cols === null){
+        statusMsg.textContent = 'Please enter whole numbers from 1 to 100.';
+        return;
+      }
+
+      if (Number(rowsInput.value) !== rows) rowsInput.value = rows;
+      if (Number(colsInput.value) !== cols) colsInput.value = cols;
+
+      state.rows = rows;
+      state.cols = cols;
+      state.splitMode = splitMode.value;
+      state.cellSize = getCellSize(rows, cols);
+
+      ensureSplitsInRange();
+
+      if (state.splitMode === 'vertical' && cols <= 1){
+        statusMsg.textContent = 'Vertical split needs at least 2 columns.';
+      } else if (state.splitMode === 'horizontal' && rows <= 1){
+        statusMsg.textContent = 'Horizontal split needs at least 2 rows.';
+      } else if (state.splitMode === 'both' && (rows <= 1 || cols <= 1)){
+        statusMsg.textContent = 'Both splits need at least 2 rows and 2 columns.';
+      } else {
+        statusMsg.textContent = '';
+      }
+
+      buildGrid();
+      grid.classList.toggle('perimeter-fade', state.perimeterAnimating);
+      grid.classList.toggle('perimeter-hold', state.perimeterHold);
+      updateSplitLines();
+      syncToggleStyles();
+      updateMetricBoxes();
+    }
+
+    function clientToGridPos(clientX, clientY){
+      const rect = grid.getBoundingClientRect();
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function pointerMove(clientX, clientY){
+      if (!state.dragging) return;
+
+      const pos = clientToGridPos(clientX, clientY);
+
+      if (state.dragging === 'vertical'){
+        const split = Math.round(pos.x / state.cellSize);
+        state.vSplit = Math.max(1, Math.min(state.cols - 1, split));
+      }
+
+      if (state.dragging === 'horizontal'){
+        const split = Math.round(pos.y / state.cellSize);
+        state.hSplit = Math.max(1, Math.min(state.rows - 1, split));
+      }
+
+      buildGrid();
+      grid.classList.toggle('perimeter-fade', state.perimeterAnimating);
+      grid.classList.toggle('perimeter-hold', state.perimeterHold);
+      updateSplitLines();
+    }
+
+    function stopDrag(){
+      state.dragging = null;
+      document.body.style.cursor = '';
+    }
+
+    function syncToggleStyles(){
+      repeatHorizontalBtn.classList.toggle('on', state.repeatHorizontal);
+      repeatVerticalBtn.classList.toggle('on', state.repeatVertical);
+      repeatHorizontalBtn.setAttribute('aria-pressed', String(state.repeatHorizontal));
+      repeatVerticalBtn.setAttribute('aria-pressed', String(state.repeatVertical));
+      fullscreenBtn.classList.toggle('active', state.fullscreen);
+      teacherSettingsBtn.classList.toggle('active', settingsPanel.classList.contains('open'));
+      revealValuesBtn.classList.toggle('active', state.revealValues);
+      revealValuesBtn.textContent = state.revealValues ? 'Hide values' : 'Show values';
+    }
+
+    function togglePanel(open){
+      settingsPanel.classList.toggle('open', open);
+      settingsPanel.setAttribute('aria-hidden', String(!open));
+      syncToggleStyles();
+    }
+
+    function toggleFullscreen(force){
+      state.fullscreen = typeof force === 'boolean' ? force : !state.fullscreen;
+      pageRoot.classList.toggle('fullscreen-mode', state.fullscreen);
+      fullscreenBtn.textContent = state.fullscreen ? 'Exit full screen' : 'Full screen';
+      syncToggleStyles();
+      requestAnimationFrame(updateDisplay);
+    }
+
+    function delay(ms){
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function flashMetric(boxEl){
+      boxEl.classList.remove('metric-flash');
+      void boxEl.offsetWidth;
+      boxEl.classList.add('metric-flash');
+      setTimeout(() => boxEl.classList.remove('metric-flash'), 280);
+    }
+
+    function showQuadrantBubble(key){
+      const bubble = regionLabels.querySelector(`.bubble[data-quadrant="${key}"]`);
+      if (!bubble) return;
+      bubble.classList.remove('hidden');
+      bubble.classList.remove('area-pop');
+      void bubble.offsetWidth;
+      bubble.classList.add('area-pop');
+      setTimeout(() => bubble.classList.remove('area-pop'), 860);
+    }
+
+    function getPerimeterSequence(){
+      const colSegs = getColumnSegments();
+      const rowSegs = getRowSegments();
+
+      const seq = [];
+      let elapsed = 0;
+      const cell = state.cellSize;
+      const topLen = state.cols * cell;
+      const rightLen = state.rows * cell;
+      const bottomLen = state.cols * cell;
+
+      let xCursor = 0;
+      colSegs.forEach((seg, idx) => {
+        const segmentPx = seg.size * cell;
+        seq.push({
+          key: `top-${idx}`,
+          value: seg.size,
+          trigger: elapsed + xCursor + segmentPx
+        });
+        xCursor += segmentPx;
+      });
+      elapsed += topLen;
+
+      let yCursor = 0;
+      rowSegs.forEach((seg, idx) => {
+        const segmentPx = seg.size * cell;
+        seq.push({
+          key: `right-${idx}`,
+          value: seg.size,
+          trigger: elapsed + yCursor + segmentPx
+        });
+        yCursor += segmentPx;
+      });
+      elapsed += rightLen;
+
+      xCursor = 0;
+      [...colSegs].reverse().forEach((seg, revIdx) => {
+        const idx = colSegs.length - 1 - revIdx;
+        const segmentPx = seg.size * cell;
+        seq.push({
+          key: `bottom-${idx}`,
+          value: seg.size,
+          trigger: elapsed + xCursor + segmentPx
+        });
+        xCursor += segmentPx;
+      });
+      elapsed += bottomLen;
+
+      yCursor = 0;
+      [...rowSegs].reverse().forEach((seg, revIdx) => {
+        const idx = rowSegs.length - 1 - revIdx;
+        const segmentPx = seg.size * cell;
+        seq.push({
+          key: `left-${idx}`,
+          value: seg.size,
+          trigger: elapsed + yCursor + segmentPx
+        });
+        yCursor += segmentPx;
+      });
+
+      const totalLen = 2 * ((state.cols * cell) + (state.rows * cell));
+      return { seq, totalLen };
+    }
+
+    function revealPerimeterLabel(key){
+      state.revealedPerimeterLabels.add(key);
+      document.querySelectorAll(`.seg-label[data-perim-key="${key}"]`).forEach(label => {
+        label.classList.remove('hidden');
+        label.classList.remove('perimeter-pulse');
+        void label.offsetWidth;
+        label.classList.add('perimeter-pulse');
+        setTimeout(() => label.classList.remove('perimeter-pulse'), 900);
+      });
+    }
+
+    function getQuadrantAnimationMode(quadrant){
+      const quadrants = getQuadrants();
+      const isSingleRegion = quadrants.length === 1;
+
+      if (isSingleRegion){
+        if (quadrant.w > 10 || quadrant.h > 10) return 'row';
+        if (quadrant.area > 90) return 'row';
+        return 'cell';
+      }
+
+      if (quadrant.w > 15 || quadrant.h > 15 || quadrant.area > 260) return 'overlay';
+      if (quadrant.area > 90) return 'row';
+      return 'cell';
+    }
+
+    async function animateQuadrantByCells(cells, duration, token){
+      const cellCount = cells.length;
+      if (cellCount === 0){
+        await delay(duration);
+        return;
+      }
+
+      const step = duration / cellCount;
+      const pulseDuration = Math.max(120, Math.min(220, step * 1.7));
+
+      for (let i = 0; i < cellCount; i++){
+        if (token !== state.areaAnimToken) return;
+        const cell = cells[i];
+        cell.style.setProperty('--pulse-duration', `${pulseDuration}ms`);
+        cell.classList.remove('area-cell-pulse');
+        void cell.offsetWidth;
+        cell.classList.add('area-cell-pulse');
+        setTimeout(() => cell.classList.remove('area-cell-pulse'), pulseDuration + 30);
+        await delay(step);
+      }
+    }
+
+    async function animateQuadrantByRows(quadrantKey, duration, token){
+      const rows = {};
+      const cells = Array.from(grid.querySelectorAll(`.cell[data-quadrant="${quadrantKey}"]`));
+      cells.forEach(cell => {
+        const rowKey = cell.dataset.rowInQuadrant;
+        if (!rows[rowKey]) rows[rowKey] = [];
+        rows[rowKey].push(cell);
+      });
+
+      const rowKeys = Object.keys(rows).sort((a,b) => Number(a) - Number(b));
+      if (rowKeys.length === 0){
+        await delay(duration);
+        return;
+      }
+
+      const step = duration / rowKeys.length;
+      const pulseDuration = Math.max(140, Math.min(260, step * 1.5));
+
+      for (const rowKey of rowKeys){
+        if (token !== state.areaAnimToken) return;
+        const rowCells = rows[rowKey];
+        rowCells.forEach(cell => {
+          cell.style.setProperty('--pulse-duration', `${pulseDuration}ms`);
+          cell.classList.remove('area-row-pulse');
+          void cell.offsetWidth;
+          cell.classList.add('area-row-pulse');
+          setTimeout(() => cell.classList.remove('area-row-pulse'), pulseDuration + 40);
+        });
+        await delay(step);
+      }
+    }
+
+    async function animateQuadrantByOverlay(quadrantKey, duration, token){
+      const overlay = grid.querySelector(`[data-quadrant-overlay="${quadrantKey}"]`);
+      if (!overlay){
+        await delay(duration);
+        return;
+      }
+      overlay.style.setProperty('--pulse-duration', `${Math.max(650, duration * 0.85)}ms`);
+      overlay.classList.remove('pulse');
+      void overlay.offsetWidth;
+      overlay.classList.add('pulse');
+      await delay(duration);
+      if (token !== state.areaAnimToken) return;
+      overlay.classList.remove('pulse');
+    }
+
+  async function animateAreaByBubblesOnly(token){
+  const quadrants = getQuadrantOrder();
+  const count = quadrants.length;
+
+  const totalDuration = count > 8 ? 8000 : count * 1000;
+  const bubbleInterval = totalDuration / Math.max(1, count);
+
+  for (const q of quadrants){
+    if (token !== state.areaAnimToken) return;
+
+    state.revealedAreaQuadrants.add(q.key);
+    showQuadrantBubble(q.key);
+
+    state.areaRunningTotal = (state.areaRunningTotal ?? 0) + q.area;
+    updateMetricBoxes();
+    animateMetricCount(areaBox);
+
+    await delay(bubbleInterval);
+  }
+}
+
+    function getAdaptivePerimeterDuration(){
+      return 8000;
+    }
+
+    async function playAreaAnimation(){
+      const token = ++state.areaAnimToken;
+
+      state.perimeterAnimToken++;
+      state.perimeterAnimating = false;
+      state.perimeterHold = false;
+      state.showPerimeterTotal = false;
+      state.areaAnimating = true;
+      state.showAreaTotal = true;
+      state.areaRunningTotal = null;
+      state.revealedAreaQuadrants = new Set();
+
+      updateDisplay();
+      flashMetric(areaBox);
+
+      const totalArea = state.rows * state.cols;
+
+      if (totalArea >= 400){
+        await animateAreaByBubblesOnly(token);
+
+        if (token !== state.areaAnimToken) return;
+        state.areaAnimating = false;
+        state.areaRunningTotal = totalArea;
+        updateDisplay();
+        return;
+      }
+
+      const quadrants = getQuadrantOrder();
+      const quadrantDuration = 2000;
+
+      for (const q of quadrants){
+        if (token !== state.areaAnimToken) return;
+
+        const mode = getQuadrantAnimationMode(q);
+        const activeDuration = 1450;
+
+        if (mode === 'overlay'){
+          await animateQuadrantByOverlay(q.key, activeDuration, token);
+        } else if (mode === 'row'){
+          await animateQuadrantByRows(q.key, activeDuration, token);
+        } else {
+          const cells = Array.from(grid.querySelectorAll(`.cell[data-quadrant="${q.key}"]`)).sort((a, b) => {
+            const topDiff = parseFloat(a.style.top) - parseFloat(b.style.top);
+            if (topDiff !== 0) return topDiff;
+            return parseFloat(a.style.left) - parseFloat(b.style.left);
+          });
+          await animateQuadrantByCells(cells, activeDuration, token);
+        }
+
+        if (token !== state.areaAnimToken) return;
+
+        state.revealedAreaQuadrants.add(q.key);
+        showQuadrantBubble(q.key);
+
+        state.areaRunningTotal = (state.areaRunningTotal ?? 0) + q.area;
+        updateMetricBoxes();
+        animateMetricCount(areaBox);
+
+        await delay(Math.max(0, quadrantDuration - activeDuration));
+      }
+
+      if (token !== state.areaAnimToken) return;
+      state.areaAnimating = false;
+      state.areaRunningTotal = state.rows * state.cols;
+      updateDisplay();
+    }
+
+    async function playPerimeterAnimation(){
+      const token = ++state.perimeterAnimToken;
+
+      state.areaAnimToken++;
+      state.areaAnimating = false;
+      state.perimeterHold = false;
+      state.showAreaTotal = false;
+      state.perimeterAnimating = true;
+      state.showPerimeterTotal = true;
+      state.perimeterRunningTotal = null;
+      state.revealedPerimeterLabels = new Set();
+
+      updateDisplay();
+      flashMetric(perimeterBox);
+
+      const path = perimeterTrace.querySelector('.trace-path');
+      const totalCells = state.rows * state.cols;
+      const totalDuration = getAdaptivePerimeterDuration();
+
+      if (path){
+        path.classList.remove('hold');
+        path.classList.remove('play');
+        void path.getBoundingClientRect();
+        path.style.strokeWidth = totalCells > 2500 ? '5' : '6';
+        path.style.setProperty('--perimeter-duration', `${totalDuration}ms`);
+        path.classList.add('play');
+      }
+
+      const { seq, totalLen } = getPerimeterSequence();
+      let previousTime = 0;
+
+      for (const item of seq){
+        if (token !== state.perimeterAnimToken) return;
+
+        const triggerTime = (item.trigger / totalLen) * totalDuration;
+        const waitTime = Math.max(0, triggerTime - previousTime);
+        previousTime = triggerTime;
+
+        if (waitTime > 0){
+          await delay(waitTime);
+        }
+
+        if (token !== state.perimeterAnimToken) return;
+
+        revealPerimeterLabel(item.key);
+        state.perimeterRunningTotal = (state.perimeterRunningTotal ?? 0) + item.value;
+        updateMetricBoxes();
+        animateMetricCount(perimeterBox);
+      }
+
+      await delay(Math.max(0, totalDuration - previousTime));
+
+      if (token !== state.perimeterAnimToken) return;
+      state.perimeterAnimating = false;
+      state.perimeterHold = true;
+      state.perimeterRunningTotal = 2 * (state.rows + state.cols);
+      updateDisplay();
+    }
+
+    function resetResultsOnly(){
+      state.showAreaTotal = false;
+      state.showPerimeterTotal = false;
+      state.areaAnimToken++;
+      state.perimeterAnimToken++;
+      state.areaAnimating = false;
+      state.perimeterAnimating = false;
+      state.perimeterHold = false;
+      state.areaRunningTotal = null;
+      state.perimeterRunningTotal = null;
+      state.revealedAreaQuadrants = new Set();
+      state.revealedPerimeterLabels = new Set();
+      updateMetricBoxes();
+      const path = perimeterTrace.querySelector('.trace-path');
+      if (path) path.classList.remove('play', 'hold');
+      grid.classList.remove('perimeter-fade');
+      grid.classList.remove('perimeter-hold');
+    }
+
+    vSplitLine.addEventListener('pointerdown', (e) => {
+      if (!splitEnabled(state.splitMode, 'vertical') || state.vSplit == null) return;
+      state.dragging = 'vertical';
+      document.body.style.cursor = 'ew-resize';
+      e.preventDefault();
+    });
+
+    hSplitLine.addEventListener('pointerdown', (e) => {
+      if (!splitEnabled(state.splitMode, 'horizontal') || state.hSplit == null) return;
+      state.dragging = 'horizontal';
+      document.body.style.cursor = 'ns-resize';
+      e.preventDefault();
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      pointerMove(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('pointerup', stopDrag);
+    window.addEventListener('pointercancel', stopDrag);
+
+    rowsInput.addEventListener('input', () => {
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    colsInput.addEventListener('input', () => {
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    rowsInput.addEventListener('blur', () => {
+      const val = sanitiseInput(rowsInput);
+      if (val === null) rowsInput.value = 10;
+      updateDisplay();
+    });
+
+    colsInput.addEventListener('blur', () => {
+      const val = sanitiseInput(colsInput);
+      if (val === null) colsInput.value = 10;
+      updateDisplay();
+    });
+
+    splitMode.addEventListener('change', () => {
+      const nextMode = splitMode.value;
+
+      if (nextMode === 'vertical' || nextMode === 'both'){
+        if (state.cols > 1 && state.vSplit == null) state.vSplit = defaultSplit(state.cols);
+      } else {
+        state.vSplit = null;
+      }
+
+      if (nextMode === 'horizontal' || nextMode === 'both'){
+        if (state.rows > 1 && state.hSplit == null) state.hSplit = defaultSplit(state.rows);
+      } else {
+        state.hSplit = null;
+      }
+
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      rowsInput.value = 10;
+      colsInput.value = 10;
+      splitMode.value = 'none';
+      state.vSplit = null;
+      state.hSplit = null;
+      state.repeatHorizontal = false;
+      state.repeatVertical = false;
+      state.revealValues = false;
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    newQBtn.addEventListener('click', () => {
+      rowsInput.value = Math.floor(Math.random() * 100) + 1;
+      colsInput.value = Math.floor(Math.random() * 100) + 1;
+      state.revealValues = false;
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    teacherSettingsBtn.addEventListener('click', () => {
+      togglePanel(!settingsPanel.classList.contains('open'));
+    });
+
+    closePanelBtn.addEventListener('click', () => {
+      togglePanel(false);
+    });
+
+    repeatHorizontalBtn.addEventListener('click', () => {
+      state.repeatHorizontal = !state.repeatHorizontal;
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    repeatVerticalBtn.addEventListener('click', () => {
+      state.repeatVertical = !state.repeatVertical;
+      resetResultsOnly();
+      updateDisplay();
+    });
+
+    revealValuesBtn.addEventListener('click', () => {
+      state.revealValues = !state.revealValues;
+      if (state.revealValues) {
+        state.perimeterHold = false;
+        state.revealedAreaQuadrants = new Set(getQuadrants().map(q => q.key));
+      } else if (!state.showAreaTotal) {
+        state.revealedAreaQuadrants = new Set();
+      }
+      updateDisplay();
+    });
+
+    areaBox.addEventListener('click', () => {
+      playAreaAnimation();
+    });
+
+    perimeterBox.addEventListener('click', () => {
+      playPerimeterAnimation();
+    });
+
+    fullscreenBtn.addEventListener('click', () => {
+      toggleFullscreen();
+    });
+
+    fullscreenCloseBtn.addEventListener('click', () => {
+      toggleFullscreen(false);
+    });
+
+    window.addEventListener('resize', updateDisplay);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape'){
+        togglePanel(false);
+        if (state.fullscreen) toggleFullscreen(false);
+      }
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
