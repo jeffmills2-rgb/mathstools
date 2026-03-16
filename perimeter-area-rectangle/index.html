@@ -403,7 +403,13 @@
       display:inline-block;
       min-width:1ch;
     }
-
+.metric-placeholder{
+  display:inline-block;
+  font-size:26px;
+  font-weight:600;
+  color:#9ca3af;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
     .array-stage{
       grid-column:2;
       grid-row:3;
@@ -889,7 +895,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      color:#2563eb;
+      color:#9ca3af;
       font-family:var(--mathFont);
       font-weight:700;
       z-index:13;
@@ -905,7 +911,7 @@
 
     .dimension-arrow .dim-line{
       position:absolute;
-      background:#2563eb;
+      background:#9ca3af;
       border-radius:999px;
       opacity:.95;
     }
@@ -927,14 +933,14 @@
     }
 
     .dimension-arrow .arrow-start,
-    .dimension-arrow .arrow-end{
-      position:absolute;
-      width:18px;
-      height:18px;
-      border-top:5px solid #2563eb;
-      border-right:5px solid #2563eb;
-      border-radius:2px;
-    }
+.dimension-arrow .arrow-end{
+  position:absolute;
+  width:18px;
+  height:18px;
+  border-top:5px solid #9ca3af;
+  border-right:5px solid #9ca3af;
+  border-radius:2px;
+}
 
     .dimension-arrow.horizontal .arrow-start{
       left:2px;
@@ -2123,32 +2129,40 @@ if (
       return '';
     }
 
-    function updateMetricBoxes(){
-      const areaVal = getMetricDisplayValue('area');
-      const perimeterVal = getMetricDisplayValue('perimeter');
+   function updateMetricBoxes(){
+  const areaVal = getMetricDisplayValue('area');
+  const perimeterVal = getMetricDisplayValue('perimeter');
 
-      const areaCanClear = state.showAreaTotal || state.areaAnimating;
-      const perimeterCanClear = state.showPerimeterTotal || state.perimeterAnimating || state.perimeterHold;
+  const areaCanClear = state.showAreaTotal || state.areaAnimating;
+  const perimeterCanClear = state.showPerimeterTotal || state.perimeterAnimating || state.perimeterHold;
 
-      areaBox.innerHTML = `
-        <div class="metric-top">
-          <div class="metric-heading">Area</div>
-          <button class="metric-clear area-clear" type="button" ${areaCanClear ? '' : 'disabled'} data-clear-metric="area">Clear</button>
-        </div>
-        <div class="metric-inner"><span class="metric-value">${areaVal}</span></div>
-      `;
+  const areaDisplay = areaVal === '' || areaVal == null
+    ? '<span class="metric-placeholder">click to reveal</span>'
+    : `<span class="metric-value">${areaVal}</span>`;
 
-      perimeterBox.innerHTML = `
-        <div class="metric-top">
-          <div class="metric-heading">Perimeter</div>
-          <button class="metric-clear perimeter-clear" type="button" ${perimeterCanClear ? '' : 'disabled'} data-clear-metric="perimeter">Clear</button>
-        </div>
-        <div class="metric-inner"><span class="metric-value">${perimeterVal}</span></div>
-      `;
+  const perimeterDisplay = perimeterVal === '' || perimeterVal == null
+    ? '<span class="metric-placeholder">click to reveal</span>'
+    : `<span class="metric-value">${perimeterVal}</span>`;
 
-      areaBox.classList.toggle('revealed-area', state.showAreaTotal || state.areaAnimating);
-      perimeterBox.classList.toggle('revealed-perimeter', state.showPerimeterTotal || state.perimeterAnimating || state.perimeterHold);
-    }
+  areaBox.innerHTML = `
+    <div class="metric-top">
+      <div class="metric-heading">Area</div>
+      <button class="metric-clear area-clear" type="button" ${areaCanClear ? '' : 'disabled'} data-clear-metric="area">Clear</button>
+    </div>
+    <div class="metric-inner">${areaDisplay}</div>
+  `;
+
+  perimeterBox.innerHTML = `
+    <div class="metric-top">
+      <div class="metric-heading">Perimeter</div>
+      <button class="metric-clear perimeter-clear" type="button" ${perimeterCanClear ? '' : 'disabled'} data-clear-metric="perimeter">Clear</button>
+    </div>
+    <div class="metric-inner">${perimeterDisplay}</div>
+  `;
+
+  areaBox.classList.toggle('revealed-area', state.showAreaTotal || state.areaAnimating);
+  perimeterBox.classList.toggle('revealed-perimeter', state.showPerimeterTotal || state.perimeterAnimating || state.perimeterHold);
+}
 
     function animateMetricCount(boxEl){
       boxEl.classList.remove('metric-count-pop');
