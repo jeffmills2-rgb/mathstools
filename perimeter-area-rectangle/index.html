@@ -1095,39 +1095,47 @@
             </div>
           </div>
 
-          <div class="settings-menu" id="settingsMenu">
-            <button class="chip" id="settingsBtn" type="button" aria-expanded="false" aria-haspopup="true">Settings ▼</button>
-            <div class="settings-dropdown" id="settingsDropdown">
-              <div class="settings-card">
-           
+         <div class="settings-menu" id="settingsMenu">
+  <button class="chip" id="settingsBtn" type="button" aria-expanded="false" aria-haspopup="true">Settings ▼</button>
+  <div class="settings-dropdown" id="settingsDropdown">
+    <div class="settings-card">
 
-                <div class="toggle-row">
-                  <span>Repeat horizontal</span>
-                  <button class="toggle" id="repeatHorizontalBtn" type="button" aria-pressed="false" aria-label="Repeat horizontal"></button>
-                </div>
+      <div class="toggle-row">
+        <span>Repeat horizontal</span>
+        <button class="toggle" id="repeatHorizontalBtn" type="button" aria-pressed="false" aria-label="Repeat horizontal"></button>
+      </div>
 
-                <div class="toggle-row">
-                  <span>Repeat vertical</span>
-                  <button class="toggle" id="repeatVerticalBtn" type="button" aria-pressed="false" aria-label="Repeat vertical"></button>
-                </div>
+      <div class="toggle-row">
+        <span>Repeat vertical</span>
+        <button class="toggle" id="repeatVerticalBtn" type="button" aria-pressed="false" aria-label="Repeat vertical"></button>
+      </div>
 
-                <div class="settings-divider"></div>
+      <div class="settings-divider"></div>
 
-                <div>
-                  <label class="partition-label" for="splitMode">Partition Splitter</label>
-                  <select id="splitMode" class="chip-select settings-select" aria-label="Partition Splitter" style="width:100%;">
-                    <option value="none">None</option>
-                    <option value="vertical">Vertical only</option>
-                    <option value="horizontal">Horizontal only</option>
-                    <option value="both">Both vertical and horizontal</option>
-                  </select>
-                </div>
+      <div>
+        <label class="partition-label" for="splitMode">Partition Splitter</label>
+        <select id="splitMode" class="chip-select settings-select" aria-label="Partition Splitter" style="width:100%;">
+          <option value="none">None</option>
+          <option value="vertical">Vertical only</option>
+          <option value="horizontal">Horizontal only</option>
+          <option value="both">Both vertical and horizontal</option>
+        </select>
+      </div>
 
-                
-              </div>
-            </div>
-          </div>
+      <div>
+        <label class="partition-label" for="randomDifficulty">Random Q Difficulty</label>
+        <select id="randomDifficulty" class="chip-select settings-select" aria-label="Random Q Difficulty" style="width:100%;">
+          <option value="sweet">Sweet</option>
+          <option value="mild">Mild</option>
+          <option value="medium" selected>Medium</option>
+          <option value="spicy">Spicy</option>
+          <option value="extraHot">Extra Hot</option>
+        </select>
+      </div>
 
+    </div>
+  </div>
+</div>
           <button class="chip red" id="resetBtn" type="button">Reset</button>
           <button class="chip blue" id="newQBtn" type="button">Random Q</button>
         </div>
@@ -1209,7 +1217,7 @@
     const newQBtn = document.getElementById('newQBtn');
     const repeatHorizontalBtn = document.getElementById('repeatHorizontalBtn');
     const repeatVerticalBtn = document.getElementById('repeatVerticalBtn');
-  
+  const randomDifficulty = document.getElementById('randomDifficulty');
 
     const toolsMenu = document.getElementById('toolsMenu');
     const toolsBtn = document.getElementById('toolsBtn');
@@ -1269,6 +1277,7 @@
       removedQuadrants: new Set(),
       selectedQuadrant: null,
       toolMode: TOOL_ARROW,
+randomDifficulty: 'medium',
       boundaryInfo: {
         orderedSegments: [],
         pathD: '',
@@ -2181,9 +2190,10 @@ if (
       const isArrow = state.toolMode === TOOL_ARROW;
       toolsBtn.disabled = !isArrow;
       settingsBtn.disabled = !isArrow;
-      splitMode.disabled = !isArrow;
-      repeatHorizontalBtn.disabled = !isArrow;
-      repeatVerticalBtn.disabled = !isArrow;
+   splitMode.disabled = !isArrow;
+randomDifficulty.disabled = !isArrow;
+repeatHorizontalBtn.disabled = !isArrow;
+repeatVerticalBtn.disabled = !isArrow;
 
       rowsInput.disabled = !isArrow;
       colsInput.disabled = !isArrow;
@@ -2753,7 +2763,9 @@ gridShell.classList.toggle('pointer-faded-guides', state.toolMode === TOOL_POINT
       state.dragging = null;
       document.body.style.cursor = '';
     }
-
+randomDifficulty.addEventListener('change', () => {
+  state.randomDifficulty = randomDifficulty.value;
+});
     vSplitLine.addEventListener('pointerdown', (e) => {
       if (state.toolMode !== TOOL_ARROW) return;
       if (!splitEnabled(state.splitMode, 'vertical') || state.vSplit == null) return;
@@ -2823,28 +2835,64 @@ gridShell.classList.toggle('pointer-faded-guides', state.toolMode === TOOL_POINT
       updateDisplay();
     });
 
-    resetBtn.addEventListener('click', () => {
-      rowsInput.value = 10;
-      colsInput.value = 10;
-      splitMode.value = 'none';
-      state.vSplit = null;
-      state.hSplit = null;
-      state.repeatHorizontal = false;
-      state.repeatVertical = false;
-      state.revealValues = false;
-      state.toolMode = TOOL_ARROW;
-      resetStructureAndResults();
-      updateDisplay();
-    });
+resetBtn.addEventListener('click', () => {
+  rowsInput.value = 10;
+  colsInput.value = 10;
+  splitMode.value = 'none';
+  randomDifficulty.value = 'medium';
+  state.randomDifficulty = 'medium';
+  state.vSplit = null;
+  state.hSplit = null;
+  state.repeatHorizontal = false;
+  state.repeatVertical = false;
+  state.revealValues = false;
+  state.toolMode = TOOL_ARROW;
+  resetStructureAndResults();
+  updateDisplay();
+});
 
-    newQBtn.addEventListener('click', () => {
-      rowsInput.value = Math.floor(Math.random() * 100) + 1;
-      colsInput.value = Math.floor(Math.random() * 100) + 1;
-      state.revealValues = false;
-      state.toolMode = TOOL_ARROW;
-      resetStructureAndResults();
-      updateDisplay();
-    });
+ newQBtn.addEventListener('click', () => {
+  const diff = state.randomDifficulty;
+
+  let r, c;
+
+  if (diff === "sweet"){
+    r = Math.floor(Math.random() * 6) + 5;      // 5–10
+    c = Math.floor(Math.random() * 6) + 5;      // 5–10
+  }
+
+  if (diff === "mild"){
+    r = Math.floor(Math.random() * 11) + 10;    // 10–20
+    c = Math.floor(Math.random() * 11) + 10;    // 10–20
+  }
+
+  if (diff === "medium"){
+    r = Math.floor(Math.random() * 41) + 10;    // 10–50
+    c = Math.floor(Math.random() * 41) + 10;    // 10–50
+  }
+
+  if (diff === "spicy"){
+    r = Math.floor(Math.random() * 41) + 10;    // 10–50
+    c = Math.floor(Math.random() * 41) + 10;    // 10–50
+  }
+
+  if (diff === "extraHot"){
+    r = Math.floor(Math.random() * 91) + 10;    // 10–100
+    c = Math.floor(Math.random() * 91) + 10;    // 10–100
+  }
+
+  // make x dimension / columns the longer one
+  const longer = Math.max(r, c);
+  const shorter = Math.min(r, c);
+
+  rowsInput.value = shorter;
+  colsInput.value = longer;
+
+  state.revealValues = false;
+  state.toolMode = TOOL_ARROW;
+  resetStructureAndResults();
+  updateDisplay();
+});
 
     repeatHorizontalBtn.addEventListener('click', () => {
       state.repeatHorizontal = !state.repeatHorizontal;
@@ -2924,6 +2972,16 @@ gridShell.classList.toggle('pointer-faded-guides', state.toolMode === TOOL_POINT
         settingsBtn.setAttribute('aria-expanded', 'false');
       }
     });
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    if (document.activeElement === rowsInput || document.activeElement === colsInput) {
+      return;
+    }
+    e.preventDefault();
+    newQBtn.click();
+  }
+});
 
     window.addEventListener('resize', updateDisplay);
 
