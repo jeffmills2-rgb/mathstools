@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rectangles - Area/Perimeter Worksheet Maker</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+      --footer-h:44px;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      padding-bottom:var(--footer-h);
+    }
+
+    .wrap{
+      max-width:1200px;
+      margin:18px auto 40px;
+      padding:0 16px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    .title{
+      font-size:30px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      margin:0 0 6px;
+    }
+
+    .subtitle{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-weight:850;
+      font-size:18px;
+    }
+
+    .controls{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+
+    .fieldRow{
+      display:flex;
+      gap:18px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+    }
+
+    label{
+      display:block;
+      font-weight:950;
+      color:var(--ink);
+      margin:0 0 8px;
+      font-size:16px;
+    }
+
+    select, input[type="number"]{
+      border:2px solid #e5e7eb;
+      border-radius:16px;
+      padding:14px 14px;
+      font-weight:950;
+      font-size:18px;
+      background:#fff;
+      min-width:260px;
+      outline:none;
+    }
+
+    input[type="number"]{ min-width:220px; }
+
+    .btnRow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:none;
+      border-radius:16px;
+      padding:14px 18px;
+      font-weight:1000;
+      cursor:pointer;
+      background:#f3f4f6;
+      color:#111827;
+      transition:transform .04s ease, filter .15s ease, opacity .2s ease;
+      user-select:none;
+      font-size:18px;
+    }
+    button:active{ transform:scale(.98); }
+    button.primary{ background:#2563eb; color:#fff; }
+    button.ghost{ background:#eef2ff; color:#1d4ed8; }
+    button.danger{ background:#fee2e2; color:#991b1b; }
+
+    .outWrap{ margin-top:16px; }
+
+    .page{
+      margin-top:16px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 10px 26px rgba(15,23,42,.08);
+      overflow:hidden;
+    }
+
+    .pageHeader{
+      padding:12px 14px 10px;
+      border-bottom:1px solid rgba(229,231,235,.95);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .hdrLeft{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:220px;
+    }
+
+    .hdrLeft img{
+      width:28px;
+      height:28px;
+      object-fit:contain;
+      display:block;
+    }
+
+    .hdrTitle{
+      font-weight:1000;
+      font-size:15px;
+      line-height:1.1;
+    }
+
+    .hdrSub{
+      color:var(--muted);
+      font-weight:850;
+      font-size:12px;
+      margin-top:2px;
+    }
+
+    .nameDate{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      justify-content:flex-end;
+      margin-left:auto;
+    }
+
+    .lineField{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:150px;
+    }
+
+    .lineLabel{
+      font-size:11px;
+      font-weight:950;
+      color:var(--muted);
+    }
+
+    .lineBox{
+      height:26px;
+      border:2px solid #111827;
+      border-radius:9px;
+      background:#fff;
+    }
+
+    .grid{
+      padding:12px 14px 14px;
+      display:grid;
+      gap:12px 14px;
+    }
+
+    .grid.cols-2{ grid-template-columns:1fr 1fr; }
+    .grid.cols-1{ grid-template-columns:1fr; }
+
+    .qCard{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:8px 8px 10px;
+      background:#fff;
+      break-inside:avoid;
+    }
+
+    .qTop{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      margin-bottom:6px;
+      flex-wrap:wrap;
+    }
+
+    .qLab{
+      font-weight:950;
+      font-size:13px;
+      color:var(--ink);
+    }
+
+    .qBox{
+      border:2px solid #111827;
+      border-radius:14px;
+      padding:6px 10px;
+      font-weight:1000;
+      font-size:15px;
+      background:#fff;
+      min-width:170px;
+      text-align:center;
+      line-height:1.1;
+    }
+
+    .diagramWrap{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      margin:4px 0 6px;
+    }
+
+    .diagramSvg{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+
+    .answerStack{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:4px;
+      align-items:center;
+    }
+
+    .ansRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      width:100%;
+    }
+
+    .ansLabel{
+      font-weight:950;
+      font-size:14px;
+      min-width:92px;
+      text-align:right;
+      font-family:var(--mathFont);
+    }
+
+    .ansBox{
+      width:180px;
+      max-width:68%;
+      height:32px;
+      border:2px solid #111827;
+      border-radius:11px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:1000;
+      font-size:16px;
+      color:#111827;
+    }
+
+    .ansBox.key{
+      color:#16a34a;
+      border-color:#16a34a;
+      background:rgba(22,163,74,.08);
+    }
+
+    .pageFooter{
+      padding:8px 14px;
+      border-top:1px solid rgba(229,231,235,.95);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      font-weight:950;
+      color:#111827;
+      font-size:12px;
+      background:rgba(255,255,255,.96);
+    }
+
+    .pageFooter a{
+      color:#2563eb;
+      text-decoration:none;
+      font-weight:1000;
+    }
+    .pageFooter a:hover{ text-decoration:underline; }
+
+    .mmtFooter{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      height:var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 12px;
+      background:rgba(255,255,255,.92);
+      border-top:1px solid rgba(229,231,235,.95);
+      backdrop-filter:blur(8px);
+      z-index:500;
+      font-weight:900;
+      color:#111827;
+      text-align:center;
+      font-size:13px;
+    }
+
+    .mmtFooter a{
+      color:#2563eb;
+      text-decoration:none;
+      font-weight:950;
+    }
+    .mmtFooter a:hover{ text-decoration:underline; }
+
+    @media print{
+      @page{
+        size:A4 portrait;
+        margin:8mm;
+      }
+
+      body{
+        background:#fff;
+        padding-bottom:0;
+      }
+
+      .wrap{
+        max-width:none;
+        margin:0;
+        padding:0;
+      }
+
+      .card{
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+      }
+
+      .controls, .title, .subtitle, .mmtFooter{
+        display:none !important;
+      }
+
+      .page{
+        margin:0;
+        border:none;
+        border-radius:0;
+        box-shadow:none;
+        page-break-after:always;
+      }
+
+      .page:last-child{
+        page-break-after:auto;
+      }
+
+      .pageHeader{
+        padding:4mm 4mm 3mm;
+      }
+
+      .grid{
+        padding:3mm 4mm 4mm;
+        gap:3mm 4mm;
+      }
+
+      .pageFooter{
+        padding:3mm 4mm 3mm;
+      }
+
+      .qCard{
+        break-inside:avoid;
+        padding:2.5mm;
+      }
+
+      .qTop{
+        margin-bottom:1.5mm;
+        gap:2mm;
+      }
+
+      .qLab{
+        font-size:11px;
+      }
+
+      .qBox{
+        font-size:11px;
+        padding:1.2mm 2.2mm;
+        min-width:0;
+      }
+
+      .diagramWrap{
+        margin:1mm 0 1.5mm;
+      }
+
+      .answerStack{
+        gap:1.5mm;
+        margin-top:1mm;
+      }
+
+      .ansLabel{
+        font-size:11px;
+        min-width:64px;
+      }
+
+      .ansBox{
+        height:22px;
+        width:120px;
+        font-size:12px;
+      }
+
+      .hdrTitle{
+        font-size:11px;
+      }
+
+      .hdrSub{
+        font-size:9px;
+      }
+
+      .lineField{
+        min-width:78px;
+        gap:1mm;
+      }
+
+      .lineLabel{
+        font-size:8px;
+      }
+
+      .lineBox{
+        height:18px;
+        border-width:1.5px;
+      }
+
+      .hdrLeft img{
+        width:18px;
+        height:18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">Rectangles - Area/Perimeter worksheet maker</h1>
+      <p class="subtitle">Printable A4 worksheets plus answer key. Layout changes automatically by level.</p>
+
+      <div class="controls">
+        <div class="fieldRow">
+          <div>
+            <label for="levelSel">Level</label>
+            <select id="levelSel">
+              <option value="sweet">Level 1 Sweet</option>
+              <option value="mild" selected>Level 2 Mild</option>
+              <option value="medium">Level 3 Medium</option>
+              <option value="spicy">Level 4 Spicy</option>
+              <option value="extraHot">Level 5 Extra hot</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="countInp">Number of questions (1–48)</label>
+            <input id="countInp" type="number" min="1" max="48" value="8" />
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button id="genBtn" class="primary">Generate worksheet</button>
+          <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  const LEVELS = {
+    sweet: {
+      name: "Sweet",
+      rowsMin: 5, rowsMax: 10,
+      colsMin: 5, colsMax: 10,
+      spicy: false,
+      perPage: 4,
+      columns: 2,
+      maxBoardW: 180,
+      maxBoardH: 100,
+      maxCell: 18
+    },
+    mild: {
+      name: "Mild",
+      rowsMin: 10, rowsMax: 20,
+      colsMin: 10, colsMax: 20,
+      spicy: false,
+      perPage: 4,
+      columns: 2,
+      maxBoardW: 180,
+      maxBoardH: 100,
+      maxCell: 10
+    },
+    medium: {
+      name: "Medium",
+      rowsMin: 10, rowsMax: 50,
+      colsMin: 10, colsMax: 50,
+      spicy: false,
+      perPage: 4,
+      columns: 2,
+      maxBoardW: 180,
+      maxBoardH: 100,
+      maxCell: 4
+    },
+    spicy: {
+      name: "Spicy",
+      rowsMin: 10, rowsMax: 20,
+      colsMin: 10, colsMax: 20,
+      spicy: true,
+      removalsMax: 2,
+      requireBufferGap: false,
+      preferEdgeNotches: false,
+      perPage: 2,
+      columns: 1,
+      maxBoardW: 230,
+      maxBoardH: 120,
+      maxCell: 10
+    },
+    extraHot: {
+      name: "Extra hot",
+      rowsMin: 10, rowsMax: 20,
+      colsMin: 10, colsMax: 20,
+      spicy: true,
+      removalsMax: 6,
+      requireBufferGap: true,
+      preferEdgeNotches: true,
+      perPage: 2,
+      columns: 1,
+      maxBoardW: 230,
+      maxBoardH: 120,
+      maxCell: 10
+    }
+  };
+
+  const SITE = "https://www.millsmathstools.au";
+
+  const levelSel = document.getElementById("levelSel");
+  const countInp = document.getElementById("countInp");
+  const genBtn = document.getElementById("genBtn");
+  const printBtn = document.getElementById("printBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const out = document.getElementById("out");
+
+  const randInt = (a,b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+  function clearOut(){
+    out.innerHTML = "";
+  }
+
+  function rectsOverlapOrTooClose(a, b, requireBufferGap = false){
+    const gap = requireBufferGap ? 1 : 0;
+    return !(
+      a.x + a.w + gap <= b.x ||
+      b.x + b.w + gap <= a.x ||
+      a.y + a.h + gap <= b.y ||
+      b.y + b.h + gap <= a.y
+    );
+  }
+
+  function generateRemovalRect(rows, cols, preferEdgeNotches = false){
+    const maxW = Math.min(5, cols - 1);
+    const maxH = Math.min(5, rows - 1);
+    if (maxW < 2 || maxH < 2) return null;
+
+    const w = randInt(2, maxW);
+    const h = randInt(2, maxH);
+    const mode = preferEdgeNotches ? randInt(0, 4) : randInt(0, 2);
+
+    if (mode <= 2){
+      const side = randInt(0, 3);
+      if (side === 0) return { x: 0, y: randInt(0, rows - h), w, h };
+      if (side === 1) return { x: cols - w, y: randInt(0, rows - h), w, h };
+      if (side === 2) return { x: randInt(0, cols - w), y: 0, w, h };
+      return { x: randInt(0, cols - w), y: rows - h, w, h };
+    }
+
+    return {
+      x: randInt(1, Math.max(1, cols - w - 1)),
+      y: randInt(1, Math.max(1, rows - h - 1)),
+      w,
+      h
+    };
+  }
+
+  function generateSeparateRemovals(rows, cols, maxCount, requireBufferGap, preferEdgeNotches = false){
+    const targetCount = randInt(1, maxCount);
+    const removals = [];
+
+    for (let i = 0; i < targetCount; i++){
+      let placed = false;
+
+      for (let tries = 0; tries < 100; tries++){
+        const candidate = generateRemovalRect(rows, cols, preferEdgeNotches);
+        if (!candidate) continue;
+
+        const clashes = removals.some(r => rectsOverlapOrTooClose(candidate, r, requireBufferGap));
+        if (clashes) continue;
+
+        removals.push(candidate);
+        placed = true;
+        break;
+      }
+
+      if (!placed) break;
+    }
+
+    return removals;
+  }
+
+  function buildOccupancy(question){
+    const grid = Array.from({ length: question.rows }, () => Array(question.cols).fill(true));
+
+    (question.removals || []).forEach(rem => {
+      for (let r = rem.y; r < rem.y + rem.h; r++){
+        for (let c = rem.x; c < rem.x + rem.w; c++){
+          if (r >= 0 && r < question.rows && c >= 0 && c < question.cols){
+            grid[r][c] = false;
+          }
+        }
+      }
+    });
+
+    return grid;
+  }
+
+  function computeAreaAndPerimeter(question){
+    const occ = buildOccupancy(question);
+    let area = 0;
+    let perimeter = 0;
+
+    for (let r = 0; r < question.rows; r++){
+      for (let c = 0; c < question.cols; c++){
+        if (!occ[r][c]) continue;
+        area++;
+
+        if (r === 0 || !occ[r - 1][c]) perimeter++;
+        if (r === question.rows - 1 || !occ[r + 1][c]) perimeter++;
+        if (c === 0 || !occ[r][c - 1]) perimeter++;
+        if (c === question.cols - 1 || !occ[r][c + 1]) perimeter++;
+      }
+    }
+
+    return { area, perimeter };
+  }
+
+  function generateQuestion(level){
+    const cfg = LEVELS[level];
+
+    let rows = randInt(cfg.rowsMin, cfg.rowsMax);
+    let cols = randInt(cfg.colsMin, cfg.colsMax);
+
+    if (rows > cols){
+      const t = rows;
+      rows = cols;
+      cols = t;
+    }
+
+    const q = {
+      rows,
+      cols,
+      removals: [],
+      levelKey: level
+    };
+
+    if (cfg.spicy){
+      for (let tries = 0; tries < 120; tries++){
+        const removals = generateSeparateRemovals(
+          rows,
+          cols,
+          cfg.removalsMax || 2,
+          !!cfg.requireBufferGap,
+          !!cfg.preferEdgeNotches
+        );
+
+        const testQ = { ...q, removals };
+        const ans = computeAreaAndPerimeter(testQ);
+
+        if (ans.area > 0 && removals.length > 0){
+          q.removals = removals;
+          break;
+        }
+      }
+    }
+
+    const answers = computeAreaAndPerimeter(q);
+    q.answerArea = answers.area;
+    q.answerPerimeter = answers.perimeter;
+
+    return q;
+  }
+
+  function svgEl(name, attrs = {}){
+    const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [k, v] of Object.entries(attrs)){
+      el.setAttribute(k, String(v));
+    }
+    return el;
+  }
+
+  function buildOuterEdgePath(occ, rows, cols, cell, padLeft, padTop){
+    const segs = [];
+
+    function addSeg(x1, y1, x2, y2){
+      segs.push([x1, y1, x2, y2]);
+    }
+
+    for (let r = 0; r < rows; r++){
+      for (let c = 0; c < cols; c++){
+        if (!occ[r][c]) continue;
+
+        const x = padLeft + c * cell;
+        const y = padTop + r * cell;
+
+        if (r === 0 || !occ[r - 1][c]) addSeg(x, y, x + cell, y);
+        if (r === rows - 1 || !occ[r + 1][c]) addSeg(x, y + cell, x + cell, y + cell);
+        if (c === 0 || !occ[r][c - 1]) addSeg(x, y, x, y + cell);
+        if (c === cols - 1 || !occ[r][c + 1]) addSeg(x + cell, y, x + cell, y + cell);
+      }
+    }
+
+    return segs.map(([x1, y1, x2, y2]) => `M ${x1} ${y1} L ${x2} ${y2}`).join(" ");
+  }
+
+  function buildDiagramSVG(q){
+    const cfg = LEVELS[q.levelKey];
+    const occ = buildOccupancy(q);
+
+    const cell = Math.max(
+      2,
+      Math.min(
+        cfg.maxCell,
+        Math.floor(Math.min(cfg.maxBoardW / q.cols, cfg.maxBoardH / q.rows))
+      )
+    );
+
+    const boardW = q.cols * cell;
+    const boardH = q.rows * cell;
+
+    const padTop = 20;
+    const padLeft = 26;
+    const padRight = 8;
+    const padBottom = 6;
+
+    const svgW = boardW + padLeft + padRight;
+    const svgH = boardH + padTop + padBottom;
+
+    const svg = svgEl("svg", {
+      viewBox: `0 0 ${svgW} ${svgH}`,
+      class: "diagramSvg",
+      role: "img",
+      "aria-label": "rectangle area perimeter diagram"
+    });
+
+    svg.appendChild(svgEl("rect", {
+      x: 0, y: 0, width: svgW, height: svgH, fill: "#ffffff"
+    }));
+
+    // Lightly shaded visible cells
+    for (let r = 0; r < q.rows; r++){
+      for (let c = 0; c < q.cols; c++){
+        if (!occ[r][c]) continue;
+
+    svg.appendChild(svgEl("rect", {
+  x: padLeft + c * cell,
+  y: padTop + r * cell,
+  width: cell,
+  height: cell,
+  fill: "#efefef",
+  stroke: "#bfc5cf",
+  "stroke-width": 0.8
+}));
+      }
+    }
+
+    // True outer edge of the visible figure
+    const outerPath = buildOuterEdgePath(occ, q.rows, q.cols, cell, padLeft, padTop);
+    if (outerPath){
+      svg.appendChild(svgEl("path", {
+        d: outerPath,
+        fill: "none",
+        stroke: "#111827",
+        "stroke-width": 1.8,
+        "stroke-linecap": "square",
+        "stroke-linejoin": "miter"
+      }));
+    }
+
+    const topText = svgEl("text", {
+      x: padLeft + boardW / 2,
+      y: 14,
+      "text-anchor": "middle",
+      "font-size": 11,
+      "font-weight": 700,
+      "font-family": '"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif',
+      fill: "#111827"
+    });
+    topText.textContent = q.cols;
+    svg.appendChild(topText);
+
+    const leftText = svgEl("text", {
+      x: 12,
+      y: padTop + boardH / 2,
+      "text-anchor": "middle",
+      "dominant-baseline": "middle",
+      "font-size": 11,
+      "font-weight": 700,
+      "font-family": '"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif',
+      fill: "#111827"
+    });
+    leftText.textContent = q.rows;
+    svg.appendChild(leftText);
+
+    return svg;
+  }
+
+  function getPromptText(cfg){
+    return cfg.spicy
+      ? "Find the area and perimeter for the shaded regions."
+      : "Find the area and perimeter of the rectangle below.";
+  }
+
+  function pageHeaderHTML(levelName, pageLabel){
+    return `
+      <div class="pageHeader">
+        <div class="hdrLeft">
+          <img src="mmt.png" alt="MMT logo" />
+          <div>
+            <div class="hdrTitle">Rectangles - Area/Perimeter Worksheet (${levelName})</div>
+            <div class="hdrSub">${pageLabel}</div>
+          </div>
+        </div>
+
+        <div class="nameDate">
+          <div class="lineField">
+            <div class="lineLabel">Name</div>
+            <div class="lineBox"></div>
+          </div>
+          <div class="lineField">
+            <div class="lineLabel">Date</div>
+            <div class="lineBox"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function pageFooterHTML(){
+    return `
+      <div class="pageFooter">
+        This tool and more can be found at <a href="${SITE}">www.millsmathstools.au</a>
+      </div>
+    `;
+  }
+
+  function makeQuestionCard(Q, index, showAnswers){
+    const wrap = document.createElement("div");
+    wrap.className = "qCard";
+
+    const cfg = LEVELS[Q.levelKey];
+
+    const top = document.createElement("div");
+    top.className = "qTop";
+    top.innerHTML = `<div class="qLab">Question ${index + 1}</div><div class="qBox">${getPromptText(cfg)}</div>`;
+    wrap.appendChild(top);
+
+    const diagramWrap = document.createElement("div");
+    diagramWrap.className = "diagramWrap";
+    diagramWrap.appendChild(buildDiagramSVG(Q));
+    wrap.appendChild(diagramWrap);
+
+    const answerStack = document.createElement("div");
+    answerStack.className = "answerStack";
+
+    const areaAns = showAnswers ? Q.answerArea : "";
+    const perAns = showAnswers ? Q.answerPerimeter : "";
+
+    answerStack.innerHTML = `
+      <div class="ansRow">
+        <div class="ansLabel">Area =</div>
+        <div class="ansBox ${showAnswers ? "key" : ""}">${areaAns}</div>
+      </div>
+      <div class="ansRow">
+        <div class="ansLabel">Perimeter =</div>
+        <div class="ansBox ${showAnswers ? "key" : ""}">${perAns}</div>
+      </div>
+    `;
+
+    wrap.appendChild(answerStack);
+    return wrap;
+  }
+
+  function buildPages(questions, cfg, titleLabel, showAnswers){
+    const pages = [];
+    const perPage = cfg.perPage;
+    const totalPages = Math.ceil(questions.length / perPage);
+
+    for (let p = 0; p < totalPages; p++){
+      const page = document.createElement("div");
+      page.className = "page";
+      page.innerHTML = pageHeaderHTML(cfg.name, `${titleLabel} — Page ${p + 1} of ${totalPages}`);
+
+      const grid = document.createElement("div");
+      grid.className = `grid cols-${cfg.columns}`;
+
+      const start = p * perPage;
+      const slice = questions.slice(start, start + perPage);
+
+      slice.forEach((Q, localIndex) => {
+        grid.appendChild(makeQuestionCard(Q, start + localIndex, showAnswers));
+      });
+
+      page.appendChild(grid);
+
+      const footer = document.createElement("div");
+      footer.innerHTML = pageFooterHTML();
+      page.appendChild(footer.firstElementChild);
+
+      pages.push(page);
+    }
+
+    return pages;
+  }
+
+  function generate(){
+    clearOut();
+
+    const key = levelSel.value;
+    const cfg = LEVELS[key];
+
+    let n = Number(countInp.value);
+    if (!Number.isFinite(n)) n = cfg.perPage;
+    n = Math.max(1, Math.min(48, Math.round(n)));
+    countInp.value = String(n);
+
+    const questions = Array.from({ length:n }, () => generateQuestion(key));
+
+    const wsPages = buildPages(questions, cfg, "Worksheet", false);
+    const keyPages = buildPages(questions, cfg, "Answer key", true);
+
+    for (const pg of wsPages) out.appendChild(pg);
+    for (const pg of keyPages) out.appendChild(pg);
+
+    if (out.firstElementChild){
+      out.firstElementChild.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+  }
+
+  function resetAll(){
+    clearOut();
+    levelSel.value = "mild";
+    countInp.value = "8";
+  }
+
+  genBtn.addEventListener("click", generate);
+  printBtn.addEventListener("click", () => window.print());
+  resetBtn.addEventListener("click", resetAll);
+})();
+</script>
+</body>
+</html>
