@@ -102,6 +102,14 @@
       justify-content:flex-end;
     }
 
+    .downloadSelect{
+      min-width:250px;
+      background:#eef2ff;
+      color:#1d4ed8;
+      border-color:#c7d2fe;
+      cursor:pointer;
+    }
+
     button{
       border:none;
       border-radius:16px;
@@ -278,19 +286,19 @@
     }
 
     .ansBox{
-      width:180px;
-      max-width:68%;
-      height:32px;
-      border:2px solid #111827;
-      border-radius:11px;
-      background:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:1000;
-      font-size:16px;
-      color:#111827;
-    }
+  width:450px;
+  max-width:90%;
+  height:80px;
+  border:2px solid #111827;
+  border-radius:18px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:1000;
+  font-size:32px;
+  color:#111827;
+}
 
     .ansBox.key{
       color:#16a34a;
@@ -490,6 +498,10 @@
         </div>
 
         <div class="btnRow">
+          <select id="worksheetDownloadSel" class="downloadSelect" aria-label="Worksheet downloader">
+            <option value="" selected>Worksheet downloader</option>
+            <option value="Matchstick-troubles.pdf">Matchstick Troubles</option>
+          </select>
           <button id="genBtn" class="primary">Generate worksheet</button>
           <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
           <button id="resetBtn" class="danger">Reset</button>
@@ -575,6 +587,7 @@
 
   const levelSel = document.getElementById("levelSel");
   const countInp = document.getElementById("countInp");
+  const worksheetDownloadSel = document.getElementById("worksheetDownloadSel");
   const genBtn = document.getElementById("genBtn");
   const printBtn = document.getElementById("printBtn");
   const resetBtn = document.getElementById("resetBtn");
@@ -794,24 +807,22 @@
       x: 0, y: 0, width: svgW, height: svgH, fill: "#ffffff"
     }));
 
-    // Lightly shaded visible cells
     for (let r = 0; r < q.rows; r++){
       for (let c = 0; c < q.cols; c++){
         if (!occ[r][c]) continue;
 
-    svg.appendChild(svgEl("rect", {
-  x: padLeft + c * cell,
-  y: padTop + r * cell,
-  width: cell,
-  height: cell,
-  fill: "#efefef",
-  stroke: "#bfc5cf",
-  "stroke-width": 0.8
-}));
+        svg.appendChild(svgEl("rect", {
+          x: padLeft + c * cell,
+          y: padTop + r * cell,
+          width: cell,
+          height: cell,
+          fill: "#efefef",
+          stroke: "#bfc5cf",
+          "stroke-width": 0.8
+        }));
       }
     }
 
-    // True outer edge of the visible figure
     const outerPath = buildOuterEdgePath(occ, q.rows, q.cols, cell, padLeft, padTop);
     if (outerPath){
       svg.appendChild(svgEl("path", {
@@ -988,7 +999,16 @@
     clearOut();
     levelSel.value = "mild";
     countInp.value = "8";
+    worksheetDownloadSel.value = "";
   }
+
+  worksheetDownloadSel.addEventListener("change", () => {
+    const file = worksheetDownloadSel.value;
+    if (!file) return;
+
+    window.open(file, "_blank");
+    worksheetDownloadSel.value = "";
+  });
 
   genBtn.addEventListener("click", generate);
   printBtn.addEventListener("click", () => window.print());
