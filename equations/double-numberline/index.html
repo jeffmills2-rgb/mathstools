@@ -1,2535 +1,1086 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Equations – Double Number Line</title>
+  <meta charset="UTF-8" />
+  <title>Mills Maths Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Playful banner font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet" />
 
   <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --ink:#111827;
-      --muted:#6b7280;
+    :root {
+      --bg:#f5f7fb;
+      --card-bg:rgba(255,255,255,.95);
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --text-main:#111827;
+      --text-muted:#6b7280;
       --border:#e5e7eb;
-      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:16px;
+      --shadow:0 10px 26px rgba(15,23,42,.10);
 
-      --blue:#2563eb;
-      --green:#6cbc4a;
-      --danger:#ef4444;
+      --fb:#1877f2;
+      --fb-soft:rgba(24,119,242,.08);
+      --fb-border:rgba(24,119,242,.22);
 
-      --btn:#eef2f7;
-      --btnHover:#e5ebf3;
-      --btnDisabled:#e5e7eb;
-      --btnDisabledText:#9ca3af;
+      /* Brighter sidebar bubbles */
+      --wm:#1d4ed8;                 /* brighter blue */
+      --wm-soft:rgba(29,78,216,.18);
+      --wm-border:rgba(29,78,216,.40);
 
-      --line:#111827;
-      --tick:#111827;
-      --tickSoft:#b9c0cb;
-      --ghost:#97a0ad;
-      --ghostGreen:#87956f;
-      --cue:#a4b0c0;
+      --sp:#16a34a;                 /* brighter green */
+      --sp-soft:rgba(22,163,74,.18);
+      --sp-border:rgba(22,163,74,.40);
 
-      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
-      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      /* New orange bubble */
+      --fc:#ea580c;
+      --fc-soft:rgba(234,88,12,.18);
+      --fc-border:rgba(234,88,12,.40);
     }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    *{box-sizing:border-box}
 
     body{
       margin:0;
-      font-family:var(--uiFont);
-      background:var(--bg);
-      color:var(--ink);
-      overflow:hidden;
-    }
-
-    .app{
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+      background:radial-gradient(circle at top left,#e0f2fe,#f5f7fb 45%,#eef2ff);
+      color:var(--text-main);
       min-height:100vh;
-      min-height:100dvh;
-      display:flex;
-      flex-direction:column;
-      padding:18px 22px 16px;
-      gap:12px;
     }
 
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      flex-wrap:wrap;
-      position:relative;
-    }
-
-    .back-btn{
-      display:inline-flex;
-      align-items:center;
-      gap:12px;
-      text-decoration:none;
-      color:var(--ink);
-      background:rgba(255,255,255,.78);
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding:10px 16px;
-      box-shadow:0 1px 0 rgba(17,24,39,.03);
-      font-weight:800;
-      font-size:17px;
-      backdrop-filter:blur(4px);
-      transition:.16s ease;
-      user-select:none;
-      -webkit-user-select:none;
-    }
-    .back-btn:hover{
-      transform:translateY(-1px);
-      background:rgba(255,255,255,.92);
-      box-shadow:0 6px 18px rgba(37,99,235,.08);
-    }
-
-    .back-logo{
-      width:28px;
-      height:28px;
-      border-radius:6px;
-      object-fit:contain;
-      display:block;
-      flex:0 0 auto;
-    }
-
-    .actions{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      flex-wrap:wrap;
-      position:relative;
-    }
-
-    .btn{
-      border:0;
-      background:var(--btn);
-      color:var(--ink);
-      padding:14px 20px;
-      border-radius:16px;
-      font-weight:800;
-      font-size:17px;
-      cursor:pointer;
-      transition:.18s ease;
-      box-shadow:0 1px 0 rgba(17,24,39,.03);
-      user-select:none;
-      -webkit-user-select:none;
-    }
-    .btn:hover{ background:var(--btnHover); transform:translateY(-1px); }
-    .btn:active{ transform:translateY(0); }
-    .btn:focus-visible{
-      outline:none;
-      box-shadow:0 0 0 4px rgba(37,99,235,.14);
-    }
-
-   .btn-danger{
-  background:#f3f4f6;
-  color:#6b7280;
-}
-.btn-danger:hover{
-  background:#e5e7eb;
-  color:#374151;
-}
- 
-
-    .btn-primary{
-      background:var(--blue);
-      color:#fff;
-    }
-    .btn-primary:hover{ background:#1d4ed8; }
-
-    .tools-wrap{ position:relative; }
-
-    .tools-menu{
-      position:absolute;
-      top:calc(100% + 10px);
-      right:0;
-      min-width:220px;
-      background:rgba(255,255,255,.98);
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      padding:10px;
-      opacity:0;
-      transform:translateY(-8px) scale(.98);
-      pointer-events:none;
-      transition:.18s ease;
-      z-index:30;
-    }
-    .tools-menu.open{
-      opacity:1;
-      transform:translateY(0) scale(1);
-      pointer-events:auto;
-    }
-
-    .tools-link{
-      display:block;
-      text-decoration:none;
-      color:var(--ink);
-      font-weight:800;
-      padding:12px 14px;
-      border-radius:12px;
-      transition:.14s ease;
-    }
-    .tools-link:hover{
-      background:#f3f6fb;
-      color:var(--blue);
+    .page{
+      max-width:1200px;
+      margin:0 auto;
+      padding:2rem 1.25rem 3rem;
     }
 
     .layout{
-      flex:1;
-      min-height:0;
-      position:relative;
-    }
-
-    .teacher-panel{
-      position:absolute;
-      top:0;
-      right:0;
-      width:min(500px, calc(100vw - 44px));
-      background:rgba(255,255,255,.98);
-      border:1px solid var(--border);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      padding:18px;
-      z-index:20;
-      transform:translateY(-10px) scale(.98);
-      opacity:0;
-      pointer-events:none;
-      transition:.22s ease;
-      max-height:min(82vh, 780px);
-      overflow:auto;
-    }
-    .teacher-panel.open{
-      transform:translateY(0) scale(1);
-      opacity:1;
-      pointer-events:auto;
-    }
-
-    .panel-title{
-      font-size:19px;
-      font-weight:900;
-      margin:0 0 14px;
-    }
-
-    .panel-grid{
       display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
+      grid-template-columns:280px 1fr;
+      gap:1.25rem;
+      align-items:start;
     }
 
-    .field{
+    /* ---------------- Sidebar ---------------- */
+
+    /* Make the sidebar container “transparent” so we can create two separate white cards */
+    aside{
+      background:transparent;
+      border-radius:0;
+      padding:0;
+      box-shadow:none;
+      position:sticky;
+      top:1rem;
+    }
+
+    .aside-card{
+      background:var(--card-bg);
+      border-radius:var(--radius);
+      padding:1rem;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.7);
+    }
+
+    .aside-gap{ height:.9rem; }
+
+    aside h3{margin:.25rem 0 .5rem;font-size:.95rem}
+    aside p{font-size:.85rem;color:var(--text-muted);margin:0 0 .6rem}
+
+    .links{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap:.45rem;
+    }
+
+    .links a{
+      display:flex;
+      gap:.6rem;
+      text-decoration:none;
+      color:inherit;
+      padding:.55rem;
+      border-radius:12px;
+      background:#fff;
+      border:1px solid transparent;
+      transition:transform .05s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+
+    .links a:hover{
+      border-color:rgba(37,99,235,.35);
+      box-shadow:0 6px 14px rgba(37,99,235,.14);
+      transform:translateY(-1px);
+    }
+
+    .icon{
+      width:26px;
+      height:26px;
+      border-radius:8px;
+      background:var(--accent-soft);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 26px;
+    }
+
+    /* ✅ Feature card content */
+    .feature-title{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:.75rem;
+      margin:.1rem 0 .55rem;
+    }
+    .feature-title strong{
+      font-size:.95rem;
+      letter-spacing:-.01em;
+    }
+    .feature-title span{
+      font-size:.78rem;
+      color:var(--text-muted);
+    }
+
+    .side-bubbles{
+      margin-top:.15rem;
+      display:grid;
+      gap:.75rem;
+    }
+
+    .bubble{
+      border-radius:16px;
+      padding:.85rem .85rem .8rem;
+      background:#fff;
+      box-shadow:0 8px 18px rgba(15,23,42,.08);
+      border:1px solid rgba(17,24,39,.08);
+      overflow:hidden;
+    }
+
+    .bubble.wm{
+      background:linear-gradient(180deg, var(--wm-soft), rgba(255,255,255,.96));
+      border-color:var(--wm-border);
+    }
+
+    .bubble.sp{
+      background:linear-gradient(180deg, var(--sp-soft), rgba(255,255,255,.96));
+      border-color:var(--sp-border);
+    }
+
+    .bubble.fc{
+      background:linear-gradient(180deg, var(--fc-soft), rgba(255,255,255,.96));
+      border-color:var(--fc-border);
+    }
+
+    .bubble-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.6rem;
+      margin-bottom:.55rem;
+    }
+
+    .bubble-title{
+      display:flex;
+      align-items:center;
+      gap:.55rem;
+      min-width:0;
+    }
+
+    .bubble-badge{
+      width:32px;height:32px;border-radius:11px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.05rem;
+      background:#fff;
+      border:1px solid rgba(17,24,39,.10);
+      box-shadow:0 6px 14px rgba(15,23,42,.10);
+      flex:0 0 32px;
+    }
+
+    .bubble h4{
+      margin:0;
+      font-size:.95rem;
+      letter-spacing:-.01em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .bubble small{
+      display:block;
+      margin:.05rem 0 0;
+      color:var(--text-muted);
+      font-size:.78rem;
+      line-height:1.25;
+    }
+
+    /* Stage blocks inside each bubble */
+    .stage-stack{
+      display:grid;
+      gap:.55rem;
+      margin-top:.55rem;
+    }
+
+    .stage-row{
+      border-radius:14px;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(17,24,39,.10);
+      padding:.6rem;
+      display:grid;
+      gap:.45rem;
+    }
+
+    .stage-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.6rem;
+    }
+
+    .stage-left{
+      display:flex;
+      align-items:center;
+      gap:.55rem;
+      min-width:0;
+    }
+
+    .stage-pill{
+      width:28px;height:28px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;
+      font-size:.9rem;
+      color:#0f172a;
+      background:#fff;
+      border:1px solid rgba(17,24,39,.10);
+      flex:0 0 28px;
+    }
+
+    .stage-name{
       display:flex;
       flex-direction:column;
-      gap:8px;
+      min-width:0;
+      line-height:1.1;
     }
-    .field label{
-      font-weight:800;
-      color:var(--ink);
-      font-size:15px;
+
+    .stage-name strong{
+      font-size:.86rem;
+      letter-spacing:-.01em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    .field select{
+
+    .stage-name span{
+      font-size:.75rem;
+      color:var(--text-muted);
+      margin-top:.12rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .stage-controls{
+      display:flex;
+      gap:.5rem;
+      align-items:center;
+    }
+
+    select{
       width:100%;
+      padding:.55rem .65rem;
+      border-radius:12px;
       border:1px solid var(--border);
       background:#fff;
-      border-radius:14px;
-      padding:13px 14px;
-      font:inherit;
-      font-size:15px;
-      color:var(--ink);
+      font-size:.9rem;
       outline:none;
-      transition:border-color .16s ease, box-shadow .16s ease;
     }
-    .field select:focus{
-      border-color:var(--blue);
+    select:focus{
+      border-color:rgba(37,99,235,.55);
       box-shadow:0 0 0 4px rgba(37,99,235,.12);
     }
 
-    .toggle{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      padding:12px 14px;
-      background:#f8fafc;
-      border:1px solid var(--border);
-      border-radius:16px;
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+      border-radius:999px;
+      padding:.35rem .75rem;
+      border:1px solid var(--accent);
+      color:var(--accent);
+      background:#fff;
+      font-size:.8rem;
+      font-weight:800;
+      text-decoration:none;
+      cursor:pointer;
+      transition:transform .05s ease, background .15s ease, color .15s ease;
+      user-select:none;
+      white-space:nowrap;
     }
-    .toggle input{
-      margin-top:3px;
-      transform:scale(1.16);
-      accent-color:var(--blue);
+    .btn:hover{transform:translateY(-1px); background:var(--accent); color:#fff;}
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
     }
-    .toggle-text{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .toggle-text strong{ font-size:15px; }
-    .toggle-text span{
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.4;
+    .btn:disabled:hover{background:#fff;color:var(--accent);}
+
+    /* ---------------- Main ---------------- */
+
+    header{margin-bottom:1.25rem}
+
+    .banner{
+      position:relative;
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.7);
+      background:#fff;
     }
 
-    .panel-note{
-      margin:2px 0 0;
-      font-size:13px;
-      color:var(--muted);
+    .banner img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      filter:brightness(.85) saturate(.95);
+      display:block;
+    }
+
+    .banner h1{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:1rem;
+      text-align:center;
+      font-family:"Gloria Hallelujah", system-ui, sans-serif;
+      font-size:clamp(1.6rem,3vw,2.4rem);
+      color:#fff;
+      text-shadow:0 10px 24px rgba(0,0,0,.55);
+      letter-spacing:-.01em;
+    }
+
+    .intro{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:1.25rem;
+      margin-top:1rem;
+      max-width:950px;
+      align-items:start;
+    }
+
+    .intro strong{display:block;margin-bottom:.25rem}
+    .intro p{margin:.25rem 0 0;color:var(--text-muted);line-height:1.45}
+
+    .intro img{
+      max-height:120px;
+      max-width:150px;
+      object-fit:contain;
+      filter:drop-shadow(0 8px 16px rgba(0,0,0,.15));
+    }
+
+    /* ---------------- Cards ---------------- */
+
+    .card{
+      background:var(--card-bg);
+      border-radius:var(--radius);
+      padding:1rem 1.1rem;
+      box-shadow:var(--shadow);
+      margin-bottom:1rem;
+      border:1px solid rgba(255,255,255,.7);
+    }
+
+    .card h2{margin:.1rem 0 .5rem;font-size:1.05rem;letter-spacing:-.01em}
+    .card p, .card li{font-size:.92rem;color:var(--text-muted);line-height:1.5}
+
+    ul{padding-left:1.2rem;margin:.6rem 0 0}
+    li{margin:.25rem 0}
+
+    /* ---------------- Facebook Callout ---------------- */
+
+    .fb-callout{
+      margin-top:.85rem;
+      padding:.9rem;
+      border-radius:14px;
+      background:var(--fb-soft);
+      border:1px solid var(--fb-border);
+      max-width:950px;
+    }
+
+    .fb-row{
+      display:flex;
+      gap:.9rem;
+      flex-wrap:wrap;
+      align-items:stretch;
+    }
+
+    .fb-row img{
+      max-height:110px;
+      width:auto;
+      border-radius:12px;
+      filter:drop-shadow(0 6px 14px rgba(0,0,0,.15));
+    }
+
+    .chip{
+      display:inline-flex;
+      gap:.35rem;
+      align-items:center;
+      padding:.32rem .75rem;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:.82rem;
+      text-decoration:none;
+      color:inherit;
+      font-weight:600;
+      transition:transform .05s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .chip:hover{
+      transform:translateY(-1px);
+      box-shadow:0 8px 18px rgba(15,23,42,.10);
+      border-color:rgba(37,99,235,.28);
+    }
+
+    .chip.fb{
+      border-color:var(--fb-border);
+      background:var(--fb-soft);
+      color:#0b5bd3;
+    }
+
+    .chip.fb:hover{
+      border-color:rgba(24,119,242,.35);
+      background:rgba(24,119,242,.12);
+    }
+
+    /* ---------------- Tools ---------------- */
+
+    .tools-title{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:1rem;
+      flex-wrap:wrap;
+      margin:1.1rem 0 .6rem;
+    }
+    .tools-title h2{margin:0;font-size:1.05rem}
+    .tools-title small{color:var(--text-muted)}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:1rem;
+    }
+
+    .group-label{
+      grid-column:1 / -1;
+      display:flex;
+      align-items:center;
+      gap:.55rem;
+      padding:.55rem .75rem;
+      border-radius:14px;
+      background:rgba(37,99,235,.06);
+      border:1px solid rgba(37,99,235,.16);
+      box-shadow:0 8px 18px rgba(15,23,42,.05);
+      margin-top:.2rem;
+    }
+    .group-label .gicon{
+      width:28px;height:28px;border-radius:10px;
+      background:var(--accent-soft);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.05rem;
+      flex:0 0 28px;
+    }
+    .group-label strong{
+      font-size:.92rem;
+      letter-spacing:-.01em;
+    }
+    .group-label span{
+      font-size:.84rem;
+      color:var(--text-muted);
+    }
+
+    .tool{
+      background:#fff;
+      border-radius:var(--radius);
+      padding:1rem 1.05rem;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.7);
+      display:flex;
+      flex-direction:column;
+      min-height:170px;
+    }
+
+    .tool-title{
+      display:flex;
+      align-items:center;
+      gap:.45rem;
+      margin:.1rem 0 .35rem;
+      font-size:1rem;
+      letter-spacing:-.01em;
+    }
+    .tool-icon{
+      font-size:1.25rem;
+      line-height:1;
+      flex:0 0 auto;
+      transform:translateY(-1px);
+    }
+
+    .tool p{
+      margin:0;
+      font-size:.86rem;
+      color:var(--text-muted);
       line-height:1.45;
     }
 
-    .main{
-      position:absolute;
-      inset:0;
-      display:grid;
-     grid-template-rows:auto 1fr auto auto;
-      min-height:0;
-    }
-
-    .hero{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      min-height:78px;
-    }
-
-    .equation-box{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:380px;
-      min-height:92px;
-    padding:16px 34px;
-      background:#fff;
-      border:4px solid #111;
-      border-radius:24px;
-      box-shadow:0 4px 0 rgba(0,0,0,.02);
-    }
-
-    .eq-line{
-      font-family:var(--mathFont);
-      font-size:38px;
-      font-weight:700;
-      line-height:1.1;
-      white-space:nowrap;
-      letter-spacing:.01em;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:14px;
-      min-height:44px;
-    }
-
-    .stage-chip-row{
-      display:flex;
-      justify-content:center;
-      min-height:34px;
-      margin-top:2px;
-    }
-
-.stage-chip{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:170px;
-  min-height:34px;
-  padding:7px 16px;
-  background:#e3edff;
-  color:#1d4ed8;
-  border:1px solid rgba(37,99,235,.18);
-  border-radius:999px;
-  font-size:14px;
-  font-weight:900;
-  letter-spacing:.01em;
-  text-align:center;
-  user-select:none;
-  -webkit-user-select:none;
-  transition:transform .18s ease, opacity .18s ease;
-}
-.stage-chip.bump{
-  transform:scale(1.06);
-}
-
-    
-
-    .expr{ color:var(--blue); }
-    .value{ color:#a6cf8d; }
-    .equals{ color:#8c8c8c; padding:0 8px; }
-
-    .canvas-wrap{
-      position:relative;
-      min-height:0;
-      display:flex;
-      align-items:stretch;
-      justify-content:center;
-      margin-top:-12px;
-    }
-
-    svg{
-      width:100%;
-      height:100%;
-      display:block;
-      overflow:visible;
-    }
-
-    .footer{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height:56px;
-      margin-top:-6px;
-    }
-
-    .control-row{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:16px;
-      flex-wrap:wrap;
-      width:100%;
-    }
-
-    .nav-btn{
-      width:78px;
-      height:56px;
-      border:0;
-      border-radius:16px;
-      background:rgba(255,255,255,.62);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      transition:.16s ease;
-      box-shadow:0 1px 0 rgba(17,24,39,.03);
-      user-select:none;
-      -webkit-user-select:none;
-    }
-    .nav-btn:hover:not(:disabled){ background:rgba(255,255,255,.88); transform:translateY(-1px); }
-    .nav-btn:disabled{
-      background:var(--btnDisabled);
-      color:var(--btnDisabledText);
-      cursor:not-allowed;
-      box-shadow:none;
-      opacity:.8;
-    }
-
-    .nav-pill{
-      width:46px;
-      height:34px;
-      border-radius:999px;
-      background:var(--blue);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow: inset 0 -2px 0 rgba(0,0,0,.08);
-    }
-    .nav-btn:disabled .nav-pill{
-      background:#cfd4dc;
-      box-shadow:none;
-    }
-
-    .footer-newq{
-      border:0;
-      padding:15px 24px;
-      border-radius:16px;
-      background:var(--blue);
-      color:#fff;
-      font-weight:800;
-      font-size:19px;
-      cursor:pointer;
-      transition:.16s ease;
-      display:none;
-      user-select:none;
-      -webkit-user-select:none;
-    }
-    .footer-newq:hover{ background:#1d4ed8; transform:translateY(-1px); }
-    .footer-newq.show{ display:inline-flex; align-items:center; justify-content:center; }
-
-    .brand-footer{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height:32px;
-      font-size:15px;
-      font-weight:700;
-      color:var(--muted);
-      text-align:center;
-      margin-top:2px;
-    }
-    .brand-footer a{
-      color:var(--blue);
+    .tool a{
+      margin-top:auto;
+      align-self:flex-end;
+      font-size:.82rem;
       text-decoration:none;
-      font-weight:900;
+      border:1px solid var(--accent);
+      padding:.35rem .8rem;
+      border-radius:999px;
+      color:var(--accent);
+      background:#fff;
+      transition:background .15s ease, color .15s ease, transform .05s ease;
     }
 
-    .main-line{
-      stroke:var(--line);
-      stroke-width:10;
-      stroke-linecap:round;
+    .tool a:hover{
+      background:var(--accent);
+      color:#fff;
+      transform:translateY(-1px);
     }
 
-    .tick-major{
-      stroke:var(--tick);
-      stroke-width:12;
-      stroke-linecap:round;
-    }
-    .tick-minor{
-      stroke:var(--tickSoft);
-      stroke-width:7.5;
-      stroke-linecap:round;
+    footer{
+      text-align:center;
+      font-size:.75rem;
+      color:var(--text-muted);
+      margin-top:1.5rem;
     }
 
-    .point-top,
-    .point-bottom{
-      font-family:var(--mathFont);
-      font-weight:700;
-      dominant-baseline:middle;
-      text-anchor:middle;
-      pointer-events:none;
-      user-select:none;
+    footer .footer-links{
+      margin-top:.6rem;
+      display:flex;
+      justify-content:center;
+      gap:.5rem;
+      flex-wrap:wrap;
     }
 
-    .point-top{ fill:var(--blue); }
-    .point-bottom{ fill:var(--green); }
-
-    .small-black{ fill:#111 !important; }
-    .ghost-black{ fill:var(--ghost) !important; opacity:.94; }
-    .ghost-green{ fill:var(--ghostGreen) !important; opacity:.94; }
-
-    .cue-line,
-    .cue-arc,
-    .cue-loop{
-      stroke:var(--cue);
-      stroke-width:5;
-      stroke-linecap:round;
-      fill:none;
-      opacity:.74;
-      stroke-dasharray:14 10;
-      animation:dashMove 1.1s linear infinite;
+    @media(max-width:980px){
+      .layout{grid-template-columns:1fr}
+      aside{display:none}
     }
 
-    .cue-head{
-      fill:var(--cue);
-      opacity:.9;
-      transition:opacity .18s ease;
-    }
-
-    .cue-loop{
-      transform-origin:center;
-    }
-
-    .cue-arc{
-      animation:dashMove 1.1s linear infinite, arcAppear .18s ease forwards;
-      opacity:0;
-      transform-origin:center;
-    }
-
-    .stage1-halo{
-      fill:url(#stage1Glow);
-      opacity:.48;
-      pointer-events:none;
-    }
-
-    .stage1-label{
-      font-family:var(--uiFont);
-      font-weight:800;
-      font-size:24px;
-      fill:#9aa4b2;
-      text-anchor:middle;
-      letter-spacing:.01em;
-      pointer-events:none;
-      user-select:none;
-    }
-
-    .stage1-pulse{
-      animation:stage1Pulse 1.9s ease-in-out infinite;
-      transform-origin:center;
-    }
-
-    .ghost-animate{
-      animation:ghostIn .32s ease forwards;
-      transform-origin:center;
-    }
-    .answer-pop{
-      animation:answerSettle .42s cubic-bezier(.2,.9,.25,1.18);
-      transform-origin:center;
-    }
-
-    @keyframes dashMove{
-      from{ stroke-dashoffset:0; }
-      to{ stroke-dashoffset:-24; }
-    }
-    @keyframes arcAppear{
-      from{ opacity:0; transform:translateY(6px); }
-      to{ opacity:.74; transform:translateY(0); }
-    }
-    @keyframes ghostIn{
-      0%{ opacity:0; transform:translateY(7px); }
-      100%{ opacity:1; transform:translateY(0); }
-    }
-    @keyframes answerSettle{
-      0%{ opacity:0; transform:scale(.82); }
-      60%{ opacity:1; transform:scale(1.08); }
-      100%{ opacity:1; transform:scale(1); }
-    }
-    @keyframes stage1Pulse{
-      0%,100%{ opacity:1; transform:scale(1); }
-      50%{ opacity:.8; transform:scale(1.03); }
-    }
-
-    @media (max-width: 980px){
-      .equation-box{ min-width:300px; min-height:84px; }
-      .eq-line{ font-size:31px; }
-      
-    }
-
-    @media (max-width: 700px){
-      .app{ padding:14px; }
-      .btn{ padding:12px 16px; font-size:15px; border-radius:14px; }
-      .equation-box{ min-width:250px; min-height:78px; padding:14px 20px; }
-      .eq-line{ font-size:25px; }
-      .stage-chip{ min-width:140px; font-size:13px; }
-      .nav-btn{ width:66px; height:48px; }
-      .nav-pill{ width:38px; height:28px; }
-      .footer-newq{ padding:12px 18px; font-size:16px; }
-      .brand-footer{ font-size:13px; }
+    @media(max-width:640px){
+      .intro{grid-template-columns:1fr}
+      .intro img{max-height:95px;max-width:120px;margin-top:.35rem}
+      .fb-row img{max-height:90px}
     }
   </style>
 </head>
+
 <body>
-  <div class="app">
-    <div class="topbar">
-      <a class="back-btn" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
-        <img class="back-logo" src="mmt.png" alt="Mills Maths Tools logo" />
-        <span>Back to Mills Maths Tools</span>
-      </a>
+<div class="page">
+<div class="layout">
 
-      <div class="actions">
-        <div class="tools-wrap">
-          <button class="btn" id="toolsBtn" type="button" aria-expanded="false" aria-controls="toolsMenu" title="Open related tools">Tools ▼</button>
-          <div class="tools-menu" id="toolsMenu">
-            <a class="tools-link" href="student-quiz.html">Student Quiz</a>
-            <a class="tools-link" href="worksheet-creator.html">Worksheet Creator</a>
-            <a class="tools-link" href="lesson-plan.html">Lesson Plan</a>
-          </div>
-        </div>
+  <!-- SIDEBAR -->
+  <aside aria-label="Sidebar">
 
-        <button class="btn" id="teacherBtn" type="button" aria-expanded="false" aria-controls="teacherPanel" title="Change question type and display options">Teacher settings</button>
-        <button class="btn btn-danger" id="resetBtn" type="button" title="Reset settings and generate a fresh question">Reset tool</button>
-        <button class="btn btn-primary" id="newBtn" type="button" title="Generate a new question">New Question</button>
-      </div>
+    <!-- Card 1: Relevant links -->
+    <div class="aside-card" aria-label="Relevant links">
+      <h3>Relevant links</h3>
+      <p>Research & frameworks informing the tools.</p>
+
+      <ul class="links">
+        <li>
+          <a href="https://education.nsw.gov.au/teaching-and-learning/curriculum/mathematics" target="_blank" rel="noopener">
+            <span class="icon">🧭</span>
+            <span>NSW DoE Mathematics</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.education.vic.gov.au/Documents/school/teachers/teachingresources/discipline/maths/teaching-with-the-big-ideas-in-mathematics.pdf" target="_blank" rel="noopener">
+            <span class="icon">📄</span>
+            <span>Siemon – Big Ideas</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.teachermagazine.com/au_en/articles/targeting-big-ideas-in-mathematics" target="_blank" rel="noopener">
+            <span class="icon">📰</span>
+            <span>Teacher Magazine</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.education.vic.gov.au/Documents/school/teachers/teachingresources/discipline/maths/assessment/devbigideas.pdf" target="_blank" rel="noopener">
+            <span class="icon">📘</span>
+            <span>Developing the Big Ideas of Number</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://scispace.com/papers/elpsa-as-a-lesson-design-framework-1tkt38cilw" target="_blank" rel="noopener">
+            <span class="icon">🧩</span>
+            <span>ELPSA framework</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://education.nsw.gov.au/teaching-and-learning/curriculum/literacy-and-numeracy/teaching-and-learning-resources/numeracy" target="_blank" rel="noopener">
+            <span class="icon">🔎</span>
+            <span>NSW DoE: Numeracy</span>
+          </a>
+        </li>
+      </ul>
     </div>
 
-    <div class="layout">
-      <div class="teacher-panel" id="teacherPanel" aria-hidden="true">
-        <h2 class="panel-title">Teacher settings</h2>
+    <div class="aside-gap"></div>
 
-        <div class="panel-grid">
-          <div class="field">
-            <label for="equationType">Equation type</label>
-            <select id="equationType">
-              <option value="addsub_pos">Add/Subtract (positive)</option>
-              <option value="addsub_neg">Add/Subtract (including negatives)</option>
-              <option value="mult_pos">Multiply (positive)</option>
-              <option value="mult_neg_only">Multiply (negative)</option>
-              <option value="mult_mixed">Multiply (mixed)</option>
-              <option value="div_pos">Divide (positive)</option>
-              <option value="div_neg_only">Divide (negative)</option>
-              <option value="div_mixed">Divide (mixed)</option>
-              <option value="mixed_all">Mixed one-step</option>
-            </select>
-          </div>
-
-       
-
-          <label class="toggle">
-            <input id="showStrategyPrompts" type="checkbox" checked />
-            <div class="toggle-text">
-              <strong>Show strategy prompts</strong>
-              <span>Displays cues such as equal groups, add, subtract, multiply, and divide prompts.</span>
-            </div>
-          </label>
-
-          <label class="toggle">
-            <input id="pauseBeforeAnswer" type="checkbox" />
-            <div class="toggle-text">
-              <strong>Pause before final answer</strong>
-              <span>Adds one extra reveal so students can predict the value of x before the answer appears.</span>
-            </div>
-          </label>
-        </div>
-
-        <p class="panel-note">
-          Right arrow reveals the next step. Left arrow steps back. Enter generates a new question. Escape closes open panels.
-        </p>
+    <!-- Card 2: New features (separate white “space”) -->
+    <div class="aside-card" aria-label="Fluency tools quick access">
+      <div class="feature-title">
+        <strong>Fluency tools</strong>
+        <span>Worksheet + student practice</span>
       </div>
 
-      <div class="main">
-        <div class="hero">
-          <div class="equation-box">
-            <div class="eq-line" id="questionEquation"></div>
-          </div>
-          <div class="stage-chip-row">
-            <div class="stage-chip" id="stageLabel">Start</div>
-          </div>
-        </div>
+      <div class="side-bubbles" aria-label="Fluency quick access">
 
-        <div class="canvas-wrap">
-          <svg id="board" viewBox="0 0 1800 620" preserveAspectRatio="xMidYMid meet" aria-label="Double number line"></svg>
-        </div>
-
-        <div class="footer">
-          <div class="control-row">
-            <button class="nav-btn" id="backStepBtn" type="button" aria-label="Back one step" title="Previous reveal" disabled>
-              <div class="nav-pill">
-                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M16 5L6 12l10 7z" fill="#fff"></path>
-                </svg>
+        <!-- Worksheet Maker bubble (blue) -->
+        <section class="bubble wm" aria-label="Worksheet Maker">
+          <div class="bubble-head">
+            <div class="bubble-title">
+              <div class="bubble-badge">🧾</div>
+              <div>
+                <h4>Worksheet Maker</h4>
+                <small>Choose a set, then open</small>
               </div>
-            </button>
-
-            <button class="nav-btn" id="nextStepBtn" type="button" aria-label="Next step" title="Next reveal">
-              <div class="nav-pill">
-                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 5l10 7-10 7z" fill="#fff"></path>
-                </svg>
-              </div>
-            </button>
-
-            <button class="footer-newq" id="footerNewQ" type="button">New Question</button>
+            </div>
           </div>
-        </div>
 
-        <div class="brand-footer">
-          This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a>
-        </div>
+          <div class="stage-stack">
+            <!-- Stage 4 -->
+            <div class="stage-row" aria-label="Worksheet Maker Stage 4">
+              <div class="stage-top">
+                <div class="stage-left">
+                  <div class="stage-pill">4</div>
+                  <div class="stage-name">
+                    <strong>Stage 4</strong>
+                    <span>Available sets</span>
+                  </div>
+                </div>
+              </div>
+
+              <select id="wmStage4Select" aria-label="Worksheet Maker Stage 4 sets">
+                <option value="" selected disabled>Choose a set…</option>
+                <option value="./fluency-portal/Stage%204/computation-with-integers/index.html">Computation with Integers</option>
+                <option value="./fluency-portal/Stage%204/Algebraic-techniques/index.html">Algebraic Techniques</option>
+              </select>
+
+              <div class="stage-controls">
+                <button id="wmStage4Btn" class="btn" disabled type="button">Open →</button>
+              </div>
+            </div>
+
+            <!-- Stage 5 (coming soon) -->
+            <div class="stage-row" aria-label="Worksheet Maker Stage 5">
+              <div class="stage-top">
+                <div class="stage-left">
+                  <div class="stage-pill">5</div>
+                  <div class="stage-name">
+                    <strong>Stage 5</strong>
+                    <span>Coming soon</span>
+                  </div>
+                </div>
+              </div>
+
+              <select aria-label="Worksheet Maker Stage 5 sets" disabled>
+                <option selected>No sets yet</option>
+              </select>
+
+              <div class="stage-controls">
+                <button class="btn" disabled type="button">Open →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Student Practice bubble (green) -->
+        <section class="bubble sp" aria-label="Student Practice">
+          <div class="bubble-head">
+            <div class="bubble-title">
+              <div class="bubble-badge">✅</div>
+              <div>
+                <h4>Student Practice</h4>
+                <small>Choose a quiz, then open</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="stage-stack">
+            <!-- Stage 4 -->
+            <div class="stage-row" aria-label="Student Practice Stage 4">
+              <div class="stage-top">
+                <div class="stage-left">
+                  <div class="stage-pill">4</div>
+                  <div class="stage-name">
+                    <strong>Stage 4</strong>
+                    <span>Available quizzes</span>
+                  </div>
+                </div>
+              </div>
+
+             <select id="spStage4Select" aria-label="Student Practice Stage 4 quizzes">
+  <option value="" selected disabled>Choose a quiz…</option>
+  <option value="./fluency-portal/Stage%204/computation-with-integers/student-quiz.html">Computation with Integers</option>
+</select>
+
+              <div class="stage-controls">
+                <button id="spStage4Btn" class="btn" disabled type="button">Open →</button>
+              </div>
+            </div>
+
+            <!-- Stage 5 (coming soon) -->
+            <div class="stage-row" aria-label="Student Practice Stage 5">
+              <div class="stage-top">
+                <div class="stage-left">
+                  <div class="stage-pill">5</div>
+                  <div class="stage-name">
+                    <strong>Stage 5</strong>
+                    <span>Coming soon</span>
+                  </div>
+                </div>
+              </div>
+
+              <select aria-label="Student Practice Stage 5 quizzes" disabled>
+                <option selected>No quizzes yet</option>
+              </select>
+
+              <div class="stage-controls">
+                <button class="btn" disabled type="button">Open →</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Fluency Flip Cards bubble (orange) -->
+        <section class="bubble fc" aria-label="Fluency Flip Cards">
+          <div class="bubble-head">
+            <div class="bubble-title">
+              <div class="bubble-badge">🃏</div>
+              <div>
+                <h4>Fluency Flip Cards</h4>
+                <small>Choose a card set, then open</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="stage-stack">
+            <!-- Stage 4 -->
+            <div class="stage-row" aria-label="Fluency Flip Cards Stage 4">
+              <div class="stage-top">
+                <div class="stage-left">
+                  <div class="stage-pill">4</div>
+                  <div class="stage-name">
+                    <strong>Stage 4</strong>
+                    <span>Available card sets</span>
+                  </div>
+                </div>
+              </div>
+
+              <select id="fcStage4Select" aria-label="Fluency Flip Cards Stage 4 sets">
+                <option value="" selected disabled>Choose a set…</option>
+                <option value="./flip-cards/divide-by-tens.html">Divide by tens</option>
+                <option value="./flip-cards/multiply-divide-integers.html">Multiply Divide Integers</option>
+              </select>
+
+              <div class="stage-controls">
+                <button id="fcStage4Btn" class="btn" disabled type="button">Open →</button>
+              </div>
+            </div>
+
+            <!-- Stage 5 (coming soon) -->
+            <div class="stage-row" aria-label="Fluency Flip Cards Stage 5">
+              <div class="stage-top">
+                <div class="stage-left">
+                  <div class="stage-pill">5</div>
+                  <div class="stage-name">
+                    <strong>Stage 5</strong>
+                    <span>Coming soon</span>
+                  </div>
+                </div>
+              </div>
+
+              <select aria-label="Fluency Flip Cards Stage 5 sets" disabled>
+                <option selected>No sets yet</option>
+              </select>
+
+              <div class="stage-controls">
+                <button class="btn" disabled type="button">Open →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <header>
+      <div class="banner" aria-label="Welcome banner">
+        <img src="banner.png" alt="Mills Maths Tools banner">
+        <h1>Welcome to Mills Maths Tools</h1>
+      </div>
+
+      <div class="intro">
+        <div>
+          <strong>Free, classroom-tested interactives inspired by the ELPSA cycle.</strong>
+          <p>
+            Visual models supporting deep number, ratio and proportional reasoning.
+            Built by NSW mathematics teacher Jeff Mills.
+          </p>
+        </div>
+        <img src="mmt.png" alt="MMT logo">
+      </div>
+    </header>
+
+    <!-- About -->
+    <section class="card" aria-label="About this site">
+      <h2>About this site</h2>
+      <p>
+        This site hosts a growing collection of classroom-tested visual mathematics tools designed to support deep conceptual
+        understanding in Years 7–10.
+      </p>
+      <p>
+        The tools are aligned to the <strong>ELPSA learning cycle</strong> (Experience, Language, Pictorial, Symbolic, Application),
+        providing multiple entry points for students and supporting movement from concrete experiences to formal mathematical reasoning.
+      </p>
+      <p>
+        Design decisions are informed by <strong>Di Siemon’s Big Ideas in Mathematics</strong>, with an emphasis on structure, relationships,
+        and multiplicative thinking.
+      </p>
+      <ul>
+        <li>Make mathematical structure visible</li>
+        <li>Support discussion, reasoning, and representation</li>
+        <li>Reduce cognitive load while maintaining conceptual demand</li>
+        <li>Be usable flexibly for whole-class teaching, small groups, or independent exploration</li>
+      </ul>
+    </section>
+
+    <!-- Tools -->
+    <div class="tools-title">
+      <h2>Tools</h2>
+      <small>Grouped for quick scanning.</small>
+    </div>
+
+    <section class="grid" aria-label="Tools grid">
+
+      <!-- GROUP: Probability -->
+      <div class="group-label" role="heading" aria-level="3" aria-label="Probability tools">
+        <span class="gicon">🎲</span>
+        <div>
+          <strong>Probability</strong>
+          <span>chance, long-run thinking</span>
+        </div>
+      </div>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">🎰</span>Financial Expectation Spinner</h3>
+        <p>Explore expected value and long-run outcomes.</p>
+        <a href="./financial-expectation-spinner/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <!-- GROUP: Ratio & Proportion -->
+      <div class="group-label" role="heading" aria-level="3" aria-label="Ratio and proportion tools">
+        <span class="gicon">➗</span>
+        <div>
+          <strong>Ratio &amp; Proportion</strong>
+          <span>structure, scaling, equivalence</span>
+        </div>
+      </div>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">➗</span>Divide a Ratio</h3>
+        <p>Visualise proportional sharing.</p>
+        <a href="./divide-a-ratio/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">🧱</span>Stacked Bar Model – Ratio</h3>
+        <p>Make ratio structure visible.</p>
+        <a href="./stacked-bar-ratio/" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">📊</span>Partition Splitter</h3>
+        <p>Explore equivalent ratios and scaling.</p>
+        <a href="./partition-splitter/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <!-- GROUP: Number & Integers -->
+      <div class="group-label" role="heading" aria-level="3" aria-label="Number and integers tools">
+        <span class="gicon">🧮</span>
+        <div>
+          <strong>Number &amp; Integers</strong>
+          <span>place value, direction, operations</span>
+        </div>
+      </div>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">🔢</span>Multiply / Divide by 10</h3>
+        <p>Dynamic place-value modelling.</p>
+        <a href="./multiply-divide-by-ten/" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">➖</span>Negatives on the Number Line</h3>
+        <p>Missing-value integer reasoning.</p>
+        <a href="./negatives-on-the-number-line/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">➕</span>Integer Addition</h3>
+        <p>Visualise and reason about integer addition.</p>
+        <a href="./integer-addition/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">➡️</span>Vector Integer Addition</h3>
+        <p>Add integers using vector (directed) movement on the number line.</p>
+        <a href="./integer-combined-signs/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <!-- ✅ NEW: Factor Circles -->
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">⭕</span>Factor Circles</h3>
+        <p>Build fluency with factors using circle models and quick generation.</p>
+        <a href="./factor-circles/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+      <!-- GROUP: Measurement -->
+      <div class="group-label" role="heading" aria-level="3" aria-label="Measurement tools">
+        <span class="gicon">📐</span>
+        <div>
+          <strong>Measurement</strong>
+          <span>area, perimeter, dimensions</span>
+        </div>
+      </div>
+
+      <article class="tool">
+        <h3 class="tool-title"><span class="tool-icon">▭</span>Rectangles - Perimeter &amp; Area</h3>
+        <p>Explore area and perimeter relationships using rectangle models.</p>
+        <a href="./perimeter-area-rectangle/index.html" target="_blank" rel="noopener">Open →</a>
+      </article>
+
+   <!-- GROUP: Algebra -->
+<div class="group-label" role="heading" aria-level="3" aria-label="Algebra tools">
+  <span class="gicon">🟰</span>
+  <div>
+    <strong>Algebra</strong>
+    <span>expressions, structure, simplification</span>
   </div>
-
-  <script>
-    (() => {
-      const svg = document.getElementById('board');
-      const questionEquation = document.getElementById('questionEquation');
-      const stageLabel = document.getElementById('stageLabel');
-
-      const teacherBtn = document.getElementById('teacherBtn');
-      const teacherPanel = document.getElementById('teacherPanel');
-      const equationTypeSelect = document.getElementById('equationType');
-      const showStrategyPrompts = document.getElementById('showStrategyPrompts');
-      const pauseBeforeAnswer = document.getElementById('pauseBeforeAnswer');
-
-      const newBtn = document.getElementById('newBtn');
-      const resetBtn = document.getElementById('resetBtn');
-      const nextStepBtn = document.getElementById('nextStepBtn');
-      const backStepBtn = document.getElementById('backStepBtn');
-      const footerNewQ = document.getElementById('footerNewQ');
-      const toolsBtn = document.getElementById('toolsBtn');
-      const toolsMenu = document.getElementById('toolsMenu');
-
-      const SVG_NS = 'http://www.w3.org/2000/svg';
-      const VIEW_W = 1800;
-      const LINE_Y = 380;
-      const TOP_Y_MAIN = 235;
-      const TOP_Y_SMALL = 308;
-      const BOTTOM_Y_MAIN = 490;
-      const BOTTOM_Y_SMALL = 424;
-
-      const ADD_SUB_ARC_Y = LINE_Y - 36;
-      const ADD_SUB_TEXT_Y = 248;
-
-      const GROUP_LOOP_Y = LINE_Y;
-      const MULT_TEXT_Y = 170;
-      const DIV_TEXT_Y = 158;
-
-      const START_CENTER_X = VIEW_W / 2;
-
-      const SLIDE_MS = 1100;
-      const STAGE3_PAUSE_MS = 600;
-      const SEQ_BASE_MS = 1800;
-      const REVEAL_BASE_MS = 1800;
-      const FLIP_MS = 1200;
-
-      let drawRoot = svg;
-
-  const DEFAULT_SETTINGS = {
-  equationType: 'addsub_pos',
-  showStrategyPrompts: true,
-  pauseBeforeAnswer: false
-};
-
-    const state = {
-  settings: { ...DEFAULT_SETTINGS },
-  question: null,
-  stage: 1,
-  prevStage: 1,
-  renderToken: 0,
-  timers: [],
-  navDirection: 'forward'
-};
-
-      function setDrawRoot(root){ drawRoot = root || svg; }
-      function appendNode(node){ drawRoot.appendChild(node); return node; }
-
-      function setToolsOpen(open){
-        if(open) setTeacherOpen(false, true);
-        toolsMenu.classList.toggle('open', open);
-        toolsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toolsBtn.textContent = open ? 'Tools ▲' : 'Tools ▼';
-      }
-
-      function setTeacherOpen(open, suppressToolClose = false){
-        if(open && !suppressToolClose) setToolsOpen(false);
-        teacherPanel.classList.toggle('open', open);
-        teacherBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        teacherPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
-      }
-
-      function closeOverlays(){
-        setToolsOpen(false);
-        setTeacherOpen(false, true);
-      }
-
-      function schedule(fn, delay){
-        const id = setTimeout(() => {
-          state.timers = state.timers.filter(t => t !== id);
-          fn();
-        }, delay);
-        state.timers.push(id);
-        return id;
-      }
-
-      function clearAllTimers(){
-        state.timers.forEach(id => clearTimeout(id));
-        state.timers = [];
-      }
-
-      function nextRenderToken(){
-        clearAllTimers();
-        state.renderToken += 1;
-        return state.renderToken;
-      }
-
-      function isActiveRender(token){
-        return token === state.renderToken;
-      }
-
-      function randInt(min, max){
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-      }
-
-      function choice(arr){
-        return arr[Math.floor(Math.random() * arr.length)];
-      }
-
-      function weightedChoice(items){
-        const total = items.reduce((s, item) => s + item.weight, 0);
-        let r = Math.random() * total;
-        for(const item of items){
-          if(r < item.weight) return item.value;
-          r -= item.weight;
-        }
-        return items[items.length - 1].value;
-      }
-
-      function createSVG(tag, attrs = {}){
-        const el = document.createElementNS(SVG_NS, tag);
-        Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
-        return el;
-      }
-
-      function clearBoard(){
-        while(svg.firstChild) svg.removeChild(svg.firstChild);
-        setDrawRoot(svg);
-      }
-
-      function stripHTML(html){
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        return div.textContent || div.innerText || '';
-      }
-
-      function fractionHTML(num, den){
-        return `<span style="display:inline-flex;flex-direction:column;align-items:center;line-height:1;transform:translateY(2px);">
-          <span>${num}</span>
-          <span style="width:1.55em;border-top:2px solid currentColor;margin:3px 0 2px;"></span>
-          <span>${den}</span>
-        </span>`;
-      }
-
-      function buildExpressionOnlyHTML(q){
-        return `<span class="expr">${q.equationLeftHTML}</span>`;
-      }
-
-      function buildFullEquationHTML(q){
-        return `<span class="expr">${q.equationLeftHTML}</span><span class="equals">=</span><span class="value">${q.equationRightText}</span>`;
-      }
-
-      function shouldShowFullEquation(stage){
-        return stage >= 3;
-      }
-
-function renderEquationBox(){
-  if(!state.question) return;
-  const showFull = shouldShowFullEquation(state.stage);
-  questionEquation.innerHTML = showFull
-    ? buildFullEquationHTML(state.question)
-    : buildExpressionOnlyHTML(state.question);
-
-  questionEquation.style.opacity = '1';
-  questionEquation.style.filter = 'none';
-}
-
-  
-      function getStageDescriptors(q){
-        if(!q){
-          return ['Start'];
-        }
-
-        if(q.mode === 'addsub'){
-          return state.settings.pauseBeforeAnswer
-            ? ['Start', 'Build it', 'Show value', 'Think first', 'Solve it']
-            : ['Start', 'Build it', 'Show value', 'Solve it'];
-        }
-
-        if(q.negative){
-          return state.settings.pauseBeforeAnswer
-            ? ['Start', 'Build it', 'Show value', 'Flip it', 'Think first', 'Solve it']
-            : ['Start', 'Build it', 'Show value', 'Flip it', 'Solve it'];
-        }
-
-        return state.settings.pauseBeforeAnswer
-          ? ['Start', 'Build it', 'Show value', 'Think first', 'Solve it']
-          : ['Start', 'Build it', 'Show value', 'Solve it'];
-      }
-
-      function updateStageUI(){
-        const labels = getStageDescriptors(state.question);
-      stageLabel.textContent = labels[state.stage - 1] || 'Stage';
-
-stageLabel.classList.remove('bump');
-void stageLabel.offsetWidth; // trigger reflow
-stageLabel.classList.add('bump');
-      }
-
-      function mapRange(v, min, max, minX, maxX){
-        if(min === max) return (minX + maxX) / 2;
-        return minX + ((v - min) / (max - min)) * (maxX - minX);
-      }
-
-      function rangeInclusive(start, end){
-        const out = [];
-        const step = start <= end ? 1 : -1;
-        for(let v = start; step > 0 ? v <= end : v >= end; v += step){
-          out.push(v);
-        }
-        return out;
-      }
-
-      function adaptiveDelay(count, totalMs, maxEach = 220, minEach = 70){
-        if(count <= 0) return totalMs;
-        return Math.max(minEach, Math.min(maxEach, totalMs / count));
-      }
-
-      function addGhostAnimation(node, delay = 0){
-        if(!node) return;
-        node.style.opacity = '0';
-        schedule(() => {
-          node.style.opacity = '1';
-          node.classList.add('ghost-animate');
-        }, delay);
-      }
-
-      function popAnswer(node, delay = 0){
-        if(!node) return;
-        node.style.opacity = '0';
-        schedule(() => {
-          node.style.opacity = '1';
-          node.classList.add('answer-pop');
-        }, delay);
-      }
-
-      function numberWord(n){
-        const words = {
-          1:'one', 2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven',
-          8:'eight', 9:'nine', 10:'ten', 11:'eleven', 12:'twelve', 13:'thirteen', 14:'fourteen'
-        };
-        return words[n] || String(n);
-      }
-
-      function addSubPromptText(q){
-        return q.isAdd ? `Subtract ${numberWord(q.k)}` : `Add ${numberWord(q.k)}`;
-      }
-
-      function multPromptText(q){
-        return `Divide by ${q.a} to find x`;
-      }
-
-      function divPromptText(q){
-        return `Multiply by ${q.d} to find x`;
-      }
-
-      function buildQuestion(){
-        switch(state.settings.equationType){
-          case 'addsub_pos': return buildAddSub(false);
-          case 'addsub_neg': return buildAddSub(true);
-          case 'mult_pos': return buildMult('pos');
-          case 'mult_neg_only': return buildMult('neg');
-          case 'mult_mixed': return buildMult('mixed');
-          case 'div_pos': return buildDiv('pos');
-          case 'div_neg_only': return buildDiv('neg');
-          case 'div_mixed': return buildDiv('mixed');
-          case 'mixed_all':
-            return weightedChoice([
-              { weight: 4, value: () => buildAddSub(true) },
-              { weight: 3, value: () => buildMult('mixed') },
-              { weight: 3, value: () => buildDiv('mixed') }
-            ])();
-          default:
-            return buildAddSub(false);
-        }
-      }
-
-      function buildAddSub(includeNegatives){
-        for(let tries = 0; tries < 1500; tries++){
-          const x = includeNegatives ? randInt(-16,16) : randInt(1,20);
-          const isAdd = Math.random() < 0.5;
-          const k = randInt(2,14);
-          const result = isAdd ? x + k : x - k;
-
-          if(includeNegatives){
-            if(result < -20 || result > 20) continue;
-          } else {
-            if(result < 1 || result > 24) continue;
-          }
-          if(Math.abs(result - x) < 3) continue;
-
-          const exprValue = result;
-          const xValue = x;
-          const minVal = Math.min(exprValue, xValue);
-          const maxVal = Math.max(exprValue, xValue);
-
-          const leftX = minVal >= 0 ? 420 : 250;
-          const rightX = 1380;
-
-          const exprX = mapRange(exprValue, minVal, maxVal, leftX, rightX);
-          const xX = mapRange(xValue, minVal, maxVal, leftX, rightX);
-
-          const tickValues = rangeInclusive(exprValue, xValue);
-          const tickXs = tickValues.map(v => mapRange(v, minVal, maxVal, leftX, rightX));
-
-          return {
-            mode:'addsub',
-            negative: includeNegatives && (x < 0 || result < 0),
-            isAdd,
-            x,
-            result,
-            k,
-            equationLeftHTML: isAdd ? `x+${k}` : `x-${k}`,
-            equationRightText:String(result),
-            exprValue,
-            xValue,
-            exprX,
-            xX,
-            tickValues,
-            tickXs
-          };
-        }
-
-        return {
-          mode:'addsub',
-          negative:false,
-          isAdd:true,
-          x:6,
-          result:10,
-          k:4,
-          equationLeftHTML:'x+4',
-          equationRightText:'10',
-          exprValue:10,
-          xValue:6,
-          exprX:420,
-          xX:1380,
-          tickValues:rangeInclusive(10,6),
-          tickXs:rangeInclusive(10,6).map(v => mapRange(v,6,10,420,1380))
-        };
-      }
-
-      function buildMult(mode){
-        const coeffs = [2,3,4,5,6,7,8];
-
-        for(let tries = 0; tries < 1500; tries++){
-          const a = choice(coeffs);
-          let x;
-          if(mode === 'pos') x = randInt(2,10);
-          else if(mode === 'neg') x = -randInt(2,10);
-          else x = weightedChoice([
-            { weight: 7, value: randInt(2,10) },
-            { weight: 3, value: -randInt(2,10) }
-          ]);
-
-          const result = a * x;
-          if(Math.abs(result) > 72) continue;
-
-          const absX = Math.abs(x);
-          const left = 250;
-          const right = 1380;
-          const step = (right - left) / a;
-
-          const prePoints = [];
-          for(let i = 0; i <= a; i++){
-            prePoints.push({
-              px:left + i * step,
-              value:absX * i,
-              multiplier:i
-            });
-          }
-
-          const negative = result < 0;
-          let points, zeroIndex, xIndex, resultIndex;
-
-          if(negative){
-            points = [];
-            for(let i = 0; i <= a; i++){
-              points.push({
-                px:left + i * step,
-                value:result + absX * i,
-                multiplier:a - i
-              });
-            }
-            resultIndex = 0;
-            xIndex = a - 1;
-            zeroIndex = a;
-          } else {
-            points = prePoints.map(p => ({...p}));
-            zeroIndex = 0;
-            xIndex = 1;
-            resultIndex = a;
-          }
-
-          return {
-            mode:'mult',
-            negative,
-            a,
-            x,
-            result,
-            equationLeftHTML:`${a}x`,
-            equationRightText:String(result),
-            prePoints,
-            preZeroIndex:0,
-            preXIndex:1,
-            preResultIndex:a,
-            points,
-            zeroIndex,
-            xIndex,
-            resultIndex
-          };
-        }
-
-        return buildMult('pos');
-      }
-
-      function buildDiv(mode){
-        const divisors = [2,3,4,5,6,7,8];
-
-        for(let tries = 0; tries < 1500; tries++){
-          const d = choice(divisors);
-          let quotient;
-          if(mode === 'pos') quotient = randInt(2,10);
-          else if(mode === 'neg') quotient = -randInt(2,10);
-          else quotient = weightedChoice([
-            { weight: 7, value: randInt(2,10) },
-            { weight: 3, value: -randInt(2,10) }
-          ]);
-
-          const x = d * quotient;
-          if(Math.abs(x) > 72) continue;
-
-          const absQ = Math.abs(quotient);
-          const left = 250;
-          const right = 1380;
-          const step = (right - left) / d;
-
-          const prePoints = [];
-          for(let i = 0; i <= d; i++){
-            prePoints.push({
-              px:left + i * step,
-              value:absQ * i,
-              numerator:i
-            });
-          }
-
-          const negative = quotient < 0;
-          let points, zeroIndex, fracIndex, xIndex;
-
-          if(negative){
-            points = [];
-            for(let i = 0; i <= d; i++){
-              points.push({
-                px:left + i * step,
-                value:x + absQ * i,
-                numerator:d - i
-              });
-            }
-            xIndex = 0;
-            fracIndex = d - 1;
-            zeroIndex = d;
-          } else {
-            points = prePoints.map(p => ({...p}));
-            zeroIndex = 0;
-            fracIndex = 1;
-            xIndex = d;
-          }
-
-          return {
-            mode:'div',
-            negative,
-            d,
-            quotient,
-            x,
-            equationLeftHTML:fractionHTML('x', String(d)),
-            equationRightText:String(quotient),
-            prePoints,
-            preZeroIndex:0,
-            preFracIndex:1,
-            preXIndex:d,
-            points,
-            zeroIndex,
-            fracIndex,
-            xIndex
-          };
-        }
-
-        return buildDiv('pos');
-      }
-
-      function getMaxStage(){
-        const q = state.question;
-        const pauseExtra = state.settings.pauseBeforeAnswer ? 1 : 0;
-
-        if(!q){
-          const type = state.settings.equationType;
-          if(type.startsWith('addsub')) return 4 + pauseExtra;
-          if(type === 'mult_pos' || type === 'div_pos') return 4 + pauseExtra;
-          return 5 + pauseExtra;
-        }
-
-        if(q.mode === 'addsub') return 4 + pauseExtra;
-        return q.negative ? 5 + pauseExtra : 4 + pauseExtra;
-      }
-
-      function isAnswerStage(){
-        return state.stage === getMaxStage();
-      }
-
-      function addDefs(){
-        const defs = createSVG('defs');
-        const radial = createSVG('radialGradient', {
-          id:'stage1Glow',
-          cx:'50%',
-          cy:'50%',
-          r:'50%'
-        });
-
-        radial.appendChild(createSVG('stop', { offset:'0%', 'stop-color':'#dbeafe', 'stop-opacity':'1' }));
-        radial.appendChild(createSVG('stop', { offset:'70%', 'stop-color':'#dbeafe', 'stop-opacity':'.35' }));
-        radial.appendChild(createSVG('stop', { offset:'100%', 'stop-color':'#dbeafe', 'stop-opacity':'0' }));
-
-        defs.appendChild(radial);
-        svg.appendChild(defs);
-      }
-
-      function drawBaseLine(){
-        appendNode(createSVG('line', {
-          x1:20, y1:LINE_Y, x2:VIEW_W - 20, y2:LINE_Y, class:'main-line'
-        }));
-      }
-
-      function drawTick(x, major = false){
-        return appendNode(createSVG('line', {
-          x1:x,
-          y1:LINE_Y - (major ? 36 : 24),
-          x2:x,
-          y2:LINE_Y + (major ? 36 : 24),
-          class: major ? 'tick-major' : 'tick-minor'
-        }));
-      }
-
-      function drawTopText(x, y, text, size, color='blue'){
-        const classes = ['point-top'];
-        if(color === 'black') classes.push('small-black');
-        if(color === 'ghost') classes.push('ghost-black');
-
-        const el = createSVG('text', {
-          x, y,
-          class:classes.join(' '),
-          'font-size': size
-        });
-        el.textContent = text;
-        return appendNode(el);
-      }
-
-      function drawBottomText(x, y, text, size, color='green'){
-        const classes = ['point-bottom'];
-        if(color === 'black') classes.push('small-black');
-        if(color === 'ghost') classes.push('ghost-black');
-        if(color === 'ghostGreen') classes.push('ghost-green');
-
-        const el = createSVG('text', {
-          x, y,
-          class:classes.join(' '),
-          'font-size': size
-        });
-        el.textContent = text;
-        return appendNode(el);
-      }
-
-      function drawFractionTop(x, y, num, den, size, color='blue'){
-        const group = createSVG('g', {});
-        const txtClass = ['point-top'];
-        if(color === 'black') txtClass.push('small-black');
-        if(color === 'ghost') txtClass.push('ghost-black');
-
-        const strokeColor = color === 'black' ? '#111' : color === 'ghost' ? '#97a0ad' : '#2563eb';
-
-        const top = createSVG('text', { x, y, class:txtClass.join(' '), 'font-size': size });
-        top.textContent = num;
-
-        const width = Math.max(42, Math.max(String(num).length, String(den).length) * (size * 0.36));
-        const bar = createSVG('line', {
-          x1: x - width / 2,
-          y1: y + 15,
-          x2: x + width / 2,
-          y2: y + 15,
-          stroke: strokeColor,
-          'stroke-width': 3.5,
-          'stroke-linecap':'round',
-          opacity: color === 'ghost' ? '.9' : '1'
-        });
-
-        const bottom = createSVG('text', {
-          x, y: y + 44,
-          class:txtClass.join(' '),
-          'font-size': size * 0.92
-        });
-        bottom.textContent = den;
-
-        group.appendChild(top);
-        group.appendChild(bar);
-        group.appendChild(bottom);
-        return appendNode(group);
-      }
-
-      function drawCueText(label, opts = {}){
-        const {
-          fromX,
-          toX,
-          textY,
-          mainFontSize = 30,
-          centerX = null
-        } = opts;
-
-        const text = createSVG('text', {
-          x: centerX ?? ((fromX + toX) / 2),
-          y: textY,
-          class:'point-top ghost-black',
-          'font-size':mainFontSize
-        });
-        text.textContent = label;
-        return appendNode(text);
-      }
-
-      function drawDirectionCue(fromX, toX, label, opts = {}){
-        const {
-          cueY = LINE_Y - 98,
-          textY = cueY - 18,
-          mainFontSize = 30
-        } = opts;
-
-        appendNode(createSVG('line', {
-          x1:fromX,
-          y1:cueY,
-          x2:toX,
-          y2:cueY,
-          class:'cue-line'
-        }));
-
-        const headSize = 16;
-        appendNode(createSVG('polygon', {
-          class:'cue-head',
-          points: toX > fromX
-            ? `${toX},${cueY} ${toX-headSize},${cueY-headSize/2} ${toX-headSize},${cueY+headSize/2}`
-            : `${toX},${cueY} ${toX+headSize},${cueY-headSize/2} ${toX+headSize},${cueY+headSize/2}`
-        }));
-
-        drawCueText(label, { fromX, toX, textY, mainFontSize });
-      }
-
-      function createArrowHeadAtTangent(xTip, yTip, angleDeg, size = 16){
-        const angle = angleDeg * Math.PI / 180;
-        const backX = xTip - Math.cos(angle) * size;
-        const backY = yTip - Math.sin(angle) * size;
-        const wing = size * 0.55;
-        const perpX = -Math.sin(angle) * wing;
-        const perpY =  Math.cos(angle) * wing;
-
-        return createSVG('polygon', {
-          class:'cue-head',
-          points: `${xTip},${yTip} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`
-        });
-      }
-
-      function drawJumpArcsBetweenTicks(xs, opts = {}){
-        const {
-          cueY = ADD_SUB_ARC_Y,
-          arcHeight = 48,
-          durationMs = 1800,
-          token = null,
-          animated = true
-        } = opts;
-
-        if(!xs || xs.length < 2) return;
-
-        const segCount = xs.length - 1;
-        const perDelay = Math.max(70, Math.min(220, durationMs / segCount));
-
-        for(let i = 0; i < segCount; i++){
-          const x1 = xs[i];
-          const x2 = xs[i + 1];
-          const mid = (x1 + x2) / 2;
-
-          const path = createSVG('path', {
-            d: `M ${x1} ${cueY} Q ${mid} ${cueY - arcHeight} ${x2} ${cueY}`,
-            class:'cue-arc'
-          });
-
-          if(animated){
-            path.style.animationDelay = `${Math.round(i * perDelay)}ms, ${Math.round(i * perDelay)}ms`;
-          } else {
-            path.style.animation = 'dashMove 1.1s linear infinite';
-            path.style.opacity = '.74';
-          }
-
-          appendNode(path);
-        }
-
-        const last = xs[xs.length - 1];
-        const prev = xs[xs.length - 2];
-        const mid = (prev + last) / 2;
-        const tangentDx = (last - mid);
-        const tangentDy = arcHeight;
-        const angle = Math.atan2(tangentDy, tangentDx) * (180 / Math.PI);
-
-        const head = createArrowHeadAtTangent(last, cueY, angle, 16);
-        head.style.opacity = animated ? '0' : '.9';
-        appendNode(head);
-
-        if(animated){
-          schedule(() => {
-            if(token !== null && !isActiveRender(token)) return;
-            head.style.opacity = '.9';
-          }, Math.round((segCount - 1) * perDelay + 140));
-        }
-      }
-
-      function drawPartitionLoops(points, opts = {}){
-        const {
-          cueY = GROUP_LOOP_Y,
-          durationMs = 1800,
-          height = 72,
-          inset = 8,
-          animated = true
-        } = opts;
-
-        if(!points || points.length < 2) return;
-
-        const segCount = points.length - 1;
-        const perDelay = Math.max(90, Math.min(240, durationMs / segCount));
-
-        for(let i = 0; i < segCount; i++){
-          const p1 = points[i];
-          const p2 = points[i + 1];
-          const width = Math.max(40, Math.abs(p2.px - p1.px) - inset * 2);
-          const rx = width / 2;
-          const ry = height / 2;
-          const midX = (p1.px + p2.px) / 2;
-          const gap = 4;
-
-          const topArc = createSVG('path', {
-            d: `M ${midX - rx} ${cueY - gap} A ${rx} ${ry} 0 0 1 ${midX + rx} ${cueY - gap}`,
-            class:'cue-loop'
-          });
-          const bottomArc = createSVG('path', {
-            d: `M ${midX + rx} ${cueY + gap} A ${rx} ${ry} 0 0 1 ${midX - rx} ${cueY + gap}`,
-            class:'cue-loop'
-          });
-
-          if(animated){
-            const startDelay = Math.round(i * perDelay);
-            topArc.style.opacity = '0';
-            bottomArc.style.opacity = '0';
-            schedule(() => { topArc.style.opacity = '.74'; }, startDelay);
-            schedule(() => { bottomArc.style.opacity = '.74'; }, startDelay);
-          } else {
-            topArc.style.opacity = '.74';
-            bottomArc.style.opacity = '.74';
-          }
-
-          appendNode(topArc);
-          appendNode(bottomArc);
-        }
-      }
-
-      function drawPartitionLoopsStatic(points, opts = {}){
-        const {
-          cueY = GROUP_LOOP_Y,
-          height = 72,
-          inset = 8
-        } = opts;
-
-        if(!points || points.length < 2) return;
-
-        for(let i = 0; i < points.length - 1; i++){
-          const p1 = points[i];
-          const p2 = points[i + 1];
-          const width = Math.max(40, Math.abs(p2.px - p1.px) - inset * 2);
-          const rx = width / 2;
-          const ry = height / 2;
-          const midX = (p1.px + p2.px) / 2;
-          const gap = 4;
-
-          const topArc = createSVG('path', {
-            d: `M ${midX - rx} ${cueY - gap} A ${rx} ${ry} 0 0 1 ${midX + rx} ${cueY - gap}`,
-            class:'cue-loop'
-          });
-          const bottomArc = createSVG('path', {
-            d: `M ${midX + rx} ${cueY + gap} A ${rx} ${ry} 0 0 1 ${midX - rx} ${cueY + gap}`,
-            class:'cue-loop'
-          });
-
-          topArc.style.opacity = '.74';
-          bottomArc.style.opacity = '.74';
-
-          appendNode(topArc);
-          appendNode(bottomArc);
-        }
-      }
-
-      function orderedPointSpan(points, startIdx, endIdx){
-        const start = Math.min(startIdx, endIdx);
-        const end = Math.max(startIdx, endIdx);
-        const span = points.slice(start, end + 1);
-        return startIdx <= endIdx ? span : span.reverse();
-      }
-
-      function drawStage1Intro(){
-        drawBaseLine();
-
-        const halo = createSVG('ellipse', {
-          cx: START_CENTER_X,
-          cy: LINE_Y,
-          rx: 120,
-          ry: 84,
-          class:'stage1-halo'
-        });
-        appendNode(halo);
-
-        const intro = createSVG('text', {
-          x: START_CENTER_X,
-          y: 178,
-          class:'stage1-label'
-        });
-        intro.textContent = 'Start with x';
-        appendNode(intro);
-
-        const pulseGroup = createSVG('g', { class:'stage1-pulse' });
-        const tick = createSVG('line', {
-          x1:START_CENTER_X, y1:LINE_Y - 36,
-          x2:START_CENTER_X, y2:LINE_Y + 36,
-          class:'tick-major'
-        });
-        pulseGroup.appendChild(tick);
-        appendNode(pulseGroup);
-
-        drawTopText(START_CENTER_X, TOP_Y_MAIN, 'x', 72, 'blue');
-      }
-
-      function animateSlidingXPair(targetX, callback, token, opts = {}){
-        const {
-          showQuestionMark = false,
-          fromX = START_CENTER_X,
-          toX = targetX
-        } = opts;
-
-        drawBaseLine();
-
-        const layer = createSVG('g', {});
-        layer.style.transform = `translateX(${fromX - toX}px)`;
-        layer.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.22,.8,.2,1)`;
-
-        const tick = createSVG('line', {
-          x1:toX, y1:LINE_Y - 36,
-          x2:toX, y2:LINE_Y + 36,
-          class:'tick-major'
-        });
-
-        const top = createSVG('text', {
-          x:toX, y:TOP_Y_MAIN, class:'point-top', 'font-size':72
-        });
-        top.textContent = 'x';
-
-        layer.appendChild(tick);
-        layer.appendChild(top);
-
-        if(showQuestionMark){
-          const bottom = createSVG('text', {
-            x:toX, y:BOTTOM_Y_MAIN, class:'point-bottom', 'font-size':84
-          });
-          bottom.textContent = '?';
-          layer.appendChild(bottom);
-        }
-
-        appendNode(layer);
-
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            layer.style.transform = 'translateX(0px)';
-          });
-        });
-
-        if(callback){
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            callback();
-          }, SLIDE_MS);
-        }
-      }
-
-      function renderStage1BackwardSlide(token){
-        const q = state.question;
-        let fromX = START_CENTER_X;
-
-        if(q.mode === 'addsub') fromX = q.xX;
-        else if(q.mode === 'mult') fromX = q.prePoints[q.preXIndex].px;
-        else if(q.mode === 'div') fromX = q.prePoints[q.preXIndex].px;
-
-        drawBaseLine();
-
-        const halo = createSVG('ellipse', {
-          cx: START_CENTER_X,
-          cy: LINE_Y,
-          rx: 120,
-          ry: 84,
-          class:'stage1-halo'
-        });
-        appendNode(halo);
-
-        const intro = createSVG('text', {
-          x: START_CENTER_X,
-          y: 178,
-          class:'stage1-label'
-        });
-        intro.textContent = 'Start with x';
-        appendNode(intro);
-
-        animateSlidingXPair(START_CENTER_X, null, token, {
-          fromX,
-          toX: START_CENTER_X,
-          showQuestionMark:false
-        });
-      }
-
-      function startNewQuestion(){
-        closeOverlays();
-        state.question = buildQuestion();
-        state.prevStage = 1;
-        state.stage = 1;
-        state.navDirection = 'forward';
-        renderEquationBox();
-        updateStageUI();
-        renderBoard(false);
-        updateControls();
-      }
-
-      function resetTool(){
-        closeOverlays();
-        clearAllTimers();
-
-        state.settings = { ...DEFAULT_SETTINGS };
-        equationTypeSelect.value = state.settings.equationType;
-        showStrategyPrompts.checked = state.settings.showStrategyPrompts;
-        pauseBeforeAnswer.checked = state.settings.pauseBeforeAnswer;
-
-        state.question = buildQuestion();
-        state.prevStage = 1;
-        state.stage = 1;
-        state.navDirection = 'forward';
-        renderEquationBox();
-        updateStageUI();
-        renderBoard(false);
-        updateControls();
-      }
-
-      function nextStage(animated = true){
-        const maxStage = getMaxStage();
-        if(state.stage < maxStage){
-          state.prevStage = state.stage;
-          state.navDirection = 'forward';
-          state.stage += 1;
-          renderEquationBox();
-          updateStageUI();
-          renderBoard(animated);
-          updateControls();
-        }
-      }
-
-      function prevStage(){
-        if(state.stage > 1){
-          state.prevStage = state.stage;
-          state.navDirection = 'backward';
-          state.stage -= 1;
-          renderEquationBox();
-          updateStageUI();
-          renderBoard(true);
-          updateControls();
-        }
-      }
-
-      function updateControls(){
-        const maxStage = getMaxStage();
-        backStepBtn.disabled = state.stage === 1;
-        nextStepBtn.disabled = state.stage === maxStage;
-        footerNewQ.classList.toggle('show', state.stage === maxStage);
-      }
-
-      function renderAddSubBuild(animated, token, showGiven, showCue){
-        drawBaseLine();
-
-        const q = state.question;
-        const exprText = stripHTML(q.equationLeftHTML);
-
-        if(!animated || (state.navDirection === 'backward' && state.stage === 2)){
-          q.tickValues.forEach((v, i) => {
-            const isMajor = v === q.xValue || v === q.exprValue;
-            drawTick(q.tickXs[i], isMajor);
-          });
-          drawTopText(q.xX, TOP_Y_MAIN, 'x', 72, 'blue');
-          drawTopText(q.exprX, TOP_Y_MAIN, exprText, 66, 'blue');
-          if(showGiven){
-            drawBottomText(q.xX, BOTTOM_Y_MAIN, '?', 84, 'green');
-            drawBottomText(q.exprX, BOTTOM_Y_MAIN, String(q.result), 70, 'green');
-          }
-          if(showCue && state.settings.showStrategyPrompts){
-            drawDirectionCue(q.xX, q.exprX, q.isAdd ? 'move right' : 'move left');
-          }
-          return;
-        }
-
-        animateSlidingXPair(q.xX, () => {
-          if(!isActiveRender(token)) return;
-
-          const xIdx = q.tickValues.indexOf(q.xValue);
-          const exprIdx = q.tickValues.indexOf(q.exprValue);
-          const path = [];
-
-          if(exprIdx > xIdx){
-            for(let i = xIdx + 1; i <= exprIdx; i++) path.push(i);
-          } else {
-            for(let i = xIdx - 1; i >= exprIdx; i--) path.push(i);
-          }
-
-          const perDelay = adaptiveDelay(path.length, SEQ_BASE_MS);
-
-          path.forEach((idx, orderIdx) => {
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              const x = q.tickXs[idx];
-              const isExpr = idx === exprIdx;
-              drawTick(x, isExpr);
-              if(isExpr){
-                const top = drawTopText(x, TOP_Y_MAIN, exprText, 66, 'blue');
-                addGhostAnimation(top);
-              }
-            }, Math.round(orderIdx * perDelay));
-          });
-
-          if(showCue && state.settings.showStrategyPrompts){
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              drawDirectionCue(q.xX, q.exprX, q.isAdd ? 'move right' : 'move left');
-            }, Math.min(600, path.length * perDelay));
-          }
-        }, token, { showQuestionMark:false });
-      }
-
-      function renderAddSubGiven(animated, token){
-        drawBaseLine();
-
-        const q = state.question;
-        const exprText = stripHTML(q.equationLeftHTML);
-
-        q.tickValues.forEach((v, i) => {
-          const isMajor = v === q.xValue || v === q.exprValue;
-          drawTick(q.tickXs[i], isMajor);
-        });
-
-        drawTopText(q.xX, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(q.xX, BOTTOM_Y_MAIN, '?', 84, 'green');
-        drawTopText(q.exprX, TOP_Y_MAIN, exprText, 66, 'blue');
-
-        if(animated && state.navDirection === 'forward'){
-          const given = drawBottomText(q.exprX, BOTTOM_Y_MAIN, String(q.result), 70, 'green');
-          popAnswer(given, 120);
-        } else {
-          drawBottomText(q.exprX, BOTTOM_Y_MAIN, String(q.result), 70, 'green');
-        }
-      }
-
-      function renderAddSubSolve(animated, token, revealAnswer){
-        drawBaseLine();
-
-        const q = state.question;
-
-        q.tickValues.forEach((v, i) => {
-          const x = q.tickXs[i];
-          const isMajor = v === q.xValue || v === q.exprValue;
-          drawTick(x, isMajor);
-
-          if(v === q.xValue){
-            drawTopText(x, TOP_Y_MAIN, 'x', 72, 'blue');
-          }
-          if(v === q.exprValue){
-            drawTopText(x, TOP_Y_MAIN, stripHTML(q.equationLeftHTML), 66, 'blue');
-            drawBottomText(x, BOTTOM_Y_MAIN, String(q.result), 70, 'green');
-          }
-        });
-
-        const exprIdx = q.tickValues.indexOf(q.exprValue);
-        const xIdx = q.tickValues.indexOf(q.xValue);
-        const path = [];
-
-        if(xIdx > exprIdx){
-          for(let i = exprIdx + 1; i < xIdx; i++) path.push(i);
-        } else {
-          for(let i = exprIdx - 1; i > xIdx; i--) path.push(i);
-        }
-
-        const perDelay = adaptiveDelay(path.length, REVEAL_BASE_MS);
-        const revealStart = animated ? STAGE3_PAUSE_MS : 0;
-
-        const questionMark = drawBottomText(q.xX, BOTTOM_Y_MAIN, '?', 84, 'green');
-
-        let cueXs = q.tickXs.slice(Math.min(exprIdx, xIdx), Math.max(exprIdx, xIdx) + 1);
-        if(exprIdx > xIdx) cueXs = cueXs.reverse();
-
-        if(!animated || state.navDirection === 'backward'){
-          path.forEach(i => drawBottomText(q.tickXs[i], BOTTOM_Y_SMALL, String(q.tickValues[i]), 32, 'ghost'));
-          if(state.settings.showStrategyPrompts){
-            drawCueText(addSubPromptText(q), {
-              fromX: q.exprX, toX: q.xX, textY: ADD_SUB_TEXT_Y, mainFontSize: 27
-            });
-            drawJumpArcsBetweenTicks(cueXs, {
-              cueY: ADD_SUB_ARC_Y, arcHeight: 48, durationMs: 1800, token, animated:false
-            });
-          }
-          if(revealAnswer){
-            questionMark.style.opacity = '0';
-            drawBottomText(q.xX, BOTTOM_Y_MAIN, String(q.x), 84, 'green');
-          }
-          return;
-        }
-
-        path.forEach((i, orderIdx) => {
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            const node = drawBottomText(q.tickXs[i], BOTTOM_Y_SMALL, String(q.tickValues[i]), 32, 'ghost');
-            addGhostAnimation(node);
-          }, revealStart + Math.round(orderIdx * perDelay));
-        });
-
-        if(state.settings.showStrategyPrompts){
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            drawCueText(addSubPromptText(q), {
-              fromX: q.exprX, toX: q.xX, textY: ADD_SUB_TEXT_Y, mainFontSize: 27
-            });
-            drawJumpArcsBetweenTicks(cueXs, {
-              cueY: ADD_SUB_ARC_Y, arcHeight: 48, durationMs: 1800, token, animated:true
-            });
-          }, revealStart);
-        }
-
-        if(revealAnswer){
-          const answerDelay = revealStart + Math.max(REVEAL_BASE_MS, path.length * perDelay);
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            questionMark.style.opacity = '0';
-            const ans = drawBottomText(q.xX, BOTTOM_Y_MAIN, String(q.x), 84, 'green');
-            ans.style.opacity = '0';
-            ans.classList.add('answer-pop');
-            ans.style.opacity = '1';
-          }, answerDelay);
-        }
-      }
-
-      function renderMultPreBuild(animated, token){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const resultPoint = points[q.preResultIndex];
-        const zeroPoint = points[q.preZeroIndex];
-
-        if(!animated || state.navDirection === 'backward'){
-          points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preXIndex || idx === q.preResultIndex));
-          drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-          drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-          drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-          drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-          if(state.settings.showStrategyPrompts){
-            drawCueText('equal groups', {
-              fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-            });
-          }
-          const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
-          drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
-          return;
-        }
-
-        animateSlidingXPair(xPoint.px, () => {
-          if(!isActiveRender(token)) return;
-
-          points.forEach((p, idx) => {
-            if(idx === q.preXIndex) return;
-            const major = idx === q.preZeroIndex || idx === q.preResultIndex;
-            drawTick(p.px, major);
-
-            if(idx === q.preZeroIndex){
-              const t = drawTopText(p.px, TOP_Y_MAIN, '0', 62, 'black');
-              const b = drawBottomText(p.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-              addGhostAnimation(t);
-              addGhostAnimation(b);
-            }
-
-            if(idx === q.preResultIndex){
-              const t = drawTopText(p.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-              addGhostAnimation(t);
-            }
-          });
-
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            if(state.settings.showStrategyPrompts){
-              drawCueText('equal groups', {
-                fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-              });
-            }
-            const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
-            drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:true });
-          }, 240);
-        }, token, { showQuestionMark:false });
-      }
-
-      function renderMultGiven(animated){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const resultPoint = points[q.preResultIndex];
-        const zeroPoint = points[q.preZeroIndex];
-
-        points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preXIndex || idx === q.preResultIndex));
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-        drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-        drawBottomText(resultPoint.px, BOTTOM_Y_MAIN, String(q.result), 82, 'green');
-
-        if(state.settings.showStrategyPrompts){
-          drawCueText('equal groups', {
-            fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-          });
-        }
-        const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
-        drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
-      }
-
-      function renderMultNegativeKnown(){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.points;
-        const xPoint = points[q.xIndex];
-        const resultPoint = points[q.resultIndex];
-        const zeroPoint = points[q.zeroIndex];
-
-        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.xIndex || idx === q.resultIndex));
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-        drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-        drawBottomText(resultPoint.px, BOTTOM_Y_MAIN, String(q.result), 82, 'green');
-
-        if(state.settings.showStrategyPrompts){
-          drawCueText('equal groups', {
-            fromX: resultPoint.px, toX: zeroPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-          });
-        }
-        const orderedPoints = orderedPointSpan(points, q.resultIndex, q.zeroIndex);
-        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
-      }
-
-      function renderMultSolve(animated, token, revealAnswer){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.points;
-        const xPoint = points[q.xIndex];
-        const resultPoint = points[q.resultIndex];
-        const zeroPoint = points[q.zeroIndex];
-
-        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.xIndex || idx === q.resultIndex));
-
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-        drawBottomText(resultPoint.px, BOTTOM_Y_MAIN, String(q.result), 82, 'green');
-
-        const orderedPoints = orderedPointSpan(points, q.zeroIndex, q.resultIndex);
-        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
-
-        let mids = points.filter((_, idx) => idx !== q.zeroIndex && idx !== q.xIndex && idx !== q.resultIndex);
-        const revealTowardsQuestion = q.negative ? mids : mids.slice().reverse();
-        const perDelay = adaptiveDelay(revealTowardsQuestion.length, REVEAL_BASE_MS);
-        const revealStart = animated ? STAGE3_PAUSE_MS : 0;
-        const questionMark = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-
-        if(animated && state.navDirection === 'forward'){
-          revealTowardsQuestion.forEach((p, orderIdx) => {
-            const top = drawTopText(p.px, TOP_Y_SMALL, `${p.multiplier}x`, 32, 'ghost');
-            const bottom = drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 30, 'ghost');
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              addGhostAnimation(top);
-              addGhostAnimation(bottom);
-            }, revealStart + 280 + Math.round(orderIdx * perDelay));
-          });
-
-          if(state.settings.showStrategyPrompts){
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              drawCueText(multPromptText(q), {
-                fromX: resultPoint.px, toX: xPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-              });
-            }, revealStart + 100);
-          }
-
-          if(revealAnswer){
-            const answerDelay = revealStart + Math.max(REVEAL_BASE_MS, revealTowardsQuestion.length * perDelay);
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              questionMark.style.opacity = '0';
-              const ans = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 84, 'green');
-              ans.style.opacity = '0';
-              ans.classList.add('answer-pop');
-              ans.style.opacity = '1';
-            }, answerDelay);
-          }
-        } else {
-          revealTowardsQuestion.forEach((p) => {
-            drawTopText(p.px, TOP_Y_SMALL, `${p.multiplier}x`, 32, 'ghost');
-            drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 30, 'ghost');
-          });
-          if(state.settings.showStrategyPrompts){
-            drawCueText(multPromptText(q), {
-              fromX: resultPoint.px, toX: xPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-            });
-          }
-          if(revealAnswer){
-            questionMark.style.opacity = '0';
-            drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 84, 'green');
-          }
-        }
-      }
-
-      function renderDivPreBuild(animated, token){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const fracPoint = points[q.preFracIndex];
-        const zeroPoint = points[q.preZeroIndex];
-
-        if(!animated || state.navDirection === 'backward'){
-          points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex));
-          drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-          drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-          drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-          drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-
-          if(state.settings.showStrategyPrompts){
-            drawCueText('equal groups', {
-              fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-            });
-          }
-          const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
-          drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
-          return;
-        }
-
-        animateSlidingXPair(xPoint.px, () => {
-          if(!isActiveRender(token)) return;
-
-          points.forEach((p, idx) => {
-            if(idx === q.preXIndex) return;
-            const major = idx === q.preZeroIndex || idx === q.preFracIndex;
-            drawTick(p.px, major);
-
-            if(idx === q.preZeroIndex){
-              const t = drawTopText(p.px, TOP_Y_MAIN, '0', 62, 'black');
-              const b = drawBottomText(p.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-              addGhostAnimation(t);
-              addGhostAnimation(b);
-            }
-
-            if(idx === q.preFracIndex){
-              const t = drawFractionTop(p.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-              addGhostAnimation(t);
-            }
-          });
-
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            if(state.settings.showStrategyPrompts){
-              drawCueText('equal groups', {
-                fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-              });
-            }
-            const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
-            drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:true });
-          }, 240);
-        }, token, { showQuestionMark:false });
-      }
-
-      function renderDivGiven(animated){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const fracPoint = points[q.preFracIndex];
-        const zeroPoint = points[q.preZeroIndex];
-
-        points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex));
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
-
-        if(state.settings.showStrategyPrompts){
-          drawCueText('equal groups', {
-            fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-          });
-        }
-        const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
-        drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
-      }
-
-      function renderDivNegativeKnown(){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.points;
-        const xPoint = points[q.xIndex];
-        const fracPoint = points[q.fracIndex];
-        const zeroPoint = points[q.zeroIndex];
-
-        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.fracIndex || idx === q.xIndex));
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-
-        if(state.settings.showStrategyPrompts){
-          drawCueText('equal groups', {
-            fromX: xPoint.px, toX: zeroPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-          });
-        }
-        const orderedPoints = orderedPointSpan(points, q.xIndex, q.zeroIndex);
-        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
-      }
-
-      function renderDivSolve(animated, token, revealAnswer){
-        drawBaseLine();
-
-        const q = state.question;
-        const points = q.points;
-        const xPoint = points[q.xIndex];
-        const fracPoint = points[q.fracIndex];
-        const zeroPoint = points[q.zeroIndex];
-
-        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.fracIndex || idx === q.xIndex));
-
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
-
-        const orderedPoints = orderedPointSpan(points, q.zeroIndex, q.xIndex);
-        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
-
-        let mids = points.filter((_, idx) => idx !== q.zeroIndex && idx !== q.fracIndex && idx !== q.xIndex);
-        if(q.negative) mids = mids.reverse();
-
-        const perDelay = adaptiveDelay(mids.length, REVEAL_BASE_MS);
-        const revealStart = animated ? STAGE3_PAUSE_MS : 0;
-        const questionMark = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-
-        if(animated && state.navDirection === 'forward'){
-          mids.forEach((p, orderIdx) => {
-            const top = drawFractionTop(p.px, TOP_Y_SMALL - 18, `${p.numerator}x`, String(q.d), 30, 'ghost');
-            const bottom = drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 30, 'ghost');
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              addGhostAnimation(top);
-              addGhostAnimation(bottom);
-            }, revealStart + Math.round(orderIdx * perDelay));
-          });
-
-          if(state.settings.showStrategyPrompts){
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              drawCueText(divPromptText(q), {
-                fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-              });
-            }, revealStart + 100);
-          }
-
-          if(revealAnswer){
-            const answerDelay = revealStart + Math.max(REVEAL_BASE_MS, mids.length * perDelay);
-            schedule(() => {
-              if(!isActiveRender(token)) return;
-              questionMark.style.opacity = '0';
-              const finalX = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 82, 'green');
-              finalX.style.opacity = '0';
-              finalX.classList.add('answer-pop');
-              finalX.style.opacity = '1';
-            }, answerDelay);
-          }
-        } else {
-          mids.forEach((p) => {
-            drawFractionTop(p.px, TOP_Y_SMALL - 18, `${p.numerator}x`, String(q.d), 30, 'ghost');
-            drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 30, 'ghost');
-          });
-          if(state.settings.showStrategyPrompts){
-            drawCueText(divPromptText(q), {
-              fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-            });
-          }
-          if(revealAnswer){
-            questionMark.style.opacity = '0';
-            drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 82, 'green');
-          }
-        }
-      }
-
-      function applySceneTransform(group, sx, sy = 1, skew = 0){
-        group.setAttribute(
-          'transform',
-          `translate(${VIEW_W/2} ${LINE_Y}) skewY(${skew}) scale(${sx} ${sy}) translate(${-VIEW_W/2} ${-LINE_Y})`
-        );
-      }
-
-      function renderFlipAnimation(token, drawFront, drawBack, reverse = false){
-        const front = createSVG('g', {});
-        const back = createSVG('g', {});
-        appendNode(front);
-        appendNode(back);
-
-        setDrawRoot(front);
-        drawFront();
-        setDrawRoot(back);
-        drawBack();
-        setDrawRoot(svg);
-
-        if(reverse){
-          front.style.opacity = '0';
-          back.style.opacity = '1';
-          applySceneTransform(back, 1, 1, 0);
-        } else {
-          front.style.opacity = '1';
-          back.style.opacity = '0';
-        }
-
-        let start = null;
-        function step(ts){
-          if(!isActiveRender(token)) return;
-          if(start === null) start = ts;
-          const p = Math.min(1, (ts - start) / FLIP_MS);
-
-          if(!reverse){
-            if(p < 0.5){
-              const t = p / 0.5;
-              const sx = 1 - 0.95 * t;
-              const sy = 1 - 0.08 * t;
-              const skew = 8 * t;
-              front.style.opacity = String(1 - 0.8 * t);
-              back.style.opacity = '0';
-              applySceneTransform(front, Math.max(0.05, sx), sy, skew);
-            } else {
-              const t = (p - 0.5) / 0.5;
-              const sx = 0.05 + 0.95 * t;
-              const sy = 0.92 + 0.08 * t;
-              const skew = 8 - 8 * t;
-              front.style.opacity = '0';
-              back.style.opacity = String(0.2 + 0.8 * t);
-              applySceneTransform(back, sx, sy, skew);
-            }
-          } else {
-            if(p < 0.5){
-              const t = p / 0.5;
-              const sx = 1 - 0.95 * t;
-              const sy = 1 - 0.08 * t;
-              const skew = -8 * t;
-              back.style.opacity = String(1 - 0.8 * t);
-              front.style.opacity = '0';
-              applySceneTransform(back, Math.max(0.05, sx), sy, skew);
-            } else {
-              const t = (p - 0.5) / 0.5;
-              const sx = 0.05 + 0.95 * t;
-              const sy = 0.92 + 0.08 * t;
-              const skew = -8 + 8 * t;
-              back.style.opacity = '0';
-              front.style.opacity = String(0.2 + 0.8 * t);
-              applySceneTransform(front, sx, sy, skew);
-            }
-          }
-
-          if(p < 1){
-            requestAnimationFrame(step);
-          } else {
-            if(reverse){
-              back.remove();
-              front.style.opacity = '1';
-              applySceneTransform(front, 1, 1, 0);
-            } else {
-              front.remove();
-              back.style.opacity = '1';
-              applySceneTransform(back, 1, 1, 0);
-            }
-          }
-        }
-
-        requestAnimationFrame(step);
-      }
-
-      function renderBoard(animated){
-        const token = nextRenderToken();
-        clearBoard();
-        addDefs();
-
-        const q = state.question;
-        const revealAnswer = isAnswerStage();
-
-        if(state.stage === 1){
-          if(state.navDirection === 'backward' && state.prevStage === 2){
-            renderStage1BackwardSlide(token);
-          } else {
-            drawStage1Intro();
-          }
-          return;
-        }
-
-        if(q.mode === 'addsub'){
-          if(state.stage === 2) renderAddSubBuild(animated, token, false, true);
-          else if(state.stage === 3) renderAddSubGiven(animated, token);
-          else renderAddSubSolve(animated, token, revealAnswer);
-          return;
-        }
-
-        if(q.mode === 'mult'){
-          if(!q.negative){
-            if(state.stage === 2) renderMultPreBuild(animated, token);
-            else if(state.stage === 3) renderMultGiven(animated);
-            else renderMultSolve(animated, token, revealAnswer);
-            return;
-          }
-
-          const flipStage = 4;
-
-          if(state.stage === 2){
-            renderMultPreBuild(animated, token);
-          } else if(state.stage === 3){
-            if(state.navDirection === 'backward' && state.prevStage === flipStage){
-              renderFlipAnimation(
-                token,
-                () => { renderMultGiven(false); },
-                () => { renderMultNegativeKnown(); },
-                true
-              );
-            } else {
-              renderMultGiven(animated);
-            }
-          } else if(state.stage === flipStage){
-            if(state.navDirection === 'forward' && state.prevStage === 3 && animated){
-              renderFlipAnimation(
-                token,
-                () => { renderMultGiven(false); },
-                () => { renderMultNegativeKnown(); },
-                false
-              );
-            } else {
-              renderMultNegativeKnown();
-            }
-          } else {
-            if(state.navDirection === 'backward' && state.prevStage === getMaxStage()){
-              renderMultSolve(false, token, false);
-            } else if(state.navDirection === 'backward'){
-              renderMultNegativeKnown();
-            } else {
-              renderMultSolve(animated, token, revealAnswer);
-            }
-          }
-          return;
-        }
-
-        if(!q.negative){
-          if(state.stage === 2) renderDivPreBuild(animated, token);
-          else if(state.stage === 3) renderDivGiven(animated);
-          else renderDivSolve(animated, token, revealAnswer);
-          return;
-        }
-
-        const flipStage = 4;
-
-        if(state.stage === 2){
-          renderDivPreBuild(animated, token);
-        } else if(state.stage === 3){
-          if(state.navDirection === 'backward' && state.prevStage === flipStage){
-            renderFlipAnimation(
-              token,
-              () => { renderDivGiven(false); },
-              () => { renderDivNegativeKnown(); },
-              true
-            );
-          } else {
-            renderDivGiven(animated);
-          }
-        } else if(state.stage === flipStage){
-          if(state.navDirection === 'forward' && state.prevStage === 3 && animated){
-            renderFlipAnimation(
-              token,
-              () => { renderDivGiven(false); },
-              () => { renderDivNegativeKnown(); },
-              false
-            );
-          } else {
-            renderDivNegativeKnown();
-          }
-        } else {
-          if(state.navDirection === 'backward' && state.prevStage === getMaxStage()){
-            renderDivSolve(false, token, false);
-          } else if(state.navDirection === 'backward'){
-            renderDivNegativeKnown();
-          } else {
-            renderDivSolve(animated, token, revealAnswer);
-          }
-        }
-      }
-
-      toolsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setToolsOpen(!toolsMenu.classList.contains('open'));
-      });
-
-      teacherBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setTeacherOpen(!teacherPanel.classList.contains('open'));
-      });
-
-      document.addEventListener('click', (e) => {
-        if(teacherPanel.classList.contains('open') && !teacherPanel.contains(e.target) && !teacherBtn.contains(e.target)){
-          setTeacherOpen(false);
-        }
-        if(toolsMenu.classList.contains('open') && !toolsMenu.contains(e.target) && !toolsBtn.contains(e.target)){
-          setToolsOpen(false);
-        }
-      });
-
-      equationTypeSelect.addEventListener('change', () => {
-        state.settings.equationType = equationTypeSelect.value;
-      });
-
-      showStrategyPrompts.addEventListener('change', () => {
-        state.settings.showStrategyPrompts = showStrategyPrompts.checked;
-        if(state.question){
-          renderBoard(false);
-        }
-      });
-
-      pauseBeforeAnswer.addEventListener('change', () => {
-        state.settings.pauseBeforeAnswer = pauseBeforeAnswer.checked;
-        if(state.question){
-          const maxStage = getMaxStage();
-          if(state.stage > maxStage) state.stage = maxStage;
-          updateStageUI();
-          renderBoard(false);
-          updateControls();
-        }
-      });
-
-      nextStepBtn.addEventListener('click', () => nextStage(true));
-      backStepBtn.addEventListener('click', prevStage);
-      footerNewQ.addEventListener('click', startNewQuestion);
-      newBtn.addEventListener('click', startNewQuestion);
-      resetBtn.addEventListener('click', resetTool);
-
-      document.addEventListener('keydown', (e) => {
-        const tag = document.activeElement?.tagName;
-        const isFormFocus = tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA';
-        if(isFormFocus && e.key !== 'Escape') return;
-
-        if(e.key === 'ArrowRight'){
-          e.preventDefault();
-          nextStage(true);
-        } else if(e.key === 'ArrowLeft'){
-          e.preventDefault();
-          prevStage();
-        } else if(e.key === 'Enter'){
-          e.preventDefault();
-          startNewQuestion();
-        } else if(e.key === 'Escape'){
-          e.preventDefault();
-          closeOverlays();
-        } else if(e.key.toLowerCase() === 't'){
-          e.preventDefault();
-          setToolsOpen(!toolsMenu.classList.contains('open'));
-        }
-      });
-
-      equationTypeSelect.value = DEFAULT_SETTINGS.equationType;
-      showStrategyPrompts.checked = DEFAULT_SETTINGS.showStrategyPrompts;
-      pauseBeforeAnswer.checked = DEFAULT_SETTINGS.pauseBeforeAnswer;
-
-      setToolsOpen(false);
-      setTeacherOpen(false, true);
-      startNewQuestion();
-    })();
-  </script>
+</div>
+<article class="tool">
+  <h3 class="tool-title"><span class="tool-icon">🔤</span>Collecting Like Terms (1)</h3>
+  <p>Practice collecting like terms using grouped visual models.</p>
+  <a href="./collecting-like-terms/number-groups/index.html" target="_blank" rel="noopener">Open →</a>
+</article>
+<article class="tool">
+  <h3 class="tool-title"><span class="tool-icon">🔤</span>Collecting Like Terms (2)</h3>
+  <p>Simplify algebraic expressions by identifying and combining like terms.</p>
+  <a href="./collecting-like-terms/index.html" target="_blank" rel="noopener">Open →</a>
+</article>
+<article class="tool">
+  <h3 class="tool-title"><span class="tool-icon">📏</span>One step Equations - Double Number Line</h3>
+  <p>Solve one-step equations using a visual double number line model.</p>
+  <a href="./equations/double-numberline/index.html" target="_blank" rel="noopener">Open →</a>
+</article>
+
+
+    </section>
+
+    <!-- Contact moved to bottom -->
+    <section class="card" aria-label="Contact">
+      <h2>Contact</h2>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+        <strong style="color:var(--text-main);">Jeff Mills</strong>
+
+        <a class="chip" href="mailto:jeff.mills2@det.nsw.edu.au">
+          📧 jeff.mills2@det.nsw.edu.au
+        </a>
+
+        <a class="chip fb"
+           href="https://www.facebook.com/millsmathstools"
+           target="_blank" rel="noopener">
+          📘 Facebook: Mills Maths Tools
+        </a>
+      </div>
+
+      <p style="margin-top:.65rem;">
+        Feedback, classroom reflections, and requests for new tools are welcome.
+      </p>
+
+      <div class="fb-callout" role="note" aria-label="Facebook updates">
+        <div class="fb-row">
+          <img src="fbmmt.png" alt="Mills Maths Tools Facebook">
+          <div style="flex:1;min-width:240px;">
+            <strong>Want more updates when new tools are added?</strong>
+            <p style="margin:.35rem 0 .55rem;color:var(--text-muted);">
+              Follow the Mills Maths Tools Facebook Page for announcements and classroom ideas.
+            </p>
+            <a class="chip fb"
+               href="https://www.facebook.com/millsmathstools"
+               target="_blank" rel="noopener">
+              📘 Follow on Facebook
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      © <span id="year"></span> Mills Maths Tools • Built for classroom use
+      <div class="footer-links">
+        <a class="chip fb"
+           href="https://www.facebook.com/millsmathstools"
+           target="_blank" rel="noopener">📘 Facebook</a>
+        <a class="chip"
+           href="https://www.millsmathstools.au"
+           target="_blank" rel="noopener">🌐 millsmathstools.au</a>
+      </div>
+    </footer>
+
+  </main>
+
+</div>
+</div>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  function wire(selectId, btnId){
+    const sel = document.getElementById(selectId);
+    const btn = document.getElementById(btnId);
+    if(!sel || !btn) return;
+
+    function openSelected(){
+      const url = sel.value;
+      if(!url) return;
+      window.open(url, "_blank", "noopener");
+    }
+
+    sel.addEventListener("change", () => {
+      btn.disabled = !sel.value;
+    });
+
+    btn.addEventListener("click", openSelected);
+  }
+
+  wire("wmStage4Select", "wmStage4Btn");
+  wire("spStage4Select", "spStage4Btn");
+  wire("fcStage4Select", "fcStage4Btn");
+</script>
 </body>
 </html>
