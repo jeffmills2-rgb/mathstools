@@ -1,0 +1,2369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Equations – Double Number Line</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+
+      --blue:#2563eb;
+      --green:#6cbc4a;
+      --danger:#ef4444;
+
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --btnDisabled:#e5e7eb;
+      --btnDisabledText:#9ca3af;
+
+      --line:#111827;
+      --tick:#111827;
+      --tickSoft:#aeb5c1;
+      --ghost:#8a93a1;
+      --ghostGreen:#7c8b67;
+      --cue:#94a3b8;
+
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      background:var(--bg);
+      color:var(--ink);
+      overflow:hidden;
+    }
+
+    .app{
+      min-height:100vh;
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      padding:18px 22px 16px;
+      gap:12px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      text-decoration:none;
+      color:var(--ink);
+      background:rgba(255,255,255,.78);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:10px 16px;
+      box-shadow:0 1px 0 rgba(17,24,39,.03);
+      font-weight:800;
+      font-size:17px;
+      backdrop-filter:blur(4px);
+      transition:.16s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .back-btn:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.92);
+      box-shadow:0 6px 18px rgba(37,99,235,.08);
+    }
+
+    .back-logo{
+      width:28px;
+      height:28px;
+      border-radius:6px;
+      object-fit:contain;
+      display:block;
+      flex:0 0 auto;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+
+    .btn{
+      border:0;
+      background:var(--btn);
+      color:var(--ink);
+      padding:14px 20px;
+      border-radius:16px;
+      font-weight:800;
+      font-size:17px;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow:0 1px 0 rgba(17,24,39,.03);
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .btn:hover{ background:var(--btnHover); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{
+      outline:none;
+      box-shadow:0 0 0 4px rgba(37,99,235,.14);
+    }
+
+    .btn-danger{
+      background:#f7d8d8;
+      color:#b91c1c;
+    }
+    .btn-danger:hover{ background:#f3c7c7; }
+
+    .btn-primary{
+      background:var(--blue);
+      color:#fff;
+    }
+    .btn-primary:hover{ background:#1d4ed8; }
+
+    .tools-wrap{ position:relative; }
+
+    .tools-menu{
+      position:absolute;
+      top:calc(100% + 10px);
+      right:0;
+      min-width:220px;
+      background:rgba(255,255,255,.98);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:10px;
+      opacity:0;
+      transform:translateY(-8px) scale(.98);
+      pointer-events:none;
+      transition:.18s ease;
+      z-index:30;
+    }
+    .tools-menu.open{
+      opacity:1;
+      transform:translateY(0) scale(1);
+      pointer-events:auto;
+    }
+
+    .tools-link{
+      display:block;
+      text-decoration:none;
+      color:var(--ink);
+      font-weight:800;
+      padding:12px 14px;
+      border-radius:12px;
+      transition:.14s ease;
+    }
+    .tools-link:hover{
+      background:#f3f6fb;
+      color:var(--blue);
+    }
+
+    .layout{
+      flex:1;
+      min-height:0;
+      position:relative;
+    }
+
+    .teacher-panel{
+      position:absolute;
+      top:0;
+      right:0;
+      width:min(480px, calc(100vw - 44px));
+      background:rgba(255,255,255,.98);
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      z-index:20;
+      transform:translateY(-10px) scale(.98);
+      opacity:0;
+      pointer-events:none;
+      transition:.22s ease;
+      max-height:min(82vh, 760px);
+      overflow:auto;
+    }
+    .teacher-panel.open{
+      transform:translateY(0) scale(1);
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .panel-title{
+      font-size:19px;
+      font-weight:900;
+      margin:0 0 14px;
+    }
+
+    .panel-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .field label{
+      font-weight:800;
+      color:var(--ink);
+      font-size:15px;
+    }
+    .field select{
+      width:100%;
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:14px;
+      padding:13px 14px;
+      font:inherit;
+      font-size:15px;
+      color:var(--ink);
+      outline:none;
+      transition:border-color .16s ease, box-shadow .16s ease;
+    }
+    .field select:focus{
+      border-color:var(--blue);
+      box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .toggle{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:16px;
+    }
+    .toggle input{
+      margin-top:3px;
+      transform:scale(1.16);
+      accent-color:var(--blue);
+    }
+    .toggle-text{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .toggle-text strong{ font-size:15px; }
+    .toggle-text span{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .panel-note{
+      margin:2px 0 0;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .main{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-rows:auto 1fr auto auto;
+      min-height:0;
+    }
+
+    .hero{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:92px;
+    }
+
+    .equation-box{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:380px;
+      min-height:92px;
+      padding:14px 28px;
+      background:#fff;
+      border:4px solid #111;
+      border-radius:24px;
+      box-shadow:0 4px 0 rgba(0,0,0,.02);
+    }
+
+    .eq-line{
+      font-family:var(--mathFont);
+      font-size:36px;
+      font-weight:700;
+      line-height:1.1;
+      white-space:nowrap;
+      letter-spacing:.01em;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      min-height:44px;
+      transition:opacity .18s ease, filter .18s ease;
+    }
+
+    .tagline{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:240px;
+      min-height:40px;
+      padding:8px 18px;
+      background:rgba(255,255,255,.82);
+      border:1px solid var(--border);
+      border-radius:999px;
+      font-size:16px;
+      font-weight:700;
+      color:var(--muted);
+      letter-spacing:.01em;
+    }
+
+    .expr{ color:var(--blue); }
+    .value{ color:#a6cf8d; }
+    .equals{ color:#8c8c8c; padding:0 8px; }
+
+    .canvas-wrap{
+      position:relative;
+      min-height:0;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      margin-top:-8px;
+    }
+
+    svg{
+      width:100%;
+      height:100%;
+      display:block;
+      overflow:visible;
+    }
+
+    .footer{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:56px;
+      margin-top:-6px;
+    }
+
+    .control-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+      flex-wrap:wrap;
+      width:100%;
+    }
+
+    .nav-btn{
+      width:78px;
+      height:56px;
+      border:0;
+      border-radius:16px;
+      background:rgba(255,255,255,.62);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:.16s ease;
+      box-shadow:0 1px 0 rgba(17,24,39,.03);
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .nav-btn:hover:not(:disabled){ background:rgba(255,255,255,.88); transform:translateY(-1px); }
+    .nav-btn:disabled{
+      background:var(--btnDisabled);
+      color:var(--btnDisabledText);
+      cursor:not-allowed;
+      box-shadow:none;
+      opacity:.8;
+    }
+
+    .nav-pill{
+      width:46px;
+      height:34px;
+      border-radius:999px;
+      background:var(--blue);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.08);
+    }
+    .nav-btn:disabled .nav-pill{
+      background:#cfd4dc;
+      box-shadow:none;
+    }
+
+    .footer-newq{
+      border:0;
+      padding:15px 24px;
+      border-radius:16px;
+      background:var(--blue);
+      color:#fff;
+      font-weight:800;
+      font-size:19px;
+      cursor:pointer;
+      transition:.16s ease;
+      display:none;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .footer-newq:hover{ background:#1d4ed8; transform:translateY(-1px); }
+    .footer-newq.show{ display:inline-flex; align-items:center; justify-content:center; }
+
+    .brand-footer{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:32px;
+      font-size:15px;
+      font-weight:700;
+      color:var(--muted);
+      text-align:center;
+      margin-top:2px;
+    }
+    .brand-footer a{
+      color:var(--blue);
+      text-decoration:none;
+      font-weight:900;
+    }
+
+    .main-line{
+      stroke:var(--line);
+      stroke-width:10;
+      stroke-linecap:round;
+    }
+
+    .tick-major{
+      stroke:var(--tick);
+      stroke-width:12;
+      stroke-linecap:round;
+    }
+    .tick-minor{
+      stroke:var(--tickSoft);
+      stroke-width:7.5;
+      stroke-linecap:round;
+    }
+
+    .point-top,
+    .point-bottom{
+      font-family:var(--mathFont);
+      font-weight:700;
+      dominant-baseline:middle;
+      text-anchor:middle;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    .point-top{ fill:var(--blue); }
+    .point-bottom{ fill:var(--green); }
+
+    .small-black{ fill:#111 !important; }
+    .ghost-black{ fill:var(--ghost) !important; opacity:.97; }
+    .ghost-green{ fill:var(--ghostGreen) !important; opacity:.97; }
+
+    .cue-line,
+    .cue-arc,
+    .cue-loop{
+      stroke:var(--cue);
+      stroke-width:5;
+      stroke-linecap:round;
+      fill:none;
+      opacity:.78;
+      stroke-dasharray:14 10;
+      animation:dashMove 1.1s linear infinite;
+    }
+
+    .cue-head{
+      fill:var(--cue);
+      opacity:.92;
+      transition:opacity .18s ease;
+    }
+
+    .cue-loop{
+      transform-origin:center;
+    }
+
+    .cue-arc{
+      animation:dashMove 1.1s linear infinite, arcAppear .18s ease forwards;
+      opacity:0;
+      transform-origin:center;
+    }
+
+    .stage1-halo{
+      fill:url(#stage1Glow);
+      opacity:.48;
+      pointer-events:none;
+    }
+
+    .stage1-label{
+      font-family:var(--uiFont);
+      font-weight:800;
+      font-size:24px;
+      fill:#9aa4b2;
+      text-anchor:middle;
+      letter-spacing:.01em;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    .stage1-pulse{
+      animation:stage1Pulse 1.9s ease-in-out infinite;
+      transform-origin:center;
+    }
+
+    .ghost-animate{
+      animation:ghostIn .32s ease forwards;
+      transform-origin:center;
+    }
+    .answer-pop{
+      animation:answerSettle .42s cubic-bezier(.2,.9,.25,1.18);
+      transform-origin:center;
+    }
+
+    @keyframes dashMove{
+      from{ stroke-dashoffset:0; }
+      to{ stroke-dashoffset:-24; }
+    }
+    @keyframes arcAppear{
+      from{ opacity:0; transform:translateY(6px); }
+      to{ opacity:.78; transform:translateY(0); }
+    }
+    @keyframes ghostIn{
+      0%{ opacity:0; transform:translateY(7px); }
+      100%{ opacity:1; transform:translateY(0); }
+    }
+    @keyframes answerSettle{
+      0%{ opacity:0; transform:scale(.82); }
+      60%{ opacity:1; transform:scale(1.08); }
+      100%{ opacity:1; transform:scale(1); }
+    }
+    @keyframes stage1Pulse{
+      0%,100%{ opacity:1; transform:scale(1); }
+      50%{ opacity:.8; transform:scale(1.03); }
+    }
+
+    @media (max-width: 980px){
+      .equation-box{ min-width:300px; min-height:84px; }
+      .eq-line{ font-size:31px; }
+      .tagline{ font-size:15px; }
+    }
+
+    @media (max-width: 700px){
+      .app{ padding:14px; }
+      .btn{ padding:12px 16px; font-size:15px; border-radius:14px; }
+      .equation-box{ min-width:250px; min-height:78px; padding:14px 20px; }
+      .eq-line{ font-size:25px; }
+      .tagline{ min-width:200px; font-size:14px; }
+      .nav-btn{ width:66px; height:48px; }
+      .nav-pill{ width:38px; height:28px; }
+      .footer-newq{ padding:12px 18px; font-size:16px; }
+      .brand-footer{ font-size:13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <a class="back-btn" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <img class="back-logo" src="mmt.png" alt="Mills Maths Tools logo" />
+        <span>Back to Mills Maths Tools</span>
+      </a>
+
+      <div class="actions">
+        <div class="tools-wrap">
+          <button class="btn" id="toolsBtn" type="button" aria-expanded="false" aria-controls="toolsMenu">Tools ▼</button>
+          <div class="tools-menu" id="toolsMenu">
+            <a class="tools-link" href="student-quiz.html">Student Quiz</a>
+            <a class="tools-link" href="worksheet-creator.html">Worksheet Creator</a>
+            <a class="tools-link" href="lesson-plan.html">Lesson Plan</a>
+          </div>
+        </div>
+
+        <button class="btn" id="teacherBtn" type="button" aria-expanded="false" aria-controls="teacherPanel">Teacher settings</button>
+        <button class="btn btn-danger" id="resetBtn" type="button">Reset</button>
+        <button class="btn btn-primary" id="newBtn" type="button">New Question</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="teacher-panel" id="teacherPanel" aria-hidden="true">
+        <h2 class="panel-title">Teacher settings</h2>
+
+        <div class="panel-grid">
+          <div class="field">
+            <label for="equationType">Equation type</label>
+            <select id="equationType">
+              <option value="addsub_pos">Addition/Subtraction - positive only</option>
+              <option value="addsub_neg">Addition/Subtraction - negatives included</option>
+              <option value="mult_pos">Multiplication - positives only</option>
+              <option value="mult_neg_only">Multiplication - negatives only</option>
+              <option value="mult_mixed">Multiplication - mixed</option>
+              <option value="div_pos">Division - positives only</option>
+              <option value="div_neg_only">Division - negatives only</option>
+              <option value="div_mixed">Division - mixed</option>
+              <option value="mixed_all">Mixed one step equations</option>
+            </select>
+          </div>
+
+          <label class="toggle">
+            <input id="hideEquationAfterStage1" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Fade equation after Stage 1</strong>
+              <span>Keeps the equation visible but softened so students rely more on the structure.</span>
+            </div>
+          </label>
+
+          <label class="toggle">
+            <input id="forceIntegerAnswers" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Force integer answers</strong>
+              <span>Keeps generated questions to clean integer values and tidy skip-counting patterns.</span>
+            </div>
+          </label>
+        </div>
+
+        <p class="panel-note">
+          Right arrow reveals the next step. Left arrow steps back. Enter generates a new question. Escape closes open panels.
+        </p>
+      </div>
+
+      <div class="main">
+        <div class="hero">
+          <div class="equation-box">
+            <div class="eq-line" id="questionEquation"></div>
+          </div>
+          <div class="tagline">Reveal it, Write it, Flip it</div>
+        </div>
+
+        <div class="canvas-wrap">
+          <svg id="board" viewBox="0 0 1800 620" preserveAspectRatio="xMidYMid meet" aria-label="Double number line"></svg>
+        </div>
+
+        <div class="footer">
+          <div class="control-row">
+            <button class="nav-btn" id="backStepBtn" type="button" aria-label="Back one step" disabled>
+              <div class="nav-pill">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 5L6 12l10 7z" fill="#fff"></path>
+                </svg>
+              </div>
+            </button>
+
+            <button class="nav-btn" id="nextStepBtn" type="button" aria-label="Next step">
+              <div class="nav-pill">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 5l10 7-10 7z" fill="#fff"></path>
+                </svg>
+              </div>
+            </button>
+
+            <button class="footer-newq" id="footerNewQ" type="button">New Question</button>
+          </div>
+        </div>
+
+        <div class="brand-footer">
+          This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const svg = document.getElementById('board');
+      const questionEquation = document.getElementById('questionEquation');
+      const teacherBtn = document.getElementById('teacherBtn');
+      const teacherPanel = document.getElementById('teacherPanel');
+      const equationTypeSelect = document.getElementById('equationType');
+      const hideEquationAfterStage1 = document.getElementById('hideEquationAfterStage1');
+      const forceIntegerAnswers = document.getElementById('forceIntegerAnswers');
+      const newBtn = document.getElementById('newBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const nextStepBtn = document.getElementById('nextStepBtn');
+      const backStepBtn = document.getElementById('backStepBtn');
+      const footerNewQ = document.getElementById('footerNewQ');
+      const toolsBtn = document.getElementById('toolsBtn');
+      const toolsMenu = document.getElementById('toolsMenu');
+
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const VIEW_W = 1800;
+      const LINE_Y = 380;
+      const TOP_Y_MAIN = 235;
+      const TOP_Y_SMALL = 308;
+      const BOTTOM_Y_MAIN = 490;
+      const BOTTOM_Y_SMALL = 424;
+
+      const ADD_SUB_ARC_Y = LINE_Y - 36;
+      const ADD_SUB_TEXT_Y = 248;
+
+      const GROUP_LOOP_Y = LINE_Y;
+      const MULT_TEXT_Y = 170;
+      const DIV_TEXT_Y = 158;
+
+      const START_CENTER_X = VIEW_W / 2;
+
+      const SLIDE_MS = 1100;
+      const STAGE3_PAUSE_MS = 600;
+      const SEQ_BASE_MS = 1800;
+      const REVEAL_BASE_MS = 1800;
+      const FLIP_MS = 1200;
+
+      let drawRoot = svg;
+
+      const state = {
+        settings: {
+          equationType: equationTypeSelect.value,
+          hideEquationAfterStage1: hideEquationAfterStage1.checked,
+          forceIntegerAnswers: forceIntegerAnswers.checked
+        },
+        question: null,
+        stage: 1,
+        prevStage: 1,
+        renderToken: 0,
+        timers: [],
+        navDirection: 'forward'
+      };
+
+      function setDrawRoot(root){ drawRoot = root || svg; }
+      function appendNode(node){ drawRoot.appendChild(node); return node; }
+
+      function setToolsOpen(open){
+        toolsMenu.classList.toggle('open', open);
+        toolsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toolsBtn.textContent = open ? 'Tools ▲' : 'Tools ▼';
+      }
+
+      function setTeacherOpen(open){
+        teacherPanel.classList.toggle('open', open);
+        teacherBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        teacherPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      }
+
+      function closeOverlays(){
+        setToolsOpen(false);
+        setTeacherOpen(false);
+      }
+
+      function schedule(fn, delay){
+        const id = setTimeout(() => {
+          state.timers = state.timers.filter(t => t !== id);
+          fn();
+        }, delay);
+        state.timers.push(id);
+        return id;
+      }
+
+      function clearAllTimers(){
+        state.timers.forEach(id => clearTimeout(id));
+        state.timers = [];
+      }
+
+      function nextRenderToken(){
+        clearAllTimers();
+        state.renderToken += 1;
+        return state.renderToken;
+      }
+
+      function isActiveRender(token){
+        return token === state.renderToken;
+      }
+
+      function randInt(min, max){
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function choice(arr){
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function createSVG(tag, attrs = {}){
+        const el = document.createElementNS(SVG_NS, tag);
+        Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+        return el;
+      }
+
+      function clearBoard(){
+        while(svg.firstChild) svg.removeChild(svg.firstChild);
+        setDrawRoot(svg);
+      }
+
+      function stripHTML(html){
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div.innerText || '';
+      }
+
+      function fractionHTML(num, den){
+        return `<span style="display:inline-flex;flex-direction:column;align-items:center;line-height:1;transform:translateY(2px);">
+          <span>${num}</span>
+          <span style="width:1.55em;border-top:2px solid currentColor;margin:3px 0 2px;"></span>
+          <span>${den}</span>
+        </span>`;
+      }
+
+      function buildExpressionOnlyHTML(q){
+        return `<span class="expr">${q.equationLeftHTML}</span>`;
+      }
+
+      function buildFullEquationHTML(q){
+        return `<span class="expr">${q.equationLeftHTML}</span><span class="equals">=</span><span class="value">${q.equationRightText}</span>`;
+      }
+
+      function shouldShowFullEquation(q, stage){
+        if(q.mode === 'addsub') return stage >= 3;
+        if(q.negative) return stage >= 3;
+        return stage >= 3;
+      }
+
+      function renderEquationBox(){
+        if(!state.question) return;
+        const showFull = shouldShowFullEquation(state.question, state.stage);
+        questionEquation.innerHTML = showFull
+          ? buildFullEquationHTML(state.question)
+          : buildExpressionOnlyHTML(state.question);
+
+        const faded = state.settings.hideEquationAfterStage1 && state.stage > 1;
+        questionEquation.style.opacity = faded ? '0.56' : '1';
+        questionEquation.style.filter = faded ? 'grayscale(.12)' : 'none';
+      }
+
+      function mapRange(v, min, max, minX, maxX){
+        if(min === max) return (minX + maxX) / 2;
+        return minX + ((v - min) / (max - min)) * (maxX - minX);
+      }
+
+      function rangeInclusive(start, end){
+        const out = [];
+        const step = start <= end ? 1 : -1;
+        for(let v = start; step > 0 ? v <= end : v >= end; v += step){
+          out.push(v);
+        }
+        return out;
+      }
+
+      function adaptiveDelay(count, totalMs, maxEach = 220, minEach = 70){
+        if(count <= 0) return totalMs;
+        return Math.max(minEach, Math.min(maxEach, totalMs / count));
+      }
+
+      function addGhostAnimation(node, delay = 0){
+        if(!node) return;
+        node.style.opacity = '0';
+        schedule(() => {
+          node.style.opacity = '1';
+          node.classList.add('ghost-animate');
+        }, delay);
+      }
+
+      function popAnswer(node, delay = 0){
+        if(!node) return;
+        node.style.opacity = '0';
+        schedule(() => {
+          node.style.opacity = '1';
+          node.classList.add('answer-pop');
+        }, delay);
+      }
+
+      function numberWord(n){
+        const words = {
+          1:'one', 2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven',
+          8:'eight', 9:'nine', 10:'ten', 11:'eleven', 12:'twelve', 13:'thirteen', 14:'fourteen'
+        };
+        return words[n] || String(n);
+      }
+
+      function addSubPromptText(q){
+        return q.isAdd ? `Subtract ${numberWord(q.k)}` : `Add ${numberWord(q.k)}`;
+      }
+
+      function multPromptText(q){
+        return `Divide by ${q.a} to find x`;
+      }
+
+      function divPromptText(q){
+        return `Multiply by ${q.d} to find x`;
+      }
+
+      function buildQuestion(){
+        switch(state.settings.equationType){
+          case 'addsub_pos': return buildAddSub(false);
+          case 'addsub_neg': return buildAddSub(true);
+          case 'mult_pos': return buildMult('pos');
+          case 'mult_neg_only': return buildMult('neg');
+          case 'mult_mixed': return buildMult('mixed');
+          case 'div_pos': return buildDiv('pos');
+          case 'div_neg_only': return buildDiv('neg');
+          case 'div_mixed': return buildDiv('mixed');
+          case 'mixed_all':
+            return choice([
+              () => buildAddSub(true),
+              () => buildMult('mixed'),
+              () => buildDiv('mixed')
+            ])();
+          default:
+            return buildAddSub(false);
+        }
+      }
+
+      function buildAddSub(includeNegatives){
+        for(let tries = 0; tries < 1500; tries++){
+          const x = includeNegatives ? randInt(-16,16) : randInt(1,20);
+          const isAdd = Math.random() < 0.5;
+          const k = randInt(2,14);
+          const result = isAdd ? x + k : x - k;
+
+          if(includeNegatives){
+            if(result < -20 || result > 20) continue;
+          } else {
+            if(result < 1 || result > 24) continue;
+          }
+          if(Math.abs(result - x) < 3) continue;
+
+          const exprValue = result;
+          const xValue = x;
+          const minVal = Math.min(exprValue, xValue);
+          const maxVal = Math.max(exprValue, xValue);
+
+          const leftX = minVal >= 0 ? 420 : 250;
+          const rightX = 1380;
+
+          const exprX = mapRange(exprValue, minVal, maxVal, leftX, rightX);
+          const xX = mapRange(xValue, minVal, maxVal, leftX, rightX);
+
+          const tickValues = rangeInclusive(exprValue, xValue);
+          const tickXs = tickValues.map(v => mapRange(v, minVal, maxVal, leftX, rightX));
+
+          return {
+            mode:'addsub',
+            negative:false,
+            isAdd,
+            x,
+            result,
+            k,
+            equationLeftHTML: isAdd ? `x+${k}` : `x-${k}`,
+            equationRightText:String(result),
+            exprValue,
+            xValue,
+            exprX,
+            xX,
+            tickValues,
+            tickXs
+          };
+        }
+
+        return {
+          mode:'addsub',
+          negative:false,
+          isAdd:true,
+          x:6,
+          result:10,
+          k:4,
+          equationLeftHTML:'x+4',
+          equationRightText:'10',
+          exprValue:10,
+          xValue:6,
+          exprX:420,
+          xX:1380,
+          tickValues:rangeInclusive(10,6),
+          tickXs:rangeInclusive(10,6).map(v => mapRange(v,6,10,420,1380))
+        };
+      }
+
+      function buildMult(mode){
+        const coeffs = [2,3,4,5,6,7,8];
+
+        for(let tries = 0; tries < 1500; tries++){
+          const a = choice(coeffs);
+          let x;
+          if(mode === 'pos') x = randInt(2,10);
+          else if(mode === 'neg') x = -randInt(2,10);
+          else x = choice([randInt(2,10), -randInt(2,10)]);
+
+          const result = a * x;
+          if(Math.abs(result) > 72) continue;
+
+          const absX = Math.abs(x);
+          const left = 250;
+          const right = 1380;
+          const step = (right - left) / a;
+
+          const prePoints = [];
+          for(let i = 0; i <= a; i++){
+            prePoints.push({
+              px:left + i * step,
+              value:absX * i,
+              multiplier:i
+            });
+          }
+
+          const negative = result < 0;
+          let points, zeroIndex, xIndex, resultIndex;
+
+          if(negative){
+            points = [];
+            for(let i = 0; i <= a; i++){
+              points.push({
+                px:left + i * step,
+                value:result + absX * i,
+                multiplier:a - i
+              });
+            }
+            resultIndex = 0;
+            xIndex = a - 1;
+            zeroIndex = a;
+          } else {
+            points = prePoints.map(p => ({...p}));
+            zeroIndex = 0;
+            xIndex = 1;
+            resultIndex = a;
+          }
+
+          return {
+            mode:'mult',
+            negative,
+            a,
+            x,
+            result,
+            equationLeftHTML:`${a}x`,
+            equationRightText:String(result),
+            prePoints,
+            preZeroIndex:0,
+            preXIndex:1,
+            preResultIndex:a,
+            points,
+            zeroIndex,
+            xIndex,
+            resultIndex
+          };
+        }
+
+        return buildMult('pos');
+      }
+
+      function buildDiv(mode){
+        const divisors = [2,3,4,5,6,7,8];
+
+        for(let tries = 0; tries < 1500; tries++){
+          const d = choice(divisors);
+          let quotient;
+          if(mode === 'pos') quotient = randInt(2,10);
+          else if(mode === 'neg') quotient = -randInt(2,10);
+          else quotient = choice([randInt(2,10), -randInt(2,10)]);
+
+          const x = d * quotient;
+          if(Math.abs(x) > 72) continue;
+
+          const absQ = Math.abs(quotient);
+          const left = 250;
+          const right = 1380;
+          const step = (right - left) / d;
+
+          const prePoints = [];
+          for(let i = 0; i <= d; i++){
+            prePoints.push({
+              px:left + i * step,
+              value:absQ * i,
+              numerator:i
+            });
+          }
+
+          const negative = quotient < 0;
+          let points, zeroIndex, fracIndex, xIndex;
+
+          if(negative){
+            points = [];
+            for(let i = 0; i <= d; i++){
+              points.push({
+                px:left + i * step,
+                value:x + absQ * i,
+                numerator:d - i
+              });
+            }
+            xIndex = 0;
+            fracIndex = d - 1;
+            zeroIndex = d;
+          } else {
+            points = prePoints.map(p => ({...p}));
+            zeroIndex = 0;
+            fracIndex = 1;
+            xIndex = d;
+          }
+
+          return {
+            mode:'div',
+            negative,
+            d,
+            quotient,
+            x,
+            equationLeftHTML:fractionHTML('x', String(d)),
+            equationRightText:String(quotient),
+            prePoints,
+            preZeroIndex:0,
+            preFracIndex:1,
+            preXIndex:d,
+            points,
+            zeroIndex,
+            fracIndex,
+            xIndex
+          };
+        }
+
+        return buildDiv('pos');
+      }
+
+      function getMaxStage(){
+        const q = state.question;
+        if(!q){
+          const type = state.settings.equationType;
+          if(type.startsWith('addsub')) return 4;
+          if(type === 'mult_pos' || type === 'div_pos') return 4;
+          return 5;
+        }
+        if(q.mode === 'addsub') return 4;
+        return q.negative ? 5 : 4;
+      }
+
+      function addDefs(){
+        const defs = createSVG('defs');
+        const radial = createSVG('radialGradient', {
+          id:'stage1Glow',
+          cx:'50%',
+          cy:'50%',
+          r:'50%'
+        });
+
+        radial.appendChild(createSVG('stop', { offset:'0%', 'stop-color':'#dbeafe', 'stop-opacity':'1' }));
+        radial.appendChild(createSVG('stop', { offset:'70%', 'stop-color':'#dbeafe', 'stop-opacity':'.35' }));
+        radial.appendChild(createSVG('stop', { offset:'100%', 'stop-color':'#dbeafe', 'stop-opacity':'0' }));
+
+        defs.appendChild(radial);
+        svg.appendChild(defs);
+      }
+
+      function drawBaseLine(){
+        appendNode(createSVG('line', {
+          x1:20, y1:LINE_Y, x2:VIEW_W - 20, y2:LINE_Y, class:'main-line'
+        }));
+      }
+
+      function drawTick(x, major = false){
+        return appendNode(createSVG('line', {
+          x1:x,
+          y1:LINE_Y - (major ? 36 : 24),
+          x2:x,
+          y2:LINE_Y + (major ? 36 : 24),
+          class: major ? 'tick-major' : 'tick-minor'
+        }));
+      }
+
+      function drawTopText(x, y, text, size, color='blue'){
+        const classes = ['point-top'];
+        if(color === 'black') classes.push('small-black');
+        if(color === 'ghost') classes.push('ghost-black');
+
+        const el = createSVG('text', {
+          x, y,
+          class:classes.join(' '),
+          'font-size': size
+        });
+        el.textContent = text;
+        return appendNode(el);
+      }
+
+      function drawBottomText(x, y, text, size, color='green'){
+        const classes = ['point-bottom'];
+        if(color === 'black') classes.push('small-black');
+        if(color === 'ghost') classes.push('ghost-black');
+        if(color === 'ghostGreen') classes.push('ghost-green');
+
+        const el = createSVG('text', {
+          x, y,
+          class:classes.join(' '),
+          'font-size': size
+        });
+        el.textContent = text;
+        return appendNode(el);
+      }
+
+      function drawFractionTop(x, y, num, den, size, color='blue'){
+        const group = createSVG('g', {});
+        const txtClass = ['point-top'];
+        if(color === 'black') txtClass.push('small-black');
+        if(color === 'ghost') txtClass.push('ghost-black');
+
+        const strokeColor = color === 'black' ? '#111' : color === 'ghost' ? '#8a93a1' : '#2563eb';
+
+        const top = createSVG('text', { x, y, class:txtClass.join(' '), 'font-size': size });
+        top.textContent = num;
+
+        const width = Math.max(42, Math.max(String(num).length, String(den).length) * (size * 0.36));
+        const bar = createSVG('line', {
+          x1: x - width / 2,
+          y1: y + 15,
+          x2: x + width / 2,
+          y2: y + 15,
+          stroke: strokeColor,
+          'stroke-width': 3.5,
+          'stroke-linecap':'round',
+          opacity: color === 'ghost' ? '.9' : '1'
+        });
+
+        const bottom = createSVG('text', {
+          x, y: y + 44,
+          class:txtClass.join(' '),
+          'font-size': size * 0.92
+        });
+        bottom.textContent = den;
+
+        group.appendChild(top);
+        group.appendChild(bar);
+        group.appendChild(bottom);
+        return appendNode(group);
+      }
+
+      function drawCueText(label, opts = {}){
+        const {
+          fromX,
+          toX,
+          textY,
+          mainFontSize = 30,
+          centerX = null
+        } = opts;
+
+        const text = createSVG('text', {
+          x: centerX ?? ((fromX + toX) / 2),
+          y: textY,
+          class:'point-top ghost-black',
+          'font-size':mainFontSize
+        });
+        text.textContent = label;
+        return appendNode(text);
+      }
+
+      function drawDirectionCue(fromX, toX, label, opts = {}){
+        const {
+          cueY = LINE_Y - 98,
+          textY = cueY - 18,
+          mainFontSize = 30
+        } = opts;
+
+        appendNode(createSVG('line', {
+          x1:fromX,
+          y1:cueY,
+          x2:toX,
+          y2:cueY,
+          class:'cue-line'
+        }));
+
+        const headSize = 16;
+        appendNode(createSVG('polygon', {
+          class:'cue-head',
+          points: toX > fromX
+            ? `${toX},${cueY} ${toX-headSize},${cueY-headSize/2} ${toX-headSize},${cueY+headSize/2}`
+            : `${toX},${cueY} ${toX+headSize},${cueY-headSize/2} ${toX+headSize},${cueY+headSize/2}`
+        }));
+
+        drawCueText(label, { fromX, toX, textY, mainFontSize });
+      }
+
+      function createArrowHeadAtTangent(xTip, yTip, angleDeg, size = 16){
+        const angle = angleDeg * Math.PI / 180;
+        const backX = xTip - Math.cos(angle) * size;
+        const backY = yTip - Math.sin(angle) * size;
+        const wing = size * 0.55;
+        const perpX = -Math.sin(angle) * wing;
+        const perpY =  Math.cos(angle) * wing;
+
+        return createSVG('polygon', {
+          class:'cue-head',
+          points: `${xTip},${yTip} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`
+        });
+      }
+
+      function drawJumpArcsBetweenTicks(xs, opts = {}){
+        const {
+          cueY = ADD_SUB_ARC_Y,
+          arcHeight = 48,
+          durationMs = 1800,
+          token = null,
+          animated = true
+        } = opts;
+
+        if(!xs || xs.length < 2) return;
+
+        const segCount = xs.length - 1;
+        const perDelay = Math.max(70, Math.min(220, durationMs / segCount));
+
+        for(let i = 0; i < segCount; i++){
+          const x1 = xs[i];
+          const x2 = xs[i + 1];
+          const mid = (x1 + x2) / 2;
+
+          const path = createSVG('path', {
+            d: `M ${x1} ${cueY} Q ${mid} ${cueY - arcHeight} ${x2} ${cueY}`,
+            class:'cue-arc'
+          });
+
+          if(animated){
+            path.style.animationDelay = `${Math.round(i * perDelay)}ms, ${Math.round(i * perDelay)}ms`;
+          } else {
+            path.style.animation = 'dashMove 1.1s linear infinite';
+            path.style.opacity = '.78';
+          }
+
+          appendNode(path);
+        }
+
+        const last = xs[xs.length - 1];
+        const prev = xs[xs.length - 2];
+        const mid = (prev + last) / 2;
+        const tangentDx = (last - mid);
+        const tangentDy = arcHeight;
+        const angle = Math.atan2(tangentDy, tangentDx) * (180 / Math.PI);
+
+        const head = createArrowHeadAtTangent(last, cueY, angle, 16);
+        head.style.opacity = animated ? '0' : '.92';
+        appendNode(head);
+
+        if(animated){
+          schedule(() => {
+            if(token !== null && !isActiveRender(token)) return;
+            head.style.opacity = '.92';
+          }, Math.round((segCount - 1) * perDelay + 140));
+        }
+      }
+
+      function drawPartitionLoops(points, opts = {}){
+        const {
+          cueY = GROUP_LOOP_Y,
+          durationMs = 1800,
+          height = 72,
+          inset = 8,
+          animated = true
+        } = opts;
+
+        if(!points || points.length < 2) return;
+
+        const segCount = points.length - 1;
+        const perDelay = Math.max(90, Math.min(240, durationMs / segCount));
+
+        for(let i = 0; i < segCount; i++){
+          const p1 = points[i];
+          const p2 = points[i + 1];
+          const width = Math.max(40, Math.abs(p2.px - p1.px) - inset * 2);
+          const rx = width / 2;
+          const ry = height / 2;
+          const midX = (p1.px + p2.px) / 2;
+          const gap = 4;
+
+          const topArc = createSVG('path', {
+            d: `M ${midX - rx} ${cueY - gap} A ${rx} ${ry} 0 0 1 ${midX + rx} ${cueY - gap}`,
+            class:'cue-loop'
+          });
+          const bottomArc = createSVG('path', {
+            d: `M ${midX + rx} ${cueY + gap} A ${rx} ${ry} 0 0 1 ${midX - rx} ${cueY + gap}`,
+            class:'cue-loop'
+          });
+
+          if(animated){
+            const startDelay = Math.round(i * perDelay);
+            topArc.style.opacity = '0';
+            bottomArc.style.opacity = '0';
+            schedule(() => { topArc.style.opacity = '.78'; }, startDelay);
+            schedule(() => { bottomArc.style.opacity = '.78'; }, startDelay);
+          } else {
+            topArc.style.opacity = '.78';
+            bottomArc.style.opacity = '.78';
+          }
+
+          appendNode(topArc);
+          appendNode(bottomArc);
+        }
+      }
+
+      function drawPartitionLoopsStatic(points, opts = {}){
+        const {
+          cueY = GROUP_LOOP_Y,
+          height = 72,
+          inset = 8
+        } = opts;
+
+        if(!points || points.length < 2) return;
+
+        for(let i = 0; i < points.length - 1; i++){
+          const p1 = points[i];
+          const p2 = points[i + 1];
+          const width = Math.max(40, Math.abs(p2.px - p1.px) - inset * 2);
+          const rx = width / 2;
+          const ry = height / 2;
+          const midX = (p1.px + p2.px) / 2;
+          const gap = 4;
+
+          const topArc = createSVG('path', {
+            d: `M ${midX - rx} ${cueY - gap} A ${rx} ${ry} 0 0 1 ${midX + rx} ${cueY - gap}`,
+            class:'cue-loop'
+          });
+          const bottomArc = createSVG('path', {
+            d: `M ${midX + rx} ${cueY + gap} A ${rx} ${ry} 0 0 1 ${midX - rx} ${cueY + gap}`,
+            class:'cue-loop'
+          });
+
+          topArc.style.opacity = '.78';
+          bottomArc.style.opacity = '.78';
+
+          appendNode(topArc);
+          appendNode(bottomArc);
+        }
+      }
+
+      function orderedPointSpan(points, startIdx, endIdx){
+        const start = Math.min(startIdx, endIdx);
+        const end = Math.max(startIdx, endIdx);
+        const span = points.slice(start, end + 1);
+        return startIdx <= endIdx ? span : span.reverse();
+      }
+
+      function drawStage1Intro(){
+        drawBaseLine();
+
+        const halo = createSVG('ellipse', {
+          cx: START_CENTER_X,
+          cy: LINE_Y,
+          rx: 120,
+          ry: 84,
+          class:'stage1-halo'
+        });
+        appendNode(halo);
+
+        const intro = createSVG('text', {
+          x: START_CENTER_X,
+          y: 178,
+          class:'stage1-label'
+        });
+        intro.textContent = 'Start with x';
+        appendNode(intro);
+
+        const pulseGroup = createSVG('g', { class:'stage1-pulse' });
+        const tick = createSVG('line', {
+          x1:START_CENTER_X, y1:LINE_Y - 36,
+          x2:START_CENTER_X, y2:LINE_Y + 36,
+          class:'tick-major'
+        });
+        pulseGroup.appendChild(tick);
+        appendNode(pulseGroup);
+
+        drawTopText(START_CENTER_X, TOP_Y_MAIN, 'x', 72, 'blue');
+      }
+
+      function animateSlidingXPair(targetX, callback, token, opts = {}){
+        const {
+          showQuestionMark = false,
+          fromX = START_CENTER_X,
+          toX = targetX
+        } = opts;
+
+        drawBaseLine();
+
+        const layer = createSVG('g', {});
+        layer.style.transform = `translateX(${fromX - toX}px)`;
+        layer.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.22,.8,.2,1)`;
+
+        const tick = createSVG('line', {
+          x1:toX, y1:LINE_Y - 36,
+          x2:toX, y2:LINE_Y + 36,
+          class:'tick-major'
+        });
+
+        const top = createSVG('text', {
+          x:toX, y:TOP_Y_MAIN, class:'point-top', 'font-size':72
+        });
+        top.textContent = 'x';
+
+        layer.appendChild(tick);
+        layer.appendChild(top);
+
+        if(showQuestionMark){
+          const bottom = createSVG('text', {
+            x:toX, y:BOTTOM_Y_MAIN, class:'point-bottom', 'font-size':88
+          });
+          bottom.textContent = '?';
+          layer.appendChild(bottom);
+        }
+
+        appendNode(layer);
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            layer.style.transform = 'translateX(0px)';
+          });
+        });
+
+        if(callback){
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            callback();
+          }, SLIDE_MS);
+        }
+      }
+
+      function renderStage1BackwardSlide(token){
+        const q = state.question;
+        let fromX = START_CENTER_X;
+
+        if(q.mode === 'addsub') fromX = q.xX;
+        else if(q.mode === 'mult') fromX = q.prePoints[q.preXIndex].px;
+        else if(q.mode === 'div') fromX = q.prePoints[q.preXIndex].px;
+
+        drawBaseLine();
+
+        const halo = createSVG('ellipse', {
+          cx: START_CENTER_X,
+          cy: LINE_Y,
+          rx: 120,
+          ry: 84,
+          class:'stage1-halo'
+        });
+        appendNode(halo);
+
+        const intro = createSVG('text', {
+          x: START_CENTER_X,
+          y: 178,
+          class:'stage1-label'
+        });
+        intro.textContent = 'Start with x';
+        appendNode(intro);
+
+        animateSlidingXPair(START_CENTER_X, null, token, {
+          fromX,
+          toX: START_CENTER_X,
+          showQuestionMark:false
+        });
+      }
+
+      function startNewQuestion(){
+        closeOverlays();
+        state.question = buildQuestion();
+        state.prevStage = 1;
+        state.stage = 1;
+        state.navDirection = 'forward';
+        renderEquationBox();
+        renderBoard(false);
+        updateControls();
+      }
+
+      function nextStage(animated = true){
+        const maxStage = getMaxStage();
+        if(state.stage < maxStage){
+          state.prevStage = state.stage;
+          state.navDirection = 'forward';
+          state.stage += 1;
+          renderEquationBox();
+          renderBoard(animated);
+          updateControls();
+        }
+      }
+
+      function prevStage(){
+        if(state.stage > 1){
+          state.prevStage = state.stage;
+          state.navDirection = 'backward';
+          state.stage -= 1;
+          renderEquationBox();
+          renderBoard(true);
+          updateControls();
+        }
+      }
+
+      function updateControls(){
+        const maxStage = getMaxStage();
+        backStepBtn.disabled = state.stage === 1;
+        nextStepBtn.disabled = state.stage === maxStage;
+        footerNewQ.classList.toggle('show', state.stage === maxStage);
+      }
+
+      function renderAddSubBuild(animated, token, showGiven, showCue){
+        drawBaseLine();
+
+        const q = state.question;
+        const exprText = stripHTML(q.equationLeftHTML);
+
+        if(!animated || (state.navDirection === 'backward' && state.stage === 2)){
+          q.tickValues.forEach((v, i) => {
+            const isMajor = v === q.xValue || v === q.exprValue;
+            drawTick(q.tickXs[i], isMajor);
+          });
+          drawTopText(q.xX, TOP_Y_MAIN, 'x', 72, 'blue');
+          drawTopText(q.exprX, TOP_Y_MAIN, exprText, 66, 'blue');
+          if(showGiven){
+            drawBottomText(q.xX, BOTTOM_Y_MAIN, '?', 88, 'green');
+            drawBottomText(q.exprX, BOTTOM_Y_MAIN, String(q.result), 74, 'green');
+          }
+          if(showCue){
+            drawDirectionCue(q.xX, q.exprX, q.isAdd ? 'move right' : 'move left');
+          }
+          return;
+        }
+
+        animateSlidingXPair(q.xX, () => {
+          if(!isActiveRender(token)) return;
+
+          const xIdx = q.tickValues.indexOf(q.xValue);
+          const exprIdx = q.tickValues.indexOf(q.exprValue);
+          const path = [];
+
+          if(exprIdx > xIdx){
+            for(let i = xIdx + 1; i <= exprIdx; i++) path.push(i);
+          } else {
+            for(let i = xIdx - 1; i >= exprIdx; i--) path.push(i);
+          }
+
+          const perDelay = adaptiveDelay(path.length, SEQ_BASE_MS);
+
+          path.forEach((idx, orderIdx) => {
+            schedule(() => {
+              if(!isActiveRender(token)) return;
+              const x = q.tickXs[idx];
+              const isExpr = idx === exprIdx;
+              drawTick(x, isExpr);
+              if(isExpr){
+                const top = drawTopText(x, TOP_Y_MAIN, exprText, 66, 'blue');
+                addGhostAnimation(top);
+              }
+            }, Math.round(orderIdx * perDelay));
+          });
+
+          if(showCue){
+            schedule(() => {
+              if(!isActiveRender(token)) return;
+              drawDirectionCue(q.xX, q.exprX, q.isAdd ? 'move right' : 'move left');
+            }, Math.min(600, path.length * perDelay));
+          }
+        }, token, { showQuestionMark:false });
+      }
+
+      function renderAddSubGiven(animated, token){
+        drawBaseLine();
+
+        const q = state.question;
+        const exprText = stripHTML(q.equationLeftHTML);
+
+        q.tickValues.forEach((v, i) => {
+          const isMajor = v === q.xValue || v === q.exprValue;
+          drawTick(q.tickXs[i], isMajor);
+        });
+
+        drawTopText(q.xX, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(q.xX, BOTTOM_Y_MAIN, '?', 88, 'green');
+        drawTopText(q.exprX, TOP_Y_MAIN, exprText, 66, 'blue');
+
+        if(animated && state.navDirection === 'forward'){
+          const given = drawBottomText(q.exprX, BOTTOM_Y_MAIN, String(q.result), 74, 'green');
+          popAnswer(given, 120);
+        } else {
+          drawBottomText(q.exprX, BOTTOM_Y_MAIN, String(q.result), 74, 'green');
+        }
+      }
+
+      function renderAddSubFinal(animated, token){
+        drawBaseLine();
+
+        const q = state.question;
+
+        q.tickValues.forEach((v, i) => {
+          const x = q.tickXs[i];
+          const isMajor = v === q.xValue || v === q.exprValue;
+          drawTick(x, isMajor);
+
+          if(v === q.xValue){
+            drawTopText(x, TOP_Y_MAIN, 'x', 72, 'blue');
+          }
+          if(v === q.exprValue){
+            drawTopText(x, TOP_Y_MAIN, stripHTML(q.equationLeftHTML), 66, 'blue');
+            drawBottomText(x, BOTTOM_Y_MAIN, String(q.result), 74, 'green');
+          }
+        });
+
+        const exprIdx = q.tickValues.indexOf(q.exprValue);
+        const xIdx = q.tickValues.indexOf(q.xValue);
+        const path = [];
+
+        if(xIdx > exprIdx){
+          for(let i = exprIdx + 1; i < xIdx; i++) path.push(i);
+        } else {
+          for(let i = exprIdx - 1; i > xIdx; i--) path.push(i);
+        }
+
+        const perDelay = adaptiveDelay(path.length, REVEAL_BASE_MS);
+        const revealStart = animated ? STAGE3_PAUSE_MS : 0;
+
+        const questionMark = drawBottomText(q.xX, BOTTOM_Y_MAIN, '?', 88, 'green');
+
+        let cueXs = q.tickXs.slice(Math.min(exprIdx, xIdx), Math.max(exprIdx, xIdx) + 1);
+        if(exprIdx > xIdx) cueXs = cueXs.reverse();
+
+        if(!animated || state.navDirection === 'backward'){
+          path.forEach(i => drawBottomText(q.tickXs[i], BOTTOM_Y_SMALL, String(q.tickValues[i]), 34, 'ghost'));
+          drawCueText(addSubPromptText(q), {
+            fromX: q.exprX, toX: q.xX, textY: ADD_SUB_TEXT_Y, mainFontSize: 30
+          });
+          drawJumpArcsBetweenTicks(cueXs, {
+            cueY: ADD_SUB_ARC_Y, arcHeight: 48, durationMs: 1800, token, animated:false
+          });
+          questionMark.style.opacity = '0';
+          drawBottomText(q.xX, BOTTOM_Y_MAIN, String(q.x), 88, 'green');
+          return;
+        }
+
+        path.forEach((i, orderIdx) => {
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            const node = drawBottomText(q.tickXs[i], BOTTOM_Y_SMALL, String(q.tickValues[i]), 34, 'ghost');
+            addGhostAnimation(node);
+          }, revealStart + Math.round(orderIdx * perDelay));
+        });
+
+        schedule(() => {
+          if(!isActiveRender(token)) return;
+          drawCueText(addSubPromptText(q), {
+            fromX: q.exprX, toX: q.xX, textY: ADD_SUB_TEXT_Y, mainFontSize: 30
+          });
+          drawJumpArcsBetweenTicks(cueXs, {
+            cueY: ADD_SUB_ARC_Y, arcHeight: 48, durationMs: 1800, token, animated:true
+          });
+        }, revealStart);
+
+        const answerDelay = revealStart + Math.max(REVEAL_BASE_MS, path.length * perDelay);
+        schedule(() => {
+          if(!isActiveRender(token)) return;
+          questionMark.style.opacity = '0';
+          const ans = drawBottomText(q.xX, BOTTOM_Y_MAIN, String(q.x), 88, 'green');
+          ans.style.opacity = '0';
+          ans.classList.add('answer-pop');
+          ans.style.opacity = '1';
+        }, answerDelay);
+      }
+
+      function renderMultPreBuild(animated, token){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.prePoints;
+        const xPoint = points[q.preXIndex];
+        const resultPoint = points[q.preResultIndex];
+        const zeroPoint = points[q.preZeroIndex];
+
+        if(!animated || state.navDirection === 'backward'){
+          points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preXIndex || idx === q.preResultIndex));
+          drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+          drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+          drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+          drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
+          drawCueText('equal groups', {
+            fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 30
+          });
+          const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
+          drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
+          return;
+        }
+
+        animateSlidingXPair(xPoint.px, () => {
+          if(!isActiveRender(token)) return;
+
+          points.forEach((p, idx) => {
+            if(idx === q.preXIndex) return;
+            const major = idx === q.preZeroIndex || idx === q.preResultIndex;
+            drawTick(p.px, major);
+
+            if(idx === q.preZeroIndex){
+              const t = drawTopText(p.px, TOP_Y_MAIN, '0', 62, 'black');
+              const b = drawBottomText(p.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+              addGhostAnimation(t);
+              addGhostAnimation(b);
+            }
+
+            if(idx === q.preResultIndex){
+              const t = drawTopText(p.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
+              addGhostAnimation(t);
+            }
+          });
+
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            drawCueText('equal groups', {
+              fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 30
+            });
+            const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
+            drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:true });
+          }, 240);
+        }, token, { showQuestionMark:false });
+      }
+
+      function renderMultGiven(animated){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.prePoints;
+        const xPoint = points[q.preXIndex];
+        const resultPoint = points[q.preResultIndex];
+        const zeroPoint = points[q.preZeroIndex];
+
+        points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preXIndex || idx === q.preResultIndex));
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 88, 'green');
+        drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
+        drawBottomText(resultPoint.px, BOTTOM_Y_MAIN, String(q.result), 86, 'green');
+
+        drawCueText('equal groups', {
+          fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 30
+        });
+        const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
+        drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
+      }
+
+      function renderMultNegativeKnown(){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.points;
+        const xPoint = points[q.xIndex];
+        const resultPoint = points[q.resultIndex];
+        const zeroPoint = points[q.zeroIndex];
+
+        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.xIndex || idx === q.resultIndex));
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 88, 'green');
+        drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
+        drawBottomText(resultPoint.px, BOTTOM_Y_MAIN, String(q.result), 86, 'green');
+
+        drawCueText('equal groups', {
+          fromX: resultPoint.px, toX: zeroPoint.px, textY: MULT_TEXT_Y, mainFontSize: 30
+        });
+        const orderedPoints = orderedPointSpan(points, q.resultIndex, q.zeroIndex);
+        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
+      }
+
+      function renderMultFinal(animated, token){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.points;
+        const xPoint = points[q.xIndex];
+        const resultPoint = points[q.resultIndex];
+        const zeroPoint = points[q.zeroIndex];
+
+        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.xIndex || idx === q.resultIndex));
+
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
+        drawBottomText(resultPoint.px, BOTTOM_Y_MAIN, String(q.result), 86, 'green');
+
+        const orderedPoints = orderedPointSpan(points, q.zeroIndex, q.resultIndex);
+        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
+
+        let mids = points.filter((_, idx) => idx !== q.zeroIndex && idx !== q.xIndex && idx !== q.resultIndex);
+        const revealTowardsQuestion = q.negative ? mids : mids.slice().reverse();
+        const perDelay = adaptiveDelay(revealTowardsQuestion.length, REVEAL_BASE_MS);
+        const revealStart = animated ? STAGE3_PAUSE_MS : 0;
+        const questionMark = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 88, 'green');
+
+        if(animated && state.navDirection === 'forward'){
+          revealTowardsQuestion.forEach((p, orderIdx) => {
+            const top = drawTopText(p.px, TOP_Y_SMALL, `${p.multiplier}x`, 34, 'ghost');
+            const bottom = drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 32, 'ghost');
+            schedule(() => {
+              if(!isActiveRender(token)) return;
+              addGhostAnimation(top);
+              addGhostAnimation(bottom);
+            }, revealStart + 280 + Math.round(orderIdx * perDelay));
+          });
+
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            drawCueText(multPromptText(q), {
+              fromX: resultPoint.px, toX: xPoint.px, textY: MULT_TEXT_Y, mainFontSize: 30
+            });
+          }, revealStart + 100);
+
+          const answerDelay = revealStart + Math.max(REVEAL_BASE_MS, revealTowardsQuestion.length * perDelay);
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            questionMark.style.opacity = '0';
+            const ans = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 88, 'green');
+            ans.style.opacity = '0';
+            ans.classList.add('answer-pop');
+            ans.style.opacity = '1';
+          }, answerDelay);
+        } else {
+          revealTowardsQuestion.forEach((p) => {
+            drawTopText(p.px, TOP_Y_SMALL, `${p.multiplier}x`, 34, 'ghost');
+            drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 32, 'ghost');
+          });
+          drawCueText(multPromptText(q), {
+            fromX: resultPoint.px, toX: xPoint.px, textY: MULT_TEXT_Y, mainFontSize: 30
+          });
+          questionMark.style.opacity = '0';
+          drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 88, 'green');
+        }
+      }
+
+      function renderDivPreBuild(animated, token){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.prePoints;
+        const xPoint = points[q.preXIndex];
+        const fracPoint = points[q.preFracIndex];
+        const zeroPoint = points[q.preZeroIndex];
+
+        if(!animated || state.navDirection === 'backward'){
+          points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex));
+          drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+          drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+          drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+          drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+
+          drawCueText('equal groups', {
+            fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 30
+          });
+          const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
+          drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
+          return;
+        }
+
+        animateSlidingXPair(xPoint.px, () => {
+          if(!isActiveRender(token)) return;
+
+          points.forEach((p, idx) => {
+            if(idx === q.preXIndex) return;
+            const major = idx === q.preZeroIndex || idx === q.preFracIndex;
+            drawTick(p.px, major);
+
+            if(idx === q.preZeroIndex){
+              const t = drawTopText(p.px, TOP_Y_MAIN, '0', 62, 'black');
+              const b = drawBottomText(p.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+              addGhostAnimation(t);
+              addGhostAnimation(b);
+            }
+
+            if(idx === q.preFracIndex){
+              const t = drawFractionTop(p.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+              addGhostAnimation(t);
+            }
+          });
+
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            drawCueText('equal groups', {
+              fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 30
+            });
+            const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
+            drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:true });
+          }, 240);
+        }, token, { showQuestionMark:false });
+      }
+
+      function renderDivGiven(animated){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.prePoints;
+        const xPoint = points[q.preXIndex];
+        const fracPoint = points[q.preFracIndex];
+        const zeroPoint = points[q.preZeroIndex];
+
+        points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex));
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 88, 'green');
+        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 86, 'green');
+
+        drawCueText('equal groups', {
+          fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 30
+        });
+        const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
+        drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
+      }
+
+      function renderDivNegativeKnown(){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.points;
+        const xPoint = points[q.xIndex];
+        const fracPoint = points[q.fracIndex];
+        const zeroPoint = points[q.zeroIndex];
+
+        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.fracIndex || idx === q.xIndex));
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 86, 'green');
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 88, 'green');
+
+        drawCueText('equal groups', {
+          fromX: xPoint.px, toX: zeroPoint.px, textY: DIV_TEXT_Y, mainFontSize: 30
+        });
+        const orderedPoints = orderedPointSpan(points, q.xIndex, q.zeroIndex);
+        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
+      }
+
+      function renderDivFinal(animated, token){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.points;
+        const xPoint = points[q.xIndex];
+        const fracPoint = points[q.fracIndex];
+        const zeroPoint = points[q.zeroIndex];
+
+        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.fracIndex || idx === q.xIndex));
+
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 72, 'black');
+        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 86, 'green');
+
+        const orderedPoints = orderedPointSpan(points, q.zeroIndex, q.xIndex);
+        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
+
+        let mids = points.filter((_, idx) => idx !== q.zeroIndex && idx !== q.fracIndex && idx !== q.xIndex);
+        if(q.negative) mids = mids.reverse();
+
+        const perDelay = adaptiveDelay(mids.length, REVEAL_BASE_MS);
+        const revealStart = animated ? STAGE3_PAUSE_MS : 0;
+        const questionMark = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 88, 'green');
+
+        if(animated && state.navDirection === 'forward'){
+          mids.forEach((p, orderIdx) => {
+            const top = drawFractionTop(p.px, TOP_Y_SMALL - 18, `${p.numerator}x`, String(q.d), 30, 'ghost');
+            const bottom = drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 32, 'ghost');
+            schedule(() => {
+              if(!isActiveRender(token)) return;
+              addGhostAnimation(top);
+              addGhostAnimation(bottom);
+            }, revealStart + Math.round(orderIdx * perDelay));
+          });
+
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            drawCueText(divPromptText(q), {
+              fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 30
+            });
+          }, revealStart + 100);
+
+          const answerDelay = revealStart + Math.max(REVEAL_BASE_MS, mids.length * perDelay);
+          schedule(() => {
+            if(!isActiveRender(token)) return;
+            questionMark.style.opacity = '0';
+            const finalX = drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 86, 'green');
+            finalX.style.opacity = '0';
+            finalX.classList.add('answer-pop');
+            finalX.style.opacity = '1';
+          }, answerDelay);
+        } else {
+          mids.forEach((p) => {
+            drawFractionTop(p.px, TOP_Y_SMALL - 18, `${p.numerator}x`, String(q.d), 30, 'ghost');
+            drawBottomText(p.px, BOTTOM_Y_SMALL, String(p.value), 32, 'ghost');
+          });
+          drawCueText(divPromptText(q), {
+            fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 30
+          });
+          questionMark.style.opacity = '0';
+          drawBottomText(xPoint.px, BOTTOM_Y_MAIN, String(q.x), 86, 'green');
+        }
+      }
+
+      function applySceneTransform(group, sx, sy = 1, skew = 0){
+        group.setAttribute(
+          'transform',
+          `translate(${VIEW_W/2} ${LINE_Y}) skewY(${skew}) scale(${sx} ${sy}) translate(${-VIEW_W/2} ${-LINE_Y})`
+        );
+      }
+
+      function renderFlipAnimation(token, drawFront, drawBack, reverse = false){
+        const front = createSVG('g', {});
+        const back = createSVG('g', {});
+        appendNode(front);
+        appendNode(back);
+
+        setDrawRoot(front);
+        drawFront();
+        setDrawRoot(back);
+        drawBack();
+        setDrawRoot(svg);
+
+        if(reverse){
+          front.style.opacity = '0';
+          back.style.opacity = '1';
+          applySceneTransform(back, 1, 1, 0);
+        } else {
+          front.style.opacity = '1';
+          back.style.opacity = '0';
+        }
+
+        let start = null;
+        function step(ts){
+          if(!isActiveRender(token)) return;
+          if(start === null) start = ts;
+          const p = Math.min(1, (ts - start) / FLIP_MS);
+
+          if(!reverse){
+            if(p < 0.5){
+              const t = p / 0.5;
+              const sx = 1 - 0.95 * t;
+              const sy = 1 - 0.08 * t;
+              const skew = 8 * t;
+              front.style.opacity = String(1 - 0.8 * t);
+              back.style.opacity = '0';
+              applySceneTransform(front, Math.max(0.05, sx), sy, skew);
+            } else {
+              const t = (p - 0.5) / 0.5;
+              const sx = 0.05 + 0.95 * t;
+              const sy = 0.92 + 0.08 * t;
+              const skew = 8 - 8 * t;
+              front.style.opacity = '0';
+              back.style.opacity = String(0.2 + 0.8 * t);
+              applySceneTransform(back, sx, sy, skew);
+            }
+          } else {
+            if(p < 0.5){
+              const t = p / 0.5;
+              const sx = 1 - 0.95 * t;
+              const sy = 1 - 0.08 * t;
+              const skew = -8 * t;
+              back.style.opacity = String(1 - 0.8 * t);
+              front.style.opacity = '0';
+              applySceneTransform(back, Math.max(0.05, sx), sy, skew);
+            } else {
+              const t = (p - 0.5) / 0.5;
+              const sx = 0.05 + 0.95 * t;
+              const sy = 0.92 + 0.08 * t;
+              const skew = -8 + 8 * t;
+              back.style.opacity = '0';
+              front.style.opacity = String(0.2 + 0.8 * t);
+              applySceneTransform(front, sx, sy, skew);
+            }
+          }
+
+          if(p < 1){
+            requestAnimationFrame(step);
+          } else {
+            if(reverse){
+              back.remove();
+              front.style.opacity = '1';
+              applySceneTransform(front, 1, 1, 0);
+            } else {
+              front.remove();
+              back.style.opacity = '1';
+              applySceneTransform(back, 1, 1, 0);
+            }
+          }
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      function renderBoard(animated){
+        const token = nextRenderToken();
+        clearBoard();
+        addDefs();
+
+        const q = state.question;
+
+        if(state.stage === 1){
+          if(state.navDirection === 'backward' && state.prevStage === 2){
+            renderStage1BackwardSlide(token);
+          } else {
+            drawStage1Intro();
+          }
+          return;
+        }
+
+        if(q.mode === 'addsub'){
+          if(state.stage === 2) renderAddSubBuild(animated, token, false, true);
+          else if(state.stage === 3) renderAddSubGiven(animated, token);
+          else renderAddSubFinal(animated, token);
+          return;
+        }
+
+        if(q.mode === 'mult'){
+          if(!q.negative){
+            if(state.stage === 2) renderMultPreBuild(animated, token);
+            else if(state.stage === 3) renderMultGiven(animated);
+            else renderMultFinal(animated, token);
+            return;
+          }
+
+          if(state.stage === 2){
+            renderMultPreBuild(animated, token);
+          } else if(state.stage === 3){
+            if(state.navDirection === 'backward' && state.prevStage === 4){
+              renderFlipAnimation(
+                token,
+                () => { renderMultGiven(false); },
+                () => { renderMultNegativeKnown(); },
+                true
+              );
+            } else {
+              renderMultGiven(animated);
+            }
+          } else if(state.stage === 4){
+            if(state.navDirection === 'forward' && state.prevStage === 3 && animated){
+              renderFlipAnimation(
+                token,
+                () => { renderMultGiven(false); },
+                () => { renderMultNegativeKnown(); },
+                false
+              );
+            } else {
+              renderMultNegativeKnown();
+            }
+          } else {
+            if(state.navDirection === 'backward'){
+              renderMultNegativeKnown();
+            } else {
+              renderMultFinal(animated, token);
+            }
+          }
+          return;
+        }
+
+        if(!q.negative){
+          if(state.stage === 2) renderDivPreBuild(animated, token);
+          else if(state.stage === 3) renderDivGiven(animated);
+          else renderDivFinal(animated, token);
+          return;
+        }
+
+        if(state.stage === 2){
+          renderDivPreBuild(animated, token);
+        } else if(state.stage === 3){
+          if(state.navDirection === 'backward' && state.prevStage === 4){
+            renderFlipAnimation(
+              token,
+              () => { renderDivGiven(false); },
+              () => { renderDivNegativeKnown(); },
+              true
+            );
+          } else {
+            renderDivGiven(animated);
+          }
+        } else if(state.stage === 4){
+          if(state.navDirection === 'forward' && state.prevStage === 3 && animated){
+            renderFlipAnimation(
+              token,
+              () => { renderDivGiven(false); },
+              () => { renderDivNegativeKnown(); },
+              false
+            );
+          } else {
+            renderDivNegativeKnown();
+          }
+        } else {
+          if(state.navDirection === 'backward'){
+            renderDivNegativeKnown();
+          } else {
+            renderDivFinal(animated, token);
+          }
+        }
+      }
+
+      toolsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setToolsOpen(!toolsMenu.classList.contains('open'));
+      });
+
+      teacherBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setTeacherOpen(!teacherPanel.classList.contains('open'));
+      });
+
+      document.addEventListener('click', (e) => {
+        if(teacherPanel.classList.contains('open') && !teacherPanel.contains(e.target) && !teacherBtn.contains(e.target)){
+          setTeacherOpen(false);
+        }
+        if(toolsMenu.classList.contains('open') && !toolsMenu.contains(e.target) && !toolsBtn.contains(e.target)){
+          setToolsOpen(false);
+        }
+      });
+
+      equationTypeSelect.addEventListener('change', () => {
+        state.settings.equationType = equationTypeSelect.value;
+      });
+
+      hideEquationAfterStage1.addEventListener('change', () => {
+        state.settings.hideEquationAfterStage1 = hideEquationAfterStage1.checked;
+        if(state.question) renderEquationBox();
+      });
+
+      forceIntegerAnswers.addEventListener('change', () => {
+        state.settings.forceIntegerAnswers = forceIntegerAnswers.checked;
+      });
+
+      nextStepBtn.addEventListener('click', () => nextStage(true));
+      backStepBtn.addEventListener('click', prevStage);
+      footerNewQ.addEventListener('click', startNewQuestion);
+      newBtn.addEventListener('click', startNewQuestion);
+      resetBtn.addEventListener('click', () => window.location.reload());
+
+      document.addEventListener('keydown', (e) => {
+        const tag = document.activeElement?.tagName;
+        const isFormFocus = tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA';
+        if(isFormFocus && e.key !== 'Escape') return;
+
+        if(e.key === 'ArrowRight'){
+          e.preventDefault();
+          nextStage(true);
+        } else if(e.key === 'ArrowLeft'){
+          e.preventDefault();
+          prevStage();
+        } else if(e.key === 'Enter'){
+          e.preventDefault();
+          startNewQuestion();
+        } else if(e.key === 'Escape'){
+          e.preventDefault();
+          closeOverlays();
+        } else if(e.key.toLowerCase() === 't'){
+          e.preventDefault();
+          setToolsOpen(!toolsMenu.classList.contains('open'));
+        }
+      });
+
+      setToolsOpen(false);
+      setTeacherOpen(false);
+      startNewQuestion();
+    })();
+  </script>
+</body>
+</html>
