@@ -560,41 +560,45 @@
 (() => {
   const LEVELS = {
     sweet: {
-      name: 'Sweet',
-      descriptor: '2–3 terms, totals to 10, simple algebra or numbers',
-      totalMin: 2,
-      totalMax: 10,
-      termOptions: [2,3],
-      numericChance: 0.45,
-      singleLetterOnly: true
-    },
-    mild: {
-      name: 'Mild',
-      descriptor: '2–3 terms, totals to 10, simple algebra or numbers',
-      totalMin: 2,
-      totalMax: 10,
-      termOptions: [2,3],
-      numericChance: 0.50,
-      singleLetterOnly: true
-    },
-    medium: {
-      name: 'Medium',
-      descriptor: '3–4 terms, totals to 12, simple algebra or numbers',
-      totalMin: 5,
-      totalMax: 12,
-      termOptions: [3,4],
-      numericChance: 0.50,
-      singleLetterOnly: false
-    },
-    spicy: {
-      name: 'Spicy',
-      descriptor: '4–5 terms, totals to 20, simple algebra or numbers',
-      totalMin: 6,
-      totalMax: 20,
-      termOptions: [4,5],
-      numericChance: 0.50,
-      singleLetterOnly: false
-    }
+  name: 'Sweet',
+  descriptor: '2–3 terms, totals to 10, simple algebra or numbers',
+  totalMin: 2,
+  totalMax: 10,
+  termOptions: [2,3],
+  numericChance: 0.45,
+  singleLetterOnly: true,
+  revealGroups: true
+},
+mild: {
+  name: 'Mild',
+  descriptor: '2–3 terms, totals to 10, simple algebra or numbers',
+  totalMin: 2,
+  totalMax: 10,
+  termOptions: [2,3],
+  numericChance: 0.50,
+  singleLetterOnly: true,
+  revealGroups: false
+},
+medium: {
+  name: 'Medium',
+  descriptor: '3–4 terms, totals to 12, simple algebra or numbers',
+  totalMin: 5,
+  totalMax: 12,
+  termOptions: [3,4],
+  numericChance: 0.50,
+  singleLetterOnly: false,
+  revealGroups: false
+},
+spicy: {
+  name: 'Spicy',
+  descriptor: '4–5 terms, totals to 20, simple algebra or numbers',
+  totalMin: 6,
+  totalMax: 20,
+  termOptions: [4,5],
+  numericChance: 0.50,
+  singleLetterOnly: false,
+  revealGroups: false
+}
   };
 
   const QUESTION_WEIGHTS = [
@@ -692,23 +696,33 @@
 
   function plainSingleTerm(coef, factor){
     if(factor.kind === 'numeric'){
-      return String(coef * factor.value);
+      if(coef === 1) return String(factor.value);
+      return `${coef} × ${factor.value}`;
     }
-    if(coef === 1) return `${factor.value}`;
+
+    if(coef === 1) return String(factor.value);
     return `${coef}${factor.value}`;
   }
 
-  function termToHTML(coef, factor){
-    if(factor.kind === 'numeric'){
-      return `<span>${escapeHtml(plainSingleTerm(coef, factor))}</span>`;
-    }
-
+  function termToHTML(coef, factor, colourGroups = false){
+  if(factor.kind === 'numeric'){
     if(coef === 1){
-      return `<span>${escapeHtml(factor.value)}</span>`;
+      return `<span>${escapeHtml(String(factor.value))}</span>`;
     }
-    return `<span><span class="coef">${coef}</span>${escapeHtml(factor.value)}</span>`;
+    const coefHtml = colourGroups
+      ? `<span class="coef">${coef}</span>`
+      : `<span>${coef}</span>`;
+    return `<span>${coefHtml}<span class="times"> × </span>${escapeHtml(String(factor.value))}</span>`;
   }
 
+  if(coef === 1){
+    return `<span>${escapeHtml(factor.value)}</span>`;
+  }
+  const coefHtml = colourGroups
+    ? `<span class="coef">${coef}</span>`
+    : `<span>${coef}</span>`;
+  return `<span>${coefHtml}${escapeHtml(factor.value)}</span>`;
+}
   function missingToHTML(){
     return `<span class="blank">&nbsp;</span>`;
   }
@@ -719,13 +733,35 @@
       return `${idx === 0 ? '' : ' + '}${txt}`;
     }).join('');
   }
+function targetExpressionHTML(question){
+  const colourGroups = question.revealGroups === true;
 
-  function termsExpressionHTML(terms, factor, hideIndex = -1){
-    return terms.map((coef, idx) => {
-      const part = (idx === hideIndex) ? missingToHTML() : termToHTML(coef, factor);
-      return `${idx === 0 ? '' : ' + '}${part}`;
-    }).join('');
+  if(question.factor.kind === 'numeric'){
+    if(question.total === 1){
+      return `<span>${escapeHtml(String(question.factor.value))}</span>`;
+    }
+    const coefHtml = colourGroups
+      ? `<span class="coef">${question.total}</span>`
+      : `<span>${question.total}</span>`;
+    return `<span>${coefHtml}<span class="times"> × </span>${escapeHtml(String(question.factor.value))}</span>`;
   }
+
+  if(question.total === 1){
+    return `<span>${escapeHtml(String(question.factor.value))}</span>`;
+  }
+  const coefHtml = colourGroups
+    ? `<span class="coef">${question.total}</span>`
+    : `<span>${question.total}</span>`;
+  return `<span>${coefHtml}${escapeHtml(String(question.factor.value))}</span>`;
+}
+
+function termsExpressionHTML(question, hideIndex = -1){
+  const colourGroups = question.revealGroups === true;
+  return question.terms.map((coef, idx) => {
+    const part = (idx === hideIndex) ? missingToHTML() : termToHTML(coef, question.factor, colourGroups);
+    return `${idx === 0 ? '' : ' <span class="op">+</span> '}${part}`;
+  }).join('');
+}
 
   function promptForType(type){
     if(type === 'simplify') return 'Simplify this expression.';
@@ -754,43 +790,44 @@
   }
 
   function makeSimplifyQuestion(cfg){
-    const factor = makeFactor(cfg);
-    const total = randInt(cfg.totalMin, cfg.totalMax);
-    const termCount = choice(cfg.termOptions);
-    const terms = randomComposition(total, termCount, 1);
+  const factor = makeFactor(cfg);
+  const total = randInt(cfg.totalMin, cfg.totalMax);
+  const termCount = choice(cfg.termOptions);
+  const terms = randomComposition(total, termCount, 1);
 
-    return {
-      type:'simplify',
-      factor,
-      total,
-      terms,
-      prompt:promptForType('simplify'),
-      answer:simplifiedValueText(total, factor),
-      keyStep:`${plainTermsExpression(terms, factor)} = ${simplifiedValueText(total, factor)}`
-    };
-  }
+  return {
+    type:'simplify',
+    factor,
+    total,
+    terms,
+    revealGroups: cfg.revealGroups,
+    prompt:promptForType('simplify'),
+    answer:simplifiedValueText(total, factor),
+    keyStep:`${plainTermsExpression(terms, factor)} = ${simplifiedValueText(total, factor)}`
+  };
+}
 
-  function makeMissingQuestion(cfg){
-    const factor = makeFactor(cfg);
-    const total = randInt(cfg.totalMin, cfg.totalMax);
-    const termCount = choice(cfg.termOptions);
-    const terms = randomComposition(total, termCount, 1);
-    const hideIndex = randInt(0, terms.length - 1);
-    const missingCoef = terms[hideIndex];
+function makeMissingQuestion(cfg){
+  const factor = makeFactor(cfg);
+  const total = randInt(cfg.totalMin, cfg.totalMax);
+  const termCount = choice(cfg.termOptions);
+  const terms = randomComposition(total, termCount, 1);
+  const hideIndex = randInt(0, terms.length - 1);
+  const missingCoef = terms[hideIndex];
 
-    return {
-      type:'missing',
-      factor,
-      total,
-      terms,
-      hideIndex,
-      missingCoef,
-      prompt:promptForType('missing'),
-      answer:plainSingleTerm(missingCoef, factor),
-      keyStep:`${plainTermsExpression(terms, factor)} = ${simplifiedValueText(total, factor)}`
-    };
-  }
-
+  return {
+    type:'missing',
+    factor,
+    total,
+    terms,
+    hideIndex,
+    missingCoef,
+    revealGroups: cfg.revealGroups,
+    prompt:promptForType('missing'),
+    answer:plainSingleTerm(missingCoef, factor),
+    keyStep:`${plainTermsExpression(terms, factor)} = ${plainSingleTerm(total, factor)}`
+  };
+}
   function buildQuestion(cfg){
     const type = weightedChoice(QUESTION_WEIGHTS);
     if(type === 'missing') return makeMissingQuestion(cfg);
@@ -799,10 +836,10 @@
 
   function questionHTML(question){
     if(question.type === 'simplify'){
-      return termsExpressionHTML(question.terms, question.factor);
+      return termsExpressionHTML(question);
     }
 
-    return `${termsExpressionHTML(question.terms, question.factor, question.hideIndex)} = ${escapeHtml(simplifiedValueText(question.total, question.factor))}`;
+    return `${termsExpressionHTML(question, question.hideIndex)} <span class="eq">=</span> ${targetExpressionHTML(question)}`;
   }
 
   function pageHeaderHTML(levelName, descriptor, pageLabel){
