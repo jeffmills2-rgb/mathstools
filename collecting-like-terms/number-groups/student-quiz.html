@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Number Pattern – Student Quiz</title>
+  <title>Collecting Like Terms – Student Quiz</title>
 
   <style>
  :root{
@@ -214,25 +214,41 @@
       padding:0 12px 0;
     }
 
- .expression{
-  margin-top:4px;
-  font-size:clamp(42px,5.4vw,104px);
-  font-weight:900;
-  font-family: var(--mathFont);
-  line-height:1.12;
-  letter-spacing:-.04em;
-  color:#000;
-  word-break:break-word;
-  transition:font-size .18s ease;
-}
+    .expression{
+      margin-top:4px;
+      font-size:clamp(42px,5.4vw,104px);
+      font-weight:900;
+      font-family: var(--mathFont);
+      line-height:1.12;
+      letter-spacing:-.04em;
+      color:#000;
+      word-break:break-word;
+      transition:font-size .18s ease;
+    }
 
     .expression.tight{ font-size:clamp(34px,4.4vw,82px); }
     .expression.tighter{ font-size:clamp(28px,3.6vw,66px); }
 
     .coef{ color:#2563eb; }
-    .times,.op{ color:#000; }
-    .factor{ color:#000; }
-    .factor.reveal-groups{ color:#16a34a; }
+    .times,.op,.eq{ color:#000; }
+
+    .missingBlank{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:1.8em;
+      padding:0 .18em;
+      border-bottom:.09em solid currentColor;
+      transform:translateY(-.02em);
+    }
+
+    .questionPrompt{
+      margin-top:14px;
+      font-weight:950;
+      font-size:18px;
+      color:var(--muted);
+      line-height:1.2;
+    }
 
     .answerRow{
       margin-top:72px;
@@ -243,26 +259,26 @@
       flex-wrap:wrap;
     }
 
- .answerLabel{
-  font-weight:950;
-  font-size:18px;
-  font-family: var(--mathFont);
-}
+    .answerLabel{
+      font-weight:950;
+      font-size:18px;
+      font-family: var(--mathFont);
+    }
 
-   .answerInput{
-  width:320px;
-  max-width:84vw;
-  border:3px solid #111827;
-  border-radius:20px;
-  padding:14px 16px;
-  font-size:18px;
-  font-weight:950;
-  font-family: var(--mathFont);
-  outline:none;
-  text-align:center;
-  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
-  background:#fff;
-}
+    .answerInput{
+      width:320px;
+      max-width:84vw;
+      border:3px solid #111827;
+      border-radius:20px;
+      padding:14px 16px;
+      font-size:18px;
+      font-weight:950;
+      font-family: var(--mathFont);
+      outline:none;
+      text-align:center;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      background:#fff;
+    }
 
     .answerInput.ok{
       border-color:var(--green);
@@ -377,16 +393,16 @@
       color:#9a3412;
     }
 
-.revealAnswer{
-  display:none;
-  font-size:clamp(28px,3vw,46px);
-  font-weight:950;
-  font-family: var(--mathFont);
-  color:#000;
-  letter-spacing:-.03em;
-  word-break:break-word;
-  text-align:center;
-}
+    .revealAnswer{
+      display:none;
+      font-size:clamp(28px,3vw,46px);
+      font-weight:950;
+      font-family: var(--mathFont);
+      color:#000;
+      letter-spacing:-.03em;
+      word-break:break-word;
+      text-align:center;
+    }
 
     .revealAnswer.show{ display:block; }
 
@@ -587,6 +603,7 @@
 
         <div class="questionStage">
           <div id="expression" class="expression">—</div>
+          <div id="questionPrompt" class="questionPrompt"></div>
 
           <div class="answerRow">
             <div class="answerLabel">Answer:</div>
@@ -705,6 +722,11 @@
     }
   };
 
+  const QUESTION_WEIGHTS = [
+    { type:'simplify', weight:60 },
+    { type:'missing', weight:40 }
+  ];
+
   const overlay = document.getElementById('overlay');
   const levelModal = document.getElementById('levelModal');
   const certModal = document.getElementById('certModal');
@@ -714,6 +736,7 @@
   const progressFill = document.getElementById('progressFill');
 
   const expressionEl = document.getElementById('expression');
+  const questionPromptEl = document.getElementById('questionPrompt');
   const answerInput = document.getElementById('answerInput');
   const enterBtn = document.getElementById('enterBtn');
   const nextBtn = document.getElementById('nextBtn');
@@ -735,7 +758,7 @@
   let levelKey = null;
   let qIndex = 0;
   let score = 0;
-  let phase = 'awaiting'; // awaiting, checked
+  let phase = 'awaiting';
   let questions = [];
 
   function showModal(modal){
@@ -756,6 +779,16 @@
 
   function choice(arr){
     return arr[randInt(0, arr.length - 1)];
+  }
+
+  function weightedChoice(items){
+    const total = items.reduce((sum, item) => sum + item.weight, 0);
+    let roll = Math.random() * total;
+    for(const item of items){
+      roll -= item.weight;
+      if(roll <= 0) return item.type;
+    }
+    return items[items.length - 1].type;
   }
 
   function shuffle(arr){
@@ -805,21 +838,87 @@
     return choice(singleLetters);
   }
 
-  function renderExpression(terms, commonFactor, revealGroups){
-    return terms.map((term, index) => {
-      const coefClass = revealGroups ? 'coef' : '';
-      const factorClass = revealGroups ? 'factor reveal-groups' : 'factor';
-      const op = index === 0 ? '' : ' <span class="op">+</span> ';
-      return `${op}<span class="${coefClass}">${term}</span><span class="times"> × </span><span class="${factorClass}">${escapeHtml(commonFactor)}</span>`;
+  function usesRevealColour(question){
+    return question.revealGroups === true;
+  }
+
+  function plainSingleTerm(coef, factorKind, factorValue){
+    if(factorKind === 'numeric'){
+      if(coef === 1) return `${factorValue}`;
+      return `${coef}x${factorValue}`;
+    }
+    if(coef === 1) return `${factorValue}`;
+    return `${coef}${factorValue}`;
+  }
+
+  function numericGroupedHtml(coef, factorValue, colourGroups){
+    if(coef === 1){
+      return `<span>${escapeHtml(String(factorValue))}</span>`;
+    }
+    const coefHtml = colourGroups
+      ? `<span class="coef">${coef}</span>`
+      : `<span>${coef}</span>`;
+    return `<span>${coefHtml}<span class="times"> × </span>${escapeHtml(String(factorValue))}</span>`;
+  }
+
+  function algebraTermHtml(coef, factorValue, colourGroups){
+    if(coef === 1){
+      return `<span>${escapeHtml(String(factorValue))}</span>`;
+    }
+    const coefHtml = colourGroups
+      ? `<span class="coef">${coef}</span>`
+      : `<span>${coef}</span>`;
+    return `<span>${coefHtml}${escapeHtml(String(factorValue))}</span>`;
+  }
+
+  function termHtml(coef, factorKind, factorValue, colourGroups = false){
+    if(factorKind === 'numeric'){
+      return numericGroupedHtml(coef, factorValue, colourGroups);
+    }
+    return algebraTermHtml(coef, factorValue, colourGroups);
+  }
+
+  function targetExpressionHtml(question){
+    const colourGroups = usesRevealColour(question);
+    if(question.kind === 'numeric'){
+      return numericGroupedHtml(question.total, question.commonFactor, colourGroups);
+    }
+    return algebraTermHtml(question.total, question.commonFactor, colourGroups);
+  }
+
+  function expressionFromTermsHtml(question, hideIndex = -1){
+    const colourGroups = usesRevealColour(question);
+    return question.terms.map((coef, index) => {
+      const piece = index === hideIndex
+        ? '<span class="missingBlank">&nbsp;</span>'
+        : termHtml(coef, question.kind, question.commonFactor, colourGroups);
+      return `${index === 0 ? '' : ' <span class="op">+</span> '}${piece}`;
     }).join('');
+  }
+
+  function simplifiedAnswerText(total, factorKind, factorValue){
+    if(factorKind === 'numeric') return String(total * factorValue);
+    return `${total}${factorValue}`;
+  }
+
+  function promptForQuestion(type){
+    return type === 'missing' ? 'What term is missing?' : 'Simplify this expression.';
+  }
+
+  function expressionLengthScore(question){
+    const factorLength = String(question.commonFactor).length;
+    const count = question.terms.length;
+    let score = count + factorLength * count;
+    if(question.kind === 'numeric') score += count * 2;
+    if(question.type === 'missing') score += 8;
+    return score;
   }
 
   function applyExpressionSizing(question){
     expressionEl.classList.remove('tight', 'tighter');
-    const count = question.terms.length;
-    const factorLength = String(question.commonFactor).length;
-    if(count >= 5 || factorLength >= 2) expressionEl.classList.add('tight');
-    if((count >= 5 && factorLength >= 2) || count >= 6) expressionEl.classList.add('tighter');
+    const rawLen = expressionLengthScore(question);
+    if(rawLen >= 12) expressionEl.classList.add('tight');
+    if(rawLen >= 18) expressionEl.classList.add('tighter');
   }
 
   function canonicalLetters(str){
@@ -856,6 +955,32 @@
     if(!parsed) return false;
     return parsed.coefficient === expectedCoefficient
       && parsed.letters === canonicalLetters(String(expectedFactor).toLowerCase());
+  }
+
+  function parseNumericGroupedResponse(raw){
+    if(raw == null) return null;
+    let s = String(raw).toLowerCase().replace(/\s+/g, '');
+    if(!s) return null;
+
+    s = s.replace(/[×*]/g, 'x');
+
+    if(/^\d+$/.test(s)){
+      return { coefficient:1, factor:Number(s) };
+    }
+
+    const match = s.match(/^(\d+)x(\d+)$/);
+    if(!match) return null;
+
+    return {
+      coefficient:Number(match[1]),
+      factor:Number(match[2])
+    };
+  }
+
+  function checkNumericGroupedTerm(studentRaw, expectedCoefficient, expectedFactor){
+    const parsed = parseNumericGroupedResponse(studentRaw);
+    if(!parsed) return false;
+    return parsed.coefficient === expectedCoefficient && parsed.factor === expectedFactor;
   }
 
   function checkNumericEquivalent(studentRaw, expectedValue){
@@ -898,14 +1023,15 @@
   }
 
   function formatRevealAnswer(question){
-    if(question.kind === 'numeric'){
-      return `${question.total} × ${question.commonFactor} = ${question.numericValue}`;
+    if(question.type === 'simplify'){
+      return `${question.plainExpression} = ${question.correctAnswer}`;
     }
-    return `${question.total}${question.commonFactor}`;
+    return `${question.plainExpressionWithBlank} = ${question.targetExpressionPlain}  →  ${question.correctAnswer}`;
   }
 
   function buildQuestion(){
     const cfg = LEVELS[levelKey];
+    const type = weightedChoice(QUESTION_WEIGHTS);
     const isNumeric = Math.random() < cfg.numericChance;
     const total = randInt(cfg.totalMin, cfg.totalMax);
     const termCount = choice(cfg.termOptions);
@@ -915,6 +1041,7 @@
       : randomLetterFactor(cfg.singleLetterOnly);
 
     const question = {
+      type,
       kind: isNumeric ? 'numeric' : 'algebra',
       revealGroups: cfg.revealGroups,
       total,
@@ -925,14 +1052,27 @@
       status: 'unseen',
       solved: false,
       attempts: 0,
-      countedCorrect: false
+      countedCorrect: false,
+      hideIndex: -1
     };
 
-    if(isNumeric){
-      question.numericValue = total * commonFactor;
+    question.targetExpressionPlain = plainSingleTerm(total, question.kind, question.commonFactor);
+
+    if(type === 'missing'){
+      question.hideIndex = randInt(0, terms.length - 1);
+      question.missingCoef = terms[question.hideIndex];
+      question.correctAnswer = plainSingleTerm(question.missingCoef, question.kind, question.commonFactor);
+      question.plainExpressionWithBlank = terms.map((coef, idx) => {
+        return idx === question.hideIndex ? '___' : plainSingleTerm(coef, question.kind, question.commonFactor);
+      }).join(' + ');
+    } else {
+      question.correctAnswer = simplifiedAnswerText(total, question.kind, question.commonFactor);
     }
 
+    question.plainExpression = terms.map(coef => plainSingleTerm(coef, question.kind, question.commonFactor)).join(' + ');
+    question.prompt = promptForQuestion(type);
     question.revealAnswer = formatRevealAnswer(question);
+
     return question;
   }
 
@@ -982,16 +1122,26 @@
     answerInput.disabled = !!question.solved;
   }
 
+  function questionHtml(question){
+    if(question.type === 'simplify'){
+      return expressionFromTermsHtml(question);
+    }
+    return `${expressionFromTermsHtml(question, question.hideIndex)} <span class="eq">=</span> ${targetExpressionHtml(question)}`;
+  }
+
   function renderCurrentQuestion(){
     const question = currentQuestion();
 
-    expressionEl.innerHTML = renderExpression(question.terms, question.commonFactor, question.revealGroups);
+    expressionEl.innerHTML = questionHtml(question);
+    questionPromptEl.textContent = question.prompt;
     applyExpressionSizing(question);
 
-    revealBadge.classList.toggle('show', !!question.revealGroups);
+    revealBadge.classList.toggle('show', levelKey === 'sweet');
 
     answerInput.value = question.answerText || '';
-    answerInput.placeholder = question.kind === 'numeric' ? 'Type the final value' : 'Type the simplified term';
+    answerInput.placeholder = question.type === 'missing'
+      ? 'Type the missing term'
+      : (question.kind === 'numeric' ? 'Type the final value' : 'Type the simplified term');
 
     updateInputStateFromQuestion(question);
     updateFeedbackFromQuestion(question);
@@ -1001,14 +1151,14 @@
 
     phase = question.status === 'unseen' ? 'awaiting' : 'checked';
 
-   setTimeout(() => {
-  if(!question.solved){
-    answerInput.focus();
-  }else{
-    answerInput.blur();
-    enterBtn.focus();
-  }
-}, 0);
+    setTimeout(() => {
+      if(!question.solved){
+        answerInput.focus();
+      }else{
+        answerInput.blur();
+        enterBtn.focus();
+      }
+    }, 0);
   }
 
   function setBanner(){
@@ -1108,13 +1258,21 @@
     let correct = false;
     let closeNeedsSimplifying = false;
 
-    if(question.kind === 'numeric'){
-      correct = checkNumericEquivalent(question.answerText, question.numericValue);
-      if(!correct){
-        closeNeedsSimplifying = isUnsimplifiedNumericEquivalent(question.answerText, question.numericValue);
+    if(question.type === 'missing'){
+      if(question.kind === 'numeric'){
+        correct = checkNumericGroupedTerm(question.answerText, question.missingCoef, question.commonFactor);
+      } else {
+        correct = checkAlgebraEquivalent(question.answerText, question.missingCoef, question.commonFactor);
       }
-    }else{
-      correct = checkAlgebraEquivalent(question.answerText, question.total, question.commonFactor);
+    } else {
+      if(question.kind === 'numeric'){
+        correct = checkNumericEquivalent(question.answerText, Number(question.correctAnswer));
+        if(!correct){
+          closeNeedsSimplifying = isUnsimplifiedNumericEquivalent(question.answerText, Number(question.correctAnswer));
+        }
+      } else {
+        correct = checkAlgebraEquivalent(question.answerText, question.total, question.commonFactor);
+      }
     }
 
     if(correct){
@@ -1148,7 +1306,7 @@
   async function copyCertificate(){
     const cfg = LEVELS[levelKey];
     const text =
-`🏆 Mills Maths Tools – Number Pattern Quiz
+`🏆 Mills Maths Tools – Collecting Like Terms Quiz
 Level: ${cfg.name}
 Score: ${score} / ${QUIZ_LEN}
 Completed: ${nowStamp()}
@@ -1182,6 +1340,7 @@ Completed: ${nowStamp()}
 
     expressionEl.textContent = '—';
     expressionEl.classList.remove('tight', 'tighter');
+    questionPromptEl.textContent = '';
     revealBadge.classList.remove('show');
 
     answerInput.value = '';
@@ -1230,13 +1389,13 @@ Completed: ${nowStamp()}
     }
   });
 
-answerInput.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    e.stopPropagation();
-    handleEnter();
-  }
-});
+  answerInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      e.stopPropagation();
+      handleEnter();
+    }
+  });
 
   document.addEventListener('keydown', (e) => {
     if(e.key !== 'Enter') return;
