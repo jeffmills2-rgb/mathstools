@@ -156,11 +156,31 @@
       background:#fafafa;
     }
 
-    .check-row-main{
+    .toggle-stack{
       position:absolute;
-      top:8px;
+      top:-100px;
       right:-6px;
       z-index:5;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      opacity:.22;
+      transition:opacity .18s ease, transform .18s ease;
+      pointer-events:auto;
+    }
+
+    .problem-wrap:hover .toggle-stack,
+    .problem-wrap:focus-within .toggle-stack,
+    .toggle-stack:hover{
+      opacity:1;
+      transform:translateY(-1px);
+    }
+
+    .check-row-main{
+      position:relative;
+      top:auto;
+      right:auto;
+      z-index:auto;
       align-items:center;
       background:#ede9fe;
       border:1px solid #c4b5fd;
@@ -168,17 +188,8 @@
       padding:12px 18px;
       box-shadow:0 8px 20px rgba(0,0,0,.08);
       cursor:pointer;
-      transition:opacity .18s ease, transform .18s ease, background .18s ease;
-      opacity:.22;
-      pointer-events:auto;
-    }
-
-    .problem-wrap:hover .check-row-main,
-    .problem-wrap:focus-within .check-row-main,
-    .check-row-main:hover,
-    .check-row-main:has(input:checked){
-      opacity:1;
-      transform:translateY(-1px);
+      transition:background .18s ease;
+      min-width:240px;
     }
 
     .check-row-main:hover{
@@ -225,7 +236,7 @@
     }
 
     .check-row-main input{
-      transform:scale(1.35);
+      transform:scale(1.2);
       margin-top:0;
     }
 
@@ -237,7 +248,7 @@
     }
 
     .check-row-main .check-label{
-      font-size:20px;
+      font-size:18px;
       font-weight:900;
       color:#6d28d9;
       white-space:nowrap;
@@ -246,9 +257,16 @@
       gap:6px;
     }
 
-    .check-row-main .check-label::before{
+    .check-row-main.reveal-toggle .check-label::before{
       content:"👀";
-      font-size:20px;
+      font-size:19px;
+    }
+
+    .check-row-main.mult-toggle .check-label::before{
+      content:"×";
+      font-size:22px;
+      font-weight:900;
+      line-height:1;
     }
 
     .main{
@@ -272,22 +290,22 @@
       min-height:220px;
     }
 
-  .expression{
-  font-size:clamp(40px, 5.6vw, 84px);
-  font-weight:800;
-  font-family: var(--mathFont);
-  line-height:1.12;
-  color:#000;
-  letter-spacing:-.03em;
-  word-break:break-word;
-  transition:font-size .18s ease;
-}
+    .expression{
+      font-size:clamp(40px, 5.6vw, 84px);
+      font-weight:800;
+      font-family: var(--mathFont);
+      line-height:1.12;
+      color:#000;
+      letter-spacing:-.03em;
+      word-break:break-word;
+      transition:font-size .18s ease;
+    }
 
     .expression.tight{ font-size:clamp(34px, 4.7vw, 70px); }
     .expression.tighter{ font-size:clamp(28px, 3.9vw, 58px); }
 
     .coef{ color:var(--blue); }
-    .times,.op{ color:#000; }
+    .times,.op,.paren{ color:#000; }
     .factor{ color:#000; }
     .factor.reveal-groups{ color:var(--green); }
 
@@ -322,17 +340,17 @@
       padding:16px 20px;
     }
 
-   .answer-value{
-  font-size:clamp(34px, 4vw, 60px);
-  font-weight:900;
-  font-family: var(--mathFont);
-  color:#000;
-  letter-spacing:-.03em;
-  opacity:0;
-  transform:translateY(10px) scale(.98);
-  transition:opacity .22s ease, transform .22s ease;
-  text-align:center;
-}
+    .answer-value{
+      font-size:clamp(34px, 4vw, 60px);
+      font-weight:900;
+      font-family: var(--mathFont);
+      color:#000;
+      letter-spacing:-.03em;
+      opacity:0;
+      transform:translateY(10px) scale(.98);
+      transition:opacity .22s ease, transform .22s ease;
+      text-align:center;
+    }
 
     .answer-value.show{
       opacity:1;
@@ -523,30 +541,40 @@
       }
       .controls{ justify-content:stretch; }
       .controls button{ flex:1 1 auto; }
-      .check-row-main{
+
+      .toggle-stack{
         position:static;
         margin:0 auto 18px;
         width:fit-content;
         opacity:1;
+        transform:none !important;
       }
+
+      .check-row-main{
+        min-width:250px;
+      }
+
       .question-stage{ padding:40px 16px 36px; }
+
       .answer-row{
         flex-direction:column;
         gap:16px;
       }
-    .answer-box{
-  min-width:min(420px, 82vw);
-  min-height:120px;
-  border:6px solid #000;
-  border-radius:24px;
-  background:#fff;
-  box-shadow:0 10px 24px rgba(0,0,0,.08);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:16px 20px;
-  font-family: var(--mathFont);
-}
+
+      .answer-box{
+        min-width:min(420px, 82vw);
+        min-height:120px;
+        border:6px solid #000;
+        border-radius:24px;
+        background:#fff;
+        box-shadow:0 10px 24px rgba(0,0,0,.08);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:16px 20px;
+        font-family: var(--mathFont);
+      }
+
       .footer{ flex-direction:column; }
     }
   </style>
@@ -555,7 +583,8 @@
   <div class="page">
     <div class="card">
       <div class="topbar">
-<a class="back-btn" href="https://millsmathstools.au" aria-label="Back to Mills Maths Tools">          <img src="../../mmt.png" alt="Mills Maths Tools logo" onerror="this.onerror=null;this.src='../mmt.png';" />
+        <a class="back-btn" href="https://millsmathstools.au" aria-label="Back to Mills Maths Tools">
+          <img src="../../mmt.png" alt="Mills Maths Tools logo" onerror="this.onerror=null;this.src='../mmt.png';" />
           <span>Back to Mills Maths Tools</span>
         </a>
 
@@ -576,9 +605,16 @@
 
       <main class="main">
         <div class="problem-wrap">
-          <div class="check-row-main">
-            <input id="revealGroupsCheck" type="checkbox" />
-            <label class="check-label" for="revealGroupsCheck">Reveal groups</label>
+          <div class="toggle-stack">
+            <div class="check-row-main reveal-toggle">
+              <input id="revealGroupsCheck" type="checkbox" />
+              <label class="check-label" for="revealGroupsCheck">Reveal groups</label>
+            </div>
+
+            <div class="check-row-main mult-toggle">
+              <input id="showMultCheck" type="checkbox" checked />
+              <label class="check-label" for="showMultCheck">Show multiplication sign</label>
+            </div>
           </div>
 
           <section class="question-stage" aria-label="Question area">
@@ -681,6 +717,7 @@
     const totalSelect = document.getElementById('totalSelect');
     const termCountSelect = document.getElementById('termCountSelect');
     const revealGroupsCheck = document.getElementById('revealGroupsCheck');
+    const showMultCheck = document.getElementById('showMultCheck');
     const randomTotalCheck = document.getElementById('randomTotalCheck');
     const randomTermsCheck = document.getElementById('randomTermsCheck');
     const algebraExamplesCheck = document.getElementById('algebraExamplesCheck');
@@ -749,12 +786,34 @@
       return singleLetters[randInt(0, singleLetters.length - 1)];
     }
 
-    function renderExpression(terms, commonFactor, revealGroups){
+    function renderSingleTerm(term, commonFactor, revealGroups, showMult){
+      const coefClass = revealGroups ? 'coef' : '';
+      const factorClass = revealGroups ? 'factor reveal-groups' : 'factor';
+      const safeFactor = escapeHtml(commonFactor);
+      const isNumericFactor = typeof commonFactor === 'number';
+
+      const coefHtml = `<span class="${coefClass}">${term}</span>`;
+      const factorHtml = `<span class="${factorClass}">${safeFactor}</span>`;
+
+      if(showMult){
+        return `${coefHtml}<span class="times"> × </span>${factorHtml}`;
+      }
+
+      if(isNumericFactor){
+        return `${coefHtml}<span class="paren">(</span>${factorHtml}<span class="paren">)</span>`;
+      }
+
+      if(term === 1){
+        return factorHtml;
+      }
+
+      return `${coefHtml}${factorHtml}`;
+    }
+
+    function renderExpression(terms, commonFactor, revealGroups, showMult){
       return terms.map((term, index) => {
-        const coefClass = revealGroups ? 'coef' : '';
-        const factorClass = revealGroups ? 'factor reveal-groups' : 'factor';
         const op = index === 0 ? '' : ' <span class="op">+</span> ';
-        return `${op}<span class="${coefClass}">${term}</span><span class="times"> × </span><span class="${factorClass}">${escapeHtml(commonFactor)}</span>`;
+        return `${op}${renderSingleTerm(term, commonFactor, revealGroups, showMult)}`;
       }).join('');
     }
 
@@ -771,9 +830,19 @@
       }
     }
 
-    function simplifyDisplay(total, commonFactor, value){
-      return `${total} × ${commonFactor} = ${value}`;
-    }
+  function simplifyDisplay(total, commonFactor, value){
+  if(showMultCheck.checked){
+    return `${total} × ${commonFactor} = ${value}`;
+  }
+
+  // bracket notation for numeric factors
+  if(typeof commonFactor === 'number'){
+    return `${total}(${commonFactor}) = ${value}`;
+  }
+
+  // algebraic (no brackets, just adjacency)
+  return `${total}${commonFactor}`;
+}
 
     function generateQuestion(){
       let total = Number(totalSelect.value);
@@ -808,11 +877,27 @@
     function renderQuestion(){
       current = generateQuestion();
       isRevealed = false;
-      expressionEl.innerHTML = renderExpression(current.terms, current.commonFactor, revealGroupsCheck.checked);
+      expressionEl.innerHTML = renderExpression(
+        current.terms,
+        current.commonFactor,
+        revealGroupsCheck.checked,
+        showMultCheck.checked
+      );
       applyExpressionSizing();
       answerValueEl.innerHTML = '&nbsp;';
       answerValueEl.classList.remove('show');
       statusEl.textContent = 'Press Enter to reveal. Press Space for a new question.';
+    }
+
+    function rerenderCurrentExpression(){
+      if(!current) return;
+      expressionEl.innerHTML = renderExpression(
+        current.terms,
+        current.commonFactor,
+        revealGroupsCheck.checked,
+        showMultCheck.checked
+      );
+      applyExpressionSizing();
     }
 
     function revealAnswer(){
@@ -864,12 +949,8 @@
     totalSelect.addEventListener('change', renderQuestion);
     termCountSelect.addEventListener('change', renderQuestion);
 
-    revealGroupsCheck.addEventListener('change', () => {
-      if(current){
-        expressionEl.innerHTML = renderExpression(current.terms, current.commonFactor, revealGroupsCheck.checked);
-        applyExpressionSizing();
-      }
-    });
+    revealGroupsCheck.addEventListener('change', rerenderCurrentExpression);
+    showMultCheck.addEventListener('change', rerenderCurrentExpression);
 
     randomTotalCheck.addEventListener('change', () => {
       totalSelect.disabled = randomTotalCheck.checked;
