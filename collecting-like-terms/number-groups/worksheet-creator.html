@@ -37,7 +37,7 @@
     }
 
     .wrap{
-      max-width:1240px;
+      max-width:1320px;
       margin:18px auto 40px;
       padding:0 16px;
     }
@@ -77,6 +77,8 @@
       display:flex;
       gap:18px;
       flex-wrap:wrap;
+      align-items:flex-end;
+      flex:1 1 auto;
     }
 
     label{
@@ -95,8 +97,78 @@
       outline:none;
     }
 
-    select{ min-width:260px; }
-    input{ min-width:220px; }
+    select{ min-width:240px; }
+    input{ min-width:200px; }
+
+    .togglePanel{
+      min-width:220px;
+      border:2px solid #e5e7eb;
+      border-radius:16px;
+      background:#fff;
+      padding:10px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .toggleRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .toggleLabel{
+      font-weight:900;
+      font-size:14px;
+      color:var(--ink);
+      line-height:1.1;
+    }
+
+    .switch{
+      position:relative;
+      display:inline-block;
+      width:52px;
+      height:30px;
+      flex:0 0 auto;
+    }
+
+    .switch input{
+      opacity:0;
+      width:0;
+      height:0;
+      position:absolute;
+    }
+
+    .slider{
+      position:absolute;
+      inset:0;
+      cursor:pointer;
+      background:#d1d5db;
+      border-radius:999px;
+      transition:.2s ease;
+    }
+
+    .slider:before{
+      content:"";
+      position:absolute;
+      height:22px;
+      width:22px;
+      left:4px;
+      top:4px;
+      background:white;
+      border-radius:50%;
+      transition:.2s ease;
+      box-shadow:0 1px 4px rgba(0,0,0,.18);
+    }
+
+    .switch input:checked + .slider{
+      background:#2563eb;
+    }
+
+    .switch input:checked + .slider:before{
+      transform:translateX(22px);
+    }
 
     .btnRow{
       display:flex;
@@ -259,20 +331,53 @@
       font-weight:900;
       font-size:17px;
       font-family:var(--mathFont);
-      line-height:1.14;
+      line-height:1.16;
       color:#000;
-      letter-spacing:-.02em;
       word-break:break-word;
       min-height:36px;
       display:flex;
       align-items:center;
       justify-content:center;
+      flex-wrap:wrap;
+      gap:0;
       padding:0 2px;
     }
 
     .qExpr.tight{ font-size:15px; }
     .qExpr.tighter{ font-size:13px; }
     .qExpr.mega-tight{ font-size:11px; }
+
+    .exprPart{
+      display:inline-flex;
+      align-items:baseline;
+      justify-content:center;
+      white-space:nowrap;
+    }
+
+    .term{
+      display:inline-flex;
+      align-items:baseline;
+      justify-content:center;
+      white-space:nowrap;
+      margin:0 3px;
+    }
+
+    .op,
+    .eq{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      white-space:nowrap;
+      margin:0 5px;
+    }
+
+    .times{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      white-space:nowrap;
+      margin:0 4px;
+    }
 
     .coef{
       color:var(--blue);
@@ -288,6 +393,7 @@
       padding:0 8px;
       border-bottom:2px solid #111827;
       transform:translateY(-1px);
+      margin:0 2px;
     }
 
     .prompt{
@@ -328,6 +434,7 @@
       color:#111827;
       padding:8px 10px;
       text-align:center;
+      line-height:1.2;
     }
 
     .ansBox.key{
@@ -395,6 +502,15 @@
       font-weight:950;
     }
     .mmtFooter a:hover{ text-decoration:underline; }
+
+    @media (max-width:1100px){
+      .fieldRow{
+        width:100%;
+      }
+      .togglePanel{
+        min-width:240px;
+      }
+    }
 
     @media (max-width:900px){
       .pageHeader{
@@ -529,6 +645,10 @@
       .qExpr.tighter{ font-size:16px; }
       .qExpr.mega-tight{ font-size:14px; }
 
+      .term{ margin:0 2px; }
+      .op, .eq{ margin:0 4px; }
+      .times{ margin:0 3px; }
+
       .prompt{
         font-size:10px;
         line-height:1.2;
@@ -575,7 +695,33 @@
 
           <div>
             <label for="countInp">Number of questions (1–96)</label>
-            <input id="countInp" type="number" min="1" max="96" value="32" />
+            <input id="countInp" type="number" min="1" max="96" value="18" />
+          </div>
+
+          <div>
+            <label for="notationSel">Notation</label>
+            <select id="notationSel">
+              <option value="times" selected>Use multiplication symbol</option>
+              <option value="brackets">Use bracket notation</option>
+            </select>
+          </div>
+
+          <div class="togglePanel">
+            <div class="toggleRow">
+              <div class="toggleLabel">Missing term</div>
+              <label class="switch" aria-label="Missing term toggle">
+                <input id="missingToggle" type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggleRow">
+              <div class="toggleLabel">Reveal groups</div>
+              <label class="switch" aria-label="Reveal groups toggle">
+                <input id="revealGroupsToggle" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -651,6 +797,9 @@
 
   const levelSel = document.getElementById('levelSel');
   const countInp = document.getElementById('countInp');
+  const notationSel = document.getElementById('notationSel');
+  const missingToggle = document.getElementById('missingToggle');
+  const revealGroupsToggle = document.getElementById('revealGroupsToggle');
   const genBtn = document.getElementById('genBtn');
   const printBtn = document.getElementById('printBtn');
   const resetBtn = document.getElementById('resetBtn');
@@ -719,6 +868,18 @@
     return choice(singleLetters);
   }
 
+  function getNotationMode(){
+    return notationSel.value === 'brackets' ? 'brackets' : 'times';
+  }
+
+  function getMissingMode(){
+    return missingToggle.checked;
+  }
+
+  function getRevealGroupsMode(){
+    return revealGroupsToggle.checked;
+  }
+
   function makeFactor(cfg){
     const isNumeric = Math.random() < cfg.numericChance;
     return {
@@ -727,81 +888,88 @@
     };
   }
 
-  function simplifiedValueText(total, factor){
+  function formattedSingleTerm(coef, factor, notationMode){
     if(factor.kind === 'numeric'){
-      return String(total * factor.value);
-    }
-    return `${total}${factor.value}`;
-  }
-
-  function plainSingleTerm(coef, factor){
-    if(factor.kind === 'numeric'){
-      if(coef === 1) return String(factor.value);
+      if(notationMode === 'brackets'){
+        if(coef === 1) return String(factor.value);
+        return `${coef}(${factor.value})`;
+      }
       return `${coef} × ${factor.value}`;
     }
 
-    if(coef === 1) return String(factor.value);
-    return `${coef}${factor.value}`;
+    if(notationMode === 'brackets'){
+      return `${coef}${factor.value}`;
+    }
+    return `${coef} × ${factor.value}`;
   }
 
-  function termToHTML(coef, factor, colourGroups = false){
+  function simplifiedValueText(total, factor, notationMode){
     if(factor.kind === 'numeric'){
-      if(coef === 1){
-        return `<span>${escapeHtml(String(factor.value))}</span>`;
-      }
-      const coefHtml = colourGroups
-        ? `<span class="coef">${coef}</span>`
-        : `<span>${coef}</span>`;
-      return `<span>${coefHtml}<span class="times"> × </span>${escapeHtml(String(factor.value))}</span>`;
+      return String(total * factor.value);
     }
+    return formattedSingleTerm(total, factor, notationMode);
+  }
 
-    if(coef === 1){
-      return `<span>${escapeHtml(factor.value)}</span>`;
-    }
+  function wrapTermHTML(inner){
+    return `<span class="term">${inner}</span>`;
+  }
+
+  function operatorHTML(symbol, cls){
+    return `<span class="${cls}">${escapeHtml(symbol)}</span>`;
+  }
+
+  function factorValueHTML(value){
+    return `<span>${escapeHtml(String(value))}</span>`;
+  }
+
+  function termToHTML(coef, factor, colourGroups, notationMode){
     const coefHtml = colourGroups
       ? `<span class="coef">${coef}</span>`
       : `<span>${coef}</span>`;
-    return `<span>${coefHtml}${escapeHtml(factor.value)}</span>`;
+
+    if(factor.kind === 'numeric'){
+      if(notationMode === 'brackets'){
+        if(coef === 1){
+          return wrapTermHTML(factorValueHTML(factor.value));
+        }
+        return wrapTermHTML(`${coefHtml}<span>(${escapeHtml(String(factor.value))})</span>`);
+      }
+
+      return wrapTermHTML(
+        `${coefHtml}<span class="times">×</span>${factorValueHTML(factor.value)}`
+      );
+    }
+
+    if(notationMode === 'brackets'){
+      return wrapTermHTML(`${coefHtml}<span>${escapeHtml(factor.value)}</span>`);
+    }
+
+    return wrapTermHTML(`${coefHtml}<span class="times">×</span><span>${escapeHtml(factor.value)}</span>`);
+  }
+
+  function targetExpressionHTML(question){
+    const colourGroups = question.revealGroups === true;
+    return termToHTML(question.total, question.factor, colourGroups, question.notationMode);
   }
 
   function missingToHTML(){
     return `<span class="blank">&nbsp;</span>`;
   }
 
-  function plainTermsExpression(terms, factor, hideIndex = -1){
+  function plainTermsExpression(terms, factor, notationMode, hideIndex = -1){
     return terms.map((coef, idx) => {
-      const txt = idx === hideIndex ? '___' : plainSingleTerm(coef, factor);
+      const txt = idx === hideIndex ? '___' : formattedSingleTerm(coef, factor, notationMode);
       return `${idx === 0 ? '' : ' + '}${txt}`;
     }).join('');
-  }
-
-  function targetExpressionHTML(question){
-    const colourGroups = question.revealGroups === true;
-
-    if(question.factor.kind === 'numeric'){
-      if(question.total === 1){
-        return `<span>${escapeHtml(String(question.factor.value))}</span>`;
-      }
-      const coefHtml = colourGroups
-        ? `<span class="coef">${question.total}</span>`
-        : `<span>${question.total}</span>`;
-      return `<span>${coefHtml}<span class="times"> × </span>${escapeHtml(String(question.factor.value))}</span>`;
-    }
-
-    if(question.total === 1){
-      return `<span>${escapeHtml(String(question.factor.value))}</span>`;
-    }
-    const coefHtml = colourGroups
-      ? `<span class="coef">${question.total}</span>`
-      : `<span>${question.total}</span>`;
-    return `<span>${coefHtml}${escapeHtml(String(question.factor.value))}</span>`;
   }
 
   function termsExpressionHTML(question, hideIndex = -1){
     const colourGroups = question.revealGroups === true;
     return question.terms.map((coef, idx) => {
-      const part = (idx === hideIndex) ? missingToHTML() : termToHTML(coef, question.factor, colourGroups);
-      return `${idx === 0 ? '' : ' <span class="op">+</span> '}${part}`;
+      const part = (idx === hideIndex)
+        ? `<span class="term">${missingToHTML()}</span>`
+        : termToHTML(coef, question.factor, colourGroups, question.notationMode);
+      return `${idx === 0 ? '' : operatorHTML('+', 'op')}${part}`;
     }).join('');
   }
 
@@ -818,20 +986,23 @@
   }
 
   function expressionLengthScore(q){
-    if(q.type === 'simplify') return q.terms.length + String(q.factor.value).length * q.terms.length;
-    if(q.type === 'missing') return q.terms.length + String(q.factor.value).length * q.terms.length + 6;
-    return 10;
+    const factorLen = String(q.factor.value).length;
+    const base = q.terms.length * (factorLen + 5);
+
+    if(q.notationMode === 'brackets') return base + 2;
+    if(q.type === 'missing') return base + 8;
+    return base;
   }
 
   function expressionClass(question){
     const rawLen = expressionLengthScore(question);
-    if(rawLen >= 22) return 'qExpr mega-tight';
-    if(rawLen >= 16) return 'qExpr tighter';
-    if(rawLen >= 12) return 'qExpr tight';
+    if(rawLen >= 28) return 'qExpr mega-tight';
+    if(rawLen >= 20) return 'qExpr tighter';
+    if(rawLen >= 14) return 'qExpr tight';
     return 'qExpr';
   }
 
-  function makeSimplifyQuestion(cfg){
+  function makeSimplifyQuestion(cfg, opts){
     const factor = makeFactor(cfg);
     const total = randInt(cfg.totalMin, cfg.totalMax);
     const termCount = choice(cfg.termOptions);
@@ -842,14 +1013,15 @@
       factor,
       total,
       terms,
-      revealGroups: cfg.revealGroups,
+      notationMode: opts.notationMode,
+      revealGroups: opts.revealGroups,
       prompt:promptForType('simplify'),
-      answer:simplifiedValueText(total, factor),
-      keyStep:`${plainTermsExpression(terms, factor)} = ${simplifiedValueText(total, factor)}`
+      answer:simplifiedValueText(total, factor, opts.notationMode),
+      keyStep:`${plainTermsExpression(terms, factor, opts.notationMode)} = ${simplifiedValueText(total, factor, opts.notationMode)}`
     };
   }
 
-  function makeMissingQuestion(cfg){
+  function makeMissingQuestion(cfg, opts){
     const factor = makeFactor(cfg);
     const total = randInt(cfg.totalMin, cfg.totalMax);
     const termCount = choice(cfg.termOptions);
@@ -864,17 +1036,22 @@
       terms,
       hideIndex,
       missingCoef,
-      revealGroups: cfg.revealGroups,
+      notationMode: opts.notationMode,
+      revealGroups: opts.revealGroups,
       prompt:promptForType('missing'),
-      answer:plainSingleTerm(missingCoef, factor),
-      keyStep:`${plainTermsExpression(terms, factor)} = ${plainSingleTerm(total, factor)}`
+      answer:formattedSingleTerm(missingCoef, factor, opts.notationMode),
+      keyStep:`${plainTermsExpression(terms, factor, opts.notationMode)} = ${formattedSingleTerm(total, factor, opts.notationMode)}`
     };
   }
 
-  function buildQuestion(cfg){
+  function buildQuestion(cfg, opts){
+    if(opts.allowMissing === false){
+      return makeSimplifyQuestion(cfg, opts);
+    }
+
     const type = weightedChoice(QUESTION_WEIGHTS);
-    if(type === 'missing') return makeMissingQuestion(cfg);
-    return makeSimplifyQuestion(cfg);
+    if(type === 'missing') return makeMissingQuestion(cfg, opts);
+    return makeSimplifyQuestion(cfg, opts);
   }
 
   function questionHTML(question){
@@ -882,7 +1059,7 @@
       return termsExpressionHTML(question);
     }
 
-    return `${termsExpressionHTML(question, question.hideIndex)} <span class="eq">=</span> ${targetExpressionHTML(question)}`;
+    return `${termsExpressionHTML(question, question.hideIndex)}${operatorHTML('=', 'eq')}${targetExpressionHTML(question)}`;
   }
 
   function pageHeaderHTML(levelName, descriptor, pageLabel){
@@ -1038,11 +1215,17 @@
     const cfg = LEVELS[key];
 
     let n = Number(countInp.value);
-    if(!Number.isFinite(n)) n = 32;
+    if(!Number.isFinite(n)) n = 18;
     n = Math.max(1, Math.min(96, Math.round(n)));
     countInp.value = String(n);
 
-    const questions = Array.from({ length:n }, () => buildQuestion(cfg));
+    const opts = {
+      notationMode: getNotationMode(),
+      allowMissing: getMissingMode(),
+      revealGroups: getRevealGroupsMode()
+    };
+
+    const questions = Array.from({ length:n }, () => buildQuestion(cfg, opts));
 
     const wsPages = buildPages(questions, cfg, 'Worksheet', false);
     const keyPages = buildPages(questions, cfg, 'Answer key', true);
@@ -1058,7 +1241,10 @@
   function resetAll(){
     clearOut();
     levelSel.value = 'mild';
-    countInp.value = '32';
+    countInp.value = '18';
+    notationSel.value = 'times';
+    missingToggle.checked = true;
+    revealGroupsToggle.checked = false;
   }
 
   genBtn.addEventListener('click', generate);
