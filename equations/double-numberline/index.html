@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -1570,53 +1571,70 @@
       }
 
       function drawPartitionLoops(points, opts = {}){
-        const {
-          cueY = GROUP_LOOP_Y,
-          durationMs = 1800,
-          height = 72,
-          inset = 8,
-          animated = true
-        } = opts;
+  const {
+    cueY = GROUP_LOOP_Y,
+    durationMs = 1800,
+    height = 72,
+    inset = 8,
+    animated = true,
+    onSegment = null
+  } = opts;
 
-        if(!points || points.length < 2) return;
+  if(!points || points.length < 2) return;
 
-        const segCount = points.length - 1;
-        const perDelay = Math.max(90, Math.min(240, durationMs / segCount));
+  const segCount = points.length - 1;
+  const perDelay = Math.max(90, Math.min(240, durationMs / segCount));
 
-        for(let i = 0; i < segCount; i++){
-          const p1 = points[i];
-          const p2 = points[i + 1];
-          const width = Math.max(40, Math.abs(p2.px - p1.px) - inset * 2);
-          const rx = width / 2;
-          const ry = height / 2;
-          const midX = (p1.px + p2.px) / 2;
-          const gap = 4;
+  for(let i = 0; i < segCount; i++){
+    const p1 = points[i];
+    const p2 = points[i + 1];
 
-          const topArc = createSVG('path', {
-            d: `M ${midX - rx} ${cueY - gap} A ${rx} ${ry} 0 0 1 ${midX + rx} ${cueY - gap}`,
-            class:'cue-loop'
-          });
-          const bottomArc = createSVG('path', {
-            d: `M ${midX + rx} ${cueY + gap} A ${rx} ${ry} 0 0 1 ${midX - rx} ${cueY + gap}`,
-            class:'cue-loop'
-          });
+    const width = Math.max(40, Math.abs(p2.px - p1.px) - inset * 2);
+    const rx = width / 2;
+    const ry = height / 2;
+    const midX = (p1.px + p2.px) / 2;
+    const gap = 4;
 
-          if(animated){
-            const startDelay = Math.round(i * perDelay);
-            topArc.style.opacity = '0';
-            bottomArc.style.opacity = '0';
-            schedule(() => { topArc.style.opacity = '.74'; }, startDelay);
-            schedule(() => { bottomArc.style.opacity = '.74'; }, startDelay);
-          } else {
-            topArc.style.opacity = '.74';
-            bottomArc.style.opacity = '.74';
-          }
+    const topArc = createSVG('path', {
+      d: `M ${midX - rx} ${cueY - gap} A ${rx} ${ry} 0 0 1 ${midX + rx} ${cueY - gap}`,
+      class:'cue-loop'
+    });
 
-          appendNode(topArc);
-          appendNode(bottomArc);
+    const bottomArc = createSVG('path', {
+      d: `M ${midX + rx} ${cueY + gap} A ${rx} ${ry} 0 0 1 ${midX - rx} ${cueY + gap}`,
+      class:'cue-loop'
+    });
+
+    appendNode(topArc);
+    appendNode(bottomArc);
+
+    const startDelay = Math.round(i * perDelay);
+
+    if(animated){
+      topArc.style.opacity = '0';
+      bottomArc.style.opacity = '0';
+
+      schedule(() => {
+        topArc.style.opacity = '.74';
+        bottomArc.style.opacity = '.74';
+
+        // 🔹 trigger tick at same moment
+        if(onSegment){
+          onSegment(i, p2);
         }
-      }
 
+      }, startDelay);
+
+    } else {
+      topArc.style.opacity = '.74';
+      bottomArc.style.opacity = '.74';
+
+      if(onSegment){
+        onSegment(i, p2);
+      }
+    }
+  }
+}
       function drawPartitionLoopsStatic(points, opts = {}){
         const {
           cueY = GROUP_LOOP_Y,
@@ -1659,37 +1677,46 @@
         return startIdx <= endIdx ? span : span.reverse();
       }
 
-      function drawStage1Intro(){
-        drawBaseLine();
+function drawStage1Intro(){
+  drawBaseLine();
 
-        const halo = createSVG('ellipse', {
-          cx: START_CENTER_X,
-          cy: LINE_Y,
-          rx: 120,
-          ry: 84,
-          class:'stage1-halo'
-        });
-        appendNode(halo);
+  const q = state.question;
+  const xPos = START_CENTER_X;
+  const showFakeZero = q && (q.mode === 'mult' || q.mode === 'div');
 
-        const intro = createSVG('text', {
-          x: START_CENTER_X,
-          y: 178,
-          class:'stage1-label'
-        });
-        intro.textContent = 'Start with x';
-        appendNode(intro);
+  const halo = createSVG('ellipse', {
+    cx: xPos,
+    cy: LINE_Y,
+    rx: 120,
+    ry: 84,
+    class:'stage1-halo'
+  });
+  appendNode(halo);
 
-        const pulseGroup = createSVG('g', { class:'stage1-pulse' });
-        const tick = createSVG('line', {
-          x1:START_CENTER_X, y1:LINE_Y - 36,
-          x2:START_CENTER_X, y2:LINE_Y + 36,
-          class:'tick-major'
-        });
-        pulseGroup.appendChild(tick);
-        appendNode(pulseGroup);
+  const intro = createSVG('text', {
+    x: xPos,
+    y: 178,
+    class:'stage1-label'
+  });
+  intro.textContent = 'Start with x';
+  appendNode(intro);
 
-        drawTopText(START_CENTER_X, TOP_Y_MAIN, 'x', 72, 'blue');
-      }
+  const tick = createSVG('line', {
+    x1:xPos, y1:LINE_Y - 36,
+    x2:xPos, y2:LINE_Y + 36,
+    class:'tick-major'
+  });
+  appendNode(tick);
+
+  drawTopText(xPos, TOP_Y_MAIN, 'x', 72, 'blue');
+
+  // top-only zero for multiply/divide start screen
+  if(showFakeZero){
+    const fakeZeroX = xPos - 240;
+    drawTick(fakeZeroX, true);
+    drawTopText(fakeZeroX, TOP_Y_MAIN, '0', 62, 'black');
+  }
+}
 
       function animateSlidingXPair(targetX, callback, token, opts = {}){
         const {
@@ -1742,40 +1769,107 @@
         }
       }
 
-      function renderStage1BackwardSlide(token){
-        const q = state.question;
-        let fromX = START_CENTER_X;
+ function renderStage1BackwardSlide(token){
+  const q = state.question;
+  const fakeZeroX = START_CENTER_X - 240;
 
-        if(q.mode === 'addsub') fromX = q.xX;
-        else if(q.mode === 'mult') fromX = q.prePoints[q.preXIndex].px;
-        else if(q.mode === 'div') fromX = q.prePoints[q.preXIndex].px;
+  let fromX = START_CENTER_X;
+  let fromZeroX = fakeZeroX;
 
-        drawBaseLine();
+  if(q.mode === 'addsub'){
+    fromX = q.xX;
+  } else if(q.mode === 'mult'){
+    fromX = q.prePoints[q.preXIndex].px;
+    fromZeroX = q.prePoints[q.preZeroIndex].px;
+  } else if(q.mode === 'div'){
+    fromX = q.prePoints[q.preXIndex].px;
+    fromZeroX = q.prePoints[q.preZeroIndex].px;
+  }
 
-        const halo = createSVG('ellipse', {
-          cx: START_CENTER_X,
-          cy: LINE_Y,
-          rx: 120,
-          ry: 84,
-          class:'stage1-halo'
-        });
-        appendNode(halo);
+  drawBaseLine();
 
-        const intro = createSVG('text', {
-          x: START_CENTER_X,
-          y: 178,
-          class:'stage1-label'
-        });
-        intro.textContent = 'Start with x';
-        appendNode(intro);
+  const halo = createSVG('ellipse', {
+    cx: START_CENTER_X,
+    cy: LINE_Y,
+    rx: 120,
+    ry: 84,
+    class:'stage1-halo'
+  });
+  appendNode(halo);
 
-        animateSlidingXPair(START_CENTER_X, null, token, {
-          fromX,
-          toX: START_CENTER_X,
-          showQuestionMark:false
-        });
-      }
+  const intro = createSVG('text', {
+    x: START_CENTER_X,
+    y: 178,
+    class:'stage1-label'
+  });
+  intro.textContent = 'Start with x';
+  appendNode(intro);
 
+  // multiply/divide: animate x and 0 back together
+  if(q && (q.mode === 'mult' || q.mode === 'div')){
+    const xGroup = createSVG('g', {});
+    xGroup.style.transform = `translateX(${fromX - START_CENTER_X}px)`;
+    xGroup.style.transition = `transform 2000ms cubic-bezier(.22,.8,.2,1)`;
+
+    const xTick = createSVG('line', {
+      x1:START_CENTER_X,
+      y1:LINE_Y - 36,
+      x2:START_CENTER_X,
+      y2:LINE_Y + 36,
+      class:'tick-major'
+    });
+    const xText = createSVG('text', {
+      x:START_CENTER_X,
+      y:TOP_Y_MAIN,
+      class:'point-top',
+      'font-size':72
+    });
+    xText.textContent = 'x';
+
+    xGroup.appendChild(xTick);
+    xGroup.appendChild(xText);
+    appendNode(xGroup);
+
+    const zeroGroup = createSVG('g', {});
+    zeroGroup.style.transform = `translateX(${fromZeroX - fakeZeroX}px)`;
+    zeroGroup.style.transition = `transform 2000ms cubic-bezier(.22,.8,.2,1)`;
+
+    const zeroTick = createSVG('line', {
+      x1:fakeZeroX,
+      y1:LINE_Y - 36,
+      x2:fakeZeroX,
+      y2:LINE_Y + 36,
+      class:'tick-major'
+    });
+    const zeroTop = createSVG('text', {
+      x:fakeZeroX,
+      y:TOP_Y_MAIN,
+      class:'point-top small-black',
+      'font-size':62
+    });
+    zeroTop.textContent = '0';
+
+    zeroGroup.appendChild(zeroTick);
+    zeroGroup.appendChild(zeroTop);
+    appendNode(zeroGroup);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        xGroup.style.transform = 'translateX(0px)';
+        zeroGroup.style.transform = 'translateX(0px)';
+      });
+    });
+
+    return;
+  }
+
+  // add/subtract: existing x-only backward slide
+  animateSlidingXPair(START_CENTER_X, null, token, {
+    fromX,
+    toX: START_CENTER_X,
+    showQuestionMark:false
+  });
+}
       function startNewQuestion(){
         closeOverlays();
         state.question = buildQuestion();
@@ -2009,65 +2103,145 @@
         }
       }
 
-      function renderMultPreBuild(animated, token){
-        drawBaseLine();
+  function renderMultPreBuild(animated, token){
+  drawBaseLine();
 
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const resultPoint = points[q.preResultIndex];
-        const zeroPoint = points[q.preZeroIndex];
+  const q = state.question;
+  const points = q.prePoints;
+  const xPoint = points[q.preXIndex];
+  const resultPoint = points[q.preResultIndex];
+  const zeroPoint = points[q.preZeroIndex];
 
-        if(!animated || state.navDirection === 'backward'){
-          points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preXIndex || idx === q.preResultIndex));
-          drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-          drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-          drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-          drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-          if(state.settings.showStrategyPrompts){
-            drawCueText('equal groups', {
-              fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-            });
-          }
-          const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
-          drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
-          return;
-        }
+  const buildSlideMs = 2000;
+  const loopMs = 2000;
+  const zeroStartX = START_CENTER_X - 240;
 
-        animateSlidingXPair(xPoint.px, () => {
-          if(!isActiveRender(token)) return;
+  if(!animated || state.navDirection === 'backward'){
+    drawTick(zeroPoint.px, true);
+    drawTick(xPoint.px, true);
+    drawTick(resultPoint.px, true);
 
-          points.forEach((p, idx) => {
-            if(idx === q.preXIndex) return;
-            const major = idx === q.preZeroIndex || idx === q.preResultIndex;
-            drawTick(p.px, major);
+    drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+    drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+    drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
 
-            if(idx === q.preZeroIndex){
-              const t = drawTopText(p.px, TOP_Y_MAIN, '0', 62, 'black');
-              const b = drawBottomText(p.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-              addGhostAnimation(t);
-              addGhostAnimation(b);
-            }
+    if(state.settings.showStrategyPrompts){
+      drawCueText('equal groups', {
+        fromX: zeroPoint.px,
+        toX: resultPoint.px,
+        textY: MULT_TEXT_Y,
+        mainFontSize: 27
+      });
+    }
 
-            if(idx === q.preResultIndex){
-              const t = drawTopText(p.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
-              addGhostAnimation(t);
-            }
-          });
+    const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
+    drawPartitionLoops(orderedPoints, {
+      cueY: GROUP_LOOP_Y,
+      durationMs: loopMs,
+      height:72,
+      inset:8,
+      animated:false,
+      onSegment: (i, p) => {
+        if(
+          p.px === zeroPoint.px ||
+          p.px === xPoint.px ||
+          p.px === resultPoint.px
+        ) return;
 
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            if(state.settings.showStrategyPrompts){
-              drawCueText('equal groups', {
-                fromX: zeroPoint.px, toX: resultPoint.px, textY: MULT_TEXT_Y, mainFontSize: 27
-              });
-            }
-            const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
-            drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:true });
-          }, 240);
-        }, token, { showQuestionMark:false });
+        drawTick(p.px, false);
       }
+    });
+    return;
+  }
 
+  const xGroup = createSVG('g', {});
+  xGroup.style.transform = `translateX(${START_CENTER_X - xPoint.px}px)`;
+  xGroup.style.transition = `transform ${buildSlideMs}ms cubic-bezier(.22,.8,.2,1)`;
+
+  const xTick = createSVG('line', {
+    x1:xPoint.px,
+    y1:LINE_Y - 36,
+    x2:xPoint.px,
+    y2:LINE_Y + 36,
+    class:'tick-major'
+  });
+  const xText = createSVG('text', {
+    x:xPoint.px,
+    y:TOP_Y_MAIN,
+    class:'point-top',
+    'font-size':72
+  });
+  xText.textContent = 'x';
+
+  xGroup.appendChild(xTick);
+  xGroup.appendChild(xText);
+  appendNode(xGroup);
+
+  const zeroGroup = createSVG('g', {});
+  zeroGroup.style.transform = `translateX(${zeroStartX - zeroPoint.px}px)`;
+  zeroGroup.style.transition = `transform ${buildSlideMs}ms cubic-bezier(.22,.8,.2,1)`;
+
+  const zeroTick = createSVG('line', {
+    x1:zeroPoint.px,
+    y1:LINE_Y - 36,
+    x2:zeroPoint.px,
+    y2:LINE_Y + 36,
+    class:'tick-major'
+  });
+
+  const zeroTop = createSVG('text', {
+    x:zeroPoint.px,
+    y:TOP_Y_MAIN,
+    class:'point-top small-black',
+    'font-size':62
+  });
+  zeroTop.textContent = '0';
+
+  zeroGroup.appendChild(zeroTick);
+  zeroGroup.appendChild(zeroTop);
+  appendNode(zeroGroup);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      xGroup.style.transform = 'translateX(0px)';
+      zeroGroup.style.transform = 'translateX(0px)';
+    });
+  });
+
+  schedule(() => {
+    if(!isActiveRender(token)) return;
+
+    drawTick(resultPoint.px, true);
+    drawTopText(resultPoint.px, TOP_Y_MAIN, `${q.a}x`, 72, 'blue');
+
+    if(state.settings.showStrategyPrompts){
+      drawCueText('equal groups', {
+        fromX: zeroPoint.px,
+        toX: resultPoint.px,
+        textY: MULT_TEXT_Y,
+        mainFontSize: 27
+      });
+    }
+
+    const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preResultIndex);
+    drawPartitionLoops(orderedPoints, {
+      cueY: GROUP_LOOP_Y,
+      durationMs: loopMs,
+      height:72,
+      inset:8,
+      animated:true,
+      onSegment: (i, p) => {
+        if(
+          p.px === zeroPoint.px ||
+          p.px === xPoint.px ||
+          p.px === resultPoint.px
+        ) return;
+
+        drawTick(p.px, false);
+      }
+    });
+  }, buildSlideMs);
+}
       function renderMultGiven(animated){
         drawBaseLine();
 
@@ -2195,117 +2369,195 @@
       }
 
       function renderDivPreBuild(animated, token){
-        drawBaseLine();
+  drawBaseLine();
 
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const fracPoint = points[q.preFracIndex];
-        const zeroPoint = points[q.preZeroIndex];
+  const q = state.question;
+  const points = q.prePoints;
+  const xPoint = points[q.preXIndex];
+  const fracPoint = points[q.preFracIndex];
+  const zeroPoint = points[q.preZeroIndex];
 
-        if(!animated || state.navDirection === 'backward'){
-          points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex));
-          drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-          drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-          drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-          drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+  const buildSlideMs = 2000;
+  const loopMs = 2000;
+  const zeroStartX = START_CENTER_X - 240;
 
-          if(state.settings.showStrategyPrompts){
-            drawCueText('equal groups', {
-              fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-            });
-          }
-          const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
-          drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
-          return;
-        }
+  if(!animated || state.navDirection === 'backward'){
+    drawTick(zeroPoint.px, true);
+    drawTick(fracPoint.px, true);
+    drawTick(xPoint.px, true);
 
-        animateSlidingXPair(xPoint.px, () => {
-          if(!isActiveRender(token)) return;
+    drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+    drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+    drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
 
-          points.forEach((p, idx) => {
-            if(idx === q.preXIndex) return;
-            const major = idx === q.preZeroIndex || idx === q.preFracIndex;
-            drawTick(p.px, major);
+    if(state.settings.showStrategyPrompts){
+      drawCueText('equal groups', {
+        fromX: zeroPoint.px,
+        toX: xPoint.px,
+        textY: DIV_TEXT_Y,
+        mainFontSize: 27
+      });
+    }
 
-            if(idx === q.preZeroIndex){
-              const t = drawTopText(p.px, TOP_Y_MAIN, '0', 62, 'black');
-              const b = drawBottomText(p.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-              addGhostAnimation(t);
-              addGhostAnimation(b);
-            }
+    const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
+    drawPartitionLoops(orderedPoints, {
+      cueY: GROUP_LOOP_Y,
+      durationMs: loopMs,
+      height:72,
+      inset:8,
+      animated:false,
+      onSegment: (i, p) => {
+        if(
+          p.px === zeroPoint.px ||
+          p.px === fracPoint.px ||
+          p.px === xPoint.px
+        ) return;
 
-            if(idx === q.preFracIndex){
-              const t = drawFractionTop(p.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-              addGhostAnimation(t);
-            }
-          });
-
-          schedule(() => {
-            if(!isActiveRender(token)) return;
-            if(state.settings.showStrategyPrompts){
-              drawCueText('equal groups', {
-                fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-              });
-            }
-            const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
-            drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:true });
-          }, 240);
-        }, token, { showQuestionMark:false });
+        drawTick(p.px, false);
       }
+    });
+    return;
+  }
 
-      function renderDivGiven(animated){
-        drawBaseLine();
+  const xGroup = createSVG('g', {});
+  xGroup.style.transform = `translateX(${START_CENTER_X - xPoint.px}px)`;
+  xGroup.style.transition = `transform ${buildSlideMs}ms cubic-bezier(.22,.8,.2,1)`;
 
-        const q = state.question;
-        const points = q.prePoints;
-        const xPoint = points[q.preXIndex];
-        const fracPoint = points[q.preFracIndex];
-        const zeroPoint = points[q.preZeroIndex];
+  const xTick = createSVG('line', {
+    x1:xPoint.px,
+    y1:LINE_Y - 36,
+    x2:xPoint.px,
+    y2:LINE_Y + 36,
+    class:'tick-major'
+  });
+  const xText = createSVG('text', {
+    x:xPoint.px,
+    y:TOP_Y_MAIN,
+    class:'point-top',
+    'font-size':72
+  });
+  xText.textContent = 'x';
 
-        points.forEach((p, idx) => drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex));
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
-        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
+  xGroup.appendChild(xTick);
+  xGroup.appendChild(xText);
+  appendNode(xGroup);
 
-        if(state.settings.showStrategyPrompts){
-          drawCueText('equal groups', {
-            fromX: zeroPoint.px, toX: xPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-          });
-        }
-        const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
-        drawPartitionLoops(orderedPoints, { cueY: GROUP_LOOP_Y, durationMs: 1800, height:72, inset:8, animated:false });
+  const zeroGroup = createSVG('g', {});
+  zeroGroup.style.transform = `translateX(${zeroStartX - zeroPoint.px}px)`;
+  zeroGroup.style.transition = `transform ${buildSlideMs}ms cubic-bezier(.22,.8,.2,1)`;
+
+  const zeroTick = createSVG('line', {
+    x1:zeroPoint.px,
+    y1:LINE_Y - 36,
+    x2:zeroPoint.px,
+    y2:LINE_Y + 36,
+    class:'tick-major'
+  });
+
+  const zeroTop = createSVG('text', {
+    x:zeroPoint.px,
+    y:TOP_Y_MAIN,
+    class:'point-top small-black',
+    'font-size':62
+  });
+  zeroTop.textContent = '0';
+
+  zeroGroup.appendChild(zeroTick);
+  zeroGroup.appendChild(zeroTop);
+  appendNode(zeroGroup);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      xGroup.style.transform = 'translateX(0px)';
+      zeroGroup.style.transform = 'translateX(0px)';
+    });
+  });
+
+  schedule(() => {
+    if(!isActiveRender(token)) return;
+
+    drawTick(fracPoint.px, true);
+    drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+
+    if(state.settings.showStrategyPrompts){
+      drawCueText('equal groups', {
+        fromX: zeroPoint.px,
+        toX: xPoint.px,
+        textY: DIV_TEXT_Y,
+        mainFontSize: 27
+      });
+    }
+
+    const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
+    drawPartitionLoops(orderedPoints, {
+      cueY: GROUP_LOOP_Y,
+      durationMs: loopMs,
+      height:72,
+      inset:8,
+      animated:true,
+      onSegment: (i, p) => {
+        if(
+          p.px === zeroPoint.px ||
+          p.px === fracPoint.px ||
+          p.px === xPoint.px
+        ) return;
+
+        drawTick(p.px, false);
       }
+    });
+  }, buildSlideMs);
+}
+function renderDivGiven(animated){
+  drawBaseLine();
 
-      function renderDivNegativeKnown(){
-        drawBaseLine();
+  const q = state.question;
+  const points = q.prePoints;
+  const xPoint = points[q.preXIndex];
+  const fracPoint = points[q.preFracIndex];
+  const zeroPoint = points[q.preZeroIndex];
 
-        const q = state.question;
-        const points = q.points;
-        const xPoint = points[q.xIndex];
-        const fracPoint = points[q.fracIndex];
-        const zeroPoint = points[q.zeroIndex];
+  points.forEach((p, idx) => {
+    drawTick(p.px, idx === q.preZeroIndex || idx === q.preFracIndex || idx === q.preXIndex);
+  });
 
-        points.forEach((p, idx) => drawTick(p.px, idx === q.zeroIndex || idx === q.fracIndex || idx === q.xIndex));
-        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
-        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
-        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
-        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
-        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
-        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
+  drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+  drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
 
-        if(state.settings.showStrategyPrompts){
-          drawCueText('equal groups', {
-            fromX: xPoint.px, toX: zeroPoint.px, textY: DIV_TEXT_Y, mainFontSize: 27
-          });
-        }
-        const orderedPoints = orderedPointSpan(points, q.xIndex, q.zeroIndex);
-        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
-      }
+  drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+  drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
 
+  drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+  drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
+
+  if(state.settings.showStrategyPrompts){
+    drawCueText('equal groups', {
+      fromX: zeroPoint.px,
+      toX: xPoint.px,
+      textY: DIV_TEXT_Y,
+      mainFontSize: 27
+    });
+  }
+
+  const orderedPoints = orderedPointSpan(points, q.preZeroIndex, q.preXIndex);
+  drawPartitionLoops(orderedPoints, {
+    cueY: GROUP_LOOP_Y,
+    durationMs: 2000,
+    height:72,
+    inset:8,
+    animated:false,
+    onSegment: (i, p) => {
+      if(
+        p.px === zeroPoint.px ||
+        p.px === fracPoint.px ||
+        p.px === xPoint.px
+      ) return;
+
+      drawTick(p.px, false);
+    }
+  });
+
+drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
+}
       function renderDivSolve(animated, token, revealAnswer){
         drawBaseLine();
 
