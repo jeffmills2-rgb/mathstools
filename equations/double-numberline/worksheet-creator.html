@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>One Step Equations — Worksheet Maker</title>
+
+  <style>
+  :root{
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --ink:#111827;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --shadow: 0 14px 40px rgba(0,0,0,.10);
+    --radius: 18px;
+
+    --blue:#2563eb;
+    --ans:#16a34a;
+    --green:#16a34a;
+    --red:#dc2626;
+
+    --line:#1f2937;
+    --tick:#111827;
+    --tickSoft:#c5ccd6;
+    --ghost:#97a0ad;
+    --ghostGreen:#87956f;
+    --cue:#b3bdc9;
+
+    --footer-h: 44px;
+    --mathFont: "Cambria Math", "STIX Two Math", "STIXGeneral", "Times New Roman", serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    background: var(--bg);
+    color: var(--ink);
+    padding-bottom: var(--footer-h);
+  }
+
+  .wrap{
+    max-width: 1280px;
+    margin: 14px auto 32px;
+    padding: 0 14px;
+  }
+
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+
+  .title{
+    font-size: 28px;
+    font-weight: 1000;
+    letter-spacing: .2px;
+    margin: 0 0 4px;
+  }
+
+  .subtitle{
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-weight: 850;
+    font-size: 15px;
+    line-height: 1.35;
+  }
+
+  .controls{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap: 12px;
+    flex-wrap:wrap;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(180deg,#ffffff,#f9fafb);
+  }
+
+  .fieldRow{
+    display:flex;
+    gap: 16px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+
+  label{
+    display:block;
+    font-weight: 950;
+    color: var(--ink);
+    margin: 0 0 7px;
+    font-size: 15px;
+  }
+
+  select, input[type="number"]{
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 12px 13px;
+    font-weight: 950;
+    font-size: 17px;
+    background:#fff;
+    min-width: 220px;
+    outline:none;
+  }
+
+  input[type="number"]{ min-width: 180px; }
+
+  .btnRow{
+    display:flex;
+    gap: 10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-end;
+  }
+
+  button{
+    border:none;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-weight: 1000;
+    cursor:pointer;
+    background:#f3f4f6;
+    color:#111827;
+    transition: transform .04s ease, filter .15s ease, opacity .2s ease;
+    user-select:none;
+    font-size: 16px;
+  }
+
+  button:active{ transform: scale(.98); }
+  button.primary{ background:#2563eb; color:#fff; }
+  button.ghost{ background:#eef2ff; color:#1d4ed8; }
+  button.danger{ background:#fee2e2; color:#991b1b; }
+
+  .outWrap{ margin-top: 14px; }
+
+  .page{
+    margin-top: 14px;
+    background:#fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.08);
+    overflow:hidden;
+  }
+
+  .pageHeader{
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(229,231,235,.95);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 10px;
+    flex-wrap:wrap;
+  }
+
+  .page.spicyPage .pageHeader{
+    padding: 8px 14px 7px;
+  }
+
+  .page.answerKeyPage .pageHeader{
+    padding: 8px 14px 7px;
+  }
+
+  .hdrTitle{
+    font-weight: 1000;
+    font-size: 15px;
+    line-height: 1.12;
+  }
+
+  .page.spicyPage .hdrTitle,
+  .page.answerKeyPage .hdrTitle{
+    font-size: 14px;
+  }
+
+  .hdrSub{
+    color: var(--muted);
+    font-weight: 850;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .page.spicyPage .hdrSub,
+  .page.answerKeyPage .hdrSub{
+    font-size: 11px;
+  }
+
+  .nameDate{
+    display:flex;
+    gap: 10px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    justify-content:flex-end;
+    margin-left:auto;
+  }
+
+  .lineField{
+    display:flex;
+    flex-direction:column;
+    gap: 4px;
+    min-width: 126px;
+  }
+
+  .lineLabel{
+    font-size: 11px;
+    font-weight: 950;
+    color: var(--muted);
+  }
+
+  .lineBox{
+    height: 22px;
+    border: 1.8px solid #111827;
+    border-radius: 9px;
+    background:#fff;
+  }
+
+  .grid{
+    padding: 14px 16px 18px;
+    display:grid;
+    gap: 14px 16px;
+    align-content:stretch;
+  }
+
+  .grid.twoCol{ grid-template-columns: 1fr 1fr; }
+  .grid.threeCol{ grid-template-columns: 1fr 1fr 1fr; }
+
+  .grid.rows-7{
+    min-height: 1120px;
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+
+  .grid.rows-11{
+    min-height: 1120px;
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+
+  /* more top breathing room for worksheet pages with diagrams */
+  .page:not(.spicyPage):not(.answerKeyPage) .grid{
+    padding-top: 22px;
+  }
+
+  .page.spicyPage .grid{
+    gap: 14px 14px;
+    padding: 16px 18px 18px;
+  }
+
+  .page.answerKeyPage .grid{
+    gap: 8px 10px;
+    padding: 8px 10px 10px;
+  }
+
+  .qCard{
+    border: 1px solid rgba(229,231,235,.95);
+    border-radius: 14px;
+    padding: 8px 10px;
+    background:#fff;
+    break-inside: avoid;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    min-height:0;
+    height:100%;
+  }
+
+  .page.spicyPage .qCard{
+    padding: 10px 12px;
+    justify-content:center;
+  }
+
+  .page.answerKeyPage .qCard{
+    padding: 4px 5px 4px;
+  }
+
+  .page.answerKeyPage.spicyPage .qCard{
+    padding: 6px 8px;
+  }
+
+  .prompt{
+    text-align:center;
+    margin-top: 0;
+  }
+
+  .page.spicyPage .prompt,
+  .page.answerKeyPage .prompt{
+    margin:0;
+  }
+
+  .promptSmall{
+    font-weight: 900;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 1px;
+    line-height: 1;
+    letter-spacing: .15px;
+    min-height: 8px;
+  }
+
+  .page.spicyPage .promptSmall,
+  .page.answerKeyPage .promptSmall{
+    min-height: 1px;
+    font-size: 8px;
+    margin-bottom: 0;
+  }
+
+  .expr{
+    font-weight: 1000;
+    font-size: 26px;
+    font-family: var(--mathFont);
+    letter-spacing: 0;
+    color:#0f172a;
+    line-height: 1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .exprInline{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+  }
+
+  .page.spicyPage .expr{
+    font-size: 22px;
+  }
+
+  .lhs{ color:var(--blue); }
+  .eq{ color:#111; }
+  .rhs{ color:#6cbc4a; }
+
+  .vizWrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding: 0;
+    margin-top: 6px;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .viz{
+    width:100%;
+    max-width: min(100%, 420px);
+    max-height: 100%;
+    aspect-ratio: 1800 / 390;
+    display:block;
+    overflow:visible;
+  }
+
+  .page.answerKeyPage .viz{
+    max-width: min(100%, 355px);
+  }
+
+  .ansRow{
+    margin-top: 8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 8px;
+    flex-wrap:wrap;
+  }
+
+  .page.spicyPage .ansRow{
+    margin-top: 6px;
+    gap: 6px;
+  }
+
+  .page.answerKeyPage .ansRow{
+    margin-top: 3px;
+    gap: 5px;
+  }
+
+  .ansLabel{
+    font-weight: 950;
+    font-size: 15px;
+    font-family: var(--mathFont);
+    line-height: 1;
+  }
+
+  .page.spicyPage .ansLabel{
+    font-size: 14px;
+  }
+
+  .ansBox{
+    width: min(160px, 55%);
+    height: 28px;
+    border: 1.8px solid #111827;
+    border-radius: 12px;
+    background:#fff;
+  }
+
+  .page.spicyPage .ansBox{
+    width: 85px;
+    height: 26px;
+    border-radius: 999px;
+  }
+
+  .page.answerKeyPage .ansBox{
+    width: min(120px, 46%);
+    height: 22px;
+  }
+
+  .page.answerKeyPage.spicyPage .ansBox{
+    width: 62px;
+    height: 18px;
+  }
+
+  .ansBox.key{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight: 1000;
+    font-size: 14px;
+    font-family: var(--mathFont);
+    color: var(--ans);
+    border-color: var(--ans);
+    background: rgba(22,163,74,.08);
+  }
+
+  .page.spicyPage .ansBox.key{
+    font-size: 12px;
+  }
+
+  .pageFooter{
+    padding: 7px 14px;
+    border-top: 1px solid rgba(229,231,235,.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+    font-weight: 950;
+    color: #111827;
+    font-size: 12px;
+    background: rgba(255,255,255,.96);
+  }
+
+  .pageFooter a{
+    color:#2563eb;
+    text-decoration:none;
+    font-weight: 1000;
+  }
+
+  .pageFooter a:hover{ text-decoration: underline; }
+
+  .mmtFooter{
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: var(--footer-h);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0 12px;
+    background: rgba(255,255,255,.92);
+    border-top: 1px solid rgba(229,231,235,.95);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    font-weight: 900;
+    color: #111827;
+    text-align:center;
+    font-size: 13px;
+  }
+
+  .mmtFooter a{
+    color: #2563eb;
+    text-decoration:none;
+    font-weight: 950;
+  }
+
+  .mmtFooter a:hover{ text-decoration: underline; }
+
+  .main-line{ stroke:var(--line); stroke-width:8; stroke-linecap:round; }
+  .tick-major{ stroke:var(--tick); stroke-width:9; stroke-linecap:round; }
+  .tick-minor{ stroke:var(--tickSoft); stroke-width:5.5; stroke-linecap:round; }
+
+  .point-top,.point-bottom{
+    font-family:var(--mathFont);
+    font-weight:700;
+    dominant-baseline:middle;
+    text-anchor:middle;
+  }
+
+  .point-top{ fill:var(--blue); }
+  .point-bottom{ fill:#6cbc4a; }
+  .small-black{ fill:#111 !important; }
+  .ghost-black{ fill:var(--ghost) !important; opacity:.88; }
+  .ghost-green{ fill:var(--ghostGreen) !important; opacity:.88; }
+
+  .cue-line,.cue-arc,.cue-loop{
+    stroke:var(--cue);
+    stroke-width:3.2;
+    stroke-linecap:round;
+    fill:none;
+    opacity:.62;
+    stroke-dasharray:10 8;
+  }
+
+  .cue-head{ fill:var(--cue); opacity:.72; }
+
+  .fraction{
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+    vertical-align:middle;
+    min-width: 18px;
+  }
+
+  .fraction .bar{
+    width:100%;
+    min-width:16px;
+    height:2.4px;
+    background:#111;
+    border-radius:999px;
+    margin:1px 0;
+  }
+
+  .frac{
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+    vertical-align:middle;
+    min-width: 20px;
+  }
+
+  .frac .top,
+  .frac .bottom{
+    display:block;
+    text-align:center;
+    line-height:1;
+  }
+
+  .frac .bar{
+    width:100%;
+    min-width:16px;
+    height:2.4px;
+    background:#111;
+    border-radius:999px;
+    margin:1px 0;
+  }
+
+  @media print{
+    @page{
+      size: A4;
+      margin: 7mm;
+    }
+
+    html, body{
+      width: 210mm;
+      height: auto;
+    }
+
+    body{
+      background:#fff;
+      padding-bottom: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .wrap{
+      max-width: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .card{
+      box-shadow:none;
+      border-radius:0;
+      padding: 0;
+    }
+
+    .controls, .title, .subtitle, .mmtFooter{
+      display:none !important;
+    }
+
+    .page{
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      page-break-after: always;
+    }
+
+    .page:last-child{ page-break-after: auto; }
+
+    .pageHeader{
+      padding: 2.6mm 3.2mm 2mm;
+    }
+
+    .page.spicyPage .pageHeader{
+      padding: 2mm 3.2mm 1.8mm;
+    }
+
+    .page.answerKeyPage .pageHeader{
+      padding: 2mm 3.2mm 1.8mm;
+    }
+
+    .hdrTitle{ font-size: 10px; }
+    .hdrSub{ font-size: 8.4px; }
+
+    .page.spicyPage .hdrTitle,
+    .page.answerKeyPage .hdrTitle{
+      font-size: 9px;
+    }
+
+    .page.spicyPage .hdrSub,
+    .page.answerKeyPage .hdrSub{
+      font-size: 7.8px;
+    }
+
+    .nameDate{ gap: 6px; }
+
+    .lineField{
+      min-width: 86px;
+      gap: 2px;
+    }
+
+    .lineLabel{ font-size: 8px; }
+
+    .lineBox{
+      height: 15px;
+      border-width: 1.2px;
+      border-radius: 7px;
+    }
+
+    .grid{
+      padding: 2mm 3mm 2.2mm;
+      gap: 1.8mm 2.2mm;
+    }
+
+    /* diagram worksheets: a touch more room under header, still fits */
+    .page:not(.spicyPage):not(.answerKeyPage) .grid{
+      padding-top: 4.4mm;
+    }
+
+    .grid.rows-7{
+      min-height: 219mm;
+      grid-template-rows: repeat(7, minmax(0, 1fr));
+    }
+
+    .grid.rows-11{
+      min-height: 221mm;
+      grid-template-rows: repeat(11, minmax(0, 1fr));
+    }
+
+    .page.spicyPage .grid{
+      padding: 2.2mm 3.2mm 2.4mm;
+      gap: 2.5mm 2.5mm;
+    }
+
+    .page.answerKeyPage .grid{
+      padding: 1.4mm 2.2mm 1.6mm;
+      gap: 1.1mm 1.4mm;
+      min-height: auto;
+    }
+
+    .qCard{
+      padding: 2px 3px 3px;
+      border-radius: 10px;
+      min-height: 0;
+      border-color:#d5dae1;
+    }
+
+    .page.spicyPage .qCard{
+      padding: 3px 5px;
+    }
+
+    .page.answerKeyPage .qCard{
+      padding: 2px 3px 2px;
+      border-color:#d0d6de;
+    }
+
+    .page.answerKeyPage.spicyPage .qCard{
+      padding: 2px 4px 2px;
+    }
+
+    .promptSmall{
+      font-size: 7px;
+      min-height: 1px;
+      margin-bottom: 0;
+    }
+
+    .expr{
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .page.spicyPage .expr{
+      font-size: 15px;
+    }
+
+    .exprInline{
+      gap: 7px;
+    }
+
+    .viz{
+      max-width: min(100%, 285px);
+      max-height: 100%;
+      aspect-ratio: 1800 / 370;
+    }
+
+    .page.answerKeyPage .viz{
+      max-width: min(100%, 272px);
+    }
+
+    .ansRow{
+      margin-top: 3px;
+      gap: 4px;
+    }
+
+    .page.spicyPage .ansRow{
+      margin-top: 3px;
+      gap: 3px;
+    }
+
+    .ansLabel{
+      font-size: 9px;
+    }
+
+    .page.spicyPage .ansLabel{
+      font-size: 9px;
+    }
+
+    .ansBox{
+      height: 14px;
+      border-width: 1.2px;
+      border-radius: 7px;
+      width: min(72px, 36%);
+    }
+
+    .page.spicyPage .ansBox{
+      width: 50px;
+      height: 14px;
+      border-radius: 999px;
+    }
+
+    .page.answerKeyPage .ansBox{
+      width: min(72px, 38%);
+      height: 15px;
+    }
+
+    .page.answerKeyPage.spicyPage .ansBox{
+      width: 42px;
+      height: 11px;
+    }
+
+    .ansBox.key{ font-size: 10px; }
+    .page.spicyPage .ansBox.key{ font-size: 8px; }
+
+    .pageFooter{
+      padding: 2mm 3.2mm 1.3mm;
+      font-size: 7.8px;
+    }
+
+    .main-line{ stroke-width:6.2; }
+    .tick-major{ stroke-width:7; }
+    .tick-minor{ stroke-width:4; }
+    .cue-line,.cue-arc,.cue-loop{
+      stroke-width:2.4;
+      opacity:.52;
+      stroke-dasharray:8 6;
+    }
+  }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">One Step Equations — Worksheet Maker</h1>
+      <p class="subtitle">Printable A4 worksheets plus completed answer key. Sweet, Mild and Medium include a compact readable visual model. Spicy uses an ultra-compact no-model layout for higher-density practice.</p>
+
+      <div class="controls">
+        <div class="fieldRow">
+          <div>
+            <label for="levelSel">Level</label>
+            <select id="levelSel">
+              <option value="sweet">Sweet</option>
+              <option value="mild">Mild</option>
+              <option value="medium">Medium</option>
+              <option value="spicy" selected>Spicy</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="countInp">Number of questions (1–48)</label>
+            <input id="countInp" type="number" min="1" max="48" value="14" />
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button id="genBtn" class="primary">Generate worksheet</button>
+          <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  const SITE = "https://www.millsmathstools.au";
+
+  const LEVELS = {
+    sweet:  { name:"Sweet",  perPage: 14, gridClass:"twoCol",   allowNeg:false, style:"sweet",  hot:false, showModel:true  },
+    mild:   { name:"Mild",   perPage: 14, gridClass:"twoCol",   allowNeg:true,  style:"mild",   hot:false, showModel:true  },
+    medium: { name:"Medium", perPage: 14, gridClass:"twoCol",   allowNeg:true,  style:"medium", hot:false, showModel:true  },
+    spicy:  { name:"Spicy",  perPage: 33, gridClass:"threeCol", allowNeg:true,  style:"spicy",  hot:true,  showModel:false }
+  };
+
+  const DEFAULT_COUNTS = { sweet:14, mild:14, medium:14, spicy:33 };
+
+  const levelSel = document.getElementById("levelSel");
+  const countInp = document.getElementById("countInp");
+  const genBtn = document.getElementById("genBtn");
+  const printBtn = document.getElementById("printBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const out = document.getElementById("out");
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const VIEW_W = 1800;
+  const VIEW_H = 390;
+  const LINE_Y = 218;
+  const TOP_Y_MAIN = 108;
+  const TOP_Y_SMALL = 145;
+  const BOTTOM_Y_MAIN = 294;
+  const BOTTOM_Y_SMALL = 258;
+  const ADD_SUB_ARC_Y = LINE_Y - 16;
+  const GROUP_LOOP_Y = LINE_Y;
+
+  const MAIN_LABEL_SIZE = 42;
+  const MAIN_VALUE_SIZE = 40;
+  const GHOST_LABEL_SIZE = 24;
+  const GHOST_VALUE_SIZE = 22;
+  const ZERO_LABEL_SIZE = 24;
+
+  function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function choice(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function mapRange(v, min, max, minX, maxX){
+    if(min === max) return (minX + maxX) / 2;
+    return minX + ((v - min) / (max - min)) * (maxX - minX);
+  }
+  function rangeInclusive(start, end){
+    const out = [];
+    const step = start <= end ? 1 : -1;
+    for(let v = start; step > 0 ? v <= end : v >= end; v += step) out.push(v);
+    return out;
+  }
+  function formatSigned(n){
+    if(Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    return String(Number(n.toFixed(2))).replace(/\.0+$/,'').replace(/(\.\d*[1-9])0+$/,'$1');
+  }
+
+  function fractionHTML(num, den){
+    return `<span class="fraction"><span>${num}</span><span class="bar"></span><span>${den}</span></span>`;
+  }
+
+  function buildQuestionForLevel(levelKey){
+    const cfg = LEVELS[levelKey];
+    const type = cfg.hot ? choice(['addsub','addsub','addsub','mult','div']) : choice(['addsub','addsub','mult','div']);
+    if(type === 'addsub') return buildAddSub(cfg.allowNeg, !!cfg.hot);
+    if(type === 'mult') return buildMult(cfg.allowNeg, !!cfg.hot);
+    return buildDiv(cfg.allowNeg, !!cfg.hot);
+  }
+
+  function buildAddSub(allowNeg, hot){
+    for(let tries = 0; tries < 2000; tries++){
+      const useHalf = hot && Math.random() < 0.35;
+      let x, k;
+
+      if(hot){
+        x = useHalf ? randInt(-120,120) / 2 : randInt(-90,90);
+        k = useHalf ? randInt(1,40) / 2 : randInt(2,36);
+      }else if(allowNeg){
+        x = randInt(-16,16);
+        k = randInt(2,14);
+      }else{
+        x = randInt(1,20);
+        k = randInt(2,14);
+      }
+
+      const isAdd = Math.random() < 0.5;
+      const result = isAdd ? x + k : x - k;
+
+      if(!allowNeg && (x <= 0 || result <= 0)) continue;
+      if(!hot && (result < -20 || result > 24)) continue;
+      if(Math.abs(result - x) < (useHalf ? 1.5 : 3)) continue;
+
+      const exprValue = result, xValue = x;
+      const minVal = Math.min(exprValue, xValue), maxVal = Math.max(exprValue, xValue);
+      const leftX = minVal >= 0 ? 360 : 220, rightX = 1440;
+
+      let tickValues = [];
+      if(Math.abs(xValue - exprValue - Math.round(xValue - exprValue)) < 1e-9){
+        tickValues = rangeInclusive(exprValue, xValue);
+      }else{
+        const step = 0.5 * (exprValue < xValue ? 1 : -1);
+        for(let v = exprValue; step > 0 ? v <= xValue + 1e-9 : v >= xValue - 1e-9; v += step){
+          tickValues.push(Number(v.toFixed(10)));
+        }
+      }
+      const tickXs = tickValues.map(v => mapRange(v, minVal, maxVal, leftX, rightX));
+
+      return {
+        mode:'addsub',
+        negative: allowNeg && (x < 0 || result < 0),
+        isAdd, x, result, k,
+        equationLeftHTML: isAdd ? `x + ${formatSigned(k)}` : `x − ${formatSigned(k)}`,
+        equationRightHTML: formatSigned(result),
+        exprValue, xValue,
+        exprX: mapRange(exprValue, minVal, maxVal, leftX, rightX),
+        xX: mapRange(xValue, minVal, maxVal, leftX, rightX),
+        tickValues, tickXs
+      };
+    }
+  }
+
+  function buildMult(allowNeg, hot){
+    const coeffs = hot ? [2,3,4,5,6,7,8,9,10,11,12,14,15,16,18,20] : [2,3,4,5,6,7,8];
+    for(let tries = 0; tries < 2000; tries++){
+      const a = choice(coeffs);
+      let x;
+      if(hot) x = (Math.random() < 0.55 ? 1 : -1) * randInt(2,20);
+      else if(allowNeg) x = (Math.random() < 0.65 ? 1 : -1) * randInt(2,10);
+      else x = randInt(2,10);
+
+      const result = a * x;
+      if(!hot && Math.abs(result) > 72) continue;
+      if(hot && Math.abs(result) > 240) continue;
+
+      const absX = Math.abs(x), left = 220, right = 1440, step = (right - left) / a;
+      const prePoints = [];
+      for(let i = 0; i <= a; i++) prePoints.push({ px:left + i*step, value:absX*i, multiplier:i });
+
+      const negative = result < 0;
+      let points, zeroIndex, xIndex, resultIndex;
+      if(negative){
+        points = [];
+        for(let i = 0; i <= a; i++) points.push({ px:left + i*step, value:result + absX*i, multiplier:a - i });
+        resultIndex = 0; xIndex = a - 1; zeroIndex = a;
+      }else{
+        points = prePoints.map(p => ({...p}));
+        zeroIndex = 0; xIndex = 1; resultIndex = a;
+      }
+
+      return {
+        mode:'mult', negative, a, x, result,
+        equationLeftHTML:`${a}x`,
+        equationRightHTML:formatSigned(result),
+        prePoints, preZeroIndex:0, preXIndex:1, preResultIndex:a,
+        points, zeroIndex, xIndex, resultIndex
+      };
+    }
+  }
+
+  function buildDiv(allowNeg, hot){
+    const divisors = hot ? [2,3,4,5,6,7,8,9,10,11,12,14,15,16,18,20] : [2,3,4,5,6,7,8];
+    for(let tries = 0; tries < 2000; tries++){
+      const d = choice(divisors);
+      let quotient;
+      if(hot) quotient = (Math.random() < 0.55 ? 1 : -1) * randInt(2,20);
+      else if(allowNeg) quotient = (Math.random() < 0.65 ? 1 : -1) * randInt(2,10);
+      else quotient = randInt(2,10);
+
+      const x = d * quotient;
+      if(!hot && Math.abs(x) > 72) continue;
+      if(hot && Math.abs(x) > 240) continue;
+
+      const absQ = Math.abs(quotient), left = 220, right = 1440, step = (right - left) / d;
+      const prePoints = [];
+      for(let i = 0; i <= d; i++) prePoints.push({ px:left + i*step, value:absQ*i, numerator:i });
+
+      const negative = quotient < 0;
+      let points, zeroIndex, fracIndex, xIndex;
+      if(negative){
+        points = [];
+        for(let i = 0; i <= d; i++) points.push({ px:left + i*step, value:x + absQ*i, numerator:d - i });
+        xIndex = 0; fracIndex = d - 1; zeroIndex = d;
+      }else{
+        points = prePoints.map(p => ({...p}));
+        zeroIndex = 0; fracIndex = 1; xIndex = d;
+      }
+
+      return {
+        mode:'div', negative, d, quotient, x,
+        equationLeftHTML:fractionHTML('x', String(d)),
+        equationRightHTML:formatSigned(quotient),
+        prePoints, preZeroIndex:0, preFracIndex:1, preXIndex:d,
+        points, zeroIndex, fracIndex, xIndex
+      };
+    }
+  }
+
+  function pageHeaderHTML(levelName, pageLabel, showNameDate){
+    return `
+      <div class="pageHeader">
+        <div>
+          <div class="hdrTitle">One Step Equations — Worksheet (${levelName})</div>
+          <div class="hdrSub">${pageLabel}</div>
+        </div>
+
+        ${showNameDate ? `
+        <div class="nameDate">
+          <div class="lineField">
+            <div class="lineLabel">Name</div>
+            <div class="lineBox"></div>
+          </div>
+          <div class="lineField">
+            <div class="lineLabel">Date</div>
+            <div class="lineBox"></div>
+          </div>
+        </div>` : ``}
+      </div>
+    `;
+  }
+
+  function pageFooterHTML(){
+    return `
+      <div class="pageFooter">
+        This tool and more can be found at <a href="${SITE}">www.millsmathstools.au</a>
+      </div>
+    `;
+  }
+
+  function createSVG(tag, attrs = {}){
+    const el = document.createElementNS(SVG_NS, tag);
+    Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+    return el;
+  }
+
+  function drawTopText(svg, x, y, text, size, color='blue'){
+    const classes = ['point-top'];
+    if(color === 'black') classes.push('small-black');
+    if(color === 'ghost') classes.push('ghost-black');
+    const el = createSVG('text', { x, y, class:classes.join(' '), 'font-size':size });
+    el.textContent = text;
+    svg.appendChild(el);
+    return el;
+  }
+
+  function drawBottomText(svg, x, y, text, size, color='green'){
+    const classes = ['point-bottom'];
+    if(color === 'black') classes.push('small-black');
+    if(color === 'ghost') classes.push('ghost-black');
+    if(color === 'ghostGreen') classes.push('ghost-green');
+    const el = createSVG('text', { x, y, class:classes.join(' '), 'font-size':size });
+    el.textContent = text;
+    svg.appendChild(el);
+    return el;
+  }
+
+  function drawFractionTop(svg, x, y, num, den, size, color='blue'){
+    const group = createSVG('g');
+    const txtClass = ['point-top'];
+    if(color === 'black') txtClass.push('small-black');
+    if(color === 'ghost') txtClass.push('ghost-black');
+
+    const top = createSVG('text', { x, y, class:txtClass.join(' '), 'font-size': size });
+    top.textContent = num;
+
+    const width = Math.max(30, Math.max(String(num).length, String(den).length) * (size * 0.34));
+    const bar = createSVG('line', {
+      x1:x-width/2, y1:y+10, x2:x+width/2, y2:y+10,
+      stroke:'#111', 'stroke-width':2.6, 'stroke-linecap':'round'
+    });
+
+    const bottom = createSVG('text', { x, y:y+30, class:txtClass.join(' '), 'font-size': size*0.86 });
+    bottom.textContent = den;
+
+    group.appendChild(top);
+    group.appendChild(bar);
+    group.appendChild(bottom);
+    svg.appendChild(group);
+    return group;
+  }
+
+  function drawJumpArcsBetweenTicks(svg, xs, opts = {}){
+    const cueY = opts.cueY ?? ADD_SUB_ARC_Y;
+    const arcHeight = opts.arcHeight ?? 24;
+    if(!xs || xs.length < 2) return;
+
+    for(let i = 0; i < xs.length - 1; i++){
+      const x1 = xs[i], x2 = xs[i+1], mid = (x1+x2)/2;
+      const path = createSVG('path', {
+        d:`M ${x1} ${cueY} Q ${mid} ${cueY - arcHeight} ${x2} ${cueY}`,
+        class:'cue-arc'
+      });
+      path.style.opacity = '.62';
+      svg.appendChild(path);
+    }
+
+    const last = xs[xs.length - 1];
+    const headSize = 9;
+    svg.appendChild(createSVG('polygon', {
+      class:'cue-head',
+      points:`${last},${cueY} ${last-headSize},${cueY-5} ${last-headSize},${cueY+5}`
+    }));
+  }
+
+  function drawPartitionLoopsStatic(svg, points, opts = {}){
+    const cueY = opts.cueY ?? GROUP_LOOP_Y;
+    const height = opts.height ?? 38;
+    const inset = opts.inset ?? 6;
+    if(!points || points.length < 2) return;
+
+    for(let i = 0; i < points.length - 1; i++){
+      const p1 = points[i], p2 = points[i+1];
+      const width = Math.max(22, Math.abs(p2.px - p1.px) - inset * 2);
+      const rx = width / 2, ry = height / 2, midX = (p1.px + p2.px) / 2, gap = 3;
+
+      const topArc = createSVG('path', {
+        d:`M ${midX-rx} ${cueY-gap} A ${rx} ${ry} 0 0 1 ${midX+rx} ${cueY-gap}`,
+        class:'cue-loop'
+      });
+      const bottomArc = createSVG('path', {
+        d:`M ${midX+rx} ${cueY+gap} A ${rx} ${ry} 0 0 1 ${midX-rx} ${cueY+gap}`,
+        class:'cue-loop'
+      });
+
+      topArc.style.opacity = '.62';
+      bottomArc.style.opacity = '.62';
+      svg.appendChild(topArc);
+      svg.appendChild(bottomArc);
+    }
+  }
+
+  function orderedPointSpan(points, startIdx, endIdx){
+    const start = Math.min(startIdx, endIdx);
+    const end = Math.max(startIdx, endIdx);
+    const span = points.slice(start, end + 1);
+    return startIdx <= endIdx ? span : span.reverse();
+  }
+
+  function createWorksheetSVG(q, levelKey){
+    const svg = createSVG('svg', {
+      viewBox:`0 0 ${VIEW_W} ${VIEW_H}`,
+      class:'viz',
+      preserveAspectRatio:'xMidYMid meet'
+    });
+
+    const style = LEVELS[levelKey].style;
+    const stripped = style === 'medium';
+    const hideGreyHelpers = style === 'sweet' || style === 'mild';
+
+    svg.appendChild(createSVG('line', { x1:56, y1:LINE_Y, x2:VIEW_W-56, y2:LINE_Y, class:'main-line' }));
+
+    if(q.mode === 'addsub'){
+      q.tickValues.forEach((v, i) => {
+        const isMajor = Math.abs(v - q.xValue) < 1e-9 || Math.abs(v - q.exprValue) < 1e-9;
+        if(!stripped || isMajor){
+          svg.appendChild(createSVG('line', {
+            x1:q.tickXs[i], y1:LINE_Y-(isMajor?22:14), x2:q.tickXs[i], y2:LINE_Y+(isMajor?22:14),
+            class:isMajor ? 'tick-major' : 'tick-minor'
+          }));
+        }
+      });
+
+      drawTopText(svg, q.xX, TOP_Y_MAIN, 'x', MAIN_LABEL_SIZE, 'blue');
+      drawTopText(svg, q.exprX, TOP_Y_MAIN, q.isAdd ? `x + ${formatSigned(q.k)}` : `x − ${formatSigned(q.k)}`, MAIN_LABEL_SIZE, 'blue');
+      drawBottomText(svg, q.exprX, BOTTOM_Y_MAIN, formatSigned(q.result), MAIN_VALUE_SIZE, 'green');
+      drawBottomText(svg, q.xX, BOTTOM_Y_MAIN, '?', MAIN_VALUE_SIZE, 'green');
+
+      if(!stripped){
+        const exprIdx = q.tickValues.findIndex(v => Math.abs(v - q.exprValue) < 1e-9);
+        const xIdx = q.tickValues.findIndex(v => Math.abs(v - q.xValue) < 1e-9);
+        let cueXs = q.tickXs.slice(Math.min(exprIdx, xIdx), Math.max(exprIdx, xIdx) + 1);
+        if(exprIdx > xIdx) cueXs = cueXs.reverse();
+        drawJumpArcsBetweenTicks(svg, cueXs, { cueY:ADD_SUB_ARC_Y, arcHeight:24 });
+
+        if(!hideGreyHelpers){
+          const start = Math.min(exprIdx, xIdx), end = Math.max(exprIdx, xIdx);
+          for(let i = start + 1; i < end; i++){
+            drawBottomText(svg, q.tickXs[i], BOTTOM_Y_SMALL, formatSigned(q.tickValues[i]), GHOST_VALUE_SIZE, 'ghost');
+          }
+        }
+      }
+      return svg;
+    }
+
+    if(q.mode === 'mult'){
+      const points = q.negative ? q.points : q.prePoints;
+      const zeroIndex = q.negative ? q.zeroIndex : q.preZeroIndex;
+      const xIndex = q.negative ? q.xIndex : q.preXIndex;
+      const resultIndex = q.negative ? q.resultIndex : q.preResultIndex;
+
+      points.forEach((p, idx) => {
+        const major = idx === zeroIndex || idx === xIndex || idx === resultIndex;
+        if(!stripped || major){
+          svg.appendChild(createSVG('line', {
+            x1:p.px, y1:LINE_Y-(major?22:14), x2:p.px, y2:LINE_Y+(major?22:14),
+            class:major ? 'tick-major' : 'tick-minor'
+          }));
+        }
+      });
+
+      drawTopText(svg, points[zeroIndex].px, TOP_Y_MAIN, '0', ZERO_LABEL_SIZE, 'black');
+      drawBottomText(svg, points[zeroIndex].px, BOTTOM_Y_MAIN, '0', MAIN_VALUE_SIZE, 'black');
+      drawTopText(svg, points[xIndex].px, TOP_Y_MAIN, 'x', MAIN_LABEL_SIZE, 'blue');
+      drawBottomText(svg, points[xIndex].px, BOTTOM_Y_MAIN, '?', MAIN_VALUE_SIZE, 'green');
+      drawTopText(svg, points[resultIndex].px, TOP_Y_MAIN, `${q.a}x`, MAIN_LABEL_SIZE, 'blue');
+      drawBottomText(svg, points[resultIndex].px, BOTTOM_Y_MAIN, formatSigned(q.result), MAIN_VALUE_SIZE, 'green');
+
+      if(!stripped){
+        drawPartitionLoopsStatic(svg, orderedPointSpan(points, zeroIndex, resultIndex), { cueY:GROUP_LOOP_Y, height:38, inset:6 });
+
+        if(!hideGreyHelpers){
+          let mids = points.filter((_, idx) => idx !== zeroIndex && idx !== xIndex && idx !== resultIndex);
+          const revealTowardsQuestion = q.negative ? mids : mids.slice().reverse();
+          revealTowardsQuestion.forEach((p) => {
+            drawTopText(svg, p.px, TOP_Y_SMALL, `${p.multiplier}x`, GHOST_LABEL_SIZE, 'ghost');
+            drawBottomText(svg, p.px, BOTTOM_Y_SMALL, String(p.value), GHOST_VALUE_SIZE, 'ghost');
+          });
+        }
+      }
+      return svg;
+    }
+
+    const points = q.negative ? q.points : q.prePoints;
+    const zeroIndex = q.negative ? q.zeroIndex : q.preZeroIndex;
+    const fracIndex = q.negative ? q.fracIndex : q.preFracIndex;
+    const xIndex = q.negative ? q.xIndex : q.preXIndex;
+
+    points.forEach((p, idx) => {
+      const major = idx === zeroIndex || idx === fracIndex || idx === xIndex;
+      if(!stripped || major){
+        svg.appendChild(createSVG('line', {
+          x1:p.px, y1:LINE_Y-(major?22:14), x2:p.px, y2:LINE_Y+(major?22:14),
+          class:major ? 'tick-major' : 'tick-minor'
+        }));
+      }
+    });
+
+    drawTopText(svg, points[zeroIndex].px, TOP_Y_MAIN, '0', ZERO_LABEL_SIZE, 'black');
+    drawBottomText(svg, points[zeroIndex].px, BOTTOM_Y_MAIN, '0', MAIN_VALUE_SIZE, 'black');
+    drawFractionTop(svg, points[fracIndex].px, TOP_Y_MAIN - 8, 'x', String(q.d), MAIN_LABEL_SIZE, 'blue');
+    drawBottomText(svg, points[fracIndex].px, BOTTOM_Y_MAIN, formatSigned(q.quotient), MAIN_VALUE_SIZE, 'green');
+    drawTopText(svg, points[xIndex].px, TOP_Y_MAIN, 'x', MAIN_LABEL_SIZE, 'blue');
+    drawBottomText(svg, points[xIndex].px, BOTTOM_Y_MAIN, '?', MAIN_VALUE_SIZE, 'green');
+
+    if(!stripped){
+      drawPartitionLoopsStatic(svg, orderedPointSpan(points, zeroIndex, xIndex), { cueY:GROUP_LOOP_Y, height:38, inset:6 });
+
+      if(!hideGreyHelpers){
+        let mids = points.filter((_, idx) => idx !== zeroIndex && idx !== fracIndex && idx !== xIndex);
+        if(q.negative) mids = mids.reverse();
+        mids.forEach((p) => {
+          drawFractionTop(svg, p.px, TOP_Y_SMALL - 10, `${p.numerator}x`, String(q.d), GHOST_LABEL_SIZE, 'ghost');
+          drawBottomText(svg, p.px, BOTTOM_Y_SMALL, String(p.value), GHOST_VALUE_SIZE, 'ghost');
+        });
+      }
+    }
+    return svg;
+  }
+
+  function createPromptEquationHTML(q){
+    const wrap = document.createElement("div");
+    wrap.className = "exprInline";
+
+    const lhs = document.createElement("span");
+    lhs.className = "lhs";
+
+    if(q.mode === 'div'){
+      lhs.innerHTML = `<span class="frac"><span class="top">x</span><span class="bar"></span><span class="bottom">${q.d}</span></span>`;
+    } else if(q.mode === 'addsub'){
+      lhs.textContent = q.isAdd
+        ? `x + ${formatSigned(q.k)}`
+        : `x − ${formatSigned(q.k)}`;
+    } else {
+      lhs.textContent = `${q.a}x`;
+    }
+
+    const eq = document.createElement("span");
+    eq.className = "eq";
+    eq.textContent = "=";
+
+    const rhs = document.createElement("span");
+    rhs.className = "rhs";
+    rhs.textContent = q.mode === 'div'
+      ? formatSigned(q.quotient)
+      : formatSigned(q.result);
+
+    wrap.appendChild(lhs);
+    wrap.appendChild(eq);
+    wrap.appendChild(rhs);
+    return wrap;
+  }
+
+  function makeQuestionCard(q, levelKey, showAnswer){
+    const wrap = document.createElement("div");
+    wrap.className = "qCard";
+
+    const prompt = document.createElement("div");
+    prompt.className = "prompt";
+
+    const promptSmall = document.createElement("div");
+    promptSmall.className = "promptSmall";
+    promptSmall.textContent = "";
+    prompt.appendChild(promptSmall);
+
+    const expr = document.createElement("div");
+    expr.className = "expr";
+    expr.appendChild(createPromptEquationHTML(q));
+    prompt.appendChild(expr);
+    wrap.appendChild(prompt);
+
+    if(LEVELS[levelKey].showModel){
+      const vizWrap = document.createElement("div");
+      vizWrap.className = "vizWrap";
+      vizWrap.appendChild(createWorksheetSVG(q, levelKey));
+      wrap.appendChild(vizWrap);
+    }
+
+    const ansRow = document.createElement("div");
+    ansRow.className = "ansRow";
+    ansRow.innerHTML = `
+      <div class="ansLabel">x =</div>
+      <div class="ansBox ${showAnswer ? "key" : ""}">${showAnswer ? formatSigned(q.x) : ""}</div>
+    `;
+    wrap.appendChild(ansRow);
+
+    return wrap;
+  }
+
+  function buildPages(questions, levelKey, titleLabel, showAnswers){
+    const cfg = LEVELS[levelKey];
+    const perPage = cfg.perPage;
+    const totalPages = Math.ceil(questions.length / perPage);
+    const cols = cfg.gridClass === "threeCol" ? 3 : 2;
+    const rows = Math.ceil(perPage / cols);
+    const pages = [];
+
+    for(let p = 0; p < totalPages; p++){
+      const page = document.createElement("div");
+      page.className = "page" + (levelKey === 'spicy' ? " spicyPage" : "") + (showAnswers ? " answerKeyPage" : "");
+
+      const pageLabel = `${titleLabel} — Page ${p+1} of ${totalPages}`;
+      page.innerHTML = pageHeaderHTML(cfg.name, pageLabel, !showAnswers);
+
+      const grid = document.createElement("div");
+      grid.className = `grid ${cfg.gridClass} rows-${rows}`;
+
+      const start = p * perPage;
+      const slice = questions.slice(start, start + perPage);
+      for(const q of slice){
+        grid.appendChild(makeQuestionCard(q, levelKey, showAnswers));
+      }
+
+      page.appendChild(grid);
+
+      const footer = document.createElement("div");
+      footer.innerHTML = pageFooterHTML();
+      page.appendChild(footer.firstElementChild);
+
+      pages.push(page);
+    }
+
+    return pages;
+  }
+
+  function clearOut(){
+    out.innerHTML = "";
+  }
+
+  function updateDefaultCountForLevel(){
+    countInp.value = String(DEFAULT_COUNTS[levelSel.value] || 14);
+  }
+
+  function generate(){
+    clearOut();
+
+    const levelKey = levelSel.value;
+    let n = Number(countInp.value);
+    if(!Number.isFinite(n)) n = DEFAULT_COUNTS[levelKey] || 14;
+    n = Math.max(1, Math.min(48, Math.round(n)));
+    countInp.value = String(n);
+
+    const questions = Array.from({length:n}, () => buildQuestionForLevel(levelKey));
+
+    const wsPages = buildPages(questions, levelKey, "Worksheet", false);
+    const keyPages = buildPages(questions, levelKey, "Answer key", true);
+
+    for(const pg of wsPages) out.appendChild(pg);
+    for(const pg of keyPages) out.appendChild(pg);
+
+    if(out.firstElementChild){
+      out.firstElementChild.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+  }
+
+  function resetAll(){
+    clearOut();
+    levelSel.value = "sweet";
+    updateDefaultCountForLevel();
+  }
+
+  levelSel.addEventListener("change", updateDefaultCountForLevel);
+  genBtn.addEventListener("click", generate);
+  printBtn.addEventListener("click", () => window.print());
+  resetBtn.addEventListener("click", resetAll);
+
+  updateDefaultCountForLevel();
+})();
+</script>
+</body>
+</html>
