@@ -1,4 +1,5 @@
 
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -1870,8 +1871,17 @@ function drawStage1Intro(){
     showQuestionMark:false
   });
 }
+      function resetBoardVisualState(){
+        clearAllTimers();
+        cleanupFlipCard();
+        clearBoard();
+        svg.style.visibility = 'visible';
+      }
+
       function startNewQuestion(){
         closeOverlays();
+        nextRenderToken();
+        resetBoardVisualState();
         state.question = buildQuestion();
         state.prevStage = 1;
         state.stage = 1;
@@ -1884,7 +1894,8 @@ function drawStage1Intro(){
 
       function resetTool(){
         closeOverlays();
-        clearAllTimers();
+        nextRenderToken();
+        resetBoardVisualState();
 
         state.settings = { ...DEFAULT_SETTINGS };
         equationTypeSelect.value = state.settings.equationType;
@@ -2558,6 +2569,42 @@ function renderDivGiven(animated){
 
 drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
 }
+
+      function renderDivNegativeKnown(){
+        drawBaseLine();
+
+        const q = state.question;
+        const points = q.points;
+        const xPoint = points[q.xIndex];
+        const fracPoint = points[q.fracIndex];
+        const zeroPoint = points[q.zeroIndex];
+
+        points.forEach((p, idx) => {
+          drawTick(p.px, idx === q.zeroIndex || idx === q.fracIndex || idx === q.xIndex);
+        });
+
+        drawTopText(zeroPoint.px, TOP_Y_MAIN, '0', 62, 'black');
+        drawBottomText(zeroPoint.px, BOTTOM_Y_MAIN, '0', 68, 'black');
+
+        drawFractionTop(fracPoint.px, TOP_Y_MAIN - 12, 'x', String(q.d), 52, 'blue');
+        drawBottomText(fracPoint.px, BOTTOM_Y_MAIN, String(q.quotient), 82, 'green');
+
+        drawTopText(xPoint.px, TOP_Y_MAIN, 'x', 72, 'blue');
+        drawBottomText(xPoint.px, BOTTOM_Y_MAIN, '?', 84, 'green');
+
+        if(state.settings.showStrategyPrompts){
+          drawCueText('equal groups', {
+            fromX: xPoint.px,
+            toX: zeroPoint.px,
+            textY: DIV_TEXT_Y,
+            mainFontSize: 27
+          });
+        }
+
+        const orderedPoints = orderedPointSpan(points, q.xIndex, q.zeroIndex);
+        drawPartitionLoopsStatic(orderedPoints, { cueY: GROUP_LOOP_Y, height:72, inset:8 });
+      }
+
       function renderDivSolve(animated, token, revealAnswer){
         drawBaseLine();
 
