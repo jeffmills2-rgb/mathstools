@@ -500,7 +500,7 @@
   function stripHTML(html){ return String(html).replace(/<[^>]*>/g,''); }
 
   // Variables: 30% x, others evenly
-  const OTHER_VARS = ["a","b","c","d","e","f","y","p","w"];
+  const OTHER_VARS = ["a","b","c","d","e","f","y","p","w","k"];
   function pickVar(){
     if (Math.random() < 0.30) return "x";
     return OTHER_VARS[Math.floor(Math.random() * OTHER_VARS.length)];
@@ -548,6 +548,24 @@
     for (const v of vars) terms.push({ coeff: map.get(v), v });
     if (csum !== 0 || terms.length === 0) terms.push({ coeff: csum, v: null });
     return buildExpressionHTML(terms);
+  }
+
+  function productFactorHTML(factor){
+    return factor.kind === 'num' ? String(factor.value) : vHTML(factor.value);
+  }
+
+  function buildMultiplyingTermsAnswer(factors){
+    let numProduct = 1;
+    const vars = [];
+    for (const f of factors){
+      if (f.kind === 'num') numProduct *= f.value;
+      else vars.push(f.value);
+    }
+    vars.sort((a,b)=>a.localeCompare(b));
+    const varPart = vars.map(v => vHTML(v)).join('');
+    if (!vars.length) return String(numProduct);
+    if (numProduct === 1) return varPart;
+    return `${numProduct}${varPart}`;
   }
 
   // ============================================================
@@ -974,6 +992,47 @@
         `;
         const card = makeCardShell(idx1, promptHTML);
         card.querySelector('.qText').classList.add('splitExpr');
+        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"C", id:"multiply_terms",
+      label:"Multiplying terms",
+      defaultOn:true,
+      gen(){
+        const factorCount = 4;
+        const pronumeralCount = randInt(1,3);
+        const numberCount = factorCount - pronumeralCount;
+
+        const usedVars = [];
+        const factors = [];
+
+        for (let i=0; i<numberCount; i++){
+          factors.push({ kind:'num', value: randInt(2,9) });
+        }
+
+        for (let i=0; i<pronumeralCount; i++){
+          let v = pickVar();
+          let guard = 0;
+          while (usedVars.includes(v) && guard < 20){
+            v = pickVar();
+            guard++;
+          }
+          usedVars.push(v);
+          factors.push({ kind:'var', value: v });
+        }
+
+        const shuffled = shuffle(factors);
+        const exprHTML = shuffled.map(productFactorHTML).join(' × ');
+        const ansHTML = buildMultiplyingTermsAnswer(shuffled);
+
+        return { type:this.id, factors: shuffled, exprHTML, ansHTML };
+      },
+      key:q => `mt_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Simplify: ${q.exprHTML}`);
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
         return card;
       }
