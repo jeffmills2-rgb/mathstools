@@ -1,0 +1,2300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Times Table Chart – Area / Product / Division / Fraction of amount</title>
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --panel:#eceff3;
+      --ink:#111827;
+      --teal:#67c8bf;
+      --line:2px;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      --toolbar-h:64px;
+      --back-h:44px;
+      --grid-size:min(72vw,860px);
+      --title-size:clamp(28px,4vw,52px);
+      --body-size:clamp(18px,2vw,30px);
+      --header-size:clamp(18px,2vw,28px);
+      --playfulFont:"Trebuchet MS","Avenir Next","Arial Rounded MT Bold","Comic Sans MS",var(--uiFont);
+
+      --preview:#e8f4c9;
+      --active:#d7ef9f;
+      --zoom-cell:#f7f7f8;
+      --zoom-line:rgba(17,17,17,.42);
+      --zoom-num:rgba(17,24,39,.22);
+      --shadow:0 14px 30px rgba(0,0,0,.10);
+      --blue:#2563eb;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:var(--uiFont);
+      overflow-x:hidden;
+    }
+
+    .app{min-height:100%;padding:12px 18px 28px}
+
+    .topbar{
+      min-height:var(--toolbar-h);
+      background:var(--panel);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      gap:12px;
+      border-radius:18px;
+    }
+
+    .left-controls,.right-controls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+      flex-wrap:wrap;
+    }
+
+    .chip,.btn{
+      border:none;
+      border-radius:16px;
+      background:#f3f4f6;
+      color:var(--ink);
+      min-height:40px;
+      padding:0 16px;
+      font-size:15px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      white-space:nowrap;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+      text-decoration:none;
+    }
+
+    
+    .content{
+      max-width:1260px;
+      margin:0 auto;
+      padding-top:12px;
+      position:relative;
+    }
+
+    .back-row{
+      min-height:var(--back-h);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+    }
+
+    .back-btn{
+      border:none;
+      background:#f3f4f6;
+      border-radius:14px;
+      min-height:40px;
+      padding:0 16px 0 14px;
+      font-size:15px;
+      font-weight:800;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(-4px);
+      transition:opacity 220ms ease,transform 220ms ease;
+    }
+
+    .back-btn.visible{
+      opacity:1;
+      pointer-events:auto;
+      transform:translateY(0);
+    }
+    .replay-btn{
+      position:absolute;
+      border:none;
+      background:#eff6ff;
+      color:var(--blue);
+      border-radius:14px;
+      min-height:40px;
+      padding:0 16px;
+      font-size:15px;
+      font-weight:800;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(37,99,235,.16), inset 0 0 0 1px rgba(37,99,235,.10);
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(-4px);
+      transition:opacity 220ms ease,transform 220ms ease,background-color 180ms ease,left 220ms ease,top 220ms ease;
+      z-index:24;
+    }
+
+    .replay-btn:hover{background:#dbeafe}
+
+    .replay-btn.visible{
+      opacity:1;
+      pointer-events:auto;
+      transform:translateY(0);
+    }
+
+    .stage{
+      position:relative;
+      min-height:700px;
+    }
+
+    .title-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      margin:8px 0 18px;
+      line-height:1.1;
+      user-select:none;
+    }
+
+    .title-logo{
+      width:48px;
+      height:48px;
+      object-fit:contain;
+      border-radius:10px;
+      flex:0 0 auto;
+    }
+
+    .title-text{
+      font-family:var(--playfulFont);
+      font-size:var(--title-size);
+      font-weight:900;
+      letter-spacing:.2px;
+      text-align:center;
+      background:linear-gradient(90deg,#2563eb,#1d4ed8);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      animation:titleBounce 340ms ease;
+    }
+
+    .title-subtext{
+      text-align:center;
+      color:#6b7280;
+      font-size:15px;
+      font-weight:700;
+      margin:-8px 0 16px;
+      min-height:22px;
+      user-select:none;
+    }
+
+    .chart-shell{
+      position:relative;
+      width:fit-content;
+      margin:0 auto;
+      touch-action:none;
+    }
+
+    .chart-shell.spotlight .chart{
+      transition:opacity 220ms ease;
+    }
+
+    .chart-shell.spotlight[data-mode="area"] .chart,
+    .chart-shell.spotlight[data-mode="product"] .chart,
+    .chart-shell.spotlight[data-mode="division"] .chart{opacity:.56}
+
+    .chart-shell.spotlight[data-mode="fraction_of_amount"] .chart{opacity:.34}
+
+    .chart-shell.locked-row .chart td.lock-dim .cell-btn{opacity:.28}
+    .chart-shell.locked-row .chart td.lock-keep .cell-btn{opacity:1}
+    .chart-shell.locked-row .chart td.lock-keep{box-shadow:inset 0 0 0 3px rgba(37,99,235,.12)}
+
+    table.chart{
+      border-collapse:collapse;
+      table-layout:fixed;
+      width:var(--grid-size);
+      background:transparent;
+      position:relative;
+      z-index:1;
+    }
+
+    .chart td{
+      border:var(--line) solid rgba(17,17,17,.88);
+      width:calc(var(--grid-size)/13);
+      height:calc(var(--grid-size)/13);
+      text-align:center;
+      vertical-align:middle;
+      background:#fff;
+      padding:0;
+      position:relative;
+      overflow:hidden;
+      transition:opacity 220ms ease, background-color 120ms ease;
+    }
+
+    .chart td.header,.chart td.corner{
+      background:var(--teal);
+      font-family:var(--mathFont);
+      font-size:var(--header-size);
+      font-weight:600;
+      user-select:none;
+    }
+
+    .cell-btn{
+      appearance:none;
+      border:none;
+      background:transparent;
+      margin:0;
+      width:100%;
+      height:100%;
+      padding:0;
+      cursor:pointer;
+      font-family:var(--mathFont);
+      font-size:var(--body-size);
+      font-weight:500;
+      color:#111;
+      display:grid;
+      place-items:center;
+      transition:box-shadow 160ms ease,background-color 160ms ease,transform 160ms ease,opacity 160ms ease;
+      position:relative;
+      z-index:1;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .cell-btn:hover,.cell-btn:focus-visible{
+      box-shadow:inset 0 0 0 2px rgba(0,0,0,.05),0 6px 14px rgba(0,0,0,.10);
+      background:transparent;
+      outline:none;
+    }
+
+    .cell-btn.preview-target{
+      transform:scale(1.05);
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .screen-fade{
+      position:absolute;
+      inset:0;
+      background:transparent;
+      pointer-events:none;
+      transition:background-color 260ms ease;
+      z-index:2;
+    }
+
+    .screen-fade.active{background:rgba(243,244,246,.94)}
+
+    .overlay{
+      position:absolute;
+      inset:0;
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .overlay.active,.overlay.active *{pointer-events:auto}
+
+    .zoom-expression{
+      position:absolute;
+      left:50%;
+      top:0;
+      transform:translateX(-50%);
+      min-height:52px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      font-family:var(--mathFont);
+      color:var(--ink);
+      z-index:20;
+      pointer-events:none;
+      width:fit-content;
+      max-width:min(96%,920px);
+      text-align:center;
+      background:#fff;
+      border-radius:18px;
+      padding:12px 18px;
+      box-shadow:0 2px 12px rgba(0,0,0,.08);
+      opacity:0;
+      transition:opacity 180ms ease;
+    }
+    .zoom-expression[hidden]{display:none}
+    .zoom-expression.visible{opacity:1}
+    .expr-part,.expr-word{white-space:nowrap;line-height:1}
+    .expr-part{font-size:clamp(24px,3vw,46px)}
+    .expr-word{font-size:clamp(22px,2.3vw,34px)}
+    .expr-pill{padding:10px 18px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;min-width:76px}
+    .expr-pill.group-green{background:#c8ea7b}
+    .expr-pill.group-purple{background:#e9c9f2}
+    .expr-pill.group-neutral{background:#ffffff;box-shadow:inset 0 0 0 1px rgba(17,24,39,.08)}
+    .expr-frac{
+      display:grid;
+      grid-template-rows:1fr auto 1fr;
+      align-items:center;
+      justify-items:center;
+      width:min(84px,10vw);
+      height:clamp(52px,7vw,90px);
+      font-size:clamp(26px,3.2vw,56px);
+      line-height:1;
+    }
+    .expr-frac .bar{width:100%;height:4px;background:#111}
+
+    .mode-card{
+      background:#fff;
+      border-radius:16px;
+      padding:8px 10px;
+      box-shadow:0 10px 24px rgba(0,0,0,.10);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+    }
+
+
+    .mode-label{
+      font-size:14px;
+      font-weight:800;
+      color:var(--ink);
+    }
+
+    .row-select{
+      border:none;
+      background:#eef2f7;
+      color:var(--ink);
+      border-radius:999px;
+      min-height:34px;
+      padding:0 12px;
+      font-weight:800;
+      font-size:14px;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+    }
+    .row-select:disabled{opacity:.55}
+    .mini-switch{position:relative;width:44px;height:24px;display:inline-block}
+    .mini-switch input{opacity:0;width:0;height:0}
+    .mini-slider{position:absolute;cursor:pointer;inset:0;background:#e5e7eb;border-radius:999px;transition:.25s}
+    .mini-slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+    .mini-switch input:checked + .mini-slider{background:#2563eb}
+    .mini-switch input:checked + .mini-slider:before{transform:translateX(20px)}
+
+    .segmented{
+      display:inline-flex;
+      background:#eef2f7;
+      border-radius:999px;
+      padding:3px;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+      gap:3px;
+      flex-wrap:wrap;
+    }
+
+    .seg-btn{
+      appearance:none;
+      border:none;
+      background:transparent;
+      color:#374151;
+      font-weight:800;
+      font-size:14px;
+      padding:8px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      transition:background-color .18s ease,color .18s ease,transform .18s ease;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:88px;
+    }
+
+    .seg-btn.active{
+      background:var(--blue);
+      color:#fff;
+      box-shadow:0 6px 14px rgba(37,99,235,.22);
+    }
+
+    .seg-btn:active{transform:scale(.98)}
+
+    .zoom-board{
+      position:absolute;
+      transform-origin:center center;
+      will-change:left,top,width,height,opacity;
+      pointer-events:auto;
+      box-shadow:var(--shadow);
+      border-radius:20px;
+      overflow:visible;
+    }
+
+    .zoom-grid{
+      position:absolute;
+      inset:0;
+      display:grid;
+      background:#fff;
+      border-radius:20px;
+      overflow:hidden;
+    }
+
+    .zoom-cell{
+      position:relative;
+      background:var(--zoom-cell);
+      border-right:2px solid var(--zoom-line);
+      border-bottom:2px solid var(--zoom-line);
+      transition:background-color 190ms ease, box-shadow 190ms ease, opacity 190ms ease, color 190ms ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:var(--mathFont);
+      font-size:clamp(18px,2.2vw,42px);
+      color:var(--zoom-num);
+      user-select:none;
+    }
+    .zoom-cell.top-edge{border-top:2px solid var(--zoom-line)}
+    .zoom-cell.left-edge{border-left:2px solid var(--zoom-line)}
+    .zoom-cell.active{background:var(--active)}
+    .zoom-cell.ghost{color:rgba(17,24,39,.08)}
+    .zoom-cell.hiddenish{color:rgba(17,24,39,.04)}
+    .zoom-cell.header-cell{
+      background:var(--teal);
+      color:#111827;
+      font-size:clamp(20px,2.2vw,38px);
+      font-weight:600;
+    }
+
+    .zoom-board.division-mode .zoom-cell{
+      border-right:1px solid rgba(17,24,39,.12);
+      border-bottom:1px solid rgba(17,24,39,.12);
+      color:rgba(17,24,39,.12);
+    }
+    .zoom-board.division-mode .zoom-cell.top-edge{border-top:1px solid rgba(17,24,39,.12)}
+    .zoom-board.division-mode .zoom-cell.left-edge{border-left:1px solid rgba(17,24,39,.12)}
+    .zoom-board.division-mode .zoom-cell.header-cell{
+      border-color:rgba(17,24,39,.35);
+      color:#0f172a;
+    }
+    .zoom-board.division-mode .zoom-cell.division-faded{
+      color:rgba(17,24,39,.08);
+    }
+    .zoom-board.division-mode .zoom-cell.division-keep{
+      color:rgba(17,24,39,.24);
+    }
+    .zoom-board.division-mode.rows-mode .zoom-cell.division-row-divider{
+      border-bottom:6px solid #111;
+    }
+    .zoom-board.division-mode.columns-mode .zoom-cell.division-col-divider{
+      border-right:6px solid #111;
+    }
+    .zoom-board.division-mode.rows-mode .zoom-cell.division-last-row{
+      border-bottom:1px solid rgba(17,24,39,.12);
+    }
+    .zoom-board.division-mode.columns-mode .zoom-cell.division-last-col{
+      border-right:1px solid rgba(17,24,39,.12);
+    }
+
+    .floating-total{
+      position:absolute;
+      display:grid;
+      place-items:center;
+      font-family:var(--mathFont);
+      font-size:clamp(32px,5vw,78px);
+      font-weight:600;
+      color:#111827;
+      background:rgba(255,255,255,.96);
+      border-radius:18px;
+      box-shadow:0 10px 24px rgba(0,0,0,.12);
+      width:clamp(72px,12vw,124px);
+      height:clamp(52px,8vw,88px);
+      left:0;
+      top:0;
+      z-index:14;
+      pointer-events:none;
+      opacity:0;
+      transform:translate(-50%,-50%) scale(.8);
+      transition:
+        left 520ms cubic-bezier(.22,.61,.36,1),
+        top 520ms cubic-bezier(.22,.61,.36,1),
+        transform 220ms ease,
+        opacity 180ms ease;
+    }
+    .floating-total.visible{
+      opacity:1;
+      transform:translate(-50%,-50%) scale(1);
+    }
+    .floating-total.pop{animation:totalPop 240ms ease}
+
+    .division-toggle-wrap{
+      position:absolute;
+      right:-12px;
+      top:-64px;
+      transform:translateX(100%);
+      z-index:13;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease;
+    }
+    .division-toggle-wrap.visible{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .division-chip{
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 10px 24px rgba(0,0,0,.12);
+      padding:8px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .division-toggle-btn{
+      appearance:none;
+      border:none;
+      background:transparent;
+      color:#374151;
+      font-weight:800;
+      font-size:13px;
+      padding:10px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      min-width:126px;
+    }
+    .division-toggle-btn.active{
+      background:var(--blue);
+      color:#fff;
+      box-shadow:0 6px 14px rgba(37,99,235,.22);
+    }
+    .group-card{
+      position:absolute;
+      display:grid;
+      place-items:center;
+      gap:4px;
+      min-width:96px;
+      min-height:64px;
+      padding:12px 18px;
+      background:rgba(255,255,255,.98);
+      color:#111827;
+      border-radius:999px;
+      box-shadow:0 10px 24px rgba(0,0,0,.12);
+      font-family:var(--mathFont);
+      font-size:clamp(24px,3vw,44px);
+      font-weight:600;
+      line-height:1;
+      transform:translate(-50%,-50%);
+      opacity:0;
+      z-index:13;
+      pointer-events:none;
+      transition:opacity 180ms ease;
+      border:3px solid transparent;
+    }
+    .group-card.visible{opacity:1}
+    .group-label{font-family:var(--uiFont);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#475569}
+    .group-value{line-height:1}
+    .group-card.group-green{background:#c8ea7b;border-color:#b6dd60}
+    .group-card.group-purple{background:#e9c9f2;border-color:#d9afe7}
+    .group-card.group-blue{background:#dbeafe;border-color:#bfdbfe}
+    .group-card.group-peach{background:#fde7d8;border-color:#f9cfaa}
+    .group-card.group-teal{background:#d7f2ec;border-color:#aee4d8}
+    .group-card.group-yellow{background:#f6efb3;border-color:#e7de87}
+
+    /* Fraction mode */
+    .fraction-wrap{
+      position:absolute;
+      transform-origin:center center;
+      will-change:left,top,width,height;
+      pointer-events:auto;
+      z-index:10;
+    }
+    .fraction-wrap.groups-mode .frac-row,
+    .fraction-wrap.groups-mode .value-row{
+      column-gap:10px;
+    }
+    .fraction-box{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+    }
+    .frac-row,.value-row{
+      display:grid;
+      width:100%;
+      height:50%;
+      column-gap:0;
+      transition:column-gap 180ms ease;
+    }
+    .frac-cell,.value-cell{
+      appearance:none;
+      border:var(--line) solid rgba(17,17,17,.88);
+      display:grid;
+      place-items:center;
+      min-width:0;
+      overflow:hidden;
+      position:relative;
+      transition:background-color 220ms ease,opacity 220ms ease,transform 150ms ease,color 150ms ease;
+      color:var(--ink);
+      padding:0;
+      margin:0;
+      background:#f3f4f6;
+    }
+    .frac-cell{border-bottom:none}
+    .value-cell{border-top:var(--line) solid rgba(17,17,17,.88)}
+    .frac-cell.clickable,.value-cell.clickable{cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .frac-cell.clickable:hover,.frac-cell.clickable:focus-visible,
+    .value-cell.clickable:hover,.value-cell.clickable:focus-visible{
+      box-shadow:inset 0 0 0 2px rgba(0,0,0,.06);
+      outline:none;
+    }
+    .frac-cell.active,.value-cell.active{background:#d7ef9f;opacity:1}
+    .frac-cell.preview,.value-cell.preview{background:#e8f4c9}
+    .fraction{
+      display:grid;
+      grid-template-rows:1fr auto 1fr;
+      align-items:center;
+      justify-items:center;
+      width:min(78%,92px);
+      height:64%;
+      font-family:var(--mathFont);
+      line-height:1;
+      font-variant-numeric:lining-nums;
+      transition:font-size 200ms ease,width 200ms ease;
+      margin:0 auto;
+    }
+    .fraction .bar{width:100%;height:3px;background:#111;align-self:center}
+    .value-text{
+      font-family:var(--mathFont);
+      line-height:1;
+      font-weight:500;
+      transition:font-size 200ms ease;
+    }
+
+    .fraction-mode-toggles{
+      display:none;
+      position:absolute;
+      left:calc(100% + 16px);
+      top:50%;
+      transform:translate(-30%, -50%);
+      z-index:21;
+      flex-direction:column;
+      gap:12px;
+    }
+    .fraction-mode-toggles.visible{display:flex}
+    .toggle-card{
+      background:#fff;
+      border-radius:16px;
+      padding:10px 14px;
+      box-shadow:0 10px 24px rgba(0,0,0,.12);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:120px;
+      justify-content:space-between;
+    }
+    .toggle-label{font-size:14px;font-weight:700;color:var(--ink)}
+    .switch{position:relative;width:44px;height:24px}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{
+      position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
+      background:#e5e7eb;border-radius:999px;transition:.25s
+    }
+    .slider:before{
+      position:absolute;content:"";height:18px;width:18px;left:3px;top:3px;background:white;
+      border-radius:50%;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.2)
+    }
+    .switch input:checked + .slider{background:#2563eb}
+    .switch input:checked + .slider:before{transform:translateX(20px)}
+
+    @keyframes titleBounce{
+      0%{transform:translateY(-6px) scale(.98)}
+      60%{transform:translateY(2px) scale(1.02)}
+      100%{transform:translateY(0) scale(1)}
+    }
+
+    @keyframes totalPop{
+      0%{transform:translate(-50%,-50%) scale(1)}
+      50%{transform:translate(-50%,-50%) scale(1.08)}
+      100%{transform:translate(-50%,-50%) scale(1)}
+    }
+
+    @media (max-width:1100px){
+      .division-toggle-wrap{
+        right:0;
+        top:auto;
+        bottom:-62px;
+        transform:none;
+      }
+    }
+
+    @media (max-width:900px){
+      :root{
+        --grid-size:min(92vw,720px);
+        --body-size:clamp(14px,2.5vw,24px);
+        --header-size:clamp(14px,2.4vw,22px);
+      }
+      .topbar{padding:8px}
+      .chip,.btn{font-size:14px;padding:0 12px}
+      .stage{min-height:620px}
+    }
+
+    @media (max-width:640px){
+      .app{padding:8px 10px 18px}
+      .topbar{flex-wrap:wrap}
+      .left-controls,.right-controls{flex-wrap:wrap}
+      .content{padding-top:8px}
+      .stage{min-height:560px}
+      .back-row{margin-bottom:4px;flex-wrap:wrap}
+      .zoom-expression{
+        gap:8px;
+        width:min(96%,520px);
+        flex-wrap:wrap;
+      }
+      .expr-word{font-size:18px}
+      .expr-part{font-size:26px}
+      .expr-frac{width:52px;height:52px;font-size:26px}
+      .title-row{gap:10px;margin:6px 0 14px}
+      .title-logo{width:40px;height:40px;border-radius:8px}
+      .title-text{font-size:clamp(24px,7vw,34px)}
+      .mode-card{padding:8px}
+      .seg-btn{min-width:72px;padding:8px 12px}
+      .division-toggle-btn{min-width:106px;font-size:12px}
+      .fraction-mode-toggles{
+        position:static;
+        transform:none;
+        margin-top:8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar" aria-label="Toolbar">
+      <div class="left-controls">
+        <a href="https://www.millsmathstools.au" class="chip" aria-label="Back to Mills Maths Tools">
+          <img src="mmt.png" alt="MMT logo" style="width:18px;height:18px;border-radius:4px" />
+          <span>Back to Mills Maths Tools</span>
+        </a>
+      </div>
+
+      <div class="right-controls">
+        <div class="mode-card" aria-label="Display mode">
+          <span class="mode-label">Mode</span>
+          <div class="segmented" role="tablist" aria-label="Area, Product, Division or Fraction of amount mode">
+            <button class="seg-btn active" id="modeAreaBtn" type="button" role="tab" aria-selected="true">Area</button>
+            <button class="seg-btn" id="modeProductBtn" type="button" role="tab" aria-selected="false">Product</button>
+            <button class="seg-btn" id="modeDivisionBtn" type="button" role="tab" aria-selected="false">Division</button>
+            <button class="seg-btn" id="modeFractionBtn" type="button" role="tab" aria-selected="false">Fraction of amount</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <main class="content">
+      <div class="back-row">
+        <button class="back-btn" id="backBtn" type="button" aria-label="Back to chart">
+          <span aria-hidden="true">←</span>
+          <span>Back</span>
+        </button>
+        </div>
+
+      <section class="stage" id="stage">
+        <div class="title-row" aria-label="Page title">
+          <img class="title-logo" src="mmt.png" alt="MMT logo" />
+          <div class="title-text">The Interactive Timestable Chart</div>
+        </div>
+        <div class="title-subtext" id="titleSubtext">Select a cell to build a rectangle</div>
+
+        <div class="chart-shell" id="chartShell">
+          <table class="chart" id="chart" aria-label="Times table chart from 1 to 12"></table>
+          <div class="screen-fade" id="screenFade"></div>
+          <div class="overlay" id="overlay" aria-hidden="true"></div>
+          <div class="zoom-expression" id="zoomExpression" hidden></div>
+          <button class="replay-btn" id="replayBtn" type="button" aria-label="Replay animation">↻ Replay</button>
+
+          <div id="fractionModeToggles" class="fraction-mode-toggles">
+            <div class="toggle-card">
+              <span class="toggle-label">Equation</span>
+              <label class="switch">
+                <input id="showEquationToggle" type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-card">
+              <span class="toggle-label">Groups</span>
+              <label class="switch">
+                <input id="showGroupsToggle" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(() => {
+  const SIZE = 12;
+  const ZOOM_IN_MS = 900;
+  const ZOOM_OUT_MS = 850;
+  const ROW_STEP_MS = 220;
+  const DIVISION_SWITCH_MS = 2000;
+  const FRACTION_ZOOM_IN_MS = 1200;
+  const FRACTION_ZOOM_OUT_MS = 850;
+
+  const chart = document.getElementById('chart');
+  const chartShell = document.getElementById('chartShell');
+  const overlay = document.getElementById('overlay');
+  const screenFade = document.getElementById('screenFade');
+  const backBtn = document.getElementById('backBtn');
+  const replayBtn = document.getElementById('replayBtn');
+  const stage = document.getElementById('stage');
+  const zoomExpression = document.getElementById('zoomExpression');
+  const titleSubtext = document.getElementById('titleSubtext');
+
+  const modeAreaBtn = document.getElementById('modeAreaBtn');
+  const modeProductBtn = document.getElementById('modeProductBtn');
+  const modeDivisionBtn = document.getElementById('modeDivisionBtn');
+  const modeFractionBtn = document.getElementById('modeFractionBtn');
+
+  const fractionModeToggles = document.getElementById('fractionModeToggles');
+  const showEquationToggle = document.getElementById('showEquationToggle');
+  const showGroupsToggle = document.getElementById('showGroupsToggle');
+
+  let currentSelection = null;
+  let isAnimating = false;
+  let mode = 'area';
+  let touchMoved = false;
+
+  /* board modes */
+  let zoomBoard = null;
+  let zoomGrid = null;
+  let floatingTotal = null;
+  let divisionToggleWrap = null;
+  let divisionRowsBtn = null;
+  let divisionColsBtn = null;
+  let zoomCells = [];
+  let divisionShareMode = 'rows';
+  let divisionGroupCards = [];
+  let divisionAnimFrame = 0;
+  let divisionAnimationStart = 0;
+
+  /* fraction mode */
+  let fractionWrap = null;
+  let currentPartition = null;
+  let fracCells = [];
+  let valueCells = [];
+  let fractionNodes = [];
+  let valueNodes = [];
+  let selectionTimers = [];
+  let hideEquation = false;
+  let showGroups = false;
+
+  let stageTimers = [];
+  let pointerPreview = null;
+
+  function multiplySymbol(){ return '×'; }
+  function divisionSymbol(){ return '÷'; }
+
+  function updatePromptText(){
+    if(mode === 'area'){
+      titleSubtext.textContent = 'Select a cell to build a rectangle';
+    }else if(mode === 'product'){
+      titleSubtext.textContent = 'Select a value to see multiplication structure';
+    }else if(mode === 'division'){
+      titleSubtext.textContent = 'Select a value to explore equal sharing';
+    }else{
+      titleSubtext.textContent = 'Select a row to explore parts of a whole';
+    }
+  }
+
+  function clearTimers(){
+    stageTimers.forEach(id => clearTimeout(id));
+    stageTimers = [];
+    selectionTimers.forEach(id => clearTimeout(id));
+    selectionTimers = [];
+  }
+
+  function cancelDivisionAnimation(){
+    if(divisionAnimFrame){
+      cancelAnimationFrame(divisionAnimFrame);
+      divisionAnimFrame = 0;
+    }
+  }
+
+  function clearDivisionGroupCards(){
+    divisionGroupCards.forEach(card => card.remove());
+    divisionGroupCards = [];
+  }
+
+  function getDivisionGroupClass(index, totalGroups){
+    if(totalGroups <= 1 || index === 1) return 'group-green';
+    if(index === totalGroups) return 'group-purple';
+    return 'group-neutral';
+  }
+
+  function createExprPill(textValue, cls){
+    const el=document.createElement('div');
+    el.className=`expr-part expr-pill ${cls}`;
+    el.textContent=String(textValue);
+    return el;
+  }
+
+  function positionReplayButton(){
+    if(!currentSelection || !replayBtn.classList.contains('visible')) return;
+    const target = mode==='fraction_of_amount' ? fractionWrap : zoomBoard;
+    if(!target) return;
+    const shellRect = chartShell.getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
+    const left = rect.right - shellRect.left - replayBtn.offsetWidth;
+    const top = rect.top - shellRect.top - replayBtn.offsetHeight - 12;
+    replayBtn.style.left = `${Math.max(8, left)}px`;
+    replayBtn.style.top = `${Math.max(8, top)}px`;
+  }
+
+  function buildChart(){
+    const frag = document.createDocumentFragment();
+    for(let r=0;r<=SIZE;r++){
+      const tr=document.createElement('tr');
+      for(let c=0;c<=SIZE;c++){
+        const td=document.createElement('td');
+        if(r===0&&c===0){
+          td.className='corner';
+          td.setAttribute('aria-hidden','true');
+        }else if(r===0||c===0){
+          td.className='header';
+          td.textContent=String(r===0?c:r);
+        }else{
+          const btn=document.createElement('button');
+          btn.className='cell-btn';
+          btn.type='button';
+          btn.textContent=String(r*c);
+          btn.dataset.row=String(r);
+          btn.dataset.col=String(c);
+          btn.dataset.value=String(r*c);
+          btn.addEventListener('click', onCellClick);
+          btn.addEventListener('touchstart', ()=>{ touchMoved=false; }, {passive:true});
+          td.appendChild(btn);
+        }
+        tr.appendChild(td);
+      }
+      frag.appendChild(tr);
+    }
+    chart.innerHTML='';
+    chart.appendChild(frag);
+  }
+
+  function getCell(r,c){
+    return chart.rows[r]?.cells[c] || null;
+  }
+
+  function getRectRelativeToShell(el){
+    const shellRect = chartShell.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    return {
+      left: rect.left - shellRect.left,
+      top: rect.top - shellRect.top,
+      width: rect.width,
+      height: rect.height,
+      right: rect.right - shellRect.left,
+      bottom: rect.bottom - shellRect.top
+    };
+  }
+
+  function getPointerGridPosition(clientX, clientY){
+    const rect=chart.getBoundingClientRect();
+    const x=clientX-rect.left;
+    const y=clientY-rect.top;
+    const cellW=rect.width/13;
+    const cellH=rect.height/13;
+    const col=Math.floor(x/cellW);
+    const row=Math.floor(y/cellH);
+    if(row<1 || row>SIZE || col<1 || col>SIZE) return null;
+    return {row,col};
+  }
+
+  function setBackVisible(v){
+    backBtn.classList.toggle('visible', v);
+    replayBtn.classList.toggle('visible', v);
+    if(v) positionReplayButton();
+  }
+  function setPromptVisible(v){}
+
+  function markPreviewTarget(row,col){
+    const btn = getCell(row,col)?.querySelector('.cell-btn');
+    if(btn) btn.classList.add('preview-target');
+  }
+
+  function clearMainPreview(){
+    if(currentSelection) return;
+    for(let r=1;r<=SIZE;r++){
+      for(let c=1;c<=SIZE;c++){
+        const cell=getCell(r,c);
+        if(cell) cell.style.background='';
+        const btn=cell?.querySelector('.cell-btn');
+        if(btn) btn.classList.remove('preview-target');
+      }
+    }
+    pointerPreview=null;
+  }
+
+  function previewRectangle(row,col){
+    if(currentSelection||isAnimating) return;
+    if(pointerPreview && pointerPreview.row===row && pointerPreview.col===col) return;
+    clearMainPreview();
+    for(let r=1;r<=row;r++){
+      for(let c=1;c<=col;c++){
+        const cell=getCell(r,c);
+        if(cell) cell.style.background='var(--preview)';
+      }
+    }
+    markPreviewTarget(row,col);
+    pointerPreview={row,col};
+  }
+
+  function previewLShape(row,col){
+    if(currentSelection||isAnimating) return;
+    if(pointerPreview && pointerPreview.row===row && pointerPreview.col===col) return;
+    clearMainPreview();
+    for(let c=1;c<=col;c++){
+      const cell=getCell(row,c);
+      if(cell) cell.style.background='var(--preview)';
+    }
+    for(let r=1;r<=row;r++){
+      const cell=getCell(r,col);
+      if(cell) cell.style.background='var(--preview)';
+    }
+    markPreviewTarget(row,col);
+    pointerPreview={row,col};
+  }
+
+  function previewFractionRow(row,col){
+    if(currentSelection||isAnimating) return;
+    if(pointerPreview && pointerPreview.row===row && pointerPreview.col===col) return;
+    clearMainPreview();
+    for(let c=1;c<=col;c++){
+      const cell=getCell(row,c);
+      if(cell) cell.style.background='var(--preview)';
+    }
+    markPreviewTarget(row,col);
+    pointerPreview={row,col};
+  }
+
+  function hideExpression(){
+    zoomExpression.hidden=true;
+    zoomExpression.classList.remove('visible');
+    zoomExpression.innerHTML='';
+  }
+
+  function clearOverlay(){
+    clearTimers();
+    cancelDivisionAnimation();
+    clearDivisionGroupCards();
+
+    if(zoomBoard){ zoomBoard.remove(); zoomBoard=null; }
+    if(fractionWrap){ fractionWrap.remove(); fractionWrap=null; }
+
+    overlay.classList.remove('active');
+    chartShell.classList.remove('spotlight');
+
+    zoomGrid=null;
+    floatingTotal=null;
+    divisionToggleWrap=null;
+    divisionRowsBtn=null;
+    divisionColsBtn=null;
+    zoomCells=[];
+    fracCells=[];
+    valueCells=[];
+    fractionNodes=[];
+    valueNodes=[];
+    currentPartition=null;
+
+    fractionModeToggles.classList.remove('visible');
+    hideExpression();
+  }
+
+  function modeUsesHeaders(currentMode = mode){
+    return currentMode === 'area' || currentMode === 'product' || currentMode === 'division';
+  }
+
+  /* -------------------- BOARD MODES -------------------- */
+
+  function showExpressionForCurrentMode(){
+    if(!currentSelection) return;
+
+    zoomExpression.hidden=false;
+    zoomExpression.classList.remove('visible');
+    zoomExpression.innerHTML='';
+
+    const { row, col, value } = currentSelection;
+
+    if(mode==='area'){
+      const a=document.createElement('div');
+      a.className='expr-word';
+      a.textContent='Area';
+      const eq=document.createElement('div');
+      eq.className='expr-part';
+      eq.textContent='=';
+      const v=document.createElement('div');
+      v.className='expr-part';
+      v.textContent=String(value);
+      const words=document.createElement('div');
+      words.className='expr-word';
+      words.textContent='square units';
+      zoomExpression.append(a,eq,v,words);
+    }else if(mode==='product'){
+      const expr=document.createElement('div');
+      expr.className='expr-part';
+      expr.textContent=`${row} ${multiplySymbol()} ${col} = ${value}`;
+      zoomExpression.append(expr);
+    }else if(mode==='division'){
+      const totalGroups = divisionShareMode==='rows' ? row : col;
+      const totalClass = getDivisionGroupClass(totalGroups, totalGroups);
+      const answerClass = getDivisionGroupClass(1, totalGroups);
+      zoomExpression.append(
+        createExprPill(value, totalClass),
+        Object.assign(document.createElement('div'), { className:'expr-part', textContent:divisionSymbol() }),
+        Object.assign(document.createElement('div'), { className:'expr-part', textContent:String(divisionShareMode==='rows' ? row : col) }),
+        Object.assign(document.createElement('div'), { className:'expr-part', textContent:'=' }),
+        createExprPill(divisionShareMode==='rows' ? col : row, answerClass)
+      );
+    }else{
+      updateFractionExpression();
+      return;
+    }
+
+    positionExpression();
+    requestAnimationFrame(()=>zoomExpression.classList.add('visible'));
+  }
+
+  function createExprFraction(n,d){
+    const w=document.createElement('div');
+    w.className='expr-frac';
+    const t=document.createElement('div');
+    t.textContent=String(n);
+    const b=document.createElement('div');
+    b.className='bar';
+    const d2=document.createElement('div');
+    d2.textContent=String(d);
+    w.append(t,b,d2);
+    return w;
+  }
+
+  function updateFractionExpression(){
+    if(mode!=='fraction_of_amount') return;
+    if(hideEquation || !currentSelection || !currentPartition){
+      hideExpression();
+      return;
+    }
+
+    const whole=currentSelection.value;
+    const numerator=currentPartition;
+    const denominator=currentSelection.col;
+    const part=currentSelection.row*currentPartition;
+
+    zoomExpression.hidden=false;
+    zoomExpression.classList.remove('visible');
+    zoomExpression.innerHTML='';
+    zoomExpression.append(
+      createExprFraction(numerator, denominator),
+      Object.assign(document.createElement('div'), { className:'expr-word', textContent:'of' }),
+      Object.assign(document.createElement('div'), { className:'expr-part', textContent:String(whole) }),
+      Object.assign(document.createElement('div'), { className:'expr-part', textContent:'=' }),
+      Object.assign(document.createElement('div'), { className:'expr-part', textContent:String(part) })
+    );
+    positionExpression();
+    requestAnimationFrame(()=>zoomExpression.classList.add('visible'));
+  }
+
+  function positionExpression(){
+    if(!currentSelection) return;
+    let relativeTop = 120;
+
+    if(mode==='fraction_of_amount' && fractionWrap){
+      const shellRect = chartShell.getBoundingClientRect();
+      const wrapRect = fractionWrap.getBoundingClientRect();
+      relativeTop = wrapRect.top - shellRect.top;
+    }else if(zoomBoard){
+      const shellRect = chartShell.getBoundingClientRect();
+      const boardRect = zoomBoard.getBoundingClientRect();
+      relativeTop = boardRect.top - shellRect.top;
+    }
+
+    const exprHeight = zoomExpression.getBoundingClientRect().height || 60;
+    zoomExpression.style.top=`${Math.max(4, relativeTop-exprHeight-24)}px`;
+  }
+
+  function getTargetRectSquareUnits(row,col, includeHeaders=false){
+    const shellRect = chartShell.getBoundingClientRect();
+    const topReserve = includeHeaders ? 110 : 90;
+    const bottomReserve = 40;
+    const sideReserve = includeHeaders ? 48 : 92;
+
+    const gridCols = includeHeaders ? col+1 : col;
+    const gridRows = includeHeaders ? row+1 : row;
+
+    const usableW = Math.max(180, shellRect.width - sideReserve*2);
+    const usableH = Math.max(180, chartShell.offsetHeight - topReserve - bottomReserve);
+
+    const square = Math.min(usableW / gridCols, usableH / gridRows);
+
+    const width = square * gridCols;
+    const height = square * gridRows;
+
+    const left = Math.max(sideReserve, (shellRect.width - width)/2);
+    const top = Math.max(topReserve, (chartShell.offsetHeight - height)/2 + 16);
+
+    return { left, top, width, height, square };
+  }
+
+  function createDivisionToggle(){
+    divisionToggleWrap = document.createElement('div');
+    divisionToggleWrap.className = 'division-toggle-wrap';
+
+    const chip = document.createElement('div');
+    chip.className = 'division-chip';
+
+    divisionRowsBtn = document.createElement('button');
+    divisionRowsBtn.className = 'division-toggle-btn';
+    divisionRowsBtn.type = 'button';
+    divisionRowsBtn.textContent = 'Share by rows';
+
+    divisionColsBtn = document.createElement('button');
+    divisionColsBtn.className = 'division-toggle-btn';
+    divisionColsBtn.type = 'button';
+    divisionColsBtn.textContent = 'Share by columns';
+
+    divisionRowsBtn.addEventListener('click', ()=>setDivisionShareMode('rows'));
+    divisionColsBtn.addEventListener('click', ()=>setDivisionShareMode('columns'));
+
+    chip.append(divisionRowsBtn, divisionColsBtn);
+    divisionToggleWrap.appendChild(chip);
+    zoomBoard.appendChild(divisionToggleWrap);
+    updateDivisionToggleButtons();
+  }
+
+  function updateDivisionToggleButtons(){
+    if(!divisionRowsBtn || !divisionColsBtn) return;
+    divisionRowsBtn.classList.toggle('active', divisionShareMode==='rows');
+    divisionColsBtn.classList.toggle('active', divisionShareMode==='columns');
+    divisionToggleWrap?.classList.toggle('visible', mode==='division');
+  }
+
+  function createZoomBoard(selection){
+    const { row, col } = selection;
+    const includeHeaders = modeUsesHeaders();
+
+    const startCell = getCell(1,1);
+    const endCell = getCell(row,col);
+    const startRect = getRectRelativeToShell(startCell);
+    const endRect = getRectRelativeToShell(endCell);
+
+    const boardLeft = includeHeaders ? Math.max(0, startRect.left - startRect.width) : startRect.left;
+    const boardTop = includeHeaders ? Math.max(0, startRect.top - startRect.height) : startRect.top;
+    const boardWidth = (endRect.right - startRect.left) + (includeHeaders ? startRect.width : 0);
+    const boardHeight = (endRect.bottom - startRect.top) + (includeHeaders ? startRect.height : 0);
+
+    zoomBoard = document.createElement('div');
+    zoomBoard.className='zoom-board';
+    if(mode==='division') zoomBoard.classList.add('division-mode');
+    zoomBoard.style.left=`${boardLeft}px`;
+    zoomBoard.style.top=`${boardTop}px`;
+    zoomBoard.style.width=`${boardWidth}px`;
+    zoomBoard.style.height=`${boardHeight}px`;
+
+    zoomGrid = document.createElement('div');
+    zoomGrid.className='zoom-grid';
+    zoomCells=[];
+
+    if(includeHeaders){
+      zoomGrid.style.gridTemplateColumns=`repeat(${col+1}, 1fr)`;
+      zoomGrid.style.gridTemplateRows=`repeat(${row+1}, 1fr)`;
+
+      for(let r=0;r<=row;r++){
+        const rowCells=[];
+        for(let c=0;c<=col;c++){
+          const cell=document.createElement('div');
+          cell.className='zoom-cell';
+          if(r===0) cell.classList.add('top-edge');
+          if(c===0) cell.classList.add('left-edge');
+
+          if(r===0 && c===0){
+            cell.classList.add('header-cell');
+            cell.textContent='';
+          }else if(r===0){
+            cell.classList.add('header-cell');
+            cell.textContent=String(c);
+          }else if(c===0){
+            cell.classList.add('header-cell');
+            cell.textContent=String(r);
+          }else{
+            cell.textContent=String(r*c);
+          }
+
+          zoomGrid.appendChild(cell);
+          rowCells.push(cell);
+        }
+        zoomCells.push(rowCells);
+      }
+    }
+
+    floatingTotal=document.createElement('div');
+    floatingTotal.className='floating-total';
+    floatingTotal.textContent=String(selection.value);
+
+    zoomBoard.appendChild(zoomGrid);
+    zoomBoard.appendChild(floatingTotal);
+
+    if(mode==='division'){
+      createDivisionToggle();
+    }
+
+    overlay.innerHTML='';
+    overlay.appendChild(zoomBoard);
+    overlay.classList.add('active');
+  }
+
+  function getZoomCell(r,c){
+    return zoomCells[r]?.[c] || null;
+  }
+
+  function getInnerWhiteBounds(){
+    if(!zoomBoard || !currentSelection) return { left:0, top:0, width:0, height:0 };
+    const boardRect = zoomBoard.getBoundingClientRect();
+    const topLeftWhite = getZoomCell(1,1);
+    const bottomRightWhite = getZoomCell(currentSelection.row, currentSelection.col);
+    const tl = topLeftWhite.getBoundingClientRect();
+    const br = bottomRightWhite.getBoundingClientRect();
+    return {
+      left: tl.left - boardRect.left,
+      top: tl.top - boardRect.top,
+      width: br.right - tl.left,
+      height: br.bottom - tl.top
+    };
+  }
+
+  function getInnerWhiteCenter(){
+    const b = getInnerWhiteBounds();
+    return { x: b.left + b.width/2, y: b.top + b.height/2 };
+  }
+
+  function getInnerWhiteColumnCenter(c){
+    const whiteTop = getZoomCell(1, c);
+    const whiteBottom = getZoomCell(currentSelection.row, c);
+    const boardRect = zoomBoard.getBoundingClientRect();
+    const t = whiteTop.getBoundingClientRect();
+    const b = whiteBottom.getBoundingClientRect();
+    return {
+      x: t.left - boardRect.left + t.width/2,
+      y: (t.top + b.bottom)/2 - boardRect.top
+    };
+  }
+
+  function getInnerWhiteRowCenter(r){
+    const whiteLeft = getZoomCell(r, 1);
+    const whiteRight = getZoomCell(r, currentSelection.col);
+    const boardRect = zoomBoard.getBoundingClientRect();
+    const l = whiteLeft.getBoundingClientRect();
+    const rr = whiteRight.getBoundingClientRect();
+    return {
+      x: (l.left + rr.right)/2 - boardRect.left,
+      y: l.top - boardRect.top + l.height/2
+    };
+  }
+
+  function getCellCenterInBoard(r,c){
+    const cell = getZoomCell(r,c);
+    const boardRect = zoomBoard.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    return {
+      x: cellRect.left - boardRect.left + cellRect.width/2,
+      y: cellRect.top - boardRect.top + cellRect.height/2
+    };
+  }
+
+  function moveFloatingTotalTo(x,y,pop=false,instant=false){
+    if(!floatingTotal) return;
+    if(instant){
+      floatingTotal.style.transition='opacity 180ms ease';
+    }else{
+      floatingTotal.style.transition=`
+        left 520ms cubic-bezier(.22,.61,.36,1),
+        top 520ms cubic-bezier(.22,.61,.36,1),
+        transform 220ms ease,
+        opacity 180ms ease
+      `;
+    }
+    floatingTotal.style.left=`${x}px`;
+    floatingTotal.style.top=`${y}px`;
+    floatingTotal.classList.add('visible');
+    if(pop){
+      floatingTotal.classList.remove('pop');
+      void floatingTotal.offsetWidth;
+      floatingTotal.classList.add('pop');
+    }
+  }
+
+  function hideFloatingTotal(){
+    if(!floatingTotal) return;
+    floatingTotal.classList.remove('visible');
+    floatingTotal.classList.remove('pop');
+  }
+
+  function resizeFloatingCardForShape(){
+    if(!floatingTotal || !currentSelection || !zoomBoard) return;
+    const b = getInnerWhiteBounds();
+    const square = Math.min(
+      b.width / currentSelection.col,
+      b.height / currentSelection.row
+    );
+
+    let maxW = Math.max(72, Math.min(124, square * 1.12));
+    let maxH = Math.max(52, Math.min(88, square * 0.92));
+    let font = Math.max(26, Math.min(78, square * 0.72));
+
+    if(mode==='area'){
+      maxW = Math.max(86, Math.min(140, square * 1.32));
+      maxH = Math.max(60, Math.min(98, square * 1.00));
+      font = Math.max(30, Math.min(82, square * 0.80));
+    }
+
+    floatingTotal.style.width=`${maxW}px`;
+    floatingTotal.style.height=`${maxH}px`;
+    floatingTotal.style.fontSize=`${font}px`;
+  }
+
+  function highlightAreaRowsSequentially(){
+    const { row, col } = currentSelection;
+    hideFloatingTotal();
+
+    for(let r=1;r<=row;r++){
+      const delay=(r-1)*ROW_STEP_MS;
+      stageTimers.push(setTimeout(()=>{
+        for(let c=1;c<=col;c++){
+          getZoomCell(r,c)?.classList.add('active');
+        }
+        if(r===row){
+          const br = getCellCenterInBoard(row,col);
+          moveFloatingTotalTo(br.x, br.y, false, true);
+          stageTimers.push(setTimeout(()=>{
+            const centre = getInnerWhiteCenter();
+            moveFloatingTotalTo(centre.x, centre.y, true, false);
+          }, 120));
+          stageTimers.push(setTimeout(()=>showExpressionForCurrentMode(), 460));
+        }
+      }, delay));
+    }
+  }
+
+  function highlightProductLShape(){
+    const { row, col } = currentSelection;
+    hideFloatingTotal();
+
+    for(let r=1;r<=row;r++){
+      for(let c=1;c<=col;c++){
+        getZoomCell(r,c)?.classList.add('active');
+      }
+    }
+
+    stageTimers.push(setTimeout(()=>{
+      for(let r=1;r<=row;r++){
+        for(let c=1;c<=col;c++){
+          getZoomCell(r,c)?.classList.remove('active');
+        }
+      }
+
+      for(let c=1;c<=col;c++){
+        const cell = getZoomCell(row,c);
+        stageTimers.push(setTimeout(()=>cell?.classList.add('active'), (c-1)*90));
+      }
+      const base = col*90;
+      for(let r=1;r<=row;r++){
+        const cell = getZoomCell(r,col);
+        stageTimers.push(setTimeout(()=>{
+          cell?.classList.add('active');
+          if(r===row){
+            const br=getCellCenterInBoard(row,col);
+            moveFloatingTotalTo(br.x, br.y, false, true);
+            showExpressionForCurrentMode();
+          }
+        }, base + (r-1)*90));
+      }
+    }, 220));
+  }
+
+  function createGroupCard(label, value, groupClass){
+    const el=document.createElement('div');
+    el.className=`group-card ${groupClass}`;
+    const top=document.createElement('div');
+    top.className='group-label';
+    top.textContent=label;
+    const val=document.createElement('div');
+    val.className='group-value';
+    val.textContent=String(value);
+    el.append(top, val);
+    zoomBoard.appendChild(el);
+    divisionGroupCards.push(el);
+    return el;
+  }
+
+  function applyDivisionCellVisibility(direction){
+    const { row, col } = currentSelection;
+    zoomBoard?.classList.toggle('rows-mode', direction==='rows');
+    zoomBoard?.classList.toggle('columns-mode', direction==='columns');
+
+    for(let r=1;r<=row;r++){
+      for(let c=1;c<=col;c++){
+        const cell = getZoomCell(r,c);
+        cell.classList.remove('active','ghost','hiddenish','division-faded','division-keep','division-row-divider','division-col-divider','division-last-row','division-last-col');
+        if(direction==='rows'){
+          cell.classList.add('division-faded');
+          if(c===col) cell.classList.add('division-keep');
+          if(r<row) cell.classList.add('division-row-divider');
+          if(r===row) cell.classList.add('division-last-row');
+        }else{
+          cell.classList.add('division-faded');
+          if(r===row) cell.classList.add('division-keep');
+          if(c<col) cell.classList.add('division-col-divider');
+          if(c===col) cell.classList.add('division-last-col');
+        }
+      }
+    }
+  }
+
+  function setupDivisionCards(direction){
+    clearDivisionGroupCards();
+    const { row, col } = currentSelection;
+    const cards=[];
+    const totalGroups = direction==='rows' ? row : col;
+
+    if(direction==='rows'){
+      for(let r=1;r<=row;r++){
+        const groupIndex = r;
+        const groupClass = getDivisionGroupClass(groupIndex, totalGroups);
+        const card = createGroupCard(`Group ${r}`, r*col, groupClass);
+        card.classList.toggle('group-featured', groupClass !== 'group-neutral');
+        cards.push({ el:card, start:getCellCenterInBoard(r,col), end:getInnerWhiteRowCenter(r), groupIndex, totalGroups });
+      }
+    }else{
+      for(let c=1;c<=col;c++){
+        const groupIndex = c;
+        const groupClass = getDivisionGroupClass(groupIndex, totalGroups);
+        const card = createGroupCard(`Group ${c}`, row*c, groupClass);
+        card.classList.toggle('group-featured', groupClass !== 'group-neutral');
+        cards.push({ el:card, start:getCellCenterInBoard(row,c), end:getInnerWhiteColumnCenter(c), groupIndex, totalGroups });
+      }
+    }
+
+    cards.forEach(item=>{
+      item.el.style.left=`${item.start.x}px`;
+      item.el.style.top=`${item.start.y}px`;
+      item.el.classList.remove('visible');
+    });
+    return cards;
+  }
+
+  function startDivisionAnimation(direction){
+    cancelDivisionAnimation();
+    clearTimers();
+    hideExpression();
+    hideFloatingTotal();
+    updateDivisionToggleButtons();
+    applyDivisionCellVisibility(direction);
+
+    const cards = setupDivisionCards(direction);
+    divisionAnimationStart = performance.now();
+
+    function getCardWindow(item){
+      const totalGroups = item.totalGroups || 1;
+      if(totalGroups <= 1) return { start:0, end:1 };
+
+      if(item.groupIndex === 1) return { start:0.00, end:0.32 };
+      if(item.groupIndex === totalGroups) return { start:0.18, end:0.50 };
+
+      const middleCount = Math.max(1, totalGroups - 2);
+      const middleOrder = item.groupIndex - 2;
+      const start = 0.46 + (middleOrder * (0.30 / middleCount));
+      const end = Math.min(0.96, start + 0.24);
+      return { start, end };
+    }
+
+    function frame(now){
+      const t = Math.min(1, (now - divisionAnimationStart) / DIVISION_SWITCH_MS);
+
+      cards.forEach(item=>{
+        const window = getCardWindow(item);
+        const localT = t <= window.start
+          ? 0
+          : t >= window.end
+            ? 1
+            : (t - window.start) / Math.max(0.001, window.end - window.start);
+
+        const eased = 1 - Math.pow(1 - localT, 3);
+        const x = item.start.x + (item.end.x - item.start.x) * eased;
+        const y = item.start.y + (item.end.y - item.start.y) * eased;
+        item.el.style.left = `${x}px`;
+        item.el.style.top = `${y}px`;
+        item.el.classList.toggle('visible', localT > 0.02);
+      });
+
+      if(t < 1){
+        divisionAnimFrame = requestAnimationFrame(frame);
+      }else{
+        cards.forEach(item=>item.el.classList.add('visible'));
+        divisionAnimFrame = 0;
+        showExpressionForCurrentMode();
+      }
+    }
+    divisionAnimFrame = requestAnimationFrame(frame);
+  }
+
+  function setDivisionShareMode(next){
+    if(mode!=='division') return;
+    if(divisionShareMode===next && !divisionAnimFrame) return;
+    divisionShareMode = next;
+    updateDivisionToggleButtons();
+    startDivisionAnimation(next);
+  }
+
+  /* -------------------- FRACTION MODE -------------------- */
+
+  function getFractionTargetRect(){
+    const shell = chartShell.getBoundingClientRect();
+    const width = Math.min(shell.width*0.9, 1060);
+    const height = Math.min(width/3, Math.min(chartShell.offsetHeight*0.56, 280));
+    const left = (shell.width-width)/2;
+    const top = Math.max(84,(chartShell.offsetHeight-height)/2+12);
+    return { left, top, width, height };
+  }
+
+  function createFractionMarkup(n,d){
+    const outer=document.createElement('div');
+    outer.style.width='100%';
+    outer.style.height='100%';
+    outer.style.display='grid';
+    outer.style.placeItems='center';
+
+    const wrapper=document.createElement('div');
+    wrapper.className='fraction';
+
+    const top=document.createElement('div');
+    top.textContent=String(n);
+    const bar=document.createElement('div');
+    bar.className='bar';
+    const bottom=document.createElement('div');
+    bottom.textContent=String(d);
+
+    wrapper.append(top,bar,bottom);
+    outer.appendChild(wrapper);
+    return outer;
+  }
+
+  function createFractionWrap(selection){
+    const { row, col } = selection;
+    const start = getCell(row,1);
+    const end = getCell(row,col);
+    const a = getRectRelativeToShell(start);
+    const b = getRectRelativeToShell(end);
+
+    const startLeft=a.left;
+    const startTop=a.top;
+    const startWidth=b.right-a.left;
+    const startHeight=a.height*2;
+
+    fractionWrap=document.createElement('div');
+    fractionWrap.className='fraction-wrap';
+    if(showGroups) fractionWrap.classList.add('groups-mode');
+    fractionWrap.style.left=`${startLeft}px`;
+    fractionWrap.style.top=`${startTop}px`;
+    fractionWrap.style.width=`${startWidth}px`;
+    fractionWrap.style.height=`${startHeight}px`;
+
+    const box=document.createElement('div');
+    box.className='fraction-box';
+
+    const fracRow=document.createElement('div');
+    fracRow.className='frac-row';
+    fracRow.style.gridTemplateColumns=`repeat(${col}, minmax(0,1fr))`;
+
+    const valueRow=document.createElement('div');
+    valueRow.className='value-row';
+    valueRow.style.gridTemplateColumns=`repeat(${col}, minmax(0,1fr))`;
+
+    fracCells=[]; valueCells=[]; fractionNodes=[]; valueNodes=[];
+
+    for(let i=1;i<=col;i++){
+      const fc=document.createElement('button');
+      fc.className='frac-cell clickable';
+      fc.type='button';
+      fc.appendChild(createFractionMarkup(i,col));
+      fc.addEventListener('click',()=>selectFractionPartition(i));
+      fc.addEventListener('mouseenter',()=>setFractionPreview(i));
+      fc.addEventListener('mouseleave',clearFractionPreview);
+
+      const vc=document.createElement('button');
+      vc.className='value-cell clickable';
+      vc.type='button';
+      const vn=document.createElement('div');
+      vn.className='value-text';
+      vn.textContent=String(row*i);
+      vc.appendChild(vn);
+      vc.addEventListener('click',()=>selectFractionPartition(i));
+      vc.addEventListener('mouseenter',()=>setFractionPreview(i));
+      vc.addEventListener('mouseleave',clearFractionPreview);
+
+      fracCells.push(fc);
+      valueCells.push(vc);
+      fractionNodes.push(fc.firstChild);
+      valueNodes.push(vn);
+
+      fracRow.appendChild(fc);
+      valueRow.appendChild(vc);
+    }
+
+    box.append(fracRow,valueRow);
+    fractionWrap.appendChild(box);
+    overlay.innerHTML='';
+    overlay.appendChild(fractionWrap);
+    overlay.classList.add('active');
+  }
+
+  function updateFractionZoomTextSizing(){
+    if(!fractionWrap || !currentSelection) return;
+    const col = currentSelection.col;
+    const w = fractionWrap.getBoundingClientRect().width || 1;
+    const seg = (w-2)/col;
+    const fracSize = Math.max(13,Math.min(52,seg*0.36));
+    const valSize = Math.max(13,Math.min(54,seg*0.4));
+    const fracWidth = Math.max(26,Math.min(seg*0.78,84));
+
+    fractionNodes.forEach(node=>{
+      const frac=node.querySelector('.fraction');
+      if(frac){
+        frac.style.fontSize=`${fracSize}px`;
+        frac.style.width=`${fracWidth}px`;
+        frac.style.margin='0 auto';
+      }
+    });
+    valueNodes.forEach(n=>n.style.fontSize=`${valSize}px`);
+  }
+
+  function setFractionPreview(index){
+    if(currentPartition || isAnimating) return;
+    fracCells.forEach((c,i)=>c.classList.toggle('preview', i<index));
+    valueCells.forEach((c,i)=>c.classList.toggle('preview', i<index));
+  }
+
+  function clearFractionPreview(){
+    fracCells.forEach(c=>c.classList.remove('preview'));
+    valueCells.forEach(c=>c.classList.remove('preview'));
+  }
+
+  function clearFractionPartitionSelection(){
+    currentPartition=null;
+    selectionTimers.forEach(id=>clearTimeout(id));
+    selectionTimers=[];
+    fracCells.forEach(c=>c.classList.remove('active','preview'));
+    valueCells.forEach(c=>c.classList.remove('active','preview'));
+    updateFractionExpression();
+  }
+
+  function selectFractionPartition(index){
+    if(!currentSelection||isAnimating) return;
+    clearFractionPreview();
+    selectionTimers.forEach(id=>clearTimeout(id));
+    selectionTimers=[];
+
+    const prev=currentPartition||0;
+    currentPartition=index;
+
+    const apply=u=>{
+      fracCells.forEach((c,i)=>c.classList.toggle('active',i<u));
+      valueCells.forEach((c,i)=>c.classList.toggle('active',i<u));
+    };
+
+    if(prev===0 || prev===index){
+      apply(index);
+    }else if(index>prev){
+      apply(prev);
+      const steps=index-prev;
+      for(let s=1;s<=steps;s++){
+        selectionTimers.push(setTimeout(()=>apply(prev+s), Math.round((260/Math.max(1,steps))*s)));
+      }
+    }else{
+      const steps=prev-index;
+      for(let s=1;s<=steps;s++){
+        selectionTimers.push(setTimeout(()=>apply(prev-s), Math.round((220/Math.max(1,steps))*s)));
+      }
+    }
+
+    updateFractionExpression();
+  }
+
+  function showFractionToggles(){
+    fractionModeToggles.classList.add('visible');
+  }
+
+  function hideFractionToggles(){
+    fractionModeToggles.classList.remove('visible');
+  }
+
+  function animateFractionToZoom(selection){
+    isAnimating=true;
+    currentSelection=selection;
+    currentPartition=null;
+
+    clearMainPreview();
+    setPromptVisible(false);
+    setBackVisible(true);
+    chartShell.classList.add('spotlight');
+    createFractionWrap(selection);
+    showFractionToggles();
+
+    const t=getFractionTargetRect();
+    screenFade.classList.add('active');
+
+    requestAnimationFrame(()=>{
+      fractionWrap.style.transition=`
+        left ${FRACTION_ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1),
+        top ${FRACTION_ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1),
+        width ${FRACTION_ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1),
+        height ${FRACTION_ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1)
+      `;
+      fractionWrap.style.left=`${t.left}px`;
+      fractionWrap.style.top=`${t.top}px`;
+      fractionWrap.style.width=`${t.width}px`;
+      fractionWrap.style.height=`${t.height}px`;
+    });
+
+    const tick=setInterval(updateFractionZoomTextSizing,30);
+    stageTimers.push(setTimeout(()=>{
+      clearInterval(tick);
+      updateFractionZoomTextSizing();
+      isAnimating=false;
+      clearFractionPartitionSelection();
+      if(showEquationToggle.checked) updateFractionExpression();
+    }, FRACTION_ZOOM_IN_MS + 30));
+  }
+
+  function animateFractionBack(){
+    if(isAnimating||!currentSelection||!fractionWrap) return;
+    isAnimating=true;
+    hideExpression();
+    hideFractionToggles();
+
+    const r=currentSelection.row, c=currentSelection.col;
+    const first=getCell(r,1), last=getCell(r,c);
+    const a=getRectRelativeToShell(first), b=getRectRelativeToShell(last);
+
+    fractionWrap.style.transition=`
+      left ${FRACTION_ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      top ${FRACTION_ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      width ${FRACTION_ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      height ${FRACTION_ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      opacity 180ms ease
+    `;
+    fractionWrap.style.left=`${a.left}px`;
+    fractionWrap.style.top=`${a.top}px`;
+    fractionWrap.style.width=`${b.right-a.left}px`;
+    fractionWrap.style.height=`${a.height*2}px`;
+
+    stageTimers.push(setTimeout(()=>{
+      clearOverlay();
+      screenFade.classList.remove('active');
+      currentSelection=null;
+      currentPartition=null;
+      isAnimating=false;
+      setBackVisible(false);
+      setPromptVisible(true);
+    }, FRACTION_ZOOM_OUT_MS + 40));
+  }
+
+  /* -------------------- COMMON -------------------- */
+
+  function animateToZoom(selection){
+    if(isAnimating || currentSelection) return;
+
+    if(mode==='fraction_of_amount'){
+      animateFractionToZoom(selection);
+      return;
+    }
+
+    isAnimating=true;
+    currentSelection=selection;
+    touchMoved=false;
+
+    clearMainPreview();
+    setPromptVisible(false);
+    setBackVisible(true);
+    chartShell.classList.add('spotlight');
+    screenFade.classList.add('active');
+
+    createZoomBoard(selection);
+
+    const target = getTargetRectSquareUnits(selection.row, selection.col, modeUsesHeaders());
+
+    requestAnimationFrame(()=>{
+      zoomBoard.style.transition=`
+        left ${ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1),
+        top ${ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1),
+        width ${ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1),
+        height ${ZOOM_IN_MS}ms cubic-bezier(.22,.61,.36,1)
+      `;
+      zoomBoard.style.left=`${target.left}px`;
+      zoomBoard.style.top=`${target.top}px`;
+      zoomBoard.style.width=`${target.width}px`;
+      zoomBoard.style.height=`${target.height}px`;
+    });
+
+    stageTimers.push(setTimeout(()=>{
+      isAnimating=false;
+      resizeFloatingCardForShape();
+      updateDivisionToggleButtons();
+      positionReplayButton();
+
+      if(mode==='area'){
+        highlightAreaRowsSequentially();
+      }else if(mode==='product'){
+        hideFloatingTotal();
+        highlightProductLShape();
+      }else if(mode==='division'){
+        divisionShareMode='rows';
+        updateDivisionToggleButtons();
+        startDivisionAnimation('rows');
+      }
+    }, ZOOM_IN_MS + 40));
+  }
+
+  function animateBack(){
+    if(isAnimating || !currentSelection) return;
+
+    if(mode==='fraction_of_amount' && fractionWrap){
+      animateFractionBack();
+      return;
+    }
+
+    if(!zoomBoard) return;
+
+    isAnimating=true;
+    clearTimers();
+    cancelDivisionAnimation();
+    hideExpression();
+    hideFloatingTotal();
+    clearDivisionGroupCards();
+
+    const includeHeaders = modeUsesHeaders();
+
+    const startCell = getCell(1,1);
+    const endCell = getCell(currentSelection.row, currentSelection.col);
+    const a = getRectRelativeToShell(startCell);
+    const b = getRectRelativeToShell(endCell);
+
+    const endLeft = includeHeaders ? Math.max(0, a.left - a.width) : a.left;
+    const endTop = includeHeaders ? Math.max(0, a.top - a.height) : a.top;
+    const endWidth = (b.right - a.left) + (includeHeaders ? a.width : 0);
+    const endHeight = (b.bottom - a.top) + (includeHeaders ? a.height : 0);
+
+    zoomBoard.style.transition=`
+      left ${ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      top ${ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      width ${ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1),
+      height ${ZOOM_OUT_MS}ms cubic-bezier(.22,.61,.36,1)
+    `;
+
+    zoomBoard.style.left=`${endLeft}px`;
+    zoomBoard.style.top=`${endTop}px`;
+    zoomBoard.style.width=`${endWidth}px`;
+    zoomBoard.style.height=`${endHeight}px`;
+
+    stageTimers.push(setTimeout(()=>{
+      clearOverlay();
+      screenFade.classList.remove('active');
+      currentSelection=null;
+      isAnimating=false;
+      setBackVisible(false);
+      setPromptVisible(true);
+    }, ZOOM_OUT_MS + 40));
+  }
+
+  function replayCurrentModeAnimation(){
+    if(!currentSelection || isAnimating) return;
+
+    clearTimers();
+    cancelDivisionAnimation();
+    clearDivisionGroupCards();
+    hideExpression();
+    hideFloatingTotal();
+
+    if(mode==='fraction_of_amount'){
+      if(!fractionWrap) return;
+      clearFractionPartitionSelection();
+      fractionWrap.classList.toggle('groups-mode', showGroups);
+      updateFractionZoomTextSizing();
+      showFractionToggles();
+      if(showEquationToggle.checked) updateFractionExpression();
+      return;
+    }
+
+    for(let r=0;r<zoomCells.length;r++){
+      for(let c=0;c<zoomCells[r].length;c++){
+        const cell = zoomCells[r][c];
+        if(cell) cell.classList.remove('active','ghost','hiddenish');
+      }
+    }
+
+    resizeFloatingCardForShape();
+    updateDivisionToggleButtons();
+    positionExpression();
+
+    if(mode==='area'){
+      highlightAreaRowsSequentially();
+    }else if(mode==='product'){
+      highlightProductLShape();
+    }else if(mode==='division'){
+      startDivisionAnimation(divisionShareMode);
+    }
+  }
+
+  function rebuildZoomForMode(nextMode){
+    if(!currentSelection) return;
+
+    const selection = currentSelection;
+    let currentRect;
+
+    if(mode==='fraction_of_amount' && fractionWrap){
+      currentRect = {
+        left: parseFloat(fractionWrap.style.left || '0'),
+        top: parseFloat(fractionWrap.style.top || '0'),
+        width: parseFloat(fractionWrap.style.width || '0'),
+        height: parseFloat(fractionWrap.style.height || '0')
+      };
+    }else{
+      currentRect = {
+        left: parseFloat(zoomBoard.style.left || '0'),
+        top: parseFloat(zoomBoard.style.top || '0'),
+        width: parseFloat(zoomBoard.style.width || '0'),
+        height: parseFloat(zoomBoard.style.height || '0')
+      };
+    }
+
+    clearOverlay();
+    mode = nextMode;
+    updateModeButtons();
+
+    if(mode==='fraction_of_amount'){
+      createFractionWrap(selection);
+      fractionWrap.style.left=`${currentRect.left}px`;
+      fractionWrap.style.top=`${currentRect.top}px`;
+      fractionWrap.style.width=`${currentRect.width}px`;
+      fractionWrap.style.height=`${currentRect.height}px`;
+      overlay.classList.add('active');
+      screenFade.classList.add('active');
+      chartShell.classList.add('spotlight');
+      showFractionToggles();
+      updateFractionZoomTextSizing();
+    }else{
+      createZoomBoard(selection);
+      zoomBoard.style.left=`${currentRect.left}px`;
+      zoomBoard.style.top=`${currentRect.top}px`;
+      zoomBoard.style.width=`${currentRect.width}px`;
+      zoomBoard.style.height=`${currentRect.height}px`;
+      overlay.classList.add('active');
+      screenFade.classList.add('active');
+      chartShell.classList.add('spotlight');
+      resizeFloatingCardForShape();
+    }
+
+    replayCurrentModeAnimation();
+  }
+
+  function changeMode(nextMode){
+    if(mode===nextMode) return;
+
+    if(currentSelection){
+      rebuildZoomForMode(nextMode);
+    }else{
+      mode=nextMode;
+      updateModeButtons();
+      if(mode!=='fraction_of_amount') hideFractionToggles();
+    }
+  }
+
+  function updateModeButtons(){
+    const isArea = mode==='area';
+    const isProduct = mode==='product';
+    const isDivision = mode==='division';
+    const isFraction = mode==='fraction_of_amount';
+
+    modeAreaBtn.classList.toggle('active', isArea);
+    modeProductBtn.classList.toggle('active', isProduct);
+    modeDivisionBtn.classList.toggle('active', isDivision);
+    modeFractionBtn.classList.toggle('active', isFraction);
+
+    modeAreaBtn.setAttribute('aria-selected', String(isArea));
+    modeProductBtn.setAttribute('aria-selected', String(isProduct));
+    modeDivisionBtn.setAttribute('aria-selected', String(isDivision));
+    modeFractionBtn.setAttribute('aria-selected', String(isFraction));
+
+    chartShell.dataset.mode = mode;
+    updatePromptText();
+    try{ localStorage.setItem('mmt-timestable-mode', mode); }catch(err){}
+  }
+
+  function onCellClick(e){
+    if(touchMoved) return;
+    const btn=e.currentTarget;
+    animateToZoom({ row:Number(btn.dataset.row), col:Number(btn.dataset.col), value:Number(btn.dataset.value) });
+  }
+
+  function handleReplayClick(){
+    if(currentSelection && !isAnimating) replayCurrentModeAnimation();
+  }
+
+
+  function handleKeydown(e){
+    if(e.key==='Escape' && currentSelection && !isAnimating){
+      e.preventDefault();
+      animateBack();
+      return;
+    }
+
+    if(mode==='fraction_of_amount' && currentSelection && !isAnimating){
+      if(e.key==='ArrowRight'){
+        e.preventDefault();
+        selectFractionPartition(Math.min(currentSelection.col, (currentPartition||0)+1 || 1));
+      }else if(e.key==='ArrowLeft'){
+        e.preventDefault();
+        selectFractionPartition(Math.max(1, (currentPartition||currentSelection.col)-1));
+      }else if(e.key==='Enter'){
+        e.preventDefault();
+        selectFractionPartition(currentPartition || currentSelection.col);
+      }
+    }
+  }
+
+  function handleStagePointerDown(e){
+    if(!currentSelection || isAnimating) return;
+
+    const activeWrap = mode==='fraction_of_amount' ? fractionWrap : zoomBoard;
+    if(activeWrap && activeWrap.contains(e.target)) return;
+    if(backBtn.contains(e.target)) return;
+    if(fractionModeToggles.contains(e.target)) return;
+
+    animateBack();
+  }
+
+  function refreshDuringResize(){
+    if(!currentSelection || isAnimating) return;
+
+    if(mode==='fraction_of_amount' && fractionWrap){
+      const t=getFractionTargetRect();
+      fractionWrap.style.left=`${t.left}px`;
+      fractionWrap.style.top=`${t.top}px`;
+      fractionWrap.style.width=`${t.width}px`;
+      fractionWrap.style.height=`${t.height}px`;
+      updateFractionZoomTextSizing();
+      updateFractionExpression();
+      positionReplayButton();
+      return;
+    }
+
+    const target = getTargetRectSquareUnits(currentSelection.row, currentSelection.col, modeUsesHeaders());
+    zoomBoard.style.left=`${target.left}px`;
+    zoomBoard.style.top=`${target.top}px`;
+    zoomBoard.style.width=`${target.width}px`;
+    zoomBoard.style.height=`${target.height}px`;
+
+    resizeFloatingCardForShape();
+    updateDivisionToggleButtons();
+    positionExpression();
+
+    if(mode==='area' && floatingTotal?.classList.contains('visible')){
+      const centre = getInnerWhiteCenter();
+      moveFloatingTotalTo(centre.x, centre.y, false);
+    }else if(mode==='product' && floatingTotal?.classList.contains('visible')){
+      const br = getCellCenterInBoard(currentSelection.row, currentSelection.col);
+      moveFloatingTotalTo(br.x, br.y, false, true);
+    }else if(mode==='division'){
+      startDivisionAnimation(divisionShareMode);
+    }
+  }
+
+  function handleChartPointerMove(e){
+    if(currentSelection || isAnimating) return;
+    const pos=getPointerGridPosition(e.clientX,e.clientY);
+    if(!pos){ clearMainPreview(); return; }
+
+    if(mode==='area') previewRectangle(pos.row,pos.col);
+    else if(mode==='fraction_of_amount') previewFractionRow(pos.row,pos.col);
+    else previewLShape(pos.row,pos.col);
+  }
+
+  function handleChartPointerLeave(){
+    if(!currentSelection) clearMainPreview();
+  }
+
+  function handleChartTouchMove(e){
+    if(currentSelection || isAnimating) return;
+    const touch=e.touches[0];
+    if(!touch) return;
+    touchMoved=true;
+    const pos=getPointerGridPosition(touch.clientX,touch.clientY);
+    if(!pos){ clearMainPreview(); return; }
+
+    if(mode==='area') previewRectangle(pos.row,pos.col);
+    else if(mode==='fraction_of_amount') previewFractionRow(pos.row,pos.col);
+    else previewLShape(pos.row,pos.col);
+  }
+
+  function handleChartTouchEnd(e){
+    if(currentSelection || isAnimating) return;
+    const touch=e.changedTouches[0];
+    if(!touch) return;
+    const pos=getPointerGridPosition(touch.clientX,touch.clientY);
+    if(!pos){ clearMainPreview(); return; }
+    const btn=getCell(pos.row,pos.col)?.querySelector('.cell-btn');
+    if(btn){
+      animateToZoom({ row:Number(btn.dataset.row), col:Number(btn.dataset.col), value:Number(btn.dataset.value) });
+    }
+  }
+
+  function handleShowEquationChange(){
+    hideEquation = !showEquationToggle.checked;
+    updateFractionExpression();
+  }
+
+  function handleShowGroupsChange(){
+    showGroups = showGroupsToggle.checked;
+    if(fractionWrap){
+      fractionWrap.classList.toggle('groups-mode', showGroups);
+      updateFractionZoomTextSizing();
+    }
+  }
+
+  backBtn.addEventListener('click', animateBack);
+  replayBtn.addEventListener('click', handleReplayClick);
+  window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('resize', refreshDuringResize);
+
+  stage.addEventListener('pointerdown', handleStagePointerDown);
+  chart.addEventListener('pointermove', handleChartPointerMove);
+  chart.addEventListener('pointerleave', handleChartPointerLeave);
+  chart.addEventListener('touchmove', handleChartTouchMove, { passive:true });
+  chart.addEventListener('touchend', handleChartTouchEnd, { passive:true });
+
+  modeAreaBtn.addEventListener('click', ()=>changeMode('area'));
+  modeProductBtn.addEventListener('click', ()=>changeMode('product'));
+  modeDivisionBtn.addEventListener('click', ()=>changeMode('division'));
+  modeFractionBtn.addEventListener('click', ()=>changeMode('fraction_of_amount'));
+
+  showEquationToggle.addEventListener('change', handleShowEquationChange);
+  showGroupsToggle.addEventListener('change', handleShowGroupsChange);
+
+  buildChart();
+  try{
+    const savedMode = localStorage.getItem('mmt-timestable-mode');
+    if(savedMode && ['area','product','division','fraction_of_amount'].includes(savedMode)) mode = savedMode;
+  }catch(err){}
+  updateModeButtons();
+})();
+</script>
+</body>
+</html>
