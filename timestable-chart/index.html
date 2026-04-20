@@ -196,6 +196,45 @@
       user-select:none;
     }
 
+
+
+    .symmetry-prompt{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+      flex-wrap:wrap;
+      margin:-4px 0 18px;
+      min-height:42px;
+      user-select:none;
+    }
+    .symmetry-prompt[hidden]{display:none}
+    .symmetry-prompt-text{
+      font-family:var(--playfulFont);
+      font-size:clamp(20px,2.2vw,34px);
+      font-weight:800;
+      color:#111827;
+    }
+    .symmetry-select{
+      appearance:none;
+      border:3px solid #111827;
+      border-radius:999px;
+      background:#fff;
+      color:#111827;
+      min-height:52px;
+      padding:0 56px 0 18px;
+      font-family:var(--playfulFont);
+      font-size:clamp(20px,2vw,30px);
+      font-weight:800;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      background-image:linear-gradient(45deg, transparent 50%, #111827 50%), linear-gradient(135deg, #111827 50%, transparent 50%);
+      background-position:calc(100% - 26px) calc(50% - 3px), calc(100% - 18px) calc(50% - 3px);
+      background-size:8px 8px, 8px 8px;
+      background-repeat:no-repeat;
+      cursor:pointer;
+    }
+    .symmetry-select:focus{outline:none; box-shadow:0 0 0 4px rgba(37,99,235,.18), 0 10px 24px rgba(0,0,0,.08);}
+
     .chart-shell{
       position:relative;
       width:fit-content;
@@ -776,11 +815,12 @@
       <div class="right-controls">
         <div class="mode-card" aria-label="Display mode">
           <span class="mode-label">Mode</span>
-          <div class="segmented" role="tablist" aria-label="Area, Product, Division or Fraction of amount mode">
+          <div class="segmented" role="tablist" aria-label="Area, Product, Division, Fraction of amount or Explore Symmetry mode">
             <button class="seg-btn active" id="modeAreaBtn" type="button" role="tab" aria-selected="true">Area</button>
             <button class="seg-btn" id="modeProductBtn" type="button" role="tab" aria-selected="false">Product</button>
             <button class="seg-btn" id="modeDivisionBtn" type="button" role="tab" aria-selected="false">Division</button>
             <button class="seg-btn" id="modeFractionBtn" type="button" role="tab" aria-selected="false">Fraction of amount</button>
+            <button class="seg-btn" id="modeSymmetryBtn" type="button" role="tab" aria-selected="false">Explore Symmetry</button>
           </div>
         </div>
 
@@ -801,6 +841,15 @@
           <div class="title-text">The Interactive Timestable Chart</div>
         </div>
         <div class="title-subtext" id="titleSubtext">Select a cell to build a rectangle</div>
+        <div class="symmetry-prompt" id="symmetryPrompt" hidden>
+          <span class="symmetry-prompt-text">Select from the drop down to explore</span>
+          <select id="symmetrySelect" class="symmetry-select" aria-label="Select a symmetry exploration">
+            <option value="nw1">Notice/Wonder 1</option>
+            <option value="nw2">Notice/Wonder 2</option>
+            <option value="nw3">Notice/Wonder 3</option>
+            <option value="nw4">Notice/Wonder 4</option>
+          </select>
+        </div>
 
         <div class="chart-shell" id="chartShell">
           <table class="chart" id="chart" aria-label="Times table chart from 1 to 12"></table>
@@ -854,8 +903,11 @@
   const modeProductBtn = document.getElementById('modeProductBtn');
   const modeDivisionBtn = document.getElementById('modeDivisionBtn');
   const modeFractionBtn = document.getElementById('modeFractionBtn');
+  const modeSymmetryBtn = document.getElementById('modeSymmetryBtn');
 
   const fractionModeToggles = document.getElementById('fractionModeToggles');
+  const symmetryPrompt = document.getElementById('symmetryPrompt');
+  const symmetrySelect = document.getElementById('symmetrySelect');
   const showEquationToggle = document.getElementById('showEquationToggle');
   const showGroupsToggle = document.getElementById('showGroupsToggle');
 
@@ -890,19 +942,113 @@
 
   let stageTimers = [];
   let pointerPreview = null;
+  let symmetryView = 'nw1';
+  let symmetrySelection = null;
 
   function multiplySymbol(){ return '×'; }
   function divisionSymbol(){ return '÷'; }
 
+  const symmetryPalettes = {
+    lShape: ['#dbeafe','#e9d5ff','#d1fae5','#fde7c7','#fef3c7','#fbcfe8','#cffafe','#ddd6fe','#dcfce7','#fed7aa','#fde68a','#f5d0fe'],
+    diagonals: ['#dbeafe','#d1fae5','#fef3c7','#fbcfe8','#cffafe','#ddd6fe','#fed7aa','#dcfce7','#fde68a','#f5d0fe','#fecdd3','#e9d5ff'],
+    products: ['#dbeafe','#e9d5ff','#d1fae5','#fde7c7','#fef3c7','#fbcfe8','#cffafe','#ddd6fe','#dcfce7','#fed7aa','#fde68a','#f5d0fe','#fecdd3','#c7d2fe']
+  };
+
+  function pastelFromIndex(index, palette){
+    return palette[(Math.abs(index)-1) % palette.length];
+  }
+
+  function mixWithWhite(hex, amount=0.22){
+    const value = hex.replace('#','');
+    const n = parseInt(value, 16);
+    let r = (n >> 16) & 255;
+    let g = (n >> 8) & 255;
+    let b = n & 255;
+    r = Math.round(r + (255-r) * amount);
+    g = Math.round(g + (255-g) * amount);
+    b = Math.round(b + (255-b) * amount);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  function getLShapeBand(row, col){
+    return Math.max(row, col);
+  }
+
+  function getSymmetryGroup(row, col, view=symmetryView){
+    if(view==='nw1') return `band-${getLShapeBand(row,col)}`;
+    if(view==='nw2') return `diag-${Math.abs(row-col)}`;
+    if(view==='nw3') return `value-${row*col}`;
+    if(row===col) return 'diag-main';
+    return row < col ? 'top-right' : 'bottom-left';
+  }
+
+  function getSymmetryBaseColor(row, col, view=symmetryView){
+    if(view==='nw1') return pastelFromIndex(getLShapeBand(row,col), symmetryPalettes.lShape);
+    if(view==='nw2') return pastelFromIndex(Math.abs(row-col)+1, symmetryPalettes.diagonals);
+    if(view==='nw3') return pastelFromIndex(row*col, symmetryPalettes.products);
+    if(row===col) return '#ffffff';
+    return row < col ? '#d9ecff' : '#dcf6dd';
+  }
+
+  function applyChartVisualMode(){
+    for(let r=1;r<=SIZE;r++){
+      for(let c=1;c<=SIZE;c++){
+        const cell = getCell(r,c);
+        const btn = cell?.querySelector('.cell-btn');
+        if(!cell || !btn) continue;
+
+        cell.style.boxShadow='';
+        cell.style.opacity='';
+        btn.style.fontWeight='500';
+        btn.style.color='';
+        btn.classList.remove('preview-target');
+
+        if(mode==='symmetry'){
+          const group = getSymmetryGroup(r,c);
+          const selectedGroup = symmetrySelection ? getSymmetryGroup(symmetrySelection.row, symmetrySelection.col) : null;
+          const isSelectedGroup = selectedGroup && group === selectedGroup;
+          const isClickedCell = symmetrySelection && symmetrySelection.row===r && symmetrySelection.col===c;
+          cell.style.background = getSymmetryBaseColor(r,c);
+          if(selectedGroup){
+            cell.style.opacity = isSelectedGroup ? '1' : '0.42';
+            if(isSelectedGroup){
+              cell.style.boxShadow = isClickedCell
+                ? 'inset 0 0 0 4px rgba(37,99,235,.65), 0 0 0 3px rgba(37,99,235,.12)'
+                : 'inset 0 0 0 3px rgba(17,24,39,.18)';
+              btn.style.fontWeight = isClickedCell ? '900' : '700';
+              btn.style.color = '#0f172a';
+            }
+          }
+        }else{
+          cell.style.background='';
+        }
+      }
+    }
+  }
+
+  function setSymmetrySelection(row, col){
+    symmetrySelection = { row, col, value: row*col };
+    clearMainPreview();
+    applyChartVisualMode();
+  }
+
   function updatePromptText(){
+    symmetryPrompt.hidden = mode !== 'symmetry';
+
     if(mode === 'area'){
+      titleSubtext.hidden = false;
       titleSubtext.textContent = 'Select a cell to build a rectangle';
     }else if(mode === 'product'){
+      titleSubtext.hidden = false;
       titleSubtext.textContent = 'Select a value to see multiplication structure';
     }else if(mode === 'division'){
+      titleSubtext.hidden = false;
       titleSubtext.textContent = 'Select a value to explore equal sharing';
-    }else{
+    }else if(mode === 'fraction_of_amount'){
+      titleSubtext.hidden = false;
       titleSubtext.textContent = 'Select a row to explore parts of a whole';
+    }else{
+      titleSubtext.hidden = true;
     }
   }
 
@@ -1025,15 +1171,8 @@
 
   function clearMainPreview(){
     if(currentSelection) return;
-    for(let r=1;r<=SIZE;r++){
-      for(let c=1;c<=SIZE;c++){
-        const cell=getCell(r,c);
-        if(cell) cell.style.background='';
-        const btn=cell?.querySelector('.cell-btn');
-        if(btn) btn.classList.remove('preview-target');
-      }
-    }
     pointerPreview=null;
+    applyChartVisualMode();
   }
 
   function previewRectangle(row,col){
@@ -1912,6 +2051,11 @@
   function animateToZoom(selection){
     if(isAnimating || currentSelection) return;
 
+    if(mode==='symmetry'){
+      setSymmetrySelection(selection.row, selection.col);
+      return;
+    }
+
     if(mode==='fraction_of_amount'){
       animateFractionToZoom(selection);
       return;
@@ -2108,12 +2252,40 @@
   function changeMode(nextMode){
     if(mode===nextMode) return;
 
+    if(nextMode==='symmetry'){
+      if(currentSelection){
+        clearOverlay();
+        screenFade.classList.remove('active');
+        chartShell.classList.remove('spotlight');
+        currentSelection=null;
+        currentPartition=null;
+        isAnimating=false;
+        setBackVisible(false);
+        hideFractionToggles();
+      }
+      mode=nextMode;
+      symmetrySelection=null;
+      updateModeButtons();
+      applyChartVisualMode();
+      return;
+    }
+
+    if(mode==='symmetry'){
+      symmetrySelection=null;
+      mode=nextMode;
+      updateModeButtons();
+      if(mode!=='fraction_of_amount') hideFractionToggles();
+      applyChartVisualMode();
+      return;
+    }
+
     if(currentSelection){
       rebuildZoomForMode(nextMode);
     }else{
       mode=nextMode;
       updateModeButtons();
       if(mode!=='fraction_of_amount') hideFractionToggles();
+      applyChartVisualMode();
     }
   }
 
@@ -2122,17 +2294,21 @@
     const isProduct = mode==='product';
     const isDivision = mode==='division';
     const isFraction = mode==='fraction_of_amount';
+    const isSymmetry = mode==='symmetry';
 
     modeAreaBtn.classList.toggle('active', isArea);
     modeProductBtn.classList.toggle('active', isProduct);
     modeDivisionBtn.classList.toggle('active', isDivision);
     modeFractionBtn.classList.toggle('active', isFraction);
+    modeSymmetryBtn.classList.toggle('active', isSymmetry);
 
     modeAreaBtn.setAttribute('aria-selected', String(isArea));
     modeProductBtn.setAttribute('aria-selected', String(isProduct));
     modeDivisionBtn.setAttribute('aria-selected', String(isDivision));
     modeFractionBtn.setAttribute('aria-selected', String(isFraction));
+    modeSymmetryBtn.setAttribute('aria-selected', String(isSymmetry));
 
+    replayBtn.classList.toggle('visible', !!currentSelection && !isSymmetry);
     chartShell.dataset.mode = mode;
     updatePromptText();
     try{ localStorage.setItem('mmt-timestable-mode', mode); }catch(err){}
@@ -2145,6 +2321,7 @@
   }
 
   function handleReplayClick(){
+    if(mode==='symmetry') return;
     if(currentSelection && !isAnimating) replayCurrentModeAnimation();
   }
 
@@ -2222,6 +2399,8 @@
     const pos=getPointerGridPosition(e.clientX,e.clientY);
     if(!pos){ clearMainPreview(); return; }
 
+    if(mode==='symmetry'){ clearMainPreview(); return; }
+    if(mode==='symmetry'){ clearMainPreview(); return; }
     if(mode==='area') previewRectangle(pos.row,pos.col);
     else if(mode==='fraction_of_amount') previewFractionRow(pos.row,pos.col);
     else previewLShape(pos.row,pos.col);
@@ -2284,16 +2463,24 @@
   modeProductBtn.addEventListener('click', ()=>changeMode('product'));
   modeDivisionBtn.addEventListener('click', ()=>changeMode('division'));
   modeFractionBtn.addEventListener('click', ()=>changeMode('fraction_of_amount'));
+  modeSymmetryBtn.addEventListener('click', ()=>changeMode('symmetry'));
 
   showEquationToggle.addEventListener('change', handleShowEquationChange);
   showGroupsToggle.addEventListener('change', handleShowGroupsChange);
+  symmetrySelect.addEventListener('change', ()=>{
+    symmetryView = symmetrySelect.value;
+    symmetrySelection = null;
+    applyChartVisualMode();
+  });
 
   buildChart();
   try{
     const savedMode = localStorage.getItem('mmt-timestable-mode');
-    if(savedMode && ['area','product','division','fraction_of_amount'].includes(savedMode)) mode = savedMode;
+    if(savedMode && ['area','product','division','fraction_of_amount','symmetry'].includes(savedMode)) mode = savedMode;
   }catch(err){}
   updateModeButtons();
+  symmetrySelect.value = symmetryView;
+  applyChartVisualMode();
 })();
 </script>
 </body>
