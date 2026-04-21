@@ -701,7 +701,7 @@
             <option value="lesson-plan.html">Lesson plan</option>
             <option value="worksheet-creator.html">Worksheet Creator</option>
             <option value="student-quiz.html">Student Quiz</option>
-<option value="https://millsmathstools.au/collecting-like-terms/number-groups/">Collecting Like Terms 2</option>
+            <option value="https://millsmathstools.au/collecting-like-terms/number-groups/">Collecting Like Terms 2</option>
           </select>
         </div>
 
@@ -756,13 +756,13 @@
 
       <div class="settingBubble green">
         <div class="settingLabel">Notation</div>
-        <div class="settingTitle">Use dot notation</div>
-        <div class="settingHelp">Switch multiplication display between <strong>×</strong> and <strong>·</strong>.</div>
+        <div class="settingTitle">Use bracket notation</div>
+        <div class="settingHelp">Switch multiplication display between <strong>×</strong> and brackets (e.g. 3(4), 3(4x)).</div>
 
         <label class="toggleRow" for="drawerMulToggle">
           <input class="toggleBox" id="drawerMulToggle" type="checkbox" />
           <div class="toggleText">
-            <div class="settingTitle" style="font-size:18px; margin:0 0 4px;">Use · instead of ×</div>
+            <div class="settingTitle" style="font-size:18px; margin:0 0 4px;">Use brackets instead of × where appropriate</div>
             <div class="settingHelp">This changes how multiplication is shown in the expression and simplification lines.</div>
           </div>
         </label>
@@ -790,7 +790,7 @@
 
   let busyReveal = false;
   let lastResetArmAt = 0;
-  let useDot = false;
+  let useBracket = false;
 
   const dragState = {
     active: false,
@@ -821,7 +821,7 @@
   const modeDoubleBtn = el('modeDoubleBtn');
   const drawerMulToggle = el('drawerMulToggle');
 
-  const MUL = () => (useDot ? '·' : '×');
+  const MUL = () => '×';
 
   function showToast(msg, ms=1200){
     toastEl.textContent = msg;
@@ -852,7 +852,7 @@
   function syncSettingsUI(){
     modeSingleBtn.classList.toggle('active', mode === 'single');
     modeDoubleBtn.classList.toggle('active', mode === 'two');
-    drawerMulToggle.checked = useDot;
+    drawerMulToggle.checked = useBracket;
   }
 
   settingsBtn.addEventListener('click', openSettings);
@@ -860,30 +860,30 @@
   drawerBackdrop.addEventListener('click', closeSettings);
 
   modeSingleBtn.addEventListener('click', () => {
-  if (mode === 'single') return;
-  mode = 'single';
-  simplifyStep = 0;
-  busyReveal = false;
-  endDragCleanup();
-  makeRandomQuestion();
-  syncSettingsUI();
-  renderAll();
-});
+    if (mode === 'single') return;
+    mode = 'single';
+    simplifyStep = 0;
+    busyReveal = false;
+    endDragCleanup();
+    makeRandomQuestion();
+    syncSettingsUI();
+    renderAll();
+  });
 
-modeDoubleBtn.addEventListener('click', () => {
-  if (mode === 'two') return;
-  mode = 'two';
-  simplifyStep = 0;
-  busyReveal = false;
-  endDragCleanup();
-  makeRandomQuestion();
-  syncSettingsUI();
-  renderAll();
-});
+  modeDoubleBtn.addEventListener('click', () => {
+    if (mode === 'two') return;
+    mode = 'two';
+    simplifyStep = 0;
+    busyReveal = false;
+    endDragCleanup();
+    makeRandomQuestion();
+    syncSettingsUI();
+    renderAll();
+  });
 
   drawerMulToggle.addEventListener('change', (e) => {
-    useDot = !!e.target.checked;
-    try{ localStorage.setItem('mmt_collect_mulDot', useDot ? '1' : '0'); }catch(_){}
+    useBracket = !!e.target.checked;
+    try{ localStorage.setItem('mmt_collect_bracket', useBracket ? '1' : '0'); }catch(_){}
     computeSimplifyLines();
     renderWorkBox();
     syncSettingsUI();
@@ -896,8 +896,8 @@ modeDoubleBtn.addEventListener('click', () => {
   });
 
   try{
-    const saved = localStorage.getItem('mmt_collect_mulDot');
-    if (saved === '1') useDot = true;
+    const saved = localStorage.getItem('mmt_collect_bracket');
+    if (saved === '1') useBracket = true;
   }catch(_){}
   syncSettingsUI();
 
@@ -1080,6 +1080,12 @@ modeDoubleBtn.addEventListener('click', () => {
     return { num: parseInt(m[1],10), letters: m[2] };
   }
 
+  function shouldUseBracketNotation(u){
+    if (!useBracket) return false;
+    if (isNumericUnit(u)) return true;
+    return /^\d+[a-z]+$/.test(String(u).toLowerCase());
+  }
+
   function termKey(u){
     return normalizeUnit(u);
   }
@@ -1103,7 +1109,10 @@ modeDoubleBtn.addEventListener('click', () => {
       return signPrefix + String(g) + u;
     }
 
-    return signPrefix + String(g) + MUL() + u;
+    if (shouldUseBracketNotation(u)){
+      return signPrefix + String(g) + '(' + u + ')';
+    }
+    return signPrefix + String(g) + '×' + u;
   }
 
   function termToExpressionFirst(groups, unit){
@@ -1112,7 +1121,10 @@ modeDoubleBtn.addEventListener('click', () => {
 
     if (g === 1) return u;
     if (!hasLeadingDigit(u) && !isNumericUnit(u)) return String(g) + u;
-    return String(g) + MUL() + u;
+    if (shouldUseBracketNotation(u)){
+      return String(g) + '(' + u + ')';
+    }
+    return String(g) + '×' + u;
   }
 
   function makeRandomQuestion(){
@@ -1361,8 +1373,13 @@ modeDoubleBtn.addEventListener('click', () => {
       if (abs === 1){
         body = u;
       } else {
-        if (!hasLeadingDigit(u) && !isNumericUnit(u)) body = String(abs) + u;
-        else body = String(abs) + MUL() + u;
+        if (!hasLeadingDigit(u) && !isNumericUnit(u)) {
+          body = String(abs) + u;
+        } else if (shouldUseBracketNotation(u)) {
+          body = String(abs) + '(' + u + ')';
+        } else {
+          body = String(abs) + MUL() + u;
+        }
       }
 
       const text = (tokens.length === 0)
