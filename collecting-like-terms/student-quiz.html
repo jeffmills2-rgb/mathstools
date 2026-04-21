@@ -74,7 +74,7 @@
       padding:12px 14px 12px;
       display:grid;
       grid-template-columns: 1fr auto 1fr;
-      align-items:center;
+      align-items:start;
       gap:10px;
     }
 
@@ -126,6 +126,14 @@
 
     .rightTop{
       display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      align-items:flex-end;
+      gap:10px;
+      flex-wrap:nowrap;
+    }
+    .rightTopMain{
+      display:flex;
       justify-content:flex-end;
       align-items:center;
       gap:10px;
@@ -150,6 +158,53 @@
       background:#fff;
       box-shadow: 0 8px 20px rgba(0,0,0,.06);
       white-space:nowrap;
+    }
+
+    .notationCard{
+      border:1px solid #ddd6fe;
+      background:#faf5ff;
+      color:#4c1d95;
+      border-radius:16px;
+      padding:10px 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:900;
+    }
+    .notationLabel{
+      font-size:14px;
+      line-height:1.1;
+      white-space:nowrap;
+    }
+    .toggleSwitch{
+      position:relative;
+      width:54px;
+      height:30px;
+      border-radius:999px;
+      border:2px solid #c4b5fd;
+      background:#e9ddff;
+      cursor:pointer;
+      transition:.18s ease;
+      flex:0 0 auto;
+    }
+    .toggleSwitch.on{
+      background:#8b5cf6;
+      border-color:#7c3aed;
+    }
+    .toggleKnob{
+      position:absolute;
+      top:2px;
+      left:2px;
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      background:#fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,.18);
+      transition:.18s ease;
+    }
+    .toggleSwitch.on .toggleKnob{
+      left:26px;
     }
 
     .wrap{
@@ -602,8 +657,9 @@
     @media (max-width: 1180px){
       .banner{ min-width: 0; width:100%; }
       .topbarInner{ grid-template-columns: 1fr; gap:10px; }
-      .leftTop, .rightTop{ justify-content:center; }
+      .leftTop, .rightTop{ justify-content:center; align-items:center; }
       .centerTop{ justify-content:center; }
+      .rightTopMain{ justify-content:center; }
       .bubblesRow{
         padding-bottom: 12px;
       }
@@ -702,8 +758,17 @@
       </div>
 
       <div class="rightTop">
-        <div class="qMini" id="qText">Question 1 / 15</div>
-        <button class="resetBtn" id="resetBtn" type="button">Reset</button>
+        <div class="rightTopMain">
+          <div class="qMini" id="qText">Question 1 / 15</div>
+          <button class="resetBtn" id="resetBtn" type="button">Reset</button>
+        </div>
+
+        <div class="notationCard" id="notationCard">
+          <div class="notationLabel">Use bracket notation</div>
+          <button class="toggleSwitch" id="notationToggle" type="button" aria-pressed="false" aria-label="Use bracket notation">
+            <span class="toggleKnob"></span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -761,18 +826,18 @@
     { n: 6, w: 10 },
   ];
 
-const DOTS = {
-  1: [[50,50]],
-  2: [[30,35],[70,65]],
-  3: [[30,35],[50,50],[70,65]],
-  4: [[30,30],[70,30],[30,70],[70,70]],
-  5: [[30,30],[70,30],[50,50],[30,70],[70,70]],
-  6: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75]],
-  7: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75],[50,50]],
-  8: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75],[50,37],[50,63]],
-  9: [[30,22],[50,22],[70,22],[30,50],[50,50],[70,50],[30,78],[50,78],[70,78]],
-  10:[[30,22],[50,18],[70,22],[30,42],[50,39],[70,42],[30,62],[50,61],[70,62],[50,82]]
-};
+  const DOTS = {
+    1: [[50,50]],
+    2: [[30,35],[70,65]],
+    3: [[30,35],[50,50],[70,65]],
+    4: [[30,30],[70,30],[30,70],[70,70]],
+    5: [[30,30],[70,30],[50,50],[30,70],[70,70]],
+    6: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75]],
+    7: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75],[50,50]],
+    8: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75],[50,37],[50,63]],
+    9: [[30,22],[50,22],[70,22],[30,50],[50,50],[70,50],[30,78],[50,78],[70,78]],
+    10:[[30,22],[50,18],[70,22],[30,42],[50,39],[70,42],[30,62],[50,61],[70,62],[50,82]]
+  };
   function positionsForCount(n){
     const k = Math.max(1, Math.min(MAX_GROUPS, n));
     return DOTS[k];
@@ -798,6 +863,8 @@ const DOTS = {
   const resetBtn = document.getElementById('resetBtn');
   const qText = document.getElementById('qText');
 
+  const notationToggle = document.getElementById('notationToggle');
+
   const bubblePanel = document.getElementById('bubblePanel');
   const bubblesRow = document.getElementById('bubblesRow');
 
@@ -819,6 +886,7 @@ const DOTS = {
     completionCode: '',
     completionMessage: '',
     lastResult: null,
+    useBracketNotation: false,
   };
 
   const dragState = {
@@ -860,6 +928,32 @@ const DOTS = {
       if(r <= 0) return p.n;
     }
     return pairs[pairs.length-1].n;
+  }
+
+  function syncNotationToggle(){
+    notationToggle.classList.toggle('on', state.useBracketNotation);
+    notationToggle.setAttribute('aria-pressed', state.useBracketNotation ? 'true' : 'false');
+  }
+
+  function shouldUseBracketNotation(unit){
+    if(!state.useBracketNotation) return false;
+    const u = String(unit || '').toLowerCase();
+    return /^\d+$/.test(u) || /^\d+[a-z]+$/.test(u);
+  }
+
+  function buildGroupedBody(groups, unit){
+    const u = String(unit).toLowerCase();
+    const g = String(groups);
+
+    if(/^[a-z]+$/.test(u)){
+      return g + u;
+    }
+
+    if(shouldUseBracketNotation(u)){
+      return g + '(' + u + ')';
+    }
+
+    return g + '×' + u;
   }
 
   function dropConfetti(){
@@ -923,26 +1017,14 @@ const DOTS = {
       const t = terms[i];
       const sign = (i===0 ? '' : (t.op==='-' ? ' − ' : ' + '));
       const g = t.groups;
-      const u = String(t.unit);
+      const u = String(t.unit).toLowerCase();
 
       let body = '';
 
       if(g === 1){
         body = u;
       } else {
-        const uIsLettersOnly = /^[a-z]+$/i.test(u);
-        const uIsNumericOnly = /^\d+$/.test(u);
-        const uIsDigitLetters = /^\d+[a-z]+$/i.test(u);
-
-        if(uIsLettersOnly){
-          body = String(g) + u.toLowerCase();
-        } else if(uIsNumericOnly){
-          body = String(g) + '×' + u;
-        } else if(uIsDigitLetters){
-          body = String(g) + '×' + u.toLowerCase();
-        } else {
-          body = String(g) + '×' + u;
-        }
+        body = buildGroupedBody(g, u);
       }
 
       parts.push(sign + body);
@@ -1103,14 +1185,45 @@ const DOTS = {
     return s;
   }
 
-  function parseStudentExpression(raw){
+  function normalizeStudentInput(raw){
     let s = String(raw || '');
     s = s.replace(/\s+/g,'');
     s = s.replace(/−/g,'-');
     s = s.replace(/×/g,'*');
 
-    if(!s) return { ok:false, reason:'empty' };
+    s = s.replace(/([0-9a-z)])\(/gi, '$1*(');
+    s = s.replace(/\)([0-9a-z(])/gi, ')*$1');
 
+    return s;
+  }
+
+  function stripOuterParens(s){
+    let out = s;
+    while(out.length >= 2 && out[0] === '(' && out[out.length - 1] === ')'){
+      let depth = 0;
+      let valid = true;
+      for(let i = 0; i < out.length; i++){
+        if(out[i] === '(') depth++;
+        if(out[i] === ')') depth--;
+        if(depth === 0 && i < out.length - 1){
+          valid = false;
+          break;
+        }
+        if(depth < 0){
+          valid = false;
+          break;
+        }
+      }
+      if(!valid || depth !== 0) break;
+      out = out.slice(1, -1);
+    }
+    return out;
+  }
+
+  function parseStudentExpression(raw){
+    let s = normalizeStudentInput(raw);
+
+    if(!s) return { ok:false, reason:'empty' };
     if(s[0] === '+') s = s.slice(1);
 
     const chunks = s.match(/[+\-]?[^+\-]+/g);
@@ -1133,7 +1246,10 @@ const DOTS = {
       let unitLetters = '';
       let hasUnit = false;
 
-      for(const f of factors){
+      for(let f of factors){
+        f = stripOuterParens(f);
+        if(!f) return { ok:false, reason:'term' };
+
         if(/^\d+$/.test(f)){
           coeff *= parseInt(f,10);
           continue;
@@ -1369,6 +1485,12 @@ const DOTS = {
       targetMap: t.map,
       targetCanonical: mapToCanonicalString(t.map),
     };
+  }
+
+  function refreshExpressionDisplays(){
+    for(const q of state.questions){
+      q.exprDisplay = buildExpressionDisplay(q.terms);
+    }
   }
 
   function showMessage(kind, html){
@@ -1932,6 +2054,18 @@ const DOTS = {
     });
   }
 
+  notationToggle.addEventListener('click', () => {
+    state.useBracketNotation = !state.useBracketNotation;
+    try{
+      localStorage.setItem('mmt_collect_like_terms_quiz_brackets', state.useBracketNotation ? '1' : '0');
+    }catch(_){}
+    syncNotationToggle();
+    refreshExpressionDisplays();
+    if(state.questions.length){
+      renderCurrentQuestion();
+    }
+  });
+
   startSweet.addEventListener('click', ()=> startLevel('sweet'));
   startMild.addEventListener('click',  ()=> startLevel('mild'));
   startMedium.addEventListener('click',()=> startLevel('medium'));
@@ -1957,6 +2091,12 @@ const DOTS = {
   copyCodeBtn.addEventListener('click', (e)=>{ e.preventDefault(); copyCode(); });
   playAgainBtn.addEventListener('click', (e)=>{ e.preventDefault(); hardReset(); });
 
+  try{
+    const saved = localStorage.getItem('mmt_collect_like_terms_quiz_brackets');
+    if(saved === '1') state.useBracketNotation = true;
+  }catch(_){}
+
+  syncNotationToggle();
   buildLocks();
 })();
 </script>
