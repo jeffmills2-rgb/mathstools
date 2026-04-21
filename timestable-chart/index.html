@@ -862,8 +862,8 @@
           <select id="symmetrySelect" class="symmetry-select" aria-label="Select a symmetry exploration">
             <option value="nw1">Notice/Wonder 1</option>
             <option value="nw2">Notice/Wonder 2</option>
-            <option value="nw3">Notice/Wonder 3</option>
-            <option value="nw4">Notice/Wonder 4</option>
+            <option value="nw4">Notice/Wonder 3</option>
+            <option value="nw3">Notice/Wonder 4</option>
           </select>
         </div>
         <div class="multiples-prompt" id="multiplesPrompt" hidden>Select up to three values to explore multiples and common multiples</div>
@@ -1001,12 +1001,32 @@
     return row < col ? 'top-right' : 'bottom-left';
   }
 
+  function darkenColor(hex, amount=0.18){
+    const value = hex.replace('#','');
+    const n = parseInt(value, 16);
+    let r = (n >> 16) & 255;
+    let g = (n >> 8) & 255;
+    let b = n & 255;
+    r = Math.max(0, Math.round(r * (1 - amount)));
+    g = Math.max(0, Math.round(g * (1 - amount)));
+    b = Math.max(0, Math.round(b * (1 - amount)));
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
   function getSymmetryBaseColor(row, col, view=symmetryView){
     if(view==='nw1') return pastelFromIndex(getLShapeBand(row,col), symmetryPalettes.lShape);
     if(view==='nw2') return pastelFromIndex(Math.abs(row-col)+1, symmetryPalettes.diagonals);
     if(view==='nw3') return pastelFromIndex(row*col, symmetryPalettes.products);
     if(row===col) return '#ffffff';
-    return row < col ? '#d9ecff' : '#dcf6dd';
+    return row < col ? '#dbeafe' : '#dcfce7';
+  }
+
+  function getSymmetrySelectedColor(row, col, view=symmetryView){
+    if(view==='nw4'){
+      if(row===col) return '#cbd5e1';
+      return row < col ? '#2563eb' : '#16a34a';
+    }
+    return getSymmetryBaseColor(row, col, view);
   }
 
   function isMultipleMember(cellValue, anchor){
@@ -1100,15 +1120,28 @@
           const selectedGroup = symmetrySelection ? getSymmetryGroup(symmetrySelection.row, symmetrySelection.col) : null;
           const isSelectedGroup = selectedGroup && group === selectedGroup;
           const isClickedCell = symmetrySelection && symmetrySelection.row===r && symmetrySelection.col===c;
-          cell.style.background = getSymmetryBaseColor(r,c);
+          const baseColor = getSymmetryBaseColor(r,c);
+          cell.style.background = baseColor;
           if(selectedGroup){
-            cell.style.opacity = isSelectedGroup ? '1' : '0.42';
-            if(isSelectedGroup){
-              cell.style.boxShadow = isClickedCell
-                ? 'inset 0 0 0 4px rgba(37,99,235,.65), 0 0 0 3px rgba(37,99,235,.12)'
-                : 'inset 0 0 0 3px rgba(17,24,39,.18)';
-              btn.style.fontWeight = isClickedCell ? '900' : '700';
-              btn.style.color = '#0f172a';
+            if(symmetryView==='nw4'){
+              cell.style.opacity = '1';
+              if(isSelectedGroup){
+                cell.style.background = getSymmetrySelectedColor(r, c);
+                cell.style.boxShadow = isClickedCell
+                  ? 'inset 0 0 0 4px rgba(15,23,42,.62), 0 0 0 2px rgba(255,255,255,.22)'
+                  : 'inset 0 0 0 3px rgba(15,23,42,.34)';
+                btn.style.fontWeight = isClickedCell ? '900' : '700';
+                btn.style.color = '#0f172a';
+              }
+            }else{
+              cell.style.opacity = isSelectedGroup ? '1' : '0.46';
+              if(isSelectedGroup){
+                cell.style.boxShadow = isClickedCell
+                  ? 'inset 0 0 0 4px rgba(15,23,42,.72), 0 0 0 3px rgba(255,255,255,.28)'
+                  : 'inset 0 0 0 3px rgba(15,23,42,.42)';
+                btn.style.fontWeight = isClickedCell ? '900' : '700';
+                btn.style.color = '#0f172a';
+              }
             }
           }
         }else if(mode==='multiples'){
@@ -2587,10 +2620,7 @@
   });
 
   buildChart();
-  try{
-    const savedMode = localStorage.getItem('mmt-timestable-mode');
-    if(savedMode && ['area','product','division','fraction_of_amount','symmetry','multiples'].includes(savedMode)) mode = savedMode;
-  }catch(err){}
+  mode = 'area';
   updateModeButtons();
   symmetrySelect.value = symmetryView;
   applyChartVisualMode();
