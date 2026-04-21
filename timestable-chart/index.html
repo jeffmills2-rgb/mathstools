@@ -235,6 +235,21 @@
     }
     .symmetry-select:focus{outline:none; box-shadow:0 0 0 4px rgba(37,99,235,.18), 0 10px 24px rgba(0,0,0,.08);}
 
+    .multiples-prompt{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      margin:-4px 0 16px;
+      min-height:26px;
+      color:#6b7280;
+      font-size:15px;
+      font-weight:700;
+      user-select:none;
+      text-align:center;
+    }
+    .multiples-prompt[hidden]{display:none}
+
     .chart-shell{
       position:relative;
       width:fit-content;
@@ -821,6 +836,7 @@
             <button class="seg-btn" id="modeDivisionBtn" type="button" role="tab" aria-selected="false">Division</button>
             <button class="seg-btn" id="modeFractionBtn" type="button" role="tab" aria-selected="false">Fraction of amount</button>
             <button class="seg-btn" id="modeSymmetryBtn" type="button" role="tab" aria-selected="false">Explore Symmetry</button>
+            <button class="seg-btn" id="modeMultiplesBtn" type="button" role="tab" aria-selected="false">Explore Multiples</button>
           </div>
         </div>
 
@@ -850,6 +866,7 @@
             <option value="nw4">Notice/Wonder 4</option>
           </select>
         </div>
+        <div class="multiples-prompt" id="multiplesPrompt" hidden>Select up to three values to explore multiples and common multiples</div>
 
         <div class="chart-shell" id="chartShell">
           <table class="chart" id="chart" aria-label="Times table chart from 1 to 12"></table>
@@ -904,10 +921,11 @@
   const modeDivisionBtn = document.getElementById('modeDivisionBtn');
   const modeFractionBtn = document.getElementById('modeFractionBtn');
   const modeSymmetryBtn = document.getElementById('modeSymmetryBtn');
+  const modeMultiplesBtn = document.getElementById('modeMultiplesBtn');
+
+  const multiplesPrompt = document.getElementById('multiplesPrompt');
 
   const fractionModeToggles = document.getElementById('fractionModeToggles');
-  const symmetryPrompt = document.getElementById('symmetryPrompt');
-  const symmetrySelect = document.getElementById('symmetrySelect');
   const showEquationToggle = document.getElementById('showEquationToggle');
   const showGroupsToggle = document.getElementById('showGroupsToggle');
 
@@ -944,6 +962,7 @@
   let pointerPreview = null;
   let symmetryView = 'nw1';
   let symmetrySelection = null;
+  let multiplesSelections = [];
 
   function multiplySymbol(){ return '×'; }
   function divisionSymbol(){ return '÷'; }
@@ -990,6 +1009,78 @@
     return row < col ? '#d9ecff' : '#dcf6dd';
   }
 
+  function isMultipleMember(cellValue, anchor){
+    return cellValue % anchor.value === 0;
+  }
+
+  function getMultipleComboKey(indices){
+    return indices.slice().sort((a,b)=>a-b).join('');
+  }
+
+  const multiplePastelColors = {
+    '0':'#dbeafe',
+    '1':'#fef3c7',
+    '2':'#fee2e2',
+    '01':'#dcfce7',
+    '02':'#ede9fe',
+    '12':'#ffedd5',
+    '012':'#e7d3bf'
+  };
+
+  const multipleStrongColors = {
+    '0':'#2563eb',
+    '1':'#eab308',
+    '2':'#dc2626',
+    '01':'#16a34a',
+    '02':'#7c3aed',
+    '12':'#ea580c',
+    '012':'#8b5e3c'
+  };
+
+  function getMultiplesMembership(row, col){
+    const value = row * col;
+    const indices = [];
+    for(let i=0;i<multiplesSelections.length;i++){
+      if(isMultipleMember(value, multiplesSelections[i])) indices.push(i);
+    }
+    return indices;
+  }
+
+  function getAnchorIndex(row, col){
+    return multiplesSelections.findIndex(item => item.row===row && item.col===col);
+  }
+
+  function clearSymmetrySelection(){
+    symmetrySelection = null;
+    applyChartVisualMode();
+  }
+
+  function toggleSymmetrySelection(row, col){
+    const clickedGroup = getSymmetryGroup(row, col);
+    const selectedGroup = symmetrySelection ? getSymmetryGroup(symmetrySelection.row, symmetrySelection.col) : null;
+    if(selectedGroup && clickedGroup === selectedGroup){
+      clearSymmetrySelection();
+      return;
+    }
+    symmetrySelection = { row, col, value: row*col };
+    clearMainPreview();
+    applyChartVisualMode();
+  }
+
+  function toggleMultipleSelection(row, col){
+    const existingIndex = getAnchorIndex(row, col);
+    if(existingIndex !== -1){
+      multiplesSelections.splice(existingIndex, 1);
+      applyChartVisualMode();
+      return;
+    }
+
+    multiplesSelections.push({ row, col, value: row*col });
+    if(multiplesSelections.length > 3) multiplesSelections.shift();
+    clearMainPreview();
+    applyChartVisualMode();
+  }
+
   function applyChartVisualMode(){
     for(let r=1;r<=SIZE;r++){
       for(let c=1;c<=SIZE;c++){
@@ -999,6 +1090,7 @@
 
         cell.style.boxShadow='';
         cell.style.opacity='';
+        cell.style.background='';
         btn.style.fontWeight='500';
         btn.style.color='';
         btn.classList.remove('preview-target');
@@ -1019,21 +1111,31 @@
               btn.style.color = '#0f172a';
             }
           }
-        }else{
-          cell.style.background='';
+        }else if(mode==='multiples'){
+          const membership = getMultiplesMembership(r,c);
+          const comboKey = getMultipleComboKey(membership);
+          const anchorIndex = getAnchorIndex(r,c);
+          if(comboKey){
+            cell.style.background = anchorIndex !== -1
+              ? multipleStrongColors[comboKey]
+              : multiplePastelColors[comboKey];
+            cell.style.opacity = '1';
+            btn.style.fontWeight = anchorIndex !== -1 ? '900' : '700';
+            btn.style.color = '#0f172a';
+            if(anchorIndex !== -1){
+              cell.style.boxShadow = 'inset 0 0 0 3px rgba(17,24,39,.18)';
+            }
+          }else{
+            cell.style.background = '#ffffff';
+          }
         }
       }
     }
   }
 
-  function setSymmetrySelection(row, col){
-    symmetrySelection = { row, col, value: row*col };
-    clearMainPreview();
-    applyChartVisualMode();
-  }
-
   function updatePromptText(){
     symmetryPrompt.hidden = mode !== 'symmetry';
+    multiplesPrompt.hidden = mode !== 'multiples';
 
     if(mode === 'area'){
       titleSubtext.hidden = false;
@@ -2052,7 +2154,12 @@
     if(isAnimating || currentSelection) return;
 
     if(mode==='symmetry'){
-      setSymmetrySelection(selection.row, selection.col);
+      toggleSymmetrySelection(selection.row, selection.col);
+      return;
+    }
+
+    if(mode==='multiples'){
+      toggleMultipleSelection(selection.row, selection.col);
       return;
     }
 
@@ -2252,7 +2359,7 @@
   function changeMode(nextMode){
     if(mode===nextMode) return;
 
-    if(nextMode==='symmetry'){
+    if(nextMode==='symmetry' || nextMode==='multiples'){
       if(currentSelection){
         clearOverlay();
         screenFade.classList.remove('active');
@@ -2264,14 +2371,16 @@
         hideFractionToggles();
       }
       mode=nextMode;
-      symmetrySelection=null;
+      if(nextMode==='symmetry') symmetrySelection=null;
+      if(nextMode==='multiples') multiplesSelections=[];
       updateModeButtons();
       applyChartVisualMode();
       return;
     }
 
-    if(mode==='symmetry'){
+    if(mode==='symmetry' || mode==='multiples'){
       symmetrySelection=null;
+      multiplesSelections=[];
       mode=nextMode;
       updateModeButtons();
       if(mode!=='fraction_of_amount') hideFractionToggles();
@@ -2295,20 +2404,23 @@
     const isDivision = mode==='division';
     const isFraction = mode==='fraction_of_amount';
     const isSymmetry = mode==='symmetry';
+    const isMultiples = mode==='multiples';
 
     modeAreaBtn.classList.toggle('active', isArea);
     modeProductBtn.classList.toggle('active', isProduct);
     modeDivisionBtn.classList.toggle('active', isDivision);
     modeFractionBtn.classList.toggle('active', isFraction);
     modeSymmetryBtn.classList.toggle('active', isSymmetry);
+    modeMultiplesBtn.classList.toggle('active', isMultiples);
 
     modeAreaBtn.setAttribute('aria-selected', String(isArea));
     modeProductBtn.setAttribute('aria-selected', String(isProduct));
     modeDivisionBtn.setAttribute('aria-selected', String(isDivision));
     modeFractionBtn.setAttribute('aria-selected', String(isFraction));
     modeSymmetryBtn.setAttribute('aria-selected', String(isSymmetry));
+    modeMultiplesBtn.setAttribute('aria-selected', String(isMultiples));
 
-    replayBtn.classList.toggle('visible', !!currentSelection && !isSymmetry);
+    replayBtn.classList.toggle('visible', !!currentSelection && !isSymmetry && !isMultiples);
     chartShell.dataset.mode = mode;
     updatePromptText();
     try{ localStorage.setItem('mmt-timestable-mode', mode); }catch(err){}
@@ -2321,7 +2433,7 @@
   }
 
   function handleReplayClick(){
-    if(mode==='symmetry') return;
+    if(mode==='symmetry' || mode==='multiples') return;
     if(currentSelection && !isAnimating) replayCurrentModeAnimation();
   }
 
@@ -2399,8 +2511,7 @@
     const pos=getPointerGridPosition(e.clientX,e.clientY);
     if(!pos){ clearMainPreview(); return; }
 
-    if(mode==='symmetry'){ clearMainPreview(); return; }
-    if(mode==='symmetry'){ clearMainPreview(); return; }
+    if(mode==='symmetry' || mode==='multiples'){ clearMainPreview(); return; }
     if(mode==='area') previewRectangle(pos.row,pos.col);
     else if(mode==='fraction_of_amount') previewFractionRow(pos.row,pos.col);
     else previewLShape(pos.row,pos.col);
@@ -2418,6 +2529,7 @@
     const pos=getPointerGridPosition(touch.clientX,touch.clientY);
     if(!pos){ clearMainPreview(); return; }
 
+    if(mode==='symmetry' || mode==='multiples'){ clearMainPreview(); return; }
     if(mode==='area') previewRectangle(pos.row,pos.col);
     else if(mode==='fraction_of_amount') previewFractionRow(pos.row,pos.col);
     else previewLShape(pos.row,pos.col);
@@ -2464,6 +2576,7 @@
   modeDivisionBtn.addEventListener('click', ()=>changeMode('division'));
   modeFractionBtn.addEventListener('click', ()=>changeMode('fraction_of_amount'));
   modeSymmetryBtn.addEventListener('click', ()=>changeMode('symmetry'));
+  modeMultiplesBtn.addEventListener('click', ()=>changeMode('multiples'));
 
   showEquationToggle.addEventListener('change', handleShowEquationChange);
   showGroupsToggle.addEventListener('change', handleShowGroupsChange);
@@ -2476,7 +2589,7 @@
   buildChart();
   try{
     const savedMode = localStorage.getItem('mmt-timestable-mode');
-    if(savedMode && ['area','product','division','fraction_of_amount','symmetry'].includes(savedMode)) mode = savedMode;
+    if(savedMode && ['area','product','division','fraction_of_amount','symmetry','multiples'].includes(savedMode)) mode = savedMode;
   }catch(err){}
   updateModeButtons();
   symmetrySelect.value = symmetryView;
