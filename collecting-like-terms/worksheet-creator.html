@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -63,7 +62,7 @@
 
     .controls{
       display:flex;
-      align-items:flex-end;
+      align-items:flex-start;
       justify-content:space-between;
       gap: 14px;
       flex-wrap:wrap;
@@ -100,12 +99,66 @@
     }
     input[type="number"]{ min-width: 220px; }
 
+    .btnCluster{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:flex-end;
+    }
+
     .btnRow{
       display:flex;
       gap: 12px;
       flex-wrap:wrap;
       align-items:center;
       justify-content:flex-end;
+    }
+
+    .notationCard{
+      border:1px solid #ddd6fe;
+      background:#faf5ff;
+      color:#4c1d95;
+      border-radius:16px;
+      padding:10px 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:900;
+    }
+    .notationLabel{
+      font-size:14px;
+      line-height:1.1;
+      white-space:nowrap;
+    }
+    .toggleSwitch{
+      position:relative;
+      width:54px;
+      height:30px;
+      border-radius:999px;
+      border:2px solid #c4b5fd;
+      background:#e9ddff;
+      cursor:pointer;
+      transition:.18s ease;
+      flex:0 0 auto;
+    }
+    .toggleSwitch.on{
+      background:#8b5cf6;
+      border-color:#7c3aed;
+    }
+    .toggleKnob{
+      position:absolute;
+      top:2px;
+      left:2px;
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      background:#fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,.18);
+      transition:.18s ease;
+    }
+    .toggleSwitch.on .toggleKnob{
+      left:26px;
     }
 
     button{
@@ -488,10 +541,19 @@
           </div>
         </div>
 
-        <div class="btnRow">
-          <button id="genBtn" class="primary">Generate worksheet</button>
-          <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
-          <button id="resetBtn" class="danger">Reset</button>
+        <div class="btnCluster">
+          <div class="btnRow">
+            <button id="genBtn" class="primary">Generate worksheet</button>
+            <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
+            <button id="resetBtn" class="danger">Reset</button>
+          </div>
+
+          <div class="notationCard">
+            <div class="notationLabel">Use bracket notation</div>
+            <button class="toggleSwitch" id="notationToggle" type="button" aria-pressed="false" aria-label="Use bracket notation">
+              <span class="toggleKnob"></span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -546,7 +608,36 @@
   const genBtn = document.getElementById("genBtn");
   const printBtn = document.getElementById("printBtn");
   const resetBtn = document.getElementById("resetBtn");
+  const notationToggle = document.getElementById("notationToggle");
   const out = document.getElementById("out");
+
+  let useBracketNotation = false;
+
+  function syncNotationToggle(){
+    notationToggle.classList.toggle('on', useBracketNotation);
+    notationToggle.setAttribute('aria-pressed', useBracketNotation ? 'true' : 'false');
+  }
+
+  function shouldUseBracketNotation(unit){
+    if(!useBracketNotation) return false;
+    const u = String(unit || '').toLowerCase();
+    return /^\d+$/.test(u) || /^\d+[a-z]+$/.test(u);
+  }
+
+  function buildGroupedBody(groups, unit){
+    const u = String(unit).toLowerCase();
+    const g = String(groups);
+
+    if(/^[a-z]+$/.test(u)){
+      return g + u;
+    }
+
+    if(shouldUseBracketNotation(u)){
+      return g + '(' + u + ')';
+    }
+
+    return g + '×' + u;
+  }
 
   function randInt(min, max){
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -592,21 +683,9 @@
 
       let body = '';
       if(g === 1){
-        body = u;
+        body = u.toLowerCase();
       } else {
-        const uIsLettersOnly = /^[a-z]+$/i.test(u);
-        const uIsNumericOnly = /^\d+$/.test(u);
-        const uIsDigitLetters = /^\d+[a-z]+$/i.test(u);
-
-        if(uIsLettersOnly){
-          body = String(g) + u.toLowerCase();
-        } else if(uIsNumericOnly){
-          body = String(g) + '×' + u;
-        } else if(uIsDigitLetters){
-          body = String(g) + '×' + u.toLowerCase();
-        } else {
-          body = String(g) + '×' + u;
-        }
+        body = buildGroupedBody(g, u);
       }
       parts.push(sign + body);
     }
@@ -1044,11 +1123,25 @@
     updateDefaultCountForLevel();
   }
 
+  notationToggle.addEventListener('click', () => {
+    useBracketNotation = !useBracketNotation;
+    try{
+      localStorage.setItem('mmt_collect_like_terms_ws_brackets', useBracketNotation ? '1' : '0');
+    }catch(_){}
+    syncNotationToggle();
+  });
+
   levelSel.addEventListener("change", updateDefaultCountForLevel);
   genBtn.addEventListener("click", generate);
   printBtn.addEventListener("click", () => window.print());
   resetBtn.addEventListener("click", resetAll);
 
+  try{
+    const saved = localStorage.getItem('mmt_collect_like_terms_ws_brackets');
+    if(saved === '1') useBracketNotation = true;
+  }catch(_){}
+
+  syncNotationToggle();
   updateDefaultCountForLevel();
 })();
 </script>
