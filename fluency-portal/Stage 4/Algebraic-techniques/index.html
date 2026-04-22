@@ -76,6 +76,38 @@
       align-items:center;
       padding: 6px 0 0;
     }
+
+    .checksHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      width:100%;
+      margin-bottom: 2px;
+    }
+
+    .checksTitle{
+      margin:0;
+      font-size:13px;
+      font-weight:950;
+      color:var(--muted);
+    }
+
+    .miniBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 950;
+      cursor:pointer;
+      background:#eef2ff;
+      color:#1d4ed8;
+      font-size: 12px;
+      line-height:1;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+    }
+    .miniBtn:active{ transform: scale(.98); }
+
     .chk{
       display:flex;
       gap: 10px;
@@ -435,7 +467,10 @@
           <select id="outcomeSel"></select>
 
           <div class="checks" aria-label="Question types">
-            <label style="margin:0; font-size:13px; font-weight:950; color:var(--muted); width:100%;">Question types (checkboxes)</label>
+            <div class="checksHeader">
+              <label class="checksTitle">Question types (checkboxes)</label>
+              <button id="toggleAllBtn" type="button" class="miniBtn">Deselect all</button>
+            </div>
             <div id="chkWrap" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center;"></div>
           </div>
         </div>
@@ -571,13 +606,14 @@
   // ============================================================
   // DOM helpers
   // ============================================================
-  const outcomeSel = document.getElementById('outcomeSel');
-  const chkWrap    = document.getElementById('chkWrap');
-  const countInp   = document.getElementById('countInp');
-  const genBtn     = document.getElementById('genBtn');
-  const printBtn   = document.getElementById('printBtn');
-  const resetBtn   = document.getElementById('resetBtn');
-  const out        = document.getElementById('out');
+  const outcomeSel   = document.getElementById('outcomeSel');
+  const chkWrap      = document.getElementById('chkWrap');
+  const countInp     = document.getElementById('countInp');
+  const genBtn       = document.getElementById('genBtn');
+  const printBtn     = document.getElementById('printBtn');
+  const resetBtn     = document.getElementById('resetBtn');
+  const toggleAllBtn = document.getElementById('toggleAllBtn');
+  const out          = document.getElementById('out');
 
   function clearOut(){ out.innerHTML = ""; }
 
@@ -798,29 +834,41 @@
     },
 
     {
-      level:"DE", id:"mul_div_term",
-      label:"Multiply or divide a single term",
+      level:"DE", id:"mul_single_term",
+      label:"Multiply a single term",
       defaultOn:true,
       gen(){
         const v = pickVar();
         const a = randInt(2,9);
         const b = randInt(2,9);
-        const kind = choice(["times", "divide"]);
-
-        if (kind === "times"){
-          const exprHTML = `${a}${vHTML(v)} × ${b}`;
-          const ansHTML = buildExpressionHTML([{coeff:a*b, v}]);
-          return { type:this.id, kind, exprHTML, ansHTML };
-        } else {
-          const prod = a*b;
-          const top = `${prod}${vHTML(v)}`;
-          const bottom = `${b}`;
-          const exprHTML = fracHTML(top, bottom);
-          const ansHTML = buildExpressionHTML([{coeff:a, v}]);
-          return { type:this.id, kind, exprHTML, ansHTML };
-        }
+        const exprHTML = `${a}${vHTML(v)} × ${b}`;
+        const ansHTML = buildExpressionHTML([{coeff:a*b, v}]);
+        return { type:this.id, exprHTML, ansHTML };
       },
-      key:q => `md_${q.kind}_${stripHTML(q.exprHTML)}`,
+      key:q => `mst_${stripHTML(q.exprHTML)}`,
+      render(q, idx1, showAnswers){
+        const card = makeCardShell(idx1, `Simplify: ${q.exprHTML}`);
+        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
+        return card;
+      }
+    },
+
+    {
+      level:"DE", id:"div_single_term",
+      label:"Divide a single term",
+      defaultOn:true,
+      gen(){
+        const v = pickVar();
+        const a = randInt(2,9);
+        const b = randInt(2,9);
+        const prod = a*b;
+        const top = `${prod}${vHTML(v)}`;
+        const bottom = `${b}`;
+        const exprHTML = fracHTML(top, bottom);
+        const ansHTML = buildExpressionHTML([{coeff:a, v}]);
+        return { type:this.id, exprHTML, ansHTML };
+      },
+      key:q => `dst_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
         const card = makeCardShell(idx1, `Simplify: ${q.exprHTML}`);
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
@@ -1238,6 +1286,16 @@
     rebuildCheckboxes();
   }
 
+  function updateToggleAllButtonLabel(){
+    const boxes = Array.from(chkWrap.querySelectorAll('input[type="checkbox"]'));
+    if (!boxes.length){
+      toggleAllBtn.textContent = 'Select all';
+      return;
+    }
+    const allChecked = boxes.every(b => b.checked);
+    toggleAllBtn.textContent = allChecked ? 'Deselect all' : 'Select all';
+  }
+
   function rebuildCheckboxes(){
     chkWrap.innerHTML = '';
     const types = typesForCurrentLevel();
@@ -1250,6 +1308,7 @@
       inp.type = 'checkbox';
       inp.id = `chk_${qt.id}`;
       inp.checked = !!qt.defaultOn;
+      inp.addEventListener('change', updateToggleAllButtonLabel);
 
       const span = document.createElement('span');
       span.textContent = qt.label;
@@ -1258,6 +1317,14 @@
       lab.appendChild(span);
       chkWrap.appendChild(lab);
     }
+
+    updateToggleAllButtonLabel();
+  }
+
+  function setAllCheckboxes(checked){
+    const boxes = chkWrap.querySelectorAll('input[type="checkbox"]');
+    boxes.forEach(box => box.checked = checked);
+    updateToggleAllButtonLabel();
   }
 
   function activeTypes(){
@@ -1402,6 +1469,12 @@
   outcomeSel.addEventListener('change', () => {
     clearOut();
     rebuildCheckboxes();
+  });
+
+  toggleAllBtn.addEventListener('click', () => {
+    const boxes = Array.from(chkWrap.querySelectorAll('input[type="checkbox"]'));
+    const allChecked = boxes.length && boxes.every(b => b.checked);
+    setAllCheckboxes(!allChecked);
   });
 
   genBtn.addEventListener('click', generate);
