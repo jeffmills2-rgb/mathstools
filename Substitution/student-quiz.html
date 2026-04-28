@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Substitution in Algebra — Student Quiz</title>
+  <style>
+    :root{
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --navy:#0f172a;
+      --purple:#7c3aed;
+      --green:#16a34a;
+      --orange:#f97316;
+      --red:#ef4444;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --footer-h:44px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      padding-bottom:var(--footer-h);
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(180px,1fr) auto minmax(180px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      text-decoration:none;
+      color:white;
+      justify-self:start;
+      border-radius:14px;
+      padding:6px 9px;
+      margin-left:-9px;
+      transition:background .18s ease,transform .18s ease;
+    }
+    .brand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+    .brand-logo{width:44px;height:44px;object-fit:contain;background:white;border-radius:4px}
+    .brand-logo:empty{display:none}
+    .brand-text strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em}
+    .brand-text span{display:block;font-size:.78rem;opacity:.82;font-weight:650}
+    .top-title{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center}
+
+    .wrap{max-width:1180px;margin:28px auto 38px;padding:0 24px}
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      padding:22px 24px 24px;
+      position:relative;
+    }
+
+    .topRow{
+      display:grid;
+      grid-template-columns:150px 1fr 150px;
+      align-items:start;
+      gap:14px;
+      margin-bottom:12px;
+    }
+    .backBtn,.resetBtn,.btn{
+      border:none;
+      border-radius:14px;
+      padding:11px 15px;
+      font-weight:1000;
+      cursor:pointer;
+      transition:transform .04s ease,filter .15s ease,opacity .2s ease,background .15s ease;
+      user-select:none;
+      font-family:var(--uiFont);
+    }
+    .backBtn{background:transparent;color:var(--text);justify-self:start;display:inline-flex;gap:8px;align-items:center}
+    .backBtn:hover{background:#eef2ff}
+    .resetBtn{background:#fee2e2;color:#991b1b;justify-self:end}
+    .backBtn:active,.resetBtn:active,.btn:active{transform:scale(.98)}
+    .btn[disabled],.resetBtn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+
+    .levelBannerWrap{display:flex;justify-content:center;align-items:center}
+    .levelBanner{
+      width:min(640px,100%);
+      border-radius:17px;
+      padding:12px 16px;
+      color:white;
+      font-weight:1000;
+      font-size:clamp(30px,3.8vw,42px);
+      letter-spacing:-.04em;
+      text-align:center;
+      box-shadow:0 16px 32px rgba(15,23,42,.18);
+      background:linear-gradient(180deg,#1d4ed8,#1e3a8a);
+    }
+
+    .notationRow{
+      display:flex;
+      justify-content:flex-end;
+      margin:4px 0 14px;
+    }
+    .notationPill{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      background:rgba(124,58,237,.08);
+      border:1px solid rgba(124,58,237,.22);
+      color:#4c1d95;
+      border-radius:18px;
+      padding:10px 12px 10px 14px;
+      box-shadow:0 10px 22px rgba(15,23,42,.05);
+      font-weight:950;
+    }
+    .notationLabel{font-size:15px;white-space:nowrap}
+    .pillSwitch{
+      position:relative;
+      width:150px;
+      height:42px;
+      border:none;
+      border-radius:999px;
+      background:#ede9fe;
+      box-shadow:inset 0 0 0 2px #c4b5fd;
+      cursor:pointer;
+      padding:0;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .pillSwitch .pillKnob{
+      position:absolute;
+      top:4px;
+      left:4px;
+      width:70px;
+      height:34px;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--purple),var(--blue));
+      box-shadow:0 8px 16px rgba(37,99,235,.28);
+      transition:left .2s ease;
+    }
+    .pillSwitch.clean .pillKnob{left:76px}
+    .pillSwitch .pillChoice{
+      position:absolute;
+      top:0;
+      height:42px;
+      width:75px;
+      display:grid;
+      place-items:center;
+      font-family:var(--mathFont);
+      font-weight:1000;
+      font-size:21px;
+      z-index:1;
+      transition:color .2s ease;
+      color:#5b21b6;
+    }
+    .pillSwitch .symbols{left:0}
+    .pillSwitch .clean{right:0;font-size:19px}
+    .pillSwitch:not(.clean) .symbols,
+    .pillSwitch.clean .clean{color:white}
+
+    .progressRow{display:flex;align-items:center;gap:12px;margin:12px 4px 14px}
+    .progressTrack{flex:1;height:10px;border-radius:999px;background:#e5e7eb;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
+    .progressFill{height:100%;width:0%;background:var(--blue);border-radius:999px;transition:width .35s ease,background .25s ease}
+    .qCounter{font-weight:1000;color:var(--text);white-space:nowrap;font-size:18px}
+
+    .stage{
+      border:1px solid var(--border);
+      border-radius:22px;
+      padding:20px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+      min-height:500px;
+      position:relative;
+      overflow:hidden;
+    }
+    .questionPanel{display:grid;gap:18px;justify-items:center;padding-top:6px}
+    .subValues{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;width:100%}
+    .valueChip{
+      background:#eff6ff;
+      border:2px solid #bfdbfe;
+      color:#1e3a8a;
+      border-radius:18px;
+      padding:10px 18px;
+      font-weight:1000;
+      font-size:26px;
+      font-family:var(--mathFont);
+      box-shadow:0 10px 20px rgba(37,99,235,.08);
+    }
+
+    .exprCard{
+      width:min(940px,100%);
+      min-height:190px;
+      border:2px solid #dbeafe;
+      background:#fff;
+      border-radius:26px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      padding:26px 20px;
+      box-shadow:0 18px 36px rgba(15,23,42,.08);
+    }
+    .smallLabel{font-family:var(--uiFont);color:#6b7280;font-weight:1000;font-size:20px}
+    .expression{
+      font-family:var(--mathFont);
+      font-size:clamp(48px,7vw,82px);
+      font-weight:1000;
+      line-height:1.05;
+      color:#0f172a;
+      text-align:center;
+      letter-spacing:.2px;
+    }
+    .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;margin:0 .08em}
+    .frac .top{padding:0 .18em .08em;border-bottom:.075em solid currentColor}
+    .frac .bottom{padding:.1em .18em 0}
+
+    .answerRow{margin-top:22px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+    .answerLabel{font-weight:1000;font-size:21px}
+    .answerInput{
+      width:250px;
+      max-width:80vw;
+      border:2px solid #111827;
+      border-radius:16px;
+      padding:13px 14px;
+      font-size:24px;
+      font-weight:1000;
+      outline:none;
+      text-align:center;
+      transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+      background:#fff;
+    }
+    .answerInput.ok{border-color:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.15);background:#dcfce7}
+    .answerInput.bad{border-color:#dc2626;box-shadow:0 0 0 4px rgba(220,38,38,.12);background:#fee2e2}
+    .enterBtn{background:#1d4ed8;color:white}
+    .nextBtn{background:#111827;color:white;display:none}
+    .nextBtn.show{display:inline-block}
+    .primary{background:#2563eb;color:white}
+    .danger{background:#fee2e2;color:#991b1b}
+
+    .feedback{
+      width:min(760px,96%);
+      margin:18px auto 0;
+      text-align:center;
+      border:1px solid var(--border);
+      background:white;
+      color:#6b7280;
+      border-radius:18px;
+      padding:11px 14px;
+      font-weight:950;
+      box-shadow:0 10px 22px rgba(15,23,42,.05);
+    }
+    .feedback.ok{background:#dcfce7;border-color:rgba(22,163,74,.35);color:#065f46}
+    .feedback.bad{background:#fee2e2;border-color:rgba(220,38,38,.35);color:#7f1d1d}
+    .hintMini{text-align:center;margin-top:12px;font-size:13px;font-weight:900;color:#6b7280}
+
+    .polypadHelp{
+      margin:18px auto 0;
+      width:min(820px,100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:12px 16px;
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+      color:#334155;
+      font-weight:850;
+      text-align:center;
+    }
+    .helpLogo{width:34px;height:34px;object-fit:contain;flex:0 0 auto}
+    .polypadHelp a{color:var(--blue-dark);font-weight:1000;text-decoration:none}
+    .polypadHelp a:hover{text-decoration:underline}
+
+    .mmtFooter{
+      position:fixed;
+      left:0;right:0;bottom:0;
+      height:var(--footer-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 12px;
+      background:rgba(255,255,255,.92);
+      border-top:1px solid rgba(229,231,235,.95);
+      backdrop-filter:blur(8px);
+      z-index:500;
+      font-weight:900;
+      color:#111827;
+      text-align:center;
+      font-size:13px;
+    }
+    .mmtFooter a{color:var(--blue);text-decoration:none;font-weight:1000}
+    .mmtFooter a:hover{text-decoration:underline}
+
+    .overlay{position:fixed;inset:0;background:rgba(15,23,42,.42);backdrop-filter:blur(2px);display:none;z-index:1000}
+    .overlay.show{display:block}
+    .modal{
+      position:fixed;
+      left:50%;top:50%;
+      transform:translate(-50%,-50%);
+      width:min(860px,92vw);
+      background:#fff;
+      border-radius:24px;
+      box-shadow:0 18px 60px rgba(0,0,0,.18);
+      z-index:1100;
+      display:none;
+      overflow:hidden;
+    }
+    .modal.show{display:block}
+    .modalHead{padding:24px 26px 12px;font-weight:1000;font-size:26px;letter-spacing:-.03em}
+    .modalBody{padding:0 26px 24px}
+    .levelList{display:flex;flex-direction:column;gap:14px;padding:6px 0 2px}
+    .levelRow{border-radius:18px;padding:17px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;border:2px solid rgba(17,24,39,.10)}
+    .levelName{font-weight:1000;font-size:22px}
+    .levelSub{margin-top:4px;color:#334155;font-weight:800;font-size:13px;line-height:1.3}
+    .startBtn{border:none;border-radius:14px;padding:11px 17px;font-weight:1000;background:#2563eb;color:#fff;cursor:pointer;user-select:none}
+    .startBtn:active{transform:scale(.98)}
+    .lvl-sweet{background:#dcfce7;border-color:rgba(22,163,74,.25)}
+    .lvl-mild{background:#dbeafe;border-color:rgba(37,99,235,.22)}
+    .lvl-medium{background:#fef9c3;border-color:rgba(245,158,11,.25)}
+    .lvl-spicy{background:#ffedd5;border-color:rgba(249,115,22,.25)}
+    .lvl-extra{background:#ffe4e6;border-color:rgba(239,68,68,.25)}
+
+    .certWrap{display:flex;gap:18px;align-items:flex-start;padding:8px 0}
+    .trophyBox{width:96px;height:96px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:48px;background:#fff7ed;border:2px solid rgba(249,115,22,.18);flex:0 0 auto}
+    .certText{font-weight:1000;font-size:clamp(28px,4vw,38px);margin:0;line-height:1.1}
+    .certSub{margin-top:10px;color:#6b7280;font-weight:950;font-size:clamp(20px,3vw,30px);line-height:1.1}
+    .modalActions{padding:18px 26px 24px;display:flex;gap:12px;justify-content:flex-start;flex-wrap:wrap}
+
+    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2000}
+    .confetti i{position:absolute;top:-20px;width:10px;height:14px;opacity:.95;border-radius:2px;transform:rotate(0deg);animation:fall linear forwards}
+    @keyframes fall{to{transform:translate3d(var(--dx),110vh,0) rotate(var(--rot))}}
+
+    @media(max-width:780px){
+      .topbar{grid-template-columns:1fr auto;gap:10px}
+      .top-title{grid-column:1/-1;grid-row:2;text-align:center}
+      .brand-text span{display:none}
+      .wrap{padding:0 14px;margin-top:18px}
+      .card{padding:16px}
+      .topRow{grid-template-columns:1fr;justify-items:center}
+      .backBtn,.resetBtn{justify-self:center}
+      .notationRow{justify-content:center}
+      .notationPill{flex-direction:column;gap:8px}
+      .levelBanner{font-size:30px}
+      .exprCard{min-height:155px}
+      .polypadHelp{flex-direction:column}
+      .certWrap{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
+      <img src="mmt.png" alt="Mills Maths Tools logo" class="brand-logo" onerror="this.style.visibility='hidden'">
+      <div class="brand-text">
+        <strong>MMT</strong>
+        <span>Mills Maths Tools</span>
+      </div>
+    </a>
+    <div class="top-title">Substitution in Algebra</div>
+    <div></div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="topRow">
+        <button id="backToLevelsBtn" class="backBtn" title="Back to level menu">← Back</button>
+        <div class="levelBannerWrap"><div id="levelBanner" class="levelBanner">Level: —</div></div>
+        <button id="resetQuizBtn" class="resetBtn" title="Reset quiz">Reset</button>
+      </div>
+
+      <div class="notationRow">
+        <div class="notationPill" aria-label="Notation choice">
+          <span class="notationLabel">Choose notation:</span>
+          <button class="pillSwitch" id="notationToggle" type="button" aria-pressed="true" aria-label="Switch between multiplication/division symbols and cleaner fraction notation">
+            <span class="pillKnob"></span>
+            <span class="pillChoice symbols">× ÷</span>
+            <span class="pillChoice clean">a⁄b</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="progressRow">
+        <div class="progressTrack" aria-label="progress"><div id="progressFill" class="progressFill"></div></div>
+        <div id="qCounter" class="qCounter">Question 1 / 15</div>
+      </div>
+
+      <div class="stage">
+        <div class="questionPanel">
+          <div class="subValues" id="subValues"></div>
+          <div class="exprCard">
+            <div class="smallLabel">Evaluate:</div>
+            <div id="exprBox" class="expression">—</div>
+          </div>
+        </div>
+
+        <div class="answerRow">
+          <div class="answerLabel">Answer:</div>
+          <input id="answerInput" class="answerInput" inputmode="numeric" autocomplete="off" placeholder="Type..." />
+          <button id="enterBtn" class="btn enterBtn">Enter</button>
+          <button id="nextBtn" class="btn nextBtn">Next →</button>
+        </div>
+
+        <div id="feedback" class="feedback">Type your answer, then press <b>Enter</b>.</div>
+        <div class="hintMini">Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.</div>
+
+        <div class="polypadHelp">
+          <img src="logo.png" alt="Polypad logo" class="helpLogo" onerror="this.style.display='none'">
+          <span>Use the function machines on Polypad to help you: <a href="https://polypad.amplify.com/p#functions" target="_blank" rel="noopener noreferrer">https://polypad.amplify.com/p#functions</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
+  </div>
+
+  <div id="overlay" class="overlay"></div>
+
+  <div id="levelModal" class="modal" role="dialog" aria-modal="true" aria-label="Choose your level">
+    <div class="modalHead">Choose your level</div>
+    <div class="modalBody">
+      <div class="levelList">
+        <div class="levelRow lvl-sweet"><div><div class="levelName">Sweet</div><div class="levelSub">One variable · value from 1 to 10 · one-step expressions</div></div><button class="startBtn" data-level="sweet">Start</button></div>
+        <div class="levelRow lvl-mild"><div><div class="levelName">Mild</div><div class="levelSub">One variable · value from 1 to 10 · two-step expressions</div></div><button class="startBtn" data-level="mild">Start</button></div>
+        <div class="levelRow lvl-medium"><div><div class="levelName">Medium</div><div class="levelSub">Two variables · values from 1 to 10 · multiplication and division structures</div></div><button class="startBtn" data-level="medium">Start</button></div>
+        <div class="levelRow lvl-spicy"><div><div class="levelName">Spicy</div><div class="levelSub">Two variables · values from −10 to 10, excluding zero</div></div><button class="startBtn" data-level="spicy">Start</button></div>
+        <div class="levelRow lvl-extra"><div><div class="levelName">Extra hot</div><div class="levelSub">Three variables · values from −10 to 10, excluding zero</div></div><button class="startBtn" data-level="extraHot">Start</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="certModal" class="modal" role="dialog" aria-modal="true" aria-label="Certificate">
+    <div class="modalHead">Certificate</div>
+    <div class="modalBody">
+      <div class="certWrap">
+        <div class="trophyBox">🏆</div>
+        <div>
+          <div id="certLine1" class="certText">You completed Sweet and got 0 out of 15.</div>
+          <div class="certSub">Screenshot this and paste into Google Classroom.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modalActions">
+      <button id="copyBtn" class="btn primary">Copy to clipboard</button>
+      <button id="closeCertBtn" class="btn">Close</button>
+      <button id="backToMenuBtn" class="btn danger">Back to level menu</button>
+    </div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+<script>
+(() => {
+  const QUIZ_LEN = 15;
+  const LETTERS = 'abcdefghijkmnpqrstuvwxyz'.split(''); // avoids o and l
+  const LEVELS = {
+    sweet:    { name:'Sweet',     banner:['#16a34a','#0f766e'] },
+    mild:     { name:'Mild',      banner:['#2563eb','#1e3a8a'] },
+    medium:   { name:'Medium',    banner:['#f59e0b','#b45309'] },
+    spicy:    { name:'Spicy',     banner:['#f97316','#c2410c'] },
+    extraHot: { name:'Extra hot', banner:['#ef4444','#be123c'] }
+  };
+
+  const overlay = document.getElementById('overlay');
+  const levelModal = document.getElementById('levelModal');
+  const certModal = document.getElementById('certModal');
+  const levelBanner = document.getElementById('levelBanner');
+  const qCounter = document.getElementById('qCounter');
+  const progressFill = document.getElementById('progressFill');
+  const notationToggle = document.getElementById('notationToggle');
+  const subValues = document.getElementById('subValues');
+  const exprBox = document.getElementById('exprBox');
+  const answerInput = document.getElementById('answerInput');
+  const enterBtn = document.getElementById('enterBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const feedback = document.getElementById('feedback');
+  const resetQuizBtn = document.getElementById('resetQuizBtn');
+  const backToLevelsBtn = document.getElementById('backToLevelsBtn');
+  const certLine1 = document.getElementById('certLine1');
+  const copyBtn = document.getElementById('copyBtn');
+  const closeCertBtn = document.getElementById('closeCertBtn');
+  const backToMenuBtn = document.getElementById('backToMenuBtn');
+  const confettiWrap = document.getElementById('confetti');
+
+  let levelKey = null;
+  let qIndex = 0;
+  let score = 0;
+  let phase = 'awaiting';
+  let Q = null;
+  let useSymbolNotation = true;
+
+  const randInt = (a,b) => Math.floor(Math.random() * (b - a + 1)) + a;
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const chance = p => Math.random() < p;
+
+  function showModal(modal){ overlay.classList.add('show'); modal.classList.add('show'); }
+  function hideModal(modal){
+    modal.classList.remove('show');
+    if(![levelModal, certModal].some(m => m.classList.contains('show'))) overlay.classList.remove('show');
+  }
+  function nowStamp(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function nonZeroRand(min=-10, max=10){ let v = 0; while(v === 0) v = randInt(min,max); return v; }
+  function fmtNum(n){ return n < 0 ? `−${Math.abs(n)}` : String(n); }
+  function parseStudentNumber(str){
+    const clean = String(str).trim().replace(/,/g,'').replace(/−/g,'-');
+    if(!clean) return NaN;
+    return Number(clean);
+  }
+
+  // -----------------------------
+  // Tiny expression tree
+  // -----------------------------
+  const num = value => ({ type:'num', value });
+  const vari = name => ({ type:'var', name });
+  const add = (left,right) => ({ type:'add', left, right });
+  const sub = (left,right) => ({ type:'sub', left, right });
+  const mul = (left,right) => ({ type:'mul', left, right });
+  const div = (left,right) => ({ type:'div', left, right });
+  const neg = inner => ({ type:'neg', inner });
+
+  function evalExpr(node, values){
+    switch(node.type){
+      case 'num': return node.value;
+      case 'var': return values[node.name];
+      case 'add': return evalExpr(node.left, values) + evalExpr(node.right, values);
+      case 'sub': return evalExpr(node.left, values) - evalExpr(node.right, values);
+      case 'mul': return evalExpr(node.left, values) * evalExpr(node.right, values);
+      case 'div': return evalExpr(node.left, values) / evalExpr(node.right, values);
+      case 'neg': return -evalExpr(node.inner, values);
+      default: return NaN;
+    }
+  }
+
+  function precedence(node){
+    if(node.type === 'add' || node.type === 'sub') return 1;
+    if(node.type === 'mul' || node.type === 'div') return 2;
+    if(node.type === 'neg') return 3;
+    return 4;
+  }
+  function maybeParen(child, parentPrec, html){
+    return precedence(child) < parentPrec ? `(${html})` : html;
+  }
+  function needsParensInProduct(node){ return node.type === 'add' || node.type === 'sub'; }
+  function fracHtml(top, bottom){ return `<span class="frac"><span class="top">${top}</span><span class="bottom">${bottom}</span></span>`; }
+
+  function renderExpr(node, opts={}){
+    const mode = opts.mode || (useSymbolNotation ? 'symbols' : 'clean');
+
+    if(node.type === 'num') return fmtNum(node.value);
+    if(node.type === 'var') return node.name;
+    if(node.type === 'neg'){
+      const inside = renderExpr(node.inner, { mode });
+      return `−${maybeParen(node.inner, 3, inside)}`;
+    }
+    if(node.type === 'add'){
+      return `${renderExpr(node.left, { mode })} + ${renderExpr(node.right, { mode })}`;
+    }
+    if(node.type === 'sub'){
+      const right = renderExpr(node.right, { mode });
+      return `${renderExpr(node.left, { mode })} − ${maybeParen(node.right, 1, right)}`;
+    }
+    if(node.type === 'mul'){
+      const left = renderExpr(node.left, { mode });
+      const right = renderExpr(node.right, { mode });
+
+      if(mode === 'symbols'){
+        return `${maybeParen(node.left, 2, left)} × ${maybeParen(node.right, 2, right)}`;
+      }
+
+      // Cleaner algebraic notation
+      if(node.left.type === 'num' && node.right.type === 'var') return `${fmtNum(node.left.value)}${node.right.name}`;
+      if(node.left.type === 'var' && node.right.type === 'num') return `${fmtNum(node.right.value)}${node.left.name}`;
+      if(node.left.type === 'var' && node.right.type === 'var') return `${node.left.name}${node.right.name}`;
+      if(node.left.type === 'num' && needsParensInProduct(node.right)) return `${fmtNum(node.left.value)}(${right})`;
+      if(node.right.type === 'num' && needsParensInProduct(node.left)) return `${fmtNum(node.right.value)}(${left})`;
+      if(node.left.type === 'num') return `${fmtNum(node.left.value)}${maybeParen(node.right, 2, right)}`;
+      if(node.right.type === 'num') return `${maybeParen(node.left, 2, left)}${fmtNum(node.right.value)}`;
+      return `${maybeParen(node.left, 2, left)}${maybeParen(node.right, 2, right)}`;
+    }
+    if(node.type === 'div'){
+      const left = renderExpr(node.left, { mode });
+      const right = renderExpr(node.right, { mode });
+      if(mode === 'symbols'){
+        return `${maybeParen(node.left, 2, left)} ÷ ${maybeParen(node.right, 2, right)}`;
+      }
+      return fracHtml(left, right);
+    }
+    return '';
+  }
+
+  function randomLetters(n){
+    const copy = [...LETTERS];
+    const out = [];
+    while(out.length < n){
+      const idx = randInt(0, copy.length - 1);
+      out.push(copy.splice(idx, 1)[0]);
+    }
+    return out;
+  }
+  function valuesForLetters(letters, min, max, excludeZero=false){
+    const values = {};
+    letters.forEach(letter => values[letter] = excludeZero ? nonZeroRand(min,max) : randInt(min,max));
+    return values;
+  }
+
+  function q(letters, values, expr){
+    const answer = evalExpr(expr, values);
+    return { letters, values, expr, answer };
+  }
+
+  function makeDivisibleBracketExpr(variable, vValue, minResult=1, maxResult=12){
+    for(let i=0;i<200;i++){
+      const d = randInt(2,12);
+      const result = randInt(minResult,maxResult);
+      const total = d * result; // within 12 × 12 chart
+      const n = total - vValue;
+      if(n >= 1 && n <= 36) return { d, n, result };
+    }
+    const d = 3;
+    const result = Math.max(1, Math.min(12, Math.ceil((vValue + 2) / d)));
+    return { d, n:d*result - vValue, result };
+  }
+
+  function generateSweet(){
+    for(let tries=0; tries<500; tries++){
+      const [x] = randomLetters(1);
+      const values = valuesForLetters([x], 1, 10);
+      const xv = values[x];
+      const type = pick(['add','sub','mul','div']);
+      let expr;
+      if(type === 'add') expr = add(vari(x), num(randInt(1,12)));
+      if(type === 'sub') expr = sub(vari(x), num(randInt(1,xv)));
+      if(type === 'mul') expr = mul(num(randInt(2,12)), vari(x));
+      if(type === 'div'){
+        const ds = [2,3,4,5,6,7,8,9,10,11,12].filter(d => xv % d === 0);
+        if(!ds.length) continue;
+        expr = div(vari(x), num(pick(ds)));
+      }
+      const question = q([x], values, expr);
+      if(Number.isInteger(question.answer) && question.answer >= 0) return question;
+    }
+    const [x] = ['a'];
+    return q([x], {a:6}, div(vari('a'), num(3)));
+  }
+
+  function generateMild(){
+    for(let tries=0; tries<900; tries++){
+      const [x] = randomLetters(1);
+      const values = valuesForLetters([x], 1, 10);
+      const xv = values[x];
+      const type = pick(['mulAdd','mulSub','divAdd','divSub','coeffDivAdd','bracketMul','bracketDiv']);
+      let expr;
+
+      if(type === 'mulAdd') expr = add(mul(num(randInt(2,12)), vari(x)), num(randInt(1,12)));
+      if(type === 'mulSub'){
+        const m = randInt(2,12);
+        expr = sub(mul(num(m), vari(x)), num(randInt(1, Math.min(20, m*xv))));
+      }
+      if(type === 'divAdd' || type === 'divSub'){
+        const ds = [2,3,4,5,6,7,8,9,10,11,12].filter(d => xv % d === 0);
+        if(!ds.length) continue;
+        const d = pick(ds);
+        const base = xv / d;
+        if(type === 'divAdd') expr = add(div(vari(x), num(d)), num(randInt(1,12)));
+        else expr = sub(div(vari(x), num(d)), num(randInt(1, Math.max(1, base))));
+      }
+      if(type === 'coeffDivAdd'){
+        const d = randInt(2,12);
+        const k = randInt(1,12);
+        const m = d * k;
+        if(m > 12) continue; // keep coefficient itself inside 12 where possible
+        expr = add(div(mul(num(m), vari(x)), num(d)), num(randInt(1,12)));
+      }
+      if(type === 'bracketMul') expr = mul(num(randInt(2,12)), add(vari(x), num(randInt(1,12))));
+      if(type === 'bracketDiv'){
+        const bd = makeDivisibleBracketExpr(x, xv, 1, 12);
+        expr = div(add(vari(x), num(bd.n)), num(bd.d));
+      }
+
+      const question = q([x], values, expr);
+      if(Number.isInteger(question.answer)) return question;
+    }
+    return q(['a'], {a:6}, add(div(vari('a'), num(3)), num(4)));
+  }
+
+  function generateMedium(){
+    for(let tries=0; tries<1000; tries++){
+      const letters = randomLetters(2);
+      const [x,y] = letters;
+      const values = valuesForLetters(letters, 1, 10);
+      const xv = values[x], yv = values[y];
+      const type = pick(['sumConst','productConst','coeffSum','mixedCoeff','difference','fracCoeffPlus','bracketMul','bracketDiv','sumDiv','varDivPlus']);
+      let expr;
+
+      if(type === 'sumConst') expr = add(add(vari(x), vari(y)), num(randInt(1,12)));
+      if(type === 'productConst') expr = add(mul(vari(x), vari(y)), num(randInt(1,12)));
+      if(type === 'coeffSum') expr = add(mul(num(randInt(2,12)), vari(x)), vari(y));
+      if(type === 'mixedCoeff') expr = add(mul(num(randInt(2,12)), vari(x)), mul(num(randInt(2,12)), vari(y)));
+      if(type === 'difference') expr = sub(mul(num(randInt(2,12)), vari(x)), vari(y));
+      if(type === 'fracCoeffPlus'){
+        const d = randInt(2,12);
+        const k = randInt(1,12);
+        const m = d * k;
+        if(m > 12) continue;
+        expr = add(div(mul(num(m), vari(x)), num(d)), vari(y));
+      }
+      if(type === 'bracketMul') expr = mul(num(randInt(2,12)), add(vari(x), vari(y)));
+      if(type === 'bracketDiv' || type === 'sumDiv'){
+        const d = randInt(2,12);
+        const sum = xv + yv;
+        const r = Math.ceil(sum / d);
+        const n = d * r - sum;
+        if(n < 0 || n > 20 || r > 12) continue;
+        expr = div(add(add(vari(x), vari(y)), num(n)), num(d));
+      }
+      if(type === 'varDivPlus'){
+        const ds = [2,3,4,5,6,7,8,9,10,11,12].filter(d => xv % d === 0);
+        if(!ds.length) continue;
+        expr = add(div(vari(x), num(pick(ds))), vari(y));
+      }
+
+      const question = q(letters, values, expr);
+      if(Number.isInteger(question.answer)) return question;
+    }
+    return q(['a','b'], {a:4,b:7}, add(mul(num(3), vari('a')), vari('b')));
+  }
+
+  function generateSpicy(){
+    for(let tries=0; tries<1200; tries++){
+      const letters = randomLetters(2);
+      const [x,y] = letters;
+      const values = valuesForLetters(letters, -10, 10, true);
+      const xv = values[x], yv = values[y];
+      const type = pick(['sumConst','productConst','coeffSum','mixedCoeff','difference','fracCoeffPlus','bracketMul','bracketDiv','negCoeff','varDivPlus']);
+      let expr;
+
+      if(type === 'sumConst') expr = add(add(vari(x), vari(y)), num(randInt(-10,10)));
+      if(type === 'productConst') expr = add(mul(vari(x), vari(y)), num(randInt(-10,10)));
+      if(type === 'coeffSum') expr = add(mul(num(randInt(2,12)), vari(x)), vari(y));
+      if(type === 'mixedCoeff') expr = sub(mul(num(randInt(2,12)), vari(x)), mul(num(randInt(2,12)), vari(y)));
+      if(type === 'difference') expr = sub(mul(num(randInt(2,12)), vari(x)), vari(y));
+      if(type === 'fracCoeffPlus'){
+        const d = randInt(2,12), k = randInt(1,12), m = d*k;
+        if(m > 12) continue;
+        expr = add(div(mul(num(m), vari(x)), num(d)), vari(y));
+      }
+      if(type === 'bracketMul') expr = mul(num(randInt(2,12)), add(vari(x), vari(y)));
+      if(type === 'bracketDiv'){
+        const d = randInt(2,12);
+        const sum = xv + yv;
+        const result = randInt(-12,12);
+        if(result === 0) continue;
+        const n = d * result - sum;
+        if(n < -30 || n > 30) continue;
+        expr = div(add(add(vari(x), vari(y)), num(n)), num(d));
+      }
+      if(type === 'negCoeff') expr = add(neg(mul(num(randInt(2,12)), vari(x))), num(randInt(1,12)));
+      if(type === 'varDivPlus'){
+        const ds = [2,3,4,5,6,7,8,9,10,11,12].filter(d => xv % d === 0);
+        if(!ds.length) continue;
+        expr = add(div(vari(x), num(pick(ds))), vari(y));
+      }
+
+      const question = q(letters, values, expr);
+      if(Number.isInteger(question.answer)) return question;
+    }
+    return q(['a','b'], {a:-4,b:7}, add(mul(num(3), vari('a')), vari('b')));
+  }
+
+  function generateExtraHot(){
+    for(let tries=0; tries<1400; tries++){
+      const letters = randomLetters(3);
+      const [x,y,z] = letters;
+      const values = valuesForLetters(letters, -10, 10, true);
+      const xv = values[x], yv = values[y], zv = values[z];
+      const type = pick(['sumConst','xyPlusZ','coeffAll','mxyPlusZ','bracketPlusZ','mixedDiff','fracCoeffPlus','bracketDiv3']);
+      let expr;
+
+      if(type === 'sumConst') expr = add(add(add(vari(x), vari(y)), vari(z)), num(randInt(-10,10)));
+      if(type === 'xyPlusZ') expr = add(mul(vari(x), vari(y)), vari(z));
+      if(type === 'coeffAll') expr = add(add(mul(num(randInt(2,12)), vari(x)), mul(num(randInt(2,12)), vari(y))), mul(num(randInt(2,12)), vari(z)));
+      if(type === 'mxyPlusZ') expr = add(mul(num(randInt(2,6)), mul(vari(x), vari(y))), vari(z));
+      if(type === 'bracketPlusZ') expr = add(mul(num(randInt(2,12)), add(vari(x), vari(y))), vari(z));
+      if(type === 'mixedDiff') expr = add(sub(mul(num(randInt(2,12)), vari(x)), mul(num(randInt(2,12)), vari(y))), vari(z));
+      if(type === 'fracCoeffPlus'){
+        const d = randInt(2,12), k = randInt(1,12), m = d*k;
+        if(m > 12) continue;
+        expr = add(add(div(mul(num(m), vari(x)), num(d)), vari(y)), vari(z));
+      }
+      if(type === 'bracketDiv3'){
+        const d = randInt(2,12);
+        const sum = xv + yv + zv;
+        const result = randInt(-12,12);
+        if(result === 0) continue;
+        const n = d * result - sum;
+        if(n < -36 || n > 36) continue;
+        expr = div(add(add(add(vari(x), vari(y)), vari(z)), num(n)), num(d));
+      }
+
+      const question = q(letters, values, expr);
+      if(Number.isInteger(question.answer)) return question;
+    }
+    return q(['a','b','c'], {a:-4,b:7,c:3}, add(add(mul(num(3), vari('a')), vari('b')), vari('c')));
+  }
+
+  function generateQuestion(){
+    if(levelKey === 'sweet') return generateSweet();
+    if(levelKey === 'mild') return generateMild();
+    if(levelKey === 'medium') return generateMedium();
+    if(levelKey === 'spicy') return generateSpicy();
+    if(levelKey === 'extraHot') return generateExtraHot();
+    return generateSweet();
+  }
+
+  function syncNotationToggle(){
+    notationToggle.classList.toggle('clean', !useSymbolNotation);
+    notationToggle.setAttribute('aria-pressed', useSymbolNotation ? 'true' : 'false');
+  }
+  function renderCurrentExpressionOnly(){
+    if(Q) exprBox.innerHTML = renderExpr(Q.expr);
+  }
+  function renderValues(values){
+    subValues.innerHTML = '';
+    Object.entries(values).forEach(([k,v]) => {
+      const chip = document.createElement('div');
+      chip.className = 'valueChip';
+      chip.innerHTML = `<span>${k} = ${fmtNum(v)}</span>`;
+      subValues.appendChild(chip);
+    });
+  }
+  function setBanner(){
+    const L = LEVELS[levelKey];
+    levelBanner.textContent = `Level: ${L.name}`;
+    levelBanner.style.background = `linear-gradient(180deg, ${L.banner[0]}, ${L.banner[1]})`;
+    progressFill.style.background = L.banner[0];
+  }
+  function setProgress(){
+    qCounter.textContent = `Question ${Math.min(QUIZ_LEN, qIndex + 1)} / ${QUIZ_LEN}`;
+    progressFill.style.width = `${(qIndex / QUIZ_LEN) * 100}%`;
+  }
+  function showFeedback(kind, text){
+    feedback.className = 'feedback' + (kind ? ` ${kind}` : '');
+    feedback.innerHTML = text;
+  }
+  function resetInputStyles(){ answerInput.classList.remove('ok','bad'); }
+  function showNext(show){ nextBtn.classList.toggle('show', !!show); }
+
+  function loadQuestion(){
+    phase = 'awaiting';
+    resetInputStyles();
+    answerInput.value = '';
+    answerInput.disabled = false;
+    enterBtn.disabled = false;
+    showNext(false);
+    showFeedback('', 'Type your answer, then press <b>Enter</b>.');
+    Q = generateQuestion();
+    renderValues(Q.values);
+    renderCurrentExpressionOnly();
+    answerInput.focus();
+  }
+  function startQuiz(key){
+    levelKey = key;
+    qIndex = 0;
+    score = 0;
+    setBanner();
+    setProgress();
+    hideModal(levelModal);
+    hideModal(certModal);
+    loadQuestion();
+  }
+  function resetQuizSameLevel(){
+    if(!levelKey) return;
+    qIndex = 0;
+    score = 0;
+    setProgress();
+    loadQuestion();
+  }
+  function submitAnswer(){
+    if(phase !== 'awaiting') return;
+    const student = parseStudentNumber(answerInput.value);
+    const correct = Number.isFinite(student) && student === Q.answer;
+    resetInputStyles();
+    answerInput.classList.add(correct ? 'ok' : 'bad');
+    if(correct){
+      score++;
+      showFeedback('ok', '✅ Correct!');
+      dropConfetti();
+    } else {
+      showFeedback('bad', `Not quite. The correct answer was <b>${fmtNum(Q.answer)}</b>.`);
+    }
+    phase = 'revealed';
+    answerInput.disabled = true;
+    showNext(true);
+    nextBtn.focus();
+  }
+  function nextQuestion(){
+    if(phase !== 'revealed') return;
+    if(qIndex >= QUIZ_LEN - 1){
+      progressFill.style.width = '100%';
+      showCertificate();
+      return;
+    }
+    qIndex++;
+    setProgress();
+    loadQuestion();
+  }
+  function showCertificate(){
+    const L = LEVELS[levelKey].name;
+    certLine1.textContent = `You completed ${L} and got ${score} out of ${QUIZ_LEN}.`;
+    showModal(certModal);
+  }
+  function backToLevelMenu(){
+    hideModal(certModal);
+    showModal(levelModal);
+    levelKey = null;
+    phase = 'awaiting';
+    levelBanner.textContent = 'Level: —';
+    levelBanner.style.background = 'linear-gradient(180deg,#1d4ed8,#1e3a8a)';
+    qCounter.textContent = `Question 1 / ${QUIZ_LEN}`;
+    progressFill.style.width = '0%';
+    progressFill.style.background = '#2563eb';
+    exprBox.textContent = '—';
+    subValues.innerHTML = '';
+    answerInput.value = '';
+    answerInput.disabled = false;
+    resetInputStyles();
+    showNext(false);
+    showFeedback('', 'Type your answer, then press <b>Enter</b>.');
+  }
+  async function copyCertificate(){
+    const L = LEVELS[levelKey].name;
+    const text = `🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: ${L}\nScore: ${score} / ${QUIZ_LEN}\nCompleted: ${nowStamp()}\n\n(Submit a screenshot or paste this into Google Classroom.)`;
+    try{
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 1200);
+    } catch {
+      window.prompt('Copy this text:', text);
+    }
+  }
+  function dropConfetti(){
+    confettiWrap.innerHTML = '';
+    const colors = ['#2563eb','#16a34a','#f59e0b','#a855f7','#ef4444','#06b6d4'];
+    const pieces = 55;
+    const w = window.innerWidth;
+    for(let i=0;i<pieces;i++){
+      const p = document.createElement('i');
+      const x = Math.random() * w;
+      const dx = (Math.random()*2 - 1) * 210;
+      const rot = (Math.random()*2 - 1) * 720;
+      const dur = 1100 + Math.random()*900;
+      p.style.left = x + 'px';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.setProperty('--dx', dx + 'px');
+      p.style.setProperty('--rot', rot + 'deg');
+      p.style.animationDuration = dur + 'ms';
+      confettiWrap.appendChild(p);
+    }
+    setTimeout(() => { confettiWrap.innerHTML = ''; }, 2200);
+  }
+
+  notationToggle.addEventListener('click', () => {
+    useSymbolNotation = !useSymbolNotation;
+    try{ localStorage.setItem('mmt_substitution_quiz_symbol_notation', useSymbolNotation ? '1' : '0'); }catch(_){ }
+    syncNotationToggle();
+    renderCurrentExpressionOnly(); // important: do not generate a new question
+  });
+  document.querySelectorAll('.startBtn').forEach(btn => btn.addEventListener('click', () => startQuiz(btn.dataset.level)));
+  resetQuizBtn.addEventListener('click', () => resetQuizSameLevel());
+  backToLevelsBtn.addEventListener('click', () => backToLevelMenu());
+  enterBtn.addEventListener('click', () => { if(phase === 'awaiting') submitAnswer(); else if(phase === 'revealed') nextQuestion(); });
+  nextBtn.addEventListener('click', () => nextQuestion());
+  copyBtn.addEventListener('click', copyCertificate);
+  closeCertBtn.addEventListener('click', () => hideModal(certModal));
+  backToMenuBtn.addEventListener('click', () => { hideModal(certModal); backToLevelMenu(); });
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      if(levelModal.classList.contains('show') || certModal.classList.contains('show')) return;
+      e.preventDefault();
+      if(phase === 'awaiting') submitAnswer();
+      else if(phase === 'revealed') nextQuestion();
+    }
+    if(e.key === 'Escape'){
+      if(certModal.classList.contains('show')) hideModal(certModal);
+      else if(!levelModal.classList.contains('show')) backToLevelMenu();
+    }
+  });
+
+  try{
+    const saved = localStorage.getItem('mmt_substitution_quiz_symbol_notation');
+    if(saved === '0') useSymbolNotation = false;
+  }catch(_){ }
+  syncNotationToggle();
+  showModal(levelModal);
+})();
+</script>
+</body>
+</html>
