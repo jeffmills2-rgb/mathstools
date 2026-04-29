@@ -283,9 +283,19 @@
   .grid.twoCol{ grid-template-columns: 1fr 1fr; }
   .grid.threeCol{ grid-template-columns: 1fr 1fr 1fr; }
 
+  .grid.rows-6{
+    min-height: 1120px;
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+
   .grid.rows-7{
     min-height: 1120px;
     grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+
+  .grid.rows-8{
+    min-height: 1120px;
+    grid-template-rows: repeat(8, minmax(0, 1fr));
   }
 
   .grid.rows-11{
@@ -322,8 +332,12 @@
   }
 
   .page.spicyPage .qCard{
-    padding: 10px 12px;
+    padding: 18px 16px;
     justify-content:center;
+  }
+
+  .page.spicyPage .qCard .expr{
+    line-height:1.16;
   }
 
   .page.answerKeyPage .qCard{
@@ -696,8 +710,8 @@
     }
 
     .grid{
-      padding: 2mm 3mm 2.2mm;
-      gap: 1.8mm 2.2mm;
+      padding: 2.5mm 3.2mm 2.6mm;
+      gap: 2.6mm 2.8mm;
     }
 
     /* diagram worksheets: a touch more room under header, still fits */
@@ -705,9 +719,19 @@
       padding-top: 4.4mm;
     }
 
+    .grid.rows-6{
+      min-height: 255mm;
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+    }
+
     .grid.rows-7{
       min-height: 219mm;
       grid-template-rows: repeat(7, minmax(0, 1fr));
+    }
+
+    .grid.rows-8{
+      min-height: 221mm;
+      grid-template-rows: repeat(8, minmax(0, 1fr));
     }
 
     .grid.rows-11{
@@ -727,14 +751,14 @@
     }
 
     .qCard{
-      padding: 2px 3px 3px;
+      padding: 5px 6px 6px;
       border-radius: 10px;
       min-height: 0;
       border-color:#d5dae1;
     }
 
     .page.spicyPage .qCard{
-      padding: 3px 5px;
+      padding: 5px 7px;
     }
 
     .page.answerKeyPage .qCard{
@@ -743,7 +767,7 @@
     }
 
     .page.answerKeyPage.spicyPage .qCard{
-      padding: 2px 4px 2px;
+      padding: 4px 5px;
     }
 
     .promptSmall{
@@ -766,13 +790,13 @@
     }
 
     .viz{
-      max-width: min(100%, 285px);
+      max-width: min(100%, 330px);
       max-height: 100%;
       aspect-ratio: 1800 / 370;
     }
 
     .page.answerKeyPage .viz{
-      max-width: min(100%, 272px);
+      max-width: min(100%, 300px);
     }
 
     .ansRow{
@@ -877,7 +901,7 @@
 
           <div>
             <label for="countInp">Number of questions (1–48)</label>
-            <input id="countInp" type="number" min="1" max="48" value="14" />
+            <input id="countInp" type="number" min="1" max="48" value="33" />
           </div>
         </div>
 
@@ -914,7 +938,8 @@
     spicy:  { name:"Spicy",  perPage: 33, gridClass:"threeCol", style:"spicy",  showModel:false }
   };
 
-  const DEFAULT_COUNTS = { sweet:14, mild:14, medium:14, spicy:33 };
+  const DEFAULT_COUNTS = { sweet:12, mild:12, medium:12, spicy:33 };
+  const MODEL_DEFAULT_COUNT = 12;
 
   const setSel = document.getElementById("setSel");
   const levelSel = document.getElementById("levelSel");
@@ -928,18 +953,18 @@
   const VIEW_W = 1800;
   const VIEW_H = 390;
   const LINE_Y = 218;
-  const TOP_Y_MAIN = 108;
-  const TOP_Y_SMALL = 145;
-  const BOTTOM_Y_MAIN = 294;
-  const BOTTOM_Y_SMALL = 258;
+  const TOP_Y_MAIN = 102;
+  const TOP_Y_SMALL = 148;
+  const BOTTOM_Y_MAIN = 306;
+  const BOTTOM_Y_SMALL = 264;
   const ADD_SUB_ARC_Y = LINE_Y - 16;
   const GROUP_LOOP_Y = LINE_Y;
 
-  const MAIN_LABEL_SIZE = 42;
-  const MAIN_VALUE_SIZE = 40;
-  const GHOST_LABEL_SIZE = 24;
-  const GHOST_VALUE_SIZE = 22;
-  const ZERO_LABEL_SIZE = 24;
+  const MAIN_LABEL_SIZE = 58;
+  const MAIN_VALUE_SIZE = 54;
+  const GHOST_LABEL_SIZE = 32;
+  const GHOST_VALUE_SIZE = 30;
+  const ZERO_LABEL_SIZE = 36;
 
   function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
   function choice(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
@@ -1300,16 +1325,24 @@
     if(color === 'black') txtClass.push('small-black');
     if(color === 'ghost') txtClass.push('ghost-black');
 
-    const top = createSVG('text', { x, y, class:txtClass.join(' '), 'font-size': size });
+    // Treat y as the centre of the whole fraction, then space the numerator,
+    // vinculum and denominator using the selected font size. This prevents
+    // large worksheet-model fractions from colliding with the fraction bar.
+    const topY = y - size * 0.38;
+    const barY = y + size * 0.04;
+    const bottomY = y + size * 0.48;
+    const denSize = size * 0.86;
+    const width = Math.max(34, Math.max(String(num).length, String(den).length) * (size * 0.38));
+
+    const top = createSVG('text', { x, y:topY, class:txtClass.join(' '), 'font-size': size });
     top.textContent = num;
 
-    const width = Math.max(30, Math.max(String(num).length, String(den).length) * (size * 0.34));
     const bar = createSVG('line', {
-      x1:x-width/2, y1:y+10, x2:x+width/2, y2:y+10,
-      stroke:'#111', 'stroke-width':2.6, 'stroke-linecap':'round'
+      x1:x-width/2, y1:barY, x2:x+width/2, y2:barY,
+      stroke:'#111', 'stroke-width':3.2, 'stroke-linecap':'round'
     });
 
-    const bottom = createSVG('text', { x, y:y+30, class:txtClass.join(' '), 'font-size': size*0.86 });
+    const bottom = createSVG('text', { x, y:bottomY, class:txtClass.join(' '), 'font-size': denSize });
     bottom.textContent = den;
 
     group.appendChild(top);
@@ -1477,7 +1510,7 @@
 
     drawTopText(svg, points[zeroIndex].px, TOP_Y_MAIN, '0', ZERO_LABEL_SIZE, 'black');
     drawBottomText(svg, points[zeroIndex].px, BOTTOM_Y_MAIN, '0', MAIN_VALUE_SIZE, 'black');
-    drawFractionTop(svg, points[fracIndex].px, TOP_Y_MAIN - 8, 'x', String(q.d), MAIN_LABEL_SIZE, 'blue');
+    drawFractionTop(svg, points[fracIndex].px, TOP_Y_MAIN, 'x', String(q.d), MAIN_LABEL_SIZE, 'blue');
     drawBottomText(svg, points[fracIndex].px, BOTTOM_Y_MAIN, formatSigned(q.quotient), MAIN_VALUE_SIZE, 'green');
     drawTopText(svg, points[xIndex].px, TOP_Y_MAIN, 'x', MAIN_LABEL_SIZE, 'blue');
     drawBottomText(svg, points[xIndex].px, BOTTOM_Y_MAIN, '?', MAIN_VALUE_SIZE, 'green');
@@ -1530,9 +1563,9 @@
     return wrap;
   }
 
-  function makeQuestionCard(q, levelKey, showAnswer){
+  function makeQuestionCard(q, levelKey, setKey, showAnswer){
     const wrap = document.createElement("div");
-    wrap.className = "qCard";
+    wrap.className = `qCard ${levelKey} ${setKey}`;
 
     const prompt = document.createElement("div");
     prompt.className = "prompt";
@@ -1566,12 +1599,25 @@
     return wrap;
   }
 
+  function getLayoutConfig(levelKey, setKey){
+    const cfg = LEVELS[levelKey];
+
+    // Any worksheet question with a visual model/image uses a roomier 2 × 6 layout.
+    if(cfg.showModel){
+      return { perPage:12, gridClass:"twoCol", rows:6 };
+    }
+
+    // Spicy has no model, so all question sets use the same denser 3-column layout.
+    const perPage = cfg.perPage;
+    const gridClass = cfg.gridClass;
+    const cols = gridClass === "threeCol" ? 3 : 2;
+    return { perPage, gridClass, rows:Math.ceil(perPage / cols) };
+  }
+
   function buildPages(questions, levelKey, setKey, titleLabel, showAnswers){
     const cfg = LEVELS[levelKey];
-    const perPage = cfg.perPage;
+    const { perPage, gridClass, rows } = getLayoutConfig(levelKey, setKey);
     const totalPages = Math.ceil(questions.length / perPage);
-    const cols = cfg.gridClass === "threeCol" ? 3 : 2;
-    const rows = Math.ceil(perPage / cols);
     const pages = [];
 
     for(let p = 0; p < totalPages; p++){
@@ -1582,12 +1628,12 @@
       page.innerHTML = pageHeaderHTML(SETS[setKey].name, cfg.name, pageLabel, !showAnswers);
 
       const grid = document.createElement("div");
-      grid.className = `grid ${cfg.gridClass} rows-${rows}`;
+      grid.className = `grid ${gridClass} rows-${rows}`;
 
       const start = p * perPage;
       const slice = questions.slice(start, start + perPage);
       for(const q of slice){
-        grid.appendChild(makeQuestionCard(q, levelKey, showAnswers));
+        grid.appendChild(makeQuestionCard(q, levelKey, setKey, showAnswers));
       }
 
       page.appendChild(grid);
@@ -1607,6 +1653,11 @@
   }
 
   function updateDefaultCountForLevel(){
+    const cfg = LEVELS[levelSel.value];
+    if(cfg && cfg.showModel){
+      countInp.value = String(MODEL_DEFAULT_COUNT);
+      return;
+    }
     countInp.value = String(DEFAULT_COUNTS[levelSel.value] || 14);
   }
 
@@ -1616,7 +1667,7 @@
     const setKey = setSel.value;
     const levelKey = levelSel.value;
     let n = Number(countInp.value);
-    if(!Number.isFinite(n)) n = DEFAULT_COUNTS[levelKey] || 14;
+    if(!Number.isFinite(n)) n = LEVELS[levelKey].showModel ? MODEL_DEFAULT_COUNT : (DEFAULT_COUNTS[levelKey] || 14);
     n = Math.max(1, Math.min(48, Math.round(n)));
     countInp.value = String(n);
 
@@ -1640,8 +1691,8 @@
     updateDefaultCountForLevel();
   }
 
-  setSel.addEventListener("change", () => { clearOut(); });
-  levelSel.addEventListener("change", updateDefaultCountForLevel);
+  setSel.addEventListener("change", () => { updateDefaultCountForLevel(); clearOut(); });
+  levelSel.addEventListener("change", () => { updateDefaultCountForLevel(); clearOut(); });
   genBtn.addEventListener("click", generate);
   printBtn.addEventListener("click", () => window.print());
   resetBtn.addEventListener("click", resetAll);
