@@ -16,9 +16,12 @@
     --radius: 18px;
 
     --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --purple:#7c3aed;
     --ans:#16a34a;
     --green:#16a34a;
-    --red:#dc2626;
+    --orange:#f97316;
+    --red:#ef4444;
 
     --line:#1f2937;
     --tick:#111827;
@@ -29,17 +32,69 @@
 
     --footer-h: 44px;
     --mathFont: "Cambria Math", "STIX Two Math", "STIXGeneral", "Times New Roman", serif;
+    --uiFont: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
   }
 
   *{ box-sizing:border-box; }
 
   body{
     margin:0;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    background: var(--bg);
+    font-family: var(--uiFont);
+    background:
+      radial-gradient(circle at top left, rgba(37,99,235,.10), transparent 30rem),
+      radial-gradient(circle at top right, rgba(124,58,237,.09), transparent 30rem),
+      var(--bg);
     color: var(--ink);
     padding-bottom: var(--footer-h);
   }
+
+  .topbar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+    color:white;
+    padding:14px 24px;
+    display:grid;
+    grid-template-columns:minmax(180px,1fr) auto minmax(180px,1fr);
+    align-items:center;
+    gap:18px;
+    box-shadow:0 10px 28px rgba(15,23,42,.22);
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-decoration:none;
+    color:white;
+    justify-self:start;
+    border-radius:14px;
+    padding:8px 12px;
+    margin-left:-12px;
+    transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+  }
+
+  .brand:hover{
+    background:rgba(255,255,255,.12);
+    transform:translateY(-1px);
+    box-shadow:
+      0 0 10px rgba(124,58,237,.6),
+      0 0 18px rgba(37,99,235,.4);
+  }
+
+  .brand-logo{
+    width:44px;
+    height:44px;
+    object-fit:contain;
+    background:white;
+    border-radius:6px;
+    padding:3px;
+  }
+
+  .brand-text strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em}
+  .brand-text span{display:block;font-size:.78rem;opacity:.82;font-weight:650}
+  .top-title{font-weight:900;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center}
 
   .wrap{
     max-width: 1280px;
@@ -48,10 +103,11 @@
   }
 
   .card{
-    background: var(--card);
+    background: rgba(255,255,255,.96);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 16px;
+    border:1px solid rgba(226,232,240,.9);
   }
 
   .title{
@@ -128,6 +184,7 @@
     transition: transform .04s ease, filter .15s ease, opacity .2s ease;
     user-select:none;
     font-size: 16px;
+    font-family:var(--uiFont);
   }
 
   button:active{ transform: scale(.98); }
@@ -544,6 +601,16 @@
     margin:1px 0;
   }
 
+
+  @media(max-width:780px){
+    .topbar{grid-template-columns:1fr auto;gap:10px}
+    .top-title{grid-column:1/-1;grid-row:2;text-align:center}
+    .brand-text span{display:none}
+    .controls{align-items:stretch}
+    .fieldRow,.btnRow{width:100%}
+    select,input[type="number"]{width:100%}
+  }
+
   @media print{
     @page{
       size: A4;
@@ -574,7 +641,7 @@
       padding: 0;
     }
 
-    .controls, .title, .subtitle, .mmtFooter{
+    .topbar, .controls, .title, .subtitle, .mmtFooter{
       display:none !important;
     }
 
@@ -770,13 +837,34 @@
 </head>
 
 <body>
+  <header class="topbar">
+    <a class="brand" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
+      <img src="mmt.png" alt="Mills Maths Tools logo" class="brand-logo" onerror="this.style.visibility='hidden'">
+      <div class="brand-text">
+        <strong>MMT</strong>
+        <span>Mills Maths Tools</span>
+      </div>
+    </a>
+    <div class="top-title">Equations – Double Number Line</div>
+    <div></div>
+  </header>
+
   <div class="wrap">
     <div class="card">
       <h1 class="title">One Step Equations — Worksheet Maker</h1>
-      <p class="subtitle">Printable A4 worksheets plus completed answer key. Sweet, Mild and Medium include a compact readable visual model. Spicy uses an ultra-compact no-model layout for higher-density practice.</p>
+      <p class="subtitle">Printable A4 worksheets plus completed answer key. Choose Addition/Subtraction, Multiplication/Division, or Mixed one-step equations, then select Sweet through Spicy. Sweet, Mild and Medium include a compact readable visual model. Spicy uses an ultra-compact no-model layout for higher-density practice.</p>
 
       <div class="controls">
         <div class="fieldRow">
+          <div>
+            <label for="setSel">Question set</label>
+            <select id="setSel">
+              <option value="addsub">One Step Addition/Subtraction</option>
+              <option value="multdiv">One Step Multiplication/Division</option>
+              <option value="mixed" selected>One Step Mixed</option>
+            </select>
+          </div>
+
           <div>
             <label for="levelSel">Level</label>
             <select id="levelSel">
@@ -813,15 +901,22 @@
 (() => {
   const SITE = "https://www.millsmathstools.au";
 
+  const SETS = {
+    addsub: { name:"One Step Addition/Subtraction", shortName:"Addition/Subtraction" },
+    multdiv:{ name:"One Step Multiplication/Division", shortName:"Multiplication/Division" },
+    mixed:  { name:"One Step Mixed", shortName:"Mixed" }
+  };
+
   const LEVELS = {
-    sweet:  { name:"Sweet",  perPage: 14, gridClass:"twoCol",   allowNeg:false, style:"sweet",  hot:false, showModel:true  },
-    mild:   { name:"Mild",   perPage: 14, gridClass:"twoCol",   allowNeg:true,  style:"mild",   hot:false, showModel:true  },
-    medium: { name:"Medium", perPage: 14, gridClass:"twoCol",   allowNeg:true,  style:"medium", hot:false, showModel:true  },
-    spicy:  { name:"Spicy",  perPage: 33, gridClass:"threeCol", allowNeg:true,  style:"spicy",  hot:true,  showModel:false }
+    sweet:  { name:"Sweet",  perPage: 14, gridClass:"twoCol",   style:"sweet",  showModel:true  },
+    mild:   { name:"Mild",   perPage: 14, gridClass:"twoCol",   style:"mild",   showModel:true  },
+    medium: { name:"Medium", perPage: 14, gridClass:"twoCol",   style:"medium", showModel:true  },
+    spicy:  { name:"Spicy",  perPage: 33, gridClass:"threeCol", style:"spicy",  showModel:false }
   };
 
   const DEFAULT_COUNTS = { sweet:14, mild:14, medium:14, spicy:33 };
 
+  const setSel = document.getElementById("setSel");
   const levelSel = document.getElementById("levelSel");
   const countInp = document.getElementById("countInp");
   const genBtn = document.getElementById("genBtn");
@@ -867,12 +962,150 @@
     return `<span class="fraction"><span>${num}</span><span class="bar"></span><span>${den}</span></span>`;
   }
 
-  function buildQuestionForLevel(levelKey){
-    const cfg = LEVELS[levelKey];
+  function valuesInRange(min, max, includeZero=false){
+    const out = [];
+    for(let v = min; v <= max; v++){
+      if(v === 0 && !includeZero) continue;
+      out.push(v);
+    }
+    return out;
+  }
+
+  function buildAddSubFromRange(min, max, includeZero=false){
+    const values = valuesInRange(min, max, includeZero);
+
+    for(let tries = 0; tries < 4000; tries++){
+      const x = choice(values);
+      const result = choice(values);
+      if(result === x) continue;
+
+      const isAdd = Math.random() < 0.5;
+      const k = isAdd ? result - x : x - result;
+      if(k <= 0) continue;
+
+      const exprValue = result, xValue = x;
+      const minVal = Math.min(exprValue, xValue), maxVal = Math.max(exprValue, xValue);
+      const leftX = minVal >= 0 ? 360 : 220, rightX = 1440;
+      const tickValues = rangeInclusive(exprValue, xValue);
+      const tickXs = tickValues.map(v => mapRange(v, minVal, maxVal, leftX, rightX));
+
+      return {
+        mode:'addsub',
+        negative: min < 0 && (x < 0 || result < 0),
+        isAdd, x, result, k,
+        equationLeftHTML: isAdd ? `x + ${formatSigned(k)}` : `x − ${formatSigned(k)}`,
+        equationRightHTML: formatSigned(result),
+        exprValue, xValue,
+        exprX: mapRange(exprValue, minVal, maxVal, leftX, rightX),
+        xX: mapRange(xValue, minVal, maxVal, leftX, rightX),
+        tickValues, tickXs
+      };
+    }
+
+    // Safe fallback
+    return buildAddSub(false, false);
+  }
+
+  function buildAddSubForQuizLevel(levelKey){
+    if(levelKey === 'sweet') return buildAddSubFromRange(1, 10, false);
+    if(levelKey === 'mild') return buildAddSubFromRange(1, 50, false);
+    if(levelKey === 'medium') return buildAddSubFromRange(-20, 20, false);
+    return buildAddSubFromRange(-50, 50, false);
+  }
+
+  function buildTimesTableMult(allowNeg){
+    const coeffs = [2,3,4,5,6,7,8,9,10,11,12];
+    for(let tries = 0; tries < 2000; tries++){
+      const a = choice(coeffs);
+      const mag = randInt(1,12);
+      const x = allowNeg && Math.random() < 0.5 ? -mag : mag;
+      const result = a * x;
+
+      const absX = Math.abs(x), left = 220, right = 1440, step = (right - left) / a;
+      const prePoints = [];
+      for(let i = 0; i <= a; i++) prePoints.push({ px:left + i*step, value:absX*i, multiplier:i });
+
+      const negative = result < 0;
+      let points, zeroIndex, xIndex, resultIndex;
+      if(negative){
+        points = [];
+        for(let i = 0; i <= a; i++) points.push({ px:left + i*step, value:result + absX*i, multiplier:a - i });
+        resultIndex = 0; xIndex = a - 1; zeroIndex = a;
+      }else{
+        points = prePoints.map(p => ({...p}));
+        zeroIndex = 0; xIndex = 1; resultIndex = a;
+      }
+
+      return {
+        mode:'mult', negative, a, x, result,
+        equationLeftHTML:`${a}x`,
+        equationRightHTML:formatSigned(result),
+        prePoints, preZeroIndex:0, preXIndex:1, preResultIndex:a,
+        points, zeroIndex, xIndex, resultIndex
+      };
+    }
+    return buildMult(allowNeg, false);
+  }
+
+  function buildTimesTableDiv(allowNeg){
+    const divisors = [2,3,4,5,6,7,8,9,10,11,12];
+    for(let tries = 0; tries < 2000; tries++){
+      const d = choice(divisors);
+      const magQ = randInt(1,12);
+      const quotient = allowNeg && Math.random() < 0.5 ? -magQ : magQ;
+      const x = d * quotient;
+
+      const absQ = Math.abs(quotient), left = 220, right = 1440, step = (right - left) / d;
+      const prePoints = [];
+      for(let i = 0; i <= d; i++) prePoints.push({ px:left + i*step, value:absQ*i, numerator:i });
+
+      const negative = quotient < 0;
+      let points, zeroIndex, fracIndex, xIndex;
+      if(negative){
+        points = [];
+        for(let i = 0; i <= d; i++) points.push({ px:left + i*step, value:x + absQ*i, numerator:d - i });
+        xIndex = 0; fracIndex = d - 1; zeroIndex = d;
+      }else{
+        points = prePoints.map(p => ({...p}));
+        zeroIndex = 0; fracIndex = 1; xIndex = d;
+      }
+
+      return {
+        mode:'div', negative, d, quotient, x,
+        equationLeftHTML:fractionHTML('x', String(d)),
+        equationRightHTML:formatSigned(quotient),
+        prePoints, preZeroIndex:0, preFracIndex:1, preXIndex:d,
+        points, zeroIndex, fracIndex, xIndex
+      };
+    }
+    return buildDiv(allowNeg, false);
+  }
+
+  function buildMultDivForQuizLevel(levelKey){
+    const allowNeg = levelKey === 'medium' || levelKey === 'spicy';
+    return choice(['mult','div']) === 'mult'
+      ? buildTimesTableMult(allowNeg)
+      : buildTimesTableDiv(allowNeg);
+  }
+
+  function buildMixedForLevel(levelKey){
+    const cfg = {
+      sweet:  { allowNeg:false, hot:false },
+      mild:   { allowNeg:true,  hot:false },
+      medium: { allowNeg:true,  hot:false },
+      spicy:  { allowNeg:true,  hot:true  }
+    }[levelKey] || { allowNeg:true, hot:false };
+
     const type = cfg.hot ? choice(['addsub','addsub','addsub','mult','div']) : choice(['addsub','addsub','mult','div']);
     if(type === 'addsub') return buildAddSub(cfg.allowNeg, !!cfg.hot);
     if(type === 'mult') return buildMult(cfg.allowNeg, !!cfg.hot);
     return buildDiv(cfg.allowNeg, !!cfg.hot);
+  }
+
+  function buildQuestionForLevel(levelKey, setKey){
+    if(setKey === 'addsub') return buildAddSubForQuizLevel(levelKey);
+    if(setKey === 'multdiv') return buildMultDivForQuizLevel(levelKey);
+    return buildMixedForLevel(levelKey);
   }
 
   function buildAddSub(allowNeg, hot){
@@ -1003,11 +1236,11 @@
     }
   }
 
-  function pageHeaderHTML(levelName, pageLabel, showNameDate){
+  function pageHeaderHTML(setName, levelName, pageLabel, showNameDate){
     return `
       <div class="pageHeader">
         <div>
-          <div class="hdrTitle">One Step Equations — Worksheet (${levelName})</div>
+          <div class="hdrTitle">${setName} — Worksheet (${levelName})</div>
           <div class="hdrSub">${pageLabel}</div>
         </div>
 
@@ -1333,7 +1566,7 @@
     return wrap;
   }
 
-  function buildPages(questions, levelKey, titleLabel, showAnswers){
+  function buildPages(questions, levelKey, setKey, titleLabel, showAnswers){
     const cfg = LEVELS[levelKey];
     const perPage = cfg.perPage;
     const totalPages = Math.ceil(questions.length / perPage);
@@ -1346,7 +1579,7 @@
       page.className = "page" + (levelKey === 'spicy' ? " spicyPage" : "") + (showAnswers ? " answerKeyPage" : "");
 
       const pageLabel = `${titleLabel} — Page ${p+1} of ${totalPages}`;
-      page.innerHTML = pageHeaderHTML(cfg.name, pageLabel, !showAnswers);
+      page.innerHTML = pageHeaderHTML(SETS[setKey].name, cfg.name, pageLabel, !showAnswers);
 
       const grid = document.createElement("div");
       grid.className = `grid ${cfg.gridClass} rows-${rows}`;
@@ -1380,16 +1613,17 @@
   function generate(){
     clearOut();
 
+    const setKey = setSel.value;
     const levelKey = levelSel.value;
     let n = Number(countInp.value);
     if(!Number.isFinite(n)) n = DEFAULT_COUNTS[levelKey] || 14;
     n = Math.max(1, Math.min(48, Math.round(n)));
     countInp.value = String(n);
 
-    const questions = Array.from({length:n}, () => buildQuestionForLevel(levelKey));
+    const questions = Array.from({length:n}, () => buildQuestionForLevel(levelKey, setKey));
 
-    const wsPages = buildPages(questions, levelKey, "Worksheet", false);
-    const keyPages = buildPages(questions, levelKey, "Answer key", true);
+    const wsPages = buildPages(questions, levelKey, setKey, "Worksheet", false);
+    const keyPages = buildPages(questions, levelKey, setKey, "Answer key", true);
 
     for(const pg of wsPages) out.appendChild(pg);
     for(const pg of keyPages) out.appendChild(pg);
@@ -1401,10 +1635,12 @@
 
   function resetAll(){
     clearOut();
+    setSel.value = "mixed";
     levelSel.value = "sweet";
     updateDefaultCountForLevel();
   }
 
+  setSel.addEventListener("change", () => { clearOut(); });
   levelSel.addEventListener("change", updateDefaultCountForLevel);
   genBtn.addEventListener("click", generate);
   printBtn.addEventListener("click", () => window.print());
