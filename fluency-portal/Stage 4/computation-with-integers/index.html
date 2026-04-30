@@ -45,8 +45,6 @@
       padding: 18px;
     }
 
-    .seedHint{ margin-top:6px; color: var(--muted); font-weight: 850; font-size: 12px; }
-
     .controls{
       display:flex;
       align-items:flex-end;
@@ -86,6 +84,35 @@
       align-items:center;
       padding: 6px 0 0;
     }
+
+    .checksHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      width:100%;
+      margin-bottom: 2px;
+    }
+    .checksTitle{
+      margin:0;
+      font-size:13px;
+      font-weight:950;
+      color:var(--muted);
+    }
+    .miniBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 950;
+      cursor:pointer;
+      background:#eef2ff;
+      color:#1d4ed8;
+      font-size: 12px;
+      line-height:1;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+    }
+    .miniBtn:active{ transform: scale(.98); }
     .chk{
       display:flex;
       gap: 10px;
@@ -131,6 +158,14 @@
     button.danger{ background:#fee2e2; color:#991b1b; }
 
     .outWrap{ margin-top: 16px; }
+    .outWrap.flashGenerate{
+      animation: flashGenerate .42s ease-out;
+    }
+    @keyframes flashGenerate{
+      0%{ filter: brightness(1.04); transform: translateY(-1px); }
+      45%{ filter: brightness(1.01); transform: translateY(0); }
+      100%{ filter: brightness(1); transform: translateY(0); }
+    }
 
     .page{
       margin-top: 16px;
@@ -519,6 +554,48 @@
       fill: var(--ok);
     }
 
+
+    .topSelectors{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      width:100%;
+    }
+    .outcomeControl{ flex: 1 1 360px; min-width: 320px; }
+    .outcomeControl select{ width:100%; }
+    .languageControl{
+      flex: 0 1 300px;
+      min-width: 240px;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+    }
+    .languageControl select{ min-width: 240px; width:100%; }
+    .languageControl label{ text-align:right; }
+
+    .page.lang-rtl .pageHeader,
+    .page.lang-rtl .qTop,
+    .page.lang-rtl .ansRow,
+    .page.lang-rtl .hardKeyRow{ direction: rtl; }
+    .page.lang-rtl .qText,
+    .page.lang-rtl .hdrTitle,
+    .page.lang-rtl .hdrSub,
+    .page.lang-rtl .lineLabel,
+    .page.lang-rtl .ansLabel,
+    .page.lang-rtl .hardKeyLabel{ text-align: right; }
+    .page.lang-rtl .qNum{ text-align: left; }
+    .page.lang-rtl .ineqRow,
+    .page.lang-rtl .orderRow,
+    .page.lang-rtl .orderAns,
+    .page.lang-rtl .opExpr,
+    .page.lang-rtl svg{ direction:ltr; }
+    .page.lang-rtl .pill,
+    .page.lang-rtl .symBox,
+    .page.lang-rtl .ansBox.key,
+    .page.lang-rtl .hardKeyValue{ direction:ltr; }
+
     @media print{
       @page{ size: A4; margin: 12mm; }
 
@@ -575,15 +652,32 @@
   <div class="wrap">
     <div class="panel">
       <div class="controls">
-        <div>
-          <label for="outcomeSel">Stage outcome</label>
-          <select id="outcomeSel">
-            <option value="basic_de">Stage 4 — Integers (D/E basic)</option>
-            <option value="c_expected">Stage 4 — Integers (C-Expected)</option>
-<option value="ab_thorough">Stage 4 — Integers (A/B thorough)</option>          </select>
+        <div style="min-width:320px; flex:1 1 560px;">
+          <div class="topSelectors">
+            <div class="outcomeControl">
+              <label for="outcomeSel">Stage outcome</label>
+              <select id="outcomeSel">
+                <option value="basic_de">Stage 4 — Integers (D/E basic)</option>
+                <option value="c_expected">Stage 4 — Integers (C-Expected)</option>
+                <option value="ab_thorough">Stage 4 — Integers (A/B thorough)</option>
+              </select>
+            </div>
+
+            <div class="languageControl">
+              <label for="languageSel">Worksheet language</label>
+              <select id="languageSel">
+                <option value="en">English</option>
+                <option value="fa">فارسی (Farsi / Persian)</option>
+                <option value="ar">العربية (Arabic)</option>
+              </select>
+            </div>
+          </div>
 
           <div class="checks" aria-label="Question types">
-            <label style="margin:0; font-size:13px; font-weight:950; color:var(--muted); width:100%;">Question types (checkboxes)</label>
+            <div class="checksHeader">
+              <label class="checksTitle">Question types (checkboxes)</label>
+              <button id="toggleAllBtn" type="button" class="miniBtn">Deselect all</button>
+            </div>
             <div id="checksHost" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center; width:100%;"></div>
           </div>
         </div>
@@ -593,14 +687,7 @@
             <label id="countLabel" for="countInp">Total questions</label>
             <input id="countInp" type="number" min="3" max="48" step="1" value="6" />
           </div>
-          <div>
-            <label for="seedInp">Seed (optional)</label>
-            <input id="seedInp" type="text" inputmode="numeric" placeholder="random" />
-            <div class="seedHint">Use the same seed to regenerate the exact same worksheet.</div>
-          </div>
-
           <div class="btnRow">
-            <button id="newSeedBtn" class="ghost" type="button" title="Pick a new seed">New seed</button>
             <button id="genBtn" class="primary">Generate</button>
             <button id="printBtn" class="ghost">Print / Save as PDF</button>
             <button id="resetBtn" class="danger">Reset</button>
@@ -618,6 +705,65 @@
   // Config
   // ------------------------------------------------------------
   const BORDER_SRC = "border_page0.png"; // must sit beside this HTML
+
+
+  const I18N = {
+    en: {
+      dir:"ltr",
+      worksheet:"Worksheet", answerKey:"Answer key", page:"Page", of:"of", name:"Name", className:"Class", date:"Date", answer:"Answer:", noTypes:"Please tick at least one question type.",
+      basicHeader:"Stage 4 — Integers · Grades D/E — friendly numbers + diagrams",
+      cHeader:"Stage 4 - Integers - Grade C - Expected",
+      abHeader:"Stage 4 - Integers - A/B Thorough",
+      place:v=>`Place ${v} on the number line.`,
+      useLine:(a,op,b)=>`Use the number line to calculate: ${a} ${op} ${b}`,
+      insertSym:"Insert either <, > or = to make the statement true.",
+      order:(nums,dir)=>`Place the integers ${nums} in ${dir} order.`,
+      ascending:"ascending", descending:"descending",
+      calculateExpr:(a,op,b)=>`Calculate: ${a} ${op} ${b}`,
+      calculate:"Calculate:",
+      oop:"Use order of operations to calculate."
+    },
+    fa: {
+      dir:"rtl",
+      worksheet:"برگه تمرین", answerKey:"پاسخ‌نامه", page:"صفحه", of:"از", name:"نام", className:"کلاس", date:"تاریخ", answer:"پاسخ:", noTypes:"لطفاً حداقل یک نوع پرسش را انتخاب کنید.",
+      basicHeader:"مرحله ۴ — اعداد صحیح · سطح D/E — عددهای ساده و نمودارها",
+      cHeader:"مرحله ۴ — اعداد صحیح — سطح C مورد انتظار",
+      abHeader:"مرحله ۴ — اعداد صحیح — سطح A/B پیشرفته",
+      place:v=>`${v} را روی خط اعداد قرار دهید.`,
+      useLine:(a,op,b)=>`از خط اعداد برای محاسبه استفاده کنید: ${a} ${op} ${b}`,
+      insertSym:"یکی از علامت‌های <، > یا = را قرار دهید تا عبارت درست شود.",
+      order:(nums,dir)=>`اعداد صحیح ${nums} را به ترتیب ${dir} قرار دهید.`,
+      ascending:"صعودی", descending:"نزولی",
+      calculateExpr:(a,op,b)=>`محاسبه کنید: ${a} ${op} ${b}`,
+      calculate:"محاسبه کنید:",
+      oop:"با رعایت ترتیب عملیات محاسبه کنید."
+    },
+    ar: {
+      dir:"rtl",
+      worksheet:"ورقة عمل", answerKey:"دليل الإجابات", page:"صفحة", of:"من", name:"الاسم", className:"الصف", date:"التاريخ", answer:"الإجابة:", noTypes:"يرجى اختيار نوع سؤال واحد على الأقل.",
+      basicHeader:"المرحلة ٤ — الأعداد الصحيحة · المستوى D/E — أعداد سهلة ورسوم بيانية",
+      cHeader:"المرحلة ٤ — الأعداد الصحيحة — المستوى C المتوقع",
+      abHeader:"المرحلة ٤ — الأعداد الصحيحة — المستوى A/B المتقدم",
+      place:v=>`ضع ${v} على خط الأعداد.`,
+      useLine:(a,op,b)=>`استخدم خط الأعداد للحساب: ${a} ${op} ${b}`,
+      insertSym:"ضع أحد الرموز < أو > أو = لتصبح العبارة صحيحة.",
+      order:(nums,dir)=>`رتّب الأعداد الصحيحة ${nums} ترتيبًا ${dir}.`,
+      ascending:"تصاعديًا", descending:"تنازليًا",
+      calculateExpr:(a,op,b)=>`احسب: ${a} ${op} ${b}`,
+      calculate:"احسب:",
+      oop:"استخدم ترتيب العمليات للحساب."
+    }
+  };
+
+  function lang(){ return languageSel?.value || "en"; }
+  function L(){ return I18N[lang()] || I18N.en; }
+  function tr(key){ return L()[key] ?? I18N.en[key] ?? key; }
+  function joinList(items){ return items.join(lang() === "en" ? ", " : "، "); }
+  function currentHeader(){
+    if (outcomeSel.value === "basic_de") return tr("basicHeader");
+    if (outcomeSel.value === "ab_thorough") return tr("abHeader");
+    return tr("cHeader");
+  }
 
   // Basic ranges
   const PLACE_RANGE = { min:-10, max: 10 };
@@ -679,14 +825,14 @@
 
   // DOM
   const outcomeSel = document.getElementById("outcomeSel");
+  const languageSel = document.getElementById("languageSel");
   const checksHost = document.getElementById("checksHost");
   const countInp = document.getElementById("countInp");
   const countLabel = document.getElementById("countLabel");
-  const seedInp  = document.getElementById("seedInp");
-  const newSeedBtn = document.getElementById("newSeedBtn");
   const genBtn   = document.getElementById("genBtn");
   const printBtn = document.getElementById("printBtn");
   const resetBtn = document.getElementById("resetBtn");
+  const toggleAllBtn = document.getElementById("toggleAllBtn");
   const out      = document.getElementById("out");
 
   const OUTCOMES = {
@@ -702,9 +848,9 @@
         { id:"place", label:"Place an integer on a number line", checked:true },
         { id:"calc",  label:"Use a number line to calculate", checked:true },
         { id:"ineq",  label:"Compare integers ( < > = )", checked:true },
-        { id:"order", label:"Ordering integers", checked:false },
-        { id:"mult",  label:"Multiplying integers", checked:false },
-        { id:"div",   label:"Dividing integers", checked:false },
+        { id:"order", label:"Ordering integers", checked:true },
+        { id:"mult",  label:"Multiplying integers", checked:true },
+        { id:"div",   label:"Dividing integers", checked:true },
       ]
     },
     c_expected: {
@@ -779,6 +925,7 @@
       inp.type = "checkbox";
       inp.checked = !!b.checked;
       inp.dataset.id = b.id;
+      inp.addEventListener("change", updateToggleAllButtonLabel);
 
       const span = document.createElement("span");
       span.textContent = b.label;
@@ -789,6 +936,22 @@
 
       activeCbs.push(inp);
     }
+    updateToggleAllButtonLabel();
+  }
+
+  function updateToggleAllButtonLabel(){
+    if (!toggleAllBtn) return;
+    if (!activeCbs.length){
+      toggleAllBtn.textContent = "Select all";
+      return;
+    }
+    const allChecked = activeCbs.every(cb => cb.checked);
+    toggleAllBtn.textContent = allChecked ? "Deselect all" : "Select all";
+  }
+
+  function setAllCheckboxes(checked){
+    activeCbs.forEach(cb => cb.checked = checked);
+    updateToggleAllButtonLabel();
   }
 
   function enabledTypes(){
@@ -1971,16 +2134,16 @@
     let deferredAnsRow = null;
 
     if (q.type === "place"){
-      text.textContent = `Place ${fmtInt(q.v)} on the number line.`;
+      text.textContent = L().place(fmtInt(q.v));
       work.appendChild(buildFixedNumberLineSVG(q.v, showAnswers));
 
     } else if (q.type === "calc"){
-      text.textContent = `Use the number line to calculate: ${fmtInt(q.a)} ${q.op} ${fmtInt(q.b)}`;
+      text.textContent = L().useLine(fmtInt(q.a), q.op, fmtInt(q.b));
       work.appendChild(buildCalcLineSVG(q.a));
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
-      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      ansRow.innerHTML = `<div class="ansLabel">${tr("answer")}</div>`;
       const box = document.createElement("div");
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
@@ -1988,7 +2151,7 @@
       deferredAnsRow = ansRow;
 
     } else if (q.type === "ineq"){
-      text.textContent = `Insert either <, > or = to make the statement true.`;
+      text.textContent = tr("insertSym");
 
       const row = document.createElement("div");
       row.className = "ineqRow";
@@ -2011,7 +2174,7 @@
       work.appendChild(row);
 
     } else if (q.type === "order"){
-      text.textContent = `Place the integers ${q.shown.map(fmtInt).join(', ')} in ${q.dir} order.`;
+      text.textContent = L().order(joinList(q.shown.map(fmtInt)), tr(q.dir));
 
       work.style.border = "none";
       work.style.padding = "0";
@@ -2046,7 +2209,7 @@
       work.appendChild(wrap);
 
     } else if (q.type === "mult"){
-      text.textContent = `Calculate: ${fmtInt(q.a)} × ${fmtInt(q.b)}`;
+      text.textContent = L().calculateExpr(fmtInt(q.a), "×", fmtInt(q.b));
 
       work.style.alignItems = 'flex-start';
       work.style.justifyContent = 'flex-start';
@@ -2054,7 +2217,7 @@
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
-      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      ansRow.innerHTML = `<div class="ansLabel">${tr("answer")}</div>`;
       const box = document.createElement("div");
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
@@ -2062,7 +2225,7 @@
       deferredAnsRow = ansRow;
 
     } else if (q.type === "div"){
-      text.textContent = `Calculate: ${fmtInt(q.a)} ÷ ${fmtInt(q.b)}`;
+      text.textContent = L().calculateExpr(fmtInt(q.a), "÷", fmtInt(q.b));
 
       work.style.alignItems = 'flex-start';
       work.style.justifyContent = 'flex-start';
@@ -2070,7 +2233,7 @@
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
-      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      ansRow.innerHTML = `<div class="ansLabel">${tr("answer")}</div>`;
       const box = document.createElement("div");
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
@@ -2078,11 +2241,11 @@
       deferredAnsRow = ansRow;
 
     } else if (q.type === "place_ce"){
-      text.textContent = `Place ${fmtInt(q.answer)} on the number line.`;
+      text.textContent = L().place(fmtInt(q.answer));
       work.appendChild(buildPlaceLineCE(q, showAnswers));
 
     } else if (q.type === "calc_ce"){
-      text.textContent = `Calculate: ${tok(q.a)} ${q.op} ${tok(q.b)}`;
+      text.textContent = L().calculateExpr(tok(q.a), q.op, tok(q.b));
 
       work.style.alignItems = 'flex-start';
       work.style.justifyContent = 'flex-start';
@@ -2090,7 +2253,7 @@
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
-      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      ansRow.innerHTML = `<div class="ansLabel">${tr("answer")}</div>`;
       const box = document.createElement("div");
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
@@ -2098,7 +2261,7 @@
       deferredAnsRow = ansRow;
 
     } else if (q.type === "comp_ce"){
-      text.textContent = `Insert either <, > or = to make the statement true.`;
+      text.textContent = tr("insertSym");
 
       const row = document.createElement("div");
       row.className = "ineqRow";
@@ -2124,7 +2287,7 @@
       work.appendChild(row);
 
     } else if (q.type === "signs_ce"){
-      text.textContent = `Calculate:`;
+      text.textContent = tr("calculate");
 
       work.style.border = "none";
       work.style.padding = "0";
@@ -2146,7 +2309,7 @@
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
-      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      ansRow.innerHTML = `<div class="ansLabel">${tr("answer")}</div>`;
       const box = document.createElement("div");
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
@@ -2154,7 +2317,7 @@
       deferredAnsRow = ansRow;
 
     } else if (q.type === "oop_ce"){
-      text.textContent = `Use order of operations to calculate.`;
+      text.textContent = tr("oop");
 
       work.style.border = "none";
       work.style.padding = "0";
@@ -2173,7 +2336,7 @@
 
       const ansRow = document.createElement("div");
       ansRow.className = "ansRow";
-      ansRow.innerHTML = `<div class="ansLabel">Answer:</div>`;
+      ansRow.innerHTML = `<div class="ansLabel">${tr("answer")}</div>`;
       const box = document.createElement("div");
       box.className = "ansBox" + (showAnswers ? " key" : "");
       box.textContent = showAnswers ? fmtInt(q.ans) : "";
@@ -2181,7 +2344,7 @@
       deferredAnsRow = ansRow;
 
     } else if (q.type === "hard_oop_ab"){
-      text.textContent = `Use order of operations to calculate.`;
+      text.textContent = tr("oop");
 
       work.style.border = "none";
       work.style.padding = "0";
@@ -2212,7 +2375,7 @@
         const keyRow = document.createElement("div");
         keyRow.className = "hardKeyRow";
         keyRow.innerHTML = `
-          <div class="hardKeyLabel">Answer:</div>
+          <div class="hardKeyLabel">${tr("answer")}</div>
           <div class="hardKeyValue">${esc(unicodeInt(q.ans))}</div>
         `;
         deferredAnsRow = keyRow;
@@ -2226,7 +2389,7 @@
 
   function pageHTML(pageTitle, pageIndex, pageCount){
     const page = document.createElement("div");
-    page.className = "page";
+    page.className = "page" + (L().dir === "rtl" ? " lang-rtl" : "");
 
     const border = document.createElement("img");
     border.className = "pageBorder";
@@ -2246,13 +2409,13 @@
     header.className = "pageHeader";
     header.innerHTML = `
       <div class="hdrLeft">
-        <div class="hdrTitle">${pageTitle} — Page ${pageIndex} of ${pageCount}</div>
-        <div class="hdrSub">${currentCfg().header}</div>
+        <div class="hdrTitle">${pageTitle} — ${tr("page")} ${pageIndex} ${tr("of")} ${pageCount}</div>
+        <div class="hdrSub">${currentHeader()}</div>
       </div>
       <div class="nameRow">
-        <div class="lineField"><div class="lineLabel">Name</div><div class="lineBox"></div></div>
-        <div class="lineField"><div class="lineLabel">Class</div><div class="lineBox"></div></div>
-        <div class="lineField"><div class="lineLabel">Date</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">${tr("name")}</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">${tr("className")}</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">${tr("date")}</div><div class="lineBox"></div></div>
       </div>
     `;
     content.appendChild(header);
@@ -2299,54 +2462,54 @@
   }
 
   function generate(){
+    rng = Math.random;
     clearOut();
-
-    let seed = (seedInp?.value ?? "").trim();
-    if (!seed){
-      seed = String(Date.now());
-      seedInp.value = seed;
-    }
-    const seedHash = xmur3(seed)();
-    rng = mulberry32(seedHash);
 
     let n = normalizeCountForMode(countInp.value);
     countInp.value = String(n);
 
     const qs = generateQuestions(n);
     if (!qs.length){
-      out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">Please tick at least one question type.</div>`;
+      out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">${tr("noTypes")}</div>`;
       return;
     }
 
-    const ws = buildPages(qs, "Worksheet", false);
-    const key = buildPages(qs, "Answer key", true);
+    const ws = buildPages(qs, tr("worksheet"), false);
+    const key = buildPages(qs, tr("answerKey"), true);
 
     ws.forEach(pg => out.appendChild(pg));
     key.forEach(pg => out.appendChild(pg));
+
+    out.classList.remove("flashGenerate");
+    void out.offsetWidth;
+    out.classList.add("flashGenerate");
 
     if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
  function reset(){
   clearOut();
-  outcomeSel.value = "c_expected";
+  outcomeSel.value = "basic_de";
   renderCheckboxes();
   updateCountUI(true);
-  seedInp.value = "";
 }
 
   function applyOutcomeChange(){
     clearOut();
     renderCheckboxes();
     updateCountUI(true);
-    seedInp.value = "";
   }
 
+  outcomeSel.value = "basic_de";
   renderCheckboxes();
   updateCountUI(true);
 
   outcomeSel.addEventListener("change", applyOutcomeChange);
-  newSeedBtn.addEventListener("click", () => seedInp.value = String(Date.now()));
+  languageSel.addEventListener("change", () => { if (out.children.length) generate(); });
+  toggleAllBtn.addEventListener("click", () => {
+    const allChecked = activeCbs.length && activeCbs.every(cb => cb.checked);
+    setAllCheckboxes(!allChecked);
+  });
   genBtn.addEventListener("click", generate);
   printBtn.addEventListener("click", () => window.print());
   resetBtn.addEventListener("click", reset);
