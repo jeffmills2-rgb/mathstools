@@ -86,7 +86,7 @@
 
     .topRow{
       display:grid;
-      grid-template-columns:150px 1fr 150px;
+      grid-template-columns:210px 1fr 150px;
       align-items:start;
       gap:14px;
       margin-bottom:12px;
@@ -120,10 +120,20 @@
       box-shadow:0 16px 32px rgba(15,23,42,.18);
       background:linear-gradient(180deg,#1d4ed8,#1e3a8a);
     }
+    .levelBanner .rtlLine{
+      display:block;
+      font-size:.62em;
+      line-height:1.15;
+      margin-top:4px;
+      letter-spacing:0;
+    }
 
     .notationRow{
       display:flex;
-      justify-content:flex-end;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
       margin:4px 0 14px;
     }
     .notationPill{
@@ -139,6 +149,20 @@
       font-weight:950;
     }
     .notationLabel{font-size:15px;white-space:nowrap}
+    .leftControlStack{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+    .languageSelectCard{display:flex;align-items:center;gap:10px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.22);color:#4c1d95;border-radius:18px;padding:10px 12px;box-shadow:0 10px 22px rgba(15,23,42,.05);font-weight:950;width:max-content;max-width:100%}
+    .languageSelectCard.levelLanguageCard{width:100%;justify-content:flex-start;margin:0 0 16px;background:#f8f5ff}
+    .languageSelect{appearance:none;-webkit-appearance:none;border:2px solid #c4b5fd;background:#fff;color:#4c1d95;border-radius:12px;padding:8px 34px 8px 12px;font-weight:1000;font-size:14px;cursor:pointer;min-width:170px;background-image:linear-gradient(45deg,transparent 50%,#7c3aed 50%),linear-gradient(135deg,#7c3aed 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+    .languageSelect:focus{outline:none;box-shadow:0 0 0 4px rgba(124,58,237,.14);border-color:#8b5cf6}
+    .rtlText{direction:rtl;unicode-bidi:plaintext;font-family:var(--uiFont);font-weight:900}
+    .dualText .rtlLine{display:block;direction:rtl;unicode-bidi:plaintext;font-size:.72em;line-height:1.25;margin-top:4px;opacity:.92;font-weight:900}
+    .dualText .modalHead .rtlLine{font-size:.65em}
+    .dualText .levelSub .rtlLine{font-size:.95em;font-weight:850}
+    .dualText .qCounter .rtlLine{font-size:.78em}
+    .dualText .feedback .rtlLine,.dualText .hintMini .rtlLine{font-size:.9em}
+    .dualText .mmtFooter .rtlLine{display:inline;font-size:1em;margin-left:6px}
+    .smallLabel .rtlLine,.answerLabel .rtlLine{font-size:.74em}
+
     .pillSwitch{
       position:relative;
       width:150px;
@@ -388,7 +412,7 @@
         <span>Mills Maths Tools</span>
       </div>
     </a>
-    <div class="top-title">Substitution in Algebra</div>
+    <div class="top-title" id="topTitle">Substitution in Algebra</div>
     <div></div>
   </header>
 
@@ -396,13 +420,23 @@
     <div class="card">
       <div class="topRow">
         <button id="backToLevelsBtn" class="backBtn" title="Back to level menu">← Back</button>
+
         <div class="levelBannerWrap"><div id="levelBanner" class="levelBanner">Level: —</div></div>
         <button id="resetQuizBtn" class="resetBtn" title="Reset quiz">Reset</button>
       </div>
 
       <div class="notationRow">
+        <div class="languageSelectCard" id="languageCard">
+          <label class="notationLabel" id="languageLabel" for="languageSelect">Language / زبان / اللغة</label>
+          <select class="languageSelect" id="languageSelect">
+            <option value="en">English</option>
+            <option value="fa">فارسی (Persian)</option>
+            <option value="ar">العربية (Arabic)</option>
+          </select>
+        </div>
+
         <div class="notationPill" aria-label="Notation choice">
-          <span class="notationLabel">Choose notation:</span>
+          <span class="notationLabel" id="notationLabel">Choose notation:</span>
           <button class="pillSwitch" id="notationToggle" type="button" aria-pressed="true" aria-label="Switch between multiplication/division symbols and cleaner fraction notation">
             <span class="pillKnob"></span>
             <span class="pillChoice symbols">× ÷</span>
@@ -420,56 +454,65 @@
         <div class="questionPanel">
           <div class="subValues" id="subValues"></div>
           <div class="exprCard">
-            <div class="smallLabel">Evaluate:</div>
+            <div class="smallLabel" id="evaluateLabel">Evaluate:</div>
             <div id="exprBox" class="expression">—</div>
           </div>
         </div>
 
         <div class="answerRow">
-          <div class="answerLabel">Answer:</div>
+          <div class="answerLabel" id="answerLabel">Answer:</div>
           <input id="answerInput" class="answerInput" inputmode="numeric" autocomplete="off" placeholder="Type..." />
           <button id="enterBtn" class="btn enterBtn">Enter</button>
           <button id="nextBtn" class="btn nextBtn">Next →</button>
         </div>
 
         <div id="feedback" class="feedback">Type your answer, then press <b>Enter</b>.</div>
-        <div class="hintMini">Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.</div>
+        <div class="hintMini" id="hintMini">Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.</div>
 
         <div class="polypadHelp">
           <img src="logo.png" alt="Polypad logo" class="helpLogo" onerror="this.style.display='none'">
-          <span>Use the function machines on Polypad to help you: <a href="https://polypad.amplify.com/p#functions" target="_blank" rel="noopener noreferrer">https://polypad.amplify.com/p#functions</a></span>
+          <span id="polypadHelpText">Use the function machines on Polypad to help you: <a href="https://polypad.amplify.com/p#functions" target="_blank" rel="noopener noreferrer">https://polypad.amplify.com/p#functions</a></span>
         </div>
       </div>
     </div>
   </div>
 
   <div class="mmtFooter">
-    This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
+    <span id="footerText">This tool and more can be found at&nbsp;</span><a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
   </div>
 
   <div id="overlay" class="overlay"></div>
 
   <div id="levelModal" class="modal" role="dialog" aria-modal="true" aria-label="Choose your level">
-    <div class="modalHead">Choose your level</div>
+    <div class="modalHead" id="chooseLevelTitle">Choose your level</div>
     <div class="modalBody">
+      <div class="languageSelectCard levelLanguageCard" id="startLanguageCard">
+        <label class="notationLabel" id="startLanguageLabel" for="startLanguageSelect">Language / زبان / اللغة</label>
+        <select class="languageSelect" id="startLanguageSelect">
+          <option value="en">English</option>
+          <option value="fa">فارسی (Persian)</option>
+          <option value="ar">العربية (Arabic)</option>
+        </select>
+      </div>
       <div class="levelList">
-        <div class="levelRow lvl-sweet"><div><div class="levelName">Sweet</div><div class="levelSub">One variable · value from 1 to 10 · one-step expressions</div></div><button class="startBtn" data-level="sweet">Start</button></div>
-        <div class="levelRow lvl-mild"><div><div class="levelName">Mild</div><div class="levelSub">One variable · value from 1 to 10 · two-step expressions</div></div><button class="startBtn" data-level="mild">Start</button></div>
-        <div class="levelRow lvl-medium"><div><div class="levelName">Medium</div><div class="levelSub">Two variables · values from 1 to 10 · multiplication and division structures</div></div><button class="startBtn" data-level="medium">Start</button></div>
-        <div class="levelRow lvl-spicy"><div><div class="levelName">Spicy</div><div class="levelSub">Two variables · values from −10 to 10, excluding zero</div></div><button class="startBtn" data-level="spicy">Start</button></div>
-        <div class="levelRow lvl-extra"><div><div class="levelName">Extra hot</div><div class="levelSub">Three variables · values from −10 to 10, excluding zero</div></div><button class="startBtn" data-level="extraHot">Start</button></div>
+
+        <div class="levelRow lvl-sweet"><div><div class="levelName" id="levelSweetName">Sweet</div><div class="levelSub" id="levelSweetSub">One variable · value from 1 to 10 · one-step expressions</div></div><button class="startBtn" data-level="sweet">Start</button></div>
+        <div class="levelRow lvl-mild"><div><div class="levelName" id="levelMildName">Mild</div><div class="levelSub" id="levelMildSub">One variable · value from 1 to 10 · two-step expressions</div></div><button class="startBtn" data-level="mild">Start</button></div>
+        <div class="levelRow lvl-medium"><div><div class="levelName" id="levelMediumName">Medium</div><div class="levelSub" id="levelMediumSub">Two variables · values from 1 to 10 · multiplication and division structures</div></div><button class="startBtn" data-level="medium">Start</button></div>
+        <div class="levelRow lvl-spicy"><div><div class="levelName" id="levelSpicyName">Spicy</div><div class="levelSub" id="levelSpicySub">Two variables · values from −10 to 10, excluding zero</div></div><button class="startBtn" data-level="spicy">Start</button></div>
+        <div class="levelRow lvl-extra"><div><div class="levelName" id="levelExtraName">Extra hot</div><div class="levelSub" id="levelExtraSub">Three variables · values from −10 to 10, excluding zero</div></div><button class="startBtn" data-level="extraHot">Start</button></div>
       </div>
     </div>
   </div>
 
   <div id="certModal" class="modal" role="dialog" aria-modal="true" aria-label="Certificate">
-    <div class="modalHead">Certificate</div>
+    <div class="modalHead" id="certificateTitle">Certificate</div>
     <div class="modalBody">
       <div class="certWrap">
         <div class="trophyBox">🏆</div>
         <div>
           <div id="certLine1" class="certText">You completed Sweet and got 0 out of 15.</div>
-          <div class="certSub">Screenshot this and paste into Google Classroom.</div>
+          <div class="certSub" id="certSub">Screenshot this and paste into Google Classroom.</div>
         </div>
       </div>
     </div>
@@ -514,8 +557,82 @@
   const closeCertBtn = document.getElementById('closeCertBtn');
   const backToMenuBtn = document.getElementById('backToMenuBtn');
   const confettiWrap = document.getElementById('confetti');
+  const topTitle = document.getElementById('topTitle');
+  const languageSelect = document.getElementById('languageSelect');
+  const startLanguageSelect = document.getElementById('startLanguageSelect');
+  const languageLabel = document.getElementById('languageLabel');
+  const startLanguageLabel = document.getElementById('startLanguageLabel');
+  const notationLabel = document.getElementById('notationLabel');
+  const evaluateLabel = document.getElementById('evaluateLabel');
+  const answerLabel = document.getElementById('answerLabel');
+  const hintMini = document.getElementById('hintMini');
+  const polypadHelpText = document.getElementById('polypadHelpText');
+  const footerText = document.getElementById('footerText');
+  const chooseLevelTitle = document.getElementById('chooseLevelTitle');
+  const certificateTitle = document.getElementById('certificateTitle');
+  const certSub = document.getElementById('certSub');
+  const levelSweetName = document.getElementById('levelSweetName');
+  const levelSweetSub = document.getElementById('levelSweetSub');
+  const levelMildName = document.getElementById('levelMildName');
+  const levelMildSub = document.getElementById('levelMildSub');
+  const levelMediumName = document.getElementById('levelMediumName');
+  const levelMediumSub = document.getElementById('levelMediumSub');
+  const levelSpicyName = document.getElementById('levelSpicyName');
+  const levelSpicySub = document.getElementById('levelSpicySub');
+  const levelExtraName = document.getElementById('levelExtraName');
+  const levelExtraSub = document.getElementById('levelExtraSub');
+
+  let language = 'en';
+  const I18N = {
+    en: {
+      title:'Substitution in Algebra', language:'Language / زبان / اللغة', chooseLevel:'Choose your level', level:'Level', back:'← Back', reset:'Reset', notation:'Choose notation:', evaluate:'Evaluate:', answer:'Answer:', enter:'Enter', next:'Next →', type:'Type your answer, then press <b>Enter</b>.', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.', correct:'✅ Correct!', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.';}, certificate:'Certificate', certSub:'Screenshot this and paste into Google Classroom.', copy:'Copy to clipboard', copied:'Copied!', close:'Close', backMenu:'Back to level menu', footer:'This tool and more can be found at&nbsp;', polypad:'Use the function machines on Polypad to help you: ', q:function(a,b){return 'Question '+a+' / '+b;}, completed:function(lvl,score,total){return 'You completed '+lvl+' and got '+score+' out of '+total+'.';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\n(Submit a screenshot or paste this into Google Classroom.)';}, levels:{sweet:['Sweet','One variable · value from 1 to 10 · one-step expressions'],mild:['Mild','One variable · value from 1 to 10 · two-step expressions'],medium:['Medium','Two variables · values from 1 to 10 · multiplication and division structures'],spicy:['Spicy','Two variables · values from −10 to 10, excluding zero'],extraHot:['Extra hot','Three variables · values from −10 to 10, excluding zero']}
+    },
+    fa: {
+      title:'Substitution in Algebra<br><span class="rtlLine">جایگذاری در جبر</span>', language:'Language<br><span class="rtlLine">زبان</span>', chooseLevel:'Choose your level<br><span class="rtlLine">سطح خود را انتخاب کنید</span>', level:'Level<br><span class="rtlLine">سطح</span>', back:'← Back<br><span class="rtlLine">بازگشت</span>', reset:'Reset<br><span class="rtlLine">شروع دوباره</span>', notation:'Choose notation:<br><span class="rtlLine">نمادگذاری را انتخاب کنید:</span>', evaluate:'Evaluate:<br><span class="rtlLine">مقدار عبارت را پیدا کنید:</span>', answer:'Answer:<br><span class="rtlLine">پاسخ:</span>', enter:'Enter<br><span class="rtlLine">ثبت</span>', next:'Next →<br><span class="rtlLine">بعدی</span>', type:'Type your answer, then press <b>Enter</b>.<br><span class="rtlLine">پاسخ خود را بنویسید، سپس Enter را فشار دهید.</span>', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.<br><span class="rtlLine">نکته: برای ثبت پاسخ Enter را بزنید؛ برای سؤال بعدی دوباره Enter را بزنید.</span>', correct:'✅ Correct!<br><span class="rtlLine">درست است!</span>', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.<br><span class="rtlLine">کاملاً درست نیست. پاسخ درست <b>'+ans+'</b> بود.</span>';}, certificate:'Certificate<br><span class="rtlLine">گواهی</span>', certSub:'Screenshot this and paste into Google Classroom.<br><span class="rtlLine">از این صفحه عکس بگیرید و در گوگل کلاس‌روم قرار دهید.</span>', copy:'Copy to clipboard<br><span class="rtlLine">کپی کردن</span>', copied:'Copied!<br><span class="rtlLine">کپی شد!</span>', close:'Close<br><span class="rtlLine">بستن</span>', backMenu:'Back to level menu<br><span class="rtlLine">بازگشت به انتخاب سطح</span>', footer:'This tool and more can be found at&nbsp;<span class="rtlLine">این ابزار و ابزارهای بیشتر در این نشانی پیدا می‌شوند</span> ', polypad:'Use the function machines on Polypad to help you: <br><span class="rtlLine">برای کمک می‌توانید از ماشین‌های تابع در Polypad استفاده کنید:</span> ', q:function(a,b){return 'Question '+a+' / '+b+'<br><span class="rtlLine">سؤال '+a+' از '+b+'</span>';}, completed:function(lvl,score,total){return 'You completed '+lvl+' and got '+score+' out of '+total+'.<br><span class="rtlLine">شما سطح '+lvl+' را کامل کردید و '+score+' از '+total+' گرفتید.</span>';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\nجایگذاری در جبر - سطح: '+lvl+' - امتیاز: '+score+' از '+total;}, levels:{sweet:['Sweet<br><span class="rtlLine">آسان</span>','One variable · value from 1 to 10 · one-step expressions<br><span class="rtlLine">یک متغیر · مقدار از ۱ تا ۱۰ · عبارت‌های یک‌مرحله‌ای</span>'],mild:['Mild<br><span class="rtlLine">متوسط آسان</span>','One variable · value from 1 to 10 · two-step expressions<br><span class="rtlLine">یک متغیر · مقدار از ۱ تا ۱۰ · عبارت‌های دو مرحله‌ای</span>'],medium:['Medium<br><span class="rtlLine">متوسط</span>','Two variables · values from 1 to 10 · multiplication and division structures<br><span class="rtlLine">دو متغیر · مقدارها از ۱ تا ۱۰ · ساختارهای ضرب و تقسیم</span>'],spicy:['Spicy<br><span class="rtlLine">چالشی</span>','Two variables · values from −10 to 10, excluding zero<br><span class="rtlLine">دو متغیر · مقدارها از ۱۰- تا ۱۰، به جز صفر</span>'],extraHot:['Extra hot<br><span class="rtlLine">خیلی چالشی</span>','Three variables · values from −10 to 10, excluding zero<br><span class="rtlLine">سه متغیر · مقدارها از ۱۰- تا ۱۰، به جز صفر</span>']}
+    },
+    ar: {
+      title:'Substitution in Algebra<br><span class="rtlLine">التعويض في الجبر</span>', language:'Language<br><span class="rtlLine">اللغة</span>', chooseLevel:'Choose your level<br><span class="rtlLine">اختر المستوى</span>', level:'Level<br><span class="rtlLine">المستوى</span>', back:'← Back<br><span class="rtlLine">رجوع</span>', reset:'Reset<br><span class="rtlLine">إعادة البدء</span>', notation:'Choose notation:<br><span class="rtlLine">اختر طريقة الكتابة:</span>', evaluate:'Evaluate:<br><span class="rtlLine">أوجد قيمة التعبير:</span>', answer:'Answer:<br><span class="rtlLine">الإجابة:</span>', enter:'Enter<br><span class="rtlLine">إدخال</span>', next:'Next →<br><span class="rtlLine">التالي</span>', type:'Type your answer, then press <b>Enter</b>.<br><span class="rtlLine">اكتب إجابتك، ثم اضغط Enter.</span>', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.<br><span class="rtlLine">نصيحة: اضغط Enter لإرسال الإجابة، ثم اضغط Enter مرة أخرى للانتقال للسؤال التالي.</span>', correct:'✅ Correct!<br><span class="rtlLine">صحيح!</span>', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.<br><span class="rtlLine">ليست صحيحة تمامًا. الإجابة الصحيحة هي <b>'+ans+'</b>.</span>';}, certificate:'Certificate<br><span class="rtlLine">الشهادة</span>', certSub:'Screenshot this and paste into Google Classroom.<br><span class="rtlLine">خذ لقطة شاشة والصقها في Google Classroom.</span>', copy:'Copy to clipboard<br><span class="rtlLine">نسخ</span>', copied:'Copied!<br><span class="rtlLine">تم النسخ!</span>', close:'Close<br><span class="rtlLine">إغلاق</span>', backMenu:'Back to level menu<br><span class="rtlLine">العودة إلى قائمة المستويات</span>', footer:'This tool and more can be found at&nbsp;<span class="rtlLine">يمكنك العثور على هذه الأداة والمزيد هنا</span> ', polypad:'Use the function machines on Polypad to help you: <br><span class="rtlLine">استخدم آلات الدوال في Polypad لمساعدتك:</span> ', q:function(a,b){return 'Question '+a+' / '+b+'<br><span class="rtlLine">السؤال '+a+' من '+b+'</span>';}, completed:function(lvl,score,total){return 'You completed '+lvl+' and got '+score+' out of '+total+'.<br><span class="rtlLine">أكملت مستوى '+lvl+' وحصلت على '+score+' من '+total+'.</span>';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\nالتعويض في الجبر - المستوى: '+lvl+' - الدرجة: '+score+' من '+total;}, levels:{sweet:['Sweet<br><span class="rtlLine">سهل</span>','One variable · value from 1 to 10 · one-step expressions<br><span class="rtlLine">متغير واحد · القيمة من ١ إلى ١٠ · تعبيرات من خطوة واحدة</span>'],mild:['Mild<br><span class="rtlLine">متوسط سهل</span>','One variable · value from 1 to 10 · two-step expressions<br><span class="rtlLine">متغير واحد · القيمة من ١ إلى ١٠ · تعبيرات من خطوتين</span>'],medium:['Medium<br><span class="rtlLine">متوسط</span>','Two variables · values from 1 to 10 · multiplication and division structures<br><span class="rtlLine">متغيران · القيم من ١ إلى ١٠ · تراكيب ضرب وقسمة</span>'],spicy:['Spicy<br><span class="rtlLine">صعب</span>','Two variables · values from −10 to 10, excluding zero<br><span class="rtlLine">متغيران · القيم من −١٠ إلى ١٠، بدون الصفر</span>'],extraHot:['Extra hot<br><span class="rtlLine">صعب جدًا</span>','Three variables · values from −10 to 10, excluding zero<br><span class="rtlLine">ثلاثة متغيرات · القيم من −١٠ إلى ١٠، بدون الصفر</span>']}
+    }
+  };
+  function L(){ return I18N[language] || I18N.en; }
+  function syncLanguageSelects(){ languageSelect.value = language; startLanguageSelect.value = language; }
+  function levelName(key){ return (I18N.en.levels[key] || ['—'])[0]; }
+  function applyLanguage(){
+    document.documentElement.lang = language;
+    document.body.classList.toggle('dualText', language !== 'en');
+    syncLanguageSelects();
+    topTitle.innerHTML = L().title;
+    languageLabel.innerHTML = L().language;
+    startLanguageLabel.innerHTML = L().language;
+    chooseLevelTitle.innerHTML = L().chooseLevel;
+    notationLabel.innerHTML = L().notation;
+    evaluateLabel.innerHTML = L().evaluate;
+    answerLabel.innerHTML = L().answer;
+    enterBtn.innerHTML = L().enter;
+    nextBtn.innerHTML = L().next;
+    resetQuizBtn.innerHTML = L().reset;
+    backToLevelsBtn.innerHTML = L().back;
+    hintMini.innerHTML = L().hint;
+    footerText.innerHTML = L().footer;
+    polypadHelpText.innerHTML = L().polypad + '<a href="https://polypad.amplify.com/p#functions" target="_blank" rel="noopener noreferrer">https://polypad.amplify.com/p#functions</a>';
+    certificateTitle.innerHTML = L().certificate;
+    certSub.innerHTML = L().certSub;
+    copyBtn.innerHTML = L().copy;
+    closeCertBtn.innerHTML = L().close;
+    backToMenuBtn.innerHTML = L().backMenu;
+    levelSweetName.innerHTML = L().levels.sweet[0]; levelSweetSub.innerHTML = L().levels.sweet[1];
+    levelMildName.innerHTML = L().levels.mild[0]; levelMildSub.innerHTML = L().levels.mild[1];
+    levelMediumName.innerHTML = L().levels.medium[0]; levelMediumSub.innerHTML = L().levels.medium[1];
+    levelSpicyName.innerHTML = L().levels.spicy[0]; levelSpicySub.innerHTML = L().levels.spicy[1];
+    levelExtraName.innerHTML = L().levels.extraHot[0]; levelExtraSub.innerHTML = L().levels.extraHot[1];
+    document.querySelectorAll('.startBtn').forEach(function(btn){ btn.innerHTML = language === 'en' ? 'Start' : 'Start<br><span class="rtlLine">' + (language === 'fa' ? 'شروع' : 'ابدأ') + '</span>'; });
+    if(levelKey) setBanner(); else levelBanner.innerHTML = L().level + ': —';
+    setProgress();
+    if(phase === 'awaiting') showFeedback('', L().type);
+  }
 
   let levelKey = null;
+
   let qIndex = 0;
   let score = 0;
   let phase = 'awaiting';
@@ -869,14 +986,28 @@
       subValues.appendChild(chip);
     });
   }
+  function extractRtlLine(html){
+    const m = String(html || '').match(/<span class="rtlLine">([\s\S]*?)<\/span>/);
+    return m ? m[1] : '';
+  }
+
   function setBanner(){
-    const L = LEVELS[levelKey];
-    levelBanner.textContent = `Level: ${L.name}`;
-    levelBanner.style.background = `linear-gradient(180deg, ${L.banner[0]}, ${L.banner[1]})`;
-    progressFill.style.background = L.banner[0];
+    const levelInfo = LEVELS[levelKey];
+    const englishLevelName = I18N.en.levels[levelKey][0];
+
+    if(language === 'en'){
+      levelBanner.innerHTML = `Level: ${englishLevelName}`;
+    } else {
+      const translatedLevelWord = extractRtlLine(L().level) || (language === 'ar' ? 'المستوى' : 'سطح');
+      const translatedLevelName = extractRtlLine(L().levels[levelKey][0]) || englishLevelName;
+      levelBanner.innerHTML = `Level: ${englishLevelName}<br><span class="rtlLine">${translatedLevelWord}: ${translatedLevelName}</span>`;
+    }
+
+    levelBanner.style.background = `linear-gradient(180deg, ${levelInfo.banner[0]}, ${levelInfo.banner[1]})`;
+    progressFill.style.background = levelInfo.banner[0];
   }
   function setProgress(){
-    qCounter.textContent = `Question ${Math.min(QUIZ_LEN, qIndex + 1)} / ${QUIZ_LEN}`;
+    qCounter.innerHTML = L().q(Math.min(QUIZ_LEN, qIndex + 1), QUIZ_LEN);
     progressFill.style.width = `${(qIndex / QUIZ_LEN) * 100}%`;
   }
   function showFeedback(kind, text){
@@ -893,7 +1024,7 @@
     answerInput.disabled = false;
     enterBtn.disabled = false;
     showNext(false);
-    showFeedback('', 'Type your answer, then press <b>Enter</b>.');
+    showFeedback('', L().type);
     Q = generateQuestion();
     renderValues(Q.values);
     renderCurrentExpressionOnly();
@@ -924,10 +1055,10 @@
     answerInput.classList.add(correct ? 'ok' : 'bad');
     if(correct){
       score++;
-      showFeedback('ok', '✅ Correct!');
+      showFeedback('ok', L().correct);
       dropConfetti();
     } else {
-      showFeedback('bad', `Not quite. The correct answer was <b>${fmtNum(Q.answer)}</b>.`);
+      showFeedback('bad', L().notQuite(fmtNum(Q.answer)));
     }
     phase = 'revealed';
     answerInput.disabled = true;
@@ -947,7 +1078,7 @@
   }
   function showCertificate(){
     const L = LEVELS[levelKey].name;
-    certLine1.textContent = `You completed ${L} and got ${score} out of ${QUIZ_LEN}.`;
+    certLine1.innerHTML = L().completed(levelName(levelKey), score, QUIZ_LEN);
     showModal(certModal);
   }
   function backToLevelMenu(){
@@ -955,9 +1086,9 @@
     showModal(levelModal);
     levelKey = null;
     phase = 'awaiting';
-    levelBanner.textContent = 'Level: —';
+    levelBanner.innerHTML = L().level + ': —';
     levelBanner.style.background = 'linear-gradient(180deg,#1d4ed8,#1e3a8a)';
-    qCounter.textContent = `Question 1 / ${QUIZ_LEN}`;
+    qCounter.innerHTML = L().q(1, QUIZ_LEN);
     progressFill.style.width = '0%';
     progressFill.style.background = '#2563eb';
     exprBox.textContent = '—';
@@ -966,15 +1097,15 @@
     answerInput.disabled = false;
     resetInputStyles();
     showNext(false);
-    showFeedback('', 'Type your answer, then press <b>Enter</b>.');
+    showFeedback('', L().type);
   }
   async function copyCertificate(){
-    const L = LEVELS[levelKey].name;
-    const text = `🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: ${L}\nScore: ${score} / ${QUIZ_LEN}\nCompleted: ${nowStamp()}\n\n(Submit a screenshot or paste this into Google Classroom.)`;
+    const lvl = levelName(levelKey);
+    const text = L().copyText(lvl, score, QUIZ_LEN, nowStamp());
     try{
       await navigator.clipboard.writeText(text);
-      copyBtn.textContent = 'Copied!';
-      setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 1200);
+      copyBtn.innerHTML = L().copied;
+      setTimeout(() => copyBtn.innerHTML = L().copy, 1200);
     } catch {
       window.prompt('Copy this text:', text);
     }
@@ -1006,6 +1137,12 @@
     syncNotationToggle();
     renderCurrentExpressionOnly(); // important: do not generate a new question
   });
+  function setLanguage(next){
+    language = next || 'en';
+    applyLanguage();
+  }
+  languageSelect.addEventListener('change', (e) => setLanguage(e.target.value));
+  startLanguageSelect.addEventListener('change', (e) => setLanguage(e.target.value));
   document.querySelectorAll('.startBtn').forEach(btn => btn.addEventListener('click', () => startQuiz(btn.dataset.level)));
   resetQuizBtn.addEventListener('click', () => resetQuizSameLevel());
   backToLevelsBtn.addEventListener('click', () => backToLevelMenu());
@@ -1033,6 +1170,8 @@
     if(saved === '0') useSymbolNotation = false;
   }catch(_){ }
   syncNotationToggle();
+  language = 'en';
+  applyLanguage();
   showModal(levelModal);
 })();
 </script>
