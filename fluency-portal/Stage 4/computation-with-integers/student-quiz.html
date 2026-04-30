@@ -71,6 +71,75 @@
     }
     .dot{ width: 12px; height:12px; border-radius: 999px; background: #cbd5e1; }
 
+
+    .languageSelectCard{
+      border:1px solid #ddd6fe;
+      background:#faf5ff;
+      color:#4c1d95;
+      border-radius:16px;
+      padding:9px 12px;
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+      width:max-content;
+      max-width:100%;
+    }
+    .languageSelectCard.levelLanguageCard{
+      margin:0 0 16px 0;
+      width:100%;
+      justify-content:flex-start;
+      background:#f8f5ff;
+    }
+    .languageLabel{
+      font-size:14px;
+      line-height:1.1;
+      white-space:nowrap;
+      font-weight:1000;
+    }
+    .languageSelect{
+      appearance:none;
+      -webkit-appearance:none;
+      border:2px solid #c4b5fd;
+      background:#fff;
+      color:#4c1d95;
+      border-radius:12px;
+      padding:8px 34px 8px 12px;
+      font-weight:1000;
+      font-size:14px;
+      cursor:pointer;
+      min-width:170px;
+      background-image:linear-gradient(45deg, transparent 50%, #7c3aed 50%), linear-gradient(135deg, #7c3aed 50%, transparent 50%);
+      background-position:calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+      background-size:6px 6px, 6px 6px;
+      background-repeat:no-repeat;
+    }
+    .languageSelect:focus{
+      outline:none;
+      box-shadow:0 0 0 4px rgba(124,58,237,.14);
+      border-color:#8b5cf6;
+    }
+    .rtlText{
+      direction:rtl;
+      unicode-bidi:plaintext;
+      font-family:var(--uiFont);
+      font-weight:900;
+    }
+    .dualText .altLine{
+      display:block;
+      direction:rtl;
+      unicode-bidi:plaintext;
+      font-size:.72em;
+      line-height:1.25;
+      margin-top:4px;
+      opacity:.92;
+      font-weight:900;
+    }
+    .bannerTitle .altLine{font-size:.48em;}
+    .qCounter .altLine{font-size:.72em;}
+    .levelChipSmall .altLine{font-size:.72em;}
+
     .linkBtn{
       border:none;
       background:transparent;
@@ -435,6 +504,27 @@
       align-items:center;
       padding-top: 10px;
     }
+    .typesActions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:12px 0 2px;
+    }
+    .miniActionBtn{
+      border:1px solid rgba(37,99,235,.22);
+      background:#eef2ff;
+      color:#1d4ed8;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:1000;
+      cursor:pointer;
+      font-family:var(--uiFont);
+      box-shadow:0 8px 18px rgba(15,23,42,.04);
+    }
+    .miniActionBtn:active{ transform:scale(.98); }
+
     .chk{
       display:flex;
       gap: 10px;
@@ -632,7 +722,15 @@
           <button id="backBtn" class="linkBtn" type="button">← Back</button>
           <div class="chip">
             <span id="levelDot" class="dot"></span>
-            <span id="levelChipText">Level: —</span>
+            <span id="levelChipText" class="levelChipSmall">Level: —</span>
+          </div>
+          <div class="languageSelectCard" id="languageCard">
+            <label class="languageLabel" id="languageLabel" for="languageSelect">Language / زبان / اللغة</label>
+            <select class="languageSelect" id="languageSelect">
+              <option value="en">English</option>
+              <option value="fa">فارسی (Persian)</option>
+              <option value="ar">العربية (Arabic)</option>
+            </select>
           </div>
         </div>
         <button id="resetBtn" class="resetBtn" type="button">Reset</button>
@@ -652,7 +750,7 @@
 
       <div class="stage">
         <div class="qArea">
-          <div class="qLabel">Question:</div>
+          <div class="qLabel" id="qLabel">Question:</div>
           <div id="qBox" class="qBox">—</div>
 
           <div id="interactionHost" style="width:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px;"></div>
@@ -678,7 +776,15 @@
 
   <div id="levelOverlay" class="overlay">
     <div class="modal">
-      <h2>Choose your level</h2>
+      <h2 id="chooseLevelTitle">Choose your level</h2>
+      <div class="languageSelectCard levelLanguageCard" id="startLanguageCard">
+        <label class="languageLabel" id="startLanguageLabel" for="startLanguageSelect">Language / زبان / اللغة</label>
+        <select class="languageSelect" id="startLanguageSelect">
+          <option value="en">English</option>
+          <option value="fa">فارسی (Persian)</option>
+          <option value="ar">العربية (Arabic)</option>
+        </select>
+      </div>
       <div class="levelList">
         <div class="levelItem basic">
           <div class="levelName">Basic</div>
@@ -698,14 +804,17 @@
 
   <div id="typeOverlay" class="overlay">
     <div class="modal">
-      <h2>Select question types</h2>
-      <div class="muted">All boxes are ticked by default. Untick any you don’t want.</div>
+      <h2 id="selectTypesTitle">Select question types</h2>
+      <div class="muted" id="typesHelpText">All boxes are ticked by default. Untick any you don’t want.</div>
+      <div class="typesActions">
+        <button id="toggleAllTypesBtn" class="miniActionBtn" type="button">Deselect all</button>
+      </div>
 
       <div id="typesGrid" class="typesGrid" aria-label="Question types"></div>
 
       <div class="row">
         <div class="field">
-          <label for="countInp">Total questions (min 10, max 60)</label>
+          <label for="countInp" id="countLabel">Total questions (min 10, max 60)</label>
           <input id="countInp" type="number" min="10" max="60" step="1" value="10" />
         </div>
 
@@ -716,7 +825,7 @@
       </div>
 
       <div id="typesWarn" class="warn">
-        Please select at least one question type.
+        <span id="typesWarnText">Please select at least one question type.</span>
       </div>
     </div>
   </div>
@@ -727,7 +836,7 @@
         <div class="trophy">🏆</div>
         <div class="resultsText">
           <div class="bigLine" id="scoreLine">You completed — and achieved a score of —/—.</div>
-          <div class="muted">Score breakdown:</div>
+          <div class="muted" id="scoreBreakdownLabel">Score breakdown:</div>
         </div>
       </div>
 
@@ -1653,6 +1762,7 @@ function scaleHardExpressions(){
   const resetBtn = document.getElementById("resetBtn");
 
   const typesGrid = document.getElementById("typesGrid");
+  const toggleAllTypesBtn = document.getElementById("toggleAllTypesBtn");
   const countInp = document.getElementById("countInp");
   const beginBtn = document.getElementById("beginBtn");
   const typesBackBtn = document.getElementById("typesBackBtn");
@@ -1663,6 +1773,96 @@ function scaleHardExpressions(){
   const copyBtn = document.getElementById("copyBtn");
   const closeBtn = document.getElementById("closeBtn");
   const menuBtn = document.getElementById("menuBtn");
+  const languageSelect = document.getElementById("languageSelect");
+  const startLanguageSelect = document.getElementById("startLanguageSelect");
+  const languageLabel = document.getElementById("languageLabel");
+  const startLanguageLabel = document.getElementById("startLanguageLabel");
+  const chooseLevelTitle = document.getElementById("chooseLevelTitle");
+  const selectTypesTitle = document.getElementById("selectTypesTitle");
+  const typesHelpText = document.getElementById("typesHelpText");
+  const countLabel = document.getElementById("countLabel");
+  const typesWarnText = document.getElementById("typesWarnText");
+  const qLabel = document.getElementById("qLabel");
+  const scoreBreakdownLabel = document.getElementById("scoreBreakdownLabel");
+
+  let language = "en";
+
+  const I18N = {
+    en: {
+      langName:"English", alt:null, languageLabel:"Language / زبان / اللغة", back:"← Back", reset:"Reset", level:"Level", question:"Question", questionLabel:"Question:", chooseLevel:"Choose your level", selectTypes:"Select question types", typesHelp:"All boxes are ticked by default. Untick any you don’t want.", totalQuestions10:"Total questions (min 10, max 60)", totalQuestionsAB:"Total questions (min 3, max 24)", begin:"Begin", start:"Start", skip:"Skip", retry:"Retry", next:"Next →", close:"Close", copy:"Copy to clipboard", menu:"Back to level menu", scoreBreakdown:"Score breakdown:", selectOne:"Please select at least one question type.", selectAll:"Select all", deselectAll:"Deselect all",
+      tipDefault:"Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.",
+      tipNumberLine:"Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.", tipChoice:"Select a symbol • Press Enter to submit • Enter again to move on.", tipOrder:"Drag the numbers into the 5 boxes • Press Enter to submit • Enter again to move on.", tipInput:"Type your answer • Press Enter to submit • Enter again to move on.",
+      place:v=>`Place ${fmtInt(v)} on the number line.`, chooseCompare:(a,b)=>`Choose <, >, or = to make this true:  ${fmtInt(a)}  __  ${fmtInt(b)}`, chooseExpr:(l,r)=>`Choose <, >, or = :  ${l}  __  ${r}`, order:(dir, nums)=>`Order these integers (${dir}): ${nums.map(fmtInt).join(", ")}`, hardCalc:"Use order of operations to calculate.", calculate:p=>`Calculate: ${p}`, qCounter:(i,n)=>`Question ${i}/${n}`, levelText:name=>`Level: ${name}`, scoreLine:(level,correct,total)=>`You completed ${level} and achieved a score of ${correct}/${total}.`, skipped:n=>` (skipped: ${n})`, copyTitle:level=>`Integers Practice — ${level}`, score:(c,t)=>`Score: ${c}/${t}`, typeScore:(label,c,t,s)=>`${label}: ${c}/${t} (skipped: ${s})`, correct:"Correct ✓", incorrect:"Incorrect ✕", skippedWrong:"Skipped (counts as wrong)",
+      levels:{basic:"Basic", expected:"Expected", ab_thorough:"A/B Thorough"}, dirs:{ascending:"ascending", descending:"descending"},
+      types:{place:"Place an integer on a number line", calc:"Use a number line to calculate", ineq:"Compare integers (< > =)", order:"Ordering integers", mult:"Multiplying integers", div:"Dividing integers", place_ce:"Place an integer on a number line", calc_ce:"Integer calculations", comp_ce:"Comparing integers (< > =)", signs_ce:"Combining signs", oop_ce:"Order of operations", hard_oop_ab:"Hard order of operations"}
+    },
+    fa: {
+      langName:"فارسی", languageLabel:'Language / زبان / اللغة', back:'← Back<span class="altLine">بازگشت</span>', reset:'Reset<span class="altLine">شروع دوباره</span>', level:'Level<span class="altLine">سطح</span>', question:'Question<span class="altLine">سؤال</span>', questionLabel:'Question:<span class="altLine">سؤال:</span>', chooseLevel:'Choose your level<span class="altLine">سطح خود را انتخاب کنید</span>', selectTypes:'Select question types<span class="altLine">نوع سؤال‌ها را انتخاب کنید</span>', typesHelp:'All boxes are ticked by default. Untick any you don’t want.<span class="altLine">همه گزینه‌ها به طور پیش‌فرض انتخاب شده‌اند. هر کدام را نمی‌خواهید بردارید.</span>', totalQuestions10:'Total questions (min 10, max 60)<span class="altLine">تعداد کل سؤال‌ها (حداقل ۱۰، حداکثر ۶۰)</span>', totalQuestionsAB:'Total questions (min 3, max 24)<span class="altLine">تعداد کل سؤال‌ها (حداقل ۳، حداکثر ۲۴)</span>', begin:'Begin<span class="altLine">شروع</span>', start:'Start<span class="altLine">شروع</span>', skip:'Skip<span class="altLine">رد کردن</span>', retry:'Retry<span class="altLine">تلاش دوباره</span>', next:'Next →<span class="altLine">بعدی</span>', close:'Close<span class="altLine">بستن</span>', copy:'Copy to clipboard<span class="altLine">کپی کردن</span>', menu:'Back to level menu<span class="altLine">بازگشت به منوی سطح‌ها</span>', scoreBreakdown:'Score breakdown:<span class="altLine">جزئیات امتیاز:</span>', selectOne:'Please select at least one question type.<span class="altLine">لطفاً حداقل یک نوع سؤال را انتخاب کنید.</span>', selectAll:'Select all<span class="altLine">انتخاب همه</span>', deselectAll:'Deselect all<span class="altLine">برداشتن همه</span>',
+      tipDefault:'Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.<span class="altLine">نکته: برای ثبت Enter را بزنید. بعد از بازخورد، دوباره Enter یا Next را بزنید.</span>', tipNumberLine:'Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.<span class="altLine">روی یک نشانه کلیک کنید تا نقطه را قرار دهید. برای ثبت Enter را بزنید.</span>', tipChoice:'Select a symbol • Press Enter to submit • Enter again to move on.<span class="altLine">یک نماد انتخاب کنید. برای ثبت Enter را بزنید.</span>', tipOrder:'Drag the numbers into the 5 boxes • Press Enter to submit • Enter again to move on.<span class="altLine">عددها را به ۵ کادر بکشید. برای ثبت Enter را بزنید.</span>', tipInput:'Type your answer • Press Enter to submit • Enter again to move on.<span class="altLine">پاسخ را تایپ کنید. برای ثبت Enter را بزنید.</span>',
+      place:v=>`Place ${fmtInt(v)} on the number line.<span class="altLine">عدد ${fmtInt(v)} را روی خط اعداد قرار دهید.</span>`, chooseCompare:(a,b)=>`Choose <, >, or = to make this true: ${fmtInt(a)} __ ${fmtInt(b)}<span class="altLine">برای درست شدن عبارت، یکی از <، > یا = را انتخاب کنید.</span>`, chooseExpr:(l,r)=>`Choose <, >, or = : ${l} __ ${r}<span class="altLine">یکی از <، > یا = را انتخاب کنید.</span>`, order:(dir, nums)=>`Order these integers (${dir}): ${nums.map(fmtInt).join(", ")}<span class="altLine">این اعداد صحیح را مرتب کنید (${dir === "ascending" ? "صعودی" : "نزولی"}).</span>`, hardCalc:'Use order of operations to calculate.<span class="altLine">با ترتیب انجام عملیات محاسبه کنید.</span>', calculate:p=>`Calculate: ${p}<span class="altLine">محاسبه کنید.</span>`, qCounter:(i,n)=>`Question ${i}/${n}<span class="altLine">سؤال ${i} از ${n}</span>`, levelText:name=>`Level: ${name}<span class="altLine">سطح: ${name}</span>`, scoreLine:(level,correct,total)=>`You completed ${level} and achieved a score of ${correct}/${total}.<span class="altLine">شما سطح ${level} را کامل کردید و امتیاز ${correct} از ${total} گرفتید.</span>`, skipped:n=>` <span class="muted">(رد شده: ${n})</span>`, copyTitle:level=>`Integers Practice — ${level}`, score:(c,t)=>`Score: ${c}/${t}`, typeScore:(label,c,t,s)=>`${label}: ${c}/${t} (skipped: ${s})`, correct:'Correct ✓<span class="altLine">درست</span>', incorrect:'Incorrect ✕<span class="altLine">نادرست</span>', skippedWrong:'Skipped (counts as wrong)<span class="altLine">رد شد (اشتباه حساب می‌شود)</span>',
+      levels:{basic:'Basic<span class="altLine">پایه</span>', expected:'Expected<span class="altLine">مورد انتظار</span>', ab_thorough:'A/B Thorough<span class="altLine">پیشرفته</span>'}, dirs:{ascending:'صعودی', descending:'نزولی'},
+      types:{place:'Place an integer on a number line<span class="altLine">قرار دادن عدد صحیح روی خط اعداد</span>', calc:'Use a number line to calculate<span class="altLine">محاسبه با خط اعداد</span>', ineq:'Compare integers (< > =)<span class="altLine">مقایسه اعداد صحیح</span>', order:'Ordering integers<span class="altLine">مرتب کردن اعداد صحیح</span>', mult:'Multiplying integers<span class="altLine">ضرب اعداد صحیح</span>', div:'Dividing integers<span class="altLine">تقسیم اعداد صحیح</span>', place_ce:'Place an integer on a number line<span class="altLine">قرار دادن عدد صحیح روی خط اعداد</span>', calc_ce:'Integer calculations<span class="altLine">محاسبات اعداد صحیح</span>', comp_ce:'Comparing integers (< > =)<span class="altLine">مقایسه اعداد صحیح</span>', signs_ce:'Combining signs<span class="altLine">ترکیب علامت‌ها</span>', oop_ce:'Order of operations<span class="altLine">ترتیب انجام عملیات</span>', hard_oop_ab:'Hard order of operations<span class="altLine">ترتیب عملیات چالشی</span>'}
+    },
+    ar: {
+      langName:"العربية", languageLabel:'Language / زبان / اللغة', back:'← Back<span class="altLine">رجوع</span>', reset:'Reset<span class="altLine">إعادة البدء</span>', level:'Level<span class="altLine">المستوى</span>', question:'Question<span class="altLine">السؤال</span>', questionLabel:'Question:<span class="altLine">السؤال:</span>', chooseLevel:'Choose your level<span class="altLine">اختر مستواك</span>', selectTypes:'Select question types<span class="altLine">اختر أنواع الأسئلة</span>', typesHelp:'All boxes are ticked by default. Untick any you don’t want.<span class="altLine">كل الخيارات محددة افتراضياً. أزل التحديد عن أي نوع لا تريده.</span>', totalQuestions10:'Total questions (min 10, max 60)<span class="altLine">عدد الأسئلة الكلي (الحد الأدنى ١٠، الحد الأقصى ٦٠)</span>', totalQuestionsAB:'Total questions (min 3, max 24)<span class="altLine">عدد الأسئلة الكلي (الحد الأدنى ٣، الحد الأقصى ٢٤)</span>', begin:'Begin<span class="altLine">ابدأ</span>', start:'Start<span class="altLine">ابدأ</span>', skip:'Skip<span class="altLine">تخطَّ</span>', retry:'Retry<span class="altLine">حاول مرة أخرى</span>', next:'Next →<span class="altLine">التالي</span>', close:'Close<span class="altLine">إغلاق</span>', copy:'Copy to clipboard<span class="altLine">نسخ</span>', menu:'Back to level menu<span class="altLine">الرجوع إلى قائمة المستويات</span>', scoreBreakdown:'Score breakdown:<span class="altLine">تفصيل الدرجة:</span>', selectOne:'Please select at least one question type.<span class="altLine">يرجى اختيار نوع واحد على الأقل من الأسئلة.</span>', selectAll:'Select all<span class="altLine">تحديد الكل</span>', deselectAll:'Deselect all<span class="altLine">إلغاء تحديد الكل</span>',
+      tipDefault:'Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.<span class="altLine">نصيحة: اضغط Enter للإرسال، ثم اضغط Enter مرة أخرى أو Next للانتقال.</span>', tipNumberLine:'Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.<span class="altLine">انقر على علامة لوضع النقطة. اضغط Enter للإرسال.</span>', tipChoice:'Select a symbol • Press Enter to submit • Enter again to move on.<span class="altLine">اختر رمزاً، ثم اضغط Enter للإرسال.</span>', tipOrder:'Drag the numbers into the 5 boxes • Press Enter to submit • Enter again to move on.<span class="altLine">اسحب الأعداد إلى المربعات الخمسة، ثم اضغط Enter للإرسال.</span>', tipInput:'Type your answer • Press Enter to submit • Enter again to move on.<span class="altLine">اكتب إجابتك، ثم اضغط Enter للإرسال.</span>',
+      place:v=>`Place ${fmtInt(v)} on the number line.<span class="altLine">ضع العدد ${fmtInt(v)} على خط الأعداد.</span>`, chooseCompare:(a,b)=>`Choose <, >, or = to make this true: ${fmtInt(a)} __ ${fmtInt(b)}<span class="altLine">اختر < أو > أو = لتجعل العبارة صحيحة.</span>`, chooseExpr:(l,r)=>`Choose <, >, or = : ${l} __ ${r}<span class="altLine">اختر < أو > أو =.</span>`, order:(dir, nums)=>`Order these integers (${dir}): ${nums.map(fmtInt).join(", ")}<span class="altLine">رتّب هذه الأعداد الصحيحة (${dir === "ascending" ? "تصاعدياً" : "تنازلياً"}).</span>`, hardCalc:'Use order of operations to calculate.<span class="altLine">استخدم ترتيب العمليات للحساب.</span>', calculate:p=>`Calculate: ${p}<span class="altLine">احسب.</span>`, qCounter:(i,n)=>`Question ${i}/${n}<span class="altLine">السؤال ${i} من ${n}</span>`, levelText:name=>`Level: ${name}<span class="altLine">المستوى: ${name}</span>`, scoreLine:(level,correct,total)=>`You completed ${level} and achieved a score of ${correct}/${total}.<span class="altLine">أكملت مستوى ${level} وحصلت على ${correct} من ${total}.</span>`, skipped:n=>` <span class="muted">(تم التخطي: ${n})</span>`, copyTitle:level=>`Integers Practice — ${level}`, score:(c,t)=>`Score: ${c}/${t}`, typeScore:(label,c,t,s)=>`${label}: ${c}/${t} (skipped: ${s})`, correct:'Correct ✓<span class="altLine">صحيح</span>', incorrect:'Incorrect ✕<span class="altLine">غير صحيح</span>', skippedWrong:'Skipped (counts as wrong)<span class="altLine">تم التخطي (يُحسب خطأ)</span>',
+      levels:{basic:'Basic<span class="altLine">أساسي</span>', expected:'Expected<span class="altLine">متوقع</span>', ab_thorough:'A/B Thorough<span class="altLine">متقدم</span>'}, dirs:{ascending:'تصاعدياً', descending:'تنازلياً'},
+      types:{place:'Place an integer on a number line<span class="altLine">وضع عدد صحيح على خط الأعداد</span>', calc:'Use a number line to calculate<span class="altLine">استخدام خط الأعداد للحساب</span>', ineq:'Compare integers (< > =)<span class="altLine">مقارنة الأعداد الصحيحة</span>', order:'Ordering integers<span class="altLine">ترتيب الأعداد الصحيحة</span>', mult:'Multiplying integers<span class="altLine">ضرب الأعداد الصحيحة</span>', div:'Dividing integers<span class="altLine">قسمة الأعداد الصحيحة</span>', place_ce:'Place an integer on a number line<span class="altLine">وضع عدد صحيح على خط الأعداد</span>', calc_ce:'Integer calculations<span class="altLine">حسابات الأعداد الصحيحة</span>', comp_ce:'Comparing integers (< > =)<span class="altLine">مقارنة الأعداد الصحيحة</span>', signs_ce:'Combining signs<span class="altLine">دمج الإشارات</span>', oop_ce:'Order of operations<span class="altLine">ترتيب العمليات</span>', hard_oop_ab:'Hard order of operations<span class="altLine">ترتيب عمليات صعب</span>'}
+    }
+  };
+
+  function L(){ return I18N[language] || I18N.en; }
+  function isTranslated(){ return language !== "en"; }
+  function stripTags(html){ const d=document.createElement('div'); d.innerHTML=html; return d.textContent || d.innerText || ''; }
+  function levelLabelHTML(key){ return L().levels[key] || LEVELS[key]?.label || key; }
+  function levelLabelPlain(key){ return stripTags(levelLabelHTML(key)); }
+  function typeLabelHTML(id){ return L().types[id] || id; }
+  function typeLabelPlain(id){ return stripTags(typeLabelHTML(id)); }
+  function syncLanguageSelects(){
+    if(languageSelect) languageSelect.value = language;
+    if(startLanguageSelect) startLanguageSelect.value = language;
+  }
+  function setButtonLabels(){
+    backBtn.innerHTML = L().back;
+    resetBtn.innerHTML = L().reset;
+    skipBtn.innerHTML = L().skip;
+    retryBtn.innerHTML = L().retry;
+    nextBtn.innerHTML = L().next;
+    beginBtn.innerHTML = L().begin;
+    typesBackBtn.innerHTML = L().back;
+    copyBtn.innerHTML = L().copy;
+    closeBtn.innerHTML = L().close;
+    menuBtn.innerHTML = L().menu;
+    updateToggleAllTypesButton();
+    document.querySelectorAll('.startPill[data-level]').forEach(btn => {
+      btn.innerHTML = L().start;
+      const item = btn.closest('.levelItem');
+      const nameEl = item ? item.querySelector('.levelName') : null;
+      if(nameEl) nameEl.innerHTML = levelLabelHTML(btn.dataset.level);
+    });
+  }
+  function applyLanguage(){
+    document.documentElement.lang = language;
+    document.body.classList.toggle('dualText', isTranslated());
+    languageLabel.innerHTML = L().languageLabel;
+    startLanguageLabel.innerHTML = L().languageLabel;
+    chooseLevelTitle.innerHTML = L().chooseLevel;
+    selectTypesTitle.innerHTML = L().selectTypes;
+    typesHelpText.innerHTML = L().typesHelp;
+    typesWarnText.innerHTML = L().selectOne;
+    qLabel.innerHTML = L().questionLabel;
+    scoreBreakdownLabel.innerHTML = L().scoreBreakdown;
+    setButtonLabels();
+    syncLanguageSelects();
+    if(currentLevel){
+      setLevelUI(currentLevel);
+      if(typeOverlay.classList.contains('show')) renderTypesForLevel(currentLevel);
+      if(questions.length && !levelOverlay.classList.contains('show') && !typeOverlay.classList.contains('show') && !resultOverlay.classList.contains('show')) renderQuestion();
+    }else{
+      resetShell();
+    }
+  }
 
   function setModalState(which){
     const showLevel  = which === "level";
@@ -1734,9 +1934,9 @@ function scaleHardExpressions(){
 
   function resetShell(){
     levelDot.style.background = "#cbd5e1";
-    levelChipText.textContent = "Level: —";
-    bannerTitle.textContent = "Level: —";
-    qCounter.textContent = "Question 0/0";
+    levelChipText.innerHTML = L().levelText("—");
+    bannerTitle.innerHTML = L().levelText("—");
+    qCounter.innerHTML = L().qCounter(0,0);
     barFill.style.width = "0%";
     qBox.textContent = "—";
     interactionHost.innerHTML = "";
@@ -1747,18 +1947,18 @@ function scaleHardExpressions(){
   function setLevelUI(levelKey){
     const cfg = LEVELS[levelKey];
     levelDot.style.background = cfg.color;
-    levelChipText.textContent = `Level: ${cfg.label}`;
-    bannerTitle.textContent = `Level: ${cfg.label}`;
+    levelChipText.innerHTML = L().levelText(levelLabelHTML(levelKey));
+    bannerTitle.innerHTML = L().levelText(levelLabelHTML(levelKey));
   }
 
   function clearBadge(){
     badge.className = "badge";
-    badge.textContent = "";
+    badge.innerHTML = "";
   }
 
   function showBadge(kind, text){
     badge.className = `badge ${kind}`;
-    badge.textContent = text;
+    badge.innerHTML = text;
     requestAnimationFrame(() => badge.classList.add("show"));
   }
 
@@ -1785,6 +1985,32 @@ function scaleHardExpressions(){
     o[field] += 1;
   }
 
+  function updateSelectedTypesFromCheckboxes(){
+    selectedTypes = [...typesGrid.querySelectorAll('input[type="checkbox"]')]
+      .filter(x => x.checked)
+      .map(x => x.dataset.id);
+    typesWarn.classList.toggle("show", selectedTypes.length === 0);
+    updateToggleAllTypesButton();
+  }
+
+  function updateToggleAllTypesButton(){
+    if(!toggleAllTypesBtn) return;
+    const boxes = [...typesGrid.querySelectorAll('input[type="checkbox"]')];
+    const anyChecked = boxes.some(x => x.checked);
+    toggleAllTypesBtn.innerHTML = anyChecked ? L().deselectAll : L().selectAll;
+  }
+
+  function toggleAllTypes(){
+    const boxes = [...typesGrid.querySelectorAll('input[type="checkbox"]')];
+    if(!boxes.length) return;
+    const anyChecked = boxes.some(x => x.checked);
+
+    // If any option is currently selected, the button acts as "Deselect all".
+    // If no options are selected, it acts as "Select all".
+    boxes.forEach(x => { x.checked = !anyChecked; });
+    updateSelectedTypesFromCheckboxes();
+  }
+
   function renderTypesForLevel(levelKey){
     typesGrid.innerHTML = "";
     typesWarn.classList.remove("show");
@@ -1798,9 +2024,9 @@ function scaleHardExpressions(){
 
     const countLabelEl = document.querySelector('label[for="countInp"]');
     if (levelKey === "ab_thorough"){
-      countLabelEl.textContent = "Total questions (min 3, max 24)";
+      countLabelEl.innerHTML = L().totalQuestionsAB;
     } else {
-      countLabelEl.textContent = "Total questions (min 10, max 60)";
+      countLabelEl.innerHTML = L().totalQuestions10;
     }
 
     for (const t of cfg.types){
@@ -1813,20 +2039,15 @@ function scaleHardExpressions(){
       inp.dataset.id = t.id;
 
       const span = document.createElement("span");
-      span.textContent = t.label;
+      span.innerHTML = typeLabelHTML(t.id);
 
-      inp.addEventListener("change", () => {
-        const checked = [...typesGrid.querySelectorAll('input[type="checkbox"]')]
-          .filter(x => x.checked)
-          .map(x => x.dataset.id);
-        selectedTypes = checked;
-        typesWarn.classList.toggle("show", selectedTypes.length === 0);
-      });
+      inp.addEventListener("change", updateSelectedTypesFromCheckboxes);
 
       lab.appendChild(inp);
       lab.appendChild(span);
       typesGrid.appendChild(lab);
     }
+    updateToggleAllTypesButton();
   }
 
   function buildQuestions(){
@@ -2217,72 +2438,72 @@ function scaleHardExpressions(){
     const done = idx;
     const pct = totalQuestions ? (done/totalQuestions)*100 : 0;
     barFill.style.width = `${pct}%`;
-    qCounter.textContent = `Question ${idx+1}/${totalQuestions}`;
+    qCounter.innerHTML = L().qCounter(idx+1,totalQuestions);
 
     if (q.mode === "numberline"){
       qBox.classList.remove("small");
-      qBox.textContent = `Place ${fmtInt(q.v)} on the number line.`;
+      qBox.innerHTML = L().place(q.v);
       interactionApi = buildNumberLineInteraction({ vmin:-10, vmax:10, step:1, labelMajors:[-10,0,10] });
-      tipLine.textContent = "Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.";
+      tipLine.innerHTML = L().tipNumberLine;
       lastBuiltMode = q.mode;
       return;
     }
 
     if (q.mode === "numberline_ce"){
       qBox.classList.remove("small");
-      qBox.textContent = `Place ${fmtInt(q.answer)} on the number line.`;
+      qBox.innerHTML = L().place(q.answer);
       const vmax = clamp(q.step * 10, 1, CE_MAX_ABS);
       const vmin = -vmax;
       interactionApi = buildNumberLineInteraction({
         vmin, vmax, step:q.step,
         labelMajors: q.labels.slice().sort((a,b)=>a-b)
       });
-      tipLine.textContent = "Click a tick mark to place the dot • Press Enter to submit • Enter again to move on.";
+      tipLine.innerHTML = L().tipNumberLine;
       lastBuiltMode = q.mode;
       return;
     }
 
     if (q.mode === "choice"){
       qBox.classList.add("small");
-      qBox.textContent = `Choose <, >, or = to make this true:  ${fmtInt(q.a)}  __  ${fmtInt(q.b)}`;
+      qBox.innerHTML = L().chooseCompare(q.a,q.b);
       interactionApi = buildChoiceInteraction(["<",">","="]);
-      tipLine.textContent = "Select a symbol • Press Enter to submit • Enter again to move on.";
+      tipLine.innerHTML = L().tipChoice;
       lastBuiltMode = q.mode;
       return;
     }
 
     if (q.mode === "choice_expr"){
       qBox.classList.add("small");
-      qBox.textContent = `Choose <, >, or = :  ${q.leftText}  __  ${q.rightText}`;
+      qBox.innerHTML = L().chooseExpr(q.leftText,q.rightText);
       interactionApi = buildChoiceInteraction(["<",">","="]);
-      tipLine.textContent = "Select a symbol • Press Enter to submit • Enter again to move on.";
+      tipLine.innerHTML = L().tipChoice;
       lastBuiltMode = q.mode;
       return;
     }
 
     if (q.mode === "order"){
       qBox.classList.add("small");
-      qBox.textContent = `Order these integers (${q.dir}): ${q.shown.map(fmtInt).join(", ")}`;
+      qBox.innerHTML = L().order(q.dir,q.shown);
       interactionApi = buildOrderInteraction(q);
-      tipLine.textContent = "Drag the numbers into the 5 boxes • Press Enter to submit • Enter again to move on.";
+      tipLine.innerHTML = L().tipOrder;
       lastBuiltMode = q.mode;
       return;
     }
 
    if (q.mode === "hard_ab_input"){
   qBox.classList.add("small");
-  qBox.textContent = "Use order of operations to calculate.";
+  qBox.innerHTML = L().hardCalc;
   interactionApi = buildHardABInteraction(q.exprHTML);
-  tipLine.textContent = "Type your answer • Press Enter to submit • Enter again to move on.";
+  tipLine.innerHTML = L().tipInput;
   lastBuiltMode = q.mode;
 
   requestAnimationFrame(() => scaleHardExpressions());
   return;
 }
     qBox.classList.remove("small");
-    qBox.textContent = `Calculate: ${q.prompt}`;
+    qBox.innerHTML = L().calculate(q.prompt);
     interactionApi = buildInputInteraction();
-    tipLine.textContent = "Type your answer • Press Enter to submit • Enter again to move on.";
+    tipLine.innerHTML = L().tipInput;
     lastBuiltMode = q.mode;
   }
 
@@ -2302,7 +2523,7 @@ function scaleHardExpressions(){
 
     if (isSkip){
       bump(type, "skipped");
-      showBadge("bad", "Skipped (counts as wrong)");
+      showBadge("bad", L().skippedWrong);
     } else {
       if (q.mode === "numberline"){
         correct = normalizeAns(currentAnswer) === fmtInt(q.v);
@@ -2327,9 +2548,9 @@ function scaleHardExpressions(){
 
       if (correct){
         bump(type, "correct");
-        showBadge("ok", "Correct ✓");
+        showBadge("ok", L().correct);
       } else {
-        showBadge("bad", "Incorrect ✕");
+        showBadge("bad", L().incorrect);
       }
     }
 
@@ -2363,7 +2584,7 @@ function scaleHardExpressions(){
       total += o.total;
       correct += o.correct;
     }
-    scoreLine.textContent = `You completed ${LEVELS[currentLevel].label} and achieved a score of ${correct}/${total}.`;
+    scoreLine.innerHTML = L().scoreLine(levelLabelPlain(currentLevel), correct, total);
 
     breakdown.innerHTML = "";
     for (const cfg of LEVELS[currentLevel].types){
@@ -2372,8 +2593,8 @@ function scaleHardExpressions(){
       const row = document.createElement("div");
       row.className = "breakdownRow";
       row.innerHTML = `
-        <div>${cfg.label}</div>
-        <div>${o.correct}/${o.total}${o.skipped ? ` <span class="muted">(skipped: ${o.skipped})</span>` : ""}</div>
+        <div>${typeLabelHTML(cfg.id)}</div>
+        <div>${o.correct}/${o.total}${o.skipped ? L().skipped(o.skipped) : ""}</div>
       `;
       breakdown.appendChild(row);
     }
@@ -2385,15 +2606,15 @@ function scaleHardExpressions(){
   function copyResults(){
     let lines = [];
     let total=0, correct=0;
-    lines.push(`Integers Practice — ${LEVELS[currentLevel].label}`);
+    lines.push(L().copyTitle(levelLabelPlain(currentLevel)));
     for (const cfg of LEVELS[currentLevel].types){
       if (!scoreByType.has(cfg.id)) continue;
       const o = scoreByType.get(cfg.id);
-      lines.push(`${cfg.label}: ${o.correct}/${o.total} (skipped: ${o.skipped})`);
+      lines.push(L().typeScore(typeLabelPlain(cfg.id), o.correct, o.total, o.skipped));
       total += o.total;
       correct += o.correct;
     }
-    lines.unshift(`Score: ${correct}/${total}`);
+    lines.unshift(L().score(correct,total));
     const text = lines.join("\n");
     navigator.clipboard?.writeText(text).catch(()=>{});
   }
@@ -2443,6 +2664,9 @@ function scaleHardExpressions(){
     renderQuestion();
   }
 
+  languageSelect.addEventListener("change", (e) => { language = e.target.value || "en"; applyLanguage(); });
+  startLanguageSelect.addEventListener("change", (e) => { language = e.target.value || "en"; applyLanguage(); });
+
   document.querySelectorAll('.startPill[data-level]').forEach(btn => {
     btn.addEventListener("click", () => {
       const levelKey = btn.dataset.level;
@@ -2454,6 +2678,7 @@ function scaleHardExpressions(){
     });
   });
 
+  toggleAllTypesBtn.addEventListener("click", toggleAllTypes);
   typesBackBtn.addEventListener("click", () => setModalState("level"));
 
   beginBtn.addEventListener("click", () => {
@@ -2492,6 +2717,8 @@ function scaleHardExpressions(){
   closeBtn.addEventListener("click", () => setModalState(null));
   menuBtn.addEventListener("click", hardBackToMenu);
 
+  language = "en";
+  applyLanguage();
   hardBackToMenu();
 })();
 window.addEventListener("resize", scaleHardExpressions);
