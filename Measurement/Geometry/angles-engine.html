@@ -48,6 +48,16 @@
     .angleLabel{font-size:16px;}
     .vertexDot{fill:#111827;}
     .rightMarker,.parallelMarker{stroke:#111827;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;fill:none;}
+
+    .protractorOuter,.protractorInner,.protractorScale{stroke:#111827;stroke-width:2;stroke-linecap:round;fill:none;}
+    .protractorBase{stroke:#111827;stroke-width:3;stroke-linecap:round;fill:none;}
+    .protractorNumberBand{fill:#ffffff;stroke:none;}
+    .protractorTick{stroke:#111827;stroke-width:1.1;stroke-linecap:round;}
+    .protractorTick.major{stroke-width:1.8;}
+    .protractorTick.minor{stroke-width:1;}
+    .protractorNumber{font-family:var(--mathFont);font-size:10.5px;font-weight:900;fill:#111827;text-anchor:middle;dominant-baseline:middle;}
+    .protractorNumber.ninety{font-size:17px;font-weight:1000;}
+    .protractorRay{stroke:var(--blue);stroke-width:4;stroke-linecap:round;fill:none;}
     @media(max-width:900px){.grid{grid-template-columns:1fr}.infoCard{display:none}.angleSvg{height:330px}.diagramBox{min-height:360px}}
   </style>
 </head>
@@ -64,10 +74,12 @@
 
       <div class="controls" aria-label="Diagram type controls">
         <button class="primary" data-demo="single">Single angle</button>
+        <button data-demo="protractor">Read angle from protractor</button>
         <button data-demo="straight">Angles on a straight line</button>
         <button data-demo="point">Angles around a point</button>
         <button data-demo="right">Angles on a right angle</button>
         <button data-demo="parallel">Parallel lines + transversal</button>
+        <button data-demo="vertical">Vertically opposite angles</button>
         <button data-demo="random">Random test</button>
       </div>
 
@@ -91,7 +103,7 @@
             <li>Fixed SVG viewBox for predictable print layout.</li>
             <li>Reusable ray, arc, label and marker functions.</li>
             <li>Config-driven diagrams so questions can generate them later.</li>
-            <li>Support for straight lines, right angles, angles around a point and parallel lines.</li>
+            <li>Support for protractor reading, straight lines, right angles, angles around a point and parallel lines.</li>
           </ul>
         </aside>
       </div>
@@ -191,6 +203,135 @@
     const arm2 = { x: backCentre.x - nx * spread, y: backCentre.y - ny * spread };
     svg.appendChild(svgEl('line', { class:'parallelMarker', x1:arm1.x, y1:arm1.y, x2:tip.x, y2:tip.y }));
     svg.appendChild(svgEl('line', { class:'parallelMarker', x1:arm2.x, y1:arm2.y, x2:tip.x, y2:tip.y }));
+  }
+
+
+  function annulusPath(cx, cy, outerR, innerR, startAngle = 0, endAngle = 180){
+    const outerStart = pointFromAngle(cx, cy, startAngle, outerR);
+    const outerEnd = pointFromAngle(cx, cy, endAngle, outerR);
+    const innerEnd = pointFromAngle(cx, cy, endAngle, innerR);
+    const innerStart = pointFromAngle(cx, cy, startAngle, innerR);
+    return `
+      M ${outerStart.x.toFixed(2)} ${outerStart.y.toFixed(2)}
+      A ${outerR} ${outerR} 0 0 0 ${outerEnd.x.toFixed(2)} ${outerEnd.y.toFixed(2)}
+      L ${innerEnd.x.toFixed(2)} ${innerEnd.y.toFixed(2)}
+      A ${innerR} ${innerR} 0 0 1 ${innerStart.x.toFixed(2)} ${innerStart.y.toFixed(2)}
+      Z
+    `;
+  }
+
+  function drawProtractor(svg, cx, cy, radius = 150){
+    // Dual-scale semi-circle protractor.
+    // Outer scale reads from the right: 0, 10, ..., 180.
+    // Inner scale reads from the left: 180, 170, ..., 0.
+    // Number bands are deliberately kept clear so radial guide lines do not run through the labels.
+    const outerR = radius;
+    const outerScaleR = radius - 28;
+    const innerScaleR = radius - 52;
+    const innerR = radius - 76;
+    const outerBand = { inner: outerScaleR - 12, outer: outerScaleR + 12 };
+    const innerBand = { inner: innerScaleR - 12, outer: innerScaleR + 12 };
+
+    // Main protractor outline and scale arcs.
+    svg.appendChild(svgEl('path', { class:'protractorOuter', d:describeArc(cx, cy, outerR, 0, 180) }));
+    svg.appendChild(svgEl('path', { class:'protractorScale', d:describeArc(cx, cy, outerBand.outer, 0, 180) }));
+    svg.appendChild(svgEl('path', { class:'protractorScale', d:describeArc(cx, cy, outerBand.inner, 0, 180) }));
+    svg.appendChild(svgEl('path', { class:'protractorScale', d:describeArc(cx, cy, innerBand.outer, 0, 180) }));
+    svg.appendChild(svgEl('path', { class:'protractorScale', d:describeArc(cx, cy, innerBand.inner, 0, 180) }));
+    svg.appendChild(svgEl('path', { class:'protractorInner', d:describeArc(cx, cy, innerR, 0, 180) }));
+    svg.appendChild(svgEl('line', { class:'protractorBase', x1:cx - outerR, y1:cy, x2:cx + outerR, y2:cy }));
+
+    // Outer ticks: every 5°, with longer ticks at 10° and extra long at 30°.
+    for (let deg = 0; deg <= 180; deg += 5){
+      const isMajor = deg % 10 === 0;
+      const isThirty = deg % 30 === 0;
+      const tickLen = isThirty ? 23 : (isMajor ? 17 : 10);
+      const outer = pointFromAngle(cx, cy, deg, outerR);
+      const inner = pointFromAngle(cx, cy, deg, outerR - tickLen);
+      svg.appendChild(svgEl('line', {
+        class:`protractorTick ${isMajor ? 'major' : 'minor'}`,
+        x1:outer.x, y1:outer.y, x2:inner.x, y2:inner.y
+      }));
+    }
+
+    // Interior radial guide lines every 10°. These stop before the number bands.
+    for (let deg = 0; deg <= 180; deg += 10){
+      const a = pointFromAngle(cx, cy, deg, innerR);
+      const b = pointFromAngle(cx, cy, deg, innerBand.inner - 2);
+      svg.appendChild(svgEl('line', { class:'protractorTick minor', x1:a.x, y1:a.y, x2:b.x, y2:b.y }));
+
+      const c = pointFromAngle(cx, cy, deg, outerBand.outer + 2);
+      const d = pointFromAngle(cx, cy, deg, outerR - 23);
+      svg.appendChild(svgEl('line', { class:'protractorTick minor', x1:c.x, y1:c.y, x2:d.x, y2:d.y }));
+    }
+
+    // White bands sit above the radial guide lines and below the numbers.
+    svg.appendChild(svgEl('path', { class:'protractorNumberBand', d:annulusPath(cx, cy, outerBand.outer, outerBand.inner, 0, 180) }));
+    svg.appendChild(svgEl('path', { class:'protractorNumberBand', d:annulusPath(cx, cy, innerBand.outer, innerBand.inner, 0, 180) }));
+
+    // Redraw band borders after the white bands so the protractor remains crisp.
+    [outerBand.outer, outerBand.inner, innerBand.outer, innerBand.inner].forEach(r => {
+      svg.appendChild(svgEl('path', { class:'protractorScale', d:describeArc(cx, cy, r, 0, 180) }));
+    });
+
+    // Outer and inner number scales. The inner scale is reversed.
+    for (let deg = 0; deg <= 180; deg += 10){
+      const outerP = pointFromAngle(cx, cy, deg, outerScaleR);
+      const innerP = pointFromAngle(cx, cy, deg, innerScaleR);
+      const outerLabel = svgEl('text', {
+        class:`protractorNumber ${deg === 90 ? 'ninety' : ''}`,
+        x:outerP.x.toFixed(1), y:outerP.y.toFixed(1)
+      });
+      outerLabel.textContent = String(deg);
+      svg.appendChild(outerLabel);
+
+      const innerLabel = svgEl('text', {
+        class:'protractorNumber',
+        x:innerP.x.toFixed(1), y:innerP.y.toFixed(1)
+      });
+      innerLabel.textContent = String(180 - deg);
+      svg.appendChild(innerLabel);
+    }
+
+    svg.appendChild(svgEl('circle', { class:'vertexDot', cx, cy, r:4 }));
+  }
+
+  function renderProtractorRead(){
+    const angle = choice([10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170]);
+    const startSide = choice(['right', 'left']);
+    const baselineAngle = startSide === 'right' ? 0 : 180;
+    const measuredRayAngle = startSide === 'right' ? angle : 180 - angle;
+    const config = {
+      kind:'protractor-read',
+      vertex:{x:210,y:220},
+      startSide,
+      baselineAngle,
+      measuredRayAngle,
+      angle,
+      scale:'dual scale: outer reads from right, inner reads from left',
+      answer:`${angle}°`
+    };
+    const svg = makeSvg();
+    const {x:cx,y:cy} = config.vertex;
+    drawProtractor(svg, cx, cy, 150);
+
+    // Baseline ray and measured ray. Baseline may start from the right or left scale.
+    const baseEnd = pointFromAngle(cx, cy, baselineAngle, 154);
+    svg.appendChild(svgEl('line', { class:'protractorRay', x1:cx, y1:cy, x2:baseEnd.x, y2:baseEnd.y }));
+    const rayEnd = pointFromAngle(cx, cy, measuredRayAngle, 144);
+    svg.appendChild(svgEl('line', { class:'protractorRay', x1:cx, y1:cy, x2:rayEnd.x, y2:rayEnd.y }));
+
+    if (toggleAngleArcs.checked){
+      if (startSide === 'right') drawAngleArc(svg, cx, cy, 0, angle, 42, 'arc');
+      else drawAngleArc(svg, cx, cy, 180 - angle, 180, 42, 'arc');
+    }
+
+    // Simple endpoint labels only; no pronumeral because this is a reading task.
+    drawPointLabel(svg, 'A', baseEnd.x + (startSide === 'right' ? 16 : -16), baseEnd.y + 10);
+    drawPointLabel(svg, 'B', rayEnd.x, rayEnd.y - 12);
+    drawPointLabel(svg, 'O', cx, cy + 18);
+
+    return {svg, config, title:'Read angle from protractor', sub:'Dual-scale SVG protractor. Angles can be generated from either the left or right baseline.'};
   }
 
   function renderSingleAngle(){
@@ -417,12 +558,58 @@
     return {svg, config, title:'Parallel lines + transversal', sub:`Random ${relationship} angle pair, with parallel arrow notation.`};
   }
 
+
+  function renderVerticalOpposite(){
+    const svg = makeSvg();
+    const cx = 210, cy = 135;
+    const unknown = randomPronumeral();
+    const acute = randInt(30, 75);
+    const baseTilt = randInt(-15, 15);
+    const lineA = baseTilt;
+    const lineB = baseTilt + acute;
+
+    const config = {
+      kind:'vertically-opposite-angles',
+      vertex:{x:cx,y:cy},
+      knownAngle:acute,
+      missingAngle:acute,
+      unknown,
+      lines:[lineA, lineB]
+    };
+
+    // two intersecting full lines
+    const a1 = pointFromAngle(cx, cy, lineA, 170);
+    const a2 = pointFromAngle(cx, cy, lineA + 180, 170);
+    const b1 = pointFromAngle(cx, cy, lineB, 150);
+    const b2 = pointFromAngle(cx, cy, lineB + 180, 150);
+    svg.appendChild(svgEl('line', { class:'ray', x1:a1.x, y1:a1.y, x2:a2.x, y2:a2.y }));
+    svg.appendChild(svgEl('line', { class:'ray', x1:b1.x, y1:b1.y, x2:b2.x, y2:b2.y }));
+
+    // opposite equal angles
+    drawAngleArc(svg, cx, cy, lineA, lineB, 46, 'arc');
+    drawAngleLabel(svg, `${acute}°`, cx, cy, lineA, lineB, 74);
+    drawAngleArc(svg, cx, cy, lineA + 180, lineB + 180, 46, 'arc green');
+    drawAngleLabel(svg, unknown, cx, cy, lineA + 180, lineB + 180, 74);
+
+    drawVertex(svg, cx, cy);
+    drawLabelNearRay(svg, 'A', cx, cy, lineB, 163);
+    drawLabelNearRay(svg, 'B', cx, cy, lineA, 180);
+    drawLabelNearRay(svg, 'C', cx, cy, lineB + 180, 163);
+    drawLabelNearRay(svg, 'D', cx, cy, lineA + 180, 180);
+    drawPointLabel(svg, 'O', cx + 17, cy + 18);
+
+    return {svg, config, title:'Vertically opposite angles', sub:'One angle is given and the vertically opposite angle is shown as a pronumeral.'};
+  }
+
+
   const renderers = {
     single: renderSingleAngle,
+    protractor: renderProtractorRead,
     straight: renderStraightLine,
     point: renderAnglesAroundPoint,
     right: renderRightAngle,
-    parallel: renderParallelLines
+    parallel: renderParallelLines,
+    vertical: renderVerticalOpposite
   };
 
   function renderRandom(){
