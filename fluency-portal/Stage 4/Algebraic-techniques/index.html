@@ -1395,20 +1395,41 @@
       level:"C", id:"pattern_table",
       label:"Complete a table of values (from an expression)",
       defaultOn:true,
-      gen(){
+      tableSequence:["n_plus_b", "n_minus_b", "an", "an_plus_b", "an_minus_b"],
+      genWithForm(form){
+        // Difficulty progression for tables:
+        // n + b, n − b, an, an + b, an − b.
         const m = randInt(2,6);
-        let b = randInt(-8,8);
-        if (b === 0) b = choice([-6,-4,-2,2,4,6]);
+        const b = randInt(1,8);
 
-        const exprHTML =
-          `${m}<span class="var">n</span>` +
-          (b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`);
+        let exprHTML = "";
+        let rule = (n) => n;
+
+        if (form === "n_plus_b"){
+          exprHTML = `<span class="var">n</span> + ${b}`;
+          rule = (n) => n + b;
+        } else if (form === "n_minus_b"){
+          exprHTML = `<span class="var">n</span> − ${b}`;
+          rule = (n) => n - b;
+        } else if (form === "an"){
+          exprHTML = `${m}<span class="var">n</span>`;
+          rule = (n) => m*n;
+        } else if (form === "an_plus_b"){
+          exprHTML = `${m}<span class="var">n</span> + ${b}`;
+          rule = (n) => m*n + b;
+        } else {
+          exprHTML = `${m}<span class="var">n</span> − ${b}`;
+          rule = (n) => m*n - b;
+        }
 
         const ns = [1,2,3,4];
-        const vals = ns.map(n => m*n + b);
-        return { type:this.id, exprHTML, ns, vals };
+        const vals = ns.map(rule);
+        return { type:this.id, form, m, b, exprHTML, ns, vals };
       },
-      key:q => `pt_${stripHTML(q.exprHTML)}_${q.vals.join(",")}`,
+      gen(){
+        return this.genWithForm(choice(this.tableSequence));
+      },
+      key:q => `pt_${q.form}_${q.m}_${q.b}_${q.vals.join(",")}`,
       render(q, idx1, showAnswers){
         const card = makeCardShell(idx1, L().completeTable(q.exprHTML));
 
@@ -1560,6 +1581,21 @@
       };
 
       if (!uniqPush(qs, q, keyFn)) continue;
+    }
+
+    // Rebuild table-of-values questions in order of increasing difficulty.
+    // This preserves the random spread of selected question types, but ensures
+    // the first table question is n+b, the next is n−b, then an, an+b, an−b,
+    // cycling again if the worksheet contains more than five table questions.
+    const tableType = ALL_TYPES.find(t => t.id === 'pattern_table');
+    if (tableType && tableType.genWithForm){
+      let tableIndex = 0;
+      for (let i=0; i<qs.length; i++){
+        if (qs[i].type !== 'pattern_table') continue;
+        const form = tableType.tableSequence[tableIndex % tableType.tableSequence.length];
+        qs[i] = tableType.genWithForm(form);
+        tableIndex++;
+      }
     }
 
     return qs;
