@@ -40,9 +40,12 @@
     .codeBox{margin:14px 0 0;background:#0f172a;color:#f8fafc;border-radius:16px;padding:16px;font-size:13px;line-height:1.35;overflow:auto;max-height:260px;}
     .note,.infoCard li{color:var(--muted);font-weight:850;font-size:16px;line-height:1.35;}
     .ray,.baseLine{stroke:#111827;stroke-width:4;stroke-linecap:round;fill:none;}
-    .arc{stroke:var(--blue);stroke-width:5;stroke-linecap:round;fill:none;}
+    .arc{stroke:var(--blue);stroke-width:3;stroke-linecap:round;fill:none;opacity:.72;}
     .arc.green{stroke:var(--green);}
     .arc.orange{stroke:var(--orange);}
+    .arcArrow{fill:var(--blue);stroke:none;opacity:1;}
+    .arcArrow.green{fill:var(--green);}
+    .arcArrow.orange{fill:var(--orange);}
     .pointLabel,.angleLabel{font-family:var(--mathFont);font-weight:1000;fill:#111827;text-anchor:middle;dominant-baseline:middle;}
     .pointLabel{font-size:18px;}
     .angleLabel{font-size:16px;}
@@ -162,9 +165,46 @@
     const largeArcFlag = sweep > 180 ? 1 : 0;
     return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
   }
+  function arcArrowClass(className){
+    if (String(className).includes('green')) return 'arcArrow green';
+    if (String(className).includes('orange')) return 'arcArrow orange';
+    return 'arcArrow';
+  }
+
+  function arcArrowSize(radius, startAngle, endAngle){
+    // Scale arrowheads to the visible arc length so short arcs are not swallowed by the arrows.
+    // Arc length = rθ. Two arrowheads should use only a small portion of the full arc.
+    const sweep = positiveSweep(startAngle, endAngle);
+    const arcLength = radius * degToRad(sweep);
+    const length = Math.max(4.4, Math.min(11.5, arcLength * 0.16));
+    const halfWidth = Math.max(2.7, Math.min(6.8, length * 0.58));
+    return { length, halfWidth };
+  }
+
+  function drawArcArrowHead(svg, cx, cy, angleDeg, sweepDirection = 1, radius = 48, className = 'arc', size = {length:8, halfWidth:4.5}){
+    // Triangular arrowhead placed tangent to the arc. Size is supplied by drawAngleArc
+    // so small angle arcs still show a visible curved section between the arrowheads.
+    const p = pointFromAngle(cx, cy, angleDeg, radius);
+    const tangentDeg = angleDeg + (sweepDirection >= 0 ? 90 : -90);
+    const tip = pointFromAngle(p.x, p.y, tangentDeg, 0);
+    const back = pointFromAngle(p.x, p.y, tangentDeg + 180, size.length);
+    const left = pointFromAngle(back.x, back.y, tangentDeg + 90, size.halfWidth);
+    const right = pointFromAngle(back.x, back.y, tangentDeg - 90, size.halfWidth);
+    svg.appendChild(svgEl('polygon', {
+      class: arcArrowClass(className),
+      points:`${tip.x.toFixed(2)},${tip.y.toFixed(2)} ${left.x.toFixed(2)},${left.y.toFixed(2)} ${right.x.toFixed(2)},${right.y.toFixed(2)}`
+    }));
+  }
+
   function drawAngleArc(svg, cx, cy, startAngle, endAngle, radius = 48, className = 'arc'){
     if (!toggleAngleArcs.checked) return;
     svg.appendChild(svgEl('path', { class:className, d:describeArc(cx, cy, radius, startAngle, endAngle) }));
+
+    // Double arrowheads mark the exact span of the angle. They scale down on short arcs
+    // and scale up only moderately on larger arcs, keeping the curve readable in print.
+    const size = arcArrowSize(radius, startAngle, endAngle);
+    drawArcArrowHead(svg, cx, cy, startAngle, -1, radius, className, size);
+    drawArcArrowHead(svg, cx, cy, endAngle, 1, radius, className, size);
   }
   function drawLabel(svg, text, x, y, className = 'pointLabel'){
     const label = svgEl('text', { class:className, x:x.toFixed ? x.toFixed(1) : x, y:y.toFixed ? y.toFixed(1) : y });
