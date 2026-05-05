@@ -70,7 +70,7 @@
     select{border:2px solid #e5e7eb;border-radius:14px;padding:11px 13px;font-weight:950;font-size:16px;background:#fff;min-width:220px;outline:none}
     .topicSection{margin-top:16px;border:1px solid rgba(229,231,235,.95);border-radius:22px;background:#fff;box-shadow:0 10px 26px rgba(15,23,42,.06);overflow:hidden}
     .topicHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 18px;background:linear-gradient(180deg,#fff,#f8fafc);border-bottom:1px solid rgba(229,231,235,.95)}
-    .topicTitle{font-size:22px;font-weight:1000;letter-spacing:-.03em}.topicMeta{font-weight:950;color:var(--muted);font-size:13px}.badgeRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.miniBadge{border-radius:999px;padding:7px 10px;font-weight:1000;font-size:12px;border:1px solid rgba(229,231,235,.95);background:#fff}.miniBadge.green{color:#166534;background:rgba(22,163,74,.10);border-color:rgba(22,163,74,.25)}.miniBadge.blue{color:#1d4ed8;background:#eef2ff;border-color:rgba(37,99,235,.18)}.miniBadge.gold{color:#854d0e;background:rgba(234,179,8,.14);border-color:rgba(234,179,8,.28)}
+    .topicTitle{font-size:22px;font-weight:1000;letter-spacing:-.03em}.topicMeta{font-weight:950;color:var(--muted);font-size:13px}.levelSummary{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.levelMini{border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:1000;color:#111827}.levelMini.basic{background:rgba(22,163,74,.10);color:#166534;border-color:rgba(22,163,74,.25)}.levelMini.expected{background:rgba(234,179,8,.14);color:#854d0e;border-color:rgba(234,179,8,.28)}.badgeRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.miniBadge{border-radius:999px;padding:7px 10px;font-weight:1000;font-size:12px;border:1px solid rgba(229,231,235,.95);background:#fff}.miniBadge.green{color:#166534;background:rgba(22,163,74,.10);border-color:rgba(22,163,74,.25)}.miniBadge.blue{color:#1d4ed8;background:#eef2ff;border-color:rgba(37,99,235,.18)}.miniBadge.gold{color:#854d0e;background:rgba(234,179,8,.14);border-color:rgba(234,179,8,.28)}
     .achievementList{display:grid;gap:10px;padding:14px}
     .achievement{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid rgba(229,231,235,.95);border-radius:18px;padding:12px;background:#fff}
     .trophy{width:50px;height:50px;border-radius:15px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.32);display:flex;align-items:center;justify-content:center;font-size:28px}
@@ -97,7 +97,7 @@
       <div class="hero">
         <div>
           <h1>My Achievements</h1>
-          <p class="subtitle">Enter your student code to view quiz certificates saved across Mills Maths Tools. This page reads from the shared Firebase achievements collection.</p>
+          <p class="subtitle">Enter your student code to view quiz certificates saved across Mills Maths Tools. This central dashboard can live anywhere on your site and groups achievements from all Firebase-enabled quizzes by topic.</p>
         </div>
         <div class="statusPill"><span id="statusDot" class="statusDot"></span><span id="statusText">Firebase not connected</span></div>
       </div>
@@ -148,12 +148,13 @@
     // 1) Paste the SAME Firebase config used by your quiz files here.
     // ============================================================
     const firebaseConfig = {
-      apiKey: "PASTE_YOUR_API_KEY_HERE",
-      authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-      projectId: "PASTE_YOUR_PROJECT_ID",
-      storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-      messagingSenderId: "PASTE_YOUR_SENDER_ID",
-      appId: "PASTE_YOUR_APP_ID"
+      apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
+      authDomain: "mills-maths-tools.firebaseapp.com",
+      projectId: "mills-maths-tools",
+      storageBucket: "mills-maths-tools.appspot.com",
+      messagingSenderId: "835000359454",
+      appId: "1:835000359454:web:d7876be83ee367b5006c0f",
+      measurementId: "G-35YCH5NJEG"
     };
 
     // ============================================================
@@ -203,10 +204,11 @@
     }
     function pct(a){
       const score = Number(a.score ?? 0), total = Number(a.total ?? 0);
-      return total ? Math.round((score / total) * 100) : Number(a.percentage ?? 0) || 0;
+      if(total) return Math.round((score / total) * 100);
+      return Number(a.percent ?? a.percentage ?? 0) || 0;
     }
     function dateValue(a){
-      const raw = a.dateCompleted || a.timestamp || a.date || a.completedAt;
+      const raw = a.createdAt || a.dateCompleted || a.timestamp || a.date || a.completedAt || a.dateClient;
       if(raw && typeof raw.toDate === 'function') return raw.toDate();
       if(raw && raw.seconds) return new Date(raw.seconds * 1000);
       if(raw) return new Date(raw);
@@ -223,9 +225,18 @@
       if(p >= 50) return 'mid';
       return 'low';
     }
-    function topicOf(a){ return a.topic || a.quizTopic || 'Untitled topic'; }
-    function levelOf(a){ return a.level || 'Level not recorded'; }
+    function topicOf(a){ return a.topic || a.quizTopic || a.toolTopic || 'Untitled topic'; }
+    function levelOf(a){ return a.level || a.englishLevel || 'Level not recorded'; }
+    function toolOf(a){ return a.tool || a.sourceTool || a.quizId || 'Mills Maths Tools quiz'; }
     function scoreText(a){ return `${Number(a.score ?? 0)}/${Number(a.total ?? 0)}`; }
+    function typeSummary(a){
+      if(Array.isArray(a.types) && a.types.length){
+        return a.types.map(t => `${t.label || t.typeId || 'Question type'} (${Number(t.ok ?? 0)}/${Number(t.total ?? 0)})`).join(', ');
+      }
+      if(Array.isArray(a.questionTypes)) return a.questionTypes.join(', ');
+      if(a.questionTypes) return String(a.questionTypes);
+      return 'Question types not recorded';
+    }
 
     async function initFirebase(){
       if(!looksConfigured()){
@@ -344,11 +355,24 @@
         section.className = 'topicSection';
         const best = Math.max(...items.map(pct));
         const latest = items.reduce((acc,a)=>dateValue(a)>dateValue(acc)?a:acc,items[0]);
+        const byLevel = new Map();
+        items.forEach(a => {
+          const level = levelOf(a);
+          const old = byLevel.get(level) || { best: 0, count: 0 };
+          old.best = Math.max(old.best, pct(a));
+          old.count++;
+          byLevel.set(level, old);
+        });
+        const levelHTML = Array.from(byLevel.entries()).map(([level, data]) => {
+          const cls = String(level).toLowerCase().includes('expected') ? 'expected' : String(level).toLowerCase().includes('basic') ? 'basic' : '';
+          return `<span class="levelMini ${cls}">${escapeHTML(level)} · best ${data.best}% · ${data.count}</span>`;
+        }).join('');
         section.innerHTML = `
           <div class="topicHeader">
             <div>
               <div class="topicTitle">${escapeHTML(topic)}</div>
-              <div class="topicMeta">Latest: ${escapeHTML(dateText(latest))}</div>
+              <div class="topicMeta">Latest: ${escapeHTML(dateText(latest))} · ${escapeHTML(toolOf(latest))}</div>
+              <div class="levelSummary">${levelHTML}</div>
             </div>
             <div class="badgeRow">
               <span class="miniBadge blue">${items.length} certificate${items.length===1?'':'s'}</span>
@@ -368,14 +392,15 @@
       const card = document.createElement('div');
       card.className = 'achievement';
       const p = pct(a);
-      const questionTypes = Array.isArray(a.questionTypes) ? a.questionTypes.join(', ') : (a.questionTypes || 'Question types not recorded');
+      const questionTypes = typeSummary(a);
       const certificate = a.certificateText || `Completed ${topicOf(a)} — ${levelOf(a)} with a score of ${scoreText(a)}.`;
       card.innerHTML = `
         <div class="trophy">${p>=90?'🏆':p>=70?'⭐':'✅'}</div>
         <div>
           <div class="achTitle">${escapeHTML(levelOf(a))}</div>
           <div class="achMeta">${escapeHTML(certificate)}</div>
-          <div class="achMeta">${escapeHTML(dateText(a))} · ${escapeHTML(questionTypes)}</div>
+          <div class="achMeta">${escapeHTML(dateText(a))} · ${escapeHTML(toolOf(a))}</div>
+          <div class="achMeta">${escapeHTML(questionTypes)}</div>
         </div>
         <div class="scorePill ${scoreClass(a)}">${escapeHTML(scoreText(a))}<br><span style="font-size:12px">${p}%</span></div>
       `;
