@@ -288,6 +288,8 @@
     .enterBtn{background:#1d4ed8;color:white}
     .nextBtn{background:#111827;color:white;display:none}
     .nextBtn.show{display:inline-block}
+    .prevBtn{background:#f3f4f6;color:#111827;display:none}
+    .prevBtn.show{display:inline-block}
     .primary{background:#2563eb;color:white}
     .danger{background:#fee2e2;color:#991b1b}
 
@@ -464,6 +466,7 @@
           <input id="answerInput" class="answerInput" inputmode="numeric" autocomplete="off" placeholder="Type..." />
           <button id="enterBtn" class="btn enterBtn">Enter</button>
           <button id="nextBtn" class="btn nextBtn">Next →</button>
+          <button id="prevBtn" class="btn prevBtn">↩ Back</button>
         </div>
 
         <div id="feedback" class="feedback">Type your answer, then press <b>Enter</b>.</div>
@@ -511,7 +514,7 @@
       <div class="certWrap">
         <div class="trophyBox">🏆</div>
         <div>
-          <div id="certLine1" class="certText">You completed Sweet and got 0 out of 15.</div>
+          <div id="certLine1" class="certText">You completed level Sweet in Substitution in Algebra and got a score of 0 out of 15.</div>
           <div class="certSub" id="certSub">Screenshot this and paste into Google Classroom.</div>
         </div>
       </div>
@@ -549,6 +552,7 @@
   const answerInput = document.getElementById('answerInput');
   const enterBtn = document.getElementById('enterBtn');
   const nextBtn = document.getElementById('nextBtn');
+  const prevBtn = document.getElementById('prevBtn');
   const feedback = document.getElementById('feedback');
   const resetQuizBtn = document.getElementById('resetQuizBtn');
   const backToLevelsBtn = document.getElementById('backToLevelsBtn');
@@ -585,13 +589,13 @@
   let language = 'en';
   const I18N = {
     en: {
-      title:'Substitution in Algebra', language:'Language / زبان / اللغة', chooseLevel:'Choose your level', level:'Level', back:'← Back', reset:'Reset', notation:'Choose notation:', evaluate:'Evaluate:', answer:'Answer:', enter:'Enter', next:'Next →', type:'Type your answer, then press <b>Enter</b>.', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.', correct:'✅ Correct!', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.';}, certificate:'Certificate', certSub:'Screenshot this and paste into Google Classroom.', copy:'Copy to clipboard', copied:'Copied!', close:'Close', backMenu:'Back to level menu', footer:'This tool and more can be found at&nbsp;', polypad:'Use the function machines on Polypad to help you: ', q:function(a,b){return 'Question '+a+' / '+b;}, completed:function(lvl,score,total){return 'You completed '+lvl+' and got '+score+' out of '+total+'.';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\n(Submit a screenshot or paste this into Google Classroom.)';}, levels:{sweet:['Sweet','One variable · value from 1 to 10 · one-step expressions'],mild:['Mild','One variable · value from 1 to 10 · two-step expressions'],medium:['Medium','Two variables · values from 1 to 10 · multiplication and division structures'],spicy:['Spicy','Two variables · values from −10 to 10, excluding zero'],extraHot:['Extra hot','Three variables · values from −10 to 10, excluding zero']}
+      title:'Substitution in Algebra', language:'Language / زبان / اللغة', chooseLevel:'Choose your level', level:'Level', back:'← Back', reset:'Reset', notation:'Choose notation:', evaluate:'Evaluate:', answer:'Answer:', enter:'Enter', next:'Next →', prev:'↩ Back', retry:'Not quite. Try again.', type:'Type your answer, then press <b>Enter</b>.', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.', correct:'✅ Correct!', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.';}, certificate:'Certificate', certSub:'Screenshot this and paste into Google Classroom.', copy:'Copy to clipboard', copied:'Copied!', close:'Close', backMenu:'Back to level menu', footer:'This tool and more can be found at&nbsp;', polypad:'Use the function machines on Polypad to help you: ', q:function(a,b){return 'Question '+a+' / '+b;}, completed:function(lvl,score,total){return 'You completed level '+lvl+' in Substitution in Algebra and got a score of '+score+' out of '+total+'.';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nTopic: Substitution in Algebra\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\n(Submit a screenshot or paste this into Google Classroom.)';}, levels:{sweet:['Sweet','One variable · value from 1 to 10 · one-step expressions'],mild:['Mild','One variable · value from 1 to 10 · two-step expressions'],medium:['Medium','Two variables · values from 1 to 10 · multiplication and division structures'],spicy:['Spicy','Two variables · values from −10 to 10, excluding zero'],extraHot:['Extra hot','Three variables · values from −10 to 10, excluding zero']}
     },
     fa: {
-      title:'Substitution in Algebra<br><span class="rtlLine">جایگذاری در جبر</span>', language:'Language<br><span class="rtlLine">زبان</span>', chooseLevel:'Choose your level<br><span class="rtlLine">سطح خود را انتخاب کنید</span>', level:'Level<br><span class="rtlLine">سطح</span>', back:'← Back<br><span class="rtlLine">بازگشت</span>', reset:'Reset<br><span class="rtlLine">شروع دوباره</span>', notation:'Choose notation:<br><span class="rtlLine">نمادگذاری را انتخاب کنید:</span>', evaluate:'Evaluate:<br><span class="rtlLine">مقدار عبارت را پیدا کنید:</span>', answer:'Answer:<br><span class="rtlLine">پاسخ:</span>', enter:'Enter<br><span class="rtlLine">ثبت</span>', next:'Next →<br><span class="rtlLine">بعدی</span>', type:'Type your answer, then press <b>Enter</b>.<br><span class="rtlLine">پاسخ خود را بنویسید، سپس Enter را فشار دهید.</span>', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.<br><span class="rtlLine">نکته: برای ثبت پاسخ Enter را بزنید؛ برای سؤال بعدی دوباره Enter را بزنید.</span>', correct:'✅ Correct!<br><span class="rtlLine">درست است!</span>', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.<br><span class="rtlLine">کاملاً درست نیست. پاسخ درست <b>'+ans+'</b> بود.</span>';}, certificate:'Certificate<br><span class="rtlLine">گواهی</span>', certSub:'Screenshot this and paste into Google Classroom.<br><span class="rtlLine">از این صفحه عکس بگیرید و در گوگل کلاس‌روم قرار دهید.</span>', copy:'Copy to clipboard<br><span class="rtlLine">کپی کردن</span>', copied:'Copied!<br><span class="rtlLine">کپی شد!</span>', close:'Close<br><span class="rtlLine">بستن</span>', backMenu:'Back to level menu<br><span class="rtlLine">بازگشت به انتخاب سطح</span>', footer:'This tool and more can be found at&nbsp;<span class="rtlLine">این ابزار و ابزارهای بیشتر در این نشانی پیدا می‌شوند</span> ', polypad:'Use the function machines on Polypad to help you: <br><span class="rtlLine">برای کمک می‌توانید از ماشین‌های تابع در Polypad استفاده کنید:</span> ', q:function(a,b){return 'Question '+a+' / '+b+'<br><span class="rtlLine">سؤال '+a+' از '+b+'</span>';}, completed:function(lvl,score,total){return 'You completed '+lvl+' and got '+score+' out of '+total+'.<br><span class="rtlLine">شما سطح '+lvl+' را کامل کردید و '+score+' از '+total+' گرفتید.</span>';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\nجایگذاری در جبر - سطح: '+lvl+' - امتیاز: '+score+' از '+total;}, levels:{sweet:['Sweet<br><span class="rtlLine">آسان</span>','One variable · value from 1 to 10 · one-step expressions<br><span class="rtlLine">یک متغیر · مقدار از ۱ تا ۱۰ · عبارت‌های یک‌مرحله‌ای</span>'],mild:['Mild<br><span class="rtlLine">متوسط آسان</span>','One variable · value from 1 to 10 · two-step expressions<br><span class="rtlLine">یک متغیر · مقدار از ۱ تا ۱۰ · عبارت‌های دو مرحله‌ای</span>'],medium:['Medium<br><span class="rtlLine">متوسط</span>','Two variables · values from 1 to 10 · multiplication and division structures<br><span class="rtlLine">دو متغیر · مقدارها از ۱ تا ۱۰ · ساختارهای ضرب و تقسیم</span>'],spicy:['Spicy<br><span class="rtlLine">چالشی</span>','Two variables · values from −10 to 10, excluding zero<br><span class="rtlLine">دو متغیر · مقدارها از ۱۰- تا ۱۰، به جز صفر</span>'],extraHot:['Extra hot<br><span class="rtlLine">خیلی چالشی</span>','Three variables · values from −10 to 10, excluding zero<br><span class="rtlLine">سه متغیر · مقدارها از ۱۰- تا ۱۰، به جز صفر</span>']}
+      title:'Substitution in Algebra<br><span class="rtlLine">جایگذاری در جبر</span>', language:'Language<br><span class="rtlLine">زبان</span>', chooseLevel:'Choose your level<br><span class="rtlLine">سطح خود را انتخاب کنید</span>', level:'Level<br><span class="rtlLine">سطح</span>', back:'← Back<br><span class="rtlLine">بازگشت</span>', reset:'Reset<br><span class="rtlLine">شروع دوباره</span>', notation:'Choose notation:<br><span class="rtlLine">نمادگذاری را انتخاب کنید:</span>', evaluate:'Evaluate:<br><span class="rtlLine">مقدار عبارت را پیدا کنید:</span>', answer:'Answer:<br><span class="rtlLine">پاسخ:</span>', enter:'Enter<br><span class="rtlLine">ثبت</span>', next:'Next →<br><span class="rtlLine">بعدی</span>', prev:'↩ Back<br><span class="rtlLine">بازگشت</span>', retry:'Not quite. Try again.<br><span class="rtlLine">کاملاً درست نیست. دوباره تلاش کنید.</span>', type:'Type your answer, then press <b>Enter</b>.<br><span class="rtlLine">پاسخ خود را بنویسید، سپس Enter را فشار دهید.</span>', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.<br><span class="rtlLine">نکته: برای ثبت پاسخ Enter را بزنید؛ برای سؤال بعدی دوباره Enter را بزنید.</span>', correct:'✅ Correct!<br><span class="rtlLine">درست است!</span>', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.<br><span class="rtlLine">کاملاً درست نیست. پاسخ درست <b>'+ans+'</b> بود.</span>';}, certificate:'Certificate<br><span class="rtlLine">گواهی</span>', certSub:'Screenshot this and paste into Google Classroom.<br><span class="rtlLine">از این صفحه عکس بگیرید و در گوگل کلاس‌روم قرار دهید.</span>', copy:'Copy to clipboard<br><span class="rtlLine">کپی کردن</span>', copied:'Copied!<br><span class="rtlLine">کپی شد!</span>', close:'Close<br><span class="rtlLine">بستن</span>', backMenu:'Back to level menu<br><span class="rtlLine">بازگشت به انتخاب سطح</span>', footer:'This tool and more can be found at&nbsp;<span class="rtlLine">این ابزار و ابزارهای بیشتر در این نشانی پیدا می‌شوند</span> ', polypad:'Use the function machines on Polypad to help you: <br><span class="rtlLine">برای کمک می‌توانید از ماشین‌های تابع در Polypad استفاده کنید:</span> ', q:function(a,b){return 'Question '+a+' / '+b+'<br><span class="rtlLine">سؤال '+a+' از '+b+'</span>';}, completed:function(lvl,score,total){return 'You completed level '+lvl+' in Substitution in Algebra and got a score of '+score+' out of '+total+'.<br><span class="rtlLine">شما سطح '+lvl+' را در جایگذاری در جبر کامل کردید و امتیاز '+score+' از '+total+' گرفتید.</span>';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nTopic: Substitution in Algebra\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\nجایگذاری در جبر - سطح: '+lvl+' - امتیاز: '+score+' از '+total;}, levels:{sweet:['Sweet<br><span class="rtlLine">آسان</span>','One variable · value from 1 to 10 · one-step expressions<br><span class="rtlLine">یک متغیر · مقدار از ۱ تا ۱۰ · عبارت‌های یک‌مرحله‌ای</span>'],mild:['Mild<br><span class="rtlLine">متوسط آسان</span>','One variable · value from 1 to 10 · two-step expressions<br><span class="rtlLine">یک متغیر · مقدار از ۱ تا ۱۰ · عبارت‌های دو مرحله‌ای</span>'],medium:['Medium<br><span class="rtlLine">متوسط</span>','Two variables · values from 1 to 10 · multiplication and division structures<br><span class="rtlLine">دو متغیر · مقدارها از ۱ تا ۱۰ · ساختارهای ضرب و تقسیم</span>'],spicy:['Spicy<br><span class="rtlLine">چالشی</span>','Two variables · values from −10 to 10, excluding zero<br><span class="rtlLine">دو متغیر · مقدارها از ۱۰- تا ۱۰، به جز صفر</span>'],extraHot:['Extra hot<br><span class="rtlLine">خیلی چالشی</span>','Three variables · values from −10 to 10, excluding zero<br><span class="rtlLine">سه متغیر · مقدارها از ۱۰- تا ۱۰، به جز صفر</span>']}
     },
     ar: {
-      title:'Substitution in Algebra<br><span class="rtlLine">التعويض في الجبر</span>', language:'Language<br><span class="rtlLine">اللغة</span>', chooseLevel:'Choose your level<br><span class="rtlLine">اختر المستوى</span>', level:'Level<br><span class="rtlLine">المستوى</span>', back:'← Back<br><span class="rtlLine">رجوع</span>', reset:'Reset<br><span class="rtlLine">إعادة البدء</span>', notation:'Choose notation:<br><span class="rtlLine">اختر طريقة الكتابة:</span>', evaluate:'Evaluate:<br><span class="rtlLine">أوجد قيمة التعبير:</span>', answer:'Answer:<br><span class="rtlLine">الإجابة:</span>', enter:'Enter<br><span class="rtlLine">إدخال</span>', next:'Next →<br><span class="rtlLine">التالي</span>', type:'Type your answer, then press <b>Enter</b>.<br><span class="rtlLine">اكتب إجابتك، ثم اضغط Enter.</span>', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.<br><span class="rtlLine">نصيحة: اضغط Enter لإرسال الإجابة، ثم اضغط Enter مرة أخرى للانتقال للسؤال التالي.</span>', correct:'✅ Correct!<br><span class="rtlLine">صحيح!</span>', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.<br><span class="rtlLine">ليست صحيحة تمامًا. الإجابة الصحيحة هي <b>'+ans+'</b>.</span>';}, certificate:'Certificate<br><span class="rtlLine">الشهادة</span>', certSub:'Screenshot this and paste into Google Classroom.<br><span class="rtlLine">خذ لقطة شاشة والصقها في Google Classroom.</span>', copy:'Copy to clipboard<br><span class="rtlLine">نسخ</span>', copied:'Copied!<br><span class="rtlLine">تم النسخ!</span>', close:'Close<br><span class="rtlLine">إغلاق</span>', backMenu:'Back to level menu<br><span class="rtlLine">العودة إلى قائمة المستويات</span>', footer:'This tool and more can be found at&nbsp;<span class="rtlLine">يمكنك العثور على هذه الأداة والمزيد هنا</span> ', polypad:'Use the function machines on Polypad to help you: <br><span class="rtlLine">استخدم آلات الدوال في Polypad لمساعدتك:</span> ', q:function(a,b){return 'Question '+a+' / '+b+'<br><span class="rtlLine">السؤال '+a+' من '+b+'</span>';}, completed:function(lvl,score,total){return 'You completed '+lvl+' and got '+score+' out of '+total+'.<br><span class="rtlLine">أكملت مستوى '+lvl+' وحصلت على '+score+' من '+total+'.</span>';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\nالتعويض في الجبر - المستوى: '+lvl+' - الدرجة: '+score+' من '+total;}, levels:{sweet:['Sweet<br><span class="rtlLine">سهل</span>','One variable · value from 1 to 10 · one-step expressions<br><span class="rtlLine">متغير واحد · القيمة من ١ إلى ١٠ · تعبيرات من خطوة واحدة</span>'],mild:['Mild<br><span class="rtlLine">متوسط سهل</span>','One variable · value from 1 to 10 · two-step expressions<br><span class="rtlLine">متغير واحد · القيمة من ١ إلى ١٠ · تعبيرات من خطوتين</span>'],medium:['Medium<br><span class="rtlLine">متوسط</span>','Two variables · values from 1 to 10 · multiplication and division structures<br><span class="rtlLine">متغيران · القيم من ١ إلى ١٠ · تراكيب ضرب وقسمة</span>'],spicy:['Spicy<br><span class="rtlLine">صعب</span>','Two variables · values from −10 to 10, excluding zero<br><span class="rtlLine">متغيران · القيم من −١٠ إلى ١٠، بدون الصفر</span>'],extraHot:['Extra hot<br><span class="rtlLine">صعب جدًا</span>','Three variables · values from −10 to 10, excluding zero<br><span class="rtlLine">ثلاثة متغيرات · القيم من −١٠ إلى ١٠، بدون الصفر</span>']}
+      title:'Substitution in Algebra<br><span class="rtlLine">التعويض في الجبر</span>', language:'Language<br><span class="rtlLine">اللغة</span>', chooseLevel:'Choose your level<br><span class="rtlLine">اختر المستوى</span>', level:'Level<br><span class="rtlLine">المستوى</span>', back:'← Back<br><span class="rtlLine">رجوع</span>', reset:'Reset<br><span class="rtlLine">إعادة البدء</span>', notation:'Choose notation:<br><span class="rtlLine">اختر طريقة الكتابة:</span>', evaluate:'Evaluate:<br><span class="rtlLine">أوجد قيمة التعبير:</span>', answer:'Answer:<br><span class="rtlLine">الإجابة:</span>', enter:'Enter<br><span class="rtlLine">إدخال</span>', next:'Next →<br><span class="rtlLine">التالي</span>', prev:'↩ Back<br><span class="rtlLine">رجوع</span>', retry:'Not quite. Try again.<br><span class="rtlLine">ليست صحيحة تمامًا. حاول مرة أخرى.</span>', type:'Type your answer, then press <b>Enter</b>.<br><span class="rtlLine">اكتب إجابتك، ثم اضغط Enter.</span>', hint:'Tip: Press <b>Enter</b> to submit · Press <b>Enter</b> again to go next.<br><span class="rtlLine">نصيحة: اضغط Enter لإرسال الإجابة، ثم اضغط Enter مرة أخرى للانتقال للسؤال التالي.</span>', correct:'✅ Correct!<br><span class="rtlLine">صحيح!</span>', notQuite:function(ans){return 'Not quite. The correct answer was <b>'+ans+'</b>.<br><span class="rtlLine">ليست صحيحة تمامًا. الإجابة الصحيحة هي <b>'+ans+'</b>.</span>';}, certificate:'Certificate<br><span class="rtlLine">الشهادة</span>', certSub:'Screenshot this and paste into Google Classroom.<br><span class="rtlLine">خذ لقطة شاشة والصقها في Google Classroom.</span>', copy:'Copy to clipboard<br><span class="rtlLine">نسخ</span>', copied:'Copied!<br><span class="rtlLine">تم النسخ!</span>', close:'Close<br><span class="rtlLine">إغلاق</span>', backMenu:'Back to level menu<br><span class="rtlLine">العودة إلى قائمة المستويات</span>', footer:'This tool and more can be found at&nbsp;<span class="rtlLine">يمكنك العثور على هذه الأداة والمزيد هنا</span> ', polypad:'Use the function machines on Polypad to help you: <br><span class="rtlLine">استخدم آلات الدوال في Polypad لمساعدتك:</span> ', q:function(a,b){return 'Question '+a+' / '+b+'<br><span class="rtlLine">السؤال '+a+' من '+b+'</span>';}, completed:function(lvl,score,total){return 'You completed level '+lvl+' in Substitution in Algebra and got a score of '+score+' out of '+total+'.<br><span class="rtlLine">أكملت مستوى '+lvl+' في التعويض في الجبر وحصلت على '+score+' من '+total+'.</span>';}, copyText:function(lvl,score,total,date){return '🏆 Mills Maths Tools – Substitution in Algebra Quiz\nTopic: Substitution in Algebra\nLevel: '+lvl+'\nScore: '+score+' / '+total+'\nCompleted: '+date+'\n\nالتعويض في الجبر - المستوى: '+lvl+' - الدرجة: '+score+' من '+total;}, levels:{sweet:['Sweet<br><span class="rtlLine">سهل</span>','One variable · value from 1 to 10 · one-step expressions<br><span class="rtlLine">متغير واحد · القيمة من ١ إلى ١٠ · تعبيرات من خطوة واحدة</span>'],mild:['Mild<br><span class="rtlLine">متوسط سهل</span>','One variable · value from 1 to 10 · two-step expressions<br><span class="rtlLine">متغير واحد · القيمة من ١ إلى ١٠ · تعبيرات من خطوتين</span>'],medium:['Medium<br><span class="rtlLine">متوسط</span>','Two variables · values from 1 to 10 · multiplication and division structures<br><span class="rtlLine">متغيران · القيم من ١ إلى ١٠ · تراكيب ضرب وقسمة</span>'],spicy:['Spicy<br><span class="rtlLine">صعب</span>','Two variables · values from −10 to 10, excluding zero<br><span class="rtlLine">متغيران · القيم من −١٠ إلى ١٠، بدون الصفر</span>'],extraHot:['Extra hot<br><span class="rtlLine">صعب جدًا</span>','Three variables · values from −10 to 10, excluding zero<br><span class="rtlLine">ثلاثة متغيرات · القيم من −١٠ إلى ١٠، بدون الصفر</span>']}
     }
   };
   function L(){ return I18N[language] || I18N.en; }
@@ -610,6 +614,7 @@
     answerLabel.innerHTML = L().answer;
     enterBtn.innerHTML = L().enter;
     nextBtn.innerHTML = L().next;
+    prevBtn.innerHTML = L().prev;
     resetQuizBtn.innerHTML = L().reset;
     backToLevelsBtn.innerHTML = L().back;
     hintMini.innerHTML = L().hint;
@@ -633,6 +638,7 @@
 
   let levelKey = null;
 
+  let questions = [];
   let qIndex = 0;
   let score = 0;
   let phase = 'awaiting';
@@ -759,7 +765,7 @@
 
   function q(letters, values, expr){
     const answer = evalExpr(expr, values);
-    return { letters, values, expr, answer };
+    return { letters, values, expr, answer, status:'unseen', answerText:'', countedCorrect:false };
   }
 
   function makeDivisibleBracketExpr(variable, vValue, minResult=1, maxResult=12){
@@ -1016,75 +1022,134 @@
   }
   function resetInputStyles(){ answerInput.classList.remove('ok','bad'); }
   function showNext(show){ nextBtn.classList.toggle('show', !!show); }
-
-  function loadQuestion(){
-    phase = 'awaiting';
+  function showPrev(show){ prevBtn.classList.toggle('show', !!show); }
+  function ensureQuestionExists(index){
+    while(questions.length <= index) questions.push(generateQuestion());
+  }
+  function markCorrect(question){
+    question.status = 'correct';
+    if(!question.countedCorrect){
+      question.countedCorrect = true;
+      score++;
+    }
+  }
+  function renderQuestionState(){
+    Q = questions[qIndex];
     resetInputStyles();
-    answerInput.value = '';
-    answerInput.disabled = false;
+    answerInput.value = Q.answerText || '';
+    answerInput.disabled = Q.status === 'correct';
     enterBtn.disabled = false;
-    showNext(false);
-    showFeedback('', L().type);
-    Q = generateQuestion();
+    showPrev(qIndex > 0);
+    showNext(Q.status !== 'unseen');
+    nextBtn.innerHTML = qIndex >= QUIZ_LEN - 1 ? (language === 'en' ? 'Finish →' : L().next) : L().next;
+
+    if(Q.status === 'correct'){
+      answerInput.classList.add('ok');
+      showFeedback('ok', L().correct);
+      phase = 'revealed';
+    } else if(Q.status === 'retry'){
+      answerInput.classList.add('bad');
+      showFeedback('bad', L().retry || 'Not quite. Try again.');
+      phase = 'awaiting';
+    } else {
+      showFeedback('', L().type);
+      phase = 'awaiting';
+    }
+
     renderValues(Q.values);
     renderCurrentExpressionOnly();
-    answerInput.focus();
+    setProgress();
+    setTimeout(() => {
+      if(Q && Q.status === 'correct') nextBtn.focus();
+      else answerInput.focus();
+    }, 0);
+  }
+  function loadQuestion(){
+    ensureQuestionExists(qIndex);
+    renderQuestionState();
   }
   function startQuiz(key){
     levelKey = key;
+    questions = [];
     qIndex = 0;
     score = 0;
+    phase = 'awaiting';
     setBanner();
-    setProgress();
     hideModal(levelModal);
     hideModal(certModal);
     loadQuestion();
   }
   function resetQuizSameLevel(){
     if(!levelKey) return;
+    questions = [];
     qIndex = 0;
     score = 0;
-    setProgress();
+    phase = 'awaiting';
     loadQuestion();
   }
+  function shouldAdvanceAfterIncorrect(){
+    return !!(Q && Q.status === 'retry' && String(answerInput.value) === String(Q.answerText || ''));
+  }
+  function handleEnterOrButton(){
+    if(!Q) return;
+    if(answerInput.disabled || shouldAdvanceAfterIncorrect()){
+      nextQuestion();
+    } else {
+      submitAnswer();
+    }
+  }
   function submitAnswer(){
-    if(phase !== 'awaiting') return;
+    if(!Q || answerInput.disabled) return;
     const student = parseStudentNumber(answerInput.value);
     const correct = Number.isFinite(student) && student === Q.answer;
+    Q.answerText = answerInput.value;
     resetInputStyles();
-    answerInput.classList.add(correct ? 'ok' : 'bad');
     if(correct){
-      score++;
+      markCorrect(Q);
+      answerInput.classList.add('ok');
+      answerInput.disabled = true;
       showFeedback('ok', L().correct);
       dropConfetti();
+      phase = 'revealed';
+      showNext(true);
+      nextBtn.focus();
     } else {
-      showFeedback('bad', L().notQuite(fmtNum(Q.answer)));
+      Q.status = 'retry';
+      answerInput.classList.add('bad');
+      answerInput.disabled = false;
+      showFeedback('bad', L().retry || 'Not quite. Try again.');
+      phase = 'awaiting';
+      showNext(true);
+      answerInput.focus();
+      answerInput.select();
     }
-    phase = 'revealed';
-    answerInput.disabled = true;
-    showNext(true);
-    nextBtn.focus();
   }
   function nextQuestion(){
-    if(phase !== 'revealed') return;
+    if(!Q || Q.status === 'unseen') return;
     if(qIndex >= QUIZ_LEN - 1){
       progressFill.style.width = '100%';
       showCertificate();
       return;
     }
     qIndex++;
-    setProgress();
+    loadQuestion();
+  }
+  function previousQuestion(){
+    if(qIndex <= 0) return;
+    qIndex--;
     loadQuestion();
   }
   function showCertificate(){
-    const L = LEVELS[levelKey].name;
+    score = questions.filter(question => question.countedCorrect).length;
     certLine1.innerHTML = L().completed(levelName(levelKey), score, QUIZ_LEN);
+    progressFill.style.width = '100%';
     showModal(certModal);
   }
   function backToLevelMenu(){
     hideModal(certModal);
     showModal(levelModal);
     levelKey = null;
+    questions = [];
     phase = 'awaiting';
     levelBanner.innerHTML = L().level + ': —';
     levelBanner.style.background = 'linear-gradient(180deg,#1d4ed8,#1e3a8a)';
@@ -1097,6 +1162,7 @@
     answerInput.disabled = false;
     resetInputStyles();
     showNext(false);
+    showPrev(false);
     showFeedback('', L().type);
   }
   async function copyCertificate(){
@@ -1146,8 +1212,9 @@
   document.querySelectorAll('.startBtn').forEach(btn => btn.addEventListener('click', () => startQuiz(btn.dataset.level)));
   resetQuizBtn.addEventListener('click', () => resetQuizSameLevel());
   backToLevelsBtn.addEventListener('click', () => backToLevelMenu());
-  enterBtn.addEventListener('click', () => { if(phase === 'awaiting') submitAnswer(); else if(phase === 'revealed') nextQuestion(); });
+  enterBtn.addEventListener('click', handleEnterOrButton);
   nextBtn.addEventListener('click', () => nextQuestion());
+  prevBtn.addEventListener('click', () => previousQuestion());
   copyBtn.addEventListener('click', copyCertificate);
   closeCertBtn.addEventListener('click', () => hideModal(certModal));
   backToMenuBtn.addEventListener('click', () => { hideModal(certModal); backToLevelMenu(); });
@@ -1156,8 +1223,7 @@
     if(e.key === 'Enter'){
       if(levelModal.classList.contains('show') || certModal.classList.contains('show')) return;
       e.preventDefault();
-      if(phase === 'awaiting') submitAnswer();
-      else if(phase === 'revealed') nextQuestion();
+      handleEnterOrButton();
     }
     if(e.key === 'Escape'){
       if(certModal.classList.contains('show')) hideModal(certModal);
