@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Translate Words to Algebra | Mills Maths Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f5f6f8;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 16px 40px rgba(15,23,42,.08);
+      --blue:#2563eb;
+      --blue-soft:#dbeafe;
+      --green:#16a34a;
+      --green-soft:#dcfce7;
+      --red:#dc2626;
+      --red-soft:#fee2e2;
+      --purple:#7c3aed;
+      --purple-soft:#ede9fe;
+      --card-outline:#1f6feb;
+      --math-font:"Cambria Math", "STIX Two Math", "STIXGeneral", "Times New Roman", serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37,99,235,.08), transparent 32rem),
+        radial-gradient(circle at bottom right, rgba(124,58,237,.08), transparent 30rem),
+        var(--bg);
+      color:var(--ink);
+      overflow-x:hidden;
+    }
+
+    .app{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:20px;
+      padding:22px 24px 8px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:5;
+    }
+
+    .left-actions,.right-actions{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius:18px;
+      padding:14px 20px;
+      font:800 17px/1 Inter, sans-serif;
+      cursor:pointer;
+      transition:transform .16s ease, box-shadow .16s ease, background .16s ease, opacity .16s ease;
+      box-shadow:0 2px 0 rgba(17,24,39,.03), inset 0 0 0 1px rgba(17,24,39,.05);
+      white-space:nowrap;
+    }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+
+    .btn-light{ background:#fff; color:var(--ink); }
+    .btn-gray{ background:#eef0f3; color:var(--ink); }
+    .btn-red{ background:var(--red-soft); color:#b91c1c; }
+
+    .back-btn{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding-inline:18px 22px;
+      text-decoration:none;
+    }
+
+    .logo-badge{
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(180deg,#e0f2fe,#dbeafe);
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+
+    .logo-badge img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .title{
+      text-align:center;
+      font-size:clamp(24px, 3vw, 36px);
+      font-weight:900;
+      margin:8px 18px 0;
+      line-height:1.15;
+      letter-spacing:-.02em;
+    }
+
+    .subtitle{
+      text-align:center;
+      color:var(--muted);
+      font-size:15px;
+      font-weight:700;
+      margin:8px 18px 0;
+    }
+
+    .main{
+      flex:1;
+      display:grid;
+      place-items:center;
+      padding:18px 24px 36px;
+    }
+
+    .board{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:22px;
+    }
+
+    .level-toggle{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px;
+      box-shadow:0 10px 26px rgba(15,23,42,.06);
+    }
+
+    .toggle-btn{
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      padding:12px 22px;
+      background:transparent;
+      color:var(--muted);
+      cursor:pointer;
+      font:900 16px/1 Inter, sans-serif;
+      transition:background .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .toggle-btn:hover{ transform:translateY(-1px); }
+    .toggle-btn.active{
+      background:var(--blue);
+      color:#fff;
+      box-shadow:0 8px 18px rgba(37,99,235,.18);
+    }
+
+    .level-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:700;
+      min-height:20px;
+    }
+
+    .flip-scene{
+      width:min(620px, 92vw);
+      height:330px;
+      perspective:1200px;
+    }
+
+    .flip-card{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform-style:preserve-3d;
+      transition:transform .2s linear;
+    }
+    .flip-card.revealed{ transform:rotateY(180deg); }
+
+    .face{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:18px;
+      border:8px solid var(--card-outline);
+      border-radius:28px;
+      background:#fff;
+      backface-visibility:hidden;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      padding:28px;
+    }
+
+    .face::before{
+      content:"";
+      position:absolute;
+      inset:12px 16px 14px 12px;
+      border-radius:22px;
+      border:2px solid rgba(37,99,235,.08);
+      pointer-events:none;
+    }
+
+    .face-label{
+      position:relative;
+      z-index:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 14px;
+      border-radius:999px;
+      background:#f8fafc;
+      color:var(--muted);
+      font-weight:900;
+      font-size:13px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .front-value,
+    .back-value{
+      position:relative;
+      z-index:1;
+      line-height:1.14;
+      text-align:center;
+      user-select:none;
+      transform-origin:center;
+      max-width:100%;
+    }
+
+    .front-value{
+      color:#1565f7;
+      font-size:clamp(28px, 4.2vw, 46px);
+      font-weight:900;
+      letter-spacing:-.02em;
+    }
+
+    .back-value{
+      color:var(--green);
+      font-family:var(--math-font);
+      font-size:clamp(42px, 7vw, 78px);
+      font-weight:700;
+    }
+
+    .var{
+      font-family:var(--math-font);
+      font-style:italic;
+      font-weight:650;
+      color:#1565f7;
+    }
+
+    .back-value .var{
+      color:var(--green);
+    }
+
+    .back{ transform:rotateY(180deg); }
+
+    .back-value.pop{
+      animation:answerPop .22s ease-out;
+    }
+
+    @keyframes answerPop{
+      0%{ transform:scale(.84); opacity:.65; }
+      70%{ transform:scale(1.08); opacity:1; }
+      100%{ transform:scale(1); opacity:1; }
+    }
+
+    .button-row{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .flip-btn,
+    .new-btn{
+      appearance:none;
+      border:none;
+      border-radius:18px;
+      padding:16px 28px;
+      cursor:pointer;
+      transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+      box-shadow:0 2px 0 rgba(17,24,39,.03), inset 0 0 0 1px rgba(17,24,39,.08);
+    }
+    .flip-btn:hover,
+    .new-btn:hover{ transform:translateY(-1px); }
+    .flip-btn:active,
+    .new-btn:active{ transform:translateY(0); }
+
+    .flip-btn{
+      background:#ffffff;
+      color:#111827;
+      font:900 28px/1 Inter, sans-serif;
+    }
+
+    .new-btn{
+      background:var(--blue);
+      color:#fff;
+      font:900 22px/1 Inter, sans-serif;
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:15px;
+      font-weight:700;
+      text-align:center;
+      margin-top:2px;
+    }
+
+    .kbd{
+      display:inline-block;
+      min-width:28px;
+      padding:4px 8px;
+      border-radius:8px;
+      background:#fff;
+      border:1px solid var(--border);
+      box-shadow:0 2px 0 rgba(0,0,0,.04);
+      color:var(--ink);
+      font:900 13px/1 Inter, sans-serif;
+      margin:0 2px;
+    }
+
+    .sidebar{
+      position:fixed;
+      top:0;
+      right:0;
+      width:min(420px, 92vw);
+      height:100vh;
+      background:#fff;
+      border-left:1px solid var(--border);
+      box-shadow:-10px 0 30px rgba(15,23,42,.10);
+      transform:translateX(100%);
+      transition:transform .22s ease;
+      z-index:40;
+      display:flex;
+      flex-direction:column;
+    }
+    .sidebar.open{ transform:translateX(0); }
+
+    .sidebar-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:22px;
+      border-bottom:1px solid var(--border);
+    }
+
+    .sidebar-title{
+      margin:0;
+      font-size:20px;
+      font-weight:900;
+    }
+
+    .icon-btn{
+      appearance:none;
+      border:none;
+      background:#f3f4f6;
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      font-size:22px;
+      cursor:pointer;
+      color:#111827;
+      font-weight:900;
+    }
+
+    .sidebar-body{
+      padding:18px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .setting-card{
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px;
+      background:#fff;
+    }
+
+    .setting-label{
+      font-size:13px;
+      font-weight:900;
+      color:var(--muted);
+      margin-bottom:12px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .sidebar-note{
+      font-size:14px;
+      line-height:1.5;
+      color:var(--muted);
+      margin:0;
+      font-weight:600;
+    }
+
+    .example-list{
+      margin:10px 0 0;
+      padding-left:18px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+      font-weight:650;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(17,24,39,.25);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease;
+      z-index:30;
+    }
+    .overlay.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    @media (max-width: 760px){
+      .topbar{ padding-inline:14px; }
+      .right-actions{ gap:10px; }
+      .btn{ padding:12px 16px; font-size:15px; }
+      .flip-scene{ height:290px; }
+      .flip-btn{ font-size:22px; padding:14px 22px; }
+      .new-btn{ font-size:18px; padding:14px 20px; }
+      .front-value{ font-size:clamp(25px, 6vw, 36px); }
+      .back-value{ font-size:clamp(40px, 9vw, 62px); }
+      .back-btn{ padding-inline:14px 16px; }
+      .logo-badge{ width:38px; height:38px; }
+      .level-toggle{ width:100%; max-width:420px; }
+      .toggle-btn{ flex:1; padding:12px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="left-actions">
+        <a class="btn btn-light back-btn" href="https://millsmathstools.au" aria-label="Back to Mills Maths Tools">
+          <span class="logo-badge">
+            <img src="mmt.png" alt="Mills Maths Tools logo">
+          </span>
+          <span>Back to Mills Maths Tools</span>
+        </a>
+      </div>
+
+      <div class="right-actions">
+        <button class="btn btn-gray" id="settingsBtn" type="button" aria-expanded="false">Teacher notes</button>
+        <button class="btn btn-red" id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
+
+    <div class="title">Flip Fluency: Words to Algebra</div>
+    <div class="subtitle">Read the worded expression, predict the algebra, then flip to check.</div>
+
+    <main class="main">
+      <div class="board">
+        <div class="level-toggle" role="group" aria-label="Choose difficulty">
+          <button class="toggle-btn active" id="basicBtn" data-level="basic" type="button">Basic</button>
+          <button class="toggle-btn" id="expectedBtn" data-level="expected" type="button">Expected</button>
+        </div>
+
+        <div class="level-note" id="levelNote">Basic: one-step phrases such as “5 more than x” or “twice x”.</div>
+
+        <div class="flip-scene" aria-live="polite">
+          <div class="flip-card" id="flipCard">
+            <div class="face front">
+              <div class="face-label">Words</div>
+              <div class="front-value" id="frontValue">5 more than <span class="var">x</span></div>
+            </div>
+            <div class="face back">
+              <div class="face-label">Algebraic expression</div>
+              <div class="back-value" id="backValue"><span class="var">x</span> + 5</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="flip-btn" id="flipBtn" type="button">Flip</button>
+          <button class="new-btn" id="newBtn" type="button">New Card</button>
+        </div>
+
+        <div class="hint">
+          Press <span class="kbd">Enter</span> or <span class="kbd">R</span> to reveal.&nbsp;&nbsp;
+          Press <span class="kbd">Space</span> for a new card.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <aside class="sidebar" id="settingsSidebar" aria-hidden="true">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">Teacher notes</h2>
+      <button class="icon-btn" id="closeSidebarBtn" type="button" aria-label="Close settings">×</button>
+    </div>
+
+    <div class="sidebar-body">
+      <div class="setting-card">
+        <div class="setting-label">Levels</div>
+        <p class="sidebar-note">
+          <strong>Basic</strong> uses one-step worded expressions. <strong>Expected</strong> uses multi-step expressions, grouping, halves, and “difference between” language.
+        </p>
+        <ul class="example-list">
+          <li>Basic: 5 more than <span class="var">x</span> → <span class="var">x</span> + 5</li>
+          <li>Basic: half of <span class="var">a</span> → <span class="var">a</span> ÷ 2</li>
+          <li>Expected: 3 more than twice <span class="var">n</span> → 2<span class="var">n</span> + 3</li>
+          <li>Expected: the sum of <span class="var">y</span> and 7, multiplied by 2 → 2(<span class="var">y</span> + 7)</li>
+        </ul>
+      </div>
+
+      <div class="setting-card">
+        <div class="setting-label">Suggested routine</div>
+        <p class="sidebar-note">
+          Ask students to say the expression aloud before flipping. Encourage multiple equivalent forms where appropriate, such as <em><span class="var">x</span> ÷ 2</em> and <em><span class="var">x</span>/2</em>.
+        </p>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const VARIABLES = ["x", "a", "b", "c", "n", "y", "p", "w"];
+
+    const BASIC_TEMPLATES = [
+      {
+        words: v => `5 more than ${varHTML(v)}`,
+        expression: v => `${varHTML(v)} + 5`
+      },
+      {
+        words: v => `${varHTML(v)} increased by 7`,
+        expression: v => `${varHTML(v)} + 7`
+      },
+      {
+        words: v => `3 less than ${varHTML(v)}`,
+        expression: v => `${varHTML(v)} − 3`
+      },
+      {
+        words: v => `${varHTML(v)} decreased by 4`,
+        expression: v => `${varHTML(v)} − 4`
+      },
+      {
+        words: v => `twice ${varHTML(v)}`,
+        expression: v => `2${varHTML(v)}`
+      },
+      {
+        words: v => `three times ${varHTML(v)}`,
+        expression: v => `3${varHTML(v)}`
+      },
+      {
+        words: v => `${varHTML(v)} divided by 2`,
+        expression: v => `${varHTML(v)} ÷ 2`
+      },
+      {
+        words: v => `half of ${varHTML(v)}`,
+        expression: v => `${varHTML(v)} ÷ 2`
+      },
+      {
+        words: v => `10 more than ${varHTML(v)}`,
+        expression: v => `${varHTML(v)} + 10`
+      },
+      {
+        words: v => `6 less than ${varHTML(v)}`,
+        expression: v => `${varHTML(v)} − 6`
+      }
+    ];
+
+    const EXPECTED_TEMPLATES = [
+      {
+        words: v => `3 more than twice ${varHTML(v)}`,
+        expression: v => `2${varHTML(v)} + 3`
+      },
+      {
+        words: v => `5 less than three times ${varHTML(v)}`,
+        expression: v => `3${varHTML(v)} − 5`
+      },
+      {
+        words: v => `the sum of ${varHTML(v)} and 7, multiplied by 2`,
+        expression: v => `2(${varHTML(v)} + 7)`
+      },
+      {
+        words: v => `half of (${varHTML(v)} + 6)`,
+        expression: v => `(${varHTML(v)} + 6) ÷ 2`
+      },
+      {
+        words: v => `the difference between 10 and ${varHTML(v)}`,
+        expression: v => `10 − ${varHTML(v)}`
+      },
+      {
+        words: v => `4 more than three times ${varHTML(v)}`,
+        expression: v => `3${varHTML(v)} + 4`
+      },
+      {
+        words: v => `twice the sum of ${varHTML(v)} and 5`,
+        expression: v => `2(${varHTML(v)} + 5)`
+      },
+      {
+        words: v => `the product of 4 and (${varHTML(v)} − 3)`,
+        expression: v => `4(${varHTML(v)} − 3)`
+      },
+      {
+        words: v => `7 less than half of ${varHTML(v)}`,
+        expression: v => `${varHTML(v)} ÷ 2 − 7`
+      },
+      {
+        words: v => `the quotient of (${varHTML(v)} + 8) and 4`,
+        expression: v => `(${varHTML(v)} + 8) ÷ 4`
+      }
+    ];
+
+    const state = {
+      level: "basic",
+      words: "",
+      expression: "",
+      previousKey: "",
+      revealed: false
+    };
+
+    const flipCard = document.getElementById("flipCard");
+    const frontValue = document.getElementById("frontValue");
+    const backValue = document.getElementById("backValue");
+    const levelNote = document.getElementById("levelNote");
+
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsSidebar = document.getElementById("settingsSidebar");
+    const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+    const overlay = document.getElementById("overlay");
+
+    const toggleButtons = [...document.querySelectorAll(".toggle-btn")];
+
+    function choice(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function varHTML(v){
+      return `<span class="var">${v}</span>`;
+    }
+
+    function activeTemplates(){
+      return state.level === "basic" ? BASIC_TEMPLATES : EXPECTED_TEMPLATES;
+    }
+
+    function setLevel(level){
+      state.level = level;
+      state.revealed = false;
+
+      toggleButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.level === level);
+      });
+
+      levelNote.textContent = level === "basic"
+        ? "Basic: one-step phrases such as “5 more than x” or “twice x”."
+        : "Expected: multi-step phrases using grouping, doubling, halving and differences.";
+
+      newCard();
+    }
+
+    function generateCard(){
+      const templates = activeTemplates();
+      let next = null;
+      let tries = 0;
+
+      do {
+        const variable = choice(VARIABLES);
+        const template = choice(templates);
+        next = {
+          words: template.words(variable),
+          expression: template.expression(variable),
+          key: `${state.level}|${template.words(variable)}|${template.expression(variable)}`
+        };
+        tries++;
+      } while (tries < 30 && next.key === state.previousKey);
+
+      state.words = next.words;
+      state.expression = next.expression;
+      state.previousKey = next.key;
+    }
+
+    function triggerPop(){
+      backValue.classList.remove("pop");
+      void backValue.offsetWidth;
+      backValue.classList.add("pop");
+    }
+
+    function updateDisplay(animateAnswer = false){
+      frontValue.innerHTML = state.words;
+      backValue.innerHTML = state.expression;
+      flipCard.classList.toggle("revealed", state.revealed);
+
+      if (animateAnswer && state.revealed) {
+        triggerPop();
+      }
+    }
+
+    function newCard(){
+      state.revealed = false;
+      generateCard();
+      updateDisplay(false);
+    }
+
+    function revealCard(){
+      state.revealed = !state.revealed;
+      updateDisplay(state.revealed);
+    }
+
+    function resetCard(){
+      state.revealed = false;
+      updateDisplay(false);
+    }
+
+    function openSidebar(){
+      settingsSidebar.classList.add("open");
+      overlay.classList.add("open");
+      settingsSidebar.setAttribute("aria-hidden", "false");
+      settingsBtn.setAttribute("aria-expanded", "true");
+    }
+
+    function closeSidebar(){
+      settingsSidebar.classList.remove("open");
+      overlay.classList.remove("open");
+      settingsSidebar.setAttribute("aria-hidden", "true");
+      settingsBtn.setAttribute("aria-expanded", "false");
+    }
+
+    settingsBtn.addEventListener("click", openSidebar);
+    closeSidebarBtn.addEventListener("click", closeSidebar);
+    overlay.addEventListener("click", closeSidebar);
+
+    document.getElementById("newBtn").addEventListener("click", newCard);
+    document.getElementById("flipBtn").addEventListener("click", revealCard);
+    document.getElementById("resetBtn").addEventListener("click", resetCard);
+
+    toggleButtons.forEach(btn => {
+      btn.addEventListener("click", () => setLevel(btn.dataset.level));
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        revealCard();
+      }
+
+      if (e.key === " ") {
+        e.preventDefault();
+        newCard();
+      }
+
+      if (e.key === "Escape") {
+        closeSidebar();
+      }
+    });
+
+    newCard();
+  </script>
+</body>
+</html>
