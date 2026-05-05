@@ -141,6 +141,15 @@
       gap:22px;
     }
 
+    .top-controls{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+      margin:2px 0 0;
+    }
+
     .level-toggle{
       display:flex;
       align-items:center;
@@ -179,6 +188,81 @@
       font-weight:700;
       min-height:20px;
     }
+
+    .notation-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:0;
+    }
+
+    .notation-pill{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      background:rgba(124,58,237,.08);
+      border:1px solid rgba(124,58,237,.22);
+      color:#4c1d95;
+      border-radius:18px;
+      padding:8px 10px 8px 12px;
+      box-shadow:0 10px 22px rgba(15,23,42,.05);
+      font-weight:900;
+    }
+
+    .notation-label{
+      font-size:15px;
+      white-space:nowrap;
+    }
+
+    .pill-switch{
+      position:relative;
+      width:150px;
+      height:42px;
+      border:none;
+      border-radius:999px;
+      background:#ede9fe;
+      box-shadow:inset 0 0 0 2px #c4b5fd;
+      cursor:pointer;
+      padding:0;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+
+    .pill-switch .pill-knob{
+      position:absolute;
+      top:4px;
+      left:4px;
+      width:70px;
+      height:34px;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--purple),var(--blue));
+      box-shadow:0 8px 16px rgba(37,99,235,.28);
+      transition:left .2s ease;
+    }
+
+    .pill-switch.clean .pill-knob{ left:76px; }
+
+    .pill-switch .pill-choice{
+      position:absolute;
+      top:0;
+      height:42px;
+      width:75px;
+      display:grid;
+      place-items:center;
+      font-family:var(--math-font);
+      font-weight:900;
+      font-size:21px;
+      z-index:1;
+      transition:color .2s ease;
+      color:#5b21b6;
+    }
+
+    .pill-switch .symbols{ left:0; }
+    .pill-switch .clean{ right:0; font-size:19px; }
+    .pill-switch:not(.clean) .symbols,
+    .pill-switch.clean .clean{ color:white; }
 
     .flip-scene{
       width:min(620px, 92vw);
@@ -267,10 +351,38 @@
       font-style:italic;
       font-weight:650;
       color:#1565f7;
+      display:inline-block;
+      margin:0 .08em;
     }
 
     .back-value .var{
       color:var(--green);
+    }
+
+    .frac{
+      display:inline-flex;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:center;
+      vertical-align:middle;
+      line-height:1.05;
+      margin:0 .08em;
+      min-width:.85em;
+      transform:translateY(-.03em);
+    }
+
+    .frac .top,
+    .frac .bottom{
+      text-align:center;
+      padding:0 .16em;
+      white-space:nowrap;
+    }
+
+    .frac .bar{
+      height:0;
+      border-top:.07em solid currentColor;
+      margin:.06em 0;
+      border-radius:999px;
     }
 
     .back{ transform:rotateY(180deg); }
@@ -452,7 +564,8 @@
       .back-value{ font-size:clamp(40px, 9vw, 62px); }
       .back-btn{ padding-inline:14px 16px; }
       .logo-badge{ width:38px; height:38px; }
-      .level-toggle{ width:100%; max-width:420px; }
+      .top-controls{ gap:12px; }
+      .level-toggle{ max-width:420px; }
       .toggle-btn{ flex:1; padding:12px 14px; }
     }
   </style>
@@ -480,9 +593,22 @@
 
     <main class="main">
       <div class="board">
-        <div class="level-toggle" role="group" aria-label="Choose difficulty">
-          <button class="toggle-btn active" id="basicBtn" data-level="basic" type="button">Basic</button>
-          <button class="toggle-btn" id="expectedBtn" data-level="expected" type="button">Expected</button>
+        <div class="top-controls">
+          <div class="level-toggle" role="group" aria-label="Choose difficulty">
+            <button class="toggle-btn active" id="basicBtn" data-level="basic" type="button">Basic</button>
+            <button class="toggle-btn" id="expectedBtn" data-level="expected" type="button">Expected</button>
+          </div>
+
+          <div class="notation-row">
+            <div class="notation-pill" aria-label="Notation choice">
+              <span class="notation-label">Choose notation:</span>
+              <button class="pill-switch" id="notationToggle" type="button" aria-pressed="true" aria-label="Switch between multiplication/division symbols and cleaner fraction notation">
+                <span class="pill-knob"></span>
+                <span class="pill-choice symbols">× ÷</span>
+                <span class="pill-choice clean">a⁄b</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="level-note" id="levelNote">Basic: one-step phrases such as “5 more than x” or “twice x”.</div>
@@ -507,7 +633,7 @@
 
         <div class="hint">
           Press <span class="kbd">Enter</span> or <span class="kbd">R</span> to reveal.&nbsp;&nbsp;
-          Press <span class="kbd">Space</span> for a new card.
+          Press <span class="kbd">Space</span> for a new card.&nbsp;&nbsp; Press <span class="kbd">F</span> to switch notation.
         </div>
       </div>
     </main>
@@ -550,86 +676,86 @@
     const BASIC_TEMPLATES = [
       {
         words: v => `5 more than ${varHTML(v)}`,
-        expression: v => `${varHTML(v)} + 5`
+        expression: v => ({ symbols:`${varHTML(v)} + 5`, clean:`${varHTML(v)} + 5` })
       },
       {
         words: v => `${varHTML(v)} increased by 7`,
-        expression: v => `${varHTML(v)} + 7`
+        expression: v => ({ symbols:`${varHTML(v)} + 7`, clean:`${varHTML(v)} + 7` })
       },
       {
         words: v => `3 less than ${varHTML(v)}`,
-        expression: v => `${varHTML(v)} − 3`
+        expression: v => ({ symbols:`${varHTML(v)} − 3`, clean:`${varHTML(v)} − 3` })
       },
       {
         words: v => `${varHTML(v)} decreased by 4`,
-        expression: v => `${varHTML(v)} − 4`
+        expression: v => ({ symbols:`${varHTML(v)} − 4`, clean:`${varHTML(v)} − 4` })
       },
       {
         words: v => `twice ${varHTML(v)}`,
-        expression: v => `2${varHTML(v)}`
+        expression: v => ({ symbols:`2 × ${varHTML(v)}`, clean:`2${varHTML(v)}` })
       },
       {
         words: v => `three times ${varHTML(v)}`,
-        expression: v => `3${varHTML(v)}`
+        expression: v => ({ symbols:`3 × ${varHTML(v)}`, clean:`3${varHTML(v)}` })
       },
       {
         words: v => `${varHTML(v)} divided by 2`,
-        expression: v => `${varHTML(v)} ÷ 2`
+        expression: v => ({ symbols:`${varHTML(v)} ÷ 2`, clean:fracHTML(varHTML(v), "2") })
       },
       {
         words: v => `half of ${varHTML(v)}`,
-        expression: v => `${varHTML(v)} ÷ 2`
+        expression: v => ({ symbols:`${varHTML(v)} ÷ 2`, clean:fracHTML(varHTML(v), "2") })
       },
       {
         words: v => `10 more than ${varHTML(v)}`,
-        expression: v => `${varHTML(v)} + 10`
+        expression: v => ({ symbols:`${varHTML(v)} + 10`, clean:`${varHTML(v)} + 10` })
       },
       {
         words: v => `6 less than ${varHTML(v)}`,
-        expression: v => `${varHTML(v)} − 6`
+        expression: v => ({ symbols:`${varHTML(v)} − 6`, clean:`${varHTML(v)} − 6` })
       }
     ];
 
     const EXPECTED_TEMPLATES = [
       {
         words: v => `3 more than twice ${varHTML(v)}`,
-        expression: v => `2${varHTML(v)} + 3`
+        expression: v => ({ symbols:`2 × ${varHTML(v)} + 3`, clean:`2${varHTML(v)} + 3` })
       },
       {
         words: v => `5 less than three times ${varHTML(v)}`,
-        expression: v => `3${varHTML(v)} − 5`
+        expression: v => ({ symbols:`3 × ${varHTML(v)} − 5`, clean:`3${varHTML(v)} − 5` })
       },
       {
         words: v => `the sum of ${varHTML(v)} and 7, multiplied by 2`,
-        expression: v => `2(${varHTML(v)} + 7)`
+        expression: v => ({ symbols:`2 × (${varHTML(v)} + 7)`, clean:`2(${varHTML(v)} + 7)` })
       },
       {
         words: v => `half of (${varHTML(v)} + 6)`,
-        expression: v => `(${varHTML(v)} + 6) ÷ 2`
+        expression: v => ({ symbols:`(${varHTML(v)} + 6) ÷ 2`, clean:fracHTML(`(${varHTML(v)} + 6)`, "2") })
       },
       {
         words: v => `the difference between 10 and ${varHTML(v)}`,
-        expression: v => `10 − ${varHTML(v)}`
+        expression: v => ({ symbols:`10 − ${varHTML(v)}`, clean:`10 − ${varHTML(v)}` })
       },
       {
         words: v => `4 more than three times ${varHTML(v)}`,
-        expression: v => `3${varHTML(v)} + 4`
+        expression: v => ({ symbols:`3 × ${varHTML(v)} + 4`, clean:`3${varHTML(v)} + 4` })
       },
       {
         words: v => `twice the sum of ${varHTML(v)} and 5`,
-        expression: v => `2(${varHTML(v)} + 5)`
+        expression: v => ({ symbols:`2 × (${varHTML(v)} + 5)`, clean:`2(${varHTML(v)} + 5)` })
       },
       {
         words: v => `the product of 4 and (${varHTML(v)} − 3)`,
-        expression: v => `4(${varHTML(v)} − 3)`
+        expression: v => ({ symbols:`4 × (${varHTML(v)} − 3)`, clean:`4(${varHTML(v)} − 3)` })
       },
       {
         words: v => `7 less than half of ${varHTML(v)}`,
-        expression: v => `${varHTML(v)} ÷ 2 − 7`
+        expression: v => ({ symbols:`${varHTML(v)} ÷ 2 − 7`, clean:`${fracHTML(varHTML(v), "2")} − 7` })
       },
       {
         words: v => `the quotient of (${varHTML(v)} + 8) and 4`,
-        expression: v => `(${varHTML(v)} + 8) ÷ 4`
+        expression: v => ({ symbols:`(${varHTML(v)} + 8) ÷ 4`, clean:fracHTML(`(${varHTML(v)} + 8)`, "4") })
       }
     ];
 
@@ -638,13 +764,15 @@
       words: "",
       expression: "",
       previousKey: "",
-      revealed: false
+      revealed: false,
+      useCleanNotation: false
     };
 
     const flipCard = document.getElementById("flipCard");
     const frontValue = document.getElementById("frontValue");
     const backValue = document.getElementById("backValue");
     const levelNote = document.getElementById("levelNote");
+    const notationToggle = document.getElementById("notationToggle");
 
     const settingsBtn = document.getElementById("settingsBtn");
     const settingsSidebar = document.getElementById("settingsSidebar");
@@ -659,6 +787,26 @@
 
     function varHTML(v){
       return `<span class="var">${v}</span>`;
+    }
+
+    function fracHTML(top, bottom){
+      return `<span class="frac"><span class="top">${top}</span><span class="bar"></span><span class="bottom">${bottom}</span></span>`;
+    }
+
+    function currentExpressionHTML(){
+      if (!state.expression) return "";
+      return state.useCleanNotation ? state.expression.clean : state.expression.symbols;
+    }
+
+    function syncNotationToggle(){
+      notationToggle.classList.toggle("clean", state.useCleanNotation);
+      notationToggle.setAttribute("aria-pressed", state.useCleanNotation ? "false" : "true");
+    }
+
+    function toggleNotation(){
+      state.useCleanNotation = !state.useCleanNotation;
+      syncNotationToggle();
+      updateDisplay(false);
     }
 
     function activeTemplates(){
@@ -677,7 +825,8 @@
         ? "Basic: one-step phrases such as “5 more than x” or “twice x”."
         : "Expected: multi-step phrases using grouping, doubling, halving and differences.";
 
-      newCard();
+      syncNotationToggle();
+    newCard();
     }
 
     function generateCard(){
@@ -688,10 +837,12 @@
       do {
         const variable = choice(VARIABLES);
         const template = choice(templates);
+        const words = template.words(variable);
+        const expression = template.expression(variable);
         next = {
-          words: template.words(variable),
-          expression: template.expression(variable),
-          key: `${state.level}|${template.words(variable)}|${template.expression(variable)}`
+          words,
+          expression,
+          key: `${state.level}|${words}|${expression.symbols}|${expression.clean}`
         };
         tries++;
       } while (tries < 30 && next.key === state.previousKey);
@@ -709,7 +860,7 @@
 
     function updateDisplay(animateAnswer = false){
       frontValue.innerHTML = state.words;
-      backValue.innerHTML = state.expression;
+      backValue.innerHTML = currentExpressionHTML();
       flipCard.classList.toggle("revealed", state.revealed);
 
       if (animateAnswer && state.revealed) {
@@ -750,6 +901,7 @@
     settingsBtn.addEventListener("click", openSidebar);
     closeSidebarBtn.addEventListener("click", closeSidebar);
     overlay.addEventListener("click", closeSidebar);
+    notationToggle.addEventListener("click", toggleNotation);
 
     document.getElementById("newBtn").addEventListener("click", newCard);
     document.getElementById("flipBtn").addEventListener("click", revealCard);
@@ -767,7 +919,13 @@
 
       if (e.key === " ") {
         e.preventDefault();
-        newCard();
+        syncNotationToggle();
+    newCard();
+      }
+
+      if (e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        toggleNotation();
       }
 
       if (e.key === "Escape") {
@@ -775,6 +933,7 @@
       }
     });
 
+    syncNotationToggle();
     newCard();
   </script>
 </body>
