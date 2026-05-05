@@ -310,6 +310,25 @@
       white-space: normal;
     }
 
+
+    .biEnglish{
+      display:block;
+      margin-top: 3px;
+      font-size: .82em;
+      line-height: 1.12;
+      color: #6b7280;
+      font-weight: 850;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+    .qText .qPrompt .biEnglish{
+      margin-top: 2px;
+    }
+    .smallBi .biEnglish{
+      font-size: .78em;
+      margin-top: 1px;
+    }
+
     /* Blank gap workspace */
     .workArea{
       margin-top: 2px;
@@ -721,6 +740,26 @@
 
   function clearOut(){ out.innerHTML = ""; }
 
+
+  function biLine(mainHTML, englishHTML){
+    if (lang() === 'en') return mainHTML;
+    return `${mainHTML}<span class="biEnglish">${englishHTML}</span>`;
+  }
+
+  function biLabel(key){
+    const main = tr(key);
+    const english = I18N.en[key] ?? main;
+    return biLine(main, english);
+  }
+
+  function biPrompt(fnKey, argsLocal = [], argsEnglish = argsLocal){
+    const mainFn = L()[fnKey];
+    const englishFn = I18N.en[fnKey];
+    const main = typeof mainFn === 'function' ? mainFn(...argsLocal) : String(mainFn ?? '');
+    const english = typeof englishFn === 'function' ? englishFn(...argsEnglish) : String(englishFn ?? main);
+    return biLine(main, english);
+  }
+
   function makeCardShell(idx1, promptHTML){
     const card = document.createElement('div');
     card.className = 'qCard';
@@ -753,7 +792,8 @@
 
     const lab = document.createElement('div');
     lab.className = 'ansLabel';
-    lab.textContent = tr('answer');
+    lab.innerHTML = biLabel('answer');
+    if (lang() !== 'en') lab.classList.add('smallBi');
 
     const box = document.createElement('div');
     box.className = 'ansBox' + (isKey ? ' key' : '');
@@ -775,7 +815,8 @@
 
     const lab = document.createElement('div');
     lab.className = 'ansLabel';
-    lab.textContent = tr('answer');
+    lab.innerHTML = biLabel('answer');
+    if (lang() !== 'en') lab.classList.add('smallBi');
 
     const box = document.createElement('div');
     box.className = 'ansBox' + (isKey ? ' key' : '');
@@ -824,7 +865,7 @@
       key:q => `${q.v}_${q.a}_${q.b}_${q.part}`,
       render(q, idx1, showAnswers){
         const expr = `${q.a}${vHTML(q.v)} + ${q.b}`;
-        const card = makeCardShell(idx1, `${L().identify(expr, tr(q.part))}`);
+        const card = makeCardShell(idx1, `${biPrompt('identify', [expr, tr(q.part)], [expr, q.part])}`);
         const answer =
           q.part === "coefficient" ? String(q.a) :
           q.part === "pronumeral" ? q.v :
@@ -849,13 +890,13 @@
       render(q, idx1, showAnswers){
         let prompt, answer;
         if (q.kind === "mult"){
-          prompt = L().rewrite(`${q.a} × ${vHTML(q.v)}`);
+          prompt = biPrompt('rewrite', [`${q.a} × ${vHTML(q.v)}`]);
           answer = `${q.a}${q.v}`;
         } else if (q.kind === "power"){
-          prompt = L().rewrite(`${vHTML(q.v)} × ${vHTML(q.v)}`);
+          prompt = biPrompt('rewrite', [`${vHTML(q.v)} × ${vHTML(q.v)}`]);
           answer = `${q.v}²`;
         } else {
-          prompt = L().rewrite(`${q.a} × (${vHTML(q.v)} + ${q.c})`);
+          prompt = biPrompt('rewrite', [`${q.a} × (${vHTML(q.v)} + ${q.c})`]);
           answer = `${q.a}(${q.v} + ${q.c})`;
         }
         const card = makeCardShell(idx1, prompt);
@@ -875,7 +916,7 @@
       },
       key:q => `w2e_${q.v}_${q.stemKey}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().words(localStem(q.stemKey, q.v)));
+        const card = makeCardShell(idx1, biPrompt('words', [localStem(q.stemKey, q.v)], [I18N.en.stems[q.stemKey](q.v)]));
         card.appendChild(makeAnswerRowHTML(q.exprHTML, stripHTML(q.exprHTML), showAnswers));
         return card;
       }
@@ -907,7 +948,7 @@
       },
       key:q => `sub_${q.v}_${q.val}_${q.value}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().evaluate(q.exprHTML, `${vHTML(q.v)} = ${fmtInt(q.val)}`));
+        const card = makeCardShell(idx1, biPrompt('evaluate', [q.exprHTML, `${vHTML(q.v)} = ${fmtInt(q.val)}`]));
         card.appendChild(makeAnswerRowPlain(String(q.value), showAnswers));
         return card;
       }
@@ -931,7 +972,7 @@
           ? `${q.a}${vHTML(q.v)} + ${q.b}${vHTML(q.v)}`
           : `${q.a}${vHTML(q.v)} − ${q.b}${vHTML(q.v)}`;
         const ansHTML = buildExpressionHTML([{coeff:q.value, v:q.v}]);
-        const card = makeCardShell(idx1, L().simplify(exprHTML));
+        const card = makeCardShell(idx1, biPrompt('simplify', [exprHTML]));
         card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
         return card;
       }
@@ -951,7 +992,7 @@
       },
       key:q => `mst_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().simplify(q.exprHTML));
+        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
         return card;
       }
@@ -974,7 +1015,7 @@
       },
       key:q => `dst_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().simplify(q.exprHTML));
+        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
         return card;
       }
@@ -1002,7 +1043,7 @@
 
         const ansHTML = buildExpressionHTML([left, right]);
 
-        const card = makeCardShell(idx1, L().expand(exprHTML));
+        const card = makeCardShell(idx1, biPrompt('expand', [exprHTML]));
         card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
         return card;
       }
@@ -1025,7 +1066,7 @@
       render(q, idx1, showAnswers){
         const exprHTML = `${q.A}${vHTML(q.v)} + ${q.B}`;
         const ansHTML  = `${q.g}(${q.a}${vHTML(q.v)} + ${q.b})`;
-        const card = makeCardShell(idx1, L().factorise(exprHTML));
+        const card = makeCardShell(idx1, biPrompt('factorise', [exprHTML]));
         card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
         return card;
       }
@@ -1043,7 +1084,7 @@
       },
       key:q => `tr_${q.v}_${q.stemKey}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().words(localStem(q.stemKey, q.v)));
+        const card = makeCardShell(idx1, biPrompt('words', [localStem(q.stemKey, q.v)], [I18N.en.stems[q.stemKey](q.v)]));
         card.appendChild(makeAnswerRowHTML(q.exprHTML, stripHTML(q.exprHTML), showAnswers));
         return card;
       }
@@ -1074,7 +1115,7 @@
       },
       key:q => `s2_${q.v}_${q.xVal}_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().evaluate(q.exprHTML, `${vHTML(q.v)} = ${fmtInt(q.xVal)}`));
+        const card = makeCardShell(idx1, biPrompt('evaluate', [q.exprHTML, `${vHTML(q.v)} = ${fmtInt(q.xVal)}`]));
         card.appendChild(makeAnswerRowPlain(String(q.val), showAnswers));
         return card;
       }
@@ -1126,7 +1167,7 @@
       key:q => `s2v_${q.v1}_${q.val1}_${q.v2}_${q.val2}_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
         const vals = valList([[vHTML(q.v1), q.val1], [vHTML(q.v2), q.val2]]);
-        const card = makeCardShell(idx1, L().evaluate(q.exprHTML, vals));
+        const card = makeCardShell(idx1, biPrompt('evaluate', [q.exprHTML, vals]));
         card.appendChild(makeAnswerRowPlain(String(q.val), showAnswers));
         return card;
       }
@@ -1191,7 +1232,7 @@
       key:q => `sm_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
         const promptHTML = `
-          <span class="qPrompt">${lang()==="fa" ? "ساده کنید" : (lang()==="ar" ? "بسّط" : "Simplify")}</span>
+          <span class="qPrompt">${biLine(lang()==="fa" ? "ساده کنید" : (lang()==="ar" ? "بسّط" : "Simplify"), "Simplify")}</span>
           <span class="qExprLine">${q.exprHTML}</span>
         `;
         const card = makeCardShell(idx1, promptHTML);
@@ -1236,7 +1277,7 @@
       },
       key:q => `mt_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().simplify(q.exprHTML));
+        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
         return card;
       }
@@ -1329,7 +1370,7 @@
       },
       key:q => `es_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().expandSimplify(q.exprHTML));
+        const card = makeCardShell(idx1, biPrompt('expandSimplify', [q.exprHTML]));
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
         return card;
       }
@@ -1394,7 +1435,7 @@
       },
       key:q => `af_${stripHTML(q.exprHTML)}`,
       render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, L().simplify(q.exprHTML));
+        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
         card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
         return card;
       }
@@ -1441,7 +1482,7 @@
       key:q => `pt_${q.form}_${q.m}_${q.b}_${q.vals.join(",")}`,
       render(q, idx1, showAnswers){
         const promptHTML = `
-          <span class="qPrompt">${lang()==="fa" ? "جدول را کامل کنید" : (lang()==="ar" ? "أكمل الجدول" : "Complete the table for:")}</span>
+          <span class="qPrompt">${biLine(lang()==="fa" ? "جدول را کامل کنید" : (lang()==="ar" ? "أكمل الجدول" : "Complete the table for:"), "Complete the table for:")}</span>
           <span class="qExprLine tableExprLine">${q.exprHTML}</span>
         `;
         const card = makeCardShell(idx1, promptHTML);
@@ -1458,7 +1499,7 @@
         work.innerHTML = `
           <table class="tinyTbl">
             ${headerRow}
-            <tr><th>${tr('value')}</th>${valueCells}</tr>
+            <tr><th>${biLabel('value')}</th>${valueCells}</tr>
           </table>
         `;
 
@@ -1637,13 +1678,13 @@
     header.className = 'pageHeader';
     header.innerHTML = `
       <div class="hdrLeft">
-        <div class="hdrTitle">${pageTitle} — ${tr('page')} ${pageIndex} / ${pageCount}</div>
+        <div class="hdrTitle">${pageTitle} — ${biLabel('page')} ${pageIndex} / ${pageCount}</div>
         <div class="hdrSub">${pageSubtitle}</div>
       </div>
       <div class="nameRow">
-        <div class="lineField"><div class="lineLabel">${tr('name')}</div><div class="lineBox"></div></div>
-        <div class="lineField"><div class="lineLabel">${tr('className')}</div><div class="lineBox"></div></div>
-        <div class="lineField"><div class="lineLabel">${tr('date')}</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">${biLabel('name')}</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">${biLabel('className')}</div><div class="lineBox"></div></div>
+        <div class="lineField"><div class="lineLabel">${biLabel('date')}</div><div class="lineBox"></div></div>
       </div>
     `;
     content.appendChild(header);
