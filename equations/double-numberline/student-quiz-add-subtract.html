@@ -664,6 +664,21 @@
       }
     }
 
+
+    /* Firebase student login */
+    .loginIntro{color:#475569;font-weight:750;line-height:1.45;margin:0 0 16px;}
+    .loginPanel{display:grid;gap:12px;margin-top:4px;}
+    .loginPanel label{font-weight:950;color:#0f172a;}
+    .loginPanel input{width:100%;border:2px solid #dbe3ef;border-radius:16px;padding:14px 15px;font-size:22px;font-weight:1000;text-align:center;letter-spacing:.05em;text-transform:uppercase;font-family:var(--uiFont);}
+    .loginPanel input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    .loginActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+    .loginMessage{display:none;border-radius:14px;padding:11px 13px;font-weight:900;line-height:1.35;}
+    .loginMessage.show{display:block;}
+    .loginMessage.error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+    .loginMessage.ok{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+    .studentChip{display:none;align-items:center;justify-content:center;gap:8px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid rgba(22,163,74,.22);font-weight:1000;padding:8px 12px;font-size:13px;justify-self:end;}
+    .studentChip.show{display:inline-flex;}
+
   </style>
 </head>
 <body>
@@ -673,7 +688,7 @@
     <div class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></div>
   </a>
   <div class="mmtTopTitle">Addition & Subtraction Equations</div>
-  <div></div>
+  <div class="studentChip" id="studentChip">Not signed in</div>
 </header>
 <div class="wrap">
   <div class="card">
@@ -725,7 +740,26 @@
 
 <div class="mmtFooter">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a></div>
 
-<div class="modalBack show" id="levelModalBack">
+
+<div class="modalBack show" id="studentLoginModalBack">
+  <div class="modal">
+    <div class="modalHead">Student login</div>
+    <div class="modalBody">
+      <p class="loginIntro">Enter your MMT student code to save your result to your teacher's dashboard. If your teacher has not given you a code, choose Skip student code to use the normal quiz.</p>
+      <div class="loginPanel">
+        <label for="studentCodeInput">Student code</label>
+        <input id="studentCodeInput" autocomplete="off" placeholder="e.g. 7MAB-K7Q2" />
+        <div class="loginActions">
+          <button class="btn primary" id="studentLoginBtn" type="button">Start</button>
+          <button class="btn" id="skipLoginBtn" type="button">Skip student code</button>
+        </div>
+        <div class="loginMessage" id="studentLoginMessage"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modalBack" id="levelModalBack">
   <div class="modal">
     <div class="modalHead">Choose your level</div>
     <div class="modalBody">
@@ -759,9 +793,47 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
 (() => {
   const QUIZ_LEN = 15;
+
+
+  const TOPIC_NAME = 'Addition/Subtraction Equations';
+  const TOOL_ID = 'addition-subtraction-equations-student-quiz';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
+    authDomain: "mills-maths-tools.firebaseapp.com",
+    projectId: "mills-maths-tools",
+    storageBucket: "mills-maths-tools.firebasestorage.app",
+    messagingSenderId: "835000359454",
+    appId: "1:835000359454:web:d7876be83ee367b5006c0f",
+    measurementId: "G-35YCH5NJEG"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  let firebaseAuthReady = false;
+  let currentStudent = null;
+  let guestMode = false;
+  let achievementSavedForRun = false;
 
   const LEVELS = {
     sweet:{ name:'Sweet', banner:['#22c55e','#0f766e'], range:[1,10], allowNeg:false, visual:'full' },
@@ -796,6 +868,12 @@
   const copyBtn = document.getElementById('copyBtn');
   const sameLevelBtn = document.getElementById('sameLevelBtn');
   const levelsBtn = document.getElementById('levelsBtn');
+  const studentLoginModalBack = document.getElementById('studentLoginModalBack');
+  const studentCodeInput = document.getElementById('studentCodeInput');
+  const studentLoginBtn = document.getElementById('studentLoginBtn');
+  const skipLoginBtn = document.getElementById('skipLoginBtn');
+  const studentLoginMessage = document.getElementById('studentLoginMessage');
+  const studentChip = document.getElementById('studentChip');
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const VIEW_W = 1800;
@@ -854,6 +932,125 @@
 
   function fractionHTML(num, den){ return `<span class="fraction"><span>${num}</span><span class="bar"></span><span>${den}</span></span>`; }
   function eqHTML(q){ return `<span class="lhs">${q.equationLeftHTML}</span><span class="eq">=</span><span class="rhs">${q.equationRightHTML}</span>`; }
+
+
+  function normaliseStudentCode(value){
+    return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  }
+
+  function showLoginMessage(text, type = 'error'){
+    studentLoginMessage.textContent = text;
+    studentLoginMessage.className = `loginMessage show ${type}`;
+  }
+
+  function clearLoginMessage(){
+    studentLoginMessage.textContent = '';
+    studentLoginMessage.className = 'loginMessage';
+  }
+
+  function setLoginLoading(isLoading){
+    studentLoginBtn.disabled = isLoading || !firebaseAuthReady;
+    studentLoginBtn.textContent = isLoading ? 'Checking...' : 'Start';
+  }
+
+  function updateStudentChip(){
+    if(guestMode){
+      studentChip.classList.add('show');
+      studentChip.textContent = 'Guest mode';
+      return;
+    }
+    if(!currentStudent){
+      studentChip.classList.remove('show');
+      studentChip.textContent = 'Not signed in';
+      return;
+    }
+    studentChip.classList.add('show');
+    studentChip.textContent = `${currentStudent.name} · ${currentStudent.className}`;
+  }
+
+  function continueWithoutStudentCode(){
+    currentStudent = null;
+    guestMode = true;
+    achievementSavedForRun = true; // Do not save guest results to Firebase achievements.
+    clearLoginMessage();
+    updateStudentChip();
+    hideModal(studentLoginModalBack);
+    showModal(levelModalBack);
+  }
+
+  async function validateStudentCode(){
+    clearLoginMessage();
+    const code = normaliseStudentCode(studentCodeInput.value);
+    studentCodeInput.value = code;
+    if(!code){
+      showLoginMessage('Please enter your student code.');
+      return;
+    }
+    if(!firebaseAuthReady){
+      showLoginMessage('Firebase is still connecting. Please wait a moment and try again.');
+      return;
+    }
+
+    setLoginLoading(true);
+    try{
+      const snap = await getDoc(doc(db, 'students', code));
+      if(!snap.exists()){
+        showLoginMessage('That student code was not found. Please check it with your teacher.');
+        return;
+      }
+      const data = snap.data();
+      if(data.active === false){
+        showLoginMessage('This student code is currently inactive. Please check it with your teacher.');
+        return;
+      }
+
+      guestMode = false;
+      achievementSavedForRun = false;
+      currentStudent = {
+        studentCode: data.studentCode || code,
+        name: data.name || `${data.firstName || ''} ${data.surname || ''}`.trim() || 'Student',
+        className: data.className || '',
+        teacher: data.teacher || ''
+      };
+      updateStudentChip();
+      showLoginMessage(`Welcome, ${currentStudent.name}.`, 'ok');
+      hideModal(studentLoginModalBack);
+      showModal(levelModalBack);
+    }catch(error){
+      console.error(error);
+      showLoginMessage(error.message || 'Could not check the student code.');
+    }finally{
+      setLoginLoading(false);
+    }
+  }
+
+  async function saveAchievement(){
+    if(achievementSavedForRun || !currentStudent || !levelKey) return;
+    achievementSavedForRun = true;
+    const cfg = LEVELS[levelKey];
+    try{
+      await addDoc(collection(db, 'achievements'), {
+        accessMode: 'registered',
+        source: 'Mills Maths Tools',
+        tool: TOOL_ID,
+        topic: TOPIC_NAME,
+        level: levelKey,
+        englishLevel: cfg.name,
+        score,
+        total: QUIZ_LEN,
+        percent: Math.round((score / QUIZ_LEN) * 100),
+        studentCode: currentStudent.studentCode,
+        studentName: currentStudent.name,
+        className: currentStudent.className,
+        teacher: currentStudent.teacher,
+        dateClient: new Date().toISOString(),
+        createdAt: serverTimestamp()
+      });
+    }catch(error){
+      achievementSavedForRun = false;
+      console.error('Achievement save failed:', error);
+    }
+  }
 
   function nowStamp(){
     const d = new Date();
@@ -1206,11 +1403,13 @@
   function hideFeedback(){ feedbackOk.classList.remove('show'); feedbackBad.classList.remove('show'); }
 
   function startQuiz(key){
+    achievementSavedForRun = guestMode;
     levelKey = key; questions = []; qIndex = 0; score = 0; phase = 'awaiting';
     ensureQuestionExists(0); setBanner(); setProgress(); hideModal(levelModalBack); renderCurrentQuestion();
   }
   function resetQuizSameLevel(){
     if(!levelKey) return;
+    achievementSavedForRun = guestMode;
     questions = []; qIndex = 0; score = 0; phase = 'awaiting';
     ensureQuestionExists(0); setProgress(); renderCurrentQuestion();
   }
@@ -1239,6 +1438,7 @@
 
   function showCertificate(){
     const cfg = LEVELS[levelKey];
+    saveAchievement();
     certText.textContent = `You completed Addition/Subtraction Equations, Level ${cfg.name}, and got ${score} out of ${QUIZ_LEN}. Paste a screenshot into Google Classroom.`;
     progressFill.style.width = '100%';
     showModal(certModalBack);
@@ -1247,6 +1447,8 @@
     const cfg = LEVELS[levelKey];
     const text =
 `🏆 Mills Maths Tools – Addition/Subtraction Double Number Line Quiz
+Student: ${currentStudent ? currentStudent.name : 'Student'}
+Class: ${currentStudent ? currentStudent.className : ''}
 Level: ${cfg.name}
 Score: ${score} / ${QUIZ_LEN}
 Completed: ${nowStamp()}
@@ -1319,7 +1521,7 @@ Completed: ${nowStamp()}
   }
 
   function handleEnter(){
-    if(levelModalBack.classList.contains('show') || certModalBack.classList.contains('show')) return;
+    if(studentLoginModalBack.classList.contains('show') || levelModalBack.classList.contains('show') || certModalBack.classList.contains('show')) return;
     if(phase === 'awaiting'){
       submitAnswer();
       return;
@@ -1932,6 +2134,18 @@ Completed: ${nowStamp()}
     }
   }
 
+  studentLoginBtn.addEventListener('click', validateStudentCode);
+  skipLoginBtn.addEventListener('click', continueWithoutStudentCode);
+  studentCodeInput.addEventListener('input', () => {
+    studentCodeInput.value = normaliseStudentCode(studentCodeInput.value);
+    clearLoginMessage();
+  });
+  studentCodeInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      validateStudentCode();
+    }
+  });
   document.querySelectorAll('.startBtn').forEach(btn => btn.addEventListener('click', () => startQuiz(btn.dataset.level)));
   backBtn.addEventListener('click', backToLevels);
   resetBtn.addEventListener('click', resetQuizSameLevel);
@@ -1969,7 +2183,7 @@ Completed: ${nowStamp()}
     }
   });
   document.addEventListener('keydown', (e) => {
-    if(levelModalBack.classList.contains('show') || certModalBack.classList.contains('show')) return;
+    if(studentLoginModalBack.classList.contains('show') || levelModalBack.classList.contains('show') || certModalBack.classList.contains('show')) return;
     if(e.key === 'ArrowLeft'){ e.preventDefault(); stepQuestion(-1); }
     else if(e.key === 'ArrowRight'){ e.preventDefault(); stepQuestion(1); }
     else if(e.key === 'Enter'){
@@ -1978,7 +2192,22 @@ Completed: ${nowStamp()}
     }
   });
 
-  backToLevels();
+  onAuthStateChanged(auth, (user) => {
+    if(user){
+      firebaseAuthReady = true;
+      setLoginLoading(false);
+      studentCodeInput.focus();
+    }
+  });
+
+  signInAnonymously(auth).catch(error => {
+    console.error(error);
+    showLoginMessage(error.message || 'Firebase connection failed.');
+    setLoginLoading(false);
+  });
+
+  setLoginLoading(true);
+  updateStudentChip();
 })();
 </script>
 </body>
