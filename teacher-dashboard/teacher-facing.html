@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMT Teacher Progress Dashboard</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --line:#dbe3ef;
+      --brand:#2563eb;
+      --brand-dark:#1d4ed8;
+      --brand-soft:#dbeafe;
+      --good:#16a34a;
+      --good-soft:#dcfce7;
+      --warn:#d97706;
+      --warn-soft:#fef3c7;
+      --bad:#dc2626;
+      --bad-soft:#fee2e2;
+      --purple:#7c3aed;
+      --purple-soft:#ede9fe;
+      --shadow:0 14px 34px rgba(15,23,42,.10);
+      --radius:20px;
+      --footer-h:44px;
+      --ui:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--ui);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.13),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.10),transparent 34rem),
+        linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%);
+      min-height:100vh;
+      padding-bottom:var(--footer-h);
+    }
+    .topbar{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;box-shadow:0 10px 28px rgba(15,23,42,.22)}
+    .topbar-inner{max-width:1380px;margin:0 auto;padding:10px 18px;display:grid;grid-template-columns:minmax(180px,1fr) auto minmax(180px,1fr);gap:16px;align-items:center}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:white;justify-self:start;border-radius:14px;padding:7px 10px;margin-left:-10px;transition:.18s ease}
+    .brand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+    .logo{width:38px;height:38px;object-fit:contain;background:white;border-radius:8px;padding:3px}
+    .brand strong{display:block;font-size:1.08rem;line-height:1;letter-spacing:-.03em}.brand span{display:block;font-size:.76rem;opacity:.84;font-weight:700}
+    .top-title{font-size:clamp(1.15rem,2vw,1.55rem);font-weight:950;letter-spacing:-.04em;text-align:center}
+    .top-user{justify-self:end;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 11px;font-weight:900;font-size:.82rem;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);color:white}
+    .wrap{max-width:1380px;margin:16px auto 42px;padding:0 16px}
+    .panel{background:rgba(255,255,255,.96);border:1px solid rgba(219,227,239,.94);box-shadow:var(--shadow);border-radius:var(--radius);padding:16px}
+    .loginPanel{max-width:760px;margin:38px auto;padding:28px;border-radius:26px;background:rgba(255,255,255,.96);border:1px solid rgba(219,227,239,.94);box-shadow:var(--shadow)}
+    h1{margin:0 0 8px;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.055em;line-height:1}
+    h2{margin:0;font-size:1.16rem;letter-spacing:-.025em}
+    h3{margin:0;font-size:1rem;letter-spacing:-.02em}
+    .lead{margin:0;color:var(--muted);font-weight:760;line-height:1.45;max-width:720px}
+    .loginGrid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-top:22px}
+    label{display:block;font-size:.82rem;font-weight:900;color:#334155;margin:0 0 6px}
+    input,select{width:100%;border:1px solid var(--line);border-radius:14px;background:white;padding:11px 12px;font:inherit;font-weight:800;color:var(--ink);outline:none}
+    input:focus,select:focus{border-color:rgba(37,99,235,.7);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+    input.codeInput{text-transform:uppercase;letter-spacing:.08em;font-size:1.08rem;text-align:center;min-width:260px}
+    button{border:0;border-radius:999px;padding:10px 14px;font:inherit;font-weight:900;cursor:pointer;transition:.15s ease;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;white-space:nowrap}
+    button:hover:not(:disabled){transform:translateY(-1px)}
+    button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .primary{background:var(--brand);color:white}.primary:hover{background:var(--brand-dark)}
+    .secondary{background:var(--brand-soft);color:var(--brand)}.neutral{background:#eef2f7;color:#0f172a}.danger{background:var(--bad-soft);color:#991b1b}.success{background:var(--good-soft);color:#166534}
+    .tiny{font-size:.78rem;min-height:32px;padding:7px 10px}
+    .message{display:none;margin-top:12px;border-radius:14px;padding:11px 13px;font-weight:850;line-height:1.35}.message.show{display:block}.message.ok{background:var(--good-soft);color:#166534;border:1px solid #86efac}.message.warn{background:var(--warn-soft);color:#92400e;border:1px solid #fed7aa}.message.bad{background:var(--bad-soft);color:#991b1b;border:1px solid #fecaca}.message.info{background:#eef2ff;color:#1d4ed8;border:1px solid #bfdbfe}
+    .hidden{display:none!important}
+    .hero{display:grid;grid-template-columns:minmax(0,1.4fr) 360px;gap:14px;margin-bottom:14px}
+    .heroCard{padding:18px 20px;position:relative;overflow:hidden}.heroCard:after{content:"";position:absolute;width:190px;height:190px;border-radius:999px;right:-72px;top:-82px;background:linear-gradient(135deg,rgba(37,99,235,.15),rgba(124,58,237,.12))}
+    .heroCard>*{position:relative;z-index:1}
+    .statusGrid{display:grid;grid-template-columns:1fr;gap:10px}.statusBox{border:1px solid var(--line);border-radius:16px;background:#f8fafc;padding:12px}.statusLabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:950}.statusValue{font-size:1.04rem;font-weight:950;margin-top:3px}.statusValue.good{color:var(--good)}.statusValue.bad{color:var(--bad)}
+    .controls{display:grid;grid-template-columns:1fr 170px 170px 170px 150px;gap:10px;margin:0 0 14px}.controls .field{min-width:0}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.rightActions{justify-content:flex-end}
+    .summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:14px 0}.summaryCard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 8px 18px rgba(15,23,42,.05)}.summaryLabel{font-size:.76rem;color:var(--muted);font-weight:950;text-transform:uppercase;letter-spacing:.05em}.summaryValue{font-size:2rem;font-weight:1000;letter-spacing:-.05em;margin-top:4px}.summarySub{font-size:.78rem;color:var(--muted);font-weight:800;margin-top:2px}
+    .mainGrid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px;align-items:start}.leftStack,.rightStack{display:grid;gap:14px}.rightStack{position:sticky;top:78px;max-height:calc(100vh - 96px);overflow:auto;padding-right:2px}
+    .sectionHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.sectionHint{color:var(--muted);font-size:.84rem;font-weight:750;margin-top:3px;line-height:1.35}
+    .chartCard{min-height:330px}.chartWrap{width:100%;height:280px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);padding:10px;overflow:hidden}.chartSvg{width:100%;height:100%;display:block}.axisText{fill:#64748b;font-size:11px;font-weight:800}.barLabel{fill:#0f172a;font-size:12px;font-weight:900}.gridLine{stroke:#e2e8f0;stroke-width:1}.bar{fill:#2563eb;rx:8}.linePath{stroke:#7c3aed;stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}.lineDot{fill:#7c3aed;stroke:white;stroke-width:3}
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:white}table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #edf2f7;font-size:.86rem;vertical-align:middle}th{position:sticky;top:0;background:#f8fafc;color:#475569;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;font-weight:950;z-index:1}tr:last-child td{border-bottom:0}.studentTable tbody tr{cursor:pointer}.studentTable tbody tr:hover{background:#f8fafc}.selectedRow{background:#eff6ff!important}.code{font-family:"SFMono-Regular",Consolas,monospace;background:#f1f5f9;border-radius:9px;padding:5px 7px;font-weight:950;letter-spacing:.03em;display:inline-block}
+    .badge{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:.72rem;font-weight:950}.badge.good{background:var(--good-soft);color:#166534}.badge.warn{background:var(--warn-soft);color:#92400e}.badge.bad{background:var(--bad-soft);color:#991b1b}.badge.blue{background:#dbeafe;color:#1d4ed8}.badge.purple{background:var(--purple-soft);color:#5b21b6}.badge.neutral{background:#f1f5f9;color:#334155}
+    .cardsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.smallCard{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px}.smallTitle{font-weight:950}.smallMeta{color:var(--muted);font-size:.8rem;font-weight:760;margin-top:4px;line-height:1.35}
+    .attentionList{display:grid;gap:8px}.attentionItem{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff}.attentionIcon{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fff7ed;border:1px solid #fed7aa}.attentionName{font-weight:950}.attentionReason{color:var(--muted);font-size:.8rem;font-weight:760;margin-top:2px}
+    .heatmap{overflow:auto}.heatmap table{min-width:620px}.heatCell{min-width:72px;text-align:center;border-radius:10px;font-weight:950}.heatHigh{background:#dcfce7;color:#166534}.heatMid{background:#fef3c7;color:#92400e}.heatLow{background:#fee2e2;color:#991b1b}.heatEmpty{background:#f1f5f9;color:#64748b}
+    .studentDetail{display:grid;gap:10px}.studentHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.avatar{width:50px;height:50px;border-radius:18px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:1.1rem;flex:0 0 auto}.studentHeadLeft{display:flex;gap:10px;align-items:center}.studentName{font-weight:1000;font-size:1.08rem}.studentMeta{color:var(--muted);font-weight:800;font-size:.82rem;margin-top:2px}.detailStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.detailStat{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:10px}.detailStat strong{font-size:1.25rem;letter-spacing:-.04em}.detailStat span{display:block;color:var(--muted);font-size:.75rem;font-weight:850;margin-top:2px}.attemptList{max-height:290px;overflow:auto;display:grid;gap:8px}.attempt{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff}.attemptTop{display:flex;justify-content:space-between;gap:8px}.attemptTitle{font-weight:950}.attemptMeta{color:var(--muted);font-size:.78rem;font-weight:800;margin-top:3px}
+    .empty{display:none;text-align:center;border:1px dashed var(--line);border-radius:18px;padding:24px;color:var(--muted);font-weight:850;background:#f8fafc}.empty.show{display:block}
+    .footer{position:fixed;left:0;right:0;bottom:0;height:var(--footer-h);display:flex;align-items:center;justify-content:center;padding:0 12px;background:rgba(255,255,255,.92);border-top:1px solid rgba(229,231,235,.95);backdrop-filter:blur(8px);z-index:500;font-weight:900;color:#111827;text-align:center;font-size:13px}.footer a{color:var(--brand);text-decoration:none;font-weight:950}
+    @media(max-width:1120px){.hero{grid-template-columns:1fr}.statusGrid{grid-template-columns:repeat(3,1fr)}.controls{grid-template-columns:1fr 1fr}.summary{grid-template-columns:repeat(3,1fr)}.mainGrid{grid-template-columns:1fr}.rightStack{position:static;max-height:none}}
+    @media(max-width:720px){.topbar-inner{grid-template-columns:1fr}.top-title{text-align:left}.top-user{justify-self:start}.wrap{padding:0 10px}.loginGrid,.controls{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.cardsGrid{grid-template-columns:1fr}.detailStats{grid-template-columns:1fr}.statusGrid{grid-template-columns:1fr}}
+    .codePrintSheet{display:none}
+    .codeCardsMeta{font-weight:900;color:#334155;margin:0 0 8px;font-size:11pt}
+    .codeCardsGrid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;page-break-after:always}
+    .codeCardsGrid:last-child{page-break-after:auto}
+    .studentCodeCard{border:1.4px solid #0f172a;border-radius:8px;padding:5mm;min-height:42mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;background:white}
+    .studentCodeCard .miniBrand{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:950;font-size:9pt;color:#2563eb;text-transform:uppercase;letter-spacing:.04em}
+    .studentCodeCard .studentName{font-size:15pt;font-weight:950;line-height:1.1;color:#0f172a;margin-top:2mm}
+    .studentCodeCard .studentCodeBig{font-family:"SFMono-Regular",Consolas,monospace;font-size:18pt;font-weight:1000;letter-spacing:.08em;text-align:center;border:1px dashed #94a3b8;border-radius:6px;padding:3mm 2mm;margin:3mm 0;background:#f8fafc;color:#0f172a}
+    .studentCodeCard .cardDetails{display:grid;gap:1.2mm;font-size:9.5pt;font-weight:800;color:#334155}
+    .studentCodeCard .cardDetails span{color:#64748b;font-weight:950;text-transform:uppercase;font-size:7.5pt;letter-spacing:.05em;margin-right:2mm}
+    @media print{.topbar,.loginPanel,.controls,.actions,.footer,.message{display:none!important}.wrap{max-width:none;margin:0;padding:0}.panel{box-shadow:none;border:none}.mainGrid{grid-template-columns:1fr}.rightStack{position:static;max-height:none}.chartWrap{break-inside:avoid}.tableWrap{overflow:visible}.attemptList{max-height:none}.leftStack,.rightStack{display:block}.panel{margin-bottom:12px}}
+    @media print{
+      @page{size:A4 portrait;margin:10mm}
+      body.printCodeCards{background:white!important;padding:0!important}
+      body.printCodeCards .topbar,body.printCodeCards .wrap,body.printCodeCards .footer{display:none!important}
+      body.printCodeCards .codePrintSheet{display:block!important}
+      body.printCodeCards .codeCardsGrid{grid-template-rows:repeat(6,42mm)}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
+        <img src="../mmt.png" alt="Mills Maths Tools logo" class="logo" onerror="this.style.visibility='hidden'" />
+        <div><strong>MMT</strong><span>Mills Maths Tools</span></div>
+      </a>
+      <div class="top-title">Teacher Progress Dashboard</div>
+      <div class="top-user"><span id="teacherChip" class="pill hidden">Teacher</span><button id="logoutBtn" class="neutral tiny hidden" type="button">Change teacher</button></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="loginPanel" class="loginPanel">
+      <h1>Teacher dashboard</h1>
+      <p class="lead">Enter your teacher code to view your classes, student progress, weekly completion patterns, strengths, and students who may need follow-up.</p>
+      <div class="loginGrid">
+        <div>
+          <label for="teacherCodeInput">Teacher code</label>
+          <input id="teacherCodeInput" class="codeInput" autocomplete="off" placeholder="Enter teacher code" />
+        </div>
+        <button id="loginBtn" class="primary" type="button">Open dashboard</button>
+      </div>
+      <div id="loginMessage" class="message"></div>
+    </section>
+
+    <section id="dashboardShell" class="hidden">
+      <section class="hero">
+        <div class="panel heroCard">
+          <h1 id="welcomeTitle">Welcome</h1>
+          <p id="welcomeSub" class="lead">Class progress across Firebase-enabled Mills Maths Tools quizzes.</p>
+        </div>
+        <div class="panel statusGrid">
+          <div class="statusBox"><div class="statusLabel">Firebase</div><div id="firebaseStatus" class="statusValue bad">Connecting</div></div>
+          <div class="statusBox"><div class="statusLabel">Teacher code</div><div id="teacherCodeStatus" class="statusValue">—</div></div>
+          <div class="statusBox"><div class="statusLabel">Visible attempts</div><div id="visibleAttemptStatus" class="statusValue">0</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="sectionHead">
+          <div><h2>Filters</h2><div class="sectionHint">Filter the whole dashboard by class, topic, level and date range.</div></div>
+          <div class="actions rightActions">
+            <button id="refreshBtn" class="secondary tiny" type="button">Refresh</button>
+            <button id="copySummaryBtn" class="secondary tiny" type="button">Copy summary</button>
+            <button id="exportCsvBtn" class="secondary tiny" type="button">Export CSV</button>
+            <button id="printCodeCardsBtn" class="secondary tiny" type="button">Print student codes</button>
+            <button id="printBtn" class="neutral tiny" type="button">Print</button>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="field"><label for="searchInput">Search student or code</label><input id="searchInput" placeholder="Search students" /></div>
+          <div class="field"><label for="classFilter">Class</label><select id="classFilter"><option value="all">All classes</option></select></div>
+          <div class="field"><label for="topicFilter">Topic</label><select id="topicFilter"><option value="all">All topics</option></select></div>
+          <div class="field"><label for="levelFilter">Level</label><select id="levelFilter"><option value="all">All levels</option></select></div>
+          <div class="field"><label for="rangeFilter">Date range</label><select id="rangeFilter"><option value="all">All time</option><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></div>
+        </div>
+        <div id="mainMessage" class="message"></div>
+      </section>
+
+      <section class="summary" id="summaryGrid">
+        <div class="summaryCard"><div class="summaryLabel">Classes</div><div id="sumClasses" class="summaryValue">0</div><div class="summarySub">Linked to this teacher</div></div>
+        <div class="summaryCard"><div class="summaryLabel">Students</div><div id="sumStudents" class="summaryValue">0</div><div class="summarySub">Visible active students</div></div>
+        <div class="summaryCard"><div class="summaryLabel">Completions</div><div id="sumAttempts" class="summaryValue">0</div><div class="summarySub">Quiz tasks completed</div></div>
+        <div class="summaryCard"><div class="summaryLabel">Average</div><div id="sumAverage" class="summaryValue">—</div><div class="summarySub">Across visible attempts</div></div>
+        <div class="summaryCard"><div class="summaryLabel">Recent</div><div id="sumRecent" class="summaryValue">—</div><div class="summarySub">Most recent completion</div></div>
+      </section>
+
+      <section class="mainGrid">
+        <div class="leftStack">
+          <section class="panel chartCard">
+            <div class="sectionHead">
+              <div><h2>Tasks completed per week</h2><div class="sectionHint">Weekly completion volume for the selected class/topic/level/date filters.</div></div>
+              <span id="chartRangeLabel" class="badge blue">Last 30 days</span>
+            </div>
+            <div class="chartWrap"><svg id="weeklyChart" class="chartSvg" viewBox="0 0 900 280" role="img" aria-label="Tasks completed per week chart"></svg></div>
+          </section>
+
+          <section class="panel">
+            <div class="sectionHead">
+              <div><h2>Class overview</h2><div class="sectionHint">Completion and average score by class.</div></div>
+            </div>
+            <div id="classCards" class="cardsGrid"></div>
+            <div id="classEmpty" class="empty">No classes to show.</div>
+          </section>
+
+          <section class="panel heatmap">
+            <div class="sectionHead">
+              <div><h2>Topic heat map</h2><div class="sectionHint">Average score by class and topic. Empty cells mean no attempts yet.</div></div>
+            </div>
+            <div id="heatmapWrap" class="tableWrap"></div>
+          </section>
+
+          <section class="panel">
+            <div class="sectionHead">
+              <div><h2>Students</h2><div class="sectionHint">Click a student to inspect attempts, personal bests and recommendations.</div></div>
+              <select id="studentSort" style="width:auto;min-width:180px"><option value="name">Sort by name</option><option value="attempts">Most attempts</option><option value="averageLow">Lowest average</option><option value="recent">Most recent</option></select>
+            </div>
+            <div class="tableWrap"><table class="studentTable"><thead><tr><th>Student</th><th>Class</th><th>Code</th><th>Attempts</th><th>Average</th><th>Best</th><th>Last attempt</th><th>Status</th></tr></thead><tbody id="studentTableBody"></tbody></table></div>
+            <div id="studentEmpty" class="empty">No students match the current filters.</div>
+          </section>
+        </div>
+
+        <aside class="rightStack">
+          <section class="panel">
+            <div class="sectionHead"><div><h2>Needs attention</h2><div class="sectionHint">Students with no attempts, low averages, or no recent activity.</div></div></div>
+            <div id="attentionList" class="attentionList"></div>
+            <div id="attentionEmpty" class="empty">No attention flags for the current filters.</div>
+          </section>
+
+          <section class="panel">
+            <div class="sectionHead"><div><h2>Top growth</h2><div class="sectionHint">Students with the clearest improvement from early to recent attempts.</div></div></div>
+            <div id="growthList" class="attentionList"></div>
+            <div id="growthEmpty" class="empty">Not enough repeated attempts yet.</div>
+          </section>
+
+          <section class="panel">
+            <div class="sectionHead"><div><h2>Student detail</h2><div class="sectionHint">Select a student from the table.</div></div></div>
+            <div id="studentDetail" class="studentDetail"></div>
+            <div id="detailEmpty" class="empty show">Select a student to view progress details.</div>
+          </section>
+        </aside>
+      </section>
+    </section>
+  </main>
+
+  <section id="codePrintSheet" class="codePrintSheet" aria-hidden="true"></section>
+
+  <div class="footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au">www.millsmathstools.au</a></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
+      authDomain: "mills-maths-tools.firebaseapp.com",
+      projectId: "mills-maths-tools",
+      storageBucket: "mills-maths-tools.firebasestorage.app",
+      messagingSenderId: "835000359454",
+      appId: "1:835000359454:web:d7876be83ee367b5006c0f",
+      measurementId: "G-35YCH5NJEG"
+    };
+
+    const COLLECTIONS = { teachers:'teachers', students:'students', achievements:'achievements' };
+    const ATTENTION_DAYS = 7;
+    const LOW_AVERAGE = 50;
+
+    let app=null, auth=null, db=null, firebaseReady=false;
+    let currentTeacher=null;
+    let allStudents=[];
+    let allAchievements=[];
+    let selectedStudentCode='';
+
+    const $ = id => document.getElementById(id);
+    const els = {
+      loginPanel:$('loginPanel'), dashboardShell:$('dashboardShell'), teacherCodeInput:$('teacherCodeInput'), loginBtn:$('loginBtn'), loginMessage:$('loginMessage'),
+      teacherChip:$('teacherChip'), logoutBtn:$('logoutBtn'), welcomeTitle:$('welcomeTitle'), welcomeSub:$('welcomeSub'), firebaseStatus:$('firebaseStatus'), teacherCodeStatus:$('teacherCodeStatus'), visibleAttemptStatus:$('visibleAttemptStatus'),
+      searchInput:$('searchInput'), classFilter:$('classFilter'), topicFilter:$('topicFilter'), levelFilter:$('levelFilter'), rangeFilter:$('rangeFilter'), refreshBtn:$('refreshBtn'), copySummaryBtn:$('copySummaryBtn'), exportCsvBtn:$('exportCsvBtn'), printCodeCardsBtn:$('printCodeCardsBtn'), printBtn:$('printBtn'), mainMessage:$('mainMessage'),
+      sumClasses:$('sumClasses'), sumStudents:$('sumStudents'), sumAttempts:$('sumAttempts'), sumAverage:$('sumAverage'), sumRecent:$('sumRecent'), chartRangeLabel:$('chartRangeLabel'), weeklyChart:$('weeklyChart'), classCards:$('classCards'), classEmpty:$('classEmpty'), heatmapWrap:$('heatmapWrap'), studentSort:$('studentSort'), studentTableBody:$('studentTableBody'), studentEmpty:$('studentEmpty'), attentionList:$('attentionList'), attentionEmpty:$('attentionEmpty'), growthList:$('growthList'), growthEmpty:$('growthEmpty'), studentDetail:$('studentDetail'), detailEmpty:$('detailEmpty'), codePrintSheet:$('codePrintSheet')
+    };
+
+    function normaliseCode(value){ return String(value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''); }
+    function showMessage(el,text,type='info'){ el.textContent=text; el.className=`message show ${type}`; }
+    function hideMessage(el){ el.textContent=''; el.className='message'; }
+    function escapeHTML(s){ return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+    function num(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
+    function pct(a){ const score=num(a.score), total=num(a.total); if(total) return Math.round(score/total*100); return num(a.percent ?? a.percentage); }
+    function scoreText(a){ return `${num(a.score)}/${num(a.total)}`; }
+    function topicOf(a){ return a.topic || a.quizTopic || a.toolTopic || a.tool || 'Untitled topic'; }
+    function levelOf(a){ return a.englishLevel || a.level || 'Level not recorded'; }
+    function studentCodeOf(a){ return a.studentCode || a.code || ''; }
+    function studentNameOf(s){ return s.name || [s.firstName,s.surname].filter(Boolean).join(' ') || 'Unnamed student'; }
+    function dateValue(a){
+      const raw=a.createdAt || a.completedAt || a.dateCompleted || a.timestamp || a.date || a.dateClient;
+      if(raw && typeof raw.toDate==='function') return raw.toDate();
+      if(raw && raw.seconds) return new Date(raw.seconds*1000);
+      if(raw) { const d=new Date(raw); if(!Number.isNaN(d.getTime())) return d; }
+      return new Date(0);
+    }
+    function dateText(d){
+      if(!d || Number.isNaN(d.getTime()) || d.getTime()===0) return 'Not recorded';
+      return d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+    }
+    function dateTimeText(d){
+      if(!d || Number.isNaN(d.getTime()) || d.getTime()===0) return 'Not recorded';
+      return d.toLocaleString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
+    }
+    function daysAgo(d){ if(!d || d.getTime()===0) return Infinity; return Math.floor((Date.now()-d.getTime())/86400000); }
+    function initials(name){ return String(name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase() || '?'; }
+    function avg(list){ return list.length ? Math.round(list.reduce((s,a)=>s+pct(a),0)/list.length) : 0; }
+    function best(list){ return list.length ? Math.max(...list.map(pct)) : 0; }
+    function latestDate(list){ return list.length ? list.map(dateValue).sort((a,b)=>b-a)[0] : new Date(0); }
+    function mondayOf(d){ const x=new Date(d); x.setHours(0,0,0,0); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
+    function weekKey(d){ const m=mondayOf(d); const y=m.getFullYear(); const mo=String(m.getMonth()+1).padStart(2,'0'); const da=String(m.getDate()).padStart(2,'0'); return `${y}-${mo}-${da}`; }
+    function weekLabel(key){ const d=new Date(key+'T00:00:00'); return d.toLocaleDateString('en-AU',{day:'numeric',month:'short'}); }
+
+    async function initFirebase(){
+      app=initializeApp(firebaseConfig); auth=getAuth(app); db=getFirestore(app);
+      onAuthStateChanged(auth,user=>{ if(user){ firebaseReady=true; els.firebaseStatus.textContent='Connected'; els.firebaseStatus.className='statusValue good'; } });
+      await signInAnonymously(auth);
+    }
+
+    async function loginTeacher(){
+      hideMessage(els.loginMessage);
+      const code=normaliseCode(els.teacherCodeInput.value);
+      els.teacherCodeInput.value=code;
+      if(!code) return showMessage(els.loginMessage,'Enter your teacher code first.','bad');
+      if(!firebaseReady) return showMessage(els.loginMessage,'Firebase is still connecting. Please wait a moment and try again.','warn');
+      els.loginBtn.disabled=true; els.loginBtn.textContent='Checking...';
+      try{
+        const snap=await getDoc(doc(db,COLLECTIONS.teachers,code));
+        if(!snap.exists()) return showMessage(els.loginMessage,'That teacher code was not found. Please check the code with the MMT admin.','bad');
+        const data=snap.data();
+        if(data.active===false) return showMessage(els.loginMessage,'This teacher code is currently inactive. Please contact the MMT admin.','bad');
+        currentTeacher={id:snap.id,teacherCode:snap.id,...data};
+        await loadTeacherData();
+        openDashboard();
+      }catch(error){
+        console.error(error);
+        showMessage(els.loginMessage,error.message || 'Could not open teacher dashboard.','bad');
+      }finally{
+        els.loginBtn.disabled=false; els.loginBtn.textContent='Open dashboard';
+      }
+    }
+
+    async function loadTeacherData(){
+      if(!currentTeacher) return;
+      // These queries may require Firestore indexes depending on your rules/project. If an index message appears, create it from the Firebase link.
+      const studentsQuery=query(collection(db,COLLECTIONS.students), where('teacherCode','==',currentTeacher.teacherCode));
+      const studentSnap=await getDocs(studentsQuery);
+      allStudents=studentSnap.docs.map(d=>({id:d.id,studentCode:d.id,...d.data()}));
+
+      let achievementSnap;
+      try{
+        const q=query(collection(db,COLLECTIONS.achievements), where('teacherCode','==',currentTeacher.teacherCode), orderBy('createdAt','desc'));
+        achievementSnap=await getDocs(q);
+      }catch(err){
+        // Fallback avoids blocking the dashboard if the composite index is not ready yet.
+        console.warn('Falling back to achievements query without orderBy:', err);
+        const q=query(collection(db,COLLECTIONS.achievements), where('teacherCode','==',currentTeacher.teacherCode));
+        achievementSnap=await getDocs(q);
+      }
+      allAchievements=achievementSnap.docs.map(d=>({id:d.id,...d.data()}));
+      populateFilters();
+      renderAll();
+    }
+
+    function openDashboard(){
+      els.loginPanel.classList.add('hidden');
+      els.dashboardShell.classList.remove('hidden');
+      els.teacherChip.classList.remove('hidden');
+      els.logoutBtn.classList.remove('hidden');
+      els.teacherChip.textContent=`${currentTeacher.teacherName || 'Teacher'} · ${currentTeacher.teacherCode}`;
+      els.welcomeTitle.textContent=`Welcome, ${currentTeacher.teacherName || 'Teacher'}`;
+      els.welcomeSub.textContent=`${currentTeacher.school || 'Mills Maths Tools'} · ${allStudents.length} linked student${allStudents.length===1?'':'s'}`;
+      els.teacherCodeStatus.textContent=currentTeacher.teacherCode;
+    }
+
+    function populateFilters(){
+      const keepClass=els.classFilter.value, keepTopic=els.topicFilter.value, keepLevel=els.levelFilter.value;
+      const classes=[...new Set(allStudents.map(s=>s.className).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      els.classFilter.innerHTML='<option value="all">All classes</option>'+classes.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+      if(classes.includes(keepClass)) els.classFilter.value=keepClass;
+      const topics=[...new Set(allAchievements.map(topicOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      els.topicFilter.innerHTML='<option value="all">All topics</option>'+topics.map(t=>`<option value="${escapeHTML(t)}">${escapeHTML(t)}</option>`).join('');
+      if(topics.includes(keepTopic)) els.topicFilter.value=keepTopic;
+      const levels=[...new Set(allAchievements.map(levelOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      els.levelFilter.innerHTML='<option value="all">All levels</option>'+levels.map(l=>`<option value="${escapeHTML(l)}">${escapeHTML(l)}</option>`).join('');
+      if(levels.includes(keepLevel)) els.levelFilter.value=keepLevel;
+    }
+
+    function filteredStudents(){
+      const term=els.searchInput.value.trim().toLowerCase();
+      const cls=els.classFilter.value;
+      return allStudents.filter(s=>{
+        if(s.active===false) return false;
+        if(cls!=='all' && s.className!==cls) return false;
+        if(term){
+          const hay=[studentNameOf(s),s.studentCode,s.className,s.teacherCode].join(' ').toLowerCase();
+          if(!hay.includes(term)) return false;
+        }
+        return true;
+      });
+    }
+
+    function filteredAchievements(){
+      const studentCodes=new Set(filteredStudents().map(s=>s.studentCode || s.id));
+      const topic=els.topicFilter.value, level=els.levelFilter.value, range=els.rangeFilter.value;
+      const cutoff=range==='all' ? null : new Date(Date.now()-Number(range)*86400000);
+      return allAchievements.filter(a=>{
+        if(!studentCodes.has(studentCodeOf(a))) return false;
+        if(topic!=='all' && topicOf(a)!==topic) return false;
+        if(level!=='all' && levelOf(a)!==level) return false;
+        if(cutoff && dateValue(a)<cutoff) return false;
+        return true;
+      });
+    }
+
+    function attemptsByStudent(list=filteredAchievements()){
+      const map=new Map();
+      list.forEach(a=>{ const code=studentCodeOf(a); if(!map.has(code)) map.set(code,[]); map.get(code).push(a); });
+      return map;
+    }
+
+    function renderAll(){
+      const students=filteredStudents();
+      const attempts=filteredAchievements();
+      els.visibleAttemptStatus.textContent=String(attempts.length);
+      renderSummary(students,attempts);
+      renderWeeklyChart(attempts);
+      renderClassCards(students,attempts);
+      renderHeatmap(students,attempts);
+      renderStudentTable(students,attempts);
+      renderAttention(students,attempts);
+      renderGrowth(students,attempts);
+      renderSelectedStudent();
+    }
+
+    function renderSummary(students,attempts){
+      const classes=new Set(students.map(s=>s.className).filter(Boolean));
+      els.sumClasses.textContent=String(classes.size);
+      els.sumStudents.textContent=String(students.length);
+      els.sumAttempts.textContent=String(attempts.length);
+      els.sumAverage.textContent=attempts.length ? `${avg(attempts)}%` : '—';
+      const latest=latestDate(attempts);
+      els.sumRecent.textContent=latest.getTime()?dateText(latest):'—';
+      const range=els.rangeFilter.options[els.rangeFilter.selectedIndex]?.textContent || 'All time';
+      els.chartRangeLabel.textContent=range;
+    }
+
+    function renderWeeklyChart(attempts){
+      const svg=els.weeklyChart;
+      svg.innerHTML='';
+      const W=900,H=280,padL=46,padR=18,padT=22,padB=44;
+      const range=els.rangeFilter.value;
+      let start;
+      if(range==='all'){
+        const dates=attempts.map(dateValue).filter(d=>d.getTime());
+        start=dates.length?mondayOf(new Date(Math.min(...dates.map(d=>d.getTime())))):mondayOf(new Date(Date.now()-28*86400000));
+      }else start=mondayOf(new Date(Date.now()-Number(range)*86400000));
+      const end=mondayOf(new Date());
+      const keys=[];
+      for(let d=new Date(start); d<=end; d.setDate(d.getDate()+7)) keys.push(weekKey(d));
+      if(!keys.length) keys.push(weekKey(new Date()));
+      const counts=Object.fromEntries(keys.map(k=>[k,0]));
+      attempts.forEach(a=>{ const d=dateValue(a); if(d.getTime()){ const k=weekKey(d); if(counts[k]!==undefined) counts[k]++; }});
+      const vals=keys.map(k=>counts[k]||0);
+      const max=Math.max(1,...vals);
+      const chartW=W-padL-padR, chartH=H-padT-padB;
+      for(let i=0;i<=4;i++){
+        const y=padT+chartH-(chartH*i/4);
+        svg.insertAdjacentHTML('beforeend',`<line class="gridLine" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"></line><text class="axisText" x="8" y="${y+4}">${Math.round(max*i/4)}</text>`);
+      }
+      const gap=8;
+      const barW=Math.max(12,(chartW/keys.length)-gap);
+      const points=[];
+      keys.forEach((k,i)=>{
+        const x=padL+i*(chartW/keys.length)+gap/2;
+        const h=(vals[i]/max)*chartH;
+        const y=padT+chartH-h;
+        svg.insertAdjacentHTML('beforeend',`<rect class="bar" x="${x}" y="${y}" width="${barW}" height="${h}" rx="7"></rect><text class="barLabel" x="${x+barW/2}" y="${Math.max(padT+13,y-5)}" text-anchor="middle">${vals[i]}</text>`);
+        if(keys.length<=10 || i%2===0) svg.insertAdjacentHTML('beforeend',`<text class="axisText" x="${x+barW/2}" y="${H-15}" text-anchor="middle">${weekLabel(k)}</text>`);
+        points.push([x+barW/2,y]);
+      });
+      if(points.length>1){
+        const d=points.map((p,i)=>`${i?'L':'M'} ${p[0]} ${p[1]}`).join(' ');
+        svg.insertAdjacentHTML('beforeend',`<path class="linePath" d="${d}"></path>`);
+        points.forEach(p=>svg.insertAdjacentHTML('beforeend',`<circle class="lineDot" cx="${p[0]}" cy="${p[1]}" r="5"></circle>`));
+      }
+      if(!attempts.length){
+        svg.insertAdjacentHTML('beforeend',`<text x="450" y="138" text-anchor="middle" fill="#64748b" font-size="18" font-weight="900">No completions in this view yet</text>`);
+      }
+    }
+
+    function renderClassCards(students,attempts){
+      const classes=[...new Set(students.map(s=>s.className||'No class'))].sort();
+      els.classCards.innerHTML='';
+      els.classEmpty.classList.toggle('show',classes.length===0);
+      classes.forEach(cls=>{
+        const clsStudents=students.filter(s=>(s.className||'No class')===cls);
+        const codes=new Set(clsStudents.map(s=>s.studentCode||s.id));
+        const clsAttempts=attempts.filter(a=>codes.has(studentCodeOf(a)));
+        const latest=latestDate(clsAttempts);
+        const div=document.createElement('div');
+        div.className='smallCard';
+        div.innerHTML=`<div class="smallTitle">${escapeHTML(cls)}</div><div class="smallMeta">${clsStudents.length} students · ${clsAttempts.length} completions · average ${clsAttempts.length?avg(clsAttempts)+'%':'—'} · latest ${latest.getTime()?dateText(latest):'—'}</div>`;
+        div.addEventListener('click',()=>{els.classFilter.value=cls; renderAll();});
+        els.classCards.appendChild(div);
+      });
+    }
+
+    function renderHeatmap(students,attempts){
+      const classes=[...new Set(students.map(s=>s.className||'No class'))].sort();
+      const topics=[...new Set(attempts.map(topicOf))].sort();
+      if(!classes.length || !topics.length){ els.heatmapWrap.innerHTML='<div class="empty show">No topic data yet.</div>'; return; }
+      const studentByClass=new Map(classes.map(c=>[c,new Set(students.filter(s=>(s.className||'No class')===c).map(s=>s.studentCode||s.id))]));
+      let html='<table><thead><tr><th>Class</th>'+topics.map(t=>`<th>${escapeHTML(t)}</th>`).join('')+'</tr></thead><tbody>';
+      classes.forEach(cls=>{
+        html+=`<tr><td><strong>${escapeHTML(cls)}</strong></td>`;
+        topics.forEach(topic=>{
+          const codes=studentByClass.get(cls);
+          const list=attempts.filter(a=>codes.has(studentCodeOf(a)) && topicOf(a)===topic);
+          const value=list.length?avg(list):null;
+          const clsName=value===null?'heatEmpty':value>=75?'heatHigh':value>=50?'heatMid':'heatLow';
+          html+=`<td><div class="heatCell ${clsName}">${value===null?'—':value+'%'}<br><span style="font-size:10px;font-weight:800">${list.length||0}</span></div></td>`;
+        });
+        html+='</tr>';
+      });
+      html+='</tbody></table>';
+      els.heatmapWrap.innerHTML=html;
+    }
+
+    function studentStats(student,attempts){
+      const code=student.studentCode||student.id;
+      const list=attempts.filter(a=>studentCodeOf(a)===code);
+      const allList=allAchievements.filter(a=>studentCodeOf(a)===code);
+      const latest=latestDate(list.length?list:allList);
+      return {code,list,allList,attempts:list.length,average:list.length?avg(list):0,best:list.length?best(list):0,latest};
+    }
+
+    function renderStudentTable(students,attempts){
+      const rows=students.map(s=>({student:s,...studentStats(s,attempts)}));
+      const mode=els.studentSort.value;
+      rows.sort((a,b)=>{
+        if(mode==='attempts') return b.attempts-a.attempts || studentNameOf(a.student).localeCompare(studentNameOf(b.student));
+        if(mode==='averageLow') return (a.attempts? a.average:999)-(b.attempts? b.average:999) || studentNameOf(a.student).localeCompare(studentNameOf(b.student));
+        if(mode==='recent') return b.latest-a.latest;
+        return studentNameOf(a.student).localeCompare(studentNameOf(b.student));
+      });
+      els.studentTableBody.innerHTML=rows.map(r=>{
+        const status=r.attempts===0?'<span class="badge warn">No attempts</span>':r.average<LOW_AVERAGE?'<span class="badge bad">Low avg</span>':daysAgo(r.latest)>ATTENTION_DAYS?'<span class="badge warn">Inactive</span>':'<span class="badge good">On track</span>';
+        return `<tr data-code="${escapeHTML(r.code)}" class="${selectedStudentCode===r.code?'selectedRow':''}"><td><strong>${escapeHTML(studentNameOf(r.student))}</strong></td><td>${escapeHTML(r.student.className||'')}</td><td><span class="code">${escapeHTML(r.code)}</span></td><td>${r.attempts}</td><td>${r.attempts?r.average+'%':'—'}</td><td>${r.attempts?r.best+'%':'—'}</td><td>${r.latest.getTime()?dateText(r.latest):'—'}</td><td>${status}</td></tr>`;
+      }).join('');
+      els.studentEmpty.classList.toggle('show',rows.length===0);
+    }
+
+    function renderAttention(students,attempts){
+      const items=[];
+      students.forEach(s=>{
+        const st=studentStats(s,attempts);
+        if(st.attempts===0) items.push({s,kind:'🟠',reason:'No completions in the current view.'});
+        else if(st.average<LOW_AVERAGE) items.push({s,kind:'🔴',reason:`Average is ${st.average}% across ${st.attempts} completion${st.attempts===1?'':'s'}.`});
+        else if(daysAgo(st.latest)>ATTENTION_DAYS) items.push({s,kind:'🟡',reason:`No completion for ${daysAgo(st.latest)} days.`});
+      });
+      els.attentionList.innerHTML=items.slice(0,12).map(item=>`<div class="attentionItem" data-code="${escapeHTML(item.s.studentCode||item.s.id)}"><div class="attentionIcon">${item.kind}</div><div><div class="attentionName">${escapeHTML(studentNameOf(item.s))}</div><div class="attentionReason">${escapeHTML(item.s.className||'')} · ${escapeHTML(item.reason)}</div></div></div>`).join('');
+      els.attentionEmpty.classList.toggle('show',items.length===0);
+    }
+
+    function renderGrowth(students,attempts){
+      const growth=[];
+      students.forEach(s=>{
+        const code=s.studentCode||s.id;
+        const list=attempts.filter(a=>studentCodeOf(a)===code).sort((a,b)=>dateValue(a)-dateValue(b));
+        if(list.length<2) return;
+        const first=list.slice(0,Math.ceil(list.length/2));
+        const recent=list.slice(Math.floor(list.length/2));
+        const diff=avg(recent)-avg(first);
+        if(diff>0) growth.push({s,diff,from:avg(first),to:avg(recent),count:list.length});
+      });
+      growth.sort((a,b)=>b.diff-a.diff);
+      els.growthList.innerHTML=growth.slice(0,8).map(g=>`<div class="attentionItem" data-code="${escapeHTML(g.s.studentCode||g.s.id)}"><div class="attentionIcon">📈</div><div><div class="attentionName">${escapeHTML(studentNameOf(g.s))}</div><div class="attentionReason">Improved by ${g.diff} percentage points (${g.from}% → ${g.to}%) across ${g.count} completions.</div></div></div>`).join('');
+      els.growthEmpty.classList.toggle('show',growth.length===0);
+    }
+
+    function recommendationFor(student,attempts){
+      const list=attempts.filter(a=>studentCodeOf(a)===(student.studentCode||student.id));
+      if(!list.length) return 'Start with one quiz at an accessible level and build a completion habit.';
+      const topicGroups=new Map();
+      list.forEach(a=>{const t=topicOf(a); if(!topicGroups.has(t))topicGroups.set(t,[]); topicGroups.get(t).push(a);});
+      const weakest=[...topicGroups.entries()].map(([topic,arr])=>({topic,average:avg(arr)})).sort((a,b)=>a.average-b.average)[0];
+      if(weakest && weakest.average<70) return `Recommended next: revisit ${weakest.topic} and aim to improve beyond ${weakest.average}%.`;
+      return 'Recommended next: try a higher level or a new topic to extend fluency.';
+    }
+
+    function renderSelectedStudent(){
+      const students=filteredStudents();
+      const attempts=filteredAchievements();
+      const student=students.find(s=>(s.studentCode||s.id)===selectedStudentCode);
+      if(!student){ els.studentDetail.innerHTML=''; els.detailEmpty.classList.add('show'); return; }
+      els.detailEmpty.classList.remove('show');
+      const code=student.studentCode||student.id;
+      const list=attempts.filter(a=>studentCodeOf(a)===code).sort((a,b)=>dateValue(b)-dateValue(a));
+      const st=studentStats(student,attempts);
+      const topics=[...new Set(list.map(topicOf))];
+      const rec=recommendationFor(student,attempts);
+      els.studentDetail.innerHTML=`
+        <div class="studentHeader">
+          <div class="studentHeadLeft"><div class="avatar">${escapeHTML(initials(studentNameOf(student)))}</div><div><div class="studentName">${escapeHTML(studentNameOf(student))}</div><div class="studentMeta">${escapeHTML(student.className||'')} · ${escapeHTML(code)}</div></div></div>
+        </div>
+        <div class="detailStats"><div class="detailStat"><strong>${st.attempts}</strong><span>Attempts</span></div><div class="detailStat"><strong>${st.attempts?st.average+'%':'—'}</strong><span>Average</span></div><div class="detailStat"><strong>${st.attempts?st.best+'%':'—'}</strong><span>Best</span></div></div>
+        <div class="smallCard"><div class="smallTitle">Recommendation</div><div class="smallMeta">${escapeHTML(rec)}</div></div>
+        <div class="smallCard"><div class="smallTitle">Topics attempted</div><div class="smallMeta">${topics.length?escapeHTML(topics.join(', ')):'No topics yet'}</div></div>
+        <div class="attemptList">${list.length?list.map(a=>`<div class="attempt"><div class="attemptTop"><div class="attemptTitle">${escapeHTML(topicOf(a))}</div><span class="badge ${pct(a)>=80?'good':pct(a)>=50?'warn':'bad'}">${pct(a)}%</span></div><div class="attemptMeta">${escapeHTML(levelOf(a))} · ${escapeHTML(scoreText(a))} · ${escapeHTML(dateTimeText(dateValue(a)))}</div></div>`).join(''):'<div class="empty show">No attempts in the current view.</div>'}</div>
+      `;
+    }
+
+    function buildSummaryText(){
+      const students=filteredStudents(); const attempts=filteredAchievements();
+      return `MMT Teacher Progress Summary\nTeacher: ${currentTeacher.teacherName||''} (${currentTeacher.teacherCode})\nClasses: ${new Set(students.map(s=>s.className).filter(Boolean)).size}\nStudents: ${students.length}\nCompletions: ${attempts.length}\nAverage: ${attempts.length?avg(attempts)+'%':'—'}\nMost recent: ${latestDate(attempts).getTime()?dateText(latestDate(attempts)):'—'}`;
+    }
+
+    function buildStudentCodeCardsPrintSheet(){
+      const students=filteredStudents().slice().sort((a,b)=>{
+        const classCompare=String(a.className||'').localeCompare(String(b.className||''));
+        if(classCompare) return classCompare;
+        return studentNameOf(a).localeCompare(studentNameOf(b));
+      });
+      if(!students.length){
+        showMessage(els.mainMessage,'No visible students to print. Choose a class/filter first.','warn');
+        return false;
+      }
+      const selectedClass=els.classFilter.value && els.classFilter.value!=='all' ? els.classFilter.value : 'All visible classes';
+      const teacherName=currentTeacher?.teacherName || 'Teacher';
+      const chunks=[];
+      for(let i=0;i<students.length;i+=12) chunks.push(students.slice(i,i+12));
+      els.codePrintSheet.innerHTML=chunks.map((chunk,pageIndex)=>`
+        <div class="codeCardsMeta">MMT student codes · ${escapeHTML(selectedClass)} · ${escapeHTML(teacherName)} · Page ${pageIndex+1} of ${chunks.length}</div>
+        <div class="codeCardsGrid">
+          ${chunk.map(student=>`
+            <article class="studentCodeCard">
+              <div>
+                <div class="miniBrand"><span>Mills Maths Tools</span><span>Student login</span></div>
+                <div class="studentName">${escapeHTML(studentNameOf(student))}</div>
+              </div>
+              <div class="studentCodeBig">${escapeHTML(student.studentCode || student.id || '')}</div>
+              <div class="cardDetails">
+                <div><span>Class</span>${escapeHTML(student.className || '—')}</div>
+                <div><span>Teacher</span>${escapeHTML(student.teacherName || student.teacher || teacherName || '—')}</div>
+              </div>
+            </article>
+          `).join('')}
+        </div>
+      `).join('');
+      return true;
+    }
+
+    function printStudentCodeCards(){
+      if(!buildStudentCodeCardsPrintSheet()) return;
+      document.body.classList.add('printCodeCards');
+      window.print();
+    }
+
+    function exportCsv(){
+      const attempts=filteredAchievements();
+      const studentLookup=new Map(allStudents.map(s=>[s.studentCode||s.id,s]));
+      const headers=['Student','Class','Student Code','Topic','Level','Score','Total','Percent','Date'];
+      const rows=attempts.map(a=>{const s=studentLookup.get(studentCodeOf(a))||{};return [studentNameOf(s),s.className||'',studentCodeOf(a),topicOf(a),levelOf(a),num(a.score),num(a.total),pct(a),dateTimeText(dateValue(a))];});
+      const csv=[headers,...rows].map(row=>row.map(cell=>`"${String(cell??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=`mmt-teacher-progress-${currentTeacher.teacherCode}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    async function copyText(text){ await navigator.clipboard.writeText(text); }
+
+    function logout(){
+      currentTeacher=null; allStudents=[]; allAchievements=[]; selectedStudentCode='';
+      els.dashboardShell.classList.add('hidden'); els.loginPanel.classList.remove('hidden'); els.teacherChip.classList.add('hidden'); els.logoutBtn.classList.add('hidden');
+      els.teacherCodeInput.focus();
+    }
+
+    els.loginBtn.addEventListener('click',loginTeacher);
+    els.teacherCodeInput.addEventListener('keydown',e=>{if(e.key==='Enter')loginTeacher();});
+    els.teacherCodeInput.addEventListener('input',()=>{els.teacherCodeInput.value=normaliseCode(els.teacherCodeInput.value);});
+    els.logoutBtn.addEventListener('click',logout);
+    els.refreshBtn.addEventListener('click',async()=>{try{await loadTeacherData();showMessage(els.mainMessage,'Dashboard refreshed.','ok')}catch(e){console.error(e);showMessage(els.mainMessage,e.message,'bad')}});
+    [els.searchInput,els.classFilter,els.topicFilter,els.levelFilter,els.rangeFilter,els.studentSort].forEach(el=>{el.addEventListener('input',renderAll);el.addEventListener('change',renderAll);});
+    els.copySummaryBtn.addEventListener('click',async()=>{await copyText(buildSummaryText());showMessage(els.mainMessage,'Summary copied to clipboard.','ok')});
+    els.exportCsvBtn.addEventListener('click',exportCsv);
+    els.printCodeCardsBtn.addEventListener('click',printStudentCodeCards);
+    els.printBtn.addEventListener('click',()=>window.print());
+    window.addEventListener('afterprint',()=>{ document.body.classList.remove('printCodeCards'); if(els.codePrintSheet) els.codePrintSheet.innerHTML=''; });
+    els.studentTableBody.addEventListener('click',e=>{const row=e.target.closest('tr[data-code]'); if(!row)return; selectedStudentCode=row.dataset.code; renderStudentTable(filteredStudents(),filteredAchievements()); renderSelectedStudent();});
+    els.attentionList.addEventListener('click',e=>{const item=e.target.closest('[data-code]'); if(!item)return; selectedStudentCode=item.dataset.code; renderAll();});
+    els.growthList.addEventListener('click',e=>{const item=e.target.closest('[data-code]'); if(!item)return; selectedStudentCode=item.dataset.code; renderAll();});
+
+    initFirebase().catch(error=>{console.error(error);showMessage(els.loginMessage,error.message||'Firebase connection failed.','bad')});
+  </script>
+</body>
+</html>
