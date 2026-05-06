@@ -3,1777 +3,643 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MMT Worksheet Generator — Algebraic Techniques</title>
+  <title>Algebraic Techniques — Student Quiz</title>
   <style>
     :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --ink:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --shadow: 0 14px 40px rgba(0,0,0,.10);
-      --radius: 18px;
-      --ok:#16a34a;
+      --bg:#f6f7fb; --card:#ffffff; --ink:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10); --radius:18px; --blue:#2563eb;
+      --basic:#16a34a; --expected:#eab308; --ok:#16a34a; --bad:#dc2626; --partial:#eab308;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--uiFont);background:var(--bg);color:var(--ink)}
+    body.modalOpen{overflow:hidden}
+    .wrap{max-width:1180px;margin:18px auto 40px;padding:0 16px}.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .topRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 12px;flex-wrap:wrap}.topLeft{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;border:1px solid rgba(229,231,235,.95);background:#fff;font-weight:950;box-shadow:0 8px 18px rgba(0,0,0,.04)}
+    .dot{width:12px;height:12px;border-radius:999px;background:#cbd5e1}.linkBtn{border:none;background:transparent;color:#111827;font-weight:950;cursor:pointer;padding:10px;border-radius:10px}.linkBtn:hover{background:#eef2ff}
+    .resetBtn{border:none;border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer;background:#fee2e2;color:#991b1b}
+    .languageSelectCard{border:1px solid #ddd6fe;background:#faf5ff;color:#4c1d95;border-radius:16px;padding:9px 12px;box-shadow:0 10px 22px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;font-weight:900;width:max-content;max-width:100%}
+    .languageSelectCard.levelLanguageCard{margin:0 0 16px;width:100%;justify-content:flex-start;background:#f8f5ff}.languageLabel{font-size:14px;line-height:1.1;white-space:nowrap;font-weight:1000}
+    .languageSelect{appearance:none;-webkit-appearance:none;border:2px solid #c4b5fd;background:#fff;color:#4c1d95;border-radius:12px;padding:8px 34px 8px 12px;font-weight:1000;font-size:14px;cursor:pointer;min-width:180px;background-image:linear-gradient(45deg,transparent 50%,#7c3aed 50%),linear-gradient(135deg,#7c3aed 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+    .languageSelect:focus{outline:none;box-shadow:0 0 0 4px rgba(124,58,237,.14);border-color:#8b5cf6}.rtlText{direction:rtl;unicode-bidi:plaintext}.dualText .altLine{display:block;direction:rtl;unicode-bidi:plaintext;font-size:.72em;line-height:1.25;margin-top:4px;opacity:.92;font-weight:900}.bannerTitle .altLine{font-size:.48em}.qCounter .altLine,.levelChipSmall .altLine{font-size:.72em}
+    .banner{background:linear-gradient(180deg,#2f64f5,#1d4ed8);color:#fff;border-radius:18px;padding:18px;display:flex;align-items:center;justify-content:center;gap:14px;position:relative;overflow:hidden}.banner .logo{width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;box-shadow:0 10px 25px rgba(0,0,0,.18)}.banner .logo img{width:100%;height:100%;object-fit:contain;padding:6px}.bannerTitle{font-weight:1000;font-size:42px;letter-spacing:.2px;line-height:1;text-align:center}@media(max-width:720px){.bannerTitle{font-size:30px}}
+    .progressRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 4px 10px}.bar{flex:1;height:14px;border-radius:999px;background:#e5e7eb;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}.bar>div{height:100%;width:0%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:999px;transition:width .25s ease}.qCounter{font-weight:1000;font-size:20px;color:#111827;white-space:nowrap}
+    .stage{background:#fff;border-radius:22px;border:1px solid rgba(229,231,235,.95);box-shadow:0 10px 26px rgba(15,23,42,.06);padding:18px;min-height:420px}.qArea{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:380px;text-align:center}.qLabel{font-family:var(--mathFont);font-weight:700;font-size:26px}.qBox{border:3px solid #111827;border-radius:18px;padding:16px 22px;font-family:var(--mathFont);font-weight:700;font-size:31px;background:#fff;width:min(820px,94vw);display:flex;align-items:center;justify-content:center;min-height:110px;line-height:1.25}.qBox.small{font-size:27px}.qBox{direction:ltr;unicode-bidi:isolate}.qBox *{direction:ltr;unicode-bidi:isolate}.exprLTR{direction:ltr!important;unicode-bidi:isolate!important;display:inline-block}.qBox .var{display:inline-block;margin:0 .16em}.mulSign{display:inline-block;padding:0 .46em;font-style:normal}.ansInput.correct,.tableInput.correct{border-color:var(--ok)!important;background:rgba(22,163,74,.08)}.ansInput.wrong,.tableInput.wrong{border-color:var(--bad)!important;background:rgba(220,38,38,.08)}.ansInput.partial,.tableInput.partial{border-color:var(--partial)!important;background:rgba(234,179,8,.12)}.confettiPiece{position:fixed;width:10px;height:14px;border-radius:3px;z-index:10000;pointer-events:none;animation:confettiFall 850ms ease-out forwards}@keyframes confettiFall{0%{transform:translate(0,0) rotate(0deg);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}.muted{color:var(--muted);font-weight:900}
+    .tableHost{display:none;width:min(820px,94vw)}
+.valueTable{width:100%;border-collapse:collapse;font-family:var(--mathFont);font-weight:700;font-size:24px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 0 0 2px rgba(17,24,39,.18)}
+.valueTable th,.valueTable td{border:2px solid rgba(17,24,39,.18);padding:12px;text-align:center}
+.valueTable th{background:#f9fafb}
+.tableInput{width:100%;max-width:120px;border:2px solid #111827;border-radius:12px;padding:10px 8px;text-align:center;font-family:var(--mathFont);font-weight:700;font-size:22px}
+.tableInput:disabled{background:#f9fafb;color:#6b7280}
+.answerRow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:min(740px,94vw)}.answerRow .ansLabel{font-family:var(--mathFont);font-weight:700;font-size:22px}.ansInput{border:2.5px solid #111827;border-radius:16px;padding:14px;font-family:var(--mathFont);font-weight:700;font-size:24px;min-width:min(360px,86vw);outline:none;background:#fff}.ansInput:disabled{background:#f9fafb;color:#6b7280}
+    .btn{border:none;border-radius:16px;padding:14px 18px;font-weight:1000;cursor:pointer;background:#f3f4f6;color:#111827;transition:transform .04s ease,filter .15s ease,opacity .2s ease;user-select:none;font-size:18px}.btn:active{transform:scale(.98)}.btn.primary{background:#2563eb;color:#fff}.btn.ghost{background:#eef2ff;color:#1d4ed8}.btn.dark{background:#111827;color:#fff}
+    .feedback{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:1000;margin-top:6px;min-height:28px}.badge{padding:8px 12px;border-radius:999px;border:2px solid rgba(17,24,39,.25);background:#fff;display:inline-flex;align-items:center;gap:8px;opacity:0;transform:translateY(6px);transition:opacity .15s ease,transform .15s ease}.badge.show{opacity:1;transform:translateY(0)}.badge.ok{border-color:rgba(22,163,74,.45);background:rgba(22,163,74,.08);color:var(--ok)}.badge.bad{border-color:rgba(220,38,38,.45);background:rgba(220,38,38,.08);color:var(--bad)}.badge.partial{border-color:rgba(234,179,8,.55);background:rgba(234,179,8,.14);color:#92400e}
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);z-index:9999;pointer-events:none}.overlay.show{display:flex;pointer-events:auto}.modal{width:min(980px,96vw);background:#fff;border-radius:26px;box-shadow:0 30px 80px rgba(0,0,0,.20);border:1px solid rgba(229,231,235,.95);padding:22px}.modal h2{margin:0 0 14px;font-size:44px;letter-spacing:.2px;font-weight:1000}.levelList{display:flex;flex-direction:column;gap:14px}.levelItem{border-radius:22px;border:3px solid rgba(0,0,0,.10);padding:22px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}.levelName{font-size:34px;font-weight:1000}.levelSub{font-weight:900;color:#4b5563;margin-top:4px}.levelItem.basic{background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.30)}.levelItem.expected{background:rgba(234,179,8,.16);border-color:rgba(234,179,8,.35)}.startPill{border:none;border-radius:999px;padding:12px 18px;font-weight:1000;cursor:pointer;background:#1d4ed8;color:#fff;font-size:18px;min-width:110px}
 
-      --footer-h: 44px;
-      --pagePad: 12mm;
-    }
+    .typesGrid{display:flex;gap:12px 14px;flex-wrap:wrap;align-items:center;padding-top:10px}.typesActions{display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap;margin:12px 0 2px}.miniActionBtn{border:1px solid rgba(37,99,235,.22);background:#eef2ff;color:#1d4ed8;border-radius:999px;padding:10px 14px;font-weight:1000;cursor:pointer;font-family:var(--uiFont);box-shadow:0 8px 18px rgba(15,23,42,.04)}.miniActionBtn:active{transform:scale(.98)}.chk{display:flex;gap:10px;align-items:center;border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:999px;padding:10px 12px;box-shadow:0 8px 18px rgba(0,0,0,.04);user-select:none;font-weight:950;font-size:14px}.typeText{display:flex;flex-direction:column;gap:2px;line-height:1.15}.typeAlt{display:block;font-size:.82em;color:#6b7280;direction:rtl;unicode-bidi:plaintext;font-weight:900}.chk input{width:18px;height:18px}.row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:10px}.field label{display:block;font-weight:1000;font-size:13px;margin:0 0 8px;color:var(--muted)}.field input[type="number"]{border:2px solid #e5e7eb;border-radius:14px;padding:12px 12px;font-weight:950;font-size:18px;background:#fff;min-width:240px;outline:none}.warn{margin-top:10px;padding:10px 12px;border-radius:14px;border:2px solid rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:#991b1b;font-weight:950;display:none}.warn.show{display:block}
+    .resultsTop{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}.trophy{width:72px;height:72px;border-radius:18px;border:2px solid rgba(234,179,8,.35);background:rgba(234,179,8,.12);display:flex;align-items:center;justify-content:center;font-size:40px;flex:0 0 auto}.resultsText{flex:1;min-width:240px}.bigLine{font-size:28px;font-weight:1000;margin:4px 0 8px}.breakdown{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}.breakdownRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed rgba(229,231,235,.95);font-weight:950}.breakdownRow:last-child{border-bottom:none}.modalBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;margin-top:16px}
+    .var{font-family:var(--mathFont);font-style:italic;font-weight:700}.frac{display:inline-flex;flex-direction:column;align-items:stretch;justify-content:center;vertical-align:middle;line-height:1.05;transform:translateY(-1px);margin:0 2px;min-width:38px}.frac .top,.frac .bottom{text-align:center;padding:0 4px;white-space:nowrap}.frac .bar{height:0;border-top:2px solid #111827;margin:2px 0;border-radius:999px}.qExprLine{display:block;margin-top:8px;text-align:center;direction:ltr;unicode-bidi:plaintext}.qPrompt{display:block}.correctAnswer{font-family:var(--mathFont);font-weight:700;color:#111827}.hintLine{font-size:14px;color:#6b7280;font-weight:900;max-width:760px}.hidden{display:none!important}
+  
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: var(--bg);
-      color: var(--ink);
-      padding-bottom: var(--footer-h);
-    }
+    /* Firebase student login + teacher assignment link builder */
+    .firebaseOverlay{position:fixed;inset:0;z-index:12000;background:rgba(15,23,42,.52);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px}
+    .firebaseOverlay.hidden{display:none}
+    .firebaseCard{width:min(560px,96vw);background:#fff;border-radius:26px;border:1px solid rgba(229,231,235,.95);box-shadow:0 30px 80px rgba(0,0,0,.24);padding:22px}
+    .firebaseCard h2{margin:0 0 8px;font-size:30px;font-weight:1000;letter-spacing:-.03em}
+    .firebaseCard p{margin:0 0 14px;color:#6b7280;font-weight:850;line-height:1.4}
+    .firebaseInput{width:100%;border:2px solid #e5e7eb;border-radius:16px;padding:14px 16px;font-size:20px;font-weight:1000;text-transform:uppercase;letter-spacing:.06em;outline:none}
+    .firebaseInput:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+    .firebaseActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.firebaseMsg{display:none;margin-top:12px;padding:11px 13px;border-radius:14px;font-weight:950}.firebaseMsg.show{display:block}.firebaseMsg.ok{background:#dcfce7;color:#166534}.firebaseMsg.bad{background:#fee2e2;color:#991b1b}.firebaseMsg.info{background:#eef2ff;color:#1d4ed8}
+    .studentChip{display:none}.studentChip.show{display:inline-flex}.teacherAssignBtn{border:none;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:999px;padding:10px 12px;font-weight:1000;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.04)}
+    .teacherAssignBtn:hover{background:#ffedd5}.assignmentNotice{display:none;margin:10px 0 0;padding:10px 12px;border-radius:14px;background:#eef2ff;color:#1d4ed8;border:1px solid rgba(37,99,235,.18);font-weight:950}.assignmentNotice.show{display:block}
+    .assignmentBuilderModal{width:min(1120px,96vw);max-height:min(92vh,820px);overflow:auto;padding:26px;border-radius:30px}
+    .assignmentBuilderModal h2{font-size:clamp(34px,5vw,54px);letter-spacing:-.055em;margin-bottom:8px;line-height:.98}
+    .builderIntro{max-width:940px;font-size:18px;line-height:1.28;font-weight:900;color:#6b7280;margin-bottom:18px}
+    .builderGrid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(170px,220px);gap:16px;margin:14px 0 16px;align-items:end}
+    .builderCard{border:1px solid rgba(229,231,235,.95);background:#f8fafc;border-radius:20px;padding:14px;box-shadow:0 8px 22px rgba(15,23,42,.04)}
+    .builderCard label,.builderSectionTitle{display:block;font-weight:1000;font-size:13px;margin:0 0 10px;color:#6b7280;letter-spacing:.02em;text-transform:uppercase}
+    .builderLevelNative{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+    .levelToggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#eef2ff;border:1px solid rgba(37,99,235,.16);border-radius:999px;padding:6px}
+    .levelToggleBtn{border:0;border-radius:999px;padding:12px 14px;background:transparent;color:#334155;font-weight:1000;font-size:16px;cursor:pointer;transition:background .15s ease,color .15s ease,box-shadow .15s ease,transform .04s ease;white-space:nowrap}
+    .levelToggleBtn:active{transform:scale(.98)}
+    .levelToggleBtn.active[data-level="basic"]{background:#dcfce7;color:#166534;box-shadow:0 8px 18px rgba(22,163,74,.18)}
+    .levelToggleBtn.active[data-level="expected"]{background:#fef9c3;color:#854d0e;box-shadow:0 8px 18px rgba(234,179,8,.18)}
+    .builderCountInput{width:100%;min-width:0!important;max-width:100%;border:2px solid #e5e7eb;border-radius:18px;padding:14px 16px;font-size:22px;font-weight:1000;background:#fff;outline:none}
+    .builderCountInput:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+    .builderToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 10px}
+    .builderSummary{font-weight:950;color:#475569;background:#f8fafc;border:1px solid rgba(229,231,235,.95);padding:9px 12px;border-radius:999px}
+    .builderTypes{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px;margin:10px 0 12px}
+    .builderTypes label{display:flex;gap:10px;align-items:center;border:1px solid rgba(229,231,235,.95);border-radius:16px;padding:12px 13px;background:#fff;font-weight:950;font-size:14px;min-height:54px;box-shadow:0 8px 18px rgba(15,23,42,.04);cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .04s ease,background .15s ease}
+    .builderTypes label:hover{border-color:rgba(37,99,235,.26);box-shadow:0 10px 22px rgba(37,99,235,.10);transform:translateY(-1px)}
+    .builderTypes label:has(input:checked){background:#eff6ff;border-color:rgba(37,99,235,.36)}
+    .builderTypes input{width:19px;height:19px;flex:0 0 auto;accent-color:#2563eb}
+    .linkOutput{width:100%;max-width:100%;border:2px solid #93c5fd;border-radius:16px;padding:13px 14px;font-weight:900;color:#1e3a8a;background:#eff6ff;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+    .builderActions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.builderActions .btn{padding:14px 22px}
+    .builderSmallNote{font-size:13px;color:#64748b;font-weight:850;margin-top:8px;line-height:1.35}
+    @media(max-width:760px){.assignmentBuilderModal{padding:18px}.builderGrid{grid-template-columns:1fr}.builderTypes{grid-template-columns:1fr}.builderActions .btn,.firebaseActions .btn{flex:1}.levelToggle{border-radius:18px}.levelToggleBtn{border-radius:14px}}
 
-    .wrap{ max-width: 1100px; margin: 18px auto 40px; padding: 0 16px; }
-    .panel{
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    /* Controls */
-    .controls{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap: 14px;
-      flex-wrap:wrap;
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: linear-gradient(180deg,#ffffff,#f9fafb);
-    }
-
-    label{
-      display:block;
-      font-weight: 950;
-      color: var(--ink);
-      margin: 0 0 8px;
-      font-size: 13px;
-    }
-
-    select, input[type="number"]{
-      border: 2px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 12px 12px;
-      font-weight: 950;
-      font-size: 16px;
-      background:#fff;
-      min-width: 320px;
-      outline:none;
-    }
-    input[type="number"]{ min-width: 220px; }
-
-
-    .topSelectors{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap: 14px;
-      flex-wrap:wrap;
-      width:100%;
-    }
-    .outcomeControl{ flex: 1 1 360px; min-width: 320px; }
-    .outcomeControl select{ width:100%; }
-    .languageControl{
-      flex: 0 1 320px;
-      min-width: 240px;
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-    }
-    .languageControl select{ min-width: 240px; width:100%; }
-    .languageControl label{ text-align:right; }
-
-    .checks{
-      display:flex;
-      gap: 12px 14px;
-      flex-wrap:wrap;
-      align-items:center;
-      padding: 6px 0 0;
-    }
-
-    .checksHeader{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      width:100%;
-      margin-bottom: 2px;
-    }
-
-    .checksTitle{
-      margin:0;
-      font-size:13px;
-      font-weight:950;
-      color:var(--muted);
-    }
-
-    .miniBtn{
-      border:none;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-weight: 950;
-      cursor:pointer;
-      background:#eef2ff;
-      color:#1d4ed8;
-      font-size: 12px;
-      line-height:1;
-      box-shadow: 0 8px 18px rgba(0,0,0,.04);
-    }
-    .miniBtn:active{ transform: scale(.98); }
-
-    .chk{
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      border: 1px solid rgba(229,231,235,.95);
-      background:#fff;
-      border-radius: 999px;
-      padding: 10px 12px;
-      box-shadow: 0 8px 18px rgba(0,0,0,.04);
-      user-select:none;
-    }
-    .chk input{ width: 18px; height: 18px; }
-    .chk span{
-      font-weight: 950;
-      font-size: 13px;
-      color:#111827;
-      white-space: nowrap;
-    }
-
-    .btnRow{
-      display:flex;
-      gap: 10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-end;
-    }
-
-    button{
-      border:none;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-weight: 1000;
-      cursor:pointer;
-      background:#f3f4f6;
-      color:#111827;
-      transition: transform .04s ease, filter .15s ease, opacity .2s ease;
-      user-select:none;
-      font-size: 16px;
-    }
-    button:active{ transform: scale(.98); }
-    button.primary{ background:#2563eb; color:#fff; }
-    button.ghost{ background:#eef2ff; color:#1d4ed8; }
-    button.danger{ background:#fee2e2; color:#991b1b; }
-
-    .outWrap{ margin-top: 16px; }
-
-    /* Pages */
-    .page{
-      margin-top: 16px;
-      background:#fff;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: 0 10px 26px rgba(15,23,42,.08);
-      overflow:hidden;
-      position: relative;
-    }
-
-    .pageBorder{
-      position:absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 0;
-      pointer-events:none;
-      opacity: 1;
-    }
-
-    .pageInner{
-      position: relative;
-      z-index: 1;
-      padding: 0;
-    }
-
-    .pageContent{
-      margin: var(--pagePad);
-      background:#fff;
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 0 0 1px rgba(229,231,235,.9) inset;
-    }
-
-    .pageHeader{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 14px;
-      flex-wrap:wrap;
-      margin-bottom: 10px;
-    }
-
-    .hdrLeft{ min-width: 240px; }
-    .hdrTitle{
-      font-weight: 1000;
-      font-size: 18px;
-      line-height: 1.15;
-      margin-bottom: 2px;
-    }
-    .hdrSub{
-      color: var(--muted);
-      font-weight: 900;
-      font-size: 12px;
-      line-height: 1.2;
-    }
-
-    .nameRow{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      align-items:end;
-      min-width: min(420px, 100%);
-    }
-    .lineField{ display:flex; flex-direction:column; gap: 6px; min-width: 0; }
-    .lineLabel{ font-size: 12px; font-weight: 950; color: var(--muted); }
-    .lineBox{
-      height: 30px;
-      border: 2px solid #111827;
-      border-radius: 10px;
-      background:#fff;
-      width: 100%;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px 16px;
-      margin-top: 10px;
-    }
-
-    .qCard{
-      border: 1px solid rgba(229,231,235,.95);
-      border-radius: 16px;
-      padding: 12px 12px 12px;
-      background:#fff;
-      min-height: 190px;
-      display:flex;
-      flex-direction:column;
-      gap: 8px;
-    }
-
-    .qTop{
-      display:flex;
-      align-items:flex-start;
-      justify-content:flex-start;
-      gap: 12px;
-    }
-    .qNum{
-      font-weight: 1000;
-      font-size: 18px;
-      min-width: 44px;
-      color:#111827;
-    }
-    .qText{
-      font-weight: 1000;
-      font-size: 16px;
-      line-height: 1.15;
-      color:#111827;
-    }
-
-    /* Like-terms layout: prompt on one line, expression on its own line */
-    .qText.splitExpr{ display:block; }
-    .qText .qPrompt{ display:block; font-weight: 1000; }
-    .qText .qExprLine{
-      display:block;
-      margin-top: 6px;
-      font-weight: 1000;
-      text-align: center;
-      overflow-wrap: anywhere;
-      font-size: 15px;
-      line-height: 1.15;
-    }
-
-    .qText.tablePrompt{ width:100%; }
-    .qText .tableExprLine{
-      font-size: 16px;
-      margin-top: 7px;
-      width: 100%;
-      text-align: center;
-      white-space: normal;
-    }
-
-
-    .biEnglish{
-      display:block;
-      margin-top: 3px;
-      font-size: .82em;
-      line-height: 1.12;
-      color: #6b7280;
-      font-weight: 850;
-      direction: ltr;
-      unicode-bidi: isolate;
-    }
-    .qText .qPrompt .biEnglish{
-      margin-top: 2px;
-    }
-    .smallBi .biEnglish{
-      font-size: .78em;
-      margin-top: 1px;
-    }
-
-    /* Blank gap workspace */
-    .workArea{
-      margin-top: 2px;
-      border: 1px solid rgba(229,231,235,.95);
-      border-radius: 16px;
-      padding: 10px 10px;
-      background: #fff;
-      flex: 1;
-      min-height: 78px;
-    }
-
-    /* Table-only: table is the workspace */
-    .workArea.tableOnly{
-      border:none;
-      padding: 0;
-      background: transparent;
-      min-height: 0;
-    }
-
-    .ansRow{
-      margin-top: 6px;
-      display:flex;
-      align-items:center;
-      justify-content:flex-start;
-      gap: 10px;
-    }
-    .ansLabel{
-      font-weight: 1000;
-      font-size: 14px;
-    }
-    .ansBox{
-      flex: 1;
-      min-width: 0;
-      height: 34px;
-      border: 2px solid #111827;
-      border-radius: 12px;
-      background:#fff;
-    }
-    .ansBox.key{
-      border-color: var(--ok);
-      background: rgba(22,163,74,.08);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight: 1000;
-      color: var(--ok);
-      font-size: 16px;
-      padding: 0 10px;
-      text-align:center;
-    }
-
-    /* Math-style variables */
-    .var{
-      font-family: "Cambria Math","STIX Two Math","Times New Roman",serif;
-      font-style: italic;
-      font-weight: 650;
-    }
-
-    /* Fraction with PRINT-SAFE bar */
-    .frac{
-      display:inline-flex;
-      flex-direction:column;
-      align-items:stretch;
-      justify-content:center;
-      vertical-align:middle;
-      line-height:1.05;
-      transform: translateY(-1px);
-      margin: 0 2px;
-      min-width: 42px;
-    }
-    .frac .top,
-    .frac .bottom{
-      text-align:center;
-      padding: 0 4px;
-      white-space: nowrap;
-    }
-    .frac .bar{
-      height: 0;
-      border-top: 2px solid #111827;
-      margin: 2px 0;
-      border-radius: 999px;
-    }
-
-    /* Table styling */
-    .tinyTbl{
-      width:100%;
-      border-collapse: collapse;
-      font-weight: 950;
-      font-size: 14px;
-      table-layout: fixed;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 0 0 1px rgba(229,231,235,.95) inset;
-      background:#fff;
-    }
-    .tinyTbl td, .tinyTbl th{
-      border:1px solid rgba(229,231,235,.95);
-      padding: 8px 6px;
-      text-align:center;
-    }
-    .tinyTbl th{
-      background:#f9fafb;
-      font-weight: 1000;
-    }
-    .cellBlank{
-      height: 34px;
-      border-radius: 10px;
-      background: #fff;
-    }
-    .cellKey{
-      height: 34px;
-      border-radius: 10px;
-      background: rgba(22,163,74,.08);
-      color: var(--ok);
-      font-weight: 1000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .page.lang-rtl .pageHeader,
-    .page.lang-rtl .qTop,
-    .page.lang-rtl .ansRow{ direction: rtl; }
-    .page.lang-rtl .qText,
-    .page.lang-rtl .hdrTitle,
-    .page.lang-rtl .hdrSub,
-    .page.lang-rtl .lineLabel,
-    .page.lang-rtl .ansLabel{ text-align: right; }
-    .page.lang-rtl .qNum{ text-align: left; }
-    .page.lang-rtl .qText .qExprLine{ text-align:center; direction:ltr; }
-    .page.lang-rtl .frac{ direction:ltr; }
-
-    /* Footer */
-    .mmtFooter{
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      height: var(--footer-h);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 0 12px;
-      background: rgba(255,255,255,.92);
-      border-top: 1px solid rgba(229,231,235,.95);
-      backdrop-filter: blur(8px);
-      z-index: 500;
-      font-weight: 900;
-      color: #111827;
-      text-align:center;
-      font-size: 13px;
-    }
-    .mmtFooter a{ color:#2563eb; text-decoration:none; font-weight: 950; }
-    .mmtFooter a:hover{ text-decoration: underline; }
-
-    /* Print */
-    @media print{
-      @page{ size: A4; margin: 12mm; }
-
-      body{
-        background:#fff !important;
-        padding:0 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .controls, .mmtFooter{ display:none !important; }
-      .wrap{ max-width:none !important; margin:0 !important; padding:0 !important; }
-
-      :root{ --pagePad: 6mm; }
-
-      .page{
-        width: 186mm;
-        height: 273mm;
-        margin: 0 auto;
-        border: none;
-        box-shadow: none;
-        page-break-after: always;
-      }
-      .page:last-child{ page-break-after: auto; }
-
-      .pageContent{ margin: var(--pagePad); padding: 12px; }
-      .pageHeader{ flex-wrap: nowrap !important; gap: 10px !important; }
-
-      .grid{ gap: 12px !important; }
-      .qCard{ break-inside: avoid; padding: 12px !important; }
-
-      .frac .bar{ border-top-width: 2px !important; }
-    }
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="panel">
-      <div class="controls" aria-label="Worksheet controls">
-        <div style="min-width:320px; flex:1 1 560px;">
-          <div class="topSelectors">
-            <div class="outcomeControl">
-              <label for="outcomeSel" data-i18n="stageOutcome">Stage outcome</label>
-              <select id="outcomeSel"></select>
-            </div>
-
-            <div class="languageControl">
-              <label for="languageSel" data-i18n="languageLabel">Worksheet language</label>
-              <select id="languageSel">
-                <option value="en">English</option>
-                <option value="fa">فارسی (Farsi / Persian)</option>
-                <option value="ar">العربية (Arabic)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="checks" aria-label="Question types">
-            <div class="checksHeader">
-              <label class="checksTitle" data-i18n="questionTypes">Question types (checkboxes)</label>
-              <button id="toggleAllBtn" type="button" class="miniBtn">Deselect all</button>
-            </div>
-            <div id="chkWrap" style="display:flex; gap:12px 14px; flex-wrap:wrap; align-items:center;"></div>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
-          <div>
-            <label for="countInp" data-i18n="totalQuestions">Total questions (multiples of 8 recommended)</label>
-            <input id="countInp" type="number" min="8" max="96" step="8" value="16" />
-          </div>
-
-          <div class="btnRow">
-            <button id="genBtn" class="primary" data-i18n="generateBtn">Generate</button>
-            <button id="printBtn" class="ghost" data-i18n="printBtn">Print / Save as PDF</button>
-            <button id="resetBtn" class="danger" data-i18n="resetBtn">Reset</button>
-          </div>
-        </div>
+  <div id="studentLoginOverlay" class="firebaseOverlay hidden" role="dialog" aria-modal="true" aria-labelledby="firebaseLoginTitle">
+    <div class="firebaseCard">
+      <h2 id="firebaseLoginTitle">Student code</h2>
+      <p>Enter your teacher-provided student code to save your result to the MMT dashboard. You can also skip and use the quiz without saving.</p>
+      <input id="studentCodeInput" class="firebaseInput" autocomplete="off" placeholder="Enter your student code" />
+      <div class="firebaseActions">
+        <button id="studentCodeBtn" class="btn primary" type="button">Continue</button>
+        <button id="studentSkipBtn" class="btn ghost" type="button">Skip student code</button>
       </div>
-
-      <div id="out" class="outWrap"></div>
+      <div id="studentLoginMsg" class="firebaseMsg info">Connecting to Firebase…</div>
     </div>
   </div>
 
-  <div class="mmtFooter">
-    This tool and more can be found at&nbsp;
-    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
-  </div>
+  <div class="wrap"><div class="panel">
+    <div class="topRow">
+      <div class="topLeft">
+        <button id="backBtn" class="linkBtn" type="button">← Back</button>
+        <div class="chip"><span id="levelDot" class="dot"></span><span id="levelChipText" class="levelChipSmall">Level: —</span></div>
+        <div class="languageSelectCard" id="languageCard"><label class="languageLabel" id="languageLabel" for="languageSelect">Language / فارسی / العربية</label><select class="languageSelect" id="languageSelect"><option value="en">English</option><option value="fa">فارسی (Farsi / Persian)</option><option value="ar">العربية (Arabic)</option></select></div><button id="teacherAssignBtn" class="teacherAssignBtn" type="button">Create assignment link</button><div id="studentChip" class="chip studentChip">👤 <span id="studentChipText">Guest mode</span></div>
+      </div>
+      <button id="resetBtn" class="resetBtn" type="button">Reset</button>
+    </div>
+    <div class="banner"><div class="logo" aria-hidden="true"><img src="mmt.png" alt=""></div><div id="bannerTitle" class="bannerTitle">Level: —</div></div><div id="assignmentNotice" class="assignmentNotice">Assigned practice mode: your teacher has selected the question types for this quiz.</div>
+    <div class="progressRow"><div class="bar"><div id="barFill"></div></div><div id="qCounter" class="qCounter">Question 0/0</div></div>
+    <div class="stage"><div class="qArea">
+      <div class="qLabel" id="qLabel">Question:</div>
+      <div id="qBox" class="qBox">—</div>
+      <div id="tableHost" class="tableHost"></div>
+      <div class="answerRow" id="answerRow"><span class="ansLabel" id="ansLabel">Answer:</span><input id="ansInput" class="ansInput" type="text" autocomplete="off" inputmode="text" /></div>
+      <div class="feedback"><div id="badge" class="badge"></div></div>
+      <div id="hintLine" class="hintLine">Use normal algebra notation. Example: 3x, x+4, or 4x/3.</div>
+      <div id="tipLine" class="muted">Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px;"><button id="prevBtn" class="btn ghost" type="button" style="display:none;">← Previous</button><button id="skipBtn" class="btn ghost" type="button">Skip</button><button id="retryBtn" class="btn dark" type="button" style="display:none;">Retry</button><button id="submitBtn" class="btn primary" type="button">Submit</button><button id="nextBtn" class="btn dark" type="button" style="display:none;">Next →</button></div>
+    </div></div>
+  </div></div>
+
+  <div id="levelOverlay" class="overlay"><div class="modal">
+    <h2 id="chooseLevelTitle">Choose your level</h2>
+    <div class="languageSelectCard levelLanguageCard"><label class="languageLabel" id="startLanguageLabel" for="startLanguageSelect">Language / فارسی / العربية</label><select class="languageSelect" id="startLanguageSelect"><option value="en">English</option><option value="fa">فارسی (Farsi / Persian)</option><option value="ar">العربية (Arabic)</option></select></div>
+    <div class="levelList">
+      <div class="levelItem basic"><div><div id="basicName" class="levelName">Basic</div><div id="basicSub" class="levelSub">D/E basic algebraic techniques</div></div><button class="startPill" type="button" data-level="basic">Start</button></div>
+      <div class="levelItem expected"><div><div id="expectedName" class="levelName">Expected</div><div id="expectedSub" class="levelSub">C expected algebraic techniques</div></div><button class="startPill" type="button" data-level="expected">Start</button></div>
+    </div>
+  </div></div>
+
+  <div id="typeOverlay" class="overlay"><div class="modal">
+    <h2 id="selectTypesTitle">Select question types</h2>
+    <div class="muted" id="typesHelpText">All boxes are ticked by default. Untick any you don’t want.</div>
+    <div class="typesActions"><button id="toggleAllTypesBtn" class="miniActionBtn" type="button">Deselect all</button></div>
+    <div id="typesGrid" class="typesGrid" aria-label="Question types"></div>
+    <div class="row">
+      <div class="field"><label for="countInp" id="countLabel">Total questions (min 5, max 60)</label><input id="countInp" type="number" min="5" max="60" step="1" value="15" /></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;"><button id="typesBackBtn" class="btn ghost" type="button">← Back</button><button id="beginBtn" class="btn primary" type="button">Begin</button></div>
+    </div>
+    <div id="typesWarn" class="warn"><span id="typesWarnText">Please select at least one question type.</span></div>
+  </div></div>
+
+  <div id="teacherBuilderOverlay" class="overlay"><div class="modal assignmentBuilderModal">
+    <h2>Create student quiz link</h2>
+    <div class="builderIntro">Choose a level, question types and number of questions. Generate a shareable link for students. When students open that link, they enter their student code and the result can save to Firebase.</div>
+    <div class="builderGrid">
+      <div class="builderCard">
+        <label for="builderLevel">Level</label>
+        <select id="builderLevel" class="builderLevelNative" aria-label="Level"><option value="basic">Basic</option><option value="expected" selected>Expected</option></select>
+        <div class="levelToggle" role="group" aria-label="Choose level">
+          <button id="builderBasicBtn" class="levelToggleBtn" type="button" data-level="basic">Basic</button>
+          <button id="builderExpectedBtn" class="levelToggleBtn active" type="button" data-level="expected">Expected</button>
+        </div>
+      </div>
+      <div class="builderCard">
+        <label for="builderCount">Questions</label>
+        <input id="builderCount" class="builderCountInput" type="number" min="5" max="60" value="15" />
+      </div>
+    </div>
+    <div class="builderToolbar">
+      <div class="builderSectionTitle" style="margin:0;">Question types</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <span id="builderSummary" class="builderSummary">0 selected</span>
+        <button id="builderToggleAllBtn" class="miniActionBtn" type="button">Deselect all</button>
+      </div>
+    </div>
+    <div id="builderTypes" class="builderTypes"></div>
+    <div id="builderWarn" class="warn">Please select at least one question type.</div>
+    <div class="builderCard" style="margin-top:14px">
+      <label for="assignmentLinkOut">Assignment link</label>
+      <input id="assignmentLinkOut" class="linkOutput" readonly placeholder="Click Generate unique link" />
+      <div class="builderSmallNote">Tip: generate the link after changing the level, question types or count. The copied link is the student-facing version.</div>
+    </div>
+    <div class="builderActions"><button id="generateAssignmentBtn" class="btn primary" type="button">Generate unique link</button><button id="copyAssignmentBtn" class="btn ghost" type="button">Copy link</button><button id="closeBuilderBtn" class="btn" type="button">Reset builder</button></div>
+  </div></div>
+
+  <div id="resultOverlay" class="overlay"><div class="modal">
+    <div class="resultsTop"><div class="trophy">🏆</div><div class="resultsText"><div class="bigLine" id="scoreLine">You completed — and achieved a score of —/—.</div><div class="muted" id="scoreBreakdownLabel">Score breakdown:</div></div></div>
+    <div id="breakdown" class="breakdown"></div>
+    <div class="modalBtns"><button id="copyBtn" class="btn primary" type="button">Copy to clipboard</button><button id="closeBtn" class="btn" type="button">Close</button><button id="menuBtn" class="btn" type="button" style="background:#fee2e2;color:#991b1b;">Back to level menu</button></div>
+  </div></div>
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
+    authDomain: "mills-maths-tools.firebaseapp.com",
+    projectId: "mills-maths-tools",
+    storageBucket: "mills-maths-tools.firebasestorage.app",
+    messagingSenderId: "835000359454",
+    appId: "1:835000359454:web:d7876be83ee367b5006c0f",
+    measurementId: "G-35YCH5NJEG"
+  };
+
+  function isAssignmentLink(){
+    const params = new URLSearchParams(window.location.search);
+    return params.get('assignment') === '1' || params.has('types');
+  }
+
+  const overlay = document.getElementById('studentLoginOverlay');
+  const input = document.getElementById('studentCodeInput');
+  const continueBtn = document.getElementById('studentCodeBtn');
+  const skipBtn = document.getElementById('studentSkipBtn');
+  const msg = document.getElementById('studentLoginMsg');
+  const chip = document.getElementById('studentChip');
+  const chipText = document.getElementById('studentChipText');
+
+  let db = null;
+  let mode = 'pending';
+  let currentStudent = null;
+
+  function normaliseCode(code){ return String(code || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''); }
+  function showMsg(text, type='info'){ msg.textContent = text; msg.className = `firebaseMsg show ${type}`; }
+  function closeLogin(){ overlay.classList.add('hidden'); }
+  function setChip(text){ chipText.textContent = text; chip.classList.add('show'); }
+
+  const assignmentLinkMode = isAssignmentLink();
+  if(assignmentLinkMode){
+    overlay.classList.remove('hidden');
+  }else{
+    overlay.classList.add('hidden');
+    setChip('Teacher builder mode');
+  }
+
+  try{
+    const app = initializeApp(firebaseConfig);
+    await signInAnonymously(getAuth(app));
+    db = getFirestore(app);
+    showMsg('Firebase connected. Enter your code or skip.', 'info');
+  }catch(err){
+    console.error(err);
+    showMsg('Firebase connection failed. You can still skip and complete the quiz.', 'bad');
+  }
+
+  continueBtn.addEventListener('click', async () => {
+    const code = normaliseCode(input.value);
+    if(!code){ showMsg('Enter your student code first.', 'bad'); return; }
+    if(!db){ showMsg('Firebase is not connected. Use Skip for now.', 'bad'); return; }
+    continueBtn.disabled = true;
+    continueBtn.textContent = 'Checking...';
+    try{
+      const snap = await getDoc(doc(db, 'students', code));
+      if(!snap.exists()) throw new Error('Student code not found.');
+      const student = { studentCode: code, ...snap.data() };
+      if(student.active === false) throw new Error('This student code is not active.');
+      currentStudent = student;
+      mode = 'registered';
+      setChip(`${student.name || 'Student'} · ${student.className || ''}`);
+      closeLogin();
+    }catch(err){
+      console.error(err);
+      showMsg(err.message || 'Could not validate that code.', 'bad');
+    }finally{
+      continueBtn.disabled = false;
+      continueBtn.textContent = 'Continue';
+    }
+  });
+
+  skipBtn.addEventListener('click', () => {
+    mode = 'skip';
+    currentStudent = null;
+    setChip('Guest mode · results not saved');
+    closeLogin();
+  });
+
+  input.addEventListener('input', () => { input.value = normaliseCode(input.value); });
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') continueBtn.click(); });
+
+  window.MMTFirebase = {
+    get db(){ return db; },
+    get mode(){ return mode; },
+    get currentStudent(){ return currentStudent; },
+    async saveAchievement(payload){
+      if(!db || mode !== 'registered' || !currentStudent) return { skipped:true, reason:'not_registered' };
+      const total = Number(payload.total || 0);
+      const score = Number(payload.score || 0);
+      const percent = total ? Math.round((score / total) * 100) : 0;
+      const achievement = {
+        studentCode: currentStudent.studentCode,
+        studentName: currentStudent.name || '',
+        firstName: currentStudent.firstName || '',
+        surname: currentStudent.surname || '',
+        className: currentStudent.className || '',
+        teacherCode: currentStudent.teacherCode || '',
+        teacherName: currentStudent.teacherName || currentStudent.teacher || '',
+        school: currentStudent.school || '',
+        topic: payload.topic || 'Algebraic Techniques',
+        tool: 'Algebraic Techniques — Student Quiz',
+        level: payload.level || '',
+        levelKey: payload.levelKey || '',
+        score,
+        total,
+        percent,
+        types: payload.types || [],
+        assignmentMode: !!payload.assignmentMode,
+        assignedTypes: payload.assignedTypes || [],
+        assignedCount: payload.assignedCount || null,
+        assignmentSource: payload.assignmentSource || null,
+        certificateText: `You completed ${payload.level || 'Algebraic Techniques'} in Algebraic Techniques and got a score of ${score} out of ${total}.`,
+        createdAt: serverTimestamp(),
+        createdAtClient: new Date().toISOString()
+      };
+      await addDoc(collection(db, 'achievements'), achievement);
+      return { saved:true };
+    }
+  };
+</script>
 
 <script>
 (() => {
-  // ============================================================
-  // CONFIG
-  // ============================================================
-  const CONFIG = {
-    title: "Worksheet Generator — Algebraic Techniques",
-    perPage: 8,
-    borderSrc: "border_page0.png",
-    pageHeaderTitle: "Algebraic Techniques",
-    answerKeyTitle: "Answer key",
-    outcomes: [
-      { value:"s4_de", label:"Stage 4 — Algebraic Techniques (D/E basic)", level:"DE" },
-      { value:"s4_c",  label:"Stage 4 — Algebraic Techniques (C expected)", level:"C"  },
-    ],
-    defaultCount: 16,
-    minCount: 8,
-    maxCount: 96,
-  };
+  if (window.__mmtAlgebraQuizInit) return;
+  window.__mmtAlgebraQuizInit = true;
 
-
+  const QUIZ_LENGTH = 15;
   const I18N = {
-    en: {
-      dir:'ltr', stageOutcome:'Stage outcome', languageLabel:'Worksheet language', questionTypes:'Question types (checkboxes)', totalQuestions:'Total questions (multiples of 8 recommended)', generateBtn:'Generate', printBtn:'Print / Save as PDF', resetBtn:'Reset', selectAll:'Select all', deselectAll:'Deselect all',
-      pageTitle:'Algebraic Techniques', answerKeyTitle:'Answer key', page:'Page', name:'Name', className:'Class', date:'Date', answer:'Answer:', value:'value', noTypes:'Please tick at least one question type.',
-      outcomeDE:'Stage 4 — Algebraic Techniques (D/E basic)', outcomeC:'Stage 4 — Algebraic Techniques (C expected)',
-      coefficient:'coefficient', pronumeral:'pronumeral', constant:'constant',
-      identify:(expr,part)=>`In ${expr}, identify the ${part}.`, rewrite:(expr)=>`Rewrite ${expr} using algebraic notation.`, words:(txt)=>`Write an expression for: “${txt}”.`, evaluate:(expr, vals)=>`Evaluate ${expr} when ${vals}.`, simplify:(expr)=>`Simplify: ${expr}`, expand:(expr)=>`Expand: ${expr}`, factorise:(expr)=>`Factorise: ${expr}`, expandSimplify:(expr)=>`Expand and simplify: ${expr}`, completeTable:(expr)=>`Complete the table for: ${expr}`,
-      stems:{ more5:v=>`5 more than ${v}`, inc7:v=>`${v} increased by 7`, less3:v=>`3 less than ${v}`, dec4:v=>`${v} decreased by 4`, twice:v=>`twice ${v}`, thrice:v=>`three times ${v}`, div2:v=>`${v} divided by 2`, half:v=>`half of ${v}`, twicePlus3:v=>`three more than twice ${v}`, threeMinus5:v=>`five less than three times ${v}`, sum7times2:v=>`the sum of ${v} and 7, multiplied by 2`, halfPlus6:v=>`half of (${v} + 6)`, diff10:v=>`the difference between 10 and ${v}`}
+    en:{dir:'ltr',alt:null,languageLabel:'Language / فارسی / العربية',back:'← Back',reset:'Reset',level:'Level',question:'Question',questionLabel:'Question:',answer:'Answer:',chooseLevel:'Choose your level',basic:'Basic',expected:'Expected',basicSub:'D/E basic algebraic techniques',expectedSub:'C expected algebraic techniques',start:'Start',skip:'Skip',retry:'Retry',submit:'Submit',prev:'← Previous',next:'Next →',close:'Close',copy:'Copy to clipboard',menu:'Back to level menu',scoreBreakdown:'Score breakdown:',selectTypes:'Select question types',typesHelp:'All boxes are ticked by default. Untick any you don’t want.',selectAll:'Select all',deselectAll:'Deselect all',selectOne:'Please select at least one question type.',totalQuestions:'Total questions (min 5, max 60)',begin:'Begin',typesBack:'← Back',tip:'Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.',hint:'Use normal algebra notation. Example: 3x, x+4, or 4x/3.',correct:'Correct ✓',incorrect:'Incorrect ✕',skipped:'Skipped (counts as wrong)',correctAnswer:'Correct answer:',partialHCF:'This is correct, but you haven’t factored the highest common factor.',qCounter:(i,n)=>`Question ${i}/${n}`,levelText:n=>`Level: ${n}`,scoreLine:(level,c,t)=>`You completed ${level} and achieved a score of ${c}/${t}.`,copyTitle:l=>`Algebraic Techniques Quiz — ${l}`,score:(c,t)=>`Score: ${c}/${t}`,typeLabels:{identify_part:'Identify coefficient / pronumeral / constant',notation:'Rewrite using correct algebraic notation',words_to_expr:'Translate words → algebraic expression',sub_one:'Substitute and evaluate (one step)',like_terms:'Collect like terms (simple)',mul_single_term:'Multiply a single term',div_single_term:'Divide a single term',expand_bracket:'Expand a single bracket',factorise_number:'Factorise by common number',factorise_expected:'Factorising',translate_rich:'Translate words → expression (multi-step)',sub_two:'Substitute and evaluate (two-step)',sub_two_vars:'Substitute and evaluate (two pronumerals)',simplify_mixed:'Simplify mixed like terms',multiply_terms:'Multiplying terms',expand_simplify:'Expand and simplify',alg_frac:'Simplify algebraic fractions',pattern_table:'Complete a table of values'},
+      coefficient:'coefficient',pronumeral:'pronumeral',constant:'constant',value:'value',
+      identify:(expr,part)=>`In ${expr}, identify the ${part}.`,rewrite:e=>`Rewrite ${e} using algebraic notation.`,words:t=>`Write an expression for: “${t}”.`,evaluate:(e,v)=>`Evaluate ${e} when ${v}.`,simplify:e=>`Simplify: ${e}`,expand:e=>`Expand: ${e}`,factorise:e=>`Factorise: ${e}`,expandSimplify:e=>`Expand and simplify: ${e}`,completeTable:e=>`Complete the table for: ${e}`,
+      stems:{more5:v=>`5 more than ${v}`,inc7:v=>`${v} increased by 7`,less3:v=>`3 less than ${v}`,dec4:v=>`${v} decreased by 4`,twice:v=>`twice ${v}`,thrice:v=>`three times ${v}`,div2:v=>`${v} divided by 2`,half:v=>`half of ${v}`,twicePlus3:v=>`three more than twice ${v}`,threeMinus5:v=>`five less than three times ${v}`,sum7times2:v=>`the sum of ${v} and 7, multiplied by 2`,halfPlus6:v=>`half of (${v} + 6)`,diff10:v=>`the difference between 10 and ${v}`}
     },
-    fa: {
-      dir:'rtl', stageOutcome:'مرحله / سطح', languageLabel:'زبان برگه', questionTypes:'نوع پرسش‌ها (گزینه‌ها)', totalQuestions:'تعداد کل پرسش‌ها (مضرب‌های ۸ پیشنهاد می‌شود)', generateBtn:'ساخت برگه', printBtn:'چاپ / ذخیره PDF', resetBtn:'بازنشانی', selectAll:'انتخاب همه', deselectAll:'لغو انتخاب همه',
-      pageTitle:'تکنیک‌های جبری', answerKeyTitle:'پاسخ‌نامه', page:'صفحه', name:'نام', className:'کلاس', date:'تاریخ', answer:'پاسخ:', value:'مقدار', noTypes:'لطفاً حداقل یک نوع پرسش را انتخاب کنید.',
-      outcomeDE:'مرحله ۴ — تکنیک‌های جبری (D/E پایه)', outcomeC:'مرحله ۴ — تکنیک‌های جبری (C مورد انتظار)',
-      coefficient:'ضریب', pronumeral:'حرف جبری', constant:'عدد ثابت',
-      identify:(expr,part)=>`در ${expr}، ${part} را مشخص کنید.`, rewrite:(expr)=>`${expr} را با نمادگذاری جبری بازنویسی کنید.`, words:(txt)=>`برای عبارت زیر یک عبارت جبری بنویسید: «${txt}».`, evaluate:(expr, vals)=>`${expr} را وقتی ${vals} محاسبه کنید.`, simplify:(expr)=>`ساده کنید: ${expr}`, expand:(expr)=>`بسط دهید: ${expr}`, factorise:(expr)=>`عامل‌گیری کنید: ${expr}`, expandSimplify:(expr)=>`بسط دهید و ساده کنید: ${expr}`, completeTable:(expr)=>`جدول را برای ${expr} کامل کنید`,
-      stems:{ more5:v=>`۵ بیشتر از ${v}`, inc7:v=>`${v} به اندازهٔ ۷ افزایش یافته است`, less3:v=>`۳ کمتر از ${v}`, dec4:v=>`${v} به اندازهٔ ۴ کاهش یافته است`, twice:v=>`دو برابر ${v}`, thrice:v=>`سه برابر ${v}`, div2:v=>`${v} تقسیم بر ۲`, half:v=>`نصف ${v}`, twicePlus3:v=>`۳ بیشتر از دو برابر ${v}`, threeMinus5:v=>`۵ کمتر از سه برابر ${v}`, sum7times2:v=>`مجموع ${v} و ۷، ضربدر ۲`, halfPlus6:v=>`نصف (${v} + ۶)`, diff10:v=>`اختلاف بین ۱۰ و ${v}`}
+    fa:{dir:'rtl',alt:'فارسی',languageLabel:'Language / فارسی / العربية',back:'← بازگشت',reset:'بازنشانی',level:'سطح',question:'پرسش',questionLabel:'پرسش:',answer:'پاسخ:',chooseLevel:'سطح خود را انتخاب کنید',basic:'Basic',expected:'Expected',basicSub:'تکنیک‌های جبری پایه D/E',expectedSub:'تکنیک‌های جبری مورد انتظار C',start:'شروع',skip:'رد کردن',retry:'دوباره تلاش کن',submit:'ثبت پاسخ',prev:'← قبلی',next:'بعدی ←',close:'بستن',copy:'کپی در کلیپ‌بورد',menu:'بازگشت به فهرست سطح‌ها',scoreBreakdown:'ریز نمره:',selectTypes:'انتخاب نوع پرسش‌ها',typesHelp:'همه گزینه‌ها به صورت پیش‌فرض انتخاب شده‌اند. هر موردی را که نمی‌خواهید بردارید.',selectAll:'انتخاب همه',deselectAll:'لغو انتخاب همه',selectOne:'لطفاً حداقل یک نوع پرسش را انتخاب کنید.',totalQuestions:'تعداد پرسش‌ها (حداقل ۵، حداکثر ۶۰)',begin:'شروع',typesBack:'← بازگشت',tip:'نکته: برای ثبت پاسخ Enter را بزنید • پس از بازخورد، دوباره Enter یا Next را بزنید.',hint:'از نمادگذاری معمول جبر استفاده کنید. مثال: 3x، x+4، یا 4x/3.',correct:'درست ✓',incorrect:'نادرست ✕',skipped:'رد شد (نادرست حساب می‌شود)',correctAnswer:'پاسخ درست:',partialHCF:'This is correct, but you haven’t factored the highest common factor.',qCounter:(i,n)=>`پرسش ${i}/${n}`,levelText:n=>`سطح: ${n}`,scoreLine:(level,c,t)=>`شما ${level} را کامل کردید و نمرهٔ ${c}/${t} گرفتید.`,copyTitle:l=>`آزمون تکنیک‌های جبری — ${l}`,score:(c,t)=>`نمره: ${c}/${t}`,typeLabels:{identify_part:'تشخیص ضریب / حرف جبری / عدد ثابت',notation:'بازنویسی با نمادگذاری جبری',words_to_expr:'تبدیل عبارت کلامی به عبارت جبری',sub_one:'جایگذاری و محاسبه (یک مرحله)',like_terms:'جمع‌آوری جمله‌های مشابه',mul_single_term:'ضرب یک جمله',div_single_term:'تقسیم یک جمله',expand_bracket:'بسط یک پرانتز',factorise_number:'عامل‌گیری با عدد مشترک',factorise_expected:'عامل‌گیری',translate_rich:'تبدیل عبارت کلامی به عبارت جبری (چند مرحله)',sub_two:'جایگذاری و محاسبه (دو مرحله)',sub_two_vars:'جایگذاری و محاسبه (دو حرف جبری)',simplify_mixed:'ساده کردن جمله‌های مشابه',multiply_terms:'ضرب جمله‌ها',expand_simplify:'بسط و ساده کردن',alg_frac:'ساده کردن کسرهای جبری',pattern_table:'کامل کردن جدول مقدارها'},
+      coefficient:'ضریب',pronumeral:'حرف جبری',constant:'عدد ثابت',value:'مقدار',
+      identify:(expr,part)=>`در ${expr}، ${part} را مشخص کنید.`,rewrite:e=>`${e} را با نمادگذاری جبری بازنویسی کنید.`,words:t=>`برای عبارت زیر یک عبارت جبری بنویسید: «${t}».`,evaluate:(e,v)=>`${e} را وقتی ${v} محاسبه کنید.`,simplify:e=>`ساده کنید: ${e}`,expand:e=>`بسط دهید: ${e}`,factorise:e=>`عامل‌گیری کنید: ${e}`,expandSimplify:e=>`بسط دهید و ساده کنید: ${e}`,completeTable:e=>`جدول را برای ${e} کامل کنید`,
+      stems:{more5:v=>`۵ بیشتر از ${v}`,inc7:v=>`${v} به اندازهٔ ۷ افزایش یافته است`,less3:v=>`۳ کمتر از ${v}`,dec4:v=>`${v} به اندازهٔ ۴ کاهش یافته است`,twice:v=>`دو برابر ${v}`,thrice:v=>`سه برابر ${v}`,div2:v=>`${v} تقسیم بر ۲`,half:v=>`نصف ${v}`,twicePlus3:v=>`۳ بیشتر از دو برابر ${v}`,threeMinus5:v=>`۵ کمتر از سه برابر ${v}`,sum7times2:v=>`مجموع ${v} و ۷، ضربدر ۲`,halfPlus6:v=>`نصف (${v} + ۶)`,diff10:v=>`اختلاف بین ۱۰ و ${v}`}
     },
-    ar: {
-      dir:'rtl', stageOutcome:'المرحلة / المستوى', languageLabel:'لغة ورقة العمل', questionTypes:'أنواع الأسئلة (مربعات اختيار)', totalQuestions:'إجمالي الأسئلة (يُفضّل مضاعفات ٨)', generateBtn:'إنشاء', printBtn:'طباعة / حفظ PDF', resetBtn:'إعادة ضبط', selectAll:'تحديد الكل', deselectAll:'إلغاء تحديد الكل',
-      pageTitle:'التقنيات الجبرية', answerKeyTitle:'دليل الإجابات', page:'صفحة', name:'الاسم', className:'الصف', date:'التاريخ', answer:'الإجابة:', value:'القيمة', noTypes:'يرجى اختيار نوع سؤال واحد على الأقل.',
-      outcomeDE:'المرحلة ٤ — التقنيات الجبرية (D/E أساسي)', outcomeC:'المرحلة ٤ — التقنيات الجبرية (C المتوقع)',
-      coefficient:'المعامل', pronumeral:'المتغير', constant:'الثابت',
-      identify:(expr,part)=>`في ${expr}، حدّد ${part}.`, rewrite:(expr)=>`أعد كتابة ${expr} بالصيغة الجبرية.`, words:(txt)=>`اكتب تعبيرًا جبريًا لـ: «${txt}».`, evaluate:(expr, vals)=>`احسب ${expr} عندما ${vals}.`, simplify:(expr)=>`بسّط: ${expr}`, expand:(expr)=>`وسّع: ${expr}`, factorise:(expr)=>`حلّل إلى عوامل: ${expr}`, expandSimplify:(expr)=>`وسّع وبسّط: ${expr}`, completeTable:(expr)=>`أكمل الجدول لـ ${expr}`,
-      stems:{ more5:v=>`٥ أكثر من ${v}`, inc7:v=>`${v} زاد بمقدار ٧`, less3:v=>`٣ أقل من ${v}`, dec4:v=>`${v} نقص بمقدار ٤`, twice:v=>`ضعف ${v}`, thrice:v=>`ثلاثة أمثال ${v}`, div2:v=>`${v} مقسوم على ٢`, half:v=>`نصف ${v}`, twicePlus3:v=>`٣ أكثر من ضعف ${v}`, threeMinus5:v=>`٥ أقل من ثلاثة أمثال ${v}`, sum7times2:v=>`مجموع ${v} و٧ مضروب في ٢`, halfPlus6:v=>`نصف (${v} + ٦)`, diff10:v=>`الفرق بين ١٠ و ${v}`}
+    ar:{dir:'rtl',alt:'العربية',languageLabel:'Language / فارسی / العربية',back:'← رجوع',reset:'إعادة ضبط',level:'المستوى',question:'السؤال',questionLabel:'السؤال:',answer:'الإجابة:',chooseLevel:'اختر مستواك',basic:'Basic',expected:'Expected',basicSub:'تقنيات جبرية أساسية D/E',expectedSub:'تقنيات جبرية متوقعة C',start:'ابدأ',skip:'تخطي',retry:'حاول مرة أخرى',submit:'إرسال',prev:'← السابق',next:'التالي ←',close:'إغلاق',copy:'نسخ إلى الحافظة',menu:'العودة إلى قائمة المستويات',scoreBreakdown:'تفصيل النتيجة:',selectTypes:'اختر أنواع الأسئلة',typesHelp:'كل المربعات محددة افتراضيًا. أزل التحديد عمّا لا تريده.',selectAll:'تحديد الكل',deselectAll:'إلغاء تحديد الكل',selectOne:'يرجى اختيار نوع سؤال واحد على الأقل.',totalQuestions:'عدد الأسئلة (الحد الأدنى ٥، الأقصى ٦٠)',begin:'ابدأ',typesBack:'← رجوع',tip:'نصيحة: اضغط Enter لإرسال الإجابة • بعد الملاحظات، اضغط Enter مرة أخرى أو Next.',hint:'استخدم الصيغة الجبرية العادية. مثال: 3x أو x+4 أو 4x/3.',correct:'صحيح ✓',incorrect:'غير صحيح ✕',skipped:'تم التخطي (يُحسب خطأ)',correctAnswer:'الإجابة الصحيحة:',partialHCF:'This is correct, but you haven’t factored the highest common factor.',qCounter:(i,n)=>`السؤال ${i}/${n}`,levelText:n=>`المستوى: ${n}`,scoreLine:(level,c,t)=>`أكملت ${level} وحققت نتيجة ${c}/${t}.`,copyTitle:l=>`اختبار التقنيات الجبرية — ${l}`,score:(c,t)=>`النتيجة: ${c}/${t}`,typeLabels:{identify_part:'تحديد المعامل / المتغير / الثابت',notation:'إعادة الكتابة بالصيغة الجبرية',words_to_expr:'تحويل الكلمات إلى تعبير جبري',sub_one:'التعويض والحساب (خطوة واحدة)',like_terms:'تجميع الحدود المتشابهة',mul_single_term:'ضرب حد واحد',div_single_term:'قسمة حد واحد',expand_bracket:'توسيع قوس واحد',factorise_number:'التحليل بعامل مشترك',factorise_expected:'التحليل إلى عوامل',translate_rich:'تحويل الكلمات إلى تعبير جبري (متعدد الخطوات)',sub_two:'التعويض والحساب (خطوتان)',sub_two_vars:'التعويض والحساب (متغيران)',simplify_mixed:'تبسيط الحدود المتشابهة',multiply_terms:'ضرب الحدود',expand_simplify:'التوسيع والتبسيط',alg_frac:'تبسيط الكسور الجبرية',pattern_table:'إكمال جدول القيم'},
+      coefficient:'المعامل',pronumeral:'المتغير',constant:'الثابت',value:'القيمة',
+      identify:(expr,part)=>`في ${expr}، حدّد ${part}.`,rewrite:e=>`أعد كتابة ${e} بالصيغة الجبرية.`,words:t=>`اكتب تعبيرًا جبريًا لـ: «${t}».`,evaluate:(e,v)=>`احسب ${e} عندما ${v}.`,simplify:e=>`بسّط: ${e}`,expand:e=>`وسّع: ${e}`,factorise:e=>`حلّل إلى عوامل: ${e}`,expandSimplify:e=>`وسّع وبسّط: ${e}`,completeTable:e=>`أكمل الجدول لـ ${e}`,
+      stems:{more5:v=>`٥ أكثر من ${v}`,inc7:v=>`${v} زاد بمقدار ٧`,less3:v=>`٣ أقل من ${v}`,dec4:v=>`${v} نقص بمقدار ٤`,twice:v=>`ضعف ${v}`,thrice:v=>`ثلاثة أمثال ${v}`,div2:v=>`${v} مقسوم على ٢`,half:v=>`نصف ${v}`,twicePlus3:v=>`٣ أكثر من ضعف ${v}`,threeMinus5:v=>`٥ أقل من ثلاثة أمثال ${v}`,sum7times2:v=>`مجموع ${v} و٧ مضروب في ٢`,halfPlus6:v=>`نصف (${v} + ٦)`,diff10:v=>`الفرق بين ١٠ و ${v}`}
     }
   };
-  function lang(){ return (document.getElementById('languageSel')?.value || 'en'); }
-  function L(){ return I18N[lang()] || I18N.en; }
-  function tr(key){ return L()[key] ?? I18N.en[key] ?? key; }
-  function dir(){ return L().dir || 'ltr'; }
-  function valList(pairs){ return pairs.map(([h,v]) => `${h} = ${fmtInt(v)}`).join(lang()==='en' ? ', ' : '، '); }
-  function localStem(key, v){ return (L().stems[key] || I18N.en.stems[key])(v); }
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
-  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
-  const choice  = (arr) => arr[randInt(0, arr.length-1)];
-  const clamp   = (n,a,b) => Math.max(a, Math.min(b, n));
-  const shuffle = (arr) => {
-    const a = arr.slice();
-    for (let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i],a[j]] = [a[j],a[i]];
+  function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=(h<<13)|(h>>>19)}return function(){h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);h^=h>>>16;return h>>>0}}
+  function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+  let rng=Math.random;function reseed(){let seed=String(Date.now());try{const a=new Uint32Array(1);crypto.getRandomValues(a);seed+='-'+a[0]}catch(e){}rng=mulberry32(xmur3(seed)())}reseed();
+  const randInt=(a,b)=>Math.floor(rng()*(b-a+1))+a; const choice=a=>a[randInt(0,a.length-1)]; const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const shuffle=(arr)=>{const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+  function stripHTML(html){const d=document.createElement('div');d.innerHTML=String(html);return d.textContent||d.innerText||''}
+  function lang(){return state.language} function L(){return I18N[lang()]||I18N.en} function tr(k){return L()[k]??I18N.en[k]??k} function trType(id,label){return (L().typeLabels&&L().typeLabels[id])||(I18N.en.typeLabels&&I18N.en.typeLabels[id])||label||id} function dir(){return L().dir||'ltr'}
+  function fmtInt(n){return n<0?`−${Math.abs(n)}`:`${n}`}
+  const OTHER_VARS=['a','b','c','d','e','f','y','p','w','k']; function pickVar(){return rng()<.30?'x':choice(OTHER_VARS)}
+  const vHTML=v=>`<span class="var">${v}</span>`; function fracHTML(top,bottom){return `<span class="frac"><span class="top">${top}</span><span class="bar"></span><span class="bottom">${bottom}</span></span>`}
+  function termHTML(coeff,v){if(v==null)return String(Math.abs(coeff));const abs=Math.abs(coeff);return abs===1?vHTML(v):`${abs}${vHTML(v)}`}
+  function buildExpressionHTML(terms){const parts=[];terms.forEach((t,i)=>{const neg=t.coeff<0;const sign=i===0?(neg?'− ':''):(neg?' − ':' + ');parts.push(sign+(t.v?termHTML(t.coeff,t.v):String(Math.abs(t.coeff))))});return parts.join('')}
+  function simplifyTerms(terms){const map=new Map();let csum=0;for(const t of terms){if(t.v==null)csum+=t.coeff;else map.set(t.v,(map.get(t.v)||0)+t.coeff)}for(const[k,v]of map.entries())if(v===0)map.delete(k);return{map,csum}}
+  function buildSimplifiedHTML(map,csum){const vars=Array.from(map.keys()).sort((a,b)=>a.localeCompare(b));const terms=[];for(const v of vars)terms.push({coeff:map.get(v),v});if(csum!==0||terms.length===0)terms.push({coeff:csum,v:null});return buildExpressionHTML(terms)}
+  function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=b;b=a%b;a=t}return a||1}
+  function monomialHTML(coeff,vars){const sorted=(vars||[]).slice().sort((a,b)=>a.localeCompare(b));const vp=sorted.map(v=>vHTML(v)).join('');if(!sorted.length)return String(coeff);if(coeff===1)return vp;return `${coeff}${vp}`}
+  function productFactorHTML(f){return f.kind==='num'?String(f.value):vHTML(f.value)}
+  function buildMultiplyingTermsAnswer(factors){let n=1;const vars=[];for(const f of factors){if(f.kind==='num')n*=f.value;else vars.push(f.value)}vars.sort((a,b)=>a.localeCompare(b));const vp=vars.map(v=>vHTML(v)).join('');if(!vars.length)return String(n);return n===1?vp:`${n}${vp}`}
+  function valList(pairs){return pairs.map(([h,v])=>`${h} = ${fmtInt(v)}`).join(lang()==='en'?', ':'، ')}
+  function localStem(key,v){return (L().stems[key]||I18N.en.stems[key])(v)}
+  function splitPromptHTML(promptHTML){
+    const raw=String(promptHTML); const plain=stripHTML(raw).trim(); const colonIndex=raw.indexOf(':');
+    if(colonIndex>=0){const instructionHTML=raw.slice(0,colonIndex).trim();const expressionHTML=raw.slice(colonIndex+1).trim().replace(/^“|”$/g,'');return {instructionHTML,expressionHTML:expressionHTML||raw};}
+    let m=plain.match(/^In (.*), identify the (.*)\.$/); if(m){return {instructionHTML:`Identify the ${m[2]}`,expressionHTML:raw.match(/^In (.*), identify the .*\.$/)?.[1]||m[1]};}
+    m=plain.match(/^Rewrite (.*) using algebraic notation\.$/); if(m){return {instructionHTML:'Rewrite using algebraic notation',expressionHTML:raw.match(/^Rewrite (.*) using algebraic notation\.$/)?.[1]||m[1]};}
+    m=plain.match(/^Evaluate (.*) when (.*)\.$/); if(m){return {instructionHTML:`Evaluate when ${m[2]}`,expressionHTML:raw.match(/^Evaluate (.*) when .*\.$/)?.[1]||m[1]};}
+    m=plain.match(/^در (.*)، (.*) را مشخص کنید\.$/); if(m){return {instructionHTML:`${m[2]} را مشخص کنید`,expressionHTML:raw.match(/^در (.*)، .* را مشخص کنید\.$/)?.[1]||m[1]};}
+    m=plain.match(/^(.*) را با نمادگذاری جبری بازنویسی کنید\.$/); if(m){return {instructionHTML:'با نمادگذاری جبری بازنویسی کنید',expressionHTML:raw.match(/^(.*) را با نمادگذاری جبری بازنویسی کنید\.$/)?.[1]||m[1]};}
+    m=plain.match(/^(.*) را وقتی (.*) محاسبه کنید\.$/); if(m){return {instructionHTML:`محاسبه کنید وقتی ${m[2]}`,expressionHTML:raw.match(/^(.*) را وقتی .* محاسبه کنید\.$/)?.[1]||m[1]};}
+    m=plain.match(/^في (.*)، حدّد (.*)\.$/); if(m){return {instructionHTML:`حدّد ${m[2]}`,expressionHTML:raw.match(/^في (.*)، حدّد .*\.$/)?.[1]||m[1]};}
+    m=plain.match(/^أعد كتابة (.*) بالصيغة الجبرية\.$/); if(m){return {instructionHTML:'أعد الكتابة بالصيغة الجبرية',expressionHTML:raw.match(/^أعد كتابة (.*) بالصيغة الجبرية\.$/)?.[1]||m[1]};}
+    m=plain.match(/^احسب (.*) عندما (.*)\.$/); if(m){return {instructionHTML:`احسب عندما ${m[2]}`,expressionHTML:raw.match(/^احسب (.*) عندما .*\.$/)?.[1]||m[1]};}
+    return {instructionHTML:tr('questionLabel'),expressionHTML:raw};
+  }
+  function qObj(type,promptHTML,answerHTML,alts=[],instructionHTML=null,expressionHTML=null){const split=splitPromptHTML(promptHTML);const expr=expressionHTML??split.expressionHTML;return {type,promptHTML,instructionHTML:instructionHTML??split.instructionHTML,expressionHTML:`<span class="exprLTR">${expr}</span>`,answerHTML,answerText:stripHTML(answerHTML),alts:alts.map(String)}}
+
+  const WORD_STEMS_DE=[{key:'more5',build:v=>`${vHTML(v)} + 5`},{key:'inc7',build:v=>`${vHTML(v)} + 7`},{key:'less3',build:v=>`${vHTML(v)} − 3`},{key:'dec4',build:v=>`${vHTML(v)} − 4`},{key:'twice',build:v=>`2${vHTML(v)}`},{key:'thrice',build:v=>`3${vHTML(v)}`},{key:'div2',build:v=>fracHTML(vHTML(v),'2')},{key:'half',build:v=>fracHTML(vHTML(v),'2')}];
+  const WORD_STEMS_C=[{key:'twicePlus3',build:v=>`2${vHTML(v)} + 3`},{key:'threeMinus5',build:v=>`3${vHTML(v)} − 5`},{key:'sum7times2',build:v=>`2(${vHTML(v)} + 7)`},{key:'halfPlus6',build:v=>fracHTML(`(${vHTML(v)} + 6)`,'2')},{key:'diff10',build:v=>`10 − ${vHTML(v)}`}];
+
+
+  function varsKey(vars){return (vars||[]).slice().sort((a,b)=>a.localeCompare(b)).join('')}
+  function termFromCoeffVars(coeff,vars){return {coeff, v: varsKey(vars)||null}}
+  function signedJoinHTML(terms){return buildExpressionHTML(terms.map(t=>({coeff:t.coeff,v:t.v||null}))) }
+  function factorAnswerHTML(outside,innerTerms){
+    const inner=signedJoinHTML(innerTerms);
+    const outsideHTML=outside===1?'':outside===-1?'−':String(outside);
+    return `${outsideHTML}(${inner})`;
+  }
+  function factorAnswerPlain(outside,innerTerms){
+    return stripHTML(factorAnswerHTML(outside,innerTerms)).replace(/−/g,'-').replace(/\s+/g,'');
+  }
+  function makeFactoriseQuestion(id,exprTerms,outside,innerTerms){
+    const expr=signedJoinHTML(exprTerms);
+    const ans=factorAnswerHTML(outside,innerTerms);
+    const q=qObj(id,L().factorise(expr),ans,[factorAnswerPlain(outside,innerTerms)],(lang()==='fa'?'عامل‌گیری کنید':lang()==='ar'?'حلّل إلى عوامل':'Factorise'),expr);
+    const map={};
+    for(const t of exprTerms){map[t.v||'']=(map[t.v||'']||0)+t.coeff;}
+    q.factoriseMeta={terms:map,hcf:Math.abs(outside),v:exprTerms.find(t=>t.v)?.v||'x'};
+    if(exprTerms.length===2 && exprTerms.some(t=>!t.v)){
+      const vt=exprTerms.find(t=>t.v), ct=exprTerms.find(t=>!t.v);
+      q.factoriseMeta.A=vt.coeff; q.factoriseMeta.B=ct.coeff; q.factoriseMeta.v=vt.v;
     }
-    return a;
-  };
-  function stripHTML(html){ return String(html).replace(/<[^>]*>/g,''); }
-
-  // Variables: 30% x, others evenly
-  const OTHER_VARS = ["a","b","c","d","e","f","y","p","w","k"];
-  function pickVar(){
-    if (Math.random() < 0.30) return "x";
-    return OTHER_VARS[Math.floor(Math.random() * OTHER_VARS.length)];
-  }
-  const vHTML = (v) => `<span class="var">${v}</span>`;
-  const fmtInt = (n) => (n < 0 ? `−${Math.abs(n)}` : `${n}`);
-
-  function fracHTML(topHTML, bottomHTML){
-    return `<span class="frac"><span class="top">${topHTML}</span><span class="bar"></span><span class="bottom">${bottomHTML}</span></span>`;
+    return q;
   }
 
-  function termHTML(coeff, v){
-    if (v == null) return String(Math.abs(coeff));
-    const abs = Math.abs(coeff);
-    if (abs === 1) return vHTML(v);
-    return `${abs}${vHTML(v)}`;
-  }
+  const TYPES=[
+    {level:'basic',id:'identify_part',label:'Identify coefficient / pronumeral / constant',gen(){const v=pickVar(),a=randInt(2,9),b=randInt(1,9),part=choice(['coefficient','pronumeral','constant']);const expr=`${a}${vHTML(v)} + ${b}`;const ans=part==='coefficient'?String(a):part==='pronumeral'?v:String(b);return qObj(this.id,L().identify(expr,tr(part)),ans)}} ,
+    {level:'basic',id:'notation',label:'Rewrite using correct algebraic notation',gen(){const v=pickVar(),a=randInt(2,9),c=randInt(1,9),kind=choice(['mult','power','bracket']);let prompt,ans,alts=[];if(kind==='mult'){prompt=L().rewrite(`${a} × ${vHTML(v)}`);ans=`${a}${v}`;alts=[`${a}*${v}`,`${a}x`.replace('x',v)]}else if(kind==='power'){prompt=L().rewrite(`${vHTML(v)} × ${vHTML(v)}`);ans=`${v}²`;alts=[`${v}^2`,`${v}2`]}else{prompt=L().rewrite(`${a} × (${vHTML(v)} + ${c})`);ans=`${a}(${v} + ${c})`;alts=[`${a}*(${v}+${c})`,`${a}(${v}+${c})`]}return qObj(this.id,prompt,ans,alts)}} ,
+    {level:'basic',id:'words_to_expr',label:'Translate words → algebraic expression',gen(){const v=pickVar(),stem=choice(WORD_STEMS_DE),expr=stem.build(v);return qObj(this.id,L().words(localStem(stem.key,v)),expr)}} ,
+    {level:'basic',id:'sub_one',label:'Substitute and evaluate (one step)',gen(){const v=pickVar(),val=randInt(-5,10),kind=choice(['av','vplus','vminus']),a=randInt(2,9),b=randInt(1,9);let expr,value;if(kind==='av'){expr=`${a}${vHTML(v)}`;value=a*val}else if(kind==='vplus'){expr=`${vHTML(v)} + ${b}`;value=val+b}else{expr=`${vHTML(v)} − ${b}`;value=val-b}return qObj(this.id,L().evaluate(expr,`${vHTML(v)} = ${fmtInt(val)}`),String(value))}} ,
+    {level:'basic',id:'like_terms',label:'Collect like terms (simple)',gen(){const v=pickVar(),a=randInt(1,9),b=randInt(1,9),op=choice(['+','-']),value=op==='+'?a+b:a-b;const expr=op==='+'?`${a}${vHTML(v)} + ${b}${vHTML(v)}`:`${a}${vHTML(v)} − ${b}${vHTML(v)}`;const ans=buildExpressionHTML([{coeff:value,v}]);return qObj(this.id,L().simplify(expr),ans)}} ,
+    {level:'basic',id:'mul_single_term',label:'Multiply a single term',gen(){const v=pickVar(),a=randInt(2,9),b=randInt(2,9);const expr=`${a}${vHTML(v)} × ${b}`,ans=buildExpressionHTML([{coeff:a*b,v}]);return qObj(this.id,L().simplify(expr),ans)}} ,
+    {level:'basic',id:'div_single_term',label:'Divide a single term',gen(){const v=pickVar(),a=randInt(2,9),b=randInt(2,9),prod=a*b;const expr=fracHTML(`${prod}${vHTML(v)}`,`${b}`),ans=buildExpressionHTML([{coeff:a,v}]);return qObj(this.id,L().simplify(expr),ans)}} ,
+    {level:'basic',id:'expand_bracket',label:'Expand a single bracket',gen(){const v=pickVar(),k=randInt(2,9),c=randInt(1,9),sign=choice(['+','-']);const expr=sign==='+'?`${k}(${vHTML(v)} + ${c})`:`${k}(${vHTML(v)} − ${c})`;const ans=buildExpressionHTML([{coeff:k,v},{coeff:sign==='+'?k*c:-(k*c),v:null}]);return qObj(this.id,L().expand(expr),ans)}} ,
+    {level:'basic',id:'factorise_number',label:'Factorise by common number',gen(){const v=pickVar(),g=randInt(2,8);let a=randInt(1,9),b=randInt(1,9),guard=0;while(gcd(a,b)!==1&&guard++<80){a=randInt(1,9);b=randInt(1,9)}const A=g*a,B=g*b,h=gcd(A,B);const expr=`${A}${vHTML(v)} + ${B}`,ans=`${h}(${A/h}${vHTML(v)} + ${B/h})`;const q=qObj(this.id,L().factorise(expr),ans,[`${h}(${A/h}${v}+${B/h})`]);q.factoriseMeta={A,B,hcf:h,v};return q}},
 
-  function buildExpressionHTML(terms){
-    const parts = [];
-    terms.forEach((t, i) => {
-      const isNeg = t.coeff < 0;
-      const sign = (i === 0) ? (isNeg ? "− " : "") : (isNeg ? " − " : " + ");
-      parts.push(sign + (t.v ? termHTML(t.coeff, t.v) : String(Math.abs(t.coeff))));
-    });
-    return parts.join("");
-  }
-
-  function simplifyTerms(terms){
-    const map = new Map();
-    let csum = 0;
-    for (const t of terms){
-      if (t.v == null) csum += t.coeff;
-      else map.set(t.v, (map.get(t.v)||0) + t.coeff);
-    }
-    for (const [k,v] of map.entries()){
-      if (v === 0) map.delete(k);
-    }
-    return { map, csum };
-  }
-
-  function buildSimplifiedHTML(map, csum){
-    const vars = Array.from(map.keys()).sort((a,b)=>a.localeCompare(b));
-    const terms = [];
-    for (const v of vars) terms.push({ coeff: map.get(v), v });
-    if (csum !== 0 || terms.length === 0) terms.push({ coeff: csum, v: null });
-    return buildExpressionHTML(terms);
-  }
-
-  function productFactorHTML(factor){
-    return factor.kind === 'num' ? String(factor.value) : vHTML(factor.value);
-  }
-
-  function buildMultiplyingTermsAnswer(factors){
-    let numProduct = 1;
-    const vars = [];
-    for (const f of factors){
-      if (f.kind === 'num') numProduct *= f.value;
-      else vars.push(f.value);
-    }
-    vars.sort((a,b)=>a.localeCompare(b));
-    const varPart = vars.map(v => vHTML(v)).join('');
-    if (!vars.length) return String(numProduct);
-    if (numProduct === 1) return varPart;
-    return `${numProduct}${varPart}`;
-  }
-
-  function gcd(a,b){
-    a = Math.abs(a); b = Math.abs(b);
-    while (b){ const t = b; b = a % b; a = t; }
-    return a || 1;
-  }
-
-  function monomialHTML(coeff, vars){
-    const sorted = (vars || []).slice().sort((a,b)=>a.localeCompare(b));
-    const varPart = sorted.map(v => vHTML(v)).join('');
-    if (!sorted.length) return String(coeff);
-    if (coeff === 1) return varPart;
-    return `${coeff}${varPart}`;
-  }
-
-  // ============================================================
-  // DOM helpers
-  // ============================================================
-  const outcomeSel   = document.getElementById('outcomeSel');
-  const languageSel  = document.getElementById('languageSel');
-  const chkWrap      = document.getElementById('chkWrap');
-  const countInp     = document.getElementById('countInp');
-  const genBtn       = document.getElementById('genBtn');
-  const printBtn     = document.getElementById('printBtn');
-  const resetBtn     = document.getElementById('resetBtn');
-  const toggleAllBtn = document.getElementById('toggleAllBtn');
-  const out          = document.getElementById('out');
-
-  function clearOut(){ out.innerHTML = ""; }
-
-
-  function biLine(mainHTML, englishHTML){
-    if (lang() === 'en') return mainHTML;
-    return `${mainHTML}<span class="biEnglish">${englishHTML}</span>`;
-  }
-
-  function biLabel(key){
-    const main = tr(key);
-    const english = I18N.en[key] ?? main;
-    return biLine(main, english);
-  }
-
-  function biPrompt(fnKey, argsLocal = [], argsEnglish = argsLocal){
-    const mainFn = L()[fnKey];
-    const englishFn = I18N.en[fnKey];
-    const main = typeof mainFn === 'function' ? mainFn(...argsLocal) : String(mainFn ?? '');
-    const english = typeof englishFn === 'function' ? englishFn(...argsEnglish) : String(englishFn ?? main);
-    return biLine(main, english);
-  }
-
-  function makeCardShell(idx1, promptHTML){
-    const card = document.createElement('div');
-    card.className = 'qCard';
-
-    const top = document.createElement('div');
-    top.className = 'qTop';
-
-    const num = document.createElement('div');
-    num.className = 'qNum';
-    num.textContent = `Q${idx1}`;
-
-    const text = document.createElement('div');
-    text.className = 'qText';
-    text.innerHTML = promptHTML;
-
-    top.appendChild(num);
-    top.appendChild(text);
-    card.appendChild(top);
-
-    const work = document.createElement('div');
-    work.className = 'workArea';
-    card.appendChild(work);
-
-    return card;
-  }
-
-  function makeAnswerRowHTML(htmlAnswer, plainFallback, isKey){
-    const ansRow = document.createElement('div');
-    ansRow.className = 'ansRow';
-
-    const lab = document.createElement('div');
-    lab.className = 'ansLabel';
-    lab.innerHTML = biLabel('answer');
-    if (lang() !== 'en') lab.classList.add('smallBi');
-
-    const box = document.createElement('div');
-    box.className = 'ansBox' + (isKey ? ' key' : '');
-    if (isKey){
-      box.innerHTML = htmlAnswer ?? '';
-      if (!box.textContent.trim() && plainFallback) box.textContent = plainFallback;
-    } else {
-      box.textContent = '';
-    }
-
-    ansRow.appendChild(lab);
-    ansRow.appendChild(box);
-    return ansRow;
-  }
-
-  function makeAnswerRowPlain(text, isKey){
-    const ansRow = document.createElement('div');
-    ansRow.className = 'ansRow';
-
-    const lab = document.createElement('div');
-    lab.className = 'ansLabel';
-    lab.innerHTML = biLabel('answer');
-    if (lang() !== 'en') lab.classList.add('smallBi');
-
-    const box = document.createElement('div');
-    box.className = 'ansBox' + (isKey ? ' key' : '');
-    box.textContent = isKey ? (text ?? '') : '';
-
-    ansRow.appendChild(lab);
-    ansRow.appendChild(box);
-    return ansRow;
-  }
-
-  // ============================================================
-  // QUESTION TYPES (D/E and C)
-  // ============================================================
-  const WORD_STEMS_DE = [
-    { key:'more5', build:(v)=>`${vHTML(v)} + 5` },
-    { key:'inc7', build:(v)=>`${vHTML(v)} + 7` },
-    { key:'less3', build:(v)=>`${vHTML(v)} − 3` },
-    { key:'dec4', build:(v)=>`${vHTML(v)} − 4` },
-    { key:'twice', build:(v)=>`2${vHTML(v)}` },
-    { key:'thrice', build:(v)=>`3${vHTML(v)}` },
-    { key:'div2', build:(v)=>fracHTML(vHTML(v), "2") },
-    { key:'half', build:(v)=>fracHTML(vHTML(v), "2") },
+    {level:'expected',id:'translate_rich',label:'Translate words → expression (multi-step)',gen(){const v=pickVar(),stem=choice(WORD_STEMS_C),expr=stem.build(v);return qObj(this.id,L().words(localStem(stem.key,v)),expr)}} ,
+    {level:'expected',id:'factorise_expected',label:'Factorising',gen(){const template=choice(['two_vars','negative_all','negative_mixed','three_terms','three_terms_neg']);let v1=pickVar(),v2=pickVar();while(v2===v1)v2=pickVar();let g=randInt(2,9),inner=[],outside=g;if(template==='two_vars'){let a=randInt(1,7),b=randInt(1,7),guard=0;while(gcd(a,b)!==1&&guard++<50){a=randInt(1,7);b=randInt(1,7)}inner=[termFromCoeffVars(a,[v1]),termFromCoeffVars(b,[v2])];}else if(template==='negative_all'){outside=-g;let a=randInt(1,7),b=randInt(1,7),guard=0;while(gcd(a,b)!==1&&guard++<50){a=randInt(1,7);b=randInt(1,7)}inner=[termFromCoeffVars(a,[v1]),termFromCoeffVars(b,[])];}else if(template==='negative_mixed'){let a=randInt(2,7),b=randInt(1,7),guard=0;while(gcd(a,b)!==1&&guard++<50){a=randInt(2,7);b=randInt(1,7)}inner=[termFromCoeffVars(a,[v1]),termFromCoeffVars(-b,[])];}else if(template==='three_terms'){let a=randInt(1,6),b=randInt(1,6),c=randInt(1,8),guard=0;while(gcd(gcd(a,b),c)!==1&&guard++<50){a=randInt(1,6);b=randInt(1,6);c=randInt(1,8)}inner=shuffle([termFromCoeffVars(a,[v1]),termFromCoeffVars(b,[v2]),termFromCoeffVars(c,[])]);}else{let a=randInt(1,6),b=randInt(1,6),c=randInt(1,8),guard=0;while(gcd(gcd(a,b),c)!==1&&guard++<50){a=randInt(1,6);b=randInt(1,6);c=randInt(1,8)}inner=shuffle([termFromCoeffVars(a,[v1]),termFromCoeffVars(-b,[v2]),termFromCoeffVars(c,[])]);}const exprTerms=inner.map(t=>({coeff:outside*t.coeff,v:t.v}));return makeFactoriseQuestion(this.id,exprTerms,outside,inner)}} ,
+    {level:'expected',id:'sub_two',label:'Substitute and evaluate (two-step)',gen(){const v=pickVar(),xVal=randInt(-4,8),a=randInt(2,5),b=randInt(1,9),kind=choice(['a(v+b)','a(v-b)','av+b']);let expr,val;if(kind==='a(v+b)'){expr=`${a}(${vHTML(v)} + ${b})`;val=a*(xVal+b)}else if(kind==='a(v-b)'){expr=`${a}(${vHTML(v)} − ${b})`;val=a*(xVal-b)}else{expr=`${a}${vHTML(v)} + ${b}`;val=a*xVal+b}return qObj(this.id,L().evaluate(expr,`${vHTML(v)} = ${fmtInt(xVal)}`),String(val))}} ,
+    {level:'expected',id:'sub_two_vars',label:'Substitute and evaluate (two pronumerals)',gen(){let v1=pickVar(),v2=pickVar();while(v2===v1)v2=pickVar();const val1=randInt(1,10),val2=randInt(1,10),kind=choice(['sumConst','productConst','coeffSum','mixedCoeff','difference','bracketMul','varDivPlus']);let expr,val;if(kind==='sumConst'){const c=randInt(1,12);expr=`${vHTML(v1)} + ${vHTML(v2)} + ${c}`;val=val1+val2+c}else if(kind==='productConst'){const c=randInt(1,12);expr=`${vHTML(v1)}${vHTML(v2)} + ${c}`;val=val1*val2+c}else if(kind==='coeffSum'){const a=randInt(2,12);expr=`${a}${vHTML(v1)} + ${vHTML(v2)}`;val=a*val1+val2}else if(kind==='mixedCoeff'){const a=randInt(2,12),b=randInt(2,12);expr=`${a}${vHTML(v1)} + ${b}${vHTML(v2)}`;val=a*val1+b*val2}else if(kind==='difference'){const a=randInt(2,12);expr=`${a}${vHTML(v1)} − ${vHTML(v2)}`;val=a*val1-val2}else if(kind==='bracketMul'){const a=randInt(2,12);expr=`${a}(${vHTML(v1)} + ${vHTML(v2)})`;val=a*(val1+val2)}else{const divs=[2,3,4,5,6,7,8,9,10,11,12].filter(d=>val1%d===0);const d=divs.length?choice(divs):1;expr=`${fracHTML(vHTML(v1),String(d))} + ${vHTML(v2)}`;val=val1/d+val2}const vals=valList([[vHTML(v1),val1],[vHTML(v2),val2]]);return qObj(this.id,L().evaluate(expr,vals),String(val))}} ,
+    {level:'expected',id:'simplify_mixed',label:'Simplify (collect like terms — mixed order)',gen(){const total=randInt(2,6);let constTerms=Math.min(randInt(0,2),Math.max(0,total-2));const varTerms=total-constTerms,maxGroups=Math.min(3,Math.floor(varTerms/2)),groupCount=randInt(1,Math.max(1,maxGroups));const vars=[];while(vars.length<groupCount){const v=pickVar();if(!vars.includes(v))vars.push(v)}const counts=Array(groupCount).fill(2);let rem=varTerms-(2*groupCount);while(rem-->0)counts[randInt(0,groupCount-1)]++;const terms=[];for(let gi=0;gi<groupCount;gi++){for(let k=0;k<counts[gi];k++)terms.push({coeff:choice([1,-1])*randInt(1,9),v:vars[gi]})}for(let k=0;k<constTerms;k++)terms.push({coeff:choice([1,-1])*randInt(1,15),v:null});const mixed=shuffle(terms),expr=buildExpressionHTML(mixed),{map,csum}=simplifyTerms(mixed),ans=buildSimplifiedHTML(map,csum);return qObj(this.id,L().simplify(expr),ans,[],(lang()==='fa'?'ساده کنید':lang()==='ar'?'بسّط':'Simplify'),expr)}} ,
+    {level:'expected',id:'multiply_terms',label:'Multiplying terms',gen(){const pron=randInt(1,3),nums=4-pron,used=[],f=[];for(let i=0;i<nums;i++)f.push({kind:'num',value:randInt(2,9)});for(let i=0;i<pron;i++){let v=pickVar(),guard=0;while(used.includes(v)&&guard++<20)v=pickVar();used.push(v);f.push({kind:'var',value:v})}const s=shuffle(f),expr=s.map(productFactorHTML).join(' <span class="mulSign">×</span> '),ans=buildMultiplyingTermsAnswer(s);return qObj(this.id,L().simplify(expr),ans)}} ,
+    {level:'expected',id:'expand_simplify',label:'Expand and simplify',gen(){const template=choice(['c_plus_k_bracket','k_bracket_plus_var','two_var_bracket_plus','two_var_big']);let expr='',finalTerms=[];if(template==='c_plus_k_bracket'){const v=pickVar(),c0=randInt(1,9),k=randInt(2,6),b=randInt(1,9),sg=choice([1,-1]);expr=`${c0} + ${k}(${vHTML(v)} ${sg>0?'+':'−'} ${b})`;finalTerms=[{coeff:k,v},{coeff:c0+k*(sg*b),v:null}]}else if(template==='k_bracket_plus_var'){const v=pickVar(),k=randInt(2,6),b=randInt(1,9),m=randInt(1,6),addC=randInt(0,9),sgB=choice([1,-1]),sgM=choice([1,-1]);expr=`${k}(${vHTML(v)} ${sgB>0?'+':'−'} ${b}) ${sgM>0?'+':'−'} ${m}${vHTML(v)}${addC?` + ${addC}`:''}`;finalTerms=[{coeff:k+sgM*m,v},{coeff:k*(sgB*b)+addC,v:null}]}else if(template==='two_var_bracket_plus'){let v1=pickVar(),v2=pickVar();while(v2===v1)v2=pickVar();const k=randInt(2,5),a=randInt(1,4),b=randInt(1,4),e1=randInt(0,6),e2=randInt(0,6);expr=`${k}(${a}${vHTML(v1)} + ${b}${vHTML(v2)})${e2?` + ${e2}${vHTML(v2)}`:''}${e1?` + ${e1}${vHTML(v1)}`:''}`;finalTerms=[{coeff:k*a+e1,v:v1},{coeff:k*b+e2,v:v2}]}else{let v1=pickVar(),v2=pickVar();while(v2===v1)v2=pickVar();const k=randInt(2,4),a=randInt(1,5),b=randInt(1,5),c0=randInt(1,9),oa=randInt(0,5),ob=randInt(0,5);expr=`${k}(${a}${vHTML(v1)} − ${b}${vHTML(v2)} + ${c0})${oa?` + ${oa}${vHTML(v1)}`:''}${ob?` − ${ob}${vHTML(v2)}`:''}`;finalTerms=[{coeff:k*a+oa,v:v1},{coeff:-(k*b+ob),v:v2},{coeff:k*c0,v:null}]}const {map,csum}=simplifyTerms(finalTerms),ans=buildSimplifiedHTML(map,csum);return qObj(this.id,L().expandSimplify(expr),ans)}} ,
+    {level:'expected',id:'alg_frac',label:'Simplify algebraic fractions',gen(){const templates=['numOnly','oneCommonVar','twoVarsCancelOne','twoVarsCancelToVarOverVar'];for(let tries=0;tries<300;tries++){const template=choice(templates);let v1=pickVar(),v2=pickVar();while(v2===v1)v2=pickVar();let topCoeff=randInt(2,9)*randInt(2,6),botCoeff=randInt(2,9)*randInt(2,6);const g=gcd(topCoeff,botCoeff);if(g===1)continue;let topVars=[],botVars=[];if(template==='numOnly'){topVars=[v1];botVars=[]}else if(template==='oneCommonVar'){topVars=[v1];botVars=[v1]}else if(template==='twoVarsCancelOne'){topVars=[v1,v2];botVars=[v1]}else{topVars=[v1,v2];botVars=[v1,pickVar()];while(botVars[1]===v1||botVars[1]===v2)botVars[1]=pickVar()}const rt=topVars.slice(),rb=botVars.slice();for(const v of [...topVars]){const ti=rt.indexOf(v),bi=rb.indexOf(v);if(ti>=0&&bi>=0){rt.splice(ti,1);rb.splice(bi,1)}}const a=topCoeff/g,b=botCoeff/g;if(b===1&&rb.length===0)continue;const expr=fracHTML(monomialHTML(topCoeff,topVars),monomialHTML(botCoeff,botVars)),ans=fracHTML(monomialHTML(a,rt),monomialHTML(b,rb));return qObj(this.id,L().simplify(expr),ans)}return qObj(this.id,L().simplify(fracHTML(`32${vHTML('a')}${vHTML('x')}`,`24${vHTML('a')}`)),fracHTML(`4${vHTML('x')}`,'3'))}},
+    {level:'expected',id:'pattern_table',label:'Complete a table of values',gen(ctx={}){const sequence=['n_plus_b','n_minus_b','an','an_plus_b','an_minus_b'];const tableIndex=Number.isFinite(ctx.tableIndex)?ctx.tableIndex:0;const form=sequence[tableIndex%sequence.length];const m=randInt(2,6);const b=randInt(1,9);const ns=[1,2,3,4];let expr,vals;if(form==='n_plus_b'){expr=`<span class="var">n</span> + ${b}`;vals=ns.map(n=>n+b)}else if(form==='n_minus_b'){expr=`<span class="var">n</span> − ${b}`;vals=ns.map(n=>n-b)}else if(form==='an'){expr=`${m}<span class="var">n</span>`;vals=ns.map(n=>m*n)}else if(form==='an_plus_b'){expr=`${m}<span class="var">n</span> + ${b}`;vals=ns.map(n=>m*n+b)}else{expr=`${m}<span class="var">n</span> − ${b}`;vals=ns.map(n=>m*n-b)}const q=qObj(this.id,L().completeTable(expr),vals.join(','),[],(lang()==='fa'?'جدول را کامل کنید':lang()==='ar'?'أكمل الجدول':'Complete the table for'),expr);q.mode='table';q.tableForm=form;q.tableNs=ns;q.tableVals=vals;q.answerHTML=vals.join(', ');q.answerText=vals.join(',');return q}}
   ];
 
-  const WORD_STEMS_C = [
-    { key:'twicePlus3', build:(v)=>`2${vHTML(v)} + 3` },
-    { key:'threeMinus5', build:(v)=>`3${vHTML(v)} − 5` },
-    { key:'sum7times2', build:(v)=>`2(${vHTML(v)} + 7)` },
-    { key:'halfPlus6', build:(v)=>fracHTML(`(${vHTML(v)} + 6)`, "2") },
-    { key:'diff10', build:(v)=>`10 − ${vHTML(v)}` },
-  ];
-
-  const ALL_TYPES = [
-    // ---------------- D/E ----------------
-    {
-      level:"DE", id:"identify_part",
-      label:"Identify coefficient / pronumeral / constant",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const a = randInt(2,9);
-        const b = randInt(1,9);
-        const part = choice(["coefficient","pronumeral","constant"]);
-        return { type:this.id, v, a, b, part };
-      },
-      key:q => `${q.v}_${q.a}_${q.b}_${q.part}`,
-      render(q, idx1, showAnswers){
-        const expr = `${q.a}${vHTML(q.v)} + ${q.b}`;
-        const card = makeCardShell(idx1, `${biPrompt('identify', [expr, tr(q.part)], [expr, q.part])}`);
-        const answer =
-          q.part === "coefficient" ? String(q.a) :
-          q.part === "pronumeral" ? q.v :
-          String(q.b);
-        card.appendChild(makeAnswerRowPlain(answer, showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"notation",
-      label:"Rewrite using correct algebraic notation",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const a = randInt(2,9);
-        const c = randInt(1,9);
-        const kind = choice(["mult", "power", "bracket"]);
-        return { type:this.id, v, a, c, kind };
-      },
-      key:q => `${q.kind}_${q.v}_${q.a}_${q.c}`,
-      render(q, idx1, showAnswers){
-        let prompt, answer;
-        if (q.kind === "mult"){
-          prompt = biPrompt('rewrite', [`${q.a} × ${vHTML(q.v)}`]);
-          answer = `${q.a}${q.v}`;
-        } else if (q.kind === "power"){
-          prompt = biPrompt('rewrite', [`${vHTML(q.v)} × ${vHTML(q.v)}`]);
-          answer = `${q.v}²`;
-        } else {
-          prompt = biPrompt('rewrite', [`${q.a} × (${vHTML(q.v)} + ${q.c})`]);
-          answer = `${q.a}(${q.v} + ${q.c})`;
-        }
-        const card = makeCardShell(idx1, prompt);
-        card.appendChild(makeAnswerRowPlain(answer, showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"words_to_expr",
-      label:"Translate words → algebraic expression",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const stem = choice(WORD_STEMS_DE);
-        return { type:this.id, v, stemKey: stem.key, exprHTML: stem.build(v) };
-      },
-      key:q => `w2e_${q.v}_${q.stemKey}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('words', [localStem(q.stemKey, q.v)], [I18N.en.stems[q.stemKey](q.v)]));
-        card.appendChild(makeAnswerRowHTML(q.exprHTML, stripHTML(q.exprHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"sub_one",
-      label:"Substitute and evaluate (one step)",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const val = randInt(-5,10);
-        const kind = choice(["av", "vplus", "vminus"]);
-        const a = randInt(2,9);
-        const b = randInt(1,9);
-
-        let exprHTML, value;
-        if (kind === "av"){
-          exprHTML = `${a}${vHTML(v)}`;
-          value = a * val;
-        } else if (kind === "vplus"){
-          exprHTML = `${vHTML(v)} + ${b}`;
-          value = val + b;
-        } else {
-          exprHTML = `${vHTML(v)} − ${b}`;
-          value = val - b;
-        }
-        return { type:this.id, v, val, exprHTML, value };
-      },
-      key:q => `sub_${q.v}_${q.val}_${q.value}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('evaluate', [q.exprHTML, `${vHTML(q.v)} = ${fmtInt(q.val)}`]));
-        card.appendChild(makeAnswerRowPlain(String(q.value), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"like_terms",
-      label:"Collect like terms (simple)",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const a = randInt(1,9);
-        const b = randInt(1,9);
-        const op = choice(["+", "-"]);
-        const value = op === "+" ? (a + b) : (a - b);
-        return { type:this.id, v, a, b, op, value };
-      },
-      key:q => `lt_${q.v}_${q.a}${q.op}${q.b}`,
-      render(q, idx1, showAnswers){
-        const exprHTML = (q.op === "+")
-          ? `${q.a}${vHTML(q.v)} + ${q.b}${vHTML(q.v)}`
-          : `${q.a}${vHTML(q.v)} − ${q.b}${vHTML(q.v)}`;
-        const ansHTML = buildExpressionHTML([{coeff:q.value, v:q.v}]);
-        const card = makeCardShell(idx1, biPrompt('simplify', [exprHTML]));
-        card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"mul_single_term",
-      label:"Multiply a single term",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const a = randInt(2,9);
-        const b = randInt(2,9);
-        const exprHTML = `${a}${vHTML(v)} × ${b}`;
-        const ansHTML = buildExpressionHTML([{coeff:a*b, v}]);
-        return { type:this.id, exprHTML, ansHTML };
-      },
-      key:q => `mst_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
-        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"div_single_term",
-      label:"Divide a single term",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const a = randInt(2,9);
-        const b = randInt(2,9);
-        const prod = a*b;
-        const top = `${prod}${vHTML(v)}`;
-        const bottom = `${b}`;
-        const exprHTML = fracHTML(top, bottom);
-        const ansHTML = buildExpressionHTML([{coeff:a, v}]);
-        return { type:this.id, exprHTML, ansHTML };
-      },
-      key:q => `dst_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
-        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"expand_bracket",
-      label:"Expand a single bracket (distributive law)",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const k = randInt(2,9);
-        const c = randInt(1,9);
-        const sign = choice(["+", "-"]);
-        return { type:this.id, v, k, c, sign };
-      },
-      key:q => `exp_${q.v}_${q.k}_${q.sign}_${q.c}`,
-      render(q, idx1, showAnswers){
-        const exprHTML = (q.sign === "+")
-          ? `${q.k}(${vHTML(q.v)} + ${q.c})`
-          : `${q.k}(${vHTML(q.v)} − ${q.c})`;
-
-        const left = { coeff:q.k, v:q.v };
-        const right = { coeff: (q.sign === "+") ? q.k*q.c : -(q.k*q.c), v: null };
-
-        const ansHTML = buildExpressionHTML([left, right]);
-
-        const card = makeCardShell(idx1, biPrompt('expand', [exprHTML]));
-        card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"DE", id:"factorise_number",
-      label:"Factorise by common number (HCF)",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const g = randInt(2,6);
-        const a = randInt(1,9);
-        const b = randInt(1,9);
-        const A = g*a;
-        const B = g*b;
-        return { type:this.id, v, g,a,b,A,B };
-      },
-      key:q => `fac_${q.v}_${q.A}_${q.B}`,
-      render(q, idx1, showAnswers){
-        const exprHTML = `${q.A}${vHTML(q.v)} + ${q.B}`;
-        const ansHTML  = `${q.g}(${q.a}${vHTML(q.v)} + ${q.b})`;
-        const card = makeCardShell(idx1, biPrompt('factorise', [exprHTML]));
-        card.appendChild(makeAnswerRowHTML(ansHTML, stripHTML(ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    // ---------------- C EXPECTED ----------------
-    {
-      level:"C", id:"translate_rich",
-      label:"Translate words → expression (multi-step)",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const stem = choice(WORD_STEMS_C);
-        return { type:this.id, v, stemKey: stem.key, exprHTML: stem.build(v) };
-      },
-      key:q => `tr_${q.v}_${q.stemKey}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('words', [localStem(q.stemKey, q.v)], [I18N.en.stems[q.stemKey](q.v)]));
-        card.appendChild(makeAnswerRowHTML(q.exprHTML, stripHTML(q.exprHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"sub_two",
-      label:"Substitute and evaluate (two-step)",
-      defaultOn:true,
-      gen(){
-        const v = pickVar();
-        const xVal = randInt(-4,8);
-        const a = randInt(2,5);
-        const b = randInt(1,9);
-        const kind = choice(["a(v+b)", "a(v-b)", "av+b"]);
-        let exprHTML, val;
-        if (kind === "a(v+b)"){
-          exprHTML = `${a}(${vHTML(v)} + ${b})`;
-          val = a * (xVal + b);
-        } else if (kind === "a(v-b)"){
-          exprHTML = `${a}(${vHTML(v)} − ${b})`;
-          val = a * (xVal - b);
-        } else {
-          exprHTML = `${a}${vHTML(v)} + ${b}`;
-          val = a * xVal + b;
-        }
-        return { type:this.id, v, xVal, exprHTML, val };
-      },
-      key:q => `s2_${q.v}_${q.xVal}_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('evaluate', [q.exprHTML, `${vHTML(q.v)} = ${fmtInt(q.xVal)}`]));
-        card.appendChild(makeAnswerRowPlain(String(q.val), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"sub_two_vars",
-      label:"Substitute and evaluate (two pronumerals)",
-      defaultOn:true,
-      gen(){
-        let v1 = pickVar(), v2 = pickVar();
-        while (v2 === v1) v2 = pickVar();
-        const val1 = randInt(1,10);
-        const val2 = randInt(1,10);
-        const kind = choice(["sumConst", "productConst", "coeffSum", "mixedCoeff", "difference", "bracketMul", "varDivPlus"]);
-        let exprHTML, val;
-        if (kind === "sumConst"){
-          const c = randInt(1,12);
-          exprHTML = `${vHTML(v1)} + ${vHTML(v2)} + ${c}`;
-          val = val1 + val2 + c;
-        } else if (kind === "productConst"){
-          const c = randInt(1,12);
-          exprHTML = `${vHTML(v1)}${vHTML(v2)} + ${c}`;
-          val = val1 * val2 + c;
-        } else if (kind === "coeffSum"){
-          const a = randInt(2,12);
-          exprHTML = `${a}${vHTML(v1)} + ${vHTML(v2)}`;
-          val = a * val1 + val2;
-        } else if (kind === "mixedCoeff"){
-          const a = randInt(2,12), b = randInt(2,12);
-          exprHTML = `${a}${vHTML(v1)} + ${b}${vHTML(v2)}`;
-          val = a * val1 + b * val2;
-        } else if (kind === "difference"){
-          const a = randInt(2,12);
-          exprHTML = `${a}${vHTML(v1)} − ${vHTML(v2)}`;
-          val = a * val1 - val2;
-        } else if (kind === "bracketMul"){
-          const a = randInt(2,12);
-          exprHTML = `${a}(${vHTML(v1)} + ${vHTML(v2)})`;
-          val = a * (val1 + val2);
-        } else {
-          const divisors = [2,3,4,5,6,7,8,9,10,11,12].filter(d => val1 % d === 0);
-          const d = divisors.length ? choice(divisors) : 1;
-          exprHTML = `${fracHTML(vHTML(v1), String(d))} + ${vHTML(v2)}`;
-          val = val1 / d + val2;
-        }
-        return { type:this.id, v1, v2, val1, val2, exprHTML, val };
-      },
-      key:q => `s2v_${q.v1}_${q.val1}_${q.v2}_${q.val2}_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const vals = valList([[vHTML(q.v1), q.val1], [vHTML(q.v2), q.val2]]);
-        const card = makeCardShell(idx1, biPrompt('evaluate', [q.exprHTML, vals]));
-        card.appendChild(makeAnswerRowPlain(String(q.val), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"simplify_mixed",
-      label:"Simplify (collect like terms — mixed order)",
-      defaultOn:true,
-      gen(){
-        // Guarantee: every pronumeral used appears at least twice
-        const totalTerms = randInt(2,6);
-
-        // constants 0–2, but must leave >=2 var terms
-        let constTerms = randInt(0,2);
-        constTerms = Math.min(constTerms, Math.max(0, totalTerms - 2));
-
-        const varTerms = totalTerms - constTerms; // at least 2
-
-        const maxGroups = Math.min(3, Math.floor(varTerms / 2));
-        const groupCount = randInt(1, Math.max(1, maxGroups));
-
-        const vars = [];
-        while (vars.length < groupCount){
-          const v = pickVar();
-          if (!vars.includes(v)) vars.push(v);
-        }
-
-        // each group starts with 2 terms
-        const counts = Array(groupCount).fill(2);
-        let remaining = varTerms - (2 * groupCount);
-        while (remaining > 0){
-          counts[randInt(0, groupCount-1)]++;
-          remaining--;
-        }
-
-        const terms = [];
-
-        for (let gi=0; gi<groupCount; gi++){
-          const v = vars[gi];
-          const ct = counts[gi];
-          for (let k=0; k<ct; k++){
-            const mag = randInt(1,9);
-            const sgn = choice([1,-1]);
-            terms.push({ coeff: sgn*mag, v });
-          }
-        }
-
-        for (let k=0; k<constTerms; k++){
-          const mag = randInt(1,15);
-          const sgn = choice([1,-1]);
-          terms.push({ coeff: sgn*mag, v: null });
-        }
-
-        const mixed = shuffle(terms);
-        const exprHTML = buildExpressionHTML(mixed);
-        const { map, csum } = simplifyTerms(mixed);
-        const ansHTML = buildSimplifiedHTML(map, csum);
-
-        return { type:this.id, exprHTML, ansHTML };
-      },
-      key:q => `sm_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const promptHTML = `
-          <span class="qPrompt">${biLine(lang()==="fa" ? "ساده کنید" : (lang()==="ar" ? "بسّط" : "Simplify"), "Simplify")}</span>
-          <span class="qExprLine">${q.exprHTML}</span>
-        `;
-        const card = makeCardShell(idx1, promptHTML);
-        card.querySelector('.qText').classList.add('splitExpr');
-        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"multiply_terms",
-      label:"Multiplying terms",
-      defaultOn:true,
-      gen(){
-        const factorCount = 4;
-        const pronumeralCount = randInt(1,3);
-        const numberCount = factorCount - pronumeralCount;
-
-        const usedVars = [];
-        const factors = [];
-
-        for (let i=0; i<numberCount; i++){
-          factors.push({ kind:'num', value: randInt(2,9) });
-        }
-
-        for (let i=0; i<pronumeralCount; i++){
-          let v = pickVar();
-          let guard = 0;
-          while (usedVars.includes(v) && guard < 20){
-            v = pickVar();
-            guard++;
-          }
-          usedVars.push(v);
-          factors.push({ kind:'var', value: v });
-        }
-
-        const shuffled = shuffle(factors);
-        const exprHTML = shuffled.map(productFactorHTML).join(' × ');
-        const ansHTML = buildMultiplyingTermsAnswer(shuffled);
-
-        return { type:this.id, factors: shuffled, exprHTML, ansHTML };
-      },
-      key:q => `mt_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
-        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"expand_simplify",
-      label:"Expand and simplify (varied structures)",
-      defaultOn:true,
-      gen(){
-        const template = choice(["c_plus_k_bracket", "k_bracket_plus_var", "two_var_bracket_plus", "two_var_big"]);
-        let exprHTML = "";
-        let finalTerms = [];
-
-        if (template === "c_plus_k_bracket"){
-          // 5 + 3(x + 5)
-          const v = pickVar();
-          const c0 = randInt(1,9);
-          const k = randInt(2,6);
-          const b = randInt(1,9);
-          const sign = choice([+1,-1]);
-
-          exprHTML = `${c0} + ${k}(${vHTML(v)} ${sign>0?"+":"−"} ${b})`;
-          finalTerms = [
-            { coeff: k, v },
-            { coeff: c0 + k*(sign*b), v: null }
-          ];
-        }
-
-        if (template === "k_bracket_plus_var"){
-          // 3(x + 4) − 2x + 5
-          const v = pickVar();
-          const k = randInt(2,6);
-          const b = randInt(1,9);
-          const m = randInt(1,6);
-          const addC = randInt(0,9);
-          const signB = choice([+1,-1]);
-          const signM = choice([+1,-1]);
-
-          exprHTML = `${k}(${vHTML(v)} ${signB>0?"+":"−"} ${b}) ${signM>0?"+":"−"} ${m}${vHTML(v)}${addC?` + ${addC}`:""}`;
-          finalTerms = [
-            { coeff: k + signM*m, v },
-            { coeff: k*(signB*b) + addC, v: null }
-          ];
-        }
-
-        if (template === "two_var_bracket_plus"){
-          // 5(2x + 3y) + 4y + 5x
-          let v1 = pickVar(), v2 = pickVar();
-          while (v2 === v1) v2 = pickVar();
-
-          const k = randInt(2,5);
-          const a = randInt(1,4);
-          const b = randInt(1,4);
-          const extra1 = randInt(0,6);
-          const extra2 = randInt(0,6);
-
-          exprHTML = `${k}(${a}${vHTML(v1)} + ${b}${vHTML(v2)})${extra2?` + ${extra2}${vHTML(v2)}`:""}${extra1?` + ${extra1}${vHTML(v1)}`:""}`;
-          finalTerms = [
-            { coeff: k*a + extra1, v: v1 },
-            { coeff: k*b + extra2, v: v2 }
-          ];
-        }
-
-        if (template === "two_var_big"){
-          // 2(3x − y + 4) + x − 5y
-          let v1 = pickVar(), v2 = pickVar();
-          while (v2 === v1) v2 = pickVar();
-
-          const k = randInt(2,4);
-          const a = randInt(1,5);
-          const b = randInt(1,5);
-          const c0 = randInt(1,9);
-
-          const outsideA = randInt(0,5);
-          const outsideB = randInt(0,5);
-
-          exprHTML = `${k}(${a}${vHTML(v1)} − ${b}${vHTML(v2)} + ${c0})${outsideA?` + ${outsideA}${vHTML(v1)}`:""}${outsideB?` − ${outsideB}${vHTML(v2)}`:""}`;
-          finalTerms = [
-            { coeff: k*a + outsideA, v: v1 },
-            { coeff: -(k*b + outsideB), v: v2 },
-            { coeff: k*c0, v: null }
-          ];
-        }
-
-        const { map, csum } = simplifyTerms(finalTerms);
-        const ansHTML = buildSimplifiedHTML(map, csum);
-
-        return { type:this.id, exprHTML, ansHTML };
-      },
-      key:q => `es_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('expandSimplify', [q.exprHTML]));
-        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"alg_frac",
-      label:"Simplify algebraic fractions (cancel common factors)",
-      defaultOn:true,
-      gen(){
-        // C level: cancel common numerical and/or pronumeral factors, but keep the answer as a fraction.
-        // Examples produced include forms like 32ax/24a -> 4x/3 and 16a/10 -> 8a/5.
-        const templates = ["numOnly", "oneCommonVar", "twoVarsCancelOne", "twoVarsCancelToVarOverVar"];
-        for (let tries=0; tries<300; tries++){
-          const template = choice(templates);
-          let v1 = pickVar(), v2 = pickVar();
-          while (v2 === v1) v2 = pickVar();
-
-          let topCoeff = randInt(2,9) * randInt(2,6);
-          let botCoeff = randInt(2,9) * randInt(2,6);
-          const g = gcd(topCoeff, botCoeff);
-          if (g === 1) continue;
-
-          let topVars = [], botVars = [];
-          if (template === "numOnly"){
-            topVars = [v1];
-            botVars = [];
-          } else if (template === "oneCommonVar"){
-            topVars = [v1];
-            botVars = [v1];
-          } else if (template === "twoVarsCancelOne"){
-            topVars = [v1, v2];
-            botVars = [v1];
-          } else {
-            topVars = [v1, v2];
-            botVars = [v1, pickVar()];
-            while (botVars[1] === v1 || botVars[1] === v2) botVars[1] = pickVar();
-          }
-
-          const remainingTopVars = topVars.slice();
-          const remainingBotVars = botVars.slice();
-          for (const v of [...topVars]){
-            const ti = remainingTopVars.indexOf(v);
-            const bi = remainingBotVars.indexOf(v);
-            if (ti >= 0 && bi >= 0){
-              remainingTopVars.splice(ti,1);
-              remainingBotVars.splice(bi,1);
-            }
-          }
-
-          const a = topCoeff / g;
-          const b = botCoeff / g;
-          if (b === 1 && remainingBotVars.length === 0) continue; // keep answer visibly fractional
-
-          const exprHTML = fracHTML(monomialHTML(topCoeff, topVars), monomialHTML(botCoeff, botVars));
-          const ansHTML = fracHTML(monomialHTML(a, remainingTopVars), monomialHTML(b, remainingBotVars));
-          return { type:this.id, exprHTML, ansHTML };
-        }
-        const exprHTML = fracHTML(`${32}${vHTML('a')}${vHTML('x')}`, `${24}${vHTML('a')}`);
-        const ansHTML = fracHTML(`${4}${vHTML('x')}`, `3`);
-        return { type:this.id, exprHTML, ansHTML };
-      },
-      key:q => `af_${stripHTML(q.exprHTML)}`,
-      render(q, idx1, showAnswers){
-        const card = makeCardShell(idx1, biPrompt('simplify', [q.exprHTML]));
-        card.appendChild(makeAnswerRowHTML(q.ansHTML, stripHTML(q.ansHTML), showAnswers));
-        return card;
-      }
-    },
-
-    {
-      level:"C", id:"pattern_table",
-      label:"Complete a table of values (from an expression)",
-      defaultOn:true,
-      tableSequence:["n_plus_b", "n_minus_b", "an", "an_plus_b", "an_minus_b"],
-      genWithForm(form){
-        // Difficulty progression for tables:
-        // n + b, n − b, an, an + b, an − b.
-        const m = randInt(2,6);
-        const b = randInt(1,8);
-
-        let exprHTML = "";
-        let rule = (n) => n;
-
-        if (form === "n_plus_b"){
-          exprHTML = `<span class="var">n</span> + ${b}`;
-          rule = (n) => n + b;
-        } else if (form === "n_minus_b"){
-          exprHTML = `<span class="var">n</span> − ${b}`;
-          rule = (n) => n - b;
-        } else if (form === "an"){
-          exprHTML = `${m}<span class="var">n</span>`;
-          rule = (n) => m*n;
-        } else if (form === "an_plus_b"){
-          exprHTML = `${m}<span class="var">n</span> + ${b}`;
-          rule = (n) => m*n + b;
-        } else {
-          exprHTML = `${m}<span class="var">n</span> − ${b}`;
-          rule = (n) => m*n - b;
-        }
-
-        const ns = [1,2,3,4];
-        const vals = ns.map(rule);
-        return { type:this.id, form, m, b, exprHTML, ns, vals };
-      },
-      gen(){
-        return this.genWithForm(choice(this.tableSequence));
-      },
-      key:q => `pt_${q.form}_${q.m}_${q.b}_${q.vals.join(",")}`,
-      render(q, idx1, showAnswers){
-        const promptHTML = `
-          <span class="qPrompt">${biLine(lang()==="fa" ? "جدول را کامل کنید" : (lang()==="ar" ? "أكمل الجدول" : "Complete the table for:"), "Complete the table for:")}</span>
-          <span class="qExprLine tableExprLine">${q.exprHTML}</span>
-        `;
-        const card = makeCardShell(idx1, promptHTML);
-        card.querySelector('.qText').classList.add('splitExpr', 'tablePrompt');
-
-        const work = card.querySelector('.workArea');
-        work.classList.add('tableOnly');
-
-        const headerRow = `<tr><th><span class="var">n</span></th>${q.ns.map(n=>`<th>${n}</th>`).join("")}</tr>`;
-        const valueCells = showAnswers
-          ? q.vals.map(v => `<td><div class="cellKey">${v}</div></td>`).join("")
-          : q.vals.map(_ => `<td><div class="cellBlank"></div></td>`).join("");
-
-        work.innerHTML = `
-          <table class="tinyTbl">
-            ${headerRow}
-            <tr><th>${biLabel('value')}</th>${valueCells}</tr>
-          </table>
-        `;
-
-        // no answer bubble for table questions
-        return card;
-      }
-    },
-  ];
-
-  // ============================================================
-  // UI / ENGINE
-  // ============================================================
-  function currentOutcome(){
-    const val = outcomeSel.value;
-    return CONFIG.outcomes.find(o => o.value === val) || CONFIG.outcomes[0];
+  function canonical(s){return String(s).toLowerCase().trim().replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/[²]/g,'^2').replace(/\s+/g,'').replace(/\*/g,'').replace(/\{/g,'(').replace(/\}/g,')').replace(/\[/g,'(').replace(/\]/g,')').replace(/−/g,'-')}
+  function normalizeFractionText(s){return canonical(s).replace(/^\((.*)\)$/,'$1')}
+  function answerOK(input,q){const raw=String(input||'');if(!raw.trim())return false;const a=canonical(raw),targets=[q.answerText,...(q.alts||[])].map(canonical);
+    if(targets.includes(a))return true;
+    const plainTarget=canonical(q.answerText).replace(/,/g,''); if(a===plainTarget)return true;
+    // allow simple fraction answers with or without parentheses around numerator/denominator
+    const af=normalizeFractionText(raw),tf=normalizeFractionText(q.answerText); if(af===tf)return true;
+    // accept x/2 for stacked fractions and coefficientless 1x variants
+    if(targets.some(t=>t.replace(/^1([a-z])/,'$1')===a.replace(/^1([a-z])/,'$1')))return true;
+    return false;
   }
-
-  function typesForCurrentLevel(){
-    const lvl = currentOutcome().level;
-    return ALL_TYPES.filter(t => t.level === lvl);
+  function parseSimpleFactorisation(input,v){
+    let s=canonical(input).replace(/\*/g,'');
+    const esc=String(v).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const re=new RegExp('^(-?\d+)\((-?\d*)'+esc+'([+-]\d+)\)$');
+    const m=s.match(re);
+    if(!m)return null;
+    const outside=Number(m[1]);
+    let innerCoeff=m[2];
+    if(innerCoeff===''||innerCoeff==='+')innerCoeff=1;
+    else if(innerCoeff==='-')innerCoeff=-1;
+    else innerCoeff=Number(innerCoeff);
+    const innerConst=Number(m[3]);
+    if(!Number.isFinite(outside)||!Number.isFinite(innerCoeff)||!Number.isFinite(innerConst))return null;
+    return {outside,innerCoeff,innerConst,A:outside*innerCoeff,B:outside*innerConst};
   }
-
-  function localizeUI(){
-    // Teacher-facing controls stay in English. The selected language only affects
-    // the generated worksheet / answer key pages.
-    document.documentElement.lang = 'en';
-    document.documentElement.dir = 'ltr';
-    genBtn.textContent = 'Generate';
-    printBtn.textContent = 'Print / Save as PDF';
-    resetBtn.textContent = 'Reset';
-    Array.from(outcomeSel.options).forEach(opt => {
-      const original = CONFIG.outcomes.find(o => o.value === opt.value);
-      if (original) opt.textContent = original.label;
-    });
-    updateToggleAllButtonLabel();
-  }
-
-  function initUI(){
-    document.title = CONFIG.title;
-
-    outcomeSel.innerHTML = '';
-    for (const o of CONFIG.outcomes){
-      const opt = document.createElement('option');
-      opt.value = o.value;
-      opt.dataset.level = o.level;
-      opt.textContent = o.label;
-      outcomeSel.appendChild(opt);
+  function parseLinearFactorisation(input){
+    const s=canonical(input).replace(/\*/g,'');
+    const m=s.match(/^(-?\d+)\((.+)\)$/);
+    if(!m)return null;
+    const outside=Number(m[1]);
+    if(!Number.isFinite(outside)||outside===0)return null;
+    let inner=m[2].replace(/-/g,'+-');
+    if(inner.startsWith('+'))inner=inner.slice(1);
+    const pieces=inner.split('+').filter(Boolean);
+    if(!pieces.length)return null;
+    const terms={};
+    for(const piece of pieces){
+      const tm=piece.match(/^(-?\d*)([a-z]*)$/);
+      if(!tm)return null;
+      let coeffTxt=tm[1], vars=tm[2]||'';
+      let coeff;
+      if(coeffTxt===''||coeffTxt==='+') coeff=1;
+      else if(coeffTxt==='-') coeff=-1;
+      else coeff=Number(coeffTxt);
+      if(!Number.isFinite(coeff))return null;
+      const key=vars.split('').sort((a,b)=>a.localeCompare(b)).join('');
+      terms[key]=(terms[key]||0)+outside*coeff;
     }
-
-    countInp.min = String(CONFIG.minCount);
-    countInp.max = String(CONFIG.maxCount);
-    countInp.step = String(CONFIG.perPage);
-    countInp.value = String(CONFIG.defaultCount);
-
-    localizeUI();
-    rebuildCheckboxes();
+    return {outside,terms};
   }
-
-  function updateToggleAllButtonLabel(){
-    const boxes = Array.from(chkWrap.querySelectorAll('input[type="checkbox"]'));
-    if (!boxes.length){
-      toggleAllBtn.textContent = 'Select all';
-      return;
-    }
-    const allChecked = boxes.every(b => b.checked);
-    toggleAllBtn.textContent = allChecked ? 'Deselect all' : 'Select all';
-  }
-
-  function rebuildCheckboxes(){
-    chkWrap.innerHTML = '';
-    const types = typesForCurrentLevel();
-
-    for (const qt of types){
-      const lab = document.createElement('label');
-      lab.className = 'chk';
-
-      const inp = document.createElement('input');
-      inp.type = 'checkbox';
-      inp.id = `chk_${qt.id}`;
-      inp.checked = !!qt.defaultOn;
-      inp.addEventListener('change', updateToggleAllButtonLabel);
-
-      const span = document.createElement('span');
-      span.textContent = qt.label;
-
-      lab.appendChild(inp);
-      lab.appendChild(span);
-      chkWrap.appendChild(lab);
-    }
-
-    updateToggleAllButtonLabel();
-  }
-
-  function setAllCheckboxes(checked){
-    const boxes = chkWrap.querySelectorAll('input[type="checkbox"]');
-    boxes.forEach(box => box.checked = checked);
-    updateToggleAllButtonLabel();
-  }
-
-  function activeTypes(){
-    const types = typesForCurrentLevel();
-    const ids = new Set();
-    for (const qt of types){
-      const el = document.getElementById(`chk_${qt.id}`);
-      if (el && el.checked) ids.add(qt.id);
-    }
-    return types.filter(qt => ids.has(qt.id));
-  }
-
-  function uniqPush(arr, item, keyFn){
-    const k = keyFn(item);
-    if (arr.some(x => keyFn(x) === k)) return false;
-    arr.push(item);
+  function sameTermMap(a,b){
+    const clean=o=>Object.fromEntries(Object.entries(o||{}).filter(([,v])=>v!==0));
+    a=clean(a); b=clean(b);
+    const keys=new Set([...Object.keys(a),...Object.keys(b)]);
+    for(const k of keys){if((a[k]||0)!==(b[k]||0))return false;}
     return true;
   }
-
-  function generateQuestions(n){
-    const types = activeTypes();
-    if (!types.length) return [];
-
-    const qs = [];
-    let safety = 0;
-
-    while (qs.length < n && safety < 15000){
-      safety++;
-      const qt = choice(types);
-      const q = qt.gen();
-      if (!q) continue;
-
-      const keyFn = (x) => {
-        const t = types.find(tt => tt.id === x.type);
-        if (!t) return JSON.stringify(x);
-        return (t.key ? t.key(x) : JSON.stringify(x));
-      };
-
-      if (!uniqPush(qs, q, keyFn)) continue;
+  function factorisePartialHCF(input,q){
+    if(!q.factoriseMeta)return false;
+    if(q.factoriseMeta.terms){
+      const p=parseLinearFactorisation(input);
+      if(!p)return false;
+      return sameTermMap(p.terms,q.factoriseMeta.terms)&&Math.abs(p.outside)!==q.factoriseMeta.hcf;
     }
+    const p=parseSimpleFactorisation(input,q.factoriseMeta.v);
+    if(!p)return false;
+    return p.A===q.factoriseMeta.A&&p.B===q.factoriseMeta.B&&Math.abs(p.outside)!==q.factoriseMeta.hcf;
+  }
+  function answerStatus(input,q){
+    if(answerOK(input,q))return 'ok';
+    if(factorisePartialHCF(input,q))return 'partial';
+    return 'bad';
+  }
+  function genQuestions(level,n,typeIds=null){const allowed=typeIds?new Set(typeIds):null;const types=TYPES.filter(t=>t.level===level&&(!allowed||allowed.has(t.id)));const qs=[];let safety=0;while(qs.length<n&&safety++<3000){const t=choice(types);const tableIndex=qs.filter(x=>x.type==='pattern_table').length;const q=t.gen({tableIndex,questionIndex:qs.length});const key=canonical(stripHTML(q.promptHTML))+'|'+canonical(q.answerText);if(qs.some(x=>x.key===key))continue;q.key=key;q.label=t.label;qs.push(q)}return qs}
 
-    // Rebuild table-of-values questions in order of increasing difficulty.
-    // This preserves the random spread of selected question types, but ensures
-    // the first table question is n+b, the next is n−b, then an, an+b, an−b,
-    // cycling again if the worksheet contains more than five table questions.
-    const tableType = ALL_TYPES.find(t => t.id === 'pattern_table');
-    if (tableType && tableType.genWithForm){
-      let tableIndex = 0;
-      for (let i=0; i<qs.length; i++){
-        if (qs[i].type !== 'pattern_table') continue;
-        const form = tableType.tableSequence[tableIndex % tableType.tableSequence.length];
-        qs[i] = tableType.genWithForm(form);
-        tableIndex++;
-      }
+  const el=id=>document.getElementById(id);
+  const body=document.body,levelOverlay=el('levelOverlay'),typeOverlay=el('typeOverlay'),resultOverlay=el('resultOverlay'),levelDot=el('levelDot'),levelChipText=el('levelChipText'),bannerTitle=el('bannerTitle'),barFill=el('barFill'),qCounter=el('qCounter'),qLabel=el('qLabel'),qBox=el('qBox'),tableHost=el('tableHost'),answerRow=el('answerRow'),ansLabel=el('ansLabel'),ansInput=el('ansInput'),badge=el('badge'),hintLine=el('hintLine'),tipLine=el('tipLine'),prevBtn=el('prevBtn'),skipBtn=el('skipBtn'),retryBtn=el('retryBtn'),submitBtn=el('submitBtn'),nextBtn=el('nextBtn'),backBtn=el('backBtn'),resetBtn=el('resetBtn'),languageSelect=el('languageSelect'),startLanguageSelect=el('startLanguageSelect'),languageLabel=el('languageLabel'),startLanguageLabel=el('startLanguageLabel'),chooseLevelTitle=el('chooseLevelTitle'),basicName=el('basicName'),basicSub=el('basicSub'),expectedName=el('expectedName'),expectedSub=el('expectedSub'),selectTypesTitle=el('selectTypesTitle'),typesHelpText=el('typesHelpText'),typesGrid=el('typesGrid'),toggleAllTypesBtn=el('toggleAllTypesBtn'),countInp=el('countInp'),beginBtn=el('beginBtn'),typesBackBtn=el('typesBackBtn'),typesWarn=el('typesWarn'),typesWarnText=el('typesWarnText'),countLabel=el('countLabel'),scoreLine=el('scoreLine'),scoreBreakdownLabel=el('scoreBreakdownLabel'),breakdown=el('breakdown'),copyBtn=el('copyBtn'),closeBtn=el('closeBtn'),menuBtn=el('menuBtn');
+  const state={language:'en',level:null,pendingLevel:null,activeTypeIds:[],quizLength:QUIZ_LENGTH,questions:[],index:0,score:0,answered:false,skips:0,results:[],records:[],assignment:null,savedResult:false};
+  function levelName(){return state.level==='basic'?tr('basic'):state.level==='expected'?tr('expected'):'—'}
+  function dual(main,alt){return alt?`<span class="dualText">${main}<span class="altLine">${alt}</span></span>`:main}
+  function localize(){document.documentElement.lang=lang();document.documentElement.dir=dir();languageLabel.textContent=tr('languageLabel');startLanguageLabel.textContent=tr('languageLabel');backBtn.textContent=tr('back');resetBtn.textContent=tr('reset');chooseLevelTitle.textContent=tr('chooseLevel');basicName.textContent=tr('basic');expectedName.textContent=tr('expected');basicSub.textContent=tr('basicSub');expectedSub.textContent=tr('expectedSub');document.querySelectorAll('.startPill').forEach(b=>b.textContent=tr('start'));prevBtn.textContent=tr('prev');skipBtn.textContent=tr('skip');retryBtn.textContent=tr('retry');submitBtn.textContent=state.answered?tr('next'):tr('submit');nextBtn.textContent=tr('next');closeBtn.textContent=tr('close');copyBtn.textContent=tr('copy');menuBtn.textContent=tr('menu');scoreBreakdownLabel.textContent=tr('scoreBreakdown');selectTypesTitle.textContent=tr('selectTypes');typesHelpText.textContent=tr('typesHelp');countLabel.textContent=tr('totalQuestions');beginBtn.textContent=tr('begin');typesBackBtn.textContent=tr('typesBack');typesWarnText.textContent=tr('selectOne');ansLabel.textContent=tr('answer');updateToggleAllTypesLabel();hintLine.textContent=tr('hint');tipLine.textContent=tr('tip');updateHeader(); if(state.questions.length&&!state.answered)showQuestion();}
+  function updateHeader(){const name=levelName();levelChipText.innerHTML=dual(tr('levelText')(name),L().alt?tr('levelText')(L().alt):null);bannerTitle.innerHTML=dual(tr('levelText')(name),L().alt?tr('levelText')(L().alt):null);qCounter.innerHTML=dual(tr('qCounter')(Math.min(state.index+1,state.questions.length||0),state.questions.length||0),null);levelDot.style.background=state.level==='basic'?'var(--basic)':state.level==='expected'?'var(--expected)':'#cbd5e1'}
+  function showOverlay(o){o.classList.add('show');body.classList.add('modalOpen')}function hideOverlay(o){o.classList.remove('show');if(!document.querySelector('.overlay.show'))body.classList.remove('modalOpen')}
+  function typesForLevel(level){return TYPES.filter(t=>t.level===level)}
+  function updateToggleAllTypesLabel(){if(!toggleAllTypesBtn)return;const boxes=Array.from(typesGrid?.querySelectorAll('input[type="checkbox"]')||[]);const all=boxes.length&&boxes.every(b=>b.checked);toggleAllTypesBtn.textContent=all?tr('deselectAll'):tr('selectAll')}
+  function buildTypeChooser(level){state.pendingLevel=level;typesWarn.classList.remove('show');typesGrid.innerHTML='';for(const t of typesForLevel(level)){const lab=document.createElement('label');lab.className='chk';const inp=document.createElement('input');inp.type='checkbox';inp.value=t.id;inp.checked=true;inp.addEventListener('change',updateToggleAllTypesLabel);const span=document.createElement('span');span.className='typeText';span.innerHTML=lang()==='en'?`<span>${t.label}</span>`:`<span>${t.label}</span><span class="typeAlt">${trType(t.id,t.label)}</span>`;lab.appendChild(inp);lab.appendChild(span);typesGrid.appendChild(lab)}countInp.value=String(state.quizLength||QUIZ_LENGTH);updateToggleAllTypesLabel();hideOverlay(levelOverlay);showOverlay(typeOverlay)}
+  function selectedTypeIds(){return Array.from(typesGrid.querySelectorAll('input[type="checkbox"]:checked')).map(x=>x.value)}
+  function beginSelectedQuiz(){const ids=selectedTypeIds();if(!ids.length){typesWarn.classList.add('show');return}let n=Number(countInp.value);if(!Number.isFinite(n))n=QUIZ_LENGTH;n=clamp(Math.round(n),5,60);state.quizLength=n;state.activeTypeIds=ids;start(state.pendingLevel||'basic',ids,n)}
+  function openMenu(){hideOverlay(resultOverlay);hideOverlay(typeOverlay);if(state.assignment){resetQuizShell();start(state.assignment.level,state.assignment.types,state.assignment.count);return}showOverlay(levelOverlay);resetQuizShell()}
+  function resetQuizShell(){state.level=null;state.questions=[];state.index=0;state.score=0;state.answered=false;state.skips=0;state.results=[];state.records=[];state.savedResult=false;barFill.style.width='0%';qBox.textContent='—';tableHost.style.display='none';tableHost.innerHTML='';answerRow.style.display='flex';ansInput.value='';ansInput.disabled=true;badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display='none';skipBtn.style.display='inline-block';updateHeader()}
+  function start(level,typeIds=state.activeTypeIds,n=state.quizLength){reseed();state.level=level;state.questions=genQuestions(level,n,typeIds);state.index=0;state.score=0;state.answered=false;state.skips=0;state.results=[];state.records=[];state.savedResult=false;hideOverlay(levelOverlay);hideOverlay(typeOverlay);ansInput.disabled=false;showQuestion()}
+  
+  function buildTableInputs(q){
+    tableHost.innerHTML=`<table class="valueTable"><tr><th><span class="var">n</span></th>${q.tableNs.map(n=>`<th>${n}</th>`).join('')}</tr><tr><th>${tr('value')}</th>${q.tableNs.map((_,i)=>`<td><input class="tableInput" data-i="${i}" type="text" inputmode="numeric" autocomplete="off"></td>`).join('')}</tr></table>`;
+    tableHost.style.display='block';
+    setTimeout(()=>tableHost.querySelector('.tableInput')?.focus(),30);
+  }
+  function tableAnswerOK(q){
+    const inputs=Array.from(tableHost.querySelectorAll('.tableInput'));
+    if(inputs.length!==q.tableVals.length)return false;
+    return inputs.every((inp,i)=>canonical(inp.value)===canonical(String(q.tableVals[i])));
+  }
+  function setTableDisabled(disabled){
+    tableHost.querySelectorAll('.tableInput').forEach(inp=>inp.disabled=disabled);
+  }
+function celebrate(){const colors=['#2563eb','#16a34a','#eab308','#dc2626','#7c3aed','#06b6d4'];const cx=window.innerWidth/2,cy=Math.min(window.innerHeight*.42,360);for(let i=0;i<42;i++){const piece=document.createElement('div');piece.className='confettiPiece';piece.style.left=cx+'px';piece.style.top=cy+'px';piece.style.background=colors[i%colors.length];piece.style.setProperty('--dx',(Math.random()*520-260)+'px');piece.style.setProperty('--dy',(Math.random()*240+120)+'px');piece.style.setProperty('--rot',(Math.random()*720-360)+'deg');document.body.appendChild(piece);setTimeout(()=>piece.remove(),950)}}
+function showQuestion(){const q=state.questions[state.index];state.answered=false;ansInput.disabled=false;ansInput.value='';ansInput.classList.remove('correct','wrong','partial');badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';qLabel.innerHTML=q.instructionHTML||tr('questionLabel');qBox.innerHTML=q.expressionHTML||q.promptHTML;qBox.classList.toggle('small',stripHTML(q.expressionHTML||q.promptHTML).length>80);qBox.classList.remove('rtlPrompt');tableHost.style.display='none';tableHost.innerHTML='';answerRow.style.display='flex';if(q.mode==='table'){answerRow.style.display='none';buildTableInputs(q)}barFill.style.width=`${(state.index/state.questions.length)*100}%`;updateHeader();if(q.mode!=='table')setTimeout(()=>ansInput.focus(),30)}
+    function mark(ok,skipped=false,partial=false){if(state.answered)return;const q=state.questions[state.index];state.answered=true;if(ok||skipped){ansInput.disabled=true;setTableDisabled(true)}else{ansInput.disabled=false;setTableDisabled(false)}ansInput.classList.remove('correct','wrong','partial');ansInput.classList.add(ok?'correct':partial?'partial':'wrong');tableHost.querySelectorAll('.tableInput').forEach(inp=>{inp.classList.remove('correct','wrong','partial');inp.classList.add(ok?'correct':partial?'partial':'wrong')});if(ok)celebrate();state.records[state.index]={type:q.type,label:q.label,ok,skipped,partial,answer:q.answerText};state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;badge.className='badge show '+(ok?'ok':partial?'partial':'bad');badge.innerHTML=ok?tr('correct'):(partial?`${tr('partialHCF')} <span class="correctAnswer">${tr('correctAnswer')} ${q.answerHTML}</span>`:(skipped?tr('skipped'):`${tr('incorrect')} <span class="correctAnswer">${tr('correctAnswer')} ${q.answerHTML}</span>`));skipBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('next');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';retryBtn.style.display=ok||skipped?'none':'inline-block';barFill.style.width=`${((state.index+1)/state.questions.length)*100}%`;if(ok||skipped)submitBtn.focus();else ansInput.focus()}
+    function submit(){if(state.answered){next();return}const q=state.questions[state.index];if(q.mode==='table'){mark(tableAnswerOK(q),false);return}const status=answerStatus(ansInput.value,q);mark(status==='ok',false,status==='partial')}
+  function retry(){delete state.records[state.index];state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;state.answered=false;ansInput.disabled=false;ansInput.classList.remove('correct','wrong','partial');tableHost.querySelectorAll('.tableInput').forEach(inp=>inp.classList.remove('correct','wrong','partial'));badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';if(state.questions[state.index]?.mode==='table'){setTableDisabled(false);tableHost.querySelector('.tableInput')?.focus()}else{ansInput.select();ansInput.focus()}}
+  function next(){if(!state.answered)return;state.index++;if(state.index>=state.questions.length){finish()}else showQuestion()}
+  function prev(){if(state.index<=0)return;state.index--;showQuestion()}
+  function finish(){barFill.style.width='100%';state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;const name=levelName();scoreLine.textContent=tr('scoreLine')(name,state.score,state.questions.length);const byType=new Map();for(const r of state.results){const key=r.type||r.label;const cur=byType.get(key)||{c:0,t:0,s:0,label:r.label};cur.t++;if(r.ok)cur.c++;if(r.skipped)cur.s++;byType.set(key,cur)}breakdown.innerHTML='';for(const [id,v]of byType.entries()){const row=document.createElement('div');row.className='breakdownRow';row.innerHTML=`<span>${trType(id,v.label)}</span><span>${v.c}/${v.t}${v.s?` (skipped: ${v.s})`:''}</span>`;breakdown.appendChild(row)}saveFirebaseAchievement(byType);showOverlay(resultOverlay)}
+  function copyResults(){const name=levelName();const lines=[tr('copyTitle')(name),tr('score')(state.score,state.questions.length),''];breakdown.querySelectorAll('.breakdownRow').forEach(r=>lines.push(r.textContent.trim()));navigator.clipboard?.writeText(lines.join('\n')).then(()=>{copyBtn.textContent='Copied ✓';setTimeout(()=>copyBtn.textContent=tr('copy'),1200)}).catch(()=>{})}
+
+
+  function readAssignmentFromURL(){
+    const params=new URLSearchParams(window.location.search);
+    if(params.get('assignment')!=='1' && !params.has('types'))return null;
+    const level=(params.get('level')||'').toLowerCase();
+    if(!['basic','expected'].includes(level))return null;
+    const valid=new Set(typesForLevel(level).map(t=>t.id));
+    const types=(params.get('types')||'').split(',').map(x=>x.trim()).filter(x=>valid.has(x));
+    if(!types.length)return null;
+    let count=Number(params.get('count')||QUIZ_LENGTH);
+    if(!Number.isFinite(count))count=QUIZ_LENGTH;
+    count=clamp(Math.round(count),5,60);
+    return {level,types,count};
+  }
+  function saveFirebaseAchievement(byType){
+    if(state.savedResult)return;
+    state.savedResult=true;
+    const typeSummary=Array.from(byType.entries()).map(([id,v])=>({typeId:id,label:trType(id,v.label),ok:v.c,total:v.t,skipped:v.s||0}));
+    window.MMTFirebase?.saveAchievement?.({
+      topic:'Algebraic Techniques',
+      level:levelName(),
+      levelKey:state.level,
+      score:state.score,
+      total:state.questions.length,
+      types:typeSummary,
+      assignmentMode:!!state.assignment,
+      assignedTypes:state.assignment?.types||[],
+      assignedCount:state.assignment?.count||null,
+      assignmentSource:state.assignment?'url':null
+    }).catch(err=>console.error('Achievement save failed',err));
+  }
+  function applyAssignmentIfPresent(){
+    const assignment=readAssignmentFromURL();
+    if(!assignment)return false;
+    state.assignment=assignment;
+    assignmentNotice?.classList.add('show');
+    teacherAssignBtn?.classList.add('hidden');
+    resetQuizShell();
+    start(assignment.level,assignment.types,assignment.count);
+    return true;
+  }
+  const BUILDER_TYPE_LABELS={basic:[{"id": "identify_part", "label": "Identify coefficient / pronumeral / constant"}, {"id": "notation", "label": "Rewrite using correct algebraic notation"}, {"id": "words_to_expr", "label": "Translate words \u2192 algebraic expression"}, {"id": "sub_one", "label": "Substitute and evaluate (one step)"}, {"id": "like_terms", "label": "Collect like terms (simple)"}, {"id": "mul_single_term", "label": "Multiply a single term"}, {"id": "div_single_term", "label": "Divide a single term"}, {"id": "expand_bracket", "label": "Expand a single bracket"}, {"id": "factorise_number", "label": "Factorise by common number"}],expected:[{"id": "translate_rich", "label": "Translate words \u2192 expression (multi-step)"}, {"id": "factorise_expected", "label": "Factorising"}, {"id": "sub_two", "label": "Substitute and evaluate (two-step)"}, {"id": "sub_two_vars", "label": "Substitute and evaluate (two pronumerals)"}, {"id": "simplify_mixed", "label": "Simplify mixed like terms"}, {"id": "multiply_terms", "label": "Multiplying terms"}, {"id": "expand_simplify", "label": "Expand and simplify"}, {"id": "alg_frac", "label": "Simplify algebraic fractions"}, {"id": "pattern_table", "label": "Complete a table of values"}]};
+  function updateBuilderLevelToggle(){
+    document.querySelectorAll('.levelToggleBtn').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.level===builderLevel.value);
+    });
+  }
+  function renderBuilderTypes(){
+    const level=builderLevel.value;
+    updateBuilderLevelToggle();
+    builderTypes.innerHTML='';
+    const items=BUILDER_TYPE_LABELS[level]||[];
+    for(const item of items){
+      const lab=document.createElement('label');
+      lab.innerHTML=`<input type="checkbox" value="${item.id}" checked> <span>${item.label}</span>`;
+      builderTypes.appendChild(lab);
     }
-
-    return qs;
+    assignmentLinkOut.value='';
+    updateBuilderToggle();
   }
-
-  function pageHTML(pageTitle, pageSubtitle, pageIndex, pageCount){
-    const page = document.createElement('div');
-    page.className = 'page' + (dir()==='rtl' ? ' lang-rtl' : '');
-
-    const border = document.createElement('img');
-    border.className = 'pageBorder';
-    border.alt = '';
-    border.src = CONFIG.borderSrc;
-    page.appendChild(border);
-
-    const inner = document.createElement('div');
-    inner.className = 'pageInner';
-    page.appendChild(inner);
-
-    const content = document.createElement('div');
-    content.className = 'pageContent';
-    inner.appendChild(content);
-
-    const header = document.createElement('div');
-    header.className = 'pageHeader';
-    header.innerHTML = `
-      <div class="hdrLeft">
-        <div class="hdrTitle">${pageTitle} — ${biLabel('page')} ${pageIndex} / ${pageCount}</div>
-        <div class="hdrSub">${pageSubtitle}</div>
-      </div>
-      <div class="nameRow">
-        <div class="lineField"><div class="lineLabel">${biLabel('name')}</div><div class="lineBox"></div></div>
-        <div class="lineField"><div class="lineLabel">${biLabel('className')}</div><div class="lineBox"></div></div>
-        <div class="lineField"><div class="lineLabel">${biLabel('date')}</div><div class="lineBox"></div></div>
-      </div>
-    `;
-    content.appendChild(header);
-
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-    content.appendChild(grid);
-
-    return { page, grid };
-  }
-
-  function buildPages(questions, pageTitle, pageSubtitle, showAnswers){
-    const pages = [];
-    const totalPages = Math.ceil(questions.length / CONFIG.perPage);
-    let qNum = 1;
-
-    const typeMap = new Map(ALL_TYPES.map(t => [t.id, t]));
-
-    for (let p=0; p<totalPages; p++){
-      const { page, grid } = pageHTML(pageTitle, pageSubtitle, p+1, totalPages);
-      const slice = questions.slice(p*CONFIG.perPage, p*CONFIG.perPage + CONFIG.perPage);
-
-      for (const q of slice){
-        const qt = typeMap.get(q.type);
-        if (!qt) continue;
-        grid.appendChild(qt.render(q, qNum, showAnswers));
-        qNum++;
-      }
-
-      pages.push(page);
+  function updateBuilderToggle(){
+    const boxes=Array.from(builderTypes.querySelectorAll('input[type="checkbox"]'));
+    const selected=boxes.filter(b=>b.checked).length;
+    const all=boxes.length&&selected===boxes.length;
+    builderToggleAllBtn.textContent=all?'Deselect all':'Select all';
+    if(typeof builderSummary!=='undefined' && builderSummary){
+      builderSummary.textContent=`${selected} of ${boxes.length} selected`;
     }
-
-    return pages;
+    assignmentLinkOut.value='';
+  }
+  function selectedBuilderTypes(){return Array.from(builderTypes.querySelectorAll('input[type="checkbox"]:checked')).map(b=>b.value)}
+  function generateAssignmentLink(){
+    const types=selectedBuilderTypes();
+    if(!types.length){builderWarn.classList.add('show');return ''}
+    builderWarn.classList.remove('show');
+    let count=Number(builderCount.value||QUIZ_LENGTH);
+    if(!Number.isFinite(count))count=QUIZ_LENGTH;
+    count=clamp(Math.round(count),5,60);
+    builderCount.value=String(count);
+    const url=new URL(window.location.href);
+    url.search='';
+    url.searchParams.set('assignment','1');
+    url.searchParams.set('level',builderLevel.value);
+    url.searchParams.set('types',types.join(','));
+    url.searchParams.set('count',String(count));
+    assignmentLinkOut.value=url.toString();
+    return assignmentLinkOut.value;
   }
 
-  function generate(){
-    clearOut();
-
-    let n = Number(countInp.value);
-    if (!Number.isFinite(n)) n = CONFIG.defaultCount;
-    n = clamp(Math.round(n), CONFIG.minCount, CONFIG.maxCount);
-    countInp.value = String(n);
-
-    const qs = generateQuestions(n);
-    if (!qs.length){
-      out.innerHTML = `<div style="padding:12px; font-weight:950; color:#991b1b;">Please tick at least one question type.</div>`;
-      return;
-    }
-
-    const outcome = currentOutcome();
-    const subtitle = outcome.level === 'DE' ? tr('outcomeDE') : tr('outcomeC');
-
-    const ws  = buildPages(qs, tr('pageTitle'), subtitle, false);
-    const key = buildPages(qs, tr('answerKeyTitle'), subtitle, true);
-
-    for (const pg of ws) out.appendChild(pg);
-    for (const pg of key) out.appendChild(pg);
-
-    if (out.firstElementChild) out.firstElementChild.scrollIntoView({ behavior:'smooth', block:'start' });
+  languageSelect.addEventListener('change',()=>{state.language=languageSelect.value;startLanguageSelect.value=state.language;localize()});startLanguageSelect.addEventListener('change',()=>{state.language=startLanguageSelect.value;languageSelect.value=state.language;localize()});document.querySelectorAll('.startPill').forEach(b=>b.addEventListener('click',()=>buildTypeChooser(b.dataset.level)));
+  toggleAllTypesBtn.addEventListener('click',()=>{const boxes=Array.from(typesGrid.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAllTypesLabel()});beginBtn.addEventListener('click',beginSelectedQuiz);typesBackBtn.addEventListener('click',()=>{hideOverlay(typeOverlay);showOverlay(levelOverlay)});backBtn.addEventListener('click',openMenu);resetBtn.addEventListener('click',()=>{resetQuizShell();hideOverlay(typeOverlay);showOverlay(levelOverlay)});prevBtn.addEventListener('click',prev);skipBtn.addEventListener('click',()=>mark(false,true));retryBtn.addEventListener('click',retry);submitBtn.addEventListener('click',submit);nextBtn.addEventListener('click',next);ansInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});tableHost.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==ansInput&&!tableHost.contains(document.activeElement)&&state.questions.length){e.preventDefault();state.answered?next():submit()}});copyBtn.addEventListener('click',copyResults);closeBtn.addEventListener('click',()=>hideOverlay(resultOverlay));menuBtn.addEventListener('click',openMenu);
+  teacherAssignBtn?.addEventListener('click',()=>{renderBuilderTypes();showOverlay(teacherBuilderOverlay)});builderLevel?.addEventListener('change',renderBuilderTypes);document.querySelectorAll('.levelToggleBtn').forEach(btn=>btn.addEventListener('click',()=>{builderLevel.value=btn.dataset.level;renderBuilderTypes()}));builderCount?.addEventListener('input',()=>{assignmentLinkOut.value=''});builderTypes?.addEventListener('change',updateBuilderToggle);builderToggleAllBtn?.addEventListener('click',()=>{const boxes=Array.from(builderTypes.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateBuilderToggle()});generateAssignmentBtn?.addEventListener('click',generateAssignmentLink);copyAssignmentBtn?.addEventListener('click',async()=>{const link=assignmentLinkOut.value||generateAssignmentLink();if(!link)return;try{await navigator.clipboard.writeText(link);copyAssignmentBtn.textContent='Copied ✓';setTimeout(()=>copyAssignmentBtn.textContent='Copy link',1200)}catch(e){window.prompt('Copy this link:',link)}});closeBuilderBtn?.addEventListener('click',()=>{ assignmentLinkOut.value=''; renderBuilderTypes(); showOverlay(teacherBuilderOverlay); });
+  function openTeacherBuilderOnLoad(){
+    renderBuilderTypes();
+    assignmentLinkOut.value = '';
+    showOverlay(teacherBuilderOverlay);
+    teacherAssignBtn?.classList.add('hidden');
+    assignmentNotice?.classList.remove('show');
   }
 
-  function reset(){
-    clearOut();
-    countInp.value = String(CONFIG.defaultCount);
-    outcomeSel.selectedIndex = 0;
-    rebuildCheckboxes();
-  }
-
-  outcomeSel.addEventListener('change', () => {
-    clearOut();
-    rebuildCheckboxes();
-  });
-
-  languageSel.addEventListener('change', () => {
-    localizeUI();
-    if (out.children.length) generate();
-  });
-
-  toggleAllBtn.addEventListener('click', () => {
-    const boxes = Array.from(chkWrap.querySelectorAll('input[type="checkbox"]'));
-    const allChecked = boxes.length && boxes.every(b => b.checked);
-    setAllCheckboxes(!allChecked);
-  });
-
-  genBtn.addEventListener('click', generate);
-  printBtn.addEventListener('click', () => window.print());
-  resetBtn.addEventListener('click', reset);
-
-  initUI();
+  localize();
+  resetQuizShell();
+  if(!applyAssignmentIfPresent()) openTeacherBuilderOnLoad();
 })();
 </script>
 </body>
