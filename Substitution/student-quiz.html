@@ -388,6 +388,103 @@
     .confetti i{position:absolute;top:-20px;width:10px;height:14px;opacity:.95;border-radius:2px;transform:rotate(0deg);animation:fall linear forwards}
     @keyframes fall{to{transform:translate3d(var(--dx),110vh,0) rotate(var(--rot))}}
 
+
+
+    /* Firebase student-code login */
+    .studentLoginBack{
+      position:fixed;
+      inset:0;
+      z-index:1400;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      background:rgba(15,23,42,.46);
+      backdrop-filter:blur(5px);
+    }
+    .studentLoginBack.hidden{display:none;}
+    .studentLoginModal{
+      width:min(760px,94vw);
+      background:#fff;
+      border:1px solid rgba(226,232,240,.95);
+      border-radius:26px;
+      box-shadow:0 24px 70px rgba(15,23,42,.24);
+      padding:26px 28px;
+    }
+    .studentLoginModal h2{
+      margin:0 0 10px;
+      font-size:28px;
+      letter-spacing:-.04em;
+      line-height:1.05;
+    }
+    .studentLoginModal p{
+      margin:0 0 18px;
+      color:#475569;
+      font-weight:850;
+      line-height:1.45;
+    }
+    .studentLoginField label{
+      display:block;
+      margin:0 0 7px;
+      font-weight:1000;
+      color:#0f172a;
+    }
+    .studentCodeInput{
+      width:100%;
+      border:2px solid #dbe3ef;
+      border-radius:18px;
+      padding:15px 16px;
+      font:1000 22px var(--uiFont);
+      text-align:center;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      outline:none;
+      background:#fff;
+    }
+    .studentCodeInput:focus{
+      border-color:#2563eb;
+      box-shadow:0 0 0 5px rgba(37,99,235,.14);
+    }
+    .studentLoginActions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin-top:16px;
+    }
+    .studentLoginMsg{
+      display:none;
+      margin-top:14px;
+      padding:11px 13px;
+      border-radius:14px;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .studentLoginMsg.show{display:block;}
+    .studentLoginMsg.ok{background:#dcfce7;color:#166534;border:1px solid rgba(22,163,74,.24);}
+    .studentLoginMsg.bad{background:#fee2e2;color:#991b1b;border:1px solid rgba(220,38,38,.24);}
+    .studentLoginMsg.info{background:#eef2ff;color:#1d4ed8;border:1px solid rgba(37,99,235,.20);}
+    .saveStatus{
+      display:none;
+      margin-top:12px;
+      padding:11px 13px;
+      border-radius:14px;
+      font-weight:900;
+      line-height:1.35;
+      background:#eef2ff;
+      color:#1d4ed8;
+      border:1px solid rgba(37,99,235,.18);
+    }
+    .saveStatus.show{display:block;}
+    .saveStatus.ok{background:#dcfce7;color:#166534;border-color:rgba(22,163,74,.24);}
+    .saveStatus.bad{background:#fee2e2;color:#991b1b;border-color:rgba(220,38,38,.24);}
+    .saveStatus.warn{background:#ffedd5;color:#9a3412;border-color:rgba(234,88,12,.22);}
+    @media(max-width:720px){
+      .studentLoginModal{padding:22px 18px;border-radius:22px;}
+      .studentCodeInput{font-size:18px;}
+      .studentLoginActions .btn{width:100%;justify-content:center;}
+    }
+
     @media(max-width:780px){
       .topbar{grid-template-columns:1fr auto;gap:10px}
       .top-title{grid-column:1/-1;grid-row:2;text-align:center}
@@ -486,6 +583,23 @@
 
   <div id="overlay" class="overlay"></div>
 
+
+  <div class="studentLoginBack" id="studentLoginBack" role="dialog" aria-modal="true" aria-labelledby="studentLoginTitle">
+    <div class="studentLoginModal">
+      <h2 id="studentLoginTitle">Student login</h2>
+      <p>Enter your MMT student code to save your result to your teacher's dashboard. If your teacher has not given you a code, choose <strong>Skip student code</strong> to use the normal quiz.</p>
+      <div class="studentLoginField">
+        <label for="studentCodeInput">Student code</label>
+        <input id="studentCodeInput" class="studentCodeInput" type="text" autocomplete="off" placeholder="Enter your student code" />
+      </div>
+      <div class="studentLoginActions">
+        <button id="studentLoginBtn" class="btn primary" type="button">Start</button>
+        <button id="skipLoginBtn" class="btn" type="button">Skip student code</button>
+      </div>
+      <div id="studentLoginMsg" class="studentLoginMsg info">Connecting to Firebase…</div>
+    </div>
+  </div>
+
   <div id="levelModal" class="modal" role="dialog" aria-modal="true" aria-label="Choose your level">
     <div class="modalHead" id="chooseLevelTitle">Choose your level</div>
     <div class="modalBody">
@@ -516,6 +630,7 @@
         <div>
           <div id="certLine1" class="certText">You completed level Sweet in Substitution in Algebra and got a score of 0 out of 15.</div>
           <div class="certSub" id="certSub">Screenshot this and paste into Google Classroom.</div>
+          <div id="saveStatus" class="saveStatus"></div>
         </div>
       </div>
     </div>
@@ -528,9 +643,26 @@
 
   <div class="confetti" id="confetti"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
 <script>
 (() => {
   const QUIZ_LEN = 15;
+  const QUIZ_TOPIC = 'Substitution in Algebra';
+  const QUIZ_TOOL_ID = 'substitution-in-algebra-student-quiz';
+  const ACHIEVEMENTS_COLLECTION = 'achievements';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
+    authDomain: "mills-maths-tools.firebaseapp.com",
+    projectId: "mills-maths-tools",
+    storageBucket: "mills-maths-tools.firebasestorage.app",
+    messagingSenderId: "835000359454",
+    appId: "1:835000359454:web:d7876be83ee367b5006c0f",
+    measurementId: "G-35YCH5NJEG"
+  };
   const LETTERS = 'abcdefghijkmnpqrstuvwxyz'.split(''); // avoids o and l
   const LEVELS = {
     sweet:    { name:'Sweet',     banner:['#16a34a','#0f766e'] },
@@ -585,6 +717,12 @@
   const levelSpicySub = document.getElementById('levelSpicySub');
   const levelExtraName = document.getElementById('levelExtraName');
   const levelExtraSub = document.getElementById('levelExtraSub');
+  const studentLoginBack = document.getElementById('studentLoginBack');
+  const studentCodeInput = document.getElementById('studentCodeInput');
+  const studentLoginBtn = document.getElementById('studentLoginBtn');
+  const skipLoginBtn = document.getElementById('skipLoginBtn');
+  const studentLoginMsg = document.getElementById('studentLoginMsg');
+  const saveStatus = document.getElementById('saveStatus');
 
   let language = 'en';
   const I18N = {
@@ -644,6 +782,11 @@
   let phase = 'awaiting';
   let Q = null;
   let useSymbolNotation = true;
+  let db = null;
+  let firebaseReady = false;
+  let currentStudent = null;
+  let accessMode = 'unknown';
+  let achievementSaveStarted = false;
 
   const randInt = (a,b) => Math.floor(Math.random() * (b - a + 1)) + a;
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -665,6 +808,172 @@
     const clean = String(str).trim().replace(/,/g,'').replace(/−/g,'-');
     if(!clean) return NaN;
     return Number(clean);
+  }
+
+
+  function stripHTML(html){
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+  function normaliseStudentCode(value){
+    return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  }
+  function showLoginMessage(text, type = 'info'){
+    if(!studentLoginMsg) return;
+    studentLoginMsg.textContent = text;
+    studentLoginMsg.className = `studentLoginMsg show ${type}`;
+  }
+  function hideLoginMessage(){
+    if(!studentLoginMsg) return;
+    studentLoginMsg.textContent = '';
+    studentLoginMsg.className = 'studentLoginMsg';
+  }
+  function setSaveStatus(text, type = 'info'){
+    if(!saveStatus) return;
+    saveStatus.textContent = text;
+    saveStatus.className = `saveStatus show ${type}`;
+  }
+  function hideSaveStatus(){
+    if(!saveStatus) return;
+    saveStatus.textContent = '';
+    saveStatus.className = 'saveStatus';
+  }
+  function initFirebase(){
+    try{
+      if(typeof firebase === 'undefined'){
+        firebaseReady = false;
+        showLoginMessage('Firebase could not load. You can still use Skip student code.', 'bad');
+        return;
+      }
+      if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebase.auth().signInAnonymously()
+        .then(() => {
+          firebaseReady = true;
+          showLoginMessage('Firebase connected. Enter your student code or skip.', 'info');
+        })
+        .catch(err => {
+          console.error(err);
+          firebaseReady = false;
+          showLoginMessage('Firebase connection failed. You can still use Skip student code.', 'bad');
+        });
+    }catch(err){
+      console.error(err);
+      firebaseReady = false;
+      showLoginMessage('Firebase connection failed. You can still use Skip student code.', 'bad');
+    }
+  }
+  async function validateStudentCode(){
+    const code = normaliseStudentCode(studentCodeInput.value);
+    studentCodeInput.value = code;
+    if(!code){
+      showLoginMessage('Enter your student code first, or choose Skip student code.', 'bad');
+      return;
+    }
+    if(!firebaseReady || !db){
+      showLoginMessage('Firebase is still connecting. Try again in a moment, or choose Skip student code.', 'bad');
+      return;
+    }
+    studentLoginBtn.disabled = true;
+    studentLoginBtn.textContent = 'Checking...';
+    try{
+      const docSnap = await db.collection('students').doc(code).get();
+      if(!docSnap.exists){
+        showLoginMessage('That student code was not found. Check the code and try again.', 'bad');
+        return;
+      }
+      const data = docSnap.data() || {};
+      if(data.active === false){
+        showLoginMessage('This student code is currently inactive. Please check with your teacher.', 'bad');
+        return;
+      }
+      currentStudent = {
+        studentCode: code,
+        studentName: data.name || [data.firstName, data.surname].filter(Boolean).join(' ') || 'Student',
+        firstName: data.firstName || '',
+        surname: data.surname || '',
+        className: data.className || '',
+        teacherCode: data.teacherCode || '',
+        teacherName: data.teacherName || data.teacher || '',
+        teacher: data.teacher || data.teacherName || '',
+        school: data.school || ''
+      };
+      accessMode = 'registered';
+      hideLoginMessage();
+      studentLoginBack.classList.add('hidden');
+    }catch(err){
+      console.error(err);
+      showLoginMessage('Could not check that code. Check Firestore rules and internet connection.', 'bad');
+    }finally{
+      studentLoginBtn.disabled = false;
+      studentLoginBtn.textContent = 'Start';
+    }
+  }
+  function skipStudentLogin(){
+    currentStudent = null;
+    accessMode = 'skip';
+    studentLoginBack.classList.add('hidden');
+  }
+  function expressionTypeSummary(){
+    const summary = new Map();
+    questions.slice(0, QUIZ_LEN).forEach(question => {
+      const countVars = question.letters ? question.letters.length : 0;
+      let key = countVars === 1 ? 'One-variable substitution' : countVars === 2 ? 'Two-variable substitution' : 'Three-variable substitution';
+      const old = summary.get(key) || { label:key, ok:0, total:0 };
+      old.total += 1;
+      if(question.status === 'correct' || question.countedCorrect) old.ok += 1;
+      summary.set(key, old);
+    });
+    return Array.from(summary.values());
+  }
+  function certificatePlainText(){
+    return `You completed level "${levelName(levelKey)}" in ${QUIZ_TOPIC} and got a score of ${score} out of ${QUIZ_LEN}.`;
+  }
+  async function saveAchievement(){
+    if(achievementSaveStarted) return;
+    achievementSaveStarted = true;
+    if(accessMode !== 'registered' || !currentStudent){
+      setSaveStatus('Result not saved because student code was skipped.', 'warn');
+      return;
+    }
+    if(!firebaseReady || !db){
+      setSaveStatus('Result could not be saved because Firebase is not connected.', 'bad');
+      return;
+    }
+    const percent = Math.round((score / QUIZ_LEN) * 100);
+    const record = {
+      accessMode: 'registered',
+      source: 'Mills Maths Tools',
+      tool: QUIZ_TOOL_ID,
+      topic: QUIZ_TOPIC,
+      level: levelKey,
+      englishLevel: levelName(levelKey),
+      score,
+      total: QUIZ_LEN,
+      percent,
+      studentCode: currentStudent.studentCode,
+      studentName: currentStudent.studentName,
+      firstName: currentStudent.firstName,
+      surname: currentStudent.surname,
+      className: currentStudent.className,
+      teacherCode: currentStudent.teacherCode,
+      teacherName: currentStudent.teacherName,
+      teacher: currentStudent.teacher,
+      school: currentStudent.school,
+      certificateText: certificatePlainText(),
+      types: expressionTypeSummary(),
+      dateClient: new Date().toISOString(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    try{
+      await db.collection(ACHIEVEMENTS_COLLECTION).add(record);
+      setSaveStatus('Result saved to your student dashboard.', 'ok');
+    }catch(err){
+      console.error(err);
+      achievementSaveStarted = false;
+      setSaveStatus('Could not save this result. Check Firestore rules and internet connection.', 'bad');
+    }
   }
 
   // -----------------------------
@@ -1074,6 +1383,8 @@
     qIndex = 0;
     score = 0;
     phase = 'awaiting';
+    achievementSaveStarted = false;
+    hideSaveStatus();
     setBanner();
     hideModal(levelModal);
     hideModal(certModal);
@@ -1085,6 +1396,8 @@
     qIndex = 0;
     score = 0;
     phase = 'awaiting';
+    achievementSaveStarted = false;
+    hideSaveStatus();
     loadQuestion();
   }
   function shouldAdvanceAfterIncorrect(){
@@ -1143,7 +1456,9 @@
     score = questions.filter(question => question.countedCorrect).length;
     certLine1.innerHTML = L().completed(levelName(levelKey), score, QUIZ_LEN);
     progressFill.style.width = '100%';
+    hideSaveStatus();
     showModal(certModal);
+    saveAchievement();
   }
   function backToLevelMenu(){
     hideModal(certModal);
@@ -1167,7 +1482,10 @@
   }
   async function copyCertificate(){
     const lvl = levelName(levelKey);
-    const text = L().copyText(lvl, score, QUIZ_LEN, nowStamp());
+    let text = L().copyText(lvl, score, QUIZ_LEN, nowStamp());
+    if(currentStudent){
+      text += '\nStudent: ' + currentStudent.studentName + ' (' + (currentStudent.className || 'No class') + ')';
+    }
     try{
       await navigator.clipboard.writeText(text);
       copyBtn.innerHTML = L().copied;
@@ -1197,6 +1515,15 @@
     setTimeout(() => { confettiWrap.innerHTML = ''; }, 2200);
   }
 
+  studentLoginBtn.addEventListener('click', validateStudentCode);
+  skipLoginBtn.addEventListener('click', skipStudentLogin);
+  studentCodeInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      validateStudentCode();
+    }
+  });
+
   notationToggle.addEventListener('click', () => {
     useSymbolNotation = !useSymbolNotation;
     try{ localStorage.setItem('mmt_substitution_quiz_symbol_notation', useSymbolNotation ? '1' : '0'); }catch(_){ }
@@ -1221,7 +1548,7 @@
 
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Enter'){
-      if(levelModal.classList.contains('show') || certModal.classList.contains('show')) return;
+      if((studentLoginBack && !studentLoginBack.classList.contains('hidden')) || levelModal.classList.contains('show') || certModal.classList.contains('show')) return;
       e.preventDefault();
       handleEnterOrButton();
     }
@@ -1236,6 +1563,7 @@
     if(saved === '0') useSymbolNotation = false;
   }catch(_){ }
   syncNotationToggle();
+  initFirebase();
   language = 'en';
   applyLanguage();
   showModal(levelModal);
