@@ -679,6 +679,42 @@
     .studentChip{display:none;align-items:center;justify-content:center;gap:8px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid rgba(22,163,74,.22);font-weight:1000;padding:8px 12px;font-size:13px;justify-self:end;}
     .studentChip.show{display:inline-flex;}
 
+
+    /* Completion modal: guest certificate vs logged-in platform finish */
+    .certWrap.platformMode{align-items:flex-start;}
+    .completionIcon{
+      width:96px;height:96px;border-radius:22px;display:flex;align-items:center;justify-content:center;
+      font-size:46px;background:#eff6ff;border:2px solid rgba(37,99,235,.18);flex:0 0 auto;
+    }
+    .completionIcon.guest{background:#fff7ed;border-color:rgba(249,115,22,.18);}
+    .completionIcon.logged{background:#ecfdf5;border-color:rgba(22,163,74,.22);}
+    .completionMeta{
+      margin-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:660px;
+    }
+    .miniStat{
+      background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:11px 12px;
+    }
+    .miniStat .label{font-size:12px;font-weight:1000;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
+    .miniStat .value{margin-top:3px;font-size:18px;font-weight:1000;color:#0f172a;}
+    .featurePreview{
+      margin-top:18px;max-width:680px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px 16px;
+    }
+    .featurePreviewTitle{font-weight:1000;margin-bottom:8px;color:#0f172a;}
+    .featureGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;}
+    .featureItem{font-weight:850;color:#334155;font-size:14px;display:flex;gap:7px;align-items:flex-start;}
+    .featureItem span{color:#16a34a;font-weight:1000;}
+    .btn.submitBlue{background:#dbeafe;color:#1d4ed8;}
+    .btn.submitGreen{background:#dcfce7;color:#166534;}
+    .btn.submitBlue:hover,.btn.submitGreen:hover{filter:brightness(.98);}
+    .saveStatus{
+      display:none;margin-left:2px;align-self:center;font-weight:1000;color:#64748b;
+    }
+    .saveStatus.show{display:inline-flex;}
+    @media(max-width:780px){
+      .completionMeta,.featureGrid{grid-template-columns:1fr;}
+    }
+
+
   </style>
 </head>
 <body>
@@ -775,20 +811,25 @@
 
 <div class="modalBack" id="certModalBack">
   <div class="modal">
-    <div class="modalHead">Certificate</div>
+    <div class="modalHead" id="certModalHead">Certificate</div>
     <div class="modalBody">
-      <div class="certWrap">
-        <div class="trophyBox">🏆</div>
+      <div class="certWrap" id="certWrap">
+        <div class="completionIcon guest" id="completionIcon">🏆</div>
         <div>
           <div id="certText" class="certText">You completed the quiz.</div>
-          <div class="certSub">Screenshot this and paste into Google Classroom.</div>
+          <div class="certSub" id="certSub">Screenshot this and paste into Google Classroom.</div>
+          <div class="completionMeta" id="completionMeta" style="display:none;"></div>
+          <div class="featurePreview" id="featurePreview" style="display:none;"></div>
         </div>
       </div>
     </div>
-    <div class="modalActions">
+    <div class="modalActions" id="certActions">
       <button class="btn primary" id="copyBtn" type="button">Copy to clipboard</button>
       <button class="btn" id="sameLevelBtn" type="button">Close</button>
       <button class="btn danger" id="levelsBtn" type="button">Back to level menu</button>
+      <button class="btn submitBlue" id="submitCompleteBtn" type="button" style="display:none;">Submit to complete</button>
+      <button class="btn submitGreen" id="submitMenuBtn" type="button" style="display:none;">Submit and back to menu</button>
+      <span class="saveStatus" id="saveStatus">Saving...</span>
     </div>
   </div>
 </div>
@@ -801,6 +842,8 @@ import {
   getDoc,
   collection,
   addDoc,
+  setDoc,
+  increment,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import {
@@ -834,6 +877,8 @@ import {
   let currentStudent = null;
   let guestMode = false;
   let achievementSavedForRun = false;
+  let pendingCompletionMode = null;
+  let recentBadges = [];
 
   const LEVELS = {
     sweet:{ name:'Sweet', banner:['#22c55e','#0f766e'], range:[1,10], allowNeg:false, visual:'full' },
@@ -864,10 +909,19 @@ import {
   const feedbackBad = document.getElementById('feedbackBad');
   const backBtn = document.getElementById('backBtn');
   const resetBtn = document.getElementById('resetBtn');
+  const certModalHead = document.getElementById('certModalHead');
+  const certWrap = document.getElementById('certWrap');
+  const completionIcon = document.getElementById('completionIcon');
   const certText = document.getElementById('certText');
+  const certSub = document.getElementById('certSub');
+  const completionMeta = document.getElementById('completionMeta');
+  const featurePreview = document.getElementById('featurePreview');
   const copyBtn = document.getElementById('copyBtn');
   const sameLevelBtn = document.getElementById('sameLevelBtn');
   const levelsBtn = document.getElementById('levelsBtn');
+  const submitCompleteBtn = document.getElementById('submitCompleteBtn');
+  const submitMenuBtn = document.getElementById('submitMenuBtn');
+  const saveStatus = document.getElementById('saveStatus');
   const studentLoginModalBack = document.getElementById('studentLoginModalBack');
   const studentCodeInput = document.getElementById('studentCodeInput');
   const studentLoginBtn = document.getElementById('studentLoginBtn');
@@ -1024,10 +1078,37 @@ import {
     }
   }
 
+  function masteryLevelFromPercent(percent){
+    if(percent >= 90) return 'Mastery';
+    if(percent >= 75) return 'Proficient';
+    if(percent >= 50) return 'Developing';
+    return 'Beginning';
+  }
+
+  function calculateXp(percent){
+    let xp = 5;
+    if(percent >= 80) xp += 5;
+    if(percent === 100) xp += 10;
+    return xp;
+  }
+
+  function buildBadgeList(percent){
+    const badges = [];
+    badges.push({ id:'quiz-complete', name:'Quiz Complete', icon:'✅' });
+    if(percent === 100) badges.push({ id:'perfect-score', name:'Perfect Score', icon:'🎯' });
+    if(percent >= 80) badges.push({ id:'accuracy-star', name:'Accuracy Star', icon:'⭐' });
+    if(score >= 10) badges.push({ id:'equation-progress', name:'Equation Progress', icon:'🧠' });
+    return badges;
+  }
+
   async function saveAchievement(){
-    if(achievementSavedForRun || !currentStudent || !levelKey) return;
-    achievementSavedForRun = true;
+    if(achievementSavedForRun || !currentStudent || !levelKey) return true;
     const cfg = LEVELS[levelKey];
+    const percent = Math.round((score / QUIZ_LEN) * 100);
+    const xpAwarded = calculateXp(percent);
+    recentBadges = buildBadgeList(percent);
+    const completedAtClient = new Date().toISOString();
+
     try{
       await addDoc(collection(db, 'achievements'), {
         accessMode: 'registered',
@@ -1038,18 +1119,80 @@ import {
         englishLevel: cfg.name,
         score,
         total: QUIZ_LEN,
-        percent: Math.round((score / QUIZ_LEN) * 100),
+        percent,
+        xpAwarded,
+        badgesEarned: recentBadges.map(b => b.id),
+        masteryLevel: masteryLevelFromPercent(percent),
         studentCode: currentStudent.studentCode,
         studentName: currentStudent.name,
         className: currentStudent.className,
         teacher: currentStudent.teacher,
-        dateClient: new Date().toISOString(),
+        dateClient: completedAtClient,
         createdAt: serverTimestamp()
       });
+
+      achievementSavedForRun = true;
+
+      // Best-effort platform scaffolding. If Firestore rules do not yet allow these
+      // documents, the main achievement save above still succeeds.
+      savePlatformProgress({ cfg, percent, xpAwarded, badges: recentBadges, completedAtClient }).catch(error => {
+        console.warn('Platform progress save skipped:', error);
+      });
+
+      return true;
     }catch(error){
       achievementSavedForRun = false;
       console.error('Achievement save failed:', error);
+      return false;
     }
+  }
+
+  async function savePlatformProgress({ cfg, percent, xpAwarded, badges, completedAtClient }){
+    if(!currentStudent) return;
+    const studentRef = doc(db, 'students', currentStudent.studentCode);
+    const masteryRef = doc(db, 'students', currentStudent.studentCode, 'mastery', TOOL_ID);
+
+    await setDoc(studentRef, {
+      xp: increment(xpAwarded),
+      lastActiveAt: serverTimestamp(),
+      lastActiveClient: completedAtClient,
+      lastTopic: TOPIC_NAME,
+      lastLevel: cfg.name,
+      lastScore: score,
+      lastTotal: QUIZ_LEN,
+      lastPercent: percent,
+      totalQuizCompletions: increment(1)
+    }, { merge:true });
+
+    await setDoc(masteryRef, {
+      tool: TOOL_ID,
+      topic: TOPIC_NAME,
+      topicId: TOOL_ID,
+      latestLevel: levelKey,
+      latestEnglishLevel: cfg.name,
+      latestScore: score,
+      latestTotal: QUIZ_LEN,
+      latestPercent: percent,
+      masteryLevel: masteryLevelFromPercent(percent),
+      attempts: increment(1),
+      xp: increment(xpAwarded),
+      lastCompletedAt: serverTimestamp(),
+      lastCompletedClient: completedAtClient,
+      recommendedNextPractice: percent >= 80 ? 'Try the next level or another equations tool.' : 'Redo this level and focus on inverse operations.',
+      redoMistakesAvailable: true
+    }, { merge:true });
+
+    await Promise.all(badges.map(badge => setDoc(
+      doc(db, 'students', currentStudent.studentCode, 'badges', badge.id),
+      {
+        ...badge,
+        tool: TOOL_ID,
+        topic: TOPIC_NAME,
+        earnedAt: serverTimestamp(),
+        earnedAtClient: completedAtClient
+      },
+      { merge:true }
+    )));
   }
 
   function nowStamp(){
@@ -1438,11 +1581,97 @@ import {
 
   function showCertificate(){
     const cfg = LEVELS[levelKey];
-    saveAchievement();
-    certText.textContent = `You completed Addition/Subtraction Equations, Level ${cfg.name}, and got ${score} out of ${QUIZ_LEN}. Paste a screenshot into Google Classroom.`;
+    const percent = Math.round((score / QUIZ_LEN) * 100);
     progressFill.style.width = '100%';
+    recentBadges = buildBadgeList(percent);
+
+    completionMeta.style.display = 'none';
+    featurePreview.style.display = 'none';
+    saveStatus.classList.remove('show');
+    saveStatus.textContent = 'Saving...';
+    submitCompleteBtn.disabled = false;
+    submitMenuBtn.disabled = false;
+
+    if(currentStudent && !guestMode){
+      pendingCompletionMode = 'logged-in';
+      certModalHead.textContent = 'Quiz complete';
+      certWrap.classList.add('platformMode');
+      completionIcon.className = 'completionIcon logged';
+      completionIcon.textContent = '✅';
+      certText.textContent = `You completed ${TOPIC_NAME}, Level ${cfg.name}, and got ${score} out of ${QUIZ_LEN}.`;
+      certSub.textContent = `Ready to save this result to ${currentStudent.name}'s dashboard. Your teacher will be able to view it once submitted.`;
+      completionMeta.style.display = 'grid';
+      completionMeta.innerHTML = `
+        <div class="miniStat"><div class="label">Score</div><div class="value">${score}/${QUIZ_LEN} (${percent}%)</div></div>
+        <div class="miniStat"><div class="label">Mastery</div><div class="value">${masteryLevelFromPercent(percent)}</div></div>
+        <div class="miniStat"><div class="label">XP earned</div><div class="value">+${calculateXp(percent)} XP</div></div>
+        <div class="miniStat"><div class="label">Badges</div><div class="value">${recentBadges.map(b => `${b.icon} ${b.name}`).join(', ')}</div></div>
+      `;
+      featurePreview.style.display = 'block';
+      featurePreview.innerHTML = `
+        <div class="featurePreviewTitle">Platform progress ready</div>
+        <div class="featureGrid">
+          <div class="featureItem"><span>✓</span> Result saves to the student dashboard</div>
+          <div class="featureItem"><span>✓</span> Teacher dashboard can show this achievement</div>
+          <div class="featureItem"><span>✓</span> XP, badges and mastery data are prepared</div>
+          <div class="featureItem"><span>✓</span> Future redo-mistakes and smart revision data are scaffolded</div>
+        </div>
+      `;
+      copyBtn.style.display = 'none';
+      sameLevelBtn.style.display = 'none';
+      levelsBtn.style.display = 'none';
+      submitCompleteBtn.style.display = 'inline-block';
+      submitMenuBtn.style.display = 'inline-block';
+    }else{
+      pendingCompletionMode = 'guest';
+      certModalHead.textContent = 'Certificate';
+      certWrap.classList.remove('platformMode');
+      completionIcon.className = 'completionIcon guest';
+      completionIcon.textContent = '🏆';
+      certText.textContent = `You completed ${TOPIC_NAME}, Level ${cfg.name}, and got ${score} out of ${QUIZ_LEN}. Paste a screenshot into Google Classroom.`;
+      certSub.textContent = `Screenshot this and paste into Google Classroom. Next time, enter your student code to save your progress online.`;
+      featurePreview.style.display = 'block';
+      featurePreview.innerHTML = `
+        <div class="featurePreviewTitle">With an MMT student code you can:</div>
+        <div class="featureGrid">
+          <div class="featureItem"><span>✓</span> Save achievements online</div>
+          <div class="featureItem"><span>✓</span> Track mastery and progress</div>
+          <div class="featureItem"><span>✓</span> Build streaks, XP and badges</div>
+          <div class="featureItem"><span>✓</span> Let your teacher view your completed work</div>
+        </div>
+      `;
+      copyBtn.style.display = 'inline-block';
+      sameLevelBtn.style.display = 'inline-block';
+      levelsBtn.style.display = 'inline-block';
+      submitCompleteBtn.style.display = 'none';
+      submitMenuBtn.style.display = 'none';
+    }
+
     showModal(certModalBack);
   }
+
+  async function submitLoggedInCompletion(goToMenu = false){
+    submitCompleteBtn.disabled = true;
+    submitMenuBtn.disabled = true;
+    saveStatus.textContent = 'Saving...';
+    saveStatus.classList.add('show');
+    const saved = await saveAchievement();
+    if(!saved){
+      saveStatus.textContent = 'Could not save. Please try again.';
+      submitCompleteBtn.disabled = false;
+      submitMenuBtn.disabled = false;
+      return;
+    }
+    saveStatus.textContent = 'Saved to dashboard ✓';
+    certText.textContent = 'Result saved to your dashboard.';
+    certSub.textContent = `Your ${TOPIC_NAME} result has been saved and shared with your teacher.`;
+    if(goToMenu){
+      setTimeout(() => backToLevels(), 650);
+    }else{
+      setTimeout(() => hideModal(certModalBack), 650);
+    }
+  }
+
   async function copyCertificate(){
     const cfg = LEVELS[levelKey];
     const text =
@@ -2155,6 +2384,8 @@ Completed: ${nowStamp()}
     hideModal(certModalBack);
     backToLevels();
   });
+  submitCompleteBtn.addEventListener('click', () => submitLoggedInCompletion(false));
+  submitMenuBtn.addEventListener('click', () => submitLoggedInCompletion(true));
   prevStepBtn.addEventListener('click', () => stepQuestion(-1));
   nextStepBtn.addEventListener('click', () => stepQuestion(1));
   enterBtn.addEventListener('click', handleEnter);
