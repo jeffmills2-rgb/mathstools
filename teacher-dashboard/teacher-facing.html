@@ -106,6 +106,20 @@
       body.printCodeCards .codePrintSheet{display:block!important}
       body.printCodeCards .codeCardsGrid{grid-template-rows:repeat(6,42mm)}
     }
+
+    .profileModalBackdrop{position:fixed;inset:0;background:rgba(15,23,42,.56);z-index:900;display:none;align-items:center;justify-content:center;padding:18px}
+    .profileModalBackdrop.show{display:flex}
+    .profileModal{width:min(1080px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:0 30px 80px rgba(15,23,42,.34)}
+    .profileModalHead{position:sticky;top:0;z-index:2;background:linear-gradient(135deg,#0f172a,#123b7a 58%,#2563eb);color:white;padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+    .profileModalTitle{font-size:1.35rem;font-weight:1000;letter-spacing:-.035em}.profileModalSub{font-size:.86rem;font-weight:800;opacity:.86;margin-top:3px}
+    .profileModalBody{padding:16px;display:grid;gap:14px}.profileCloseBtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);color:white}.profileCloseBtn:hover{background:rgba(255,255,255,.22)}
+    .profileStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.profileStat{border:1px solid var(--line);background:#f8fafc;border-radius:16px;padding:12px}.profileStat strong{font-size:1.65rem;letter-spacing:-.05em}.profileStat span{display:block;color:var(--muted);font-size:.75rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+    .profileGrid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:14px}.profileSection{border:1px solid var(--line);border-radius:18px;background:white;padding:14px}.profileSectionTitle{font-size:1rem;font-weight:1000;margin:0 0 9px}.profileTopicList{display:grid;gap:8px}.profileTopicRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid #edf2f7;border-radius:14px;padding:10px;background:#f8fafc}.profileTopicName{font-weight:950}.profileTopicMeta{font-size:.78rem;color:var(--muted);font-weight:820;margin-top:2px}.profileTopicScore{font-size:1rem;font-weight:1000}.profileAttemptTable{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:16px}.profileAttemptTable table{min-width:760px}.profileAttemptTable th,.profileAttemptTable td{font-size:.84rem}.profileActions{display:flex;gap:8px;flex-wrap:wrap}.mutedSmall{font-size:.82rem;color:var(--muted);font-weight:800;line-height:1.35}
+    @media(max-width:900px){.profileStats{grid-template-columns:repeat(2,1fr)}.profileGrid{grid-template-columns:1fr}.profileModalBackdrop{padding:8px}.profileModal{max-height:96vh}}
+    @media print{.profileModalBackdrop{display:none!important}}
+    .masteryBadge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;font-size:.72rem;font-weight:950}.masterySecure{background:var(--good-soft);color:#166534}.masteryConsolidating{background:var(--warn-soft);color:#92400e}.masteryDeveloping{background:var(--bad-soft);color:#991b1b}.nextTaskBox{border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;border-radius:16px;padding:12px;font-weight:850;line-height:1.4}.profilePrintSummary{display:none}.certificateLine{border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:9px;font-size:.82rem;font-weight:800;line-height:1.35}.activityDate{font-size:.75rem;color:var(--muted);font-weight:850;margin-top:2px}.compareText{font-size:.75rem;font-weight:900;margin-top:3px}.comparePositive{color:#166534}.compareNegative{color:#991b1b}.compareNeutral{color:#64748b}
+    @media print{body.printStudentProfile{background:white!important;padding:0!important}body.printStudentProfile .topbar,body.printStudentProfile .wrap,body.printStudentProfile .footer{display:none!important}body.printStudentProfile .profileModalBackdrop{display:block!important;position:static!important;background:white!important;padding:0!important}body.printStudentProfile .profileModal{width:100%!important;max-height:none!important;overflow:visible!important;box-shadow:none!important;border:none!important;border-radius:0!important}body.printStudentProfile .profileModalHead{position:static!important;background:#0f172a!important;color:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}body.printStudentProfile .profileActions,body.printStudentProfile .profileCloseBtn{display:none!important}body.printStudentProfile .profileAttemptTable{max-height:none!important;overflow:visible!important}.profilePrintSummary{display:block}}
+
   </style>
 </head>
 <body>
@@ -212,6 +226,19 @@
         </div>
 
         <aside class="rightStack">
+
+          <section class="panel">
+            <div class="sectionHead"><div><h2>Recent activity</h2><div class="sectionHint">Latest completions in the current view.</div></div></div>
+            <div id="recentActivityList" class="attentionList"></div>
+            <div id="recentActivityEmpty" class="empty">No recent activity for the current filters.</div>
+          </section>
+
+          <section class="panel">
+            <div class="sectionHead"><div><h2>Missing students</h2><div class="sectionHint">Students with no completions in the selected date/topic/level view.</div></div></div>
+            <div id="missingList" class="attentionList"></div>
+            <div id="missingEmpty" class="empty">Everyone has at least one completion in this view.</div>
+          </section>
+
           <section class="panel">
             <div class="sectionHead"><div><h2>Needs attention</h2><div class="sectionHint">Students with no attempts, low averages, or no recent activity.</div></div></div>
             <div id="attentionList" class="attentionList"></div>
@@ -233,6 +260,21 @@
       </section>
     </section>
   </main>
+
+
+
+  <div id="studentProfileBackdrop" class="profileModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="studentProfileTitle">
+    <section class="profileModal">
+      <div class="profileModalHead">
+        <div>
+          <div id="studentProfileTitle" class="profileModalTitle">Student Achievement Profile</div>
+          <div id="studentProfileSub" class="profileModalSub">Achievement history</div>
+        </div>
+        <button id="closeStudentProfileBtn" class="profileCloseBtn tiny" type="button">Close</button>
+      </div>
+      <div id="studentProfileBody" class="profileModalBody"></div>
+    </section>
+  </div>
 
   <section id="codePrintSheet" class="codePrintSheet" aria-hidden="true"></section>
 
@@ -268,7 +310,7 @@
       loginPanel:$('loginPanel'), dashboardShell:$('dashboardShell'), teacherCodeInput:$('teacherCodeInput'), loginBtn:$('loginBtn'), loginMessage:$('loginMessage'),
       teacherChip:$('teacherChip'), logoutBtn:$('logoutBtn'), welcomeTitle:$('welcomeTitle'), welcomeSub:$('welcomeSub'), firebaseStatus:$('firebaseStatus'), teacherCodeStatus:$('teacherCodeStatus'), visibleAttemptStatus:$('visibleAttemptStatus'),
       searchInput:$('searchInput'), classFilter:$('classFilter'), topicFilter:$('topicFilter'), levelFilter:$('levelFilter'), rangeFilter:$('rangeFilter'), refreshBtn:$('refreshBtn'), copySummaryBtn:$('copySummaryBtn'), exportCsvBtn:$('exportCsvBtn'), printCodeCardsBtn:$('printCodeCardsBtn'), printBtn:$('printBtn'), mainMessage:$('mainMessage'),
-      sumClasses:$('sumClasses'), sumStudents:$('sumStudents'), sumAttempts:$('sumAttempts'), sumAverage:$('sumAverage'), sumRecent:$('sumRecent'), chartRangeLabel:$('chartRangeLabel'), weeklyChart:$('weeklyChart'), classCards:$('classCards'), classEmpty:$('classEmpty'), heatmapWrap:$('heatmapWrap'), studentSort:$('studentSort'), studentTableBody:$('studentTableBody'), studentEmpty:$('studentEmpty'), attentionList:$('attentionList'), attentionEmpty:$('attentionEmpty'), growthList:$('growthList'), growthEmpty:$('growthEmpty'), studentDetail:$('studentDetail'), detailEmpty:$('detailEmpty'), codePrintSheet:$('codePrintSheet')
+      sumClasses:$('sumClasses'), sumStudents:$('sumStudents'), sumAttempts:$('sumAttempts'), sumAverage:$('sumAverage'), sumRecent:$('sumRecent'), chartRangeLabel:$('chartRangeLabel'), weeklyChart:$('weeklyChart'), classCards:$('classCards'), classEmpty:$('classEmpty'), heatmapWrap:$('heatmapWrap'), studentSort:$('studentSort'), studentTableBody:$('studentTableBody'), studentEmpty:$('studentEmpty'), attentionList:$('attentionList'), attentionEmpty:$('attentionEmpty'), growthList:$('growthList'), growthEmpty:$('growthEmpty'), studentDetail:$('studentDetail'), detailEmpty:$('detailEmpty'), recentActivityList:$('recentActivityList'), recentActivityEmpty:$('recentActivityEmpty'), missingList:$('missingList'), missingEmpty:$('missingEmpty'), studentProfileBackdrop:$('studentProfileBackdrop'), studentProfileTitle:$('studentProfileTitle'), studentProfileSub:$('studentProfileSub'), studentProfileBody:$('studentProfileBody'), closeStudentProfileBtn:$('closeStudentProfileBtn'), codePrintSheet:$('codePrintSheet')
     };
 
     function normaliseCode(value){ return String(value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''); }
@@ -462,6 +504,8 @@
       renderClassCards(students,attempts);
       renderHeatmap(students,attempts);
       renderStudentTable(students,attempts);
+      renderRecentActivity(students,attempts);
+      renderMissingStudents(students,attempts);
       renderAttention(students,attempts);
       renderGrowth(students,attempts);
       renderSelectedStudent();
@@ -585,13 +629,73 @@
       els.studentEmpty.classList.toggle('show',rows.length===0);
     }
 
+
+    function masteryFor(value){
+      if(value>=80) return {label:'Secure', cls:'masterySecure'};
+      if(value>=50) return {label:'Consolidating', cls:'masteryConsolidating'};
+      return {label:'Developing', cls:'masteryDeveloping'};
+    }
+
+    function classTopicAverage(className, topic){
+      const codes=new Set(allStudents.filter(s=>(s.className||'')===(className||'')).map(s=>normaliseCode(s.studentCode||s.id)));
+      const list=allAchievements.filter(a=>codes.has(studentCodeOf(a)) && topicOf(a)===topic);
+      return list.length?avg(list):null;
+    }
+
+    function allStudentAttempts(student){
+      const code=normaliseCode(student.studentCode||student.id);
+      return allAchievements.filter(a=>studentCodeOf(a)===code).sort((a,b)=>dateValue(b)-dateValue(a));
+    }
+
+    function attentionReasonsFor(student,attempts){
+      const st=studentStats(student,attempts);
+      const reasons=[];
+      if(st.attempts===0) reasons.push('No completions in the current view.');
+      if(st.attempts>0 && st.average<LOW_AVERAGE) reasons.push(`Average is ${st.average}% across ${st.attempts} completion${st.attempts===1?'':'s'}.`);
+      if(st.attempts>0 && daysAgo(st.latest)>ATTENTION_DAYS) reasons.push(`No completion for ${daysAgo(st.latest)} days.`);
+      const groups=topicSummaryFor(st.allList || allStudentAttempts(student));
+      const repeatedLow=groups.find(g=>g.count>=2 && g.average<LOW_AVERAGE);
+      if(repeatedLow) reasons.push(`Repeated low scores in ${repeatedLow.topic} (${repeatedLow.average}% average).`);
+      return reasons;
+    }
+
+    function suggestNextTask(student,list=allStudentAttempts(student)){
+      if(!list.length) return 'Suggested next task: start with an accessible Sweet or Mild quiz to build confidence and establish a first completion.';
+      const topics=topicSummaryFor(list);
+      const developing=topics.filter(t=>t.average<50).sort((a,b)=>a.average-b.average)[0];
+      if(developing) return `Suggested next task: revisit ${developing.topic} at the same or easier level. Aim to move from Developing to Consolidating.`;
+      const consolidating=topics.filter(t=>t.average<80).sort((a,b)=>a.average-b.average)[0];
+      if(consolidating) return `Suggested next task: practise ${consolidating.topic} again and aim for 80%+ to show secure fluency.`;
+      const recent=list[0];
+      return `Suggested next task: try a higher level or a new topic. Recent results suggest ${studentNameOf(student).split(' ')[0]} is ready for extension.`;
+    }
+
+
+    function renderRecentActivity(students,attempts){
+      const studentLookup=new Map(students.map(s=>[normaliseCode(s.studentCode||s.id),s]));
+      const sorted=attempts.slice().sort((a,b)=>dateValue(b)-dateValue(a)).slice(0,10);
+      els.recentActivityList.innerHTML=sorted.map(a=>{
+        const s=studentLookup.get(studentCodeOf(a))||{};
+        return `<div class="attentionItem" data-code="${escapeHTML(studentCodeOf(a))}"><div class="attentionIcon">✅</div><div><div class="attentionName">${escapeHTML(studentNameOf(s))}</div><div class="attentionReason">${escapeHTML(topicOf(a))} · ${escapeHTML(levelOf(a))} · ${pct(a)}%</div><div class="activityDate">${escapeHTML(dateTimeText(dateValue(a)))}</div></div></div>`;
+      }).join('');
+      els.recentActivityEmpty.classList.toggle('show',sorted.length===0);
+    }
+
+    function renderMissingStudents(students,attempts){
+      const attempted=new Set(attempts.map(studentCodeOf));
+      const missing=students.filter(s=>!attempted.has(normaliseCode(s.studentCode||s.id))).slice().sort((a,b)=>studentNameOf(a).localeCompare(studentNameOf(b)));
+      els.missingList.innerHTML=missing.slice(0,12).map(s=>`<div class="attentionItem" data-code="${escapeHTML(s.studentCode||s.id)}"><div class="attentionIcon">⬜</div><div><div class="attentionName">${escapeHTML(studentNameOf(s))}</div><div class="attentionReason">${escapeHTML(s.className||'')} · no completion for the selected filters.</div></div></div>`).join('');
+      els.missingEmpty.classList.toggle('show',missing.length===0);
+    }
+
     function renderAttention(students,attempts){
       const items=[];
       students.forEach(s=>{
-        const st=studentStats(s,attempts);
-        if(st.attempts===0) items.push({s,kind:'🟠',reason:'No completions in the current view.'});
-        else if(st.average<LOW_AVERAGE) items.push({s,kind:'🔴',reason:`Average is ${st.average}% across ${st.attempts} completion${st.attempts===1?'':'s'}.`});
-        else if(daysAgo(st.latest)>ATTENTION_DAYS) items.push({s,kind:'🟡',reason:`No completion for ${daysAgo(st.latest)} days.`});
+        const reasons=attentionReasonsFor(s,attempts);
+        if(reasons.length){
+          const urgent=reasons.some(r=>r.includes('Repeated low') || r.includes('Average is'));
+          items.push({s,kind:urgent?'🔴':'🟠',reason:reasons.join(' ')});
+        }
       });
       els.attentionList.innerHTML=items.slice(0,12).map(item=>`<div class="attentionItem" data-code="${escapeHTML(item.s.studentCode||item.s.id)}"><div class="attentionIcon">${item.kind}</div><div><div class="attentionName">${escapeHTML(studentNameOf(item.s))}</div><div class="attentionReason">${escapeHTML(item.s.className||'')} · ${escapeHTML(item.reason)}</div></div></div>`).join('');
       els.attentionEmpty.classList.toggle('show',items.length===0);
@@ -623,6 +727,153 @@
       return 'Recommended next: try a higher level or a new topic to extend fluency.';
     }
 
+    function topicSummaryFor(list){
+      const groups=new Map();
+      list.forEach(a=>{
+        const topic=topicOf(a);
+        if(!groups.has(topic)) groups.set(topic,[]);
+        groups.get(topic).push(a);
+      });
+      return [...groups.entries()].map(([topic,arr])=>({
+        topic,
+        count:arr.length,
+        average:avg(arr),
+        best:best(arr),
+        latest:latestDate(arr),
+        levels:[...new Set(arr.map(levelOf).filter(Boolean))].join(', ')
+      })).sort((a,b)=>String(a.topic).localeCompare(String(b.topic)));
+    }
+
+    function escapeCsvCell(value){
+      return `"${String(value ?? '').replace(/"/g,'""')}"`;
+    }
+
+    function buildStudentCsv(student,list){
+      const headers=['Student','Class','Student Code','Topic','Level','Score','Total','Percent','Date'];
+      const rows=list.map(a=>[studentNameOf(student),student.className||'',student.studentCode||student.id,topicOf(a),levelOf(a),num(a.score),num(a.total),pct(a),dateTimeText(dateValue(a))]);
+      return [headers,...rows].map(row=>row.map(escapeCsvCell).join(',')).join('\n');
+    }
+
+    function downloadStudentCsv(student,list){
+      const csv=buildStudentCsv(student,list);
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      const safeName=studentNameOf(student).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'student';
+      a.href=url;
+      a.download=`mmt-${safeName}-achievements.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildStudentSummaryText(student,list){
+      const code=student.studentCode||student.id;
+      const latest=latestDate(list);
+      const topicRows=topicSummaryFor(list).map(t=>`- ${t.topic}: ${t.count} completion${t.count===1?'':'s'}, average ${t.average}%, best ${t.best}%, latest ${dateText(t.latest)}`).join('\n') || '- No topics yet';
+      const attemptRows=list.map(a=>`- ${dateTimeText(dateValue(a))}: ${topicOf(a)} · ${levelOf(a)} · ${scoreText(a)} · ${pct(a)}%`).join('\n') || '- No achievements yet';
+      return `MMT Student Achievement Summary\nStudent: ${studentNameOf(student)}\nClass: ${student.className||''}\nStudent code: ${code}\nTotal completions: ${list.length}\nAverage: ${list.length?avg(list)+'%':'—'}\nBest: ${list.length?best(list)+'%':'—'}\nMost recent: ${latest.getTime()?dateTimeText(latest):'—'}\n\nTopic summary\n${topicRows}\n\nAchievement history\n${attemptRows}`;
+    }
+
+
+
+    function buildCertificateText(student,list){
+      const name=studentNameOf(student);
+      if(!list.length) return `${name} has no saved achievements yet.`;
+      return list.map(a=>`${name} completed ${topicOf(a)}, ${levelOf(a)} level, scoring ${scoreText(a)} (${pct(a)}%) on ${dateText(dateValue(a))}.`).join('\n');
+    }
+
+    function topicRowHtml(student,t){
+      const mastery=masteryFor(t.average);
+      const classAvg=classTopicAverage(student.className,t.topic);
+      let compare='No class comparison yet', compareCls='compareNeutral';
+      if(classAvg!==null){
+        const diff=t.average-classAvg;
+        if(diff>0){ compare=`${diff} percentage point${diff===1?'':'s'} above class average (${classAvg}%)`; compareCls='comparePositive'; }
+        else if(diff<0){ compare=`${Math.abs(diff)} percentage point${Math.abs(diff)===1?'':'s'} below class average (${classAvg}%)`; compareCls='compareNegative'; }
+        else { compare=`Matches class average (${classAvg}%)`; compareCls='compareNeutral'; }
+      }
+      return `<div class="profileTopicRow"><div><div class="profileTopicName">${escapeHTML(t.topic)} <span class="masteryBadge ${mastery.cls}">${mastery.label}</span></div><div class="profileTopicMeta">${t.count} completion${t.count===1?'':'s'} · best ${t.best}% · latest ${dateText(t.latest)}${t.levels?' · '+escapeHTML(t.levels):''}</div><div class="compareText ${compareCls}">${escapeHTML(compare)}</div></div><div class="profileTopicScore">${t.average}%</div></div>`;
+    }
+
+    function openStudentProfile(student){
+      const code=normaliseCode(student.studentCode||student.id);
+      selectedStudentCode=code;
+      const list=allStudentAttempts(student);
+      const currentViewList=filteredAchievements().filter(a=>studentCodeOf(a)===code).sort((a,b)=>dateValue(b)-dateValue(a));
+      const topicRows=topicSummaryFor(list);
+      const latest=latestDate(list);
+      const reasons=attentionReasonsFor(student,filteredAchievements());
+      const certificates=list.slice(0,5).map(a=>`<div class="certificateLine">${escapeHTML(`${studentNameOf(student)} completed ${topicOf(a)}, ${levelOf(a)} level, scoring ${scoreText(a)} (${pct(a)}%) on ${dateText(dateValue(a))}.`)}</div>`).join('') || '<div class="empty show">No certificates available yet.</div>';
+      els.studentProfileTitle.textContent=studentNameOf(student);
+      els.studentProfileSub.textContent=`${student.className||'No class'} · ${code} · full achievement history`;
+      els.studentProfileBody.innerHTML=`
+        <div class="profileActions">
+          <button id="copyStudentProfileBtn" class="secondary tiny" type="button">Copy student summary</button>
+          <button id="copyStudentCertificatesBtn" class="secondary tiny" type="button">Copy certificates</button>
+          <button id="exportStudentProfileBtn" class="secondary tiny" type="button">Export student CSV</button>
+          <button id="printStudentProfileBtn" class="neutral tiny" type="button">Print parent/student summary</button>
+        </div>
+        <div class="profileStats">
+          <div class="profileStat"><strong>${list.length}</strong><span>Total completions</span></div>
+          <div class="profileStat"><strong>${list.length?avg(list)+'%':'—'}</strong><span>Average</span></div>
+          <div class="profileStat"><strong>${list.length?best(list)+'%':'—'}</strong><span>Best</span></div>
+          <div class="profileStat"><strong>${topicRows.length}</strong><span>Topics</span></div>
+          <div class="profileStat"><strong>${latest.getTime()?dateText(latest):'—'}</strong><span>Most recent</span></div>
+        </div>
+        <div class="nextTaskBox">${escapeHTML(suggestNextTask(student,list))}</div>
+        ${reasons.length?`<div class="smallCard"><div class="smallTitle">Needs follow-up because…</div><div class="smallMeta">${escapeHTML(reasons.join(' '))}</div></div>`:''}
+        <div class="smallCard">
+          <div class="smallTitle">Current dashboard view</div>
+          <div class="smallMeta">${currentViewList.length} of ${list.length} achievement${list.length===1?'':'s'} match the current class/topic/level/date filters. The profile below shows this student’s full saved achievement record.</div>
+        </div>
+        <div class="profileGrid">
+          <section class="profileSection">
+            <h3 class="profileSectionTitle">Topic mastery and class comparison</h3>
+            <div class="profileTopicList">
+              ${topicRows.length?topicRows.map(t=>topicRowHtml(student,t)).join(''):'<div class="empty show">No topic achievements yet.</div>'}
+            </div>
+          </section>
+          <section class="profileSection">
+            <h3 class="profileSectionTitle">Achievement certificates</h3>
+            <div class="profileTopicList">${certificates}</div>
+            <p class="mutedSmall">Use “Copy certificates” to copy all certificate lines for this student.</p>
+          </section>
+        </div>
+        <section class="profileSection">
+          <h3 class="profileSectionTitle">Printable summary</h3>
+          <div class="mutedSmall">The print button creates a clean parent/student-style summary with achievement history, next step and topic mastery.</div>
+          <div class="profilePrintSummary">
+            <h2>${escapeHTML(studentNameOf(student))} — Achievement Summary</h2>
+            <p><strong>Class:</strong> ${escapeHTML(student.className||'')} · <strong>Code:</strong> ${escapeHTML(code)}</p>
+            <p><strong>Next step:</strong> ${escapeHTML(suggestNextTask(student,list))}</p>
+          </div>
+        </section>
+        <section class="profileSection">
+          <h3 class="profileSectionTitle">Full achievement history</h3>
+          <div class="profileAttemptTable">
+            ${list.length?`<table><thead><tr><th>Date</th><th>Topic</th><th>Level</th><th>Score</th><th>Percent</th><th>Mastery</th></tr></thead><tbody>${list.map(a=>{const m=masteryFor(pct(a));return `<tr><td>${escapeHTML(dateTimeText(dateValue(a)))}</td><td><strong>${escapeHTML(topicOf(a))}</strong></td><td>${escapeHTML(levelOf(a))}</td><td>${escapeHTML(scoreText(a))}</td><td><span class="badge ${pct(a)>=80?'good':pct(a)>=50?'warn':'bad'}">${pct(a)}%</span></td><td><span class="masteryBadge ${m.cls}">${m.label}</span></td></tr>`}).join('')}</tbody></table>`:'<div class="empty show">No achievements saved for this student yet.</div>'}
+          </div>
+        </section>
+      `;
+      els.studentProfileBackdrop.classList.add('show');
+      const copyBtn=$('copyStudentProfileBtn');
+      const certBtn=$('copyStudentCertificatesBtn');
+      const exportBtn=$('exportStudentProfileBtn');
+      const printBtn=$('printStudentProfileBtn');
+      if(copyBtn) copyBtn.addEventListener('click',async()=>{ await copyText(buildStudentSummaryText(student,list)); showMessage(els.mainMessage,`Copied ${studentNameOf(student)}'s achievement summary.`, 'ok'); });
+      if(certBtn) certBtn.addEventListener('click',async()=>{ await copyText(buildCertificateText(student,list)); showMessage(els.mainMessage,`Copied ${studentNameOf(student)}'s certificate lines.`, 'ok'); });
+      if(exportBtn) exportBtn.addEventListener('click',()=>downloadStudentCsv(student,list));
+      if(printBtn) printBtn.addEventListener('click',()=>{document.body.classList.add('printStudentProfile'); window.print();});
+      renderStudentTable(filteredStudents(),filteredAchievements());
+      renderSelectedStudent();
+    }
+
+    function closeStudentProfile(){
+      els.studentProfileBackdrop.classList.remove('show');
+    }
+
     function renderSelectedStudent(){
       const students=filteredStudents();
       const attempts=filteredAchievements();
@@ -633,10 +884,11 @@
       const list=attempts.filter(a=>studentCodeOf(a)===code).sort((a,b)=>dateValue(b)-dateValue(a));
       const st=studentStats(student,attempts);
       const topics=[...new Set(list.map(topicOf))];
-      const rec=recommendationFor(student,attempts);
+      const rec=suggestNextTask(student,allStudentAttempts(student));
       els.studentDetail.innerHTML=`
         <div class="studentHeader">
           <div class="studentHeadLeft"><div class="avatar">${escapeHTML(initials(studentNameOf(student)))}</div><div><div class="studentName">${escapeHTML(studentNameOf(student))}</div><div class="studentMeta">${escapeHTML(student.className||'')} · ${escapeHTML(code)}</div></div></div>
+          <button type="button" class="secondary tiny" data-open-profile="${escapeHTML(code)}">Open profile</button>
         </div>
         <div class="detailStats"><div class="detailStat"><strong>${st.attempts}</strong><span>Attempts</span></div><div class="detailStat"><strong>${st.attempts?st.average+'%':'—'}</strong><span>Average</span></div><div class="detailStat"><strong>${st.attempts?st.best+'%':'—'}</strong><span>Best</span></div></div>
         <div class="smallCard"><div class="smallTitle">Recommendation</div><div class="smallMeta">${escapeHTML(rec)}</div></div>
@@ -721,10 +973,16 @@
     els.exportCsvBtn.addEventListener('click',exportCsv);
     els.printCodeCardsBtn.addEventListener('click',printStudentCodeCards);
     els.printBtn.addEventListener('click',()=>window.print());
-    window.addEventListener('afterprint',()=>{ document.body.classList.remove('printCodeCards'); if(els.codePrintSheet) els.codePrintSheet.innerHTML=''; });
-    els.studentTableBody.addEventListener('click',e=>{const row=e.target.closest('tr[data-code]'); if(!row)return; selectedStudentCode=row.dataset.code; renderStudentTable(filteredStudents(),filteredAchievements()); renderSelectedStudent();});
+    window.addEventListener('afterprint',()=>{ document.body.classList.remove('printCodeCards'); document.body.classList.remove('printStudentProfile'); if(els.codePrintSheet) els.codePrintSheet.innerHTML=''; });
+    els.studentTableBody.addEventListener('click',e=>{const row=e.target.closest('tr[data-code]'); if(!row)return; const code=row.dataset.code; const student=allStudents.find(s=>(s.studentCode||s.id)===code); if(student) openStudentProfile(student);});
+    els.studentDetail.addEventListener('click',e=>{const btn=e.target.closest('[data-open-profile]'); if(!btn)return; const code=btn.dataset.openProfile; const student=allStudents.find(s=>(s.studentCode||s.id)===code); if(student) openStudentProfile(student);});
+    els.closeStudentProfileBtn.addEventListener('click',closeStudentProfile);
+    els.studentProfileBackdrop.addEventListener('click',e=>{if(e.target===els.studentProfileBackdrop) closeStudentProfile();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape' && els.studentProfileBackdrop.classList.contains('show')) closeStudentProfile();});
     els.attentionList.addEventListener('click',e=>{const item=e.target.closest('[data-code]'); if(!item)return; selectedStudentCode=item.dataset.code; renderAll();});
     els.growthList.addEventListener('click',e=>{const item=e.target.closest('[data-code]'); if(!item)return; selectedStudentCode=item.dataset.code; renderAll();});
+    els.recentActivityList.addEventListener('click',e=>{const item=e.target.closest('[data-code]'); if(!item)return; selectedStudentCode=item.dataset.code; renderAll();});
+    els.missingList.addEventListener('click',e=>{const item=e.target.closest('[data-code]'); if(!item)return; selectedStudentCode=item.dataset.code; renderAll();});
 
     initFirebase().catch(error=>{console.error(error);showMessage(els.loginMessage,error.message||'Firebase connection failed.','bad')});
   </script>
