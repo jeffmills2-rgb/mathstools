@@ -80,6 +80,22 @@
     .builderSmallNote{font-size:13px;color:#64748b;font-weight:850;margin-top:8px;line-height:1.35}
     @media(max-width:760px){.assignmentBuilderModal{padding:18px}.builderGrid{grid-template-columns:1fr}.builderTypes{grid-template-columns:1fr}.builderActions .btn,.firebaseActions .btn{flex:1}.levelToggle{border-radius:18px}.levelToggleBtn{border-radius:14px}}
 
+
+    /* MMT platform completion / XP system */
+    .platformSubLine{margin-top:8px;color:#475569;font-weight:950;line-height:1.35;font-size:16px}
+    .xpLine{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;background:#eef2ff;color:#1d4ed8;border:1px solid rgba(37,99,235,.18);font-weight:1000;width:max-content;max-width:100%}
+    .xpLine.show{display:block}
+    .saveResultStatus{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:950;line-height:1.35}
+    .saveResultStatus.show{display:block}
+    .saveResultStatus.ok{background:#dcfce7;color:#166534;border:1px solid rgba(22,163,74,.24)}
+    .saveResultStatus.bad{background:#fee2e2;color:#991b1b;border:1px solid rgba(220,38,38,.24)}
+    .saveResultStatus.info{background:#eef2ff;color:#1d4ed8;border:1px solid rgba(37,99,235,.20)}
+    .guestUpgradeCard{display:none;margin-top:12px;padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid rgba(226,232,240,.95);font-weight:900;color:#334155;line-height:1.35}
+    .guestUpgradeCard.show{display:block}
+    .guestUpgradeCard strong{color:#0f172a}
+    .btn.platformBlue{background:#dbeafe;color:#1d4ed8;border:1px solid rgba(37,99,235,.20)}
+    .btn.platformGreen{background:#dcfce7;color:#166534;border:1px solid rgba(22,163,74,.22)}
+
   </style>
 </head>
 <body>
@@ -175,9 +191,9 @@
   </div></div>
 
   <div id="resultOverlay" class="overlay"><div class="modal">
-    <div class="resultsTop"><div class="trophy">🏆</div><div class="resultsText"><div class="bigLine" id="scoreLine">You completed — and achieved a score of —/—.</div><div class="muted" id="scoreBreakdownLabel">Score breakdown:</div></div></div>
+    <div class="resultsTop"><div class="trophy" id="resultIcon">🏆</div><div class="resultsText"><div class="bigLine" id="scoreLine">You completed — and achieved a score of —/—.</div><div id="resultSubLine" class="platformSubLine"></div><div id="xpLine" class="xpLine"></div><div id="saveResultStatus" class="saveResultStatus"></div><div id="guestUpgradeCard" class="guestUpgradeCard"><strong>Next time, enter your student code to save your progress online.</strong><br>With a student code, your achievements, XP and progress can appear on your dashboard and your teacher can view your result.</div><div class="muted" id="scoreBreakdownLabel">Score breakdown:</div></div></div>
     <div id="breakdown" class="breakdown"></div>
-    <div class="modalBtns"><button id="copyBtn" class="btn primary" type="button">Copy to clipboard</button><button id="closeBtn" class="btn" type="button">Close</button><button id="menuBtn" class="btn" type="button" style="background:#fee2e2;color:#991b1b;">Back to level menu</button></div>
+    <div class="modalBtns"><button id="copyBtn" class="btn primary" type="button">Copy to clipboard</button><button id="submitCompleteBtn" class="btn platformBlue" type="button" style="display:none;">Submit to complete</button><button id="submitMenuBtn" class="btn platformGreen" type="button" style="display:none;">Submit and back to menu</button><button id="closeBtn" class="btn" type="button">Close</button><button id="menuBtn" class="btn" type="button" style="background:#fee2e2;color:#991b1b;">Back to level menu</button></div>
   </div></div>
 
 
@@ -295,6 +311,15 @@
         score,
         total,
         percent,
+        xpEarned: Number(payload.xpEarned || 0),
+        baseXP: Number(payload.baseXP || 0),
+        xpMultiplier: Number(payload.xpMultiplier || 1),
+        xpRuleVersion: payload.xpRuleVersion || 'v1_percentage_difficulty',
+        masteryTopic: payload.masteryTopic || payload.topic || 'Algebraic Techniques',
+        masteryScore: percent,
+        streakEligible: mode === 'registered',
+        badgeEligible: mode === 'registered',
+        platformVersion: payload.platformVersion || 'mmt-platform-template-v1',
         types: payload.types || [],
         assignmentMode: !!payload.assignmentMode,
         assignedTypes: payload.assignedTypes || [],
@@ -498,11 +523,33 @@
   function genQuestions(level,n,typeIds=null){const allowed=typeIds?new Set(typeIds):null;const types=TYPES.filter(t=>t.level===level&&(!allowed||allowed.has(t.id)));const qs=[];let safety=0;while(qs.length<n&&safety++<3000){const t=choice(types);const tableIndex=qs.filter(x=>x.type==='pattern_table').length;const q=t.gen({tableIndex,questionIndex:qs.length});const key=canonical(stripHTML(q.promptHTML))+'|'+canonical(q.answerText);if(qs.some(x=>x.key===key))continue;q.key=key;q.label=t.label;qs.push(q)}return qs}
 
   const el=id=>document.getElementById(id);
-  const body=document.body,levelOverlay=el('levelOverlay'),typeOverlay=el('typeOverlay'),resultOverlay=el('resultOverlay'),levelDot=el('levelDot'),levelChipText=el('levelChipText'),bannerTitle=el('bannerTitle'),barFill=el('barFill'),qCounter=el('qCounter'),qLabel=el('qLabel'),qBox=el('qBox'),tableHost=el('tableHost'),answerRow=el('answerRow'),ansLabel=el('ansLabel'),ansInput=el('ansInput'),badge=el('badge'),hintLine=el('hintLine'),tipLine=el('tipLine'),prevBtn=el('prevBtn'),skipBtn=el('skipBtn'),retryBtn=el('retryBtn'),submitBtn=el('submitBtn'),nextBtn=el('nextBtn'),backBtn=el('backBtn'),resetBtn=el('resetBtn'),languageSelect=el('languageSelect'),startLanguageSelect=el('startLanguageSelect'),languageLabel=el('languageLabel'),startLanguageLabel=el('startLanguageLabel'),chooseLevelTitle=el('chooseLevelTitle'),basicName=el('basicName'),basicSub=el('basicSub'),expectedName=el('expectedName'),expectedSub=el('expectedSub'),selectTypesTitle=el('selectTypesTitle'),typesHelpText=el('typesHelpText'),typesGrid=el('typesGrid'),toggleAllTypesBtn=el('toggleAllTypesBtn'),countInp=el('countInp'),beginBtn=el('beginBtn'),typesBackBtn=el('typesBackBtn'),typesWarn=el('typesWarn'),typesWarnText=el('typesWarnText'),countLabel=el('countLabel'),scoreLine=el('scoreLine'),scoreBreakdownLabel=el('scoreBreakdownLabel'),breakdown=el('breakdown'),copyBtn=el('copyBtn'),closeBtn=el('closeBtn'),menuBtn=el('menuBtn');
+  const body=document.body,levelOverlay=el('levelOverlay'),typeOverlay=el('typeOverlay'),resultOverlay=el('resultOverlay'),levelDot=el('levelDot'),levelChipText=el('levelChipText'),bannerTitle=el('bannerTitle'),barFill=el('barFill'),qCounter=el('qCounter'),qLabel=el('qLabel'),qBox=el('qBox'),tableHost=el('tableHost'),answerRow=el('answerRow'),ansLabel=el('ansLabel'),ansInput=el('ansInput'),badge=el('badge'),hintLine=el('hintLine'),tipLine=el('tipLine'),prevBtn=el('prevBtn'),skipBtn=el('skipBtn'),retryBtn=el('retryBtn'),submitBtn=el('submitBtn'),nextBtn=el('nextBtn'),backBtn=el('backBtn'),resetBtn=el('resetBtn'),languageSelect=el('languageSelect'),startLanguageSelect=el('startLanguageSelect'),languageLabel=el('languageLabel'),startLanguageLabel=el('startLanguageLabel'),chooseLevelTitle=el('chooseLevelTitle'),basicName=el('basicName'),basicSub=el('basicSub'),expectedName=el('expectedName'),expectedSub=el('expectedSub'),selectTypesTitle=el('selectTypesTitle'),typesHelpText=el('typesHelpText'),typesGrid=el('typesGrid'),toggleAllTypesBtn=el('toggleAllTypesBtn'),countInp=el('countInp'),beginBtn=el('beginBtn'),typesBackBtn=el('typesBackBtn'),typesWarn=el('typesWarn'),typesWarnText=el('typesWarnText'),countLabel=el('countLabel'),scoreLine=el('scoreLine'),resultIcon=el('resultIcon'),resultSubLine=el('resultSubLine'),xpLine=el('xpLine'),saveResultStatus=el('saveResultStatus'),guestUpgradeCard=el('guestUpgradeCard'),scoreBreakdownLabel=el('scoreBreakdownLabel'),breakdown=el('breakdown'),copyBtn=el('copyBtn'),submitCompleteBtn=el('submitCompleteBtn'),submitMenuBtn=el('submitMenuBtn'),closeBtn=el('closeBtn'),menuBtn=el('menuBtn');
   const state={language:'en',level:null,pendingLevel:null,activeTypeIds:[],quizLength:QUIZ_LENGTH,questions:[],index:0,score:0,answered:false,skips:0,results:[],records:[],assignment:null,savedResult:false};
   function levelName(){return state.level==='basic'?tr('basic'):state.level==='expected'?tr('expected'):'—'}
+  function getBaseXP(percent){
+    const p=Number(percent)||0;
+    if(p>=100)return 150;
+    if(p>=80)return 75;
+    if(p>=60)return 50;
+    if(p>=40)return 25;
+    if(p>=10)return 15;
+    return 5;
+  }
+  function getLevelMultiplier(levelKey){
+    const key=String(levelKey||'').toLowerCase();
+    if(key==='expected')return 1.5; // Expected maps to Medium
+    if(key==='basic')return 1;      // Basic maps to Sweet
+    return 1;
+  }
+  function calculateXP(score,total){
+    const percent=total?Math.round((Number(score)||0)/(Number(total)||1)*100):0;
+    const baseXP=getBaseXP(percent);
+    const xpMultiplier=getLevelMultiplier(state.level);
+    const xpEarned=Math.round(baseXP*xpMultiplier);
+    return {percent,baseXP,xpMultiplier,xpEarned,xpRuleVersion:'v1_percentage_difficulty'};
+  }
   function dual(main,alt){return alt?`<span class="dualText">${main}<span class="altLine">${alt}</span></span>`:main}
-  function localize(){document.documentElement.lang=lang();document.documentElement.dir=dir();languageLabel.textContent=tr('languageLabel');startLanguageLabel.textContent=tr('languageLabel');backBtn.textContent=tr('back');resetBtn.textContent=tr('reset');chooseLevelTitle.textContent=tr('chooseLevel');basicName.textContent=tr('basic');expectedName.textContent=tr('expected');basicSub.textContent=tr('basicSub');expectedSub.textContent=tr('expectedSub');document.querySelectorAll('.startPill').forEach(b=>b.textContent=tr('start'));prevBtn.textContent=tr('prev');skipBtn.textContent=tr('skip');retryBtn.textContent=tr('retry');submitBtn.textContent=state.answered?tr('next'):tr('submit');nextBtn.textContent=tr('next');closeBtn.textContent=tr('close');copyBtn.textContent=tr('copy');menuBtn.textContent=tr('menu');scoreBreakdownLabel.textContent=tr('scoreBreakdown');selectTypesTitle.textContent=tr('selectTypes');typesHelpText.textContent=tr('typesHelp');countLabel.textContent=tr('totalQuestions');beginBtn.textContent=tr('begin');typesBackBtn.textContent=tr('typesBack');typesWarnText.textContent=tr('selectOne');ansLabel.textContent=tr('answer');updateToggleAllTypesLabel();hintLine.textContent=tr('hint');tipLine.textContent=tr('tip');updateHeader(); if(state.questions.length&&!state.answered)showQuestion();}
+  function localize(){document.documentElement.lang=lang();document.documentElement.dir=dir();languageLabel.textContent=tr('languageLabel');startLanguageLabel.textContent=tr('languageLabel');backBtn.textContent=tr('back');resetBtn.textContent=tr('reset');chooseLevelTitle.textContent=tr('chooseLevel');basicName.textContent=tr('basic');expectedName.textContent=tr('expected');basicSub.textContent=tr('basicSub');expectedSub.textContent=tr('expectedSub');document.querySelectorAll('.startPill').forEach(b=>b.textContent=tr('start'));prevBtn.textContent=tr('prev');skipBtn.textContent=tr('skip');retryBtn.textContent=tr('retry');submitBtn.textContent=state.answered?tr('next'):tr('submit');nextBtn.textContent=tr('next');closeBtn.textContent=tr('close');copyBtn.textContent=tr('copy');submitCompleteBtn.textContent='Submit to complete';submitMenuBtn.textContent='Submit and back to menu';menuBtn.textContent=tr('menu');scoreBreakdownLabel.textContent=tr('scoreBreakdown');selectTypesTitle.textContent=tr('selectTypes');typesHelpText.textContent=tr('typesHelp');countLabel.textContent=tr('totalQuestions');beginBtn.textContent=tr('begin');typesBackBtn.textContent=tr('typesBack');typesWarnText.textContent=tr('selectOne');ansLabel.textContent=tr('answer');updateToggleAllTypesLabel();hintLine.textContent=tr('hint');tipLine.textContent=tr('tip');updateHeader(); if(state.questions.length&&!state.answered)showQuestion();}
   function updateHeader(){const name=levelName();levelChipText.innerHTML=dual(tr('levelText')(name),L().alt?tr('levelText')(L().alt):null);bannerTitle.innerHTML=dual(tr('levelText')(name),L().alt?tr('levelText')(L().alt):null);qCounter.innerHTML=dual(tr('qCounter')(Math.min(state.index+1,state.questions.length||0),state.questions.length||0),null);levelDot.style.background=state.level==='basic'?'var(--basic)':state.level==='expected'?'var(--expected)':'#cbd5e1'}
   function showOverlay(o){o.classList.add('show');body.classList.add('modalOpen')}function hideOverlay(o){o.classList.remove('show');if(!document.querySelector('.overlay.show'))body.classList.remove('modalOpen')}
   function typesForLevel(level){return TYPES.filter(t=>t.level===level)}
@@ -534,7 +581,32 @@ function showQuestion(){const q=state.questions[state.index];state.answered=fals
   function retry(){delete state.records[state.index];state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;state.answered=false;ansInput.disabled=false;ansInput.classList.remove('correct','wrong','partial');tableHost.querySelectorAll('.tableInput').forEach(inp=>inp.classList.remove('correct','wrong','partial'));badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';if(state.questions[state.index]?.mode==='table'){setTableDisabled(false);tableHost.querySelector('.tableInput')?.focus()}else{ansInput.select();ansInput.focus()}}
   function next(){if(!state.answered)return;state.index++;if(state.index>=state.questions.length){finish()}else showQuestion()}
   function prev(){if(state.index<=0)return;state.index--;showQuestion()}
-  function finish(){barFill.style.width='100%';state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;const name=levelName();scoreLine.textContent=tr('scoreLine')(name,state.score,state.questions.length);const byType=new Map();for(const r of state.results){const key=r.type||r.label;const cur=byType.get(key)||{c:0,t:0,s:0,label:r.label};cur.t++;if(r.ok)cur.c++;if(r.skipped)cur.s++;byType.set(key,cur)}breakdown.innerHTML='';for(const [id,v]of byType.entries()){const row=document.createElement('div');row.className='breakdownRow';row.innerHTML=`<span>${trType(id,v.label)}</span><span>${v.c}/${v.t}${v.s?` (skipped: ${v.s})`:''}</span>`;breakdown.appendChild(row)}saveFirebaseAchievement(byType);showOverlay(resultOverlay)}
+  function finish(){
+    barFill.style.width='100%';state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;
+    const name=levelName();
+    const xp=calculateXP(state.score,state.questions.length);
+    state.pendingXP=xp;
+    scoreLine.textContent=tr('scoreLine')(name,state.score,state.questions.length);
+    const isRegistered=window.MMTFirebase?.mode==='registered';
+    resultIcon.textContent=isRegistered?'✅':'🏆';
+    resultSubLine.textContent=isRegistered
+      ? 'Your result is ready to save to your dashboard. Your teacher will be able to view this result once you submit.'
+      : 'Screenshot or copy this result if your teacher needs evidence of completion.';
+    xpLine.textContent=`XP earned: ${xp.xpEarned} XP (base ${xp.baseXP} × ${xp.xpMultiplier})`;
+    xpLine.classList.toggle('show',isRegistered);
+    guestUpgradeCard.classList.toggle('show',!isRegistered);
+    saveResultStatus.className='saveResultStatus';
+    saveResultStatus.textContent='';
+    copyBtn.style.display=isRegistered?'none':'inline-block';
+    submitCompleteBtn.style.display=isRegistered?'inline-block':'none';
+    submitMenuBtn.style.display=isRegistered?'inline-block':'none';
+    closeBtn.style.display=isRegistered?'none':'inline-block';
+    menuBtn.style.display=isRegistered?'none':'inline-block';
+    const byType=new Map();for(const r of state.results){const key=r.type||r.label;const cur=byType.get(key)||{c:0,t:0,s:0,label:r.label};cur.t++;if(r.ok)cur.c++;if(r.skipped)cur.s++;byType.set(key,cur)}
+    state.pendingByType=byType;
+    breakdown.innerHTML='';for(const [id,v]of byType.entries()){const row=document.createElement('div');row.className='breakdownRow';row.innerHTML=`<span>${trType(id,v.label)}</span><span>${v.c}/${v.t}${v.s?` (skipped: ${v.s})`:''}</span>`;breakdown.appendChild(row)}
+    showOverlay(resultOverlay)
+  }
   function copyResults(){const name=levelName();const lines=[tr('copyTitle')(name),tr('score')(state.score,state.questions.length),''];breakdown.querySelectorAll('.breakdownRow').forEach(r=>lines.push(r.textContent.trim()));navigator.clipboard?.writeText(lines.join('\n')).then(()=>{copyBtn.textContent='Copied ✓';setTimeout(()=>copyBtn.textContent=tr('copy'),1200)}).catch(()=>{})}
 
 
@@ -551,22 +623,56 @@ function showQuestion(){const q=state.questions[state.index];state.answered=fals
     count=clamp(Math.round(count),5,60);
     return {level,types,count};
   }
-  function saveFirebaseAchievement(byType){
-    if(state.savedResult)return;
-    state.savedResult=true;
+  async function saveFirebaseAchievement(byType){
+    if(state.savedResult)return {alreadySaved:true};
     const typeSummary=Array.from(byType.entries()).map(([id,v])=>({typeId:id,label:trType(id,v.label),ok:v.c,total:v.t,skipped:v.s||0}));
-    window.MMTFirebase?.saveAchievement?.({
-      topic:'Algebraic Techniques',
-      level:levelName(),
-      levelKey:state.level,
-      score:state.score,
-      total:state.questions.length,
-      types:typeSummary,
-      assignmentMode:!!state.assignment,
-      assignedTypes:state.assignment?.types||[],
-      assignedCount:state.assignment?.count||null,
-      assignmentSource:state.assignment?'url':null
-    }).catch(err=>console.error('Achievement save failed',err));
+    const xp=state.pendingXP||calculateXP(state.score,state.questions.length);
+    try{
+      const result=await window.MMTFirebase?.saveAchievement?.({
+        topic:'Algebraic Techniques',
+        level:levelName(),
+        levelKey:state.level,
+        score:state.score,
+        total:state.questions.length,
+        types:typeSummary,
+        xpEarned:xp.xpEarned,
+        baseXP:xp.baseXP,
+        xpMultiplier:xp.xpMultiplier,
+        xpRuleVersion:xp.xpRuleVersion,
+        masteryTopic:'Algebraic Techniques',
+        platformVersion:'mmt-platform-template-v1',
+        assignmentMode:!!state.assignment,
+        assignedTypes:state.assignment?.types||[],
+        assignedCount:state.assignment?.count||null,
+        assignmentSource:state.assignment?'url':null
+      });
+      if(result?.saved || result?.alreadySaved){state.savedResult=true;return result;}
+      return result||{skipped:true};
+    }catch(err){
+      console.error('Achievement save failed',err);
+      throw err;
+    }
+  }
+  async function submitLoggedInResult(backToMenu=false){
+    submitCompleteBtn.disabled=true;submitMenuBtn.disabled=true;
+    saveResultStatus.textContent='Saving result to your dashboard…';
+    saveResultStatus.className='saveResultStatus show info';
+    try{
+      const result=await saveFirebaseAchievement(state.pendingByType||new Map());
+      if(result?.saved || result?.alreadySaved){
+        saveResultStatus.textContent=`Result saved. ${state.pendingXP?.xpEarned||0} XP added to this achievement.`;
+        saveResultStatus.className='saveResultStatus show ok';
+        if(backToMenu)setTimeout(openMenu,450);else setTimeout(()=>hideOverlay(resultOverlay),450);
+      }else{
+        saveResultStatus.textContent='Result was not saved. Please check student login and Firebase connection.';
+        saveResultStatus.className='saveResultStatus show bad';
+        submitCompleteBtn.disabled=false;submitMenuBtn.disabled=false;
+      }
+    }catch(err){
+      saveResultStatus.textContent='Could not save this result. Check Firestore rules and internet connection.';
+      saveResultStatus.className='saveResultStatus show bad';
+      submitCompleteBtn.disabled=false;submitMenuBtn.disabled=false;
+    }
   }
   function applyAssignmentIfPresent(){
     const assignment=readAssignmentFromURL();
@@ -627,7 +733,7 @@ function showQuestion(){const q=state.questions[state.index];state.answered=fals
   }
 
   languageSelect.addEventListener('change',()=>{state.language=languageSelect.value;startLanguageSelect.value=state.language;localize()});startLanguageSelect.addEventListener('change',()=>{state.language=startLanguageSelect.value;languageSelect.value=state.language;localize()});document.querySelectorAll('.startPill').forEach(b=>b.addEventListener('click',()=>buildTypeChooser(b.dataset.level)));
-  toggleAllTypesBtn.addEventListener('click',()=>{const boxes=Array.from(typesGrid.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAllTypesLabel()});beginBtn.addEventListener('click',beginSelectedQuiz);typesBackBtn.addEventListener('click',()=>{hideOverlay(typeOverlay);showOverlay(levelOverlay)});backBtn.addEventListener('click',openMenu);resetBtn.addEventListener('click',()=>{resetQuizShell();hideOverlay(typeOverlay);showOverlay(levelOverlay)});prevBtn.addEventListener('click',prev);skipBtn.addEventListener('click',()=>mark(false,true));retryBtn.addEventListener('click',retry);submitBtn.addEventListener('click',submit);nextBtn.addEventListener('click',next);ansInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});tableHost.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==ansInput&&!tableHost.contains(document.activeElement)&&state.questions.length){e.preventDefault();state.answered?next():submit()}});copyBtn.addEventListener('click',copyResults);closeBtn.addEventListener('click',()=>hideOverlay(resultOverlay));menuBtn.addEventListener('click',openMenu);
+  toggleAllTypesBtn.addEventListener('click',()=>{const boxes=Array.from(typesGrid.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAllTypesLabel()});beginBtn.addEventListener('click',beginSelectedQuiz);typesBackBtn.addEventListener('click',()=>{hideOverlay(typeOverlay);showOverlay(levelOverlay)});backBtn.addEventListener('click',openMenu);resetBtn.addEventListener('click',()=>{resetQuizShell();hideOverlay(typeOverlay);showOverlay(levelOverlay)});prevBtn.addEventListener('click',prev);skipBtn.addEventListener('click',()=>mark(false,true));retryBtn.addEventListener('click',retry);submitBtn.addEventListener('click',submit);nextBtn.addEventListener('click',next);ansInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});tableHost.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==ansInput&&!tableHost.contains(document.activeElement)&&state.questions.length){e.preventDefault();state.answered?next():submit()}});copyBtn.addEventListener('click',copyResults);submitCompleteBtn.addEventListener('click',()=>submitLoggedInResult(false));submitMenuBtn.addEventListener('click',()=>submitLoggedInResult(true));closeBtn.addEventListener('click',()=>hideOverlay(resultOverlay));menuBtn.addEventListener('click',openMenu);
   teacherAssignBtn?.addEventListener('click',()=>{renderBuilderTypes();showOverlay(teacherBuilderOverlay)});builderLevel?.addEventListener('change',renderBuilderTypes);document.querySelectorAll('.levelToggleBtn').forEach(btn=>btn.addEventListener('click',()=>{builderLevel.value=btn.dataset.level;renderBuilderTypes()}));builderCount?.addEventListener('input',()=>{assignmentLinkOut.value=''});builderTypes?.addEventListener('change',updateBuilderToggle);builderToggleAllBtn?.addEventListener('click',()=>{const boxes=Array.from(builderTypes.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateBuilderToggle()});generateAssignmentBtn?.addEventListener('click',generateAssignmentLink);copyAssignmentBtn?.addEventListener('click',async()=>{const link=assignmentLinkOut.value||generateAssignmentLink();if(!link)return;try{await navigator.clipboard.writeText(link);copyAssignmentBtn.textContent='Copied ✓';setTimeout(()=>copyAssignmentBtn.textContent='Copy link',1200)}catch(e){window.prompt('Copy this link:',link)}});closeBuilderBtn?.addEventListener('click',()=>{ assignmentLinkOut.value=''; renderBuilderTypes(); showOverlay(teacherBuilderOverlay); });
   function openTeacherBuilderOnLoad(){
     renderBuilderTypes();
