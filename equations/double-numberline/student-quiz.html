@@ -650,6 +650,34 @@
       .studentLoginActions .btn{width:100%;justify-content:center;}
     }
 
+
+    /* Completion modal: guest certificate vs logged-in platform finish */
+    .certWrap.platformMode{align-items:flex-start;}
+    .completionIcon{
+      width:96px;height:96px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+      font-size:48px;border:2px solid rgba(15,23,42,.10);flex:0 0 auto;
+    }
+    .completionIcon.guest{background:#fff7ed;border-color:rgba(249,115,22,.18);}
+    .completionIcon.logged{background:#ecfdf5;border-color:rgba(22,163,74,.22);}
+    .completionMeta{
+      margin-top:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+    }
+    .miniStat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:11px 12px;}
+    .miniStat .label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;font-weight:1000;}
+    .miniStat .value{font-size:17px;color:#0f172a;font-weight:1000;margin-top:2px;}
+    .featurePreview{margin-top:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px;}
+    .featurePreviewTitle{font-weight:1000;margin-bottom:10px;color:#0f172a;}
+    .featureGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+    .featureItem{display:flex;gap:8px;align-items:flex-start;color:#334155;font-weight:850;font-size:13px;line-height:1.25;}
+    .featureItem span{color:#16a34a;font-weight:1000;}
+    .btn.submitBlue{background:#dbeafe;color:#1e3a8a;border:1px solid rgba(37,99,235,.22);}
+    .btn.submitGreen{background:#dcfce7;color:#166534;border:1px solid rgba(22,163,74,.24);}
+    #certActions .saveStatus{align-self:center;margin-top:0;}
+    @media(max-width:720px){
+      .completionMeta,.featureGrid{grid-template-columns:1fr;}
+    }
+
+
   </style>
 </head>
 <body>
@@ -735,21 +763,25 @@
 
 <div class="modalBack" id="certModalBack">
   <div class="modal">
-    <div class="modalHead">Certificate</div>
+    <div class="modalHead" id="certModalHead">Certificate</div>
     <div class="modalBody">
-      <div class="certWrap">
-        <div class="trophyBox">🏆</div>
+      <div class="certWrap" id="certWrap">
+        <div class="completionIcon guest" id="completionIcon">🏆</div>
         <div>
           <div id="certText" class="certText">You completed the quiz.</div>
-          <div class="certSub">Screenshot this and paste into Google Classroom.</div>
-          <div id="saveStatus" class="saveStatus"></div>
+          <div class="certSub" id="certSub">Screenshot this and paste into Google Classroom.</div>
+          <div class="completionMeta" id="completionMeta" style="display:none;"></div>
+          <div class="featurePreview" id="featurePreview" style="display:none;"></div>
         </div>
       </div>
     </div>
-    <div class="modalActions">
+    <div class="modalActions" id="certActions">
       <button class="btn primary" id="copyBtn" type="button">Copy to clipboard</button>
       <button class="btn" id="sameLevelBtn" type="button">Close</button>
       <button class="btn danger" id="levelsBtn" type="button">Back to level menu</button>
+      <button class="btn submitBlue" id="submitCompleteBtn" type="button" style="display:none;">Submit to complete</button>
+      <button class="btn submitGreen" id="submitMenuBtn" type="button" style="display:none;">Submit and back to menu</button>
+      <span class="saveStatus" id="saveStatus">Saving...</span>
     </div>
   </div>
 </div>
@@ -805,10 +837,18 @@
   const feedbackBad = document.getElementById('feedbackBad');
   const backBtn = document.getElementById('backBtn');
   const resetBtn = document.getElementById('resetBtn');
+  const certModalHead = document.getElementById('certModalHead');
+  const certWrap = document.getElementById('certWrap');
+  const completionIcon = document.getElementById('completionIcon');
   const certText = document.getElementById('certText');
+  const certSub = document.getElementById('certSub');
+  const completionMeta = document.getElementById('completionMeta');
+  const featurePreview = document.getElementById('featurePreview');
   const copyBtn = document.getElementById('copyBtn');
   const sameLevelBtn = document.getElementById('sameLevelBtn');
   const levelsBtn = document.getElementById('levelsBtn');
+  const submitCompleteBtn = document.getElementById('submitCompleteBtn');
+  const submitMenuBtn = document.getElementById('submitMenuBtn');
   const studentLoginBack = document.getElementById('studentLoginBack');
   const studentCodeInput = document.getElementById('studentCodeInput');
   const studentLoginBtn = document.getElementById('studentLoginBtn');
@@ -853,6 +893,8 @@
   let currentStudent = null;
   let accessMode = 'unknown';
   let achievementSaveStarted = false;
+  let recentBadges = [];
+  let pendingCompletionMode = 'guest';
 
   const state = {
     question:null,
@@ -996,19 +1038,85 @@
     const cfg = LEVELS[levelKey];
     return `You completed level "${cfg.name}" in ${QUIZ_TOPIC} and got a score of ${score} out of ${QUIZ_LEN}.`;
   }
+
+  function masteryLevelFromPercent(percent){
+    if(percent >= 90) return 'Mastery';
+    if(percent >= 75) return 'Proficient';
+    if(percent >= 50) return 'Developing';
+    return 'Beginning';
+  }
+
+  const XP_RULE_VERSION = 'v1_percentage_difficulty_multiplier';
+
+  function getBaseXpFromPercent(percent){
+    if(percent >= 100) return 150;
+    if(percent >= 80) return 75;
+    if(percent >= 60) return 50;
+    if(percent >= 40) return 25;
+    if(percent >= 10) return 15;
+    return 5;
+  }
+
+  function getDifficultyMultiplier(level){
+    const key = String(level || '').toLowerCase().replace(/[\s_-]+/g, '');
+    const multipliers = {
+      sweet: 1,
+      mild: 1.25,
+      medium: 1.5,
+      spicy: 2,
+      extrahot: 2.5,
+      hot: 2.5,
+      veryhot: 2.5,
+      basic: 1.25,
+      expected: 2
+    };
+    return multipliers[key] || 1;
+  }
+
+  function calculateXpDetails(percent, level){
+    const baseXp = getBaseXpFromPercent(percent);
+    const multiplier = getDifficultyMultiplier(level);
+    const xpAwarded = Math.round(baseXp * multiplier);
+    return {
+      xpAwarded,
+      baseXp,
+      multiplier,
+      xpRuleVersion: XP_RULE_VERSION
+    };
+  }
+
+  function calculateXp(percent){
+    return calculateXpDetails(percent, levelKey).xpAwarded;
+  }
+
+  function buildBadgeList(percent){
+    const badges = [];
+    badges.push({ id:'quiz-complete', name:'Quiz Complete', icon:'✅' });
+    if(percent === 100) badges.push({ id:'perfect-score', name:'Perfect Score', icon:'🎯' });
+    if(percent >= 80) badges.push({ id:'accuracy-star', name:'Accuracy Star', icon:'⭐' });
+    if(score >= 10) badges.push({ id:'equation-progress', name:'Equation Progress', icon:'🧠' });
+    return badges;
+  }
+
   async function saveAchievement(){
-    if(achievementSaveStarted) return;
+    if(achievementSaveStarted) return true;
     achievementSaveStarted = true;
+
     if(accessMode !== 'registered' || !currentStudent){
-      setSaveStatus('Result not saved because student code was skipped.', 'warn');
-      return;
+      return true;
     }
     if(!firebaseReady || !db){
-      setSaveStatus('Result could not be saved because Firebase is not connected.', 'bad');
-      return;
+      achievementSaveStarted = false;
+      return false;
     }
+
     const cfg = LEVELS[levelKey];
     const percent = Math.round((score / QUIZ_LEN) * 100);
+    const xpDetails = calculateXpDetails(percent, levelKey);
+    const xpAwarded = xpDetails.xpAwarded;
+    recentBadges = buildBadgeList(percent);
+    const completedAtClient = new Date().toISOString();
+
     const record = {
       accessMode: 'registered',
       source: 'Mills Maths Tools',
@@ -1019,6 +1127,12 @@
       score,
       total: QUIZ_LEN,
       percent,
+      xpAwarded,
+      xpBase: xpDetails.baseXp,
+      xpMultiplier: xpDetails.multiplier,
+      xpRuleVersion: xpDetails.xpRuleVersion,
+      badgesEarned: recentBadges.map(b => b.id),
+      masteryLevel: masteryLevelFromPercent(percent),
       studentCode: currentStudent.studentCode,
       studentName: currentStudent.studentName,
       firstName: currentStudent.firstName,
@@ -1026,20 +1140,25 @@
       className: currentStudent.className,
       teacherCode: currentStudent.teacherCode,
       teacherName: currentStudent.teacherName,
-      teacher: currentStudent.teacher,
+      teacher: currentStudent.teacher || currentStudent.teacherName,
       school: currentStudent.school,
       certificateText: certificatePlainText(),
       types: achievementTypeSummary(),
-      dateClient: new Date().toISOString(),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      dateClient: completedAtClient,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      platformVersion: 'student_quiz_completion_v2',
+      masteryTopic: QUIZ_TOOL_ID,
+      masteryScore: percent,
+      streakEligible: true,
+      attemptType: 'student_quiz'
     };
     try{
       await db.collection(ACHIEVEMENTS_COLLECTION).add(record);
-      setSaveStatus('Result saved to your student dashboard.', 'ok');
+      return true;
     }catch(err){
       console.error(err);
       achievementSaveStarted = false;
-      setSaveStatus('Could not save this result. Check Firestore rules and internet connection.', 'bad');
+      return false;
     }
   }
 
@@ -1392,7 +1511,7 @@
   }
   function backToLevels(){
     hideModal(certModalBack); showModal(levelModalBack);
-    levelKey = null; questions = []; qIndex = 0; score = 0; phase = 'awaiting';
+    levelKey = null; questions = []; qIndex = 0; score = 0; phase = 'awaiting'; achievementSaveStarted = false;
     clearAllTimers(); clearBoard(); cleanupFlipCard();
     cardEl.classList.remove('compactNoModel');
     equationEl.textContent = '—';
@@ -1415,12 +1534,96 @@
 
   function showCertificate(){
     const cfg = LEVELS[levelKey];
-    certText.textContent = `You completed level "${cfg.name}" in ${QUIZ_TOPIC} and got a score of ${score} out of ${QUIZ_LEN}.`;
+    const percent = Math.round((score / QUIZ_LEN) * 100);
     progressFill.style.width = '100%';
+    recentBadges = buildBadgeList(percent);
+
+    completionMeta.style.display = 'none';
+    featurePreview.style.display = 'none';
     hideSaveStatus();
+    submitCompleteBtn.disabled = false;
+    submitMenuBtn.disabled = false;
+
+    if(accessMode === 'registered' && currentStudent){
+      pendingCompletionMode = 'logged-in';
+      certModalHead.textContent = 'Quiz complete';
+      certWrap.classList.add('platformMode');
+      completionIcon.className = 'completionIcon logged';
+      completionIcon.textContent = '✅';
+      certText.textContent = `You completed ${QUIZ_TOPIC}, Level ${cfg.name}, and got ${score} out of ${QUIZ_LEN}.`;
+      certSub.textContent = `Ready to save this result to ${currentStudent.studentName}'s dashboard. Your teacher will be able to view it once submitted.`;
+      completionMeta.style.display = 'grid';
+      completionMeta.innerHTML = `
+        <div class="miniStat"><div class="label">Score</div><div class="value">${score}/${QUIZ_LEN} (${percent}%)</div></div>
+        <div class="miniStat"><div class="label">Mastery</div><div class="value">${masteryLevelFromPercent(percent)}</div></div>
+        <div class="miniStat"><div class="label">XP earned</div><div class="value">+${calculateXp(percent)} XP</div></div>
+        <div class="miniStat"><div class="label">XP rule</div><div class="value">${getBaseXpFromPercent(percent)} × ${getDifficultyMultiplier(levelKey)}</div></div>
+        <div class="miniStat"><div class="label">Badges</div><div class="value">${recentBadges.map(b => `${b.icon} ${b.name}`).join(', ')}</div></div>
+      `;
+      featurePreview.style.display = 'block';
+      featurePreview.innerHTML = `
+        <div class="featurePreviewTitle">Platform progress ready</div>
+        <div class="featureGrid">
+          <div class="featureItem"><span>✓</span> Result saves to the student dashboard</div>
+          <div class="featureItem"><span>✓</span> Teacher dashboard can show this achievement</div>
+          <div class="featureItem"><span>✓</span> XP is calculated from percentage × difficulty</div>
+          <div class="featureItem"><span>✓</span> Future streaks, badges and mastery displays are scaffolded</div>
+        </div>
+      `;
+      copyBtn.style.display = 'none';
+      sameLevelBtn.style.display = 'none';
+      levelsBtn.style.display = 'none';
+      submitCompleteBtn.style.display = 'inline-block';
+      submitMenuBtn.style.display = 'inline-block';
+    }else{
+      pendingCompletionMode = 'guest';
+      certModalHead.textContent = 'Certificate';
+      certWrap.classList.remove('platformMode');
+      completionIcon.className = 'completionIcon guest';
+      completionIcon.textContent = '🏆';
+      certText.textContent = `You completed ${QUIZ_TOPIC}, Level ${cfg.name}, and got ${score} out of ${QUIZ_LEN}. Paste a screenshot into Google Classroom.`;
+      certSub.textContent = 'Screenshot this and paste into Google Classroom. Next time, enter your student code to save your progress online.';
+      featurePreview.style.display = 'block';
+      featurePreview.innerHTML = `
+        <div class="featurePreviewTitle">With an MMT student code you can:</div>
+        <div class="featureGrid">
+          <div class="featureItem"><span>✓</span> Save achievements online</div>
+          <div class="featureItem"><span>✓</span> Track mastery and progress</div>
+          <div class="featureItem"><span>✓</span> Build streaks, XP and badges</div>
+          <div class="featureItem"><span>✓</span> Let your teacher view your completed work</div>
+        </div>
+      `;
+      copyBtn.style.display = 'inline-block';
+      sameLevelBtn.style.display = 'inline-block';
+      levelsBtn.style.display = 'inline-block';
+      submitCompleteBtn.style.display = 'none';
+      submitMenuBtn.style.display = 'none';
+    }
+
     showModal(certModalBack);
-    saveAchievement();
   }
+
+  async function submitLoggedInCompletion(goToMenu = false){
+    submitCompleteBtn.disabled = true;
+    submitMenuBtn.disabled = true;
+    setSaveStatus('Saving...', 'ok');
+    const saved = await saveAchievement();
+    if(!saved){
+      setSaveStatus('Could not save. Please try again.', 'bad');
+      submitCompleteBtn.disabled = false;
+      submitMenuBtn.disabled = false;
+      return;
+    }
+    setSaveStatus('Saved to dashboard ✓', 'ok');
+    certText.textContent = 'Result saved to your dashboard.';
+    certSub.textContent = `Your ${QUIZ_TOPIC} result has been saved and shared with your teacher.`;
+    if(goToMenu){
+      setTimeout(() => backToLevels(), 650);
+    }else{
+      setTimeout(() => hideModal(certModalBack), 650);
+    }
+  }
+
   async function copyCertificate(){
     const cfg = LEVELS[levelKey];
     const text =
@@ -2123,6 +2326,8 @@ ${currentStudent ? `Student: ${currentStudent.studentName} (${currentStudent.cla
     hideModal(certModalBack);
     backToLevels();
   });
+  submitCompleteBtn.addEventListener('click', () => submitLoggedInCompletion(false));
+  submitMenuBtn.addEventListener('click', () => submitLoggedInCompletion(true));
   prevStepBtn.addEventListener('click', () => stepQuestion(-1));
   nextStepBtn.addEventListener('click', () => stepQuestion(1));
   enterBtn.addEventListener('click', handleEnter);
