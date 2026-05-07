@@ -280,7 +280,7 @@
     function scoreText(a){ return `${num(a.score)}/${num(a.total)}`; }
     function topicOf(a){ return a.topic || a.quizTopic || a.toolTopic || a.tool || 'Untitled topic'; }
     function levelOf(a){ return a.englishLevel || a.level || 'Level not recorded'; }
-    function studentCodeOf(a){ return a.studentCode || a.code || ''; }
+    function studentCodeOf(a){ return normaliseCode(a.studentCode || a.code || ''); }
     function studentNameOf(s){ return s.name || [s.firstName,s.surname].filter(Boolean).join(' ') || 'Unnamed student'; }
     function dateValue(a){
       const raw=a.createdAt || a.completedAt || a.dateCompleted || a.timestamp || a.date || a.dateClient;
@@ -335,24 +335,63 @@
       }
     }
 
+    function chunkArray(arr,size){
+      const chunks=[];
+      for(let i=0;i<arr.length;i+=size) chunks.push(arr.slice(i,i+size));
+      return chunks;
+    }
+
     async function loadTeacherData(){
       if(!currentTeacher) return;
-      // These queries may require Firestore indexes depending on your rules/project. If an index message appears, create it from the Firebase link.
+      // Load students by teacher ownership first. Achievements are then matched to these student codes.
+      // This recovers older quiz attempts that saved studentCode but did not save teacherCode.
       const studentsQuery=query(collection(db,COLLECTIONS.students), where('teacherCode','==',currentTeacher.teacherCode));
       const studentSnap=await getDocs(studentsQuery);
-      allStudents=studentSnap.docs.map(d=>({id:d.id,studentCode:d.id,...d.data()}));
+      allStudents=studentSnap.docs.map(d=>({id:d.id,studentCode:normaliseCode(d.data().studentCode || d.id),...d.data()}));
 
-      let achievementSnap;
-      try{
-        const q=query(collection(db,COLLECTIONS.achievements), where('teacherCode','==',currentTeacher.teacherCode), orderBy('createdAt','desc'));
-        achievementSnap=await getDocs(q);
-      }catch(err){
-        // Fallback avoids blocking the dashboard if the composite index is not ready yet.
-        console.warn('Falling back to achievements query without orderBy:', err);
-        const q=query(collection(db,COLLECTIONS.achievements), where('teacherCode','==',currentTeacher.teacherCode));
-        achievementSnap=await getDocs(q);
+      const studentCodes=[...new Set(allStudents.map(s=>normaliseCode(s.studentCode || s.id)).filter(Boolean))];
+      const achievementMap=new Map();
+
+      async function addAchievementDocs(snap){
+        snap.docs.forEach(d=>{
+          const record={id:d.id,...d.data()};
+          const code=studentCodeOf(record);
+          if(studentCodes.includes(code)) achievementMap.set(d.id,record);
+        });
       }
-      allAchievements=achievementSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+      // 1) Preferred current structure: achievements with teacherCode.
+      try{
+        const q=query(collection(db,COLLECTIONS.achievements), where('teacherCode','==',currentTeacher.teacherCode));
+        await addAchievementDocs(await getDocs(q));
+      }catch(err){
+        console.warn('Could not query achievements by teacherCode:', err);
+      }
+
+      // 2) Backward-compatible recovery: achievements linked only by studentCode.
+      // Firestore IN queries have a small item limit, so codes are chunked safely.
+      for(const chunk of chunkArray(studentCodes,30)){
+        if(!chunk.length) continue;
+        try{
+          const q=query(collection(db,COLLECTIONS.achievements), where('studentCode','in',chunk));
+          await addAchievementDocs(await getDocs(q));
+        }catch(err){
+          console.warn('Could not query achievements by studentCode chunk:', err);
+        }
+      }
+
+      // 3) Legacy fallback for any older record that used code instead of studentCode.
+      for(const chunk of chunkArray(studentCodes,30)){
+        if(!chunk.length) continue;
+        try{
+          const q=query(collection(db,COLLECTIONS.achievements), where('code','in',chunk));
+          await addAchievementDocs(await getDocs(q));
+        }catch(err){
+          console.warn('Could not query achievements by code chunk:', err);
+        }
+      }
+
+      allAchievements=[...achievementMap.values()].sort((a,b)=>dateValue(b)-dateValue(a));
       populateFilters();
       renderAll();
     }
