@@ -3,318 +3,85 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Algebraic Techniques — Student Quiz</title>
+  <title>MMT Worksheet Generator — Algebraic Techniques</title>
   <style>
     :root{
       --bg:#f6f7fb; --card:#ffffff; --ink:#111827; --muted:#6b7280; --border:#e5e7eb;
-      --shadow:0 14px 40px rgba(0,0,0,.10); --radius:18px; --blue:#2563eb;
-      --basic:#16a34a; --expected:#eab308; --ok:#16a34a; --bad:#dc2626; --partial:#eab308;
+      --shadow:0 14px 40px rgba(0,0,0,.10); --radius:18px; --ok:#16a34a; --footer-h:44px; --pagePad:12mm;
       --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
       --uiFont:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:var(--uiFont);background:var(--bg);color:var(--ink)}
-    body.modalOpen{overflow:hidden}
-    .wrap{max-width:1180px;margin:18px auto 40px;padding:0 16px}.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .topRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 12px;flex-wrap:wrap}.topLeft{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .chip{display:inline-flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;border:1px solid rgba(229,231,235,.95);background:#fff;font-weight:950;box-shadow:0 8px 18px rgba(0,0,0,.04)}
-    .dot{width:12px;height:12px;border-radius:999px;background:#cbd5e1}.linkBtn{border:none;background:transparent;color:#111827;font-weight:950;cursor:pointer;padding:10px;border-radius:10px}.linkBtn:hover{background:#eef2ff}
-    .resetBtn{border:none;border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer;background:#fee2e2;color:#991b1b}
-    .languageSelectCard{border:1px solid #ddd6fe;background:#faf5ff;color:#4c1d95;border-radius:16px;padding:9px 12px;box-shadow:0 10px 22px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;font-weight:900;width:max-content;max-width:100%}
-    .languageSelectCard.levelLanguageCard{margin:0 0 16px;width:100%;justify-content:flex-start;background:#f8f5ff}.languageLabel{font-size:14px;line-height:1.1;white-space:nowrap;font-weight:1000}
-    .languageSelect{appearance:none;-webkit-appearance:none;border:2px solid #c4b5fd;background:#fff;color:#4c1d95;border-radius:12px;padding:8px 34px 8px 12px;font-weight:1000;font-size:14px;cursor:pointer;min-width:180px;background-image:linear-gradient(45deg,transparent 50%,#7c3aed 50%),linear-gradient(135deg,#7c3aed 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
-    .languageSelect:focus{outline:none;box-shadow:0 0 0 4px rgba(124,58,237,.14);border-color:#8b5cf6}.rtlText{direction:rtl;unicode-bidi:plaintext}.dualText .altLine{display:block;direction:rtl;unicode-bidi:plaintext;font-size:.72em;line-height:1.25;margin-top:4px;opacity:.92;font-weight:900}.bannerTitle .altLine{font-size:.48em}.qCounter .altLine,.levelChipSmall .altLine{font-size:.72em}
-    .banner{background:linear-gradient(180deg,#2f64f5,#1d4ed8);color:#fff;border-radius:18px;padding:18px;display:flex;align-items:center;justify-content:center;gap:14px;position:relative;overflow:hidden}.banner .logo{width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;box-shadow:0 10px 25px rgba(0,0,0,.18)}.banner .logo img{width:100%;height:100%;object-fit:contain;padding:6px}.bannerTitle{font-weight:1000;font-size:42px;letter-spacing:.2px;line-height:1;text-align:center}@media(max-width:720px){.bannerTitle{font-size:30px}}
-    .progressRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 4px 10px}.bar{flex:1;height:14px;border-radius:999px;background:#e5e7eb;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}.bar>div{height:100%;width:0%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:999px;transition:width .25s ease}.qCounter{font-weight:1000;font-size:20px;color:#111827;white-space:nowrap}
-    .stage{background:#fff;border-radius:22px;border:1px solid rgba(229,231,235,.95);box-shadow:0 10px 26px rgba(15,23,42,.06);padding:18px;min-height:420px}.qArea{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:380px;text-align:center}.qLabel{font-family:var(--mathFont);font-weight:700;font-size:26px}.qBox{border:3px solid #111827;border-radius:18px;padding:16px 22px;font-family:var(--mathFont);font-weight:700;font-size:31px;background:#fff;width:min(820px,94vw);display:flex;align-items:center;justify-content:center;min-height:110px;line-height:1.25}.qBox.small{font-size:27px}.qBox{direction:ltr;unicode-bidi:isolate}.qBox *{direction:ltr;unicode-bidi:isolate}.exprLTR{direction:ltr!important;unicode-bidi:isolate!important;display:inline-block}.qBox .var{display:inline-block;margin:0 .16em}.mulSign{display:inline-block;padding:0 .46em;font-style:normal}.ansInput.correct,.tableInput.correct{border-color:var(--ok)!important;background:rgba(22,163,74,.08)}.ansInput.wrong,.tableInput.wrong{border-color:var(--bad)!important;background:rgba(220,38,38,.08)}.ansInput.partial,.tableInput.partial{border-color:var(--partial)!important;background:rgba(234,179,8,.12)}.confettiPiece{position:fixed;width:10px;height:14px;border-radius:3px;z-index:10000;pointer-events:none;animation:confettiFall 850ms ease-out forwards}@keyframes confettiFall{0%{transform:translate(0,0) rotate(0deg);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}.muted{color:var(--muted);font-weight:900}
-    .tableHost{display:none;width:min(820px,94vw)}
-.valueTable{width:100%;border-collapse:collapse;font-family:var(--mathFont);font-weight:700;font-size:24px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 0 0 2px rgba(17,24,39,.18)}
-.valueTable th,.valueTable td{border:2px solid rgba(17,24,39,.18);padding:12px;text-align:center}
-.valueTable th{background:#f9fafb}
-.tableInput{width:100%;max-width:120px;border:2px solid #111827;border-radius:12px;padding:10px 8px;text-align:center;font-family:var(--mathFont);font-weight:700;font-size:22px}
-.tableInput:disabled{background:#f9fafb;color:#6b7280}
-.answerRow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:min(740px,94vw)}.answerRow .ansLabel{font-family:var(--mathFont);font-weight:700;font-size:22px}.ansInput{border:2.5px solid #111827;border-radius:16px;padding:14px;font-family:var(--mathFont);font-weight:700;font-size:24px;min-width:min(360px,86vw);outline:none;background:#fff}.ansInput:disabled{background:#f9fafb;color:#6b7280}
-    .btn{border:none;border-radius:16px;padding:14px 18px;font-weight:1000;cursor:pointer;background:#f3f4f6;color:#111827;transition:transform .04s ease,filter .15s ease,opacity .2s ease;user-select:none;font-size:18px}.btn:active{transform:scale(.98)}.btn.primary{background:#2563eb;color:#fff}.btn.ghost{background:#eef2ff;color:#1d4ed8}.btn.dark{background:#111827;color:#fff}
-    .feedback{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:1000;margin-top:6px;min-height:28px}.badge{padding:8px 12px;border-radius:999px;border:2px solid rgba(17,24,39,.25);background:#fff;display:inline-flex;align-items:center;gap:8px;opacity:0;transform:translateY(6px);transition:opacity .15s ease,transform .15s ease}.badge.show{opacity:1;transform:translateY(0)}.badge.ok{border-color:rgba(22,163,74,.45);background:rgba(22,163,74,.08);color:var(--ok)}.badge.bad{border-color:rgba(220,38,38,.45);background:rgba(220,38,38,.08);color:var(--bad)}.badge.partial{border-color:rgba(234,179,8,.55);background:rgba(234,179,8,.14);color:#92400e}
-    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);z-index:9999;pointer-events:none}.overlay.show{display:flex;pointer-events:auto}.modal{width:min(980px,96vw);background:#fff;border-radius:26px;box-shadow:0 30px 80px rgba(0,0,0,.20);border:1px solid rgba(229,231,235,.95);padding:22px}.modal h2{margin:0 0 14px;font-size:44px;letter-spacing:.2px;font-weight:1000}.levelList{display:flex;flex-direction:column;gap:14px}.levelItem{border-radius:22px;border:3px solid rgba(0,0,0,.10);padding:22px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}.levelName{font-size:34px;font-weight:1000}.levelSub{font-weight:900;color:#4b5563;margin-top:4px}.levelItem.basic{background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.30)}.levelItem.expected{background:rgba(234,179,8,.16);border-color:rgba(234,179,8,.35)}.startPill{border:none;border-radius:999px;padding:12px 18px;font-weight:1000;cursor:pointer;background:#1d4ed8;color:#fff;font-size:18px;min-width:110px}
-
-    .typesGrid{display:flex;gap:12px 14px;flex-wrap:wrap;align-items:center;padding-top:10px}.typesActions{display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap;margin:12px 0 2px}.miniActionBtn{border:1px solid rgba(37,99,235,.22);background:#eef2ff;color:#1d4ed8;border-radius:999px;padding:10px 14px;font-weight:1000;cursor:pointer;font-family:var(--uiFont);box-shadow:0 8px 18px rgba(15,23,42,.04)}.miniActionBtn:active{transform:scale(.98)}.chk{display:flex;gap:10px;align-items:center;border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:999px;padding:10px 12px;box-shadow:0 8px 18px rgba(0,0,0,.04);user-select:none;font-weight:950;font-size:14px}.typeText{display:flex;flex-direction:column;gap:2px;line-height:1.15}.typeAlt{display:block;font-size:.82em;color:#6b7280;direction:rtl;unicode-bidi:plaintext;font-weight:900}.chk input{width:18px;height:18px}.row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:10px}.field label{display:block;font-weight:1000;font-size:13px;margin:0 0 8px;color:var(--muted)}.field input[type="number"]{border:2px solid #e5e7eb;border-radius:14px;padding:12px 12px;font-weight:950;font-size:18px;background:#fff;min-width:240px;outline:none}.warn{margin-top:10px;padding:10px 12px;border-radius:14px;border:2px solid rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:#991b1b;font-weight:950;display:none}.warn.show{display:block}
-    .resultsTop{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}.trophy{width:72px;height:72px;border-radius:18px;border:2px solid rgba(234,179,8,.35);background:rgba(234,179,8,.12);display:flex;align-items:center;justify-content:center;font-size:40px;flex:0 0 auto}.resultsText{flex:1;min-width:240px}.bigLine{font-size:28px;font-weight:1000;margin:4px 0 8px}.breakdown{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}.breakdownRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed rgba(229,231,235,.95);font-weight:950}.breakdownRow:last-child{border-bottom:none}.modalBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;margin-top:16px}
-    .var{font-family:var(--mathFont);font-style:italic;font-weight:700}.frac{display:inline-flex;flex-direction:column;align-items:stretch;justify-content:center;vertical-align:middle;line-height:1.05;transform:translateY(-1px);margin:0 2px;min-width:38px}.frac .top,.frac .bottom{text-align:center;padding:0 4px;white-space:nowrap}.frac .bar{height:0;border-top:2px solid #111827;margin:2px 0;border-radius:999px}.qExprLine{display:block;margin-top:8px;text-align:center;direction:ltr;unicode-bidi:plaintext}.qPrompt{display:block}.correctAnswer{font-family:var(--mathFont);font-weight:700;color:#111827}.hintLine{font-size:14px;color:#6b7280;font-weight:900;max-width:760px}.hidden{display:none!important}
-  
-
-    /* Firebase student login + teacher assignment link builder */
-    .firebaseOverlay{position:fixed;inset:0;z-index:12000;background:rgba(15,23,42,.52);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px}
-    .firebaseOverlay.hidden{display:none}
-    .firebaseCard{width:min(560px,96vw);background:#fff;border-radius:26px;border:1px solid rgba(229,231,235,.95);box-shadow:0 30px 80px rgba(0,0,0,.24);padding:22px}
-    .firebaseCard h2{margin:0 0 8px;font-size:30px;font-weight:1000;letter-spacing:-.03em}
-    .firebaseCard p{margin:0 0 14px;color:#6b7280;font-weight:850;line-height:1.4}
-    .firebaseInput{width:100%;border:2px solid #e5e7eb;border-radius:16px;padding:14px 16px;font-size:20px;font-weight:1000;text-transform:uppercase;letter-spacing:.06em;outline:none}
-    .firebaseInput:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
-    .firebaseActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.firebaseMsg{display:none;margin-top:12px;padding:11px 13px;border-radius:14px;font-weight:950}.firebaseMsg.show{display:block}.firebaseMsg.ok{background:#dcfce7;color:#166534}.firebaseMsg.bad{background:#fee2e2;color:#991b1b}.firebaseMsg.info{background:#eef2ff;color:#1d4ed8}
-    .studentChip{display:none}.studentChip.show{display:inline-flex}.teacherAssignBtn{border:none;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:999px;padding:10px 12px;font-weight:1000;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.04)}
-    .teacherAssignBtn:hover{background:#ffedd5}.assignmentNotice{display:none;margin:10px 0 0;padding:10px 12px;border-radius:14px;background:#eef2ff;color:#1d4ed8;border:1px solid rgba(37,99,235,.18);font-weight:950}.assignmentNotice.show{display:block}
-    .assignmentBuilderModal{width:min(1120px,96vw);max-height:min(92vh,820px);overflow:auto;padding:26px;border-radius:30px}
-    .assignmentBuilderModal h2{font-size:clamp(34px,5vw,54px);letter-spacing:-.055em;margin-bottom:8px;line-height:.98}
-    .builderIntro{max-width:940px;font-size:18px;line-height:1.28;font-weight:900;color:#6b7280;margin-bottom:18px}
-    .builderGrid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(170px,220px);gap:16px;margin:14px 0 16px;align-items:end}
-    .builderCard{border:1px solid rgba(229,231,235,.95);background:#f8fafc;border-radius:20px;padding:14px;box-shadow:0 8px 22px rgba(15,23,42,.04)}
-    .builderCard label,.builderSectionTitle{display:block;font-weight:1000;font-size:13px;margin:0 0 10px;color:#6b7280;letter-spacing:.02em;text-transform:uppercase}
-    .builderLevelNative{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
-    .levelToggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#eef2ff;border:1px solid rgba(37,99,235,.16);border-radius:999px;padding:6px}
-    .levelToggleBtn{border:0;border-radius:999px;padding:12px 14px;background:transparent;color:#334155;font-weight:1000;font-size:16px;cursor:pointer;transition:background .15s ease,color .15s ease,box-shadow .15s ease,transform .04s ease;white-space:nowrap}
-    .levelToggleBtn:active{transform:scale(.98)}
-    .levelToggleBtn.active[data-level="basic"]{background:#dcfce7;color:#166534;box-shadow:0 8px 18px rgba(22,163,74,.18)}
-    .levelToggleBtn.active[data-level="expected"]{background:#fef9c3;color:#854d0e;box-shadow:0 8px 18px rgba(234,179,8,.18)}
-    .builderCountInput{width:100%;min-width:0!important;max-width:100%;border:2px solid #e5e7eb;border-radius:18px;padding:14px 16px;font-size:22px;font-weight:1000;background:#fff;outline:none}
-    .builderCountInput:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
-    .builderToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 10px}
-    .builderSummary{font-weight:950;color:#475569;background:#f8fafc;border:1px solid rgba(229,231,235,.95);padding:9px 12px;border-radius:999px}
-    .builderTypes{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px;margin:10px 0 12px}
-    .builderTypes label{display:flex;gap:10px;align-items:center;border:1px solid rgba(229,231,235,.95);border-radius:16px;padding:12px 13px;background:#fff;font-weight:950;font-size:14px;min-height:54px;box-shadow:0 8px 18px rgba(15,23,42,.04);cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .04s ease,background .15s ease}
-    .builderTypes label:hover{border-color:rgba(37,99,235,.26);box-shadow:0 10px 22px rgba(37,99,235,.10);transform:translateY(-1px)}
-    .builderTypes label:has(input:checked){background:#eff6ff;border-color:rgba(37,99,235,.36)}
-    .builderTypes input{width:19px;height:19px;flex:0 0 auto;accent-color:#2563eb}
-    .linkOutput{width:100%;max-width:100%;border:2px solid #93c5fd;border-radius:16px;padding:13px 14px;font-weight:900;color:#1e3a8a;background:#eff6ff;overflow:hidden;text-overflow:ellipsis;font-size:15px}
-    .builderActions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.builderActions .btn{padding:14px 22px}
-    .builderSmallNote{font-size:13px;color:#64748b;font-weight:850;margin-top:8px;line-height:1.35}
-    @media(max-width:760px){.assignmentBuilderModal{padding:18px}.builderGrid{grid-template-columns:1fr}.builderTypes{grid-template-columns:1fr}.builderActions .btn,.firebaseActions .btn{flex:1}.levelToggle{border-radius:18px}.levelToggleBtn{border-radius:14px}}
-
+    body{margin:0;font-family:var(--uiFont);background:var(--bg);color:var(--ink);padding-bottom:var(--footer-h)}
+    .wrap{max-width:1120px;margin:18px auto 40px;padding:0 16px}
+    .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .controls{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#fff,#f9fafb)}
+    .topSelectors{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;width:100%}
+    .outcomeControl{flex:1 1 360px;min-width:300px}.languageControl{flex:0 1 300px;min-width:240px;display:flex;flex-direction:column;align-items:flex-end}
+    label{display:block;font-weight:950;color:var(--ink);margin:0 0 8px;font-size:13px}
+    select,input[type="number"]{border:2px solid #e5e7eb;border-radius:14px;padding:12px;font-weight:950;font-size:16px;background:#fff;min-width:240px;outline:none}
+    select:focus,input[type="number"]:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+    .outcomeControl select,.languageControl select{width:100%}.languageControl label{text-align:right}
+    .checks{display:flex;gap:12px 14px;flex-wrap:wrap;align-items:center;padding:10px 0 0;width:100%}
+    .checksHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;margin-bottom:2px}
+    .checksTitle{margin:0;font-size:13px;font-weight:950;color:var(--muted)}
+    .miniBtn{border:none;border-radius:999px;padding:8px 12px;font-weight:950;cursor:pointer;background:#eef2ff;color:#1d4ed8;font-size:12px;line-height:1;box-shadow:0 8px 18px rgba(0,0,0,.04)}
+    .chk{display:flex;gap:10px;align-items:center;border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:999px;padding:10px 12px;box-shadow:0 8px 18px rgba(0,0,0,.04);user-select:none}
+    .chk input{width:18px;height:18px;accent-color:#2563eb}.chk span{font-weight:950;font-size:13px;color:#111827;white-space:nowrap}
+    .chk .typeAlt{display:block;color:#6b7280;font-size:12px;white-space:normal;direction:rtl;text-align:right}
+    .countActions{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+    button{border:none;border-radius:14px;padding:12px 16px;font-weight:1000;cursor:pointer;background:#f3f4f6;color:#111827;transition:transform .04s ease,filter .15s ease,opacity .2s ease;user-select:none;font-size:16px}
+    button:active,.miniBtn:active{transform:scale(.98)}button.primary{background:#2563eb;color:#fff}button.ghost{background:#eef2ff;color:#1d4ed8}button.danger{background:#fee2e2;color:#991b1b}
+    .warn{display:none;margin-top:12px;border:2px solid rgba(220,38,38,.28);background:#fee2e2;color:#991b1b;border-radius:14px;padding:10px 12px;font-weight:950;width:100%}.warn.show{display:block}
+    .outWrap{margin-top:16px}
+    .page{margin-top:16px;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 26px rgba(15,23,42,.08);overflow:hidden;position:relative}
+    .pageBorder{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+    .pageInner{position:relative;z-index:1;padding:0}.pageContent{margin:var(--pagePad);background:#fff;border-radius:14px;padding:16px;box-shadow:0 0 0 1px rgba(229,231,235,.9) inset}
+    .pageHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+    .hdrLeft{min-width:240px}.hdrTitle{font-weight:1000;font-size:18px;line-height:1.15;margin-bottom:2px}.hdrSub{color:var(--muted);font-weight:900;font-size:12px;line-height:1.2}
+    .nameRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;min-width:min(420px,100%)}
+    .lineField{display:flex;flex-direction:column;gap:6px;min-width:0}.lineLabel{font-size:12px;font-weight:950;color:var(--muted)}.lineBox{height:30px;border:2px solid #111827;border-radius:10px;background:#fff;width:100%}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin-top:10px}
+    .qCard{border:1px solid rgba(229,231,235,.95);border-radius:16px;padding:12px;background:#fff;min-height:190px;display:flex;flex-direction:column;gap:8px;break-inside:avoid}
+    .qTop{display:flex;align-items:flex-start;justify-content:flex-start;gap:12px}
+    .qNum{font-weight:1000;font-size:18px;min-width:44px;color:#111827}
+    .qText{font-weight:1000;font-size:16px;line-height:1.18;color:#111827;flex:1}
+    .qInstruction{display:block;margin-bottom:6px}
+    .qExprLine{display:block;text-align:center;font-family:var(--mathFont);font-weight:700;font-size:20px;line-height:1.25;direction:ltr;unicode-bidi:isolate;margin-top:4px}
+    .workBox{margin-top:2px;border:2px solid #111827;border-radius:16px;padding:10px;background:#fff;flex:1;min-height:92px}
+    .workBox.key{border-color:var(--ok);background:rgba(22,163,74,.08);color:#111827;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:1000;font-size:18px;overflow-wrap:anywhere;font-family:var(--mathFont)}
+    .tableMini{width:100%;border-collapse:collapse;font-family:var(--mathFont);font-weight:700;font-size:16px;background:#fff;border-radius:12px;overflow:hidden;margin-top:4px}
+    .tableMini th,.tableMini td{border:1.5px solid rgba(17,24,39,.35);padding:7px 8px;text-align:center;min-width:40px;height:34px}
+    .tableMini th{background:#f9fafb}.tableMini .blank{height:34px;background:#fff}
+    .var{font-family:var(--mathFont);font-style:italic;font-weight:650}.math,.exprLTR{font-family:var(--mathFont);font-weight:650;direction:ltr;unicode-bidi:isolate}
+    .frac{display:inline-flex;flex-direction:column;align-items:stretch;justify-content:center;vertical-align:middle;line-height:1.05;transform:translateY(-1px);margin:0 2px;min-width:34px}
+    .frac .top,.frac .bottom{text-align:center;padding:0 4px;white-space:nowrap}.frac .bar{height:0;border-top:2px solid #111827;margin:2px 0;border-radius:999px}
+    .mulSign{display:inline-block;padding:0 .35em;font-style:normal}
+    .page.lang-rtl .pageHeader,.page.lang-rtl .qTop{direction:rtl}.page.lang-rtl .qText,.page.lang-rtl .hdrTitle,.page.lang-rtl .hdrSub,.page.lang-rtl .lineLabel{text-align:right}.page.lang-rtl .qNum{text-align:left}.page.lang-rtl .math,.page.lang-rtl .exprLTR,.page.lang-rtl .frac,.page.lang-rtl .tableMini{direction:ltr}
+    .mmtFooter{position:fixed;left:0;right:0;bottom:0;height:var(--footer-h);display:flex;align-items:center;justify-content:center;padding:0 12px;background:rgba(255,255,255,.92);border-top:1px solid rgba(229,231,235,.95);backdrop-filter:blur(8px);z-index:500;font-weight:900;color:#111827;text-align:center;font-size:13px}
+    .mmtFooter a{color:#2563eb;text-decoration:none;font-weight:950}.mmtFooter a:hover{text-decoration:underline}
+    @media print{
+      @page{size:A4;margin:12mm}body{background:#fff!important;padding:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.controls,.mmtFooter{display:none!important}.wrap{max-width:none!important;margin:0!important;padding:0!important}:root{--pagePad:6mm}.page{width:186mm;height:273mm;margin:0 auto;border:none;box-shadow:none;page-break-after:always;border-radius:0}.page:last-child{page-break-after:auto}.pageContent{margin:var(--pagePad);padding:12px}.pageHeader{flex-wrap:nowrap!important;gap:10px!important}.grid{gap:12px!important}.qCard{padding:12px!important;min-height:190px}.frac .bar{border-top-width:2px!important}
+    }
   </style>
 </head>
 <body>
-  <div id="studentLoginOverlay" class="firebaseOverlay hidden" role="dialog" aria-modal="true" aria-labelledby="firebaseLoginTitle">
-    <div class="firebaseCard">
-      <h2 id="firebaseLoginTitle">Student code</h2>
-      <p>Enter your teacher-provided student code to save your result to the MMT dashboard. You can also skip and use the quiz without saving.</p>
-      <input id="studentCodeInput" class="firebaseInput" autocomplete="off" placeholder="Enter your student code" />
-      <div class="firebaseActions">
-        <button id="studentCodeBtn" class="btn primary" type="button">Continue</button>
-        <button id="studentSkipBtn" class="btn ghost" type="button">Skip student code</button>
+  <div class="wrap"><div class="panel"><div class="controls" aria-label="Worksheet controls">
+    <div style="min-width:320px;flex:1 1 620px">
+      <div class="topSelectors">
+        <div class="outcomeControl"><label for="levelSel" data-ui="levelLabel">Level</label><select id="levelSel"><option value="basic">Basic — Algebraic Techniques (D/E)</option><option value="expected">Expected — Algebraic Techniques (C)</option></select></div>
+        <div class="languageControl"><label for="languageSel" data-ui="languageLabel">Worksheet language</label><select id="languageSel"><option value="en">English</option><option value="fa">فارسی (Farsi / Persian)</option><option value="ar">العربية (Arabic)</option></select></div>
       </div>
-      <div id="studentLoginMsg" class="firebaseMsg info">Connecting to Firebase…</div>
+      <div class="checks" aria-label="Question types"><div class="checksHeader"><label class="checksTitle" data-ui="questionTypes">Question types</label><button id="toggleAllBtn" type="button" class="miniBtn">Deselect all</button></div><div id="chkWrap" style="display:flex;gap:12px 14px;flex-wrap:wrap;align-items:center"></div></div>
+      <div id="warn" class="warn">Please tick at least one question type.</div>
     </div>
-  </div>
-
-  <div class="wrap"><div class="panel">
-    <div class="topRow">
-      <div class="topLeft">
-        <button id="backBtn" class="linkBtn" type="button">← Back</button>
-        <div class="chip"><span id="levelDot" class="dot"></span><span id="levelChipText" class="levelChipSmall">Level: —</span></div>
-        <div class="languageSelectCard" id="languageCard"><label class="languageLabel" id="languageLabel" for="languageSelect">Language / فارسی / العربية</label><select class="languageSelect" id="languageSelect"><option value="en">English</option><option value="fa">فارسی (Farsi / Persian)</option><option value="ar">العربية (Arabic)</option></select></div><button id="teacherAssignBtn" class="teacherAssignBtn" type="button">Create assignment link</button><div id="studentChip" class="chip studentChip">👤 <span id="studentChipText">Guest mode</span></div>
-      </div>
-      <button id="resetBtn" class="resetBtn" type="button">Reset</button>
-    </div>
-    <div class="banner"><div class="logo" aria-hidden="true"><img src="mmt.png" alt=""></div><div id="bannerTitle" class="bannerTitle">Level: —</div></div><div id="assignmentNotice" class="assignmentNotice">Assigned practice mode: your teacher has selected the question types for this quiz.</div>
-    <div class="progressRow"><div class="bar"><div id="barFill"></div></div><div id="qCounter" class="qCounter">Question 0/0</div></div>
-    <div class="stage"><div class="qArea">
-      <div class="qLabel" id="qLabel">Question:</div>
-      <div id="qBox" class="qBox">—</div>
-      <div id="tableHost" class="tableHost"></div>
-      <div class="answerRow" id="answerRow"><span class="ansLabel" id="ansLabel">Answer:</span><input id="ansInput" class="ansInput" type="text" autocomplete="off" inputmode="text" /></div>
-      <div class="feedback"><div id="badge" class="badge"></div></div>
-      <div id="hintLine" class="hintLine">Use normal algebra notation. Example: 3x, x+4, or 4x/3.</div>
-      <div id="tipLine" class="muted">Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px;"><button id="prevBtn" class="btn ghost" type="button" style="display:none;">← Previous</button><button id="skipBtn" class="btn ghost" type="button">Skip</button><button id="retryBtn" class="btn dark" type="button" style="display:none;">Retry</button><button id="submitBtn" class="btn primary" type="button">Submit</button><button id="nextBtn" class="btn dark" type="button" style="display:none;">Next →</button></div>
-    </div></div>
-  </div></div>
-
-  <div id="levelOverlay" class="overlay"><div class="modal">
-    <h2 id="chooseLevelTitle">Choose your level</h2>
-    <div class="languageSelectCard levelLanguageCard"><label class="languageLabel" id="startLanguageLabel" for="startLanguageSelect">Language / فارسی / العربية</label><select class="languageSelect" id="startLanguageSelect"><option value="en">English</option><option value="fa">فارسی (Farsi / Persian)</option><option value="ar">العربية (Arabic)</option></select></div>
-    <div class="levelList">
-      <div class="levelItem basic"><div><div id="basicName" class="levelName">Basic</div><div id="basicSub" class="levelSub">D/E basic algebraic techniques</div></div><button class="startPill" type="button" data-level="basic">Start</button></div>
-      <div class="levelItem expected"><div><div id="expectedName" class="levelName">Expected</div><div id="expectedSub" class="levelSub">C expected algebraic techniques</div></div><button class="startPill" type="button" data-level="expected">Start</button></div>
-    </div>
-  </div></div>
-
-  <div id="typeOverlay" class="overlay"><div class="modal">
-    <h2 id="selectTypesTitle">Select question types</h2>
-    <div class="muted" id="typesHelpText">All boxes are ticked by default. Untick any you don’t want.</div>
-    <div class="typesActions"><button id="toggleAllTypesBtn" class="miniActionBtn" type="button">Deselect all</button></div>
-    <div id="typesGrid" class="typesGrid" aria-label="Question types"></div>
-    <div class="row">
-      <div class="field"><label for="countInp" id="countLabel">Total questions (min 5, max 60)</label><input id="countInp" type="number" min="5" max="60" step="1" value="15" /></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;"><button id="typesBackBtn" class="btn ghost" type="button">← Back</button><button id="beginBtn" class="btn primary" type="button">Begin</button></div>
-    </div>
-    <div id="typesWarn" class="warn"><span id="typesWarnText">Please select at least one question type.</span></div>
-  </div></div>
-
-  <div id="teacherBuilderOverlay" class="overlay"><div class="modal assignmentBuilderModal">
-    <h2>Create student quiz link</h2>
-    <div class="builderIntro">Choose a level, question types and number of questions. Generate a shareable link for students. When students open that link, they enter their student code and the result can save to Firebase.</div>
-    <div class="builderGrid">
-      <div class="builderCard">
-        <label for="builderLevel">Level</label>
-        <select id="builderLevel" class="builderLevelNative" aria-label="Level"><option value="basic">Basic</option><option value="expected" selected>Expected</option></select>
-        <div class="levelToggle" role="group" aria-label="Choose level">
-          <button id="builderBasicBtn" class="levelToggleBtn" type="button" data-level="basic">Basic</button>
-          <button id="builderExpectedBtn" class="levelToggleBtn active" type="button" data-level="expected">Expected</button>
-        </div>
-      </div>
-      <div class="builderCard">
-        <label for="builderCount">Questions</label>
-        <input id="builderCount" class="builderCountInput" type="number" min="5" max="60" value="15" />
-      </div>
-    </div>
-    <div class="builderToolbar">
-      <div class="builderSectionTitle" style="margin:0;">Question types</div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <span id="builderSummary" class="builderSummary">0 selected</span>
-        <button id="builderToggleAllBtn" class="miniActionBtn" type="button">Deselect all</button>
-      </div>
-    </div>
-    <div id="builderTypes" class="builderTypes"></div>
-    <div id="builderWarn" class="warn">Please select at least one question type.</div>
-    <div class="builderCard" style="margin-top:14px">
-      <label for="assignmentLinkOut">Assignment link</label>
-      <input id="assignmentLinkOut" class="linkOutput" readonly placeholder="Click Generate unique link" />
-      <div class="builderSmallNote">Tip: generate the link after changing the level, question types or count. The copied link is the student-facing version.</div>
-    </div>
-    <div class="builderActions"><button id="generateAssignmentBtn" class="btn primary" type="button">Generate unique link</button><button id="copyAssignmentBtn" class="btn ghost" type="button">Copy link</button><button id="closeBuilderBtn" class="btn" type="button">Reset builder</button></div>
-  </div></div>
-
-  <div id="resultOverlay" class="overlay"><div class="modal">
-    <div class="resultsTop"><div class="trophy">🏆</div><div class="resultsText"><div class="bigLine" id="scoreLine">You completed — and achieved a score of —/—.</div><div class="muted" id="scoreBreakdownLabel">Score breakdown:</div></div></div>
-    <div id="breakdown" class="breakdown"></div>
-    <div class="modalBtns"><button id="copyBtn" class="btn primary" type="button">Copy to clipboard</button><button id="closeBtn" class="btn" type="button">Close</button><button id="menuBtn" class="btn" type="button" style="background:#fee2e2;color:#991b1b;">Back to level menu</button></div>
-  </div></div>
-
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
-    authDomain: "mills-maths-tools.firebaseapp.com",
-    projectId: "mills-maths-tools",
-    storageBucket: "mills-maths-tools.firebasestorage.app",
-    messagingSenderId: "835000359454",
-    appId: "1:835000359454:web:d7876be83ee367b5006c0f",
-    measurementId: "G-35YCH5NJEG"
-  };
-
-  function isAssignmentLink(){
-    const params = new URLSearchParams(window.location.search);
-    return params.get('assignment') === '1' || params.has('types');
-  }
-
-  const overlay = document.getElementById('studentLoginOverlay');
-  const input = document.getElementById('studentCodeInput');
-  const continueBtn = document.getElementById('studentCodeBtn');
-  const skipBtn = document.getElementById('studentSkipBtn');
-  const msg = document.getElementById('studentLoginMsg');
-  const chip = document.getElementById('studentChip');
-  const chipText = document.getElementById('studentChipText');
-
-  let db = null;
-  let mode = 'pending';
-  let currentStudent = null;
-
-  function normaliseCode(code){ return String(code || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''); }
-  function showMsg(text, type='info'){ msg.textContent = text; msg.className = `firebaseMsg show ${type}`; }
-  function closeLogin(){ overlay.classList.add('hidden'); }
-  function setChip(text){ chipText.textContent = text; chip.classList.add('show'); }
-
-  const assignmentLinkMode = isAssignmentLink();
-  if(assignmentLinkMode){
-    overlay.classList.remove('hidden');
-  }else{
-    overlay.classList.add('hidden');
-    setChip('Teacher builder mode');
-  }
-
-  try{
-    const app = initializeApp(firebaseConfig);
-    await signInAnonymously(getAuth(app));
-    db = getFirestore(app);
-    showMsg('Firebase connected. Enter your code or skip.', 'info');
-  }catch(err){
-    console.error(err);
-    showMsg('Firebase connection failed. You can still skip and complete the quiz.', 'bad');
-  }
-
-  continueBtn.addEventListener('click', async () => {
-    const code = normaliseCode(input.value);
-    if(!code){ showMsg('Enter your student code first.', 'bad'); return; }
-    if(!db){ showMsg('Firebase is not connected. Use Skip for now.', 'bad'); return; }
-    continueBtn.disabled = true;
-    continueBtn.textContent = 'Checking...';
-    try{
-      const snap = await getDoc(doc(db, 'students', code));
-      if(!snap.exists()) throw new Error('Student code not found.');
-      const student = { studentCode: code, ...snap.data() };
-      if(student.active === false) throw new Error('This student code is not active.');
-      currentStudent = student;
-      mode = 'registered';
-      setChip(`${student.name || 'Student'} · ${student.className || ''}`);
-      closeLogin();
-    }catch(err){
-      console.error(err);
-      showMsg(err.message || 'Could not validate that code.', 'bad');
-    }finally{
-      continueBtn.disabled = false;
-      continueBtn.textContent = 'Continue';
-    }
-  });
-
-  skipBtn.addEventListener('click', () => {
-    mode = 'skip';
-    currentStudent = null;
-    setChip('Guest mode · results not saved');
-    closeLogin();
-  });
-
-  input.addEventListener('input', () => { input.value = normaliseCode(input.value); });
-  input.addEventListener('keydown', e => { if(e.key === 'Enter') continueBtn.click(); });
-
-  window.MMTFirebase = {
-    get db(){ return db; },
-    get mode(){ return mode; },
-    get currentStudent(){ return currentStudent; },
-    async saveAchievement(payload){
-      if(!db || mode !== 'registered' || !currentStudent) return { skipped:true, reason:'not_registered' };
-      const total = Number(payload.total || 0);
-      const score = Number(payload.score || 0);
-      const percent = total ? Math.round((score / total) * 100) : 0;
-      const achievement = {
-        studentCode: currentStudent.studentCode,
-        studentName: currentStudent.name || '',
-        firstName: currentStudent.firstName || '',
-        surname: currentStudent.surname || '',
-        className: currentStudent.className || '',
-        teacherCode: currentStudent.teacherCode || '',
-        teacherName: currentStudent.teacherName || currentStudent.teacher || '',
-        school: currentStudent.school || '',
-        topic: payload.topic || 'Algebraic Techniques',
-        tool: 'Algebraic Techniques — Student Quiz',
-        level: payload.level || '',
-        levelKey: payload.levelKey || '',
-        score,
-        total,
-        percent,
-        types: payload.types || [],
-        assignmentMode: !!payload.assignmentMode,
-        assignedTypes: payload.assignedTypes || [],
-        assignedCount: payload.assignedCount || null,
-        assignmentSource: payload.assignmentSource || null,
-        certificateText: `You completed ${payload.level || 'Algebraic Techniques'} in Algebraic Techniques and got a score of ${score} out of ${total}.`,
-        createdAt: serverTimestamp(),
-        createdAtClient: new Date().toISOString()
-      };
-      await addDoc(collection(db, 'achievements'), achievement);
-      return { saved:true };
-    }
-  };
-</script>
-
+    <div class="countActions"><div><label for="countInp" data-ui="totalQuestions">Total questions (multiples of 8 recommended)</label><input id="countInp" type="number" min="8" max="96" step="8" value="16" /></div><div class="btnRow"><button id="genBtn" class="primary" data-ui="generateBtn">Generate</button><button id="printBtn" class="ghost" data-ui="printBtn">Print / Save as PDF</button><button id="resetBtn" class="danger" data-ui="resetBtn">Reset</button></div></div>
+  </div><div id="out" class="outWrap"></div></div></div>
+  <div class="mmtFooter">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au">www.millsmathstools.au</a></div>
 <script>
 (() => {
-  if (window.__mmtAlgebraQuizInit) return;
-  window.__mmtAlgebraQuizInit = true;
-
+  const state={language:'en'};
   const QUIZ_LENGTH = 15;
   const I18N = {
     en:{dir:'ltr',alt:null,languageLabel:'Language / فارسی / العربية',back:'← Back',reset:'Reset',level:'Level',question:'Question',questionLabel:'Question:',answer:'Answer:',chooseLevel:'Choose your level',basic:'Basic',expected:'Expected',basicSub:'D/E basic algebraic techniques',expectedSub:'C expected algebraic techniques',start:'Start',skip:'Skip',retry:'Retry',submit:'Submit',prev:'← Previous',next:'Next →',close:'Close',copy:'Copy to clipboard',menu:'Back to level menu',scoreBreakdown:'Score breakdown:',selectTypes:'Select question types',typesHelp:'All boxes are ticked by default. Untick any you don’t want.',selectAll:'Select all',deselectAll:'Deselect all',selectOne:'Please select at least one question type.',totalQuestions:'Total questions (min 5, max 60)',begin:'Begin',typesBack:'← Back',tip:'Tip: Press Enter to submit • After feedback, press Enter again (or Next) to move on.',hint:'Use normal algebra notation. Example: 3x, x+4, or 4x/3.',correct:'Correct ✓',incorrect:'Incorrect ✕',skipped:'Skipped (counts as wrong)',correctAnswer:'Correct answer:',partialHCF:'This is correct, but you haven’t factored the highest common factor.',qCounter:(i,n)=>`Question ${i}/${n}`,levelText:n=>`Level: ${n}`,scoreLine:(level,c,t)=>`You completed ${level} and achieved a score of ${c}/${t}.`,copyTitle:l=>`Algebraic Techniques Quiz — ${l}`,score:(c,t)=>`Score: ${c}/${t}`,typeLabels:{identify_part:'Identify coefficient / pronumeral / constant',notation:'Rewrite using correct algebraic notation',words_to_expr:'Translate words → algebraic expression',sub_one:'Substitute and evaluate (one step)',like_terms:'Collect like terms (simple)',mul_single_term:'Multiply a single term',div_single_term:'Divide a single term',expand_bracket:'Expand a single bracket',factorise_number:'Factorise by common number',factorise_expected:'Factorising',translate_rich:'Translate words → expression (multi-step)',sub_two:'Substitute and evaluate (two-step)',sub_two_vars:'Substitute and evaluate (two pronumerals)',simplify_mixed:'Simplify mixed like terms',multiply_terms:'Multiplying terms',expand_simplify:'Expand and simplify',alg_frac:'Simplify algebraic fractions',pattern_table:'Complete a table of values'},
@@ -497,149 +264,54 @@
   }
   function genQuestions(level,n,typeIds=null){const allowed=typeIds?new Set(typeIds):null;const types=TYPES.filter(t=>t.level===level&&(!allowed||allowed.has(t.id)));const qs=[];let safety=0;while(qs.length<n&&safety++<3000){const t=choice(types);const tableIndex=qs.filter(x=>x.type==='pattern_table').length;const q=t.gen({tableIndex,questionIndex:qs.length});const key=canonical(stripHTML(q.promptHTML))+'|'+canonical(q.answerText);if(qs.some(x=>x.key===key))continue;q.key=key;q.label=t.label;qs.push(q)}return qs}
 
+  const CONFIG={title:'MMT Worksheet Generator — Algebraic Techniques', perPage:8, borderSrc:'border_page0.png', defaultCount:16, minCount:8, maxCount:96};
+  const UI={
+    en:{levelLabel:'Level',languageLabel:'Worksheet language',questionTypes:'Question types',totalQuestions:'Total questions (multiples of 8 recommended)',generateBtn:'Generate',printBtn:'Print / Save as PDF',resetBtn:'Reset',selectAll:'Select all',deselectAll:'Deselect all',pageTitle:'Algebraic Techniques',answerKeyTitle:'Answer key',page:'Page',name:'Name',className:'Class',date:'Date',noTypes:'Please tick at least one question type.'},
+    fa:{levelLabel:'سطح',languageLabel:'زبان برگه',questionTypes:'نوع پرسش‌ها',totalQuestions:'تعداد کل پرسش‌ها (مضرب‌های ۸ پیشنهاد می‌شود)',generateBtn:'ساخت برگه',printBtn:'چاپ / ذخیره PDF',resetBtn:'بازنشانی',selectAll:'انتخاب همه',deselectAll:'لغو انتخاب همه',pageTitle:'تکنیک‌های جبری',answerKeyTitle:'پاسخ‌نامه',page:'صفحه',name:'نام',className:'کلاس',date:'تاریخ',noTypes:'لطفاً حداقل یک نوع پرسش را انتخاب کنید.'},
+    ar:{levelLabel:'المستوى',languageLabel:'لغة ورقة العمل',questionTypes:'أنواع الأسئلة',totalQuestions:'إجمالي الأسئلة (يُفضّل مضاعفات ٨)',generateBtn:'إنشاء',printBtn:'طباعة / حفظ PDF',resetBtn:'إعادة ضبط',selectAll:'تحديد الكل',deselectAll:'إلغاء تحديد الكل',pageTitle:'التقنيات الجبرية',answerKeyTitle:'دليل الإجابات',page:'صفحة',name:'الاسم',className:'الصف',date:'التاريخ',noTypes:'يرجى اختيار نوع سؤال واحد على الأقل.'}
+  };
   const el=id=>document.getElementById(id);
-  const body=document.body,levelOverlay=el('levelOverlay'),typeOverlay=el('typeOverlay'),resultOverlay=el('resultOverlay'),levelDot=el('levelDot'),levelChipText=el('levelChipText'),bannerTitle=el('bannerTitle'),barFill=el('barFill'),qCounter=el('qCounter'),qLabel=el('qLabel'),qBox=el('qBox'),tableHost=el('tableHost'),answerRow=el('answerRow'),ansLabel=el('ansLabel'),ansInput=el('ansInput'),badge=el('badge'),hintLine=el('hintLine'),tipLine=el('tipLine'),prevBtn=el('prevBtn'),skipBtn=el('skipBtn'),retryBtn=el('retryBtn'),submitBtn=el('submitBtn'),nextBtn=el('nextBtn'),backBtn=el('backBtn'),resetBtn=el('resetBtn'),languageSelect=el('languageSelect'),startLanguageSelect=el('startLanguageSelect'),languageLabel=el('languageLabel'),startLanguageLabel=el('startLanguageLabel'),chooseLevelTitle=el('chooseLevelTitle'),basicName=el('basicName'),basicSub=el('basicSub'),expectedName=el('expectedName'),expectedSub=el('expectedSub'),selectTypesTitle=el('selectTypesTitle'),typesHelpText=el('typesHelpText'),typesGrid=el('typesGrid'),toggleAllTypesBtn=el('toggleAllTypesBtn'),countInp=el('countInp'),beginBtn=el('beginBtn'),typesBackBtn=el('typesBackBtn'),typesWarn=el('typesWarn'),typesWarnText=el('typesWarnText'),countLabel=el('countLabel'),scoreLine=el('scoreLine'),scoreBreakdownLabel=el('scoreBreakdownLabel'),breakdown=el('breakdown'),copyBtn=el('copyBtn'),closeBtn=el('closeBtn'),menuBtn=el('menuBtn');
-  const state={language:'en',level:null,pendingLevel:null,activeTypeIds:[],quizLength:QUIZ_LENGTH,questions:[],index:0,score:0,answered:false,skips:0,results:[],records:[],assignment:null,savedResult:false};
-  function levelName(){return state.level==='basic'?tr('basic'):state.level==='expected'?tr('expected'):'—'}
-  function dual(main,alt){return alt?`<span class="dualText">${main}<span class="altLine">${alt}</span></span>`:main}
-  function localize(){document.documentElement.lang=lang();document.documentElement.dir=dir();languageLabel.textContent=tr('languageLabel');startLanguageLabel.textContent=tr('languageLabel');backBtn.textContent=tr('back');resetBtn.textContent=tr('reset');chooseLevelTitle.textContent=tr('chooseLevel');basicName.textContent=tr('basic');expectedName.textContent=tr('expected');basicSub.textContent=tr('basicSub');expectedSub.textContent=tr('expectedSub');document.querySelectorAll('.startPill').forEach(b=>b.textContent=tr('start'));prevBtn.textContent=tr('prev');skipBtn.textContent=tr('skip');retryBtn.textContent=tr('retry');submitBtn.textContent=state.answered?tr('next'):tr('submit');nextBtn.textContent=tr('next');closeBtn.textContent=tr('close');copyBtn.textContent=tr('copy');menuBtn.textContent=tr('menu');scoreBreakdownLabel.textContent=tr('scoreBreakdown');selectTypesTitle.textContent=tr('selectTypes');typesHelpText.textContent=tr('typesHelp');countLabel.textContent=tr('totalQuestions');beginBtn.textContent=tr('begin');typesBackBtn.textContent=tr('typesBack');typesWarnText.textContent=tr('selectOne');ansLabel.textContent=tr('answer');updateToggleAllTypesLabel();hintLine.textContent=tr('hint');tipLine.textContent=tr('tip');updateHeader(); if(state.questions.length&&!state.answered)showQuestion();}
-  function updateHeader(){const name=levelName();levelChipText.innerHTML=dual(tr('levelText')(name),L().alt?tr('levelText')(L().alt):null);bannerTitle.innerHTML=dual(tr('levelText')(name),L().alt?tr('levelText')(L().alt):null);qCounter.innerHTML=dual(tr('qCounter')(Math.min(state.index+1,state.questions.length||0),state.questions.length||0),null);levelDot.style.background=state.level==='basic'?'var(--basic)':state.level==='expected'?'var(--expected)':'#cbd5e1'}
-  function showOverlay(o){o.classList.add('show');body.classList.add('modalOpen')}function hideOverlay(o){o.classList.remove('show');if(!document.querySelector('.overlay.show'))body.classList.remove('modalOpen')}
-  function typesForLevel(level){return TYPES.filter(t=>t.level===level)}
-  function updateToggleAllTypesLabel(){if(!toggleAllTypesBtn)return;const boxes=Array.from(typesGrid?.querySelectorAll('input[type="checkbox"]')||[]);const all=boxes.length&&boxes.every(b=>b.checked);toggleAllTypesBtn.textContent=all?tr('deselectAll'):tr('selectAll')}
-  function buildTypeChooser(level){state.pendingLevel=level;typesWarn.classList.remove('show');typesGrid.innerHTML='';for(const t of typesForLevel(level)){const lab=document.createElement('label');lab.className='chk';const inp=document.createElement('input');inp.type='checkbox';inp.value=t.id;inp.checked=true;inp.addEventListener('change',updateToggleAllTypesLabel);const span=document.createElement('span');span.className='typeText';span.innerHTML=lang()==='en'?`<span>${t.label}</span>`:`<span>${t.label}</span><span class="typeAlt">${trType(t.id,t.label)}</span>`;lab.appendChild(inp);lab.appendChild(span);typesGrid.appendChild(lab)}countInp.value=String(state.quizLength||QUIZ_LENGTH);updateToggleAllTypesLabel();hideOverlay(levelOverlay);showOverlay(typeOverlay)}
-  function selectedTypeIds(){return Array.from(typesGrid.querySelectorAll('input[type="checkbox"]:checked')).map(x=>x.value)}
-  function beginSelectedQuiz(){const ids=selectedTypeIds();if(!ids.length){typesWarn.classList.add('show');return}let n=Number(countInp.value);if(!Number.isFinite(n))n=QUIZ_LENGTH;n=clamp(Math.round(n),5,60);state.quizLength=n;state.activeTypeIds=ids;start(state.pendingLevel||'basic',ids,n)}
-  function openMenu(){hideOverlay(resultOverlay);hideOverlay(typeOverlay);if(state.assignment){resetQuizShell();start(state.assignment.level,state.assignment.types,state.assignment.count);return}showOverlay(levelOverlay);resetQuizShell()}
-  function resetQuizShell(){state.level=null;state.questions=[];state.index=0;state.score=0;state.answered=false;state.skips=0;state.results=[];state.records=[];state.savedResult=false;barFill.style.width='0%';qBox.textContent='—';tableHost.style.display='none';tableHost.innerHTML='';answerRow.style.display='flex';ansInput.value='';ansInput.disabled=true;badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display='none';skipBtn.style.display='inline-block';updateHeader()}
-  function start(level,typeIds=state.activeTypeIds,n=state.quizLength){reseed();state.level=level;state.questions=genQuestions(level,n,typeIds);state.index=0;state.score=0;state.answered=false;state.skips=0;state.results=[];state.records=[];state.savedResult=false;hideOverlay(levelOverlay);hideOverlay(typeOverlay);ansInput.disabled=false;showQuestion()}
-  
-  function buildTableInputs(q){
-    tableHost.innerHTML=`<table class="valueTable"><tr><th><span class="var">n</span></th>${q.tableNs.map(n=>`<th>${n}</th>`).join('')}</tr><tr><th>${tr('value')}</th>${q.tableNs.map((_,i)=>`<td><input class="tableInput" data-i="${i}" type="text" inputmode="numeric" autocomplete="off"></td>`).join('')}</tr></table>`;
-    tableHost.style.display='block';
-    setTimeout(()=>tableHost.querySelector('.tableInput')?.focus(),30);
+  const levelSel=el('levelSel'), languageSel=el('languageSel'), chkWrap=el('chkWrap'), countInp=el('countInp'), genBtn=el('genBtn'), printBtn=el('printBtn'), resetBtn=el('resetBtn'), toggleAllBtn=el('toggleAllBtn'), out=el('out'), warn=el('warn');
+  function ui(k){return (UI[state.language]&&UI[state.language][k])||UI.en[k]||k}
+  function currentLevel(){return levelSel.value}
+  function levelTitle(){return currentLevel()==='basic'?'Basic — Algebraic Techniques':'Expected — Algebraic Techniques'}
+  function activeTypes(){return TYPES.filter(t=>t.level===currentLevel()).filter(t=>el('chk_'+t.id)?.checked).map(t=>t.id)}
+  function updateToggleAll(){const boxes=[...chkWrap.querySelectorAll('input[type=checkbox]')];const all=boxes.length&&boxes.every(b=>b.checked);toggleAllBtn.textContent=all?ui('deselectAll'):ui('selectAll')}
+  function renderChecks(){chkWrap.innerHTML='';TYPES.filter(t=>t.level===currentLevel()).forEach(t=>{const lab=document.createElement('label');lab.className='chk';const inp=document.createElement('input');inp.type='checkbox';inp.id='chk_'+t.id;inp.checked=true;const span=document.createElement('span');span.innerHTML=state.language==='en'?t.label:`${t.label}<span class="typeAlt">${trType(t.id,t.label)}</span>`;lab.append(inp,span);chkWrap.appendChild(lab);});updateToggleAll();}
+  function translateUI(){document.documentElement.lang=state.language;document.documentElement.dir=(I18N[state.language]?.dir)||'ltr';document.querySelectorAll('[data-ui]').forEach(n=>n.textContent=ui(n.dataset.ui));updateToggleAll();}
+  function makePromptHTML(q){
+    const inst=q.instructionHTML||stripHTML(q.promptHTML)||'Question';
+    const expr=q.expressionHTML||'';
+    return `<span class="qInstruction">${inst}</span>${expr?`<span class="qExprLine">${expr}</span>`:''}`;
   }
-  function tableAnswerOK(q){
-    const inputs=Array.from(tableHost.querySelectorAll('.tableInput'));
-    if(inputs.length!==q.tableVals.length)return false;
-    return inputs.every((inp,i)=>canonical(inp.value)===canonical(String(q.tableVals[i])));
+  function tableHTML(q,showAnswers){
+    if(!q.tableNs)return '';
+    const vals=showAnswers?q.tableVals.map(v=>fmtInt(v)):q.tableNs.map(()=>'<span class="blank"></span>');
+    return `<table class="tableMini"><tr><th><span class="var">n</span></th>${q.tableNs.map(n=>`<th>${n}</th>`).join('')}</tr><tr><th>${tr('value')}</th>${vals.map(v=>`<td>${v}</td>`).join('')}</tr></table>`;
   }
-  function setTableDisabled(disabled){
-    tableHost.querySelectorAll('.tableInput').forEach(inp=>inp.disabled=disabled);
+  function makeCard(q,idx,showAnswers){
+    const card=document.createElement('div');card.className='qCard';
+    const top=document.createElement('div');top.className='qTop';
+    const num=document.createElement('div');num.className='qNum';num.textContent=`Q${idx}`;
+    const text=document.createElement('div');text.className='qText';text.innerHTML=makePromptHTML(q);
+    top.append(num,text);card.appendChild(top);
+    if(q.mode==='table'){card.insertAdjacentHTML('beforeend',tableHTML(q,showAnswers)); if(showAnswers){const wb=document.createElement('div');wb.className='workBox key';wb.innerHTML=q.answerHTML;card.appendChild(wb);} else {const wb=document.createElement('div');wb.className='workBox';card.appendChild(wb);} return card;}
+    const wb=document.createElement('div');wb.className='workBox'+(showAnswers?' key':'');wb.innerHTML=showAnswers?`<span class="math">${q.answerHTML}</span>`:'';card.appendChild(wb);return card;
   }
-function celebrate(){const colors=['#2563eb','#16a34a','#eab308','#dc2626','#7c3aed','#06b6d4'];const cx=window.innerWidth/2,cy=Math.min(window.innerHeight*.42,360);for(let i=0;i<42;i++){const piece=document.createElement('div');piece.className='confettiPiece';piece.style.left=cx+'px';piece.style.top=cy+'px';piece.style.background=colors[i%colors.length];piece.style.setProperty('--dx',(Math.random()*520-260)+'px');piece.style.setProperty('--dy',(Math.random()*240+120)+'px');piece.style.setProperty('--rot',(Math.random()*720-360)+'deg');document.body.appendChild(piece);setTimeout(()=>piece.remove(),950)}}
-function showQuestion(){const q=state.questions[state.index];state.answered=false;ansInput.disabled=false;ansInput.value='';ansInput.classList.remove('correct','wrong','partial');badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';qLabel.innerHTML=q.instructionHTML||tr('questionLabel');qBox.innerHTML=q.expressionHTML||q.promptHTML;qBox.classList.toggle('small',stripHTML(q.expressionHTML||q.promptHTML).length>80);qBox.classList.remove('rtlPrompt');tableHost.style.display='none';tableHost.innerHTML='';answerRow.style.display='flex';if(q.mode==='table'){answerRow.style.display='none';buildTableInputs(q)}barFill.style.width=`${(state.index/state.questions.length)*100}%`;updateHeader();if(q.mode!=='table')setTimeout(()=>ansInput.focus(),30)}
-    function mark(ok,skipped=false,partial=false){if(state.answered)return;const q=state.questions[state.index];state.answered=true;if(ok||skipped){ansInput.disabled=true;setTableDisabled(true)}else{ansInput.disabled=false;setTableDisabled(false)}ansInput.classList.remove('correct','wrong','partial');ansInput.classList.add(ok?'correct':partial?'partial':'wrong');tableHost.querySelectorAll('.tableInput').forEach(inp=>{inp.classList.remove('correct','wrong','partial');inp.classList.add(ok?'correct':partial?'partial':'wrong')});if(ok)celebrate();state.records[state.index]={type:q.type,label:q.label,ok,skipped,partial,answer:q.answerText};state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;badge.className='badge show '+(ok?'ok':partial?'partial':'bad');badge.innerHTML=ok?tr('correct'):(partial?`${tr('partialHCF')} <span class="correctAnswer">${tr('correctAnswer')} ${q.answerHTML}</span>`:(skipped?tr('skipped'):`${tr('incorrect')} <span class="correctAnswer">${tr('correctAnswer')} ${q.answerHTML}</span>`));skipBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('next');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';retryBtn.style.display=ok||skipped?'none':'inline-block';barFill.style.width=`${((state.index+1)/state.questions.length)*100}%`;if(ok||skipped)submitBtn.focus();else ansInput.focus()}
-    function submit(){if(state.answered){next();return}const q=state.questions[state.index];if(q.mode==='table'){mark(tableAnswerOK(q),false);return}const status=answerStatus(ansInput.value,q);mark(status==='ok',false,status==='partial')}
-  function retry(){delete state.records[state.index];state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;state.answered=false;ansInput.disabled=false;ansInput.classList.remove('correct','wrong','partial');tableHost.querySelectorAll('.tableInput').forEach(inp=>inp.classList.remove('correct','wrong','partial'));badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';if(state.questions[state.index]?.mode==='table'){setTableDisabled(false);tableHost.querySelector('.tableInput')?.focus()}else{ansInput.select();ansInput.focus()}}
-  function next(){if(!state.answered)return;state.index++;if(state.index>=state.questions.length){finish()}else showQuestion()}
-  function prev(){if(state.index<=0)return;state.index--;showQuestion()}
-  function finish(){barFill.style.width='100%';state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;const name=levelName();scoreLine.textContent=tr('scoreLine')(name,state.score,state.questions.length);const byType=new Map();for(const r of state.results){const key=r.type||r.label;const cur=byType.get(key)||{c:0,t:0,s:0,label:r.label};cur.t++;if(r.ok)cur.c++;if(r.skipped)cur.s++;byType.set(key,cur)}breakdown.innerHTML='';for(const [id,v]of byType.entries()){const row=document.createElement('div');row.className='breakdownRow';row.innerHTML=`<span>${trType(id,v.label)}</span><span>${v.c}/${v.t}${v.s?` (skipped: ${v.s})`:''}</span>`;breakdown.appendChild(row)}saveFirebaseAchievement(byType);showOverlay(resultOverlay)}
-  function copyResults(){const name=levelName();const lines=[tr('copyTitle')(name),tr('score')(state.score,state.questions.length),''];breakdown.querySelectorAll('.breakdownRow').forEach(r=>lines.push(r.textContent.trim()));navigator.clipboard?.writeText(lines.join('\n')).then(()=>{copyBtn.textContent='Copied ✓';setTimeout(()=>copyBtn.textContent=tr('copy'),1200)}).catch(()=>{})}
-
-
-  function readAssignmentFromURL(){
-    const params=new URLSearchParams(window.location.search);
-    if(params.get('assignment')!=='1' && !params.has('types'))return null;
-    const level=(params.get('level')||'').toLowerCase();
-    if(!['basic','expected'].includes(level))return null;
-    const valid=new Set(typesForLevel(level).map(t=>t.id));
-    const types=(params.get('types')||'').split(',').map(x=>x.trim()).filter(x=>valid.has(x));
-    if(!types.length)return null;
-    let count=Number(params.get('count')||QUIZ_LENGTH);
-    if(!Number.isFinite(count))count=QUIZ_LENGTH;
-    count=clamp(Math.round(count),5,60);
-    return {level,types,count};
+  function makePage(title,pageIdx,pageCount,langClass){
+    const page=document.createElement('div');page.className=`page ${langClass}`;
+    const border=document.createElement('img');border.className='pageBorder';border.alt='';border.src=CONFIG.borderSrc;page.appendChild(border);
+    const inner=document.createElement('div');inner.className='pageInner';const cont=document.createElement('div');cont.className='pageContent';
+    const hdr=document.createElement('div');hdr.className='pageHeader';
+    const left=document.createElement('div');left.className='hdrLeft';left.innerHTML=`<div class="hdrTitle">${title}</div><div class="hdrSub">${levelTitle()} · ${ui('page')} ${pageIdx} / ${pageCount}</div>`;
+    const name=document.createElement('div');name.className='nameRow';['name','className','date'].forEach(k=>{const f=document.createElement('div');f.className='lineField';f.innerHTML=`<div class="lineLabel">${ui(k)}</div><div class="lineBox"></div>`;name.appendChild(f);});
+    hdr.append(left,name);cont.appendChild(hdr);const grid=document.createElement('div');grid.className='grid';cont.appendChild(grid);inner.appendChild(cont);page.appendChild(inner);return {page,grid};
   }
-  function saveFirebaseAchievement(byType){
-    if(state.savedResult)return;
-    state.savedResult=true;
-    const typeSummary=Array.from(byType.entries()).map(([id,v])=>({typeId:id,label:trType(id,v.label),ok:v.c,total:v.t,skipped:v.s||0}));
-    window.MMTFirebase?.saveAchievement?.({
-      topic:'Algebraic Techniques',
-      level:levelName(),
-      levelKey:state.level,
-      score:state.score,
-      total:state.questions.length,
-      types:typeSummary,
-      assignmentMode:!!state.assignment,
-      assignedTypes:state.assignment?.types||[],
-      assignedCount:state.assignment?.count||null,
-      assignmentSource:state.assignment?'url':null
-    }).catch(err=>console.error('Achievement save failed',err));
-  }
-  function applyAssignmentIfPresent(){
-    const assignment=readAssignmentFromURL();
-    if(!assignment)return false;
-    state.assignment=assignment;
-    assignmentNotice?.classList.add('show');
-    teacherAssignBtn?.classList.add('hidden');
-    resetQuizShell();
-    start(assignment.level,assignment.types,assignment.count);
-    return true;
-  }
-  const BUILDER_TYPE_LABELS={basic:[{"id": "identify_part", "label": "Identify coefficient / pronumeral / constant"}, {"id": "notation", "label": "Rewrite using correct algebraic notation"}, {"id": "words_to_expr", "label": "Translate words \u2192 algebraic expression"}, {"id": "sub_one", "label": "Substitute and evaluate (one step)"}, {"id": "like_terms", "label": "Collect like terms (simple)"}, {"id": "mul_single_term", "label": "Multiply a single term"}, {"id": "div_single_term", "label": "Divide a single term"}, {"id": "expand_bracket", "label": "Expand a single bracket"}, {"id": "factorise_number", "label": "Factorise by common number"}],expected:[{"id": "translate_rich", "label": "Translate words \u2192 expression (multi-step)"}, {"id": "factorise_expected", "label": "Factorising"}, {"id": "sub_two", "label": "Substitute and evaluate (two-step)"}, {"id": "sub_two_vars", "label": "Substitute and evaluate (two pronumerals)"}, {"id": "simplify_mixed", "label": "Simplify mixed like terms"}, {"id": "multiply_terms", "label": "Multiplying terms"}, {"id": "expand_simplify", "label": "Expand and simplify"}, {"id": "alg_frac", "label": "Simplify algebraic fractions"}, {"id": "pattern_table", "label": "Complete a table of values"}]};
-  function updateBuilderLevelToggle(){
-    document.querySelectorAll('.levelToggleBtn').forEach(btn=>{
-      btn.classList.toggle('active',btn.dataset.level===builderLevel.value);
-    });
-  }
-  function renderBuilderTypes(){
-    const level=builderLevel.value;
-    updateBuilderLevelToggle();
-    builderTypes.innerHTML='';
-    const items=BUILDER_TYPE_LABELS[level]||[];
-    for(const item of items){
-      const lab=document.createElement('label');
-      lab.innerHTML=`<input type="checkbox" value="${item.id}" checked> <span>${item.label}</span>`;
-      builderTypes.appendChild(lab);
-    }
-    assignmentLinkOut.value='';
-    updateBuilderToggle();
-  }
-  function updateBuilderToggle(){
-    const boxes=Array.from(builderTypes.querySelectorAll('input[type="checkbox"]'));
-    const selected=boxes.filter(b=>b.checked).length;
-    const all=boxes.length&&selected===boxes.length;
-    builderToggleAllBtn.textContent=all?'Deselect all':'Select all';
-    if(typeof builderSummary!=='undefined' && builderSummary){
-      builderSummary.textContent=`${selected} of ${boxes.length} selected`;
-    }
-    assignmentLinkOut.value='';
-  }
-  function selectedBuilderTypes(){return Array.from(builderTypes.querySelectorAll('input[type="checkbox"]:checked')).map(b=>b.value)}
-  function generateAssignmentLink(){
-    const types=selectedBuilderTypes();
-    if(!types.length){builderWarn.classList.add('show');return ''}
-    builderWarn.classList.remove('show');
-    let count=Number(builderCount.value||QUIZ_LENGTH);
-    if(!Number.isFinite(count))count=QUIZ_LENGTH;
-    count=clamp(Math.round(count),5,60);
-    builderCount.value=String(count);
-    const url=new URL(window.location.href);
-    url.search='';
-    url.searchParams.set('assignment','1');
-    url.searchParams.set('level',builderLevel.value);
-    url.searchParams.set('types',types.join(','));
-    url.searchParams.set('count',String(count));
-    assignmentLinkOut.value=url.toString();
-    return assignmentLinkOut.value;
-  }
-
-  languageSelect.addEventListener('change',()=>{state.language=languageSelect.value;startLanguageSelect.value=state.language;localize()});startLanguageSelect.addEventListener('change',()=>{state.language=startLanguageSelect.value;languageSelect.value=state.language;localize()});document.querySelectorAll('.startPill').forEach(b=>b.addEventListener('click',()=>buildTypeChooser(b.dataset.level)));
-  toggleAllTypesBtn.addEventListener('click',()=>{const boxes=Array.from(typesGrid.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAllTypesLabel()});beginBtn.addEventListener('click',beginSelectedQuiz);typesBackBtn.addEventListener('click',()=>{hideOverlay(typeOverlay);showOverlay(levelOverlay)});backBtn.addEventListener('click',openMenu);resetBtn.addEventListener('click',()=>{resetQuizShell();hideOverlay(typeOverlay);showOverlay(levelOverlay)});prevBtn.addEventListener('click',prev);skipBtn.addEventListener('click',()=>mark(false,true));retryBtn.addEventListener('click',retry);submitBtn.addEventListener('click',submit);nextBtn.addEventListener('click',next);ansInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});tableHost.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==ansInput&&!tableHost.contains(document.activeElement)&&state.questions.length){e.preventDefault();state.answered?next():submit()}});copyBtn.addEventListener('click',copyResults);closeBtn.addEventListener('click',()=>hideOverlay(resultOverlay));menuBtn.addEventListener('click',openMenu);
-  teacherAssignBtn?.addEventListener('click',()=>{renderBuilderTypes();showOverlay(teacherBuilderOverlay)});builderLevel?.addEventListener('change',renderBuilderTypes);document.querySelectorAll('.levelToggleBtn').forEach(btn=>btn.addEventListener('click',()=>{builderLevel.value=btn.dataset.level;renderBuilderTypes()}));builderCount?.addEventListener('input',()=>{assignmentLinkOut.value=''});builderTypes?.addEventListener('change',updateBuilderToggle);builderToggleAllBtn?.addEventListener('click',()=>{const boxes=Array.from(builderTypes.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateBuilderToggle()});generateAssignmentBtn?.addEventListener('click',generateAssignmentLink);copyAssignmentBtn?.addEventListener('click',async()=>{const link=assignmentLinkOut.value||generateAssignmentLink();if(!link)return;try{await navigator.clipboard.writeText(link);copyAssignmentBtn.textContent='Copied ✓';setTimeout(()=>copyAssignmentBtn.textContent='Copy link',1200)}catch(e){window.prompt('Copy this link:',link)}});closeBuilderBtn?.addEventListener('click',()=>{ assignmentLinkOut.value=''; renderBuilderTypes(); showOverlay(teacherBuilderOverlay); });
-  function openTeacherBuilderOnLoad(){
-    renderBuilderTypes();
-    assignmentLinkOut.value = '';
-    showOverlay(teacherBuilderOverlay);
-    teacherAssignBtn?.classList.add('hidden');
-    assignmentNotice?.classList.remove('show');
-  }
-
-  localize();
-  resetQuizShell();
-  if(!applyAssignmentIfPresent()) openTeacherBuilderOnLoad();
+  function render(qs,showAnswers=false){const totalPages=Math.ceil(qs.length/CONFIG.perPage);const langClass=(I18N[state.language]?.dir)==='rtl'?'lang-rtl':'';for(let p=0;p<totalPages;p++){const title=showAnswers?ui('answerKeyTitle'):ui('pageTitle');const pg=makePage(title,p+1,totalPages,langClass);qs.slice(p*CONFIG.perPage,(p+1)*CONFIG.perPage).forEach((q,i)=>pg.grid.appendChild(makeCard(q,p*CONFIG.perPage+i+1,showAnswers)));out.appendChild(pg.page);}}
+  function generate(){warn.classList.remove('show');out.innerHTML='';const ids=activeTypes();if(!ids.length){warn.textContent=ui('noTypes');warn.classList.add('show');return;}let n=Number(countInp.value||CONFIG.defaultCount);n=clamp(Math.round(n),CONFIG.minCount,CONFIG.maxCount);countInp.value=String(n);reseed();const qs=genQuestions(currentLevel(),n,ids);render(qs,false);render(qs,true);}
+  genBtn.addEventListener('click',generate);printBtn.addEventListener('click',()=>window.print());resetBtn.addEventListener('click',()=>{countInp.value=CONFIG.defaultCount;levelSel.value='basic';state.language='en';languageSel.value='en';renderChecks();translateUI();out.innerHTML='';generate();});
+  levelSel.addEventListener('change',()=>{renderChecks();out.innerHTML='';generate();});languageSel.addEventListener('change',()=>{state.language=languageSel.value;renderChecks();translateUI();out.innerHTML='';generate();});toggleAllBtn.addEventListener('click',()=>{const boxes=[...chkWrap.querySelectorAll('input[type=checkbox]')];const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAll();});chkWrap.addEventListener('change',updateToggleAll);
+  document.title=CONFIG.title;renderChecks();translateUI();generate();
 })();
 </script>
 </body>
