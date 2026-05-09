@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MMT Worksheet Generator — Factoring for Multiplication</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --ink:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10); --radius:18px; --ok:#16a34a; --footer-h:44px; --pagePad:10mm;
+      --blue:#2563eb; --softBlue:#eef2ff; --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--ink);padding-bottom:var(--footer-h)}
+    .wrap{max-width:1120px;margin:18px auto 40px;padding:0 16px}.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .controls{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#fff,#f9fafb)}
+    .brandRow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin-bottom:4px}.brandTitle{font-size:20px;font-weight:1000;letter-spacing:-.02em}.brandSub{font-size:13px;color:var(--muted);font-weight:850;margin-top:2px}
+    label{display:block;font-weight:950;color:var(--ink);margin:0 0 8px;font-size:13px} select,input[type="number"]{border:2px solid #e5e7eb;border-radius:14px;padding:12px;font-weight:950;font-size:16px;background:#fff;min-width:260px;outline:none} input[type="number"]{min-width:190px}
+    .topSelectors{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;width:100%}.languageControl{flex:0 1 320px;min-width:240px}.languageControl select{width:100%;min-width:240px}.countControl{flex:0 1 240px;min-width:200px}.countControl input{width:100%}.fadedControl{flex:0 1 230px;min-width:190px}.switchLabel{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:16px;padding:11px 12px;box-shadow:0 8px 18px rgba(0,0,0,.04);font-weight:950;margin:0}.switchText{font-size:13px;font-weight:950;color:#111827}.switch{position:relative;width:48px;height:28px;flex:0 0 48px}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:999px;transition:.18s}.slider:before{content:'';position:absolute;height:22px;width:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.18s;box-shadow:0 2px 7px rgba(0,0,0,.24)}.switch input:checked + .slider{background:#2563eb}.switch input:checked + .slider:before{transform:translateX(20px)}
+    .checks{display:flex;gap:12px 14px;flex-wrap:wrap;align-items:center;padding:10px 0 0;width:100%}.checksHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;margin-bottom:2px}.checksTitle{margin:0;font-size:13px;font-weight:950;color:var(--muted)}
+    .miniBtn{border:none;border-radius:999px;padding:8px 12px;font-weight:950;cursor:pointer;background:#eef2ff;color:#1d4ed8;font-size:12px;line-height:1;box-shadow:0 8px 18px rgba(0,0,0,.04)}
+    .chk{display:flex;gap:10px;align-items:center;border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:999px;padding:10px 12px;box-shadow:0 8px 18px rgba(0,0,0,.04);user-select:none}.chk input{width:18px;height:18px}.chk span{font-weight:950;font-size:13px;color:#111827;white-space:nowrap}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}button{border:none;border-radius:14px;padding:12px 16px;font-weight:1000;cursor:pointer;background:#f3f4f6;color:#111827;transition:transform .04s ease,filter .15s ease,opacity .2s ease;user-select:none;font-size:16px}button:active,.miniBtn:active{transform:scale(.98)}button.primary{background:#2563eb;color:#fff}button.ghost{background:#eef2ff;color:#1d4ed8}button.danger{background:#fee2e2;color:#991b1b}.outWrap{margin-top:16px}
+    .page{margin-top:16px;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 26px rgba(15,23,42,.08);overflow:hidden;position:relative}.pageBorder{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}.pageInner{position:relative;z-index:1;padding:0}.pageContent{margin:var(--pagePad);background:#fff;border-radius:14px;padding:14px;box-shadow:0 0 0 1px rgba(229,231,235,.9) inset}.pageHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:10px}.hdrLeft{min-width:240px}.hdrTitle{font-weight:1000;font-size:18px;line-height:1.15;margin-bottom:2px}.hdrSub{color:var(--muted);font-weight:900;font-size:12px;line-height:1.2}.nameRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;min-width:min(420px,100%)}.lineField{display:flex;flex-direction:column;gap:6px;min-width:0}.lineLabel{font-size:12px;font-weight:950;color:var(--muted)}.lineBox{height:30px;border:2px solid #111827;border-radius:10px;background:#fff;width:100%}
+    .pairGrid{display:grid;grid-template-columns:1fr;gap:18px;margin-top:10px}.pairCard{border:2px solid #111827;border-radius:16px;overflow:hidden;background:#fff;break-inside:avoid}.pairTop{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:2px solid #111827;background:#f9fafb}.pairNum{font-weight:1000;font-size:14px}.pairStrategy{font-weight:1000;font-size:14px;color:#111827}.triGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-height:340px}.col{padding:12px 14px;border-right:2px solid #111827;display:flex;flex-direction:column;gap:12px;min-width:0;overflow:hidden}.col:last-child{border-right:none}.colHead{font-weight:1000;font-size:19px;letter-spacing:-.01em;border-bottom:2px solid #111827;padding-bottom:7px;margin-bottom:4px}.mathLine{font-family:var(--mathFont);font-weight:650;font-size:27px;line-height:1.22;white-space:nowrap}.mathLine.small{font-size:27px}.workLines{display:flex;flex-direction:column;gap:24px;margin-top:4px}.blankLine{height:40px;border-bottom:2px solid #111827}.hint{font-size:12px;color:var(--muted);font-weight:850;line-height:1.2}.faded .mathLine.fade{color:#4b5563}.yourTurn .workLines{margin-top:8px}.answer{color:var(--ok);font-size:27px}.groupPurple{color:#7e22ce;background:rgba(192,132,252,.28);border-radius:999px;padding:.02em .22em .06em}.groupGreen{color:#15803d;background:rgba(163,230,53,.34);border-radius:999px;padding:.02em .22em .06em}
+    .math{font-family:var(--mathFont);font-weight:650}.times{font-family:var(--mathFont)}.frac{display:inline-flex;flex-direction:column;align-items:stretch;justify-content:center;vertical-align:middle;line-height:1.05;transform:translateY(-1px);margin:0 2px;min-width:34px}.frac .top,.frac .bottom{text-align:center;padding:0 4px;white-space:nowrap}.frac .bar{height:0;border-top:2px solid #111827;margin:2px 0;border-radius:999px}.enUnder{display:block;color:#6b7280;font-size:11px;font-weight:900;margin-top:2px;line-height:1.15}.page.lang-rtl .pageHeader,.page.lang-rtl .pairTop{direction:rtl}.page.lang-rtl .hdrTitle,.page.lang-rtl .hdrSub,.page.lang-rtl .lineLabel,.page.lang-rtl .pairStrategy{text-align:right}.page.lang-rtl .triGrid,.page.lang-rtl .mathLine,.page.lang-rtl .workLines{direction:ltr}.page.lang-rtl .colHead{text-align:right;direction:rtl}.page.lang-rtl .col{border-right:2px solid #111827;border-left:none}.page.lang-rtl .col:last-child{border-right:none}.mmtFooter{position:fixed;left:0;right:0;bottom:0;height:var(--footer-h);display:flex;align-items:center;justify-content:center;padding:0 12px;background:rgba(255,255,255,.92);border-top:1px solid rgba(229,231,235,.95);backdrop-filter:blur(8px);z-index:500;font-weight:900;color:#111827;text-align:center;font-size:13px}.mmtFooter a{color:#2563eb;text-decoration:none;font-weight:950}.mmtFooter a:hover{text-decoration:underline}
+
+        .demo .colHead,.faded .colHead,.yourTurn .colHead{text-align:center}.demo .workLines,.faded .workLines,.yourTurn .workLines{align-items:center;text-align:center}.yourTurn .workLines{flex:1}.yourTurn .mathLine{width:100%;text-align:center}.yourTurn .blankStage{flex:1;width:100%;min-height:190px}.factorVisual{margin:4px auto 2px auto;max-width:100%;width:100%;color:var(--blue)}.factorTree{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;grid-template-rows:auto 62px auto;column-gap:4px;row-gap:4px;align-items:end;justify-items:center;font-family:var(--mathFont)}.factorOrig{font-size:34px;font-weight:700;color:#111827;line-height:1.05}.factorOrig.left{grid-column:1 / span 3}.factorOrig.midX{grid-column:4;font-size:34px;font-weight:700;color:#111827}.factorOrig.right{grid-column:5 / span 3}.factorBranch{width:100%;height:62px}.factorBranch.left{grid-column:1 / span 3}.factorBranch.right{grid-column:5 / span 3}.factorBranch path{stroke:var(--blue);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}.factorChild{font-size:27px;font-weight:800;color:var(--blue);line-height:1;display:flex;align-items:center;justify-content:center;min-width:0}.factorChild.x{color:#111827;font-weight:750}.factorChild.c1{grid-column:1}.factorChild.c2{grid-column:2}.factorChild.c3{grid-column:3}.factorChild.c4{grid-column:4}.factorChild.c5{grid-column:5}.factorChild.c6{grid-column:6}.factorChild.c7{grid-column:7}.hlPurple,.hlGreen{display:inline-flex;align-items:center;justify-content:center;min-width:1.2em;padding:.03em .22em .08em;border-radius:999px}.hlPurple{background:rgba(192,132,252,.28)}.hlGreen{background:rgba(163,230,53,.34)}.fvFade{opacity:.9}.halveVisual{margin:10px auto 2px;width:315px;font-family:var(--mathFont);text-align:center}.halveGrid{display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto auto auto auto;column-gap:18px;row-gap:6px;align-items:center;justify-items:center}.halveCell{font-size:32px;font-weight:700;line-height:1.05;color:#111827}.halveCell.op{font-size:32px}.halveStep{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:18px;font-weight:1000;color:var(--blue);line-height:1}.halveArrow{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:42px;font-weight:1000;color:var(--blue);line-height:.9}.halveResult{font-size:32px;font-weight:700;line-height:1.05;color:#111827}.decimalVisual{margin:6px auto 2px;width:325px;font-family:var(--mathFont);text-align:center}.decimalGrid{display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto auto auto auto;column-gap:18px;row-gap:6px;align-items:center;justify-items:center}.decimalCell{font-size:32px;font-weight:700;line-height:1.05;color:#111827}.decimalCell.op{font-size:32px}.decimalStep{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:18px;font-weight:1000;color:var(--blue);line-height:1}.decimalArrow{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:42px;font-weight:1000;color:var(--blue);line-height:.9}.decimalResult{font-size:30px;font-weight:700;line-height:1.05;color:#111827}.decimalFactorLine{font-family:var(--mathFont);font-weight:650;font-size:27px;line-height:1.22;white-space:nowrap}.fvSpacer{height:6px}
+    @media print{@page{size:A4;margin:12mm}body{background:#fff!important;padding:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.controls,.mmtFooter{display:none!important}.wrap{max-width:none!important;margin:0!important;padding:0!important}:root{--pagePad:5mm}.page{width:186mm;height:273mm;margin:0 auto;border:none;box-shadow:none;page-break-after:always}.page:last-child{page-break-after:auto}.pageContent{margin:var(--pagePad);padding:10px}.pageHeader{flex-wrap:nowrap!important;gap:10px!important}.pairGrid{gap:12px!important}.pairCard{break-inside:avoid}.triGrid{min-height:104mm}.col{padding:9px 10px}.mathLine,.mathLine.small,.answer,.decimalFactorLine{font-size:25px}.workLines{gap:22px}.factorOrig{font-size:28px}.factorChild{font-size:23px}.factorTree{grid-template-rows:auto 45px auto;column-gap:3px}.factorBranch{height:45px}.halveCell,.halveResult,.decimalCell,.decimalResult{font-size:27px}.halveVisual,.decimalVisual{width:250px}.frac .bar{border-top-width:2px!important}}
+  
+
+/* v13 halving-and-doubling fit + consistent working-line size */
+.halveVisual{
+  width:100% !important;
+  max-width:100% !important;
+  margin:10px auto 2px !important;
+  overflow:visible;
+}
+.halveGrid{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr) !important;
+  grid-template-rows:auto auto auto auto auto !important;
+  column-gap:8px !important;
+  row-gap:8px !important;
+  align-items:center !important;
+  justify-items:center !important;
+}
+.halveCell,
+.halveCell.op,
+.halveResult,
+.halveBreakdownLine{
+  font-size:32px !important;
+  font-weight:700 !important;
+  line-height:1.08 !important;
+}
+.halveBreakdownLine{
+  grid-column:1 / 4 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+  margin-top:12px !important;
+  white-space:nowrap !important;
+}
+.halveBreakdownLine .groupPurple,
+.halveBreakdownLine .groupGreen{
+  font-size:32px !important;
+  line-height:1 !important;
+  padding:.03em .22em .08em !important;
+}
+.halveStep{
+  font-size:18px !important;
+}
+.halveArrow{
+  font-size:42px !important;
+}
+
+@media print{
+  .triGrid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+  .col{
+    min-width:0 !important;
+    overflow:hidden !important;
+    padding-left:7px !important;
+    padding-right:7px !important;
+  }
+  .halveVisual{
+    width:100% !important;
+    max-width:100% !important;
+  }
+  .halveGrid{
+    grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) !important;
+    column-gap:4px !important;
+    row-gap:5px !important;
+  }
+  .halveCell,
+  .halveCell.op,
+  .halveResult,
+  .halveBreakdownLine{
+    font-size:24px !important;
+    line-height:1.05 !important;
+  }
+  .halveBreakdownLine{
+    gap:6px !important;
+    margin-top:8px !important;
+  }
+  .halveBreakdownLine .groupPurple,
+  .halveBreakdownLine .groupGreen{
+    font-size:24px !important;
+    padding:.02em .16em .06em !important;
+  }
+  .halveStep{
+    font-size:14px !important;
+  }
+  .halveArrow{
+    font-size:31px !important;
+  }
+  .answer{
+    font-size:24px !important;
+  }
+}
+
+
+/* v14 decimal-connection print fit */
+.decimalVisual{
+  width:100% !important;
+  max-width:100% !important;
+  margin:10px auto 2px !important;
+  overflow:visible;
+}
+.decimalGrid{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr) !important;
+  column-gap:8px !important;
+  row-gap:8px !important;
+  align-items:center !important;
+  justify-items:center !important;
+}
+.decimalCell,
+.decimalCell.op,
+.decimalResult{
+  font-size:32px !important;
+  font-weight:700 !important;
+  line-height:1.08 !important;
+}
+.decimalFactorLine{
+  width:100% !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  font-size:32px !important;
+  line-height:1.25 !important;
+  margin-top:12px !important;
+}
+.decimalFactorLine .groupPurple,
+.decimalFactorLine .groupGreen,
+.decimalResult .groupPurple,
+.decimalResult .groupGreen{
+  font-size:32px !important;
+  line-height:1 !important;
+  padding:.03em .22em .08em !important;
+}
+.decimalStep{
+  font-size:18px !important;
+}
+.decimalArrow{
+  font-size:42px !important;
+}
+
+@media print{
+  .decimalVisual{
+    width:100% !important;
+    max-width:100% !important;
+    overflow:visible !important;
+  }
+  .decimalGrid{
+    grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr) !important;
+    column-gap:2px !important;
+    row-gap:5px !important;
+  }
+  .decimalCell,
+  .decimalCell.op,
+  .decimalResult{
+    font-size:22px !important;
+    line-height:1.05 !important;
+  }
+  .decimalStep{
+    font-size:13px !important;
+  }
+  .decimalArrow{
+    font-size:29px !important;
+  }
+  .decimalFactorLine{
+    font-size:22px !important;
+    line-height:1.18 !important;
+    margin-top:6px !important;
+    white-space:nowrap !important;
+  }
+  .decimalFactorLine .groupPurple,
+  .decimalFactorLine .groupGreen,
+  .decimalResult .groupPurple,
+  .decimalResult .groupGreen{
+    font-size:22px !important;
+    padding:.02em .14em .05em !important;
+  }
+}
+
+</style>
+</head>
+<body>
+  <div class="wrap"><div class="panel"><div class="controls" aria-label="Worksheet controls">
+    <div class="brandRow"><div><div class="brandTitle">Factoring for Multiplication</div><div class="brandSub">Problem pairs: demo → faded → your turn</div></div></div>
+    <div class="topSelectors">
+      <div class="languageControl"><label for="languageSel" data-i18n="languageLabel">Worksheet language</label><select id="languageSel"><option value="en">English</option><option value="fa">فارسی (Farsi / Persian)</option><option value="ar">العربية (Arabic)</option></select></div>
+      <div class="countControl"><label for="countInp" data-i18n="totalPairs">Number of problem pairs</label><input id="countInp" type="number" min="2" max="24" step="2" value="4" /></div>
+      <div class="fadedControl">
+        <label class="switchLabel" for="fadedToggle">
+          <span class="switchText" data-i18n="fadedExamples">Faded examples</span>
+          <span class="switch"><input id="fadedToggle" type="checkbox" checked><span class="slider" aria-hidden="true"></span></span>
+        </label>
+      </div>
+      <div class="btnRow"><button id="genBtn" class="primary" data-i18n="generateBtn">Generate</button><button id="printBtn" class="ghost" data-i18n="printBtn">Print / Save as PDF</button><button id="resetBtn" class="danger" data-i18n="resetBtn">Reset</button></div>
+    </div>
+    <div class="checks" aria-label="Strategy types"><div class="checksHeader"><label class="checksTitle" data-i18n="strategyTypes">Strategy types</label><button id="toggleAllBtn" type="button" class="miniBtn">Deselect all</button></div><div id="chkWrap" style="display:flex;gap:12px 14px;flex-wrap:wrap;align-items:center"></div></div>
+  </div><div id="out" class="outWrap"></div></div></div>
+  <div class="mmtFooter">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au">www.millsmathstools.au</a></div>
+<script>
+(() => {
+  const CONFIG={title:"MMT Worksheet Generator — Factoring for Multiplication",perPage:2,borderSrc:"border_page0.png",defaultCount:4,minCount:2,maxCount:24};
+  const I18N={
+    en:{dir:'ltr',languageLabel:'Worksheet language',totalPairs:'Number of problem pairs',generateBtn:'Generate',printBtn:'Print / Save as PDF',resetBtn:'Reset',strategyTypes:'Strategy types',selectAll:'Select all',deselectAll:'Deselect all',pageTitle:'Factoring for Multiplication',answerKeyTitle:'Answer key — Factoring for Multiplication',page:'Page',name:'Name',className:'Class',date:'Date',demo:'Demo',faded:'Faded',yourTurn:'Your turn',calculate:'Calculate',fadedExamples:'Faded examples',noTypes:'Please tick at least one strategy type.',show:'Show how the factors can be rearranged to make a friendly number.',algebraHint:'Use the same factor idea with pronumerals.'},
+    fa:{dir:'rtl',languageLabel:'زبان برگه',totalPairs:'تعداد جفت‌مسئله‌ها',generateBtn:'ساخت برگه',printBtn:'چاپ / ذخیره PDF',resetBtn:'بازنشانی',strategyTypes:'نوع راهبردها',selectAll:'انتخاب همه',deselectAll:'لغو انتخاب همه',pageTitle:'تجزیه برای ضرب',answerKeyTitle:'پاسخ‌نامه — تجزیه برای ضرب',page:'صفحه',name:'نام',className:'کلاس',date:'تاریخ',demo:'نمونه',faded:'نمونه نیمه‌کامل',yourTurn:'نوبت شما',calculate:'محاسبه کنید',fadedExamples:'نمونه‌های نیمه‌کامل',noTypes:'لطفاً حداقل یک نوع راهبرد را انتخاب کنید.',show:'نشان دهید چگونه می‌توان عامل‌ها را جابه‌جا کرد تا یک عدد ساده ساخته شود.',algebraHint:'از همین ایدهٔ عامل‌ها با حروف استفاده کنید.'},
+    ar:{dir:'rtl',languageLabel:'لغة ورقة العمل',totalPairs:'عدد أزواج المسائل',generateBtn:'إنشاء',printBtn:'طباعة / حفظ PDF',resetBtn:'إعادة ضبط',strategyTypes:'أنواع الاستراتيجيات',selectAll:'تحديد الكل',deselectAll:'إلغاء تحديد الكل',pageTitle:'التحليل من أجل الضرب',answerKeyTitle:'دليل الإجابات — التحليل من أجل الضرب',page:'صفحة',name:'الاسم',className:'الصف',date:'التاريخ',demo:'مثال',faded:'مثال ناقص',yourTurn:'دورك',calculate:'احسب',fadedExamples:'الأمثلة الناقصة',noTypes:'يرجى اختيار نوع استراتيجية واحد على الأقل.',show:'وضّح كيف يمكن إعادة ترتيب العوامل لتكوين عدد مناسب.',algebraHint:'استخدم فكرة العوامل نفسها مع الرموز.'}
+  };
+  const TYPES=[
+    {id:'make10',label:'Making 10',defaultOn:true},
+    {id:'make100',label:'Making 100',defaultOn:true},
+    {id:'halveDouble',label:'Halving and doubling',defaultOn:true},
+    {id:'decimal',label:'Decimal connections',defaultOn:true}
+  ];
+  const languageSel=document.getElementById('languageSel'),chkWrap=document.getElementById('chkWrap'),countInp=document.getElementById('countInp'),fadedToggle=document.getElementById('fadedToggle'),genBtn=document.getElementById('genBtn'),printBtn=document.getElementById('printBtn'),resetBtn=document.getElementById('resetBtn'),toggleAllBtn=document.getElementById('toggleAllBtn'),out=document.getElementById('out');
+  const randInt=(a,b)=>Math.floor(Math.random()*(b-a+1))+a, choice=a=>a[randInt(0,a.length-1)], shuffle=arr=>{const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+  const times='×'; const L=()=>I18N[languageSel.value]||I18N.en; const tr=k=>L()[k]??I18N.en[k]??k;
+  function labelWithEnglish(k){const main=tr(k); if(languageSel.value==='en') return main; return `${main}<span class="enUnder">${I18N.en[k]}</span>`;}
+  function strategyLabel(id){return TYPES.find(t=>t.id===id)?.label||id;}
+  function fmt(n){return Number.isInteger(Number(n))?String(Number(n)):String(Number(n).toFixed(2)).replace(/\.00$/,'').replace(/0$/,'');}
+  function line(parts){return parts.map(fmt).join(` ${times} `)}
+  function evalProduct(arr){return arr.reduce((p,x)=>p*Number(x),1)}
+  function solutionFromFactors(a,b,factors,groupLeft,groupRight,target){
+    const p1=evalProduct(groupLeft), p2=evalProduct(groupRight), ans=p1*p2;
+    return {a,b,expr:`${fmt(a)} ${times} ${fmt(b)}`,regroupLeft:p1,regroupRight:p2,regroupLine:`${fmt(p1)} ${times} ${fmt(p2)}`,answerLine:`= ${fmt(ans)}`,answer:ans,visual:true,factors,target};
+  }
+  function make10(){const f5=choice([3,5,7,9,11]); const f2=choice([6,7,8,9,11]); const a=5*f5,b=2*f2; return solutionFromFactors(a,b,[f5,5,2,f2],[f5,f2],[5,2],10);}
+  function make100(family=null){
+    // Make 100 examples need to *create* 100, not start with it.
+    // Two useful structures are used:
+    //   25 × 4  → 100, when the first number is a non-50 multiple of 25;
+    //   50 × 2  → 100, when the first number ends in 50.
+    // This avoids examples such as 100 × 12, where the friendly number is already present.
+    // family = 'twentyFive' forces the 25×4 structure.
+    // family = 'fifty' forces the 50×2 structure.
+    const useTwentyFive = family === 'twentyFive' || (!family && Math.random() < 0.55);
+    if(useTwentyFive){
+      const k=choice([3,5,7,9]);              // 75, 125, 175, 225: not multiples of 50/100
+      const m=choice([3,4,5,6,7,8]);
+      const a=25*k, b=4*m;
+      const ex = solutionFromFactors(a,b,[k,25,4,m],[k,m],[25,4],100);
+      ex.make100Family='twentyFive';
+      return ex;
+    } else {
+      const k=choice([3,5,7]);                // 150, 250, 350: pull out 50, then find a double
+      const m=choice([6,7,8,9,11,12]);
+      const a=50*k, b=2*m;
+      const ex = solutionFromFactors(a,b,[k,50,2,m],[k,m],[50,2],100);
+      ex.make100Family='fifty';
+      return ex;
+    }
+  }
+  function halveDouble(){
+    // Smaller examples chosen so one halving/doubling step makes a friendly number.
+    const pairs=[[18,25],[16,35],[14,25],[24,15],[32,15],[12,35],[28,15],[18,35]];
+    const [a0,b0]=choice(pairs);
+    const a1=a0/2, b1=b0*2;
+    return {a:a0,b:b0,expr:`${a0} ${times} ${b0}`,half:true,halfA:a1,doubleB:b1,regroupLine:`${fmt(a1)} ${times} ${fmt(b1)}`,answerLine:`= ${fmt(a0*b0)}`,answer:a0*b0};
+  }
+  function decimal(){
+    const d=choice([2.5,12.5,1.25]);
+    if(d===12.5){
+      const b=choice([16,24,32,40,48,56,64]);
+      const scale=2, scaledA=25, scaledB=b/2, leftover=scaledB/4;
+      return {a:d,b,expr:`12.5 ${times} ${b}`,decimal:true,scale,scaledA,scaledB,splitFactors:[25,4,leftover],regroupLeft:100,regroupRight:leftover,answerLine:`= ${fmt(d*b)}`,answer:d*b};
+    }
+    if(d===2.5){
+      const b=choice([24,32,36,48,56,64,72]);
+      const scale=2, scaledA=5, scaledB=b/2, leftover=scaledB/2;
+      return {a:d,b,expr:`2.5 ${times} ${b}`,decimal:true,scale,scaledA,scaledB,splitFactors:[5,2,leftover],regroupLeft:10,regroupRight:leftover,answerLine:`= ${fmt(d*b)}`,answer:d*b};
+    }
+    const b=choice([32,48,56,64,72,80]);
+    const scale=4, scaledA=5, scaledB=b/4, leftover=scaledB/2;
+    return {a:d,b,expr:`1.25 ${times} ${b}`,decimal:true,scale,scaledA,scaledB,splitFactors:[5,2,leftover],regroupLeft:10,regroupRight:leftover,answerLine:`= ${fmt(d*b)}`,answer:d*b};
+  }
+  function genExample(type){return ({make10,make100,halveDouble,decimal}[type]||make10)();}
+  function genPair(type){
+    const key=x=>`${x.expr}`;
+    let demo, faded, turn, guard=0;
+
+    if(type==='make100'){
+      // Scaffold both Making 100 structures in every problem pair:
+      // one worked example uses 25×4, the other uses 50×2.
+      // The Your turn can then be either structure, and students have a matching model to refer to.
+      const demoFirst = Math.random() < 0.5;
+      demo = make100(demoFirst ? 'twentyFive' : 'fifty');
+      faded = make100(demoFirst ? 'fifty' : 'twentyFive');
+      turn = make100(choice(['twentyFive','fifty']));
+      while((key(turn)===key(demo)||key(turn)===key(faded)||key(faded)===key(demo))&&guard++<100){
+        turn = make100(choice(['twentyFive','fifty']));
+      }
+      return {type,demo,faded,turn};
+    }
+
+    demo=genExample(type);
+    faded=genExample(type);
+    turn=genExample(type);
+    while((key(faded)===key(demo)||key(turn)===key(demo)||key(turn)===key(faded))&&guard++<100){
+      faded=genExample(type);
+      turn=genExample(type);
+    }
+    return {type,demo,faded,turn};
+  }
+  function renderChecks(){chkWrap.innerHTML=''; TYPES.forEach(t=>{const lab=document.createElement('label');lab.className='chk';const inp=document.createElement('input');inp.type='checkbox';inp.id=`chk_${t.id}`;inp.checked=t.defaultOn;const span=document.createElement('span');span.textContent=t.label;lab.append(inp,span);chkWrap.appendChild(lab);}); updateToggleAll();}
+  function activeTypes(){return TYPES.filter(t=>document.getElementById(`chk_${t.id}`)?.checked).map(t=>t.id)}
+  function updateToggleAll(){const boxes=[...chkWrap.querySelectorAll('input[type=checkbox]')]; const allOn=boxes.length&&boxes.every(b=>b.checked); toggleAllBtn.textContent=allOn?tr('deselectAll'):tr('selectAll');}
+  function translateUI(){document.title=CONFIG.title; document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=tr(el.dataset.i18n)}); updateToggleAll();}
+  function createProblemPairs(n){const ats=activeTypes(); if(!ats.length)return[]; const pairs=[]; for(let i=0;i<n;i++) pairs.push(genPair(ats[i%ats.length])); return shuffle(pairs);}
+  function factorVisual(ex,fade=false){
+    const f=ex.factors||[];
+    return `<div class="factorVisual ${fade?'fvFade':''}">
+      <div class="factorTree">
+        <div class="factorOrig left">${fmt(ex.a)}</div>
+        <div class="factorOrig midX">${times}</div>
+        <div class="factorOrig right">${fmt(ex.b)}</div>
+        <svg class="factorBranch left" viewBox="0 0 180 54" aria-hidden="true"><path d="M90 6 L28 50"></path><path d="M90 6 L152 50"></path></svg>
+        <svg class="factorBranch right" viewBox="0 0 180 54" aria-hidden="true"><path d="M90 6 L28 50"></path><path d="M90 6 L152 50"></path></svg>
+        <div class="factorChild c1"><span class="hlPurple">${fmt(f[0])}</span></div>
+        <div class="factorChild c2 x">${times}</div>
+        <div class="factorChild c3"><span class="hlGreen">${fmt(f[1])}</span></div>
+        <div class="factorChild c4 x">${times}</div>
+        <div class="factorChild c5"><span class="hlGreen">${fmt(f[2])}</span></div>
+        <div class="factorChild c6 x">${times}</div>
+        <div class="factorChild c7"><span class="hlPurple">${fmt(f[3])}</span></div>
+      </div>
+    </div>`;
+  }
+  function groupedLine(ex){
+    return `<span class="groupPurple">${fmt(ex.regroupLeft)}</span> ${times} <span class="groupGreen">${fmt(ex.regroupRight)}</span>`;
+  }
+  function decimalGroupedLine(ex){
+    return `<span class="groupGreen">${fmt(ex.regroupLeft)}</span> ${times} <span class="groupPurple">${fmt(ex.regroupRight)}</span>`;
+  }
+
+  function halveVisual(ex){
+    const splitA = ex.doubleB / 10;
+    return `<div class="halveVisual">
+      <div class="halveGrid">
+        <div class="halveCell">${fmt(ex.a)}</div>
+        <div class="halveCell op">${times}</div>
+        <div class="halveCell">${fmt(ex.b)}</div>
+
+        <div class="halveStep">÷ 2</div>
+        <div></div>
+        <div class="halveStep">× 2</div>
+
+        <div class="halveArrow">↓</div>
+        <div></div>
+        <div class="halveArrow">↓</div>
+
+        <div class="halveResult"><span class="groupPurple">${fmt(ex.halfA)}</span></div>
+        <div class="halveResult">${times}</div>
+        <div class="halveResult"><span class="groupGreen">${fmt(ex.doubleB)}</span></div>
+
+        <div class="halveBreakdownLine">
+          <span class="groupPurple">${fmt(ex.halfA)}</span>
+          <span>${times}</span>
+          <span class="groupGreen">${fmt(splitA)}</span>
+          <span>${times}</span>
+          <span class="groupGreen">10</span>
+        </div>
+      </div>
+    </div>`;
+  }
+  function decimalVisual(ex){
+    const leftOp=`× ${fmt(ex.scale)}`;
+    const rightOp=`÷ ${fmt(ex.scale)}`;
+    return `<div class="decimalVisual">
+      <div class="decimalGrid">
+        <div class="decimalCell">${fmt(ex.a)}</div>
+        <div class="decimalCell op">${times}</div>
+        <div class="decimalCell">${fmt(ex.b)}</div>
+        <div class="decimalStep">${leftOp}</div>
+        <div></div>
+        <div class="decimalStep">${rightOp}</div>
+        <div class="decimalArrow">↓</div>
+        <div></div>
+        <div class="decimalArrow">↓</div>
+        <div class="decimalResult"><span class="groupGreen">${fmt(ex.scaledA)}</span></div>
+        <div class="decimalResult">${times}</div>
+        <div class="decimalResult"><span class="groupPurple">${fmt(ex.scaledB)}</span></div>
+      </div>
+    </div>`;
+  }
+  function decimalFactorLine(ex){
+    const f=ex.splitFactors||[];
+    if(f.length<3) return '';
+    return `<span class="groupGreen">${fmt(f[0])}</span> ${times} <span class="groupPurple">${fmt(f[1])}</span> ${times} <span class="groupPurple">${fmt(f[2])}</span>`;
+  }
+
+  function makeCol(titleKey,ex,mode,showAnswers){
+    const col=document.createElement('div');
+    col.className=`col ${mode}`;
+    const head=document.createElement('div');
+    head.className='colHead';
+    head.innerHTML=labelWithEnglish(titleKey);
+    col.appendChild(head);
+    const lines=document.createElement('div');
+    lines.className='workLines';
+    const addLine=(txt,cls='')=>{
+      const d=document.createElement('div');
+      d.className=`mathLine ${cls}`.trim();
+      d.innerHTML=txt;
+      lines.appendChild(d);
+    };
+    const addBlankStage=()=>{
+      const s=document.createElement('div');
+      s.className='blankStage';
+      lines.appendChild(s);
+    };
+
+    if(mode==='yourTurn' && !showAnswers){
+      addLine(ex.expr);
+      addBlankStage();
+      col.appendChild(lines);
+      return col;
+    }
+
+    if(ex.visual){
+      lines.insertAdjacentHTML('beforeend', factorVisual(ex, mode==='faded' && !showAnswers));
+      if(mode==='demo' || showAnswers){
+        addLine(groupedLine(ex),'small');
+        addLine(ex.answerLine,'answer');
+      } else {
+        lines.appendChild(blank());
+        lines.appendChild(blank());
+      }
+    } else if(ex.half){
+      lines.insertAdjacentHTML('beforeend', halveVisual(ex));
+      if(mode==='demo' || showAnswers){
+        addLine(ex.answerLine,'answer');
+      } else {
+        lines.appendChild(blank());
+        addBlankStage();
+      }
+    } else if(ex.decimal){
+      lines.insertAdjacentHTML('beforeend', decimalVisual(ex));
+      if(mode==='demo' || showAnswers){
+        const df=document.createElement('div');
+        df.className='decimalFactorLine';
+        df.innerHTML=decimalFactorLine(ex);
+        lines.appendChild(df);
+        addLine(decimalGroupedLine(ex),'small');
+        addLine(ex.answerLine,'answer');
+      } else {
+        lines.appendChild(blank());
+        addBlankStage();
+      }
+    } else {
+      addLine(ex.expr);
+      if(mode==='demo' || showAnswers){
+        (ex.steps||[]).forEach((s,i)=>addLine(s,i===0?'small':''));
+        addLine(ex.answerLine,'answer');
+      } else if(mode==='faded'){
+        const st=ex.steps||[];
+        if(st[0]) addLine(st[0], 'small fade');
+        lines.appendChild(blank());
+        lines.appendChild(blank());
+      } else {
+        addBlankStage();
+      }
+    }
+
+    col.appendChild(lines);
+    return col;
+  }
+  function blank(){const b=document.createElement('div'); b.className='blankLine'; return b;}
+  function makePairCard(pair,idx,showAnswers){
+    const card=document.createElement('div');
+    card.className='pairCard';
+    const top=document.createElement('div');
+    top.className='pairTop';
+    top.innerHTML=`<div class="pairNum">${idx}</div><div class="pairStrategy">${strategyLabel(pair.type)}</div>`;
+    card.appendChild(top);
+
+    const tri=document.createElement('div');
+    tri.className='triGrid';
+
+    if(!fadedToggle.checked){
+      // Practice mode: all three cells are blank student-practice questions.
+      // On the answer key, use the worked rendering for each calculate item.
+      if(showAnswers){
+        tri.appendChild(makeCol('calculate',pair.demo,'demo',true));
+        tri.appendChild(makeCol('calculate',pair.faded,'demo',true));
+        tri.appendChild(makeCol('calculate',pair.turn,'demo',true));
+      } else {
+        tri.appendChild(makeCol('calculate',pair.demo,'yourTurn',false));
+        tri.appendChild(makeCol('calculate',pair.faded,'yourTurn',false));
+        tri.appendChild(makeCol('calculate',pair.turn,'yourTurn',false));
+      }
+    } else {
+      tri.appendChild(makeCol('demo',pair.demo,'demo',showAnswers));
+      tri.appendChild(makeCol('faded',pair.faded,'faded',showAnswers));
+      tri.appendChild(makeCol('yourTurn',pair.turn,'yourTurn',showAnswers));
+    }
+
+    card.appendChild(tri);
+    return card;
+  }
+  function makePage(title,pageIdx,pageCount,langClass){const page=document.createElement('div'); page.className=`page ${langClass}`; const border=document.createElement('img'); border.className='pageBorder'; border.alt=''; border.src=CONFIG.borderSrc; page.appendChild(border); const inner=document.createElement('div'); inner.className='pageInner'; const cont=document.createElement('div'); cont.className='pageContent'; const hdr=document.createElement('div'); hdr.className='pageHeader'; const left=document.createElement('div'); left.className='hdrLeft'; left.innerHTML=`<div class="hdrTitle">${title}</div><div class="hdrSub">${tr('page')} ${pageIdx} / ${pageCount}</div>`; const name=document.createElement('div'); name.className='nameRow'; ['name','className','date'].forEach(k=>{const f=document.createElement('div');f.className='lineField';f.innerHTML=`<div class="lineLabel">${tr(k)}</div><div class="lineBox"></div>`;name.appendChild(f)}); hdr.append(left,name); cont.appendChild(hdr); const grid=document.createElement('div'); grid.className='pairGrid'; cont.appendChild(grid); inner.appendChild(cont); page.appendChild(inner); return {page,grid};}
+  function render(pairs,showAnswers=false){const totalPages=Math.ceil(pairs.length/CONFIG.perPage); const langClass=L().dir==='rtl'?'lang-rtl':''; for(let p=0;p<totalPages;p++){const {page,grid}=makePage(showAnswers?tr('answerKeyTitle'):tr('pageTitle'),p+1,totalPages,langClass); pairs.slice(p*CONFIG.perPage,(p+1)*CONFIG.perPage).forEach((pair,i)=>grid.appendChild(makePairCard(pair,p*CONFIG.perPage+i+1,showAnswers))); out.appendChild(page);}}
+  function generate(){out.innerHTML=''; const n=Math.max(CONFIG.minCount,Math.min(CONFIG.maxCount,Number(countInp.value)||CONFIG.defaultCount)); const pairs=createProblemPairs(n); if(!pairs.length){out.innerHTML=`<div class="page"><div class="pageContent"><strong>${tr('noTypes')}</strong></div></div>`; return;} render(pairs,false); render(pairs,true);}
+  genBtn.addEventListener('click',generate); printBtn.addEventListener('click',()=>window.print()); resetBtn.addEventListener('click',()=>{countInp.value=CONFIG.defaultCount; fadedToggle.checked=true; renderChecks(); out.innerHTML=''; generate();}); languageSel.addEventListener('change',()=>{translateUI(); generate();}); fadedToggle.addEventListener('change',generate); toggleAllBtn.addEventListener('click',()=>{const boxes=[...chkWrap.querySelectorAll('input[type=checkbox]')]; const allOn=boxes.every(b=>b.checked); boxes.forEach(b=>b.checked=!allOn); updateToggleAll();}); chkWrap.addEventListener('change',updateToggleAll);
+  renderChecks(); translateUI(); generate();
+})();
+</script>
+</body>
+</html>
