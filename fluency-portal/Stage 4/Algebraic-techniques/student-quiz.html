@@ -365,6 +365,15 @@
   const randInt=(a,b)=>Math.floor(rng()*(b-a+1))+a; const choice=a=>a[randInt(0,a.length-1)]; const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const shuffle=(arr)=>{const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
   function stripHTML(html){const d=document.createElement('div');d.innerHTML=String(html);return d.textContent||d.innerText||''}
+  function mathTextFromHTML(html){
+    let s=String(html||'');
+    const fracRe=/<span class="frac"><span class="top">([\s\S]*?)<\/span><span class="bar"><\/span><span class="bottom">([\s\S]*?)<\/span><\/span>/;
+    let guard=0;
+    while(fracRe.test(s)&&guard++<20){
+      s=s.replace(fracRe,(_,top,bottom)=>`(${stripHTML(top)})/(${stripHTML(bottom)})`);
+    }
+    return stripHTML(s);
+  }
   function lang(){return state.language} function L(){return I18N[lang()]||I18N.en} function tr(k){return L()[k]??I18N.en[k]??k} function trType(id,label){return (L().typeLabels&&L().typeLabels[id])||(I18N.en.typeLabels&&I18N.en.typeLabels[id])||label||id} function dir(){return L().dir||'ltr'}
   function fmtInt(n){return n<0?`−${Math.abs(n)}`:`${n}`}
   const OTHER_VARS=['a','b','c','d','e','f','y','p','w','k']; function pickVar(){return rng()<.30?'x':choice(OTHER_VARS)}
@@ -393,7 +402,7 @@
     m=plain.match(/^احسب (.*) عندما (.*)\.$/); if(m){return {instructionHTML:`احسب عندما ${m[2]}`,expressionHTML:raw.match(/^احسب (.*) عندما .*\.$/)?.[1]||m[1]};}
     return {instructionHTML:tr('questionLabel'),expressionHTML:raw};
   }
-  function qObj(type,promptHTML,answerHTML,alts=[],instructionHTML=null,expressionHTML=null){const split=splitPromptHTML(promptHTML);const expr=expressionHTML??split.expressionHTML;return {type,promptHTML,instructionHTML:instructionHTML??split.instructionHTML,expressionHTML:`<span class="exprLTR">${expr}</span>`,answerHTML,answerText:stripHTML(answerHTML),alts:alts.map(String)}}
+  function qObj(type,promptHTML,answerHTML,alts=[],instructionHTML=null,expressionHTML=null){const split=splitPromptHTML(promptHTML);const expr=expressionHTML??split.expressionHTML;return {type,promptHTML,instructionHTML:instructionHTML??split.instructionHTML,expressionHTML:`<span class="exprLTR">${expr}</span>`,answerHTML,answerText:mathTextFromHTML(answerHTML),alts:alts.map(String)}}
 
   const WORD_STEMS_DE=[{key:'more5',build:v=>`${vHTML(v)} + 5`},{key:'inc7',build:v=>`${vHTML(v)} + 7`},{key:'less3',build:v=>`${vHTML(v)} − 3`},{key:'dec4',build:v=>`${vHTML(v)} − 4`},{key:'twice',build:v=>`2${vHTML(v)}`},{key:'thrice',build:v=>`3${vHTML(v)}`},{key:'div2',build:v=>fracHTML(vHTML(v),'2')},{key:'half',build:v=>fracHTML(vHTML(v),'2')}];
   const WORD_STEMS_C=[{key:'twicePlus3',build:v=>`2${vHTML(v)} + 3`},{key:'threeMinus5',build:v=>`3${vHTML(v)} − 5`},{key:'sum7times2',build:v=>`2(${vHTML(v)} + 7)`},{key:'halfPlus6',build:v=>fracHTML(`(${vHTML(v)} + 6)`,'2')},{key:'diff10',build:v=>`10 − ${vHTML(v)}`}];
@@ -448,13 +457,51 @@
 
   function canonical(s){return String(s).toLowerCase().trim().replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/[²]/g,'^2').replace(/\s+/g,'').replace(/\*/g,'').replace(/\{/g,'(').replace(/\}/g,')').replace(/\[/g,'(').replace(/\]/g,')').replace(/−/g,'-')}
   function normalizeFractionText(s){return canonical(s).replace(/^\((.*)\)$/,'$1')}
-  function answerOK(input,q){const raw=String(input||'');if(!raw.trim())return false;const a=canonical(raw),targets=[q.answerText,...(q.alts||[])].map(canonical);
-    if(targets.includes(a))return true;
+  function normaliseForEval(s){
+    let out=String(s||'').toLowerCase().trim()
+      .replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/')
+      .replace(/[²]/g,'^2').replace(/\s+/g,'')
+      .replace(/\{/g,'(').replace(/\}/g,')').replace(/\[/g,'(').replace(/\]/g,')');
+    out=out.replace(/([0-9])([a-z(])/g,'$1*$2')
+      .replace(/([a-z])([0-9])/g,'$1*$2')
+      .replace(/([a-z])\(/g,'$1*(')
+      .replace(/\)([a-z0-9(])/g,')*$1')
+      .replace(/\^/g,'**');
+    return out;
+  }
+  function evalAlgebraExpression(expr,vars,values){
+    const js=normaliseForEval(expr);
+    if(!/^[0-9a-z+\-*/().]+$/.test(js))return null;
+    if(/\*\*\*/.test(js))return null;
+    try{
+      const fn=new Function(...vars,`"use strict"; return (${js});`);
+      const val=Number(fn(...vars.map(v=>values[v])));
+      return Number.isFinite(val)?val:null;
+    }catch(e){return null;}
+  }
+  function algebraicallyEquivalent(input,target){
+    const vars=Array.from(new Set((String(input)+String(target)).toLowerCase().match(/[a-z]/g)||[])).sort();
+    if(vars.length>4)return false;
+    const tests=vars.length?[-5,-3,-1,2,4,7]:[0];
+    for(let i=0;i<Math.max(6,vars.length+2);i++){
+      const values={};
+      vars.forEach((v,j)=>{values[v]=tests[(i+j)%tests.length];});
+      const a=evalAlgebraExpression(input,vars,values);
+      const b=evalAlgebraExpression(target,vars,values);
+      if(a===null||b===null)return false;
+      if(Math.abs(a-b)>1e-9)return false;
+    }
+    return true;
+  }
+  function answerOK(input,q){const raw=String(input||'');if(!raw.trim())return false;const a=canonical(raw),targets=[q.answerText,...(q.alts||[])].map(String),canonicalTargets=targets.map(canonical);
+    if(canonicalTargets.includes(a))return true;
     const plainTarget=canonical(q.answerText).replace(/,/g,''); if(a===plainTarget)return true;
     // allow simple fraction answers with or without parentheses around numerator/denominator
     const af=normalizeFractionText(raw),tf=normalizeFractionText(q.answerText); if(af===tf)return true;
     // accept x/2 for stacked fractions and coefficientless 1x variants
-    if(targets.some(t=>t.replace(/^1([a-z])/,'$1')===a.replace(/^1([a-z])/,'$1')))return true;
+    if(canonicalTargets.some(t=>t.replace(/^1([a-z])/,'$1')===a.replace(/^1([a-z])/,'$1')))return true;
+    // accept equivalent algebraic expressions, e.g. x/2 for a stacked fraction or 5+b for b+5
+    if(targets.some(t=>algebraicallyEquivalent(raw,t)))return true;
     return false;
   }
   function parseSimpleFactorisation(input,v){
