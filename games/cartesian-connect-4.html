@@ -229,7 +229,13 @@
       grid-template-columns:minmax(320px,1fr) 340px;
       gap:22px;
       align-items:start;
+      position:relative;
+      transition:grid-template-columns .22s ease;
     }
+    body.side-panel-hidden .layout{grid-template-columns:1fr;}
+    body.side-panel-hidden .side-panel{display:none;}
+    body.side-panel-hidden .play-area{max-width:1180px;margin-inline:auto;grid-template-columns:minmax(520px,1fr) minmax(250px,300px);}
+    body.side-panel-hidden .grid-holder{max-width:880px;}
     .card{
       background:rgba(255,255,255,.94);
       border:1px solid rgba(226,232,240,.9);
@@ -239,11 +245,8 @@
     }
     .board-wrap{padding:18px;}
     .status-strip{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:12px;
-      align-items:center;
-      margin-bottom:16px;
+      display:block;
+      margin-bottom:18px;
     }
     .turn-card{
       display:flex;
@@ -267,16 +270,31 @@
     .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
     .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
 
+    .play-area{
+      display:grid;
+      grid-template-columns:minmax(430px,1fr) minmax(250px,300px);
+      gap:20px;
+      align-items:start;
+      justify-items:center;
+    }
     .dice-area{
+      display:grid;
+      grid-template-rows:auto auto auto;
+      gap:12px;
+      background:linear-gradient(180deg,#f5f3ff,#faf5ff);
+      border:1px solid #ddd6fe;
+      border-radius:24px;
+      padding:16px;
+      width:100%;
+      max-width:300px;
+      box-shadow:0 18px 42px rgba(109,40,217,.16);
+      align-self:start;
+    }
+    .dice-row{
       display:flex;
       align-items:center;
       justify-content:center;
       gap:10px;
-      background:#f8fafc;
-      border:1px solid var(--border);
-      border-radius:20px;
-      padding:10px 12px;
-      min-width:184px;
     }
     .die{
       width:54px;
@@ -304,7 +322,7 @@
 
     .grid-holder{
       position:relative;
-      width:min(74vh,100%);
+      width:100%;
       max-width:820px;
       margin:0 auto;
       aspect-ratio:1/1;
@@ -331,7 +349,44 @@
     .win-ring{fill:none;stroke:#fbbf24;stroke-width:5;filter:drop-shadow(0 0 8px rgba(251,191,36,.65));animation:pulse 1s ease-in-out infinite;}
     @keyframes pulse{0%,100%{opacity:.65;transform:scale(1);}50%{opacity:1;transform:scale(1.08);}}
 
-    .side-panel{padding:16px;display:grid;gap:16px;position:sticky;top:104px;}
+    .side-panel{padding:16px;display:grid;gap:16px;position:sticky;top:104px;overflow:visible;}
+    .side-toggle{
+      position:absolute;
+      left:-16px;
+      top:22px;
+      width:32px;
+      height:52px;
+      padding:0;
+      border-radius:999px 0 0 999px;
+      border:1px solid #dbe3ef;
+      background:white;
+      color:#334155;
+      box-shadow:0 12px 24px rgba(15,23,42,.12);
+      display:grid;
+      place-items:center;
+      font-size:1.4rem;
+      line-height:1;
+      z-index:5;
+    }
+    .side-toggle:hover{background:#f5f3ff;color:var(--purple);}
+    .side-reopen{
+      position:fixed;
+      right:10px;
+      top:112px;
+      width:34px;
+      height:56px;
+      padding:0;
+      border-radius:999px 0 0 999px;
+      border:1px solid rgba(255,255,255,.4);
+      background:linear-gradient(135deg,var(--purple),var(--blue));
+      color:white;
+      box-shadow:0 16px 34px rgba(15,23,42,.22);
+      display:none;
+      place-items:center;
+      font-size:1.45rem;
+      z-index:55;
+    }
+    body.side-panel-hidden .side-reopen{display:grid;}
     .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
     h2,h3,p{margin-top:0;}
     h2{font-size:1.15rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
@@ -361,12 +416,56 @@
     .switch input:checked + .slider{background:var(--blue);}
     .switch input:checked + .slider:before{transform:translateX(24px);}
 
-    .choice-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
-    .choice-btn{background:white;color:#0f172a;border:2px solid var(--border);border-radius:18px;padding:12px 10px;font-size:1rem;min-height:58px;font-family:var(--mathFont);}
-    .choice-btn.selected{border-color:var(--blue);background:#dbeafe;color:#1e3a8a;}
-    .choice-btn.blocked{border-color:#fecaca;background:#fff1f2;color:#991b1b;}
+    .choice-title{
+      text-align:center;
+      font-weight:950;
+      color:#5b21b6;
+      letter-spacing:-.02em;
+      font-size:.98rem;
+      margin-top:-2px;
+    }
+    .choice-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+    .dice-choice-row{margin-top:0;}
+    .choice-btn{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:5px;
+      background:linear-gradient(180deg,#ffffff,#f5f3ff);
+      color:#0f172a;
+      border:2px solid #ddd6fe;
+      border-radius:22px;
+      padding:15px 12px 13px;
+      font-size:1.35rem;
+      font-weight:950;
+      min-height:84px;
+      font-family:var(--mathFont);
+      box-shadow:inset 0 -6px 0 rgba(109,40,217,.06),0 16px 28px rgba(109,40,217,.12);
+    }
+    .choice-btn::before{
+      font-family:var(--uiFont);
+      font-size:.72rem;
+      line-height:1;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:#7c3aed;
+      font-weight:950;
+    }
+    #choiceXY::before{content:'Option 1';}
+    #choiceYX::before{content:'Option 2';}
+    .choice-btn:not(:disabled):hover{
+      border-color:#a78bfa;
+      background:linear-gradient(180deg,#ede9fe,#ffffff);
+      box-shadow:inset 0 -6px 0 rgba(124,58,237,.08),0 18px 32px rgba(124,58,237,.18);
+    }
+    .choice-btn.selected{border-color:var(--purple);background:linear-gradient(180deg,#ddd6fe,#f5f3ff);color:#4c1d95;}
+    .choice-btn.blocked{border-color:#fecaca;background:linear-gradient(180deg,#fff1f2,#fff);color:#991b1b;}
+    .choice-btn.blocked::before{content:'Taken';color:#b91c1c;}
     .message{padding:14px 16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:800;min-height:50px;display:flex;align-items:center;line-height:1.35;}
     .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
     .score-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .score-card{border-radius:18px;padding:14px;background:white;border:1px solid var(--border);}
     .score-card span{display:block;color:#334155;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -387,15 +486,100 @@
     .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
     @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
 
+
+    /* Compact desktop layout so the full grid fits at 100% browser zoom. */
+    @media (min-width:1081px){
+      html,body{height:100%;overflow:hidden;}
+      .mmtTopbar{
+        padding:8px 18px;
+        min-height:66px;
+        grid-template-columns:minmax(190px,1fr) auto minmax(360px,1fr);
+        gap:14px;
+      }
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions,.top-actions{gap:8px;}
+      .actions button,.top-actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{
+        width:min(1500px,calc(100vw - 36px));
+        height:calc(100dvh - 128px);
+        min-height:0;
+        margin:12px auto 8px;
+        grid-template-columns:minmax(0,1fr) minmax(300px,340px);
+        gap:16px;
+        align-items:stretch;
+      }
+      body.side-panel-hidden .layout{grid-template-columns:1fr;}
+      .board-wrap{
+        display:grid;
+        grid-template-rows:auto minmax(0,1fr);
+        padding:14px;
+        min-height:0;
+      }
+      .status-strip{margin-bottom:12px;}
+      .turn-card{min-height:54px;padding:10px 14px;border-radius:18px;}
+      .player-dot{width:28px;height:28px;}
+      .status-title{font-size:1rem;}
+      .status-subtitle{font-size:.84rem;}
+      .play-area{
+        height:100%;
+        min-height:0;
+        grid-template-columns:minmax(0,1fr) minmax(238px,280px);
+        gap:16px;
+        align-items:center;
+        justify-items:center;
+      }
+      body.side-panel-hidden .play-area{
+        max-width:1120px;
+        grid-template-columns:minmax(0,1fr) minmax(238px,280px);
+      }
+      .grid-holder{
+        width:min(100%,calc(100dvh - 240px));
+        max-width:680px;
+        min-width:0;
+      }
+      body.side-panel-hidden .grid-holder{
+        width:min(100%,calc(100dvh - 240px));
+        max-width:700px;
+      }
+      .dice-area{max-width:280px;padding:14px;gap:10px;border-radius:22px;}
+      .die{width:50px;height:50px;font-size:1.4rem;border-radius:14px;}
+      .dice-row{gap:9px;}
+      .btn-green{padding:9px 13px;}
+      .choice-title{font-size:.92rem;}
+      .choice-row{gap:10px;}
+      .choice-btn{min-height:72px;font-size:1.18rem;padding:12px 10px;border-radius:20px;}
+      .choice-btn::before{font-size:.66rem;}
+      .side-panel{top:78px;max-height:calc(100dvh - 98px);overflow:auto;padding:14px;}
+      .panel-section{padding:14px;border-radius:20px;}
+      h2{font-size:1.05rem;}
+      .online-panel{gap:10px;}
+      .score-card{padding:12px;}
+      .brand-footer{
+        width:min(1500px,calc(100vw - 36px));
+        min-height:30px;
+        margin:0 auto 8px;
+        font-size:12px;
+        border-radius:14px;
+      }
+      .side-reopen{top:88px;}
+    }
+
     @media(max-width:1080px){
       .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
       .mmtBrand{justify-self:center;margin-left:0;}
       .actions,.top-actions{justify-content:center;}
       .layout{width:calc(100vw - 28px);grid-template-columns:1fr;margin-top:14px;}
       .side-panel{position:static;}
+      .side-toggle,.side-reopen{display:none!important;}
+      .play-area{grid-template-columns:1fr;}
+      body.side-panel-hidden .play-area{grid-template-columns:1fr;}
       .grid-holder{width:100%;}
-      .status-strip{grid-template-columns:1fr;}
-      .dice-area{justify-content:flex-start;}
+      .dice-area{width:100%;max-width:420px;justify-self:center;}
+      .dice-row{justify-content:center;}
     }
     @media(max-width:700px){
       .mmtBrandText span{display:none;}
@@ -405,8 +589,41 @@
       .join-row,.online-actions,.score-row{grid-template-columns:1fr;}
       .brand-footer{width:calc(100vw - 20px);padding:8px 10px;}
     }
+
+
+    /* Balanced desktop sizing: keeps the compact banner, but lets the board use much more of the screen. */
+    @media (min-width:1081px){
+      .layout{
+        width:min(1680px,calc(100vw - 48px));
+        height:calc(100dvh - 116px);
+        margin:10px auto 6px;
+      }
+      body.side-panel-hidden .play-area{
+        max-width:1280px;
+        grid-template-columns:minmax(620px,880px) minmax(260px,320px);
+      }
+      .play-area{
+        grid-template-columns:minmax(560px,860px) minmax(260px,320px);
+        gap:18px;
+        justify-content:center;
+        align-items:center;
+      }
+      .grid-holder{
+        width:min(100%,calc(100dvh - 176px),860px);
+        max-width:860px;
+      }
+      body.side-panel-hidden .grid-holder{
+        width:min(100%,calc(100dvh - 176px),880px);
+        max-width:880px;
+      }
+      .dice-area{
+        max-width:320px;
+        padding:16px;
+      }
+    }
+
     @media print{
-      .mmtTopbar,.side-panel,.status-strip,.modal-backdrop,.brand-footer{display:none!important;}
+      .mmtTopbar,.side-panel,.status-strip,.modal-backdrop,.brand-footer,.side-reopen{display:none!important;}
       body{background:white;}
       .layout{display:block;width:auto;margin:0;}
       .card{box-shadow:none;border:0;}
@@ -494,7 +711,9 @@
     </div>
   </header>
 
-  <main class="layout">
+  <button class="side-reopen" id="sideReopenBtn" type="button" aria-label="Show side panel" title="Show side panel">‹</button>
+
+  <main class="layout" id="gameLayout">
     <section class="card board-wrap">
       <div class="status-strip">
         <div class="turn-card" id="turnCard">
@@ -504,19 +723,31 @@
             <div class="status-subtitle" id="statusSubtitle">Roll the dice, then choose the correct coordinate.</div>
           </div>
         </div>
-        <div class="dice-area">
-          <div class="die" id="dieA">?</div>
-          <div class="die" id="dieB">?</div>
-          <button class="btn-green" id="rollBtn">Roll</button>
-        </div>
       </div>
 
-      <div class="grid-holder">
-        <svg id="boardSvg" viewBox="0 0 720 720" role="img" aria-label="Coordinate grid game board"></svg>
+      <div class="play-area">
+        <div class="grid-holder">
+          <svg id="boardSvg" viewBox="0 0 720 720" role="img" aria-label="Coordinate grid game board"></svg>
+        </div>
+
+        <div class="dice-area">
+          <div class="dice-row">
+            <div class="die" id="dieA">?</div>
+            <div class="die" id="dieB">?</div>
+            <button class="btn-green" id="rollBtn">Roll</button>
+          </div>
+          <div class="choice-title">Choose to place</div>
+          <div class="choice-row dice-choice-row" id="choiceRow">
+            <button class="choice-btn" id="choiceXY" disabled>(x, y)</button>
+            <button class="choice-btn" id="choiceYX" disabled>(x, y)</button>
+          </div>
+          <div class="message sr-only" id="messageBox" aria-live="polite">Roll two dice to generate your coordinate.</div>
+        </div>
       </div>
     </section>
 
-    <aside class="card side-panel">
+    <aside class="card side-panel" id="sidePanel">
+      <button class="side-toggle" id="sideToggleBtn" type="button" aria-label="Hide side panel" title="Hide side panel">›</button>
 
       <section class="panel-section online-panel">
         <h2>Online match</h2>
@@ -539,19 +770,11 @@
           <button class="btn-green" id="joinOnlineBtn">Join</button>
         </div>
       </section>
-      <section class="panel-section">
-        <h2>Current move</h2>
-        <div class="message" id="messageBox">Roll two dice to generate your coordinate.</div>
-        <div class="choice-row" id="choiceRow">
-          <button class="choice-btn" id="choiceXY" disabled>(x, y)</button>
-          <button class="choice-btn" id="choiceYX" disabled>(x, y)</button>
-        </div>
-        <div class="coordinate-readout" aria-hidden="true">
-          <span class="pill" id="selectedCoord">Selected: none</span>
-          <span class="pill" id="modeReadout">Mode: First quadrant, 0–6</span>
-          <span class="pill" id="diceReadout">Dice: 1–6</span>
-        </div>
-      </section>
+      <div class="coordinate-readout sr-only" aria-hidden="true">
+        <span class="pill" id="selectedCoord">Selected: none</span>
+        <span class="pill" id="modeReadout">Mode: First quadrant, 0–6</span>
+        <span class="pill" id="diceReadout">Dice: 1–6</span>
+      </div>
 
       <section class="panel-section">
         <h2>Score</h2>
@@ -677,6 +900,8 @@
     const playerNameInput = document.getElementById('playerNameInput');
     const p1Label = document.getElementById('p1Label');
     const p2Label = document.getElementById('p2Label');
+    const sideToggleBtn = document.getElementById('sideToggleBtn');
+    const sideReopenBtn = document.getElementById('sideReopenBtn');
 
     const PAD = 72;
     const SIZE = 720;
@@ -1294,6 +1519,22 @@
       settingsBtn.setAttribute('aria-expanded', String(open));
     }
 
+    function setSidePanelHidden(hidden) {
+      document.body.classList.toggle('side-panel-hidden', Boolean(hidden));
+      if (sideToggleBtn) sideToggleBtn.setAttribute('aria-expanded', String(!hidden));
+      if (sideReopenBtn) sideReopenBtn.setAttribute('aria-expanded', String(hidden));
+      try { localStorage.setItem('coordinateConnect4SidePanelHidden', hidden ? '1' : '0'); } catch (e) {}
+      requestAnimationFrame(() => drawBoard());
+    }
+
+    function restoreSidePanelPreference() {
+      try {
+        setSidePanelHidden(localStorage.getItem('coordinateConnect4SidePanelHidden') === '1');
+      } catch (e) {
+        setSidePanelHidden(false);
+      }
+    }
+
     async function ensureOnlineReady() {
       if (!FIREBASE_CONFIGURED || !db || !auth) {
         throw new Error('Online play needs the Firebase config added to this HTML file first.');
@@ -1664,6 +1905,8 @@
     }
 
     rollBtn.addEventListener('click', rollDice);
+    if (sideToggleBtn) sideToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); setSidePanelHidden(true); });
+    if (sideReopenBtn) sideReopenBtn.addEventListener('click', (e) => { e.stopPropagation(); setSidePanelHidden(false); });
     undoBtn.addEventListener('click', undo);
     newGameBtn.addEventListener('click', () => newGame(false));
     choiceXY.addEventListener('click', () => chooseCoord(0));
