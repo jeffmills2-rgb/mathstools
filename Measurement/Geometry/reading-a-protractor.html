@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Protractor Angle Explorer</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow:hidden;
+    }
+
+    .app{
+      min-height:100vh;
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      padding:0;
+      gap:0;
+    }
+
+    .mmtTopbar{
+      position:relative;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(240px,1fr) auto minmax(420px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mmtBrand:hover{
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);
+    }
+    .mmtBrandLogo{
+      width:44px;
+      height:44px;
+      object-fit:contain;
+      background:white;
+      border-radius:6px;
+      padding:3px;
+      flex:0 0 auto;
+    }
+    .mmtBrandText strong{
+      display:block;
+      font-size:1.18rem;
+      line-height:1;
+      letter-spacing:-.03em;
+      color:white;
+    }
+    .mmtBrandText span{
+      display:block;
+      font-size:.78rem;
+      opacity:.82;
+      font-weight:650;
+      color:white;
+    }
+    .mmtTopTitle{
+      font-weight:850;
+      font-size:clamp(1.25rem,2vw,1.7rem);
+      letter-spacing:-.04em;
+      text-align:center;
+      color:white;
+      white-space:nowrap;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+    .btn{
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.14);
+      color:white;
+      padding:11px 15px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:15px;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow:none;
+      user-select:none;
+      -webkit-user-select:none;
+      font-family:var(--uiFont);
+    }
+    .btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
+    .btn:active{transform:translateY(0);}
+    .btn:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(255,255,255,.22);}
+    .btn-primary{background:white;color:#1d4ed8;border-color:white;}
+    .btn-primary:hover{background:#eef2ff;color:#1d4ed8;}
+    .btn-danger{background:rgba(255,255,255,.10);color:#fee2e2;border-color:rgba(255,255,255,.18);}
+    .btn-danger:hover{background:rgba(255,255,255,.18);color:white;}
+
+    .tools-wrap{position:relative;}
+    .tools-menu{
+      position:absolute;
+      top:calc(100% + 10px);
+      right:0;
+      min-width:240px;
+      background:rgba(255,255,255,.98);
+      border:1px solid rgba(226,232,240,.95);
+      border-radius:18px;
+      box-shadow:0 18px 45px rgba(15,23,42,.18);
+      padding:10px;
+      opacity:0;
+      transform:translateY(-8px) scale(.98);
+      pointer-events:none;
+      transition:.18s ease;
+      z-index:60;
+    }
+    .tools-menu.open{
+      opacity:1;
+      transform:translateY(0) scale(1);
+      pointer-events:auto;
+    }
+    .tools-link{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      text-align:left;
+      text-decoration:none;
+      border:0;
+      background:transparent;
+      color:var(--ink);
+      font-family:var(--uiFont);
+      font-size:15px;
+      font-weight:900;
+      padding:12px 14px;
+      border-radius:12px;
+      cursor:pointer;
+    }
+    .tools-link:hover{background:#eef2ff;color:var(--blue);}
+
+    .layout{
+      width:min(1320px, calc(100vw - 48px));
+      flex:1;
+      min-height:0;
+      margin:24px auto 14px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .teacher-panel{
+      position:absolute;
+      top:18px;
+      right:18px;
+      width:min(500px, calc(100vw - 72px));
+      background:rgba(255,255,255,.98);
+      border:1px solid var(--border);
+      border-radius:24px;
+      box-shadow:0 18px 60px rgba(15,23,42,.18);
+      padding:18px;
+      z-index:45;
+      transform:translateY(-10px) scale(.98);
+      opacity:0;
+      pointer-events:none;
+      transition:.22s ease;
+      max-height:min(82vh,780px);
+      overflow:auto;
+    }
+    .teacher-panel.open{
+      transform:translateY(0) scale(1);
+      opacity:1;
+      pointer-events:auto;
+    }
+    .panel-title{font-size:19px;font-weight:900;margin:0 0 14px;}
+    .panel-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .field{display:flex;flex-direction:column;gap:8px;}
+    .field label{font-weight:850;font-size:15px;color:var(--ink);}
+    .field select{
+      width:100%;
+      border:1px solid var(--border);
+      background:white;
+      border-radius:14px;
+      padding:13px 14px;
+      font:inherit;
+      font-size:15px;
+      color:var(--ink);
+      outline:none;
+      transition:border-color .16s ease, box-shadow .16s ease;
+    }
+    .field select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    .toggle{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:16px;
+    }
+    .toggle input{margin-top:3px;transform:scale(1.16);accent-color:var(--blue);}
+    .toggle-text{display:flex;flex-direction:column;gap:2px;}
+    .toggle-text strong{font-size:15px;}
+    .toggle-text span{font-size:13px;color:var(--muted);line-height:1.4;}
+    .panel-note{margin:2px 0 0;font-size:13px;color:var(--muted);line-height:1.45;}
+
+    .main{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      min-height:0;
+    }
+    .hero{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      padding:18px 24px 14px;
+      border-bottom:1px solid rgba(226,232,240,.9);
+      background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.86));
+    }
+    .hero-left{display:flex;flex-direction:column;gap:5px;min-width:0;}
+    .hero-title{font-size:19px;font-weight:950;letter-spacing:-.02em;}
+    .hero-subtitle{font-size:13px;color:var(--muted);font-weight:750;line-height:1.35;}
+    .reveal-card{
+      min-width:190px;
+      min-height:62px;
+      padding:10px 16px;
+      border-radius:18px;
+      background:#fff;
+      border:2px solid #dbeafe;
+      box-shadow:0 14px 30px rgba(15,23,42,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:950;
+      color:#1d4ed8;
+      font-size:clamp(1.25rem,2.5vw,2.1rem);
+      line-height:1;
+      white-space:nowrap;
+    }
+    .reveal-card.hidden-value{color:#94a3b8;font-size:1rem;letter-spacing:.01em;}
+
+    .canvas-wrap{
+      margin:18px 28px 0;
+      border:1px solid var(--border);
+      border-radius:22px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+      overflow:hidden;
+      min-height:0;
+      position:relative;
+      touch-action:none;
+    }
+    svg#board{
+      width:100%;
+      height:100%;
+      display:block;
+      overflow:hidden;
+      touch-action:none;
+      user-select:none;
+      -webkit-user-select:none;
+      cursor:default;
+    }
+
+    .help-chip{
+      position:absolute;
+      left:16px;
+      bottom:14px;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(226,232,240,.92);
+      border-radius:999px;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:850;
+      color:#475569;
+      box-shadow:0 10px 24px rgba(15,23,42,.08);
+      pointer-events:none;
+    }
+
+    .brand-footer{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:36px;
+      font-size:13px;
+      font-weight:900;
+      color:#111827;
+      background:rgba(255,255,255,.92);
+      border-top:1px solid rgba(229,231,235,.95);
+      text-align:center;
+    }
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+
+    .drag-surface{cursor:grab;}
+    .drag-surface:active{cursor:grabbing;}
+    .rotate-handle,.arm-handle,.vertex-handle{cursor:pointer;}
+    .angle-sector{cursor:move;}
+
+    .protractor-fill{fill:rgba(255,255,255,.74);stroke:#111827;stroke-width:2.5;}
+    .protractor-arc{fill:none;stroke:#111827;stroke-width:2;opacity:.94;}
+    .protractor-hole{fill:#fff;stroke:#111827;stroke-width:2;opacity:.95;}
+    .tick-minor{stroke:#111827;stroke-width:1.15;opacity:.95;}
+    .tick-mid{stroke:#111827;stroke-width:1.6;opacity:.96;}
+    .tick-major{stroke:#111827;stroke-width:2.2;opacity:1;}
+    .radial-ten{stroke:#111827;stroke-width:1.65;opacity:.84;}
+    .protractor-label{font-family:var(--uiFont);font-weight:850;fill:#111827;text-anchor:middle;dominant-baseline:middle;pointer-events:none;paint-order:stroke;stroke:rgba(255,255,255,.96);stroke-width:7px;stroke-linejoin:round;}
+    .ninety-label{font-family:var(--uiFont);font-weight:950;fill:#111827;text-anchor:middle;dominant-baseline:middle;pointer-events:none;paint-order:stroke;stroke:rgba(255,255,255,.96);stroke-width:8px;stroke-linejoin:round;}
+    .origin-t{stroke:#111827;stroke-width:2.2;fill:none;pointer-events:none;}
+    .t-label{font-family:var(--uiFont);font-weight:950;fill:#475569;text-anchor:middle;dominant-baseline:middle;pointer-events:none;}
+
+    .angle-line{stroke:#111827;stroke-width:5;stroke-linecap:round;}
+    .angle-line-shadow{stroke:rgba(15,23,42,.10);stroke-width:11;stroke-linecap:round;}
+    .angle-sector-fill{fill:rgba(139,92,246,.20);stroke:#8b5cf6;stroke-width:2.2;}
+    .angle-sector-edge{stroke:#8b5cf6;stroke-width:2.2;fill:none;}
+    .handle-core{stroke:#111827;stroke-width:2.2;fill:#60a5fa;}
+    .handle-ring{stroke:#2563eb;stroke-width:4;fill:none;opacity:.92;}
+    .rotate-core{fill:#ef4444;stroke:#111827;stroke-width:2;}
+    .rotate-ring{stroke:#ef4444;stroke-width:4;fill:none;opacity:.86;}
+
+    .snap-halo{
+      fill:none;
+      stroke:#2563eb;
+      stroke-width:4;
+      opacity:.85;
+      stroke-dasharray:10 8;
+      animation:snapDash 1.05s linear infinite, snapPulse 1.35s ease-in-out infinite;
+      pointer-events:none;
+    }
+    .snap-halo-amber{stroke:#f59e0b;}
+    .snap-status{
+      position:absolute;
+      right:16px;
+      bottom:14px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius:999px;
+      background:rgba(239,246,255,.95);
+      border:1px solid rgba(37,99,235,.18);
+      color:#1d4ed8;
+      font-size:12px;
+      font-weight:900;
+      box-shadow:0 10px 24px rgba(15,23,42,.08);
+      opacity:0;
+      transform:translateY(5px);
+      transition:.16s ease;
+      pointer-events:none;
+    }
+    .snap-status.show{opacity:1;transform:translateY(0);}
+    .snap-dot{width:9px;height:9px;border-radius:999px;background:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+
+    @keyframes snapDash{from{stroke-dashoffset:0;}to{stroke-dashoffset:-18;}}
+    @keyframes snapPulse{0%,100%{opacity:.42;}50%{opacity:.95;}}
+
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 28px);margin-top:14px;}
+      .hero{align-items:flex-start;flex-direction:column;}
+      .reveal-card{align-self:stretch;}
+    }
+    @media(max-width:700px){
+      body{overflow:auto;}
+      .app{min-height:100vh;}
+      .mmtTopbar{padding:12px 14px;}
+      .mmtBrandText span{display:none;}
+      .actions .btn{font-size:14px;padding:10px 12px;}
+      .layout{height:calc(100vh - 170px);min-height:610px;margin-top:12px;}
+      .canvas-wrap{margin:14px 14px 0;}
+      .hero{padding:14px;}
+      .help-chip{display:none;}
+      .snap-status{left:14px;right:auto;bottom:14px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" />
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+
+      <div class="mmtTopTitle">Protractor Angle Explorer</div>
+
+      <div class="actions">
+        <div class="tools-wrap">
+          <button class="btn" id="toolsBtn" type="button" aria-expanded="false" aria-controls="toolsMenu">Tools ▼</button>
+          <div class="tools-menu" id="toolsMenu">
+            <a class="tools-link" href="lesson-plan.html">Lesson Plan <span>›</span></a>
+          </div>
+        </div>
+        <button class="btn" id="teacherBtn" type="button" aria-expanded="false" aria-controls="teacherPanel">Teacher settings</button>
+        <button class="btn btn-danger" id="resetBtn" type="button">Reset</button>
+        <button class="btn" id="randomBtn" type="button">Random Angle</button>
+        <button class="btn btn-primary" id="revealBtn" type="button">Reveal</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="teacher-panel" id="teacherPanel" aria-hidden="true">
+        <h2 class="panel-title">Teacher settings</h2>
+        <div class="panel-grid">
+          <div class="field">
+            <label for="randomType">Random angle type</label>
+            <select id="randomType">
+              <option value="acute" selected>Acute</option>
+              <option value="obtuse">Obtuse</option>
+              <option value="reflex">Reflex</option>
+              <option value="mixed">Mixed</option>
+            </select>
+          </div>
+
+          <label class="toggle">
+            <input id="snapVertexToggle" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Snap vertex to protractor T</strong>
+              <span>When the vertex and protractor origin are close, they lock together.</span>
+            </div>
+          </label>
+
+          <label class="toggle">
+            <input id="snapArmsToggle" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Snap arms to 10° marks</strong>
+              <span>When an arm is within 3° of a multiple of 10, it snaps to that angle.</span>
+            </div>
+          </label>
+
+          <label class="toggle">
+            <input id="snapCueToggle" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Show snap glow</strong>
+              <span>Displays a soft cue when the vertex or arms are close to snapping.</span>
+            </div>
+          </label>
+
+          <label class="toggle">
+            <input id="outerScaleToggle" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Show outer scale</strong>
+              <span>Shows the 0–180 scale that starts on the left.</span>
+            </div>
+          </label>
+
+          <label class="toggle">
+            <input id="innerScaleToggle" type="checkbox" checked />
+            <div class="toggle-text">
+              <strong>Show inner scale</strong>
+              <span>Shows the 0–180 scale that starts on the right.</span>
+            </div>
+          </label>
+        </div>
+        <p class="panel-note">
+          Drag the protractor body to move it. Drag the red handle to rotate it. Drag the blue arm handles to change the angle. Drag the purple shaded angle, or the vertex, to move the whole angle.
+        </p>
+      </div>
+
+      <div class="main">
+        <div class="hero">
+          <div class="hero-left">
+            <div class="hero-title">Explore measuring angles with a movable protractor</div>
+            <div class="hero-subtitle">The angle starts acute. Drag an arm past 90°, 180°, or 360° to explore acute, obtuse, and reflex angles.</div>
+          </div>
+          <div class="reveal-card hidden-value" id="answerCard">Click Reveal</div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <svg id="board" viewBox="0 0 1600 760" preserveAspectRatio="xMidYMid meet" aria-label="Interactive protractor and angle explorer"></svg>
+          <div class="help-chip">Drag: protractor body, red rotate dot, blue arm dots, or purple angle region</div>
+          <div class="snap-status" id="snapStatus"><span class="snap-dot"></span><span id="snapStatusText">Snap ready</span></div>
+        </div>
+
+        <div class="brand-footer">
+          This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const svg = document.getElementById('board');
+      const toolsBtn = document.getElementById('toolsBtn');
+      const toolsMenu = document.getElementById('toolsMenu');
+      const teacherBtn = document.getElementById('teacherBtn');
+      const teacherPanel = document.getElementById('teacherPanel');
+      const resetBtn = document.getElementById('resetBtn');
+      const randomBtn = document.getElementById('randomBtn');
+      const revealBtn = document.getElementById('revealBtn');
+      const answerCard = document.getElementById('answerCard');
+      const snapStatus = document.getElementById('snapStatus');
+      const snapStatusText = document.getElementById('snapStatusText');
+
+      const randomType = document.getElementById('randomType');
+      const snapVertexToggle = document.getElementById('snapVertexToggle');
+      const snapArmsToggle = document.getElementById('snapArmsToggle');
+      const snapCueToggle = document.getElementById('snapCueToggle');
+      const outerScaleToggle = document.getElementById('outerScaleToggle');
+      const innerScaleToggle = document.getElementById('innerScaleToggle');
+
+      const VIEW = { w:1600, h:760 };
+      const PRO = {
+        radius:440,
+        innerRadius:86,
+        arc1:150,
+        arc2:270,
+        arc3:385,
+        labelOuterR:356,
+        labelInnerR:306,
+        snapVertexDistance:26,
+        snapArmDegrees:3
+      };
+
+      const state = {
+        protractor:{ x:760, y:640, rot:0 },
+        angle:{ x:760, y:640, a1:0, a2:-52, l1:430, l2:410, vertexLocked:true },
+        settings:{
+          snapVertex:true,
+          snapArms:true,
+          snapCue:true,
+          showOuter:true,
+          showInner:true,
+          randomType:'acute'
+        },
+        reveal:false,
+        drag:null,
+        cue:{ vertex:false, arm1:false, arm2:false, text:'' }
+      };
+
+      function el(tag, attrs = {}, parent = null){
+        const node = document.createElementNS(SVG_NS, tag);
+        Object.entries(attrs).forEach(([key, value]) => {
+          if(value !== null && value !== undefined) node.setAttribute(key, String(value));
+        });
+        if(parent) parent.appendChild(node);
+        return node;
+      }
+
+      function clear(){
+        while(svg.firstChild) svg.removeChild(svg.firstChild);
+      }
+
+      function degToRad(d){ return d * Math.PI / 180; }
+      function radToDeg(r){ return r * 180 / Math.PI; }
+      function norm360(d){ return ((d % 360) + 360) % 360; }
+      function norm180(d){ return ((d + 180) % 360 + 360) % 360 - 180; }
+      function round1(v){ return Math.round(v * 10) / 10; }
+      function dist(a,b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+      function bearing(from, to){ return radToDeg(Math.atan2(to.y - from.y, to.x - from.x)); }
+      function pointFrom(origin, bearingDeg, length){
+        const r = degToRad(bearingDeg);
+        return { x: origin.x + Math.cos(r) * length, y: origin.y + Math.sin(r) * length };
+      }
+      function localPolarPoint(radius, thetaDeg){
+        const t = degToRad(thetaDeg);
+        return { x: Math.cos(t) * radius, y: -Math.sin(t) * radius };
+      }
+      function screenToSvg(evt){
+        const pt = svg.createSVGPoint();
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+        return pt.matrixTransform(svg.getScreenCTM().inverse());
+      }
+      function closestUnwrapped(current, raw){
+        return current + norm180(raw - current);
+      }
+      function measurement(){
+        return norm360(state.angle.a1 - state.angle.a2);
+      }
+      function displayAngleValue(){
+        const m = measurement();
+        const rounded = Math.round(m);
+        return rounded === 360 ? 0 : rounded;
+      }
+      function updateAnswer(){
+        if(state.reveal){
+          answerCard.classList.remove('hidden-value');
+          answerCard.textContent = `Angle = ${displayAngleValue()}°`;
+          revealBtn.textContent = 'Hide';
+        } else {
+          answerCard.classList.add('hidden-value');
+          answerCard.textContent = 'Click Reveal';
+          revealBtn.textContent = 'Reveal';
+        }
+      }
+
+      function setToolsOpen(open){
+        if(open) setTeacherOpen(false, true);
+        toolsMenu.classList.toggle('open', open);
+        toolsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toolsBtn.textContent = open ? 'Tools ▲' : 'Tools ▼';
+      }
+      function setTeacherOpen(open, suppressToolsClose = false){
+        if(open && !suppressToolsClose) setToolsOpen(false);
+        teacherPanel.classList.toggle('open', open);
+        teacherBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        teacherPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      }
+      function closePanels(){
+        setToolsOpen(false);
+        setTeacherOpen(false, true);
+      }
+
+      function makeArcPath(radius, startDeg, endDeg){
+        const start = localPolarPoint(radius, startDeg);
+        const end = localPolarPoint(radius, endDeg);
+        const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+        const sweep = endDeg > startDeg ? 0 : 1;
+        return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${large} ${sweep} ${end.x} ${end.y}`;
+      }
+
+      function makeProtractorShapePath(){
+        const R = PRO.radius;
+        const hole = PRO.innerRadius;
+        const start = localPolarPoint(R, 180);
+        const end = localPolarPoint(R, 0);
+        const h1 = localPolarPoint(hole, 0);
+        const h2 = localPolarPoint(hole, 180);
+        return [
+          `M ${start.x} ${start.y}`,
+          `A ${R} ${R} 0 0 1 ${end.x} ${end.y}`,
+          `L ${h1.x} ${h1.y}`,
+          `A ${hole} ${hole} 0 0 0 ${h2.x} ${h2.y}`,
+          'Z'
+        ].join(' ');
+      }
+
+      function appendProtractor(root){
+        const g = el('g', {
+          transform:`translate(${state.protractor.x} ${state.protractor.y}) rotate(${state.protractor.rot})`
+        }, root);
+
+        const body = el('path', {
+          d:makeProtractorShapePath(),
+          class:'protractor-fill drag-surface',
+          'data-drag':'protractor',
+          'fill-rule':'evenodd'
+        }, g);
+        body.addEventListener('pointerdown', startDrag);
+
+        [PRO.arc1, PRO.arc2, PRO.arc3, PRO.radius].forEach(r => {
+          el('path', { d:makeArcPath(r,180,0), class:'protractor-arc', 'pointer-events':'none' }, g);
+        });
+        el('path', { d:makeArcPath(PRO.innerRadius,180,0), class:'protractor-hole', 'pointer-events':'none' }, g);
+        el('line', { x1:-PRO.radius, y1:0, x2:PRO.radius, y2:0, class:'protractor-arc', 'pointer-events':'none' }, g);
+
+        for(let theta=0; theta<=180; theta++){
+          const isMajor = theta % 10 === 0;
+          const isMid = theta % 5 === 0 && !isMajor;
+          const len = isMajor ? 33 : isMid ? 23 : 13;
+          const p1 = localPolarPoint(PRO.radius, theta);
+          const p2 = localPolarPoint(PRO.radius - len, theta);
+          el('line', {
+            x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y,
+            class:isMajor ? 'tick-major' : isMid ? 'tick-mid' : 'tick-minor',
+            'pointer-events':'none'
+          }, g);
+
+          if(isMajor){
+            // Keep the number band clean: radial lines stop before the scale labels,
+            // so the inner/outer numbers sit in a blank rim rather than crossing lines.
+            const r1 = localPolarPoint(PRO.innerRadius, theta);
+            const r2 = localPolarPoint(PRO.arc2 - 10, theta);
+            el('line', { x1:r1.x, y1:r1.y, x2:r2.x, y2:r2.y, class:'radial-ten', 'pointer-events':'none' }, g);
+          }
+        }
+
+        if(state.settings.showOuter){
+          for(let theta=0; theta<=180; theta+=10){
+            const p = localPolarPoint(PRO.labelOuterR, theta);
+            const label = 180 - theta;
+            const cls = theta === 90 ? 'ninety-label' : 'protractor-label';
+            const fontSize = theta === 90 ? 32 : 20;
+            const rot = 90 - theta;
+            const t = el('text', {
+              x:0, y:0, class:cls, 'font-size':fontSize,
+              transform:`translate(${p.x} ${p.y}) rotate(${rot})`,
+              'pointer-events':'none'
+            }, g);
+            t.textContent = String(label);
+          }
+        }
+
+        if(state.settings.showInner){
+          for(let theta=0; theta<=180; theta+=10){
+            const p = localPolarPoint(PRO.labelInnerR, theta);
+            const label = theta;
+            const fontSize = theta === 90 ? 22 : 18;
+            const rot = 90 - theta;
+            const t = el('text', {
+              x:0, y:0, class:'protractor-label', 'font-size':fontSize,
+              transform:`translate(${p.x} ${p.y}) rotate(${rot})`,
+              'pointer-events':'none'
+            }, g);
+            t.textContent = String(label);
+          }
+        }
+
+        el('line', { x1:-34, y1:0, x2:34, y2:0, class:'origin-t' }, g);
+        el('line', { x1:0, y1:0, x2:0, y2:-44, class:'origin-t' }, g);
+        const tText = el('text', { x:0, y:22, class:'t-label', 'font-size':16 }, g);
+        tText.textContent = 'T';
+
+        const h = el('g', { class:'rotate-handle', 'data-drag':'rotate' }, g);
+        el('circle', { cx:PRO.radius + 10, cy:0, r:17, class:'rotate-ring' }, h);
+        el('circle', { cx:PRO.radius + 10, cy:0, r:8, class:'rotate-core' }, h);
+        h.addEventListener('pointerdown', startDrag);
+      }
+
+      function sectorPath(){
+        const m = measurement();
+        const r = Math.min(128, Math.max(84, Math.min(state.angle.l1, state.angle.l2) * .34));
+        const steps = Math.max(8, Math.min(110, Math.ceil(m / 4)));
+        const pts = [];
+        for(let i=0; i<=steps; i++){
+          const t = m * (i / steps);
+          pts.push(pointFrom(state.angle, state.angle.a1 - t, r));
+        }
+        const parts = [`M ${state.angle.x} ${state.angle.y}`, `L ${pts[0].x} ${pts[0].y}`];
+        for(let i=1; i<pts.length; i++) parts.push(`L ${pts[i].x} ${pts[i].y}`);
+        parts.push('Z');
+        return parts.join(' ');
+      }
+
+      function appendAngle(root){
+        const p1 = pointFrom(state.angle, state.angle.a1, state.angle.l1);
+        const p2 = pointFrom(state.angle, state.angle.a2, state.angle.l2);
+
+        const sector = el('path', { d:sectorPath(), class:'angle-sector angle-sector-fill', 'data-drag':'angle' }, root);
+        sector.addEventListener('pointerdown', startDrag);
+
+        const lineGroup = el('g', {}, root);
+        [p1,p2].forEach(p => {
+          el('line', { x1:state.angle.x, y1:state.angle.y, x2:p.x, y2:p.y, class:'angle-line-shadow', 'pointer-events':'none' }, lineGroup);
+        });
+        el('line', { x1:state.angle.x, y1:state.angle.y, x2:p1.x, y2:p1.y, class:'angle-line', 'pointer-events':'none' }, lineGroup);
+        el('line', { x1:state.angle.x, y1:state.angle.y, x2:p2.x, y2:p2.y, class:'angle-line', 'pointer-events':'none' }, lineGroup);
+
+        const vGroup = el('g', { class:'vertex-handle', 'data-drag':'angle' }, root);
+        el('circle', { cx:state.angle.x, cy:state.angle.y, r:19, fill:'rgba(239,68,68,.08)', stroke:'rgba(239,68,68,.65)', 'stroke-width':3 }, vGroup);
+        el('circle', { cx:state.angle.x, cy:state.angle.y, r:5.5, fill:'#111827' }, vGroup);
+        vGroup.addEventListener('pointerdown', startDrag);
+
+        appendArmHandle(root, p1, 'arm1', state.cue.arm1);
+        appendArmHandle(root, p2, 'arm2', state.cue.arm2);
+      }
+
+      function appendArmHandle(root, p, type, glowing){
+        const g = el('g', { class:'arm-handle', 'data-drag':type }, root);
+        if(glowing && state.settings.snapCue){
+          el('circle', { cx:p.x, cy:p.y, r:24, class:'snap-halo snap-halo-amber' }, g);
+        }
+        el('circle', { cx:p.x, cy:p.y, r:17, class:'handle-ring' }, g);
+        el('circle', { cx:p.x, cy:p.y, r:8, class:'handle-core' }, g);
+        g.addEventListener('pointerdown', startDrag);
+      }
+
+      function appendSnapCues(root){
+        if(!state.settings.snapCue) return;
+        if(state.cue.vertex){
+          el('circle', { cx:state.protractor.x, cy:state.protractor.y, r:34, class:'snap-halo' }, root);
+        }
+      }
+
+      function updateSnapStatus(){
+        if(state.cue.text && state.settings.snapCue){
+          snapStatusText.textContent = state.cue.text;
+          snapStatus.classList.add('show');
+        } else {
+          snapStatus.classList.remove('show');
+        }
+      }
+
+      function render(){
+        clear();
+        const root = el('g', {}, svg);
+        appendProtractor(root);
+        appendSnapCues(root);
+        appendAngle(root);
+        updateAnswer();
+        updateSnapStatus();
+      }
+
+      function setCue(text = ''){
+        state.cue.vertex = false;
+        state.cue.arm1 = false;
+        state.cue.arm2 = false;
+        state.cue.text = text;
+      }
+
+      function maybeSnapVertexWhenMovingAngle(){
+        if(!state.settings.snapVertex) return false;
+        const d = dist(state.angle, state.protractor);
+        if(d <= PRO.snapVertexDistance){
+          state.angle.x = state.protractor.x;
+          state.angle.y = state.protractor.y;
+          state.angle.vertexLocked = true;
+          state.cue.vertex = true;
+          state.cue.text = 'Vertex snapped to T';
+          return true;
+        }
+        if(d <= PRO.snapVertexDistance * 1.9){
+          state.cue.vertex = true;
+          state.cue.text = 'Vertex close to T';
+        }
+        state.angle.vertexLocked = false;
+        return false;
+      }
+
+      function maybeSnapProtractorToAngle(){
+        if(!state.settings.snapVertex) return false;
+        const d = dist(state.angle, state.protractor);
+        if(d <= PRO.snapVertexDistance){
+          state.protractor.x = state.angle.x;
+          state.protractor.y = state.angle.y;
+          state.angle.vertexLocked = true;
+          state.cue.vertex = true;
+          state.cue.text = 'T snapped to vertex';
+          return true;
+        }
+        if(d <= PRO.snapVertexDistance * 1.9){
+          state.cue.vertex = true;
+          state.cue.text = 'T close to vertex';
+        }
+        return false;
+      }
+
+      function snapArmAngle(rawBearing, armKey){
+        if(!state.settings.snapArms) return rawBearing;
+        const localFull = norm360(state.protractor.rot - rawBearing);
+        const nearest = Math.round(localFull / 10) * 10;
+        const diff = Math.abs(norm180(localFull - nearest));
+        if(diff <= PRO.snapArmDegrees){
+          const snappedBearing = state.protractor.rot - nearest;
+          if(armKey === 'arm1') state.cue.arm1 = true;
+          if(armKey === 'arm2') state.cue.arm2 = true;
+          state.cue.text = `Arm snapped to ${norm360(nearest)}°`;
+          return snappedBearing;
+        }
+        if(diff <= PRO.snapArmDegrees * 1.7){
+          if(armKey === 'arm1') state.cue.arm1 = true;
+          if(armKey === 'arm2') state.cue.arm2 = true;
+          state.cue.text = `Arm close to ${norm360(nearest)}°`;
+        }
+        return rawBearing;
+      }
+
+      function startDrag(evt){
+        evt.preventDefault();
+        evt.stopPropagation();
+        closePanels();
+        const p = screenToSvg(evt);
+        const type = evt.currentTarget.getAttribute('data-drag');
+        setCue('');
+        state.reveal = false;
+
+        if(type === 'protractor'){
+          state.drag = {
+            type,
+            start:p,
+            proStart:{...state.protractor},
+            angleStart:{ x:state.angle.x, y:state.angle.y },
+            lockedAtStart:state.angle.vertexLocked || dist(state.angle,state.protractor) < 1.5
+          };
+        } else if(type === 'rotate'){
+          state.drag = {
+            type,
+            start:p,
+            startRot:state.protractor.rot,
+            startBearing:bearing(state.protractor, p)
+          };
+        } else if(type === 'angle'){
+          state.drag = {
+            type,
+            start:p,
+            angleStart:{ x:state.angle.x, y:state.angle.y }
+          };
+        } else if(type === 'arm1' || type === 'arm2'){
+          state.drag = { type, start:p };
+        }
+
+        svg.setPointerCapture(evt.pointerId);
+        render();
+      }
+
+      function onPointerMove(evt){
+        if(!state.drag) return;
+        const p = screenToSvg(evt);
+        setCue('');
+        const d = state.drag;
+
+        if(d.type === 'protractor'){
+          const dx = p.x - d.start.x;
+          const dy = p.y - d.start.y;
+          state.protractor.x = d.proStart.x + dx;
+          state.protractor.y = d.proStart.y + dy;
+
+          if(d.lockedAtStart){
+            state.angle.x = d.angleStart.x + dx;
+            state.angle.y = d.angleStart.y + dy;
+            state.angle.vertexLocked = true;
+            state.cue.vertex = true;
+            state.cue.text = 'Vertex locked to T';
+          } else {
+            maybeSnapProtractorToAngle();
+          }
+        }
+
+        if(d.type === 'rotate'){
+          const now = bearing(state.protractor, p);
+          state.protractor.rot = d.startRot + norm180(now - d.startBearing);
+          if(state.angle.vertexLocked){
+            state.cue.vertex = true;
+            state.cue.text = 'Rotating protractor';
+          }
+        }
+
+        if(d.type === 'angle'){
+          state.angle.x = d.angleStart.x + (p.x - d.start.x);
+          state.angle.y = d.angleStart.y + (p.y - d.start.y);
+          maybeSnapVertexWhenMovingAngle();
+        }
+
+        if(d.type === 'arm1' || d.type === 'arm2'){
+          const armKey = d.type;
+          const current = armKey === 'arm1' ? state.angle.a1 : state.angle.a2;
+          const raw = bearing(state.angle, p);
+          const snapped = snapArmAngle(raw, armKey);
+          const next = closestUnwrapped(current, snapped);
+          const length = Math.max(145, Math.min(560, dist(state.angle, p)));
+          if(armKey === 'arm1'){
+            state.angle.a1 = next;
+            state.angle.l1 = length;
+          } else {
+            state.angle.a2 = next;
+            state.angle.l2 = length;
+          }
+        }
+
+        render();
+      }
+
+      function onPointerUp(evt){
+        if(!state.drag) return;
+        try{ svg.releasePointerCapture(evt.pointerId); }catch(e){}
+        setCue('');
+        state.drag = null;
+        if(state.settings.snapVertex && dist(state.angle, state.protractor) < 1.5){
+          state.angle.vertexLocked = true;
+        }
+        render();
+      }
+
+      function resetAll(){
+        closePanels();
+        state.protractor = { x:760, y:640, rot:0 };
+        state.angle = { x:760, y:640, a1:0, a2:-52, l1:430, l2:410, vertexLocked:true };
+        state.reveal = false;
+        setCue('');
+        render();
+      }
+
+      function randomFriendlyAngle(){
+        const type = state.settings.randomType;
+        let pool;
+        if(type === 'acute') pool = [20,25,30,35,40,45,50,55,60,65,70,75,80];
+        else if(type === 'obtuse') pool = [100,105,110,115,120,125,130,135,140,145,150,155,160];
+        else if(type === 'reflex') pool = [200,210,220,230,240,250,260,270,280,290,300,310,320,330];
+        else pool = [20,30,40,50,60,70,80,100,110,120,130,140,150,160,200,220,240,260,280,300,320];
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      function randomiseAngle(){
+        closePanels();
+        const value = randomFriendlyAngle();
+        const base = Math.random() < .5 ? 0 : [0,10,20,-10,-20][Math.floor(Math.random()*5)];
+        state.angle.x = state.protractor.x;
+        state.angle.y = state.protractor.y;
+        state.angle.a1 = state.protractor.rot + base;
+        state.angle.a2 = state.angle.a1 - value;
+        state.angle.l1 = 430;
+        state.angle.l2 = 410;
+        state.angle.vertexLocked = true;
+        state.reveal = false;
+        setCue('');
+        render();
+      }
+
+      function syncSettings(){
+        state.settings.snapVertex = snapVertexToggle.checked;
+        state.settings.snapArms = snapArmsToggle.checked;
+        state.settings.snapCue = snapCueToggle.checked;
+        state.settings.showOuter = outerScaleToggle.checked;
+        state.settings.showInner = innerScaleToggle.checked;
+        state.settings.randomType = randomType.value;
+        setCue('');
+        render();
+      }
+
+      toolsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setToolsOpen(!toolsMenu.classList.contains('open'));
+      });
+      teacherBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setTeacherOpen(!teacherPanel.classList.contains('open'));
+      });
+      document.addEventListener('pointerdown', (e) => {
+        if(!e.target.closest('.tools-wrap') && !e.target.closest('#teacherPanel') && e.target !== teacherBtn){
+          closePanels();
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape') closePanels();
+        if(e.key.toLowerCase() === 'r' && !e.target.matches('input,select,textarea')) randomiseAngle();
+      });
+
+      resetBtn.addEventListener('click', resetAll);
+      randomBtn.addEventListener('click', randomiseAngle);
+      revealBtn.addEventListener('click', () => { state.reveal = !state.reveal; render(); });
+      [snapVertexToggle,snapArmsToggle,snapCueToggle,outerScaleToggle,innerScaleToggle,randomType].forEach(control => {
+        control.addEventListener('change', syncSettings);
+      });
+      svg.addEventListener('pointermove', onPointerMove);
+      svg.addEventListener('pointerup', onPointerUp);
+      svg.addEventListener('pointercancel', onPointerUp);
+
+      render();
+    })();
+  </script>
+</body>
+</html>
