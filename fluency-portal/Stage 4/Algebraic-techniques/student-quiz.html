@@ -463,6 +463,7 @@
       .replace(/[²]/g,'^2').replace(/\s+/g,'')
       .replace(/\{/g,'(').replace(/\}/g,')').replace(/\[/g,'(').replace(/\]/g,')');
     out=out.replace(/([0-9])([a-z(])/g,'$1*$2')
+      .replace(/([a-z])(?=[a-z])/g,'$1*')
       .replace(/([a-z])([0-9])/g,'$1*$2')
       .replace(/([a-z])\(/g,'$1*(')
       .replace(/\)([a-z0-9(])/g,')*$1')
@@ -493,6 +494,98 @@
     }
     return true;
   }
+  function parseSimplifiedMonomialFactor(factor){
+    factor=String(factor||'').trim();
+    if(!factor)return null;
+    const numOnly=factor.match(/^(?:\d+(?:\.\d+)?|\.\d+)$/);
+    if(numOnly)return {coeff:Number(factor),vars:{},hasNumeric:true,simplified:true};
+    const m=factor.match(/^((?:\d+(?:\.\d+)?|\.\d+))?((?:[a-z](?:\^\d+)?)*)$/);
+    if(!m||!m[2])return null;
+    const coeff=m[1]?Number(m[1]):1;
+    if(!Number.isFinite(coeff))return null;
+    const vars={};
+    const tokenRe=/([a-z])(?:\^(\d+))?/g;
+    let tm;
+    while((tm=tokenRe.exec(m[2]))){
+      const pow=tm[2]?Number(tm[2]):1;
+      if(!Number.isInteger(pow)||pow<1||pow>9)return null;
+      vars[tm[1]]=(vars[tm[1]]||0)+pow;
+    }
+    return {coeff,vars,hasNumeric:!!m[1],simplified:true};
+  }
+  function mergeVarPowers(target,source){for(const [v,p] of Object.entries(source||{}))target[v]=(target[v]||0)+p;}
+  function varPowerKey(vars){
+    return Object.keys(vars||{}).sort((a,b)=>a.localeCompare(b)).map(v=>vars[v]===1?v:`${v}^${vars[v]}`).join('');
+  }
+  function parseSimplifiedMonomialTerm(term){
+    let t=String(term||'').trim();
+    if(!t)return null;
+    let sign=1;
+    if(t[0]==='+')t=t.slice(1);
+    else if(t[0]==='-'){sign=-1;t=t.slice(1);}
+    if(!t)return null;
+    const divParts=t.split('/');
+    if(divParts.length>2||!divParts[0]||(divParts.length===2&&!divParts[1]))return null;
+    const numParts=divParts[0].split('*').filter(Boolean);
+    if(!numParts.length)return null;
+    let coeff=sign,numericFactors=0,simplified=true;
+    const vars={};
+    for(const part of numParts){
+      const f=parseSimplifiedMonomialFactor(part);
+      if(!f)return null;
+      coeff*=f.coeff;
+      if(f.hasNumeric)numericFactors++;
+      mergeVarPowers(vars,f.vars);
+    }
+    if(numericFactors>1)simplified=false;
+    if(divParts.length===2){
+      const d=Number(divParts[1]);
+      if(!Number.isFinite(d)||d===0||!/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(divParts[1]))return null;
+      coeff/=d;
+    }
+    return {coeff,key:varPowerKey(vars),simplified};
+  }
+  function splitTopLevelAddSub(s){
+    const terms=[];let start=0;
+    for(let i=1;i<s.length;i++){
+      const ch=s[i];
+      if(ch==='+'||ch==='-'){terms.push(s.slice(start,i));start=i;}
+    }
+    terms.push(s.slice(start));
+    return terms.filter(Boolean);
+  }
+  function parseSimplifiedExpression(input){
+    let s=String(input||'').toLowerCase().trim()
+      .replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/')
+      .replace(/[²]/g,'^2').replace(/\s+/g,'')
+      .replace(/\{/g,'(').replace(/\}/g,')').replace(/\[/g,'(').replace(/\]/g,')');
+    if(!s||/[()]/.test(s)||!/^[0-9a-z+\-*/.^]+$/.test(s))return null;
+    const pieces=splitTopLevelAddSub(s);
+    if(!pieces.length)return null;
+    const map={};let simplified=true;
+    for(const piece of pieces){
+      const term=parseSimplifiedMonomialTerm(piece);
+      if(!term)return null;
+      if(Math.abs(term.coeff)<1e-12){simplified=false;continue;}
+      if(Object.prototype.hasOwnProperty.call(map,term.key))simplified=false;
+      map[term.key]=(map[term.key]||0)+term.coeff;
+      if(!term.simplified)simplified=false;
+    }
+    for(const [k,v] of Object.entries(map)){if(Math.abs(v)<1e-12){delete map[k];simplified=false;}}
+    if(!Object.keys(map).length)map['']=0;
+    return {map,simplified};
+  }
+  function sameSimplifiedExpression(input,target){
+    const a=parseSimplifiedExpression(input),b=parseSimplifiedExpression(target);
+    if(!a||!b||!a.simplified||!b.simplified)return false;
+    const keys=new Set([...Object.keys(a.map),...Object.keys(b.map)]);
+    for(const k of keys){if(Math.abs((a.map[k]||0)-(b.map[k]||0))>1e-9)return false;}
+    return true;
+  }
+  function inputLooksSimplified(input){
+    const parsed=parseSimplifiedExpression(input);
+    return parsed?parsed.simplified:true;
+  }
   function answerOK(input,q){const raw=String(input||'');if(!raw.trim())return false;const a=canonical(raw),targets=[q.answerText,...(q.alts||[])].map(String),canonicalTargets=targets.map(canonical);
     if(canonicalTargets.includes(a))return true;
     const plainTarget=canonical(q.answerText).replace(/,/g,''); if(a===plainTarget)return true;
@@ -500,8 +593,10 @@
     const af=normalizeFractionText(raw),tf=normalizeFractionText(q.answerText); if(af===tf)return true;
     // accept x/2 for stacked fractions and coefficientless 1x variants
     if(canonicalTargets.some(t=>t.replace(/^1([a-z])/,'$1')===a.replace(/^1([a-z])/,'$1')))return true;
-    // accept equivalent algebraic expressions, e.g. x/2 for a stacked fraction or 5+b for b+5
-    if(targets.some(t=>algebraicallyEquivalent(raw,t)))return true;
+    // accept equivalent simplified algebra, including commutative multiplication such as 42fd = 42df
+    if(targets.some(t=>sameSimplifiedExpression(raw,t)))return true;
+    // fall back to numerical equivalence only when the student's expression is already simplified
+    if(inputLooksSimplified(raw)&&targets.some(t=>algebraicallyEquivalent(raw,t)))return true;
     return false;
   }
   function parseSimpleFactorisation(input,v){
@@ -623,7 +718,7 @@
   }
 function celebrate(){const colors=['#2563eb','#16a34a','#eab308','#dc2626','#7c3aed','#06b6d4'];const cx=window.innerWidth/2,cy=Math.min(window.innerHeight*.42,360);for(let i=0;i<42;i++){const piece=document.createElement('div');piece.className='confettiPiece';piece.style.left=cx+'px';piece.style.top=cy+'px';piece.style.background=colors[i%colors.length];piece.style.setProperty('--dx',(Math.random()*520-260)+'px');piece.style.setProperty('--dy',(Math.random()*240+120)+'px');piece.style.setProperty('--rot',(Math.random()*720-360)+'deg');document.body.appendChild(piece);setTimeout(()=>piece.remove(),950)}}
 function showQuestion(){const q=state.questions[state.index];state.answered=false;ansInput.disabled=false;ansInput.value='';ansInput.classList.remove('correct','wrong','partial');badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';qLabel.innerHTML=q.instructionHTML||tr('questionLabel');qBox.innerHTML=q.expressionHTML||q.promptHTML;qBox.classList.toggle('small',stripHTML(q.expressionHTML||q.promptHTML).length>80);qBox.classList.remove('rtlPrompt');tableHost.style.display='none';tableHost.innerHTML='';answerRow.style.display='flex';if(q.mode==='table'){answerRow.style.display='none';buildTableInputs(q)}barFill.style.width=`${(state.index/state.questions.length)*100}%`;updateHeader();if(q.mode!=='table')setTimeout(()=>ansInput.focus(),30)}
-    function mark(ok,skipped=false,partial=false){if(state.answered)return;const q=state.questions[state.index];state.answered=true;if(ok||skipped){ansInput.disabled=true;setTableDisabled(true)}else{ansInput.disabled=false;setTableDisabled(false)}ansInput.classList.remove('correct','wrong','partial');ansInput.classList.add(ok?'correct':partial?'partial':'wrong');tableHost.querySelectorAll('.tableInput').forEach(inp=>{inp.classList.remove('correct','wrong','partial');inp.classList.add(ok?'correct':partial?'partial':'wrong')});if(ok)celebrate();state.records[state.index]={type:q.type,label:q.label,ok,skipped,partial,answer:q.answerText};state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;badge.className='badge show '+(ok?'ok':partial?'partial':'bad');badge.innerHTML=ok?tr('correct'):(partial?`${tr('partialHCF')} <span class="correctAnswer">${tr('correctAnswer')} ${q.answerHTML}</span>`:(skipped?tr('skipped'):`${tr('incorrect')} <span class="correctAnswer">${tr('correctAnswer')} ${q.answerHTML}</span>`));skipBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('next');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';retryBtn.style.display=ok||skipped?'none':'inline-block';barFill.style.width=`${((state.index+1)/state.questions.length)*100}%`;if(ok||skipped)submitBtn.focus();else ansInput.focus()}
+    function mark(ok,skipped=false,partial=false){if(state.answered)return;const q=state.questions[state.index];state.answered=true;if(ok||skipped){ansInput.disabled=true;setTableDisabled(true)}else{ansInput.disabled=false;setTableDisabled(false)}ansInput.classList.remove('correct','wrong','partial');ansInput.classList.add(ok?'correct':partial?'partial':'wrong');tableHost.querySelectorAll('.tableInput').forEach(inp=>{inp.classList.remove('correct','wrong','partial');inp.classList.add(ok?'correct':partial?'partial':'wrong')});if(ok)celebrate();state.records[state.index]={type:q.type,label:q.label,ok,skipped,partial,answer:q.answerText};state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;badge.className='badge show '+(ok?'ok':partial?'partial':'bad');badge.innerHTML=ok?tr('correct'):(partial?tr('partialHCF'):(skipped?tr('skipped'):tr('incorrect')));skipBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('next');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';retryBtn.style.display=ok||skipped?'none':'inline-block';barFill.style.width=`${((state.index+1)/state.questions.length)*100}%`;if(ok||skipped)submitBtn.focus();else ansInput.focus()}
     function submit(){if(state.answered){next();return}const q=state.questions[state.index];if(q.mode==='table'){mark(tableAnswerOK(q),false);return}const status=answerStatus(ansInput.value,q);mark(status==='ok',false,status==='partial')}
   function retry(){delete state.records[state.index];state.results=state.records.filter(Boolean);state.score=state.results.filter(r=>r.ok).length;state.skips=state.results.filter(r=>r.skipped).length;state.answered=false;ansInput.disabled=false;ansInput.classList.remove('correct','wrong','partial');tableHost.querySelectorAll('.tableInput').forEach(inp=>inp.classList.remove('correct','wrong','partial'));badge.className='badge';badge.textContent='';retryBtn.style.display='none';submitBtn.style.display='inline-block';submitBtn.textContent=tr('submit');nextBtn.style.display='none';prevBtn.style.display=state.index>0?'inline-block':'none';skipBtn.style.display='inline-block';if(state.questions[state.index]?.mode==='table'){setTableDisabled(false);tableHost.querySelector('.tableInput')?.focus()}else{ansInput.select();ansInput.focus()}}
   function next(){if(!state.answered)return;state.index++;if(state.index>=state.questions.length){finish()}else showQuestion()}
@@ -780,7 +875,7 @@ function showQuestion(){const q=state.questions[state.index];state.answered=fals
   }
 
   languageSelect.addEventListener('change',()=>{state.language=languageSelect.value;startLanguageSelect.value=state.language;localize()});startLanguageSelect.addEventListener('change',()=>{state.language=startLanguageSelect.value;languageSelect.value=state.language;localize()});document.querySelectorAll('.startPill').forEach(b=>b.addEventListener('click',()=>buildTypeChooser(b.dataset.level)));
-  toggleAllTypesBtn.addEventListener('click',()=>{const boxes=Array.from(typesGrid.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAllTypesLabel()});beginBtn.addEventListener('click',beginSelectedQuiz);typesBackBtn.addEventListener('click',()=>{hideOverlay(typeOverlay);showOverlay(levelOverlay)});backBtn.addEventListener('click',openMenu);resetBtn.addEventListener('click',()=>{resetQuizShell();hideOverlay(typeOverlay);showOverlay(levelOverlay)});prevBtn.addEventListener('click',prev);skipBtn.addEventListener('click',()=>mark(false,true));retryBtn.addEventListener('click',retry);submitBtn.addEventListener('click',submit);nextBtn.addEventListener('click',next);ansInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});tableHost.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==ansInput&&!tableHost.contains(document.activeElement)&&state.questions.length){e.preventDefault();state.answered?next():submit()}});copyBtn.addEventListener('click',copyResults);submitCompleteBtn.addEventListener('click',()=>submitLoggedInResult(false));submitMenuBtn.addEventListener('click',()=>submitLoggedInResult(true));closeBtn.addEventListener('click',()=>hideOverlay(resultOverlay));menuBtn.addEventListener('click',openMenu);
+  toggleAllTypesBtn.addEventListener('click',()=>{const boxes=Array.from(typesGrid.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateToggleAllTypesLabel()});beginBtn.addEventListener('click',beginSelectedQuiz);typesBackBtn.addEventListener('click',()=>{hideOverlay(typeOverlay);showOverlay(levelOverlay)});backBtn.addEventListener('click',openMenu);resetBtn.addEventListener('click',()=>{resetQuizShell();hideOverlay(typeOverlay);showOverlay(levelOverlay)});prevBtn.addEventListener('click',prev);skipBtn.addEventListener('click',()=>mark(false,true));retryBtn.addEventListener('click',retry);submitBtn.addEventListener('click',submit);nextBtn.addEventListener('click',next);ansInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();submit()}});tableHost.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();submit()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==ansInput&&!tableHost.contains(document.activeElement)&&state.questions.length){e.preventDefault();state.answered?next():submit()}});copyBtn.addEventListener('click',copyResults);submitCompleteBtn.addEventListener('click',()=>submitLoggedInResult(false));submitMenuBtn.addEventListener('click',()=>submitLoggedInResult(true));closeBtn.addEventListener('click',()=>hideOverlay(resultOverlay));menuBtn.addEventListener('click',openMenu);
   teacherAssignBtn?.addEventListener('click',()=>{renderBuilderTypes();showOverlay(teacherBuilderOverlay)});builderLevel?.addEventListener('change',renderBuilderTypes);document.querySelectorAll('.levelToggleBtn').forEach(btn=>btn.addEventListener('click',()=>{builderLevel.value=btn.dataset.level;renderBuilderTypes()}));builderCount?.addEventListener('input',()=>{assignmentLinkOut.value=''});builderTypes?.addEventListener('change',updateBuilderToggle);builderToggleAllBtn?.addEventListener('click',()=>{const boxes=Array.from(builderTypes.querySelectorAll('input[type="checkbox"]'));const all=boxes.length&&boxes.every(b=>b.checked);boxes.forEach(b=>b.checked=!all);updateBuilderToggle()});generateAssignmentBtn?.addEventListener('click',generateAssignmentLink);copyAssignmentBtn?.addEventListener('click',async()=>{const link=assignmentLinkOut.value||generateAssignmentLink();if(!link)return;try{await navigator.clipboard.writeText(link);copyAssignmentBtn.textContent='Copied ✓';setTimeout(()=>copyAssignmentBtn.textContent='Copy link',1200)}catch(e){window.prompt('Copy this link:',link)}});closeBuilderBtn?.addEventListener('click',()=>{ assignmentLinkOut.value=''; renderBuilderTypes(); showOverlay(teacherBuilderOverlay); });
   function openTeacherBuilderOnLoad(){
     renderBuilderTypes();
