@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Capture the Grid | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --purpleSoft:#f4edff;
+      --green:#6cbc4a;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow:hidden;
+    }
+    button,input,select{font:inherit;}
+    button{cursor:pointer;}
+
+    .app{height:100vh;height:100dvh;display:flex;flex-direction:column;min-height:0;}
+    .mmtTopbar{
+      position:relative;z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:10px 18px;
+      display:grid;
+      grid-template-columns:minmax(220px,1fr) auto minmax(360px,1fr);
+      align-items:center;
+      gap:16px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+      min-height:72px;
+    }
+    .mmtBrand{display:flex;align-items:center;gap:10px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:7px 10px;margin-left:-10px;font-weight:900;transition:.18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:42px;height:42px;object-fit:contain;background:white;border-radius:7px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.14rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.86;font-weight:700;color:white;}
+    .mmtTopTitle{font-weight:950;font-size:clamp(1.35rem,2vw,1.9rem);letter-spacing:-.045em;text-align:center;color:white;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.18);}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;position:relative;}
+    .btn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;padding:10px 14px;border-radius:14px;font-weight:900;font-size:15px;transition:.18s ease;box-shadow:none;user-select:none;}
+    .btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
+    .btn:active{transform:translateY(0);}
+    .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    .btn-primary{background:white;color:#1d4ed8;border-color:white;}
+    .btn-primary:hover{background:#eef2ff;color:#1d4ed8;}
+    .btn-green{background:linear-gradient(135deg,#75c84d,#52a936);color:white;border:0;box-shadow:0 12px 25px rgba(82,169,54,.22);}
+    .btn-blue{background:linear-gradient(135deg,#3867f4,#2458e5);color:white;border:0;box-shadow:0 12px 25px rgba(37,99,235,.22);}
+    .btn-ghost{background:#f8fafc;color:#64748b;border:1px solid var(--border);}
+    .btn-ghost:hover{background:#eef2f7;color:#0f172a;}
+    .btn-danger{background:rgba(255,255,255,.10);color:#fee2e2;border-color:rgba(255,255,255,.18);}
+    .btn-danger:hover{background:rgba(255,255,255,.18);color:white;}
+
+    .layout{
+      width:min(1840px,calc(100vw - 26px));
+      flex:1;min-height:0;
+      margin:14px auto 10px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      display:grid;
+      grid-template-rows:auto 1fr;
+    }
+
+    .status-card{
+      margin:18px 22px 10px;
+      display:flex;align-items:center;gap:14px;
+      min-height:70px;
+      padding:12px 16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.96);
+      border:1px solid var(--border);
+      box-shadow:0 10px 24px rgba(15,23,42,.05);
+    }
+    .player-dot{width:38px;height:38px;border-radius:999px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.14),0 7px 12px rgba(15,23,42,.18);flex:0 0 auto;}
+    .p1-bg{background:var(--red);}.p2-bg{background:var(--blue);}
+    .status-title{font-size:1.1rem;font-weight:950;letter-spacing:-.025em;line-height:1.05;}
+    .status-subtitle{font-size:.95rem;color:#64748b;font-weight:800;line-height:1.25;margin-top:4px;}
+
+    .play-area{
+      min-height:0;
+      display:grid;
+      grid-template-columns:240px auto 330px;
+      gap:20px;
+      align-items:start;
+      justify-content:center;
+      padding:0 22px 16px;
+      overflow:auto;
+    }
+
+    .score-column{display:grid;gap:12px;align-content:start;padding-top:10px;min-width:0;}
+    .score-card{
+      position:relative;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+      min-height:76px;padding:14px 15px 14px 18px;border-radius:20px;background:white;border:1px solid var(--border);
+      box-shadow:0 12px 30px rgba(15,23,42,.06);overflow:hidden;
+    }
+    .score-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--red);}
+    .score-card.p2::before{background:var(--blue);}
+    .score-name{font-weight:950;font-size:1.04rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .score-meta{font-size:.78rem;color:#64748b;font-weight:850;margin-top:3px;}
+    .score-value{font-weight:950;font-size:1.75rem;line-height:1;}
+
+    .info-card{background:#f8fafc;border:1px solid var(--border);border-radius:18px;padding:13px 14px;color:#475569;font-weight:750;line-height:1.35;font-size:.92rem;}
+    .info-card strong{color:#0f172a;display:block;margin-bottom:5px;font-size:.98rem;}
+
+    .board-card{
+      width:min(740px,calc(100vh - 230px),calc(100vw - 660px));
+      min-width:500px;
+      max-width:740px;
+      aspect-ratio:1/1;
+      border:1px solid var(--border);
+      border-radius:24px;
+      background:linear-gradient(180deg,#fff,#fbfcfe);
+      box-shadow:0 10px 28px rgba(15,23,42,.05);
+      overflow:hidden;
+      margin:0 auto;
+    }
+    svg#boardSvg{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none;}
+    .grid-line{stroke:#b8c9e3;stroke-width:1.35;}
+    .axis-line{stroke:#29394f;stroke-width:2.25;}
+    .coord-label{font-family:var(--uiFont);font-weight:850;fill:#64748b;font-size:13px;}
+    .axis-label{font-family:var(--mathFont);font-weight:950;fill:#0f172a;font-size:18px;}
+    .capture-fill.p1{fill:rgba(239,68,68,.16);stroke:rgba(239,68,68,.58);}
+    .capture-fill.p2{fill:rgba(37,99,235,.15);stroke:rgba(37,99,235,.55);}
+    .capture-fill{stroke-width:2.2;rx:12;filter:drop-shadow(0 6px 12px rgba(15,23,42,.06));}
+    .capture-label{font-family:var(--uiFont);font-weight:950;font-size:14px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:rgba(255,255,255,.95);stroke-width:6px;stroke-linejoin:round;}
+    .capture-label.p1{fill:#b91c1c;}.capture-label.p2{fill:#1d4ed8;}
+    .cell-hit{fill:transparent;cursor:pointer;}
+    .counter{stroke:rgba(15,23,42,.22);stroke-width:1.6;filter:drop-shadow(0 6px 8px rgba(15,23,42,.18));}
+    .counter.p1{fill:var(--red);}.counter.p2{fill:var(--blue);}
+    .ghost{opacity:.35;}
+    .win-ring{fill:none;stroke:#f59e0b;stroke-width:5;filter:drop-shadow(0 0 9px rgba(245,158,11,.65));animation:pulse 1s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:.55;transform:scale(1);}50%{opacity:1;transform:scale(1.08);}}
+
+    .roll-card{
+      width:320px;
+      border-radius:24px;
+      border:1px solid #decfff;
+      background:linear-gradient(180deg,#f8f3ff,#fbf8ff);
+      box-shadow:0 22px 60px rgba(124,58,237,.18);
+      padding:17px;
+      display:grid;
+      gap:12px;
+      justify-items:center;
+      align-content:start;
+      margin-top:10px;
+    }
+    .dice-row{display:flex;align-items:center;justify-content:center;gap:10px;}
+    .die{width:58px;height:58px;border-radius:16px;background:white;border:1px solid var(--border);display:grid;place-items:center;font-family:var(--mathFont);font-size:1.7rem;font-weight:950;box-shadow:inset 0 -6px 0 rgba(15,23,42,.07),0 10px 18px rgba(15,23,42,.12);}
+    .die.rolling{animation:diceShake .42s ease-in-out infinite;}
+    @keyframes diceShake{0%{transform:rotate(0deg) translate(0,0);}25%{transform:rotate(-12deg) translate(-2px,2px);}50%{transform:rotate(9deg) translate(2px,-2px);}75%{transform:rotate(-6deg) translate(1px,2px);}100%{transform:rotate(0deg) translate(0,0);}}
+    .choose-title{font-weight:950;color:#5b21b6;font-size:1.05rem;letter-spacing:-.02em;margin-top:2px;}
+    .choice-row{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .choice-card{min-height:86px;border-radius:20px;border:2px solid #ede9fe;background:rgba(255,255,255,.78);box-shadow:0 10px 24px rgba(124,58,237,.08);display:grid;place-items:center;padding:9px;color:#8b95a5;font-weight:950;transition:.16s ease;}
+    .choice-card:not(:disabled):hover{transform:translateY(-2px);background:white;border-color:#c4b5fd;box-shadow:0 14px 30px rgba(124,58,237,.16);}
+    .choice-card:disabled{cursor:not-allowed;opacity:.52;}
+    .choice-card.blocked{border-color:#fecaca;background:#fff1f2;color:#991b1b;opacity:.75;}
+    .choice-card small{display:block;color:#b893f6;letter-spacing:.14em;font-size:.72rem;margin-bottom:6px;}
+    .choice-card span{font-family:var(--mathFont);font-size:1.55rem;color:#737b89;}
+    .choice-card:not(:disabled) span{color:#0f172a;}
+    .message-card{width:100%;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px 13px;font-size:.92rem;font-weight:850;line-height:1.35;}
+    .message-card.good{background:#ecfdf5;border-color:#86efac;color:#166534;}
+    .message-card.purple{background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6;}
+
+    .brand-footer{height:36px;margin:0 auto 8px;width:min(1840px,calc(100vw - 26px));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.92);border:1px solid rgba(229,231,235,.95);border-radius:999px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+
+    .settings-menu{position:absolute;top:calc(100% + 10px);right:0;width:min(430px,calc(100vw - 32px));background:rgba(255,255,255,.98);border:1px solid rgba(226,232,240,.95);border-radius:20px;box-shadow:0 18px 45px rgba(15,23,42,.18);padding:14px;opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:.18s ease;z-index:60;color:var(--ink);display:grid;gap:12px;}
+    .settings-menu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+    .settings-group{border:1px solid var(--border);background:#f8fafc;border-radius:16px;padding:12px;display:grid;gap:10px;}
+    .settings-title{font-weight:950;font-size:1rem;}
+    .field{display:grid;gap:7px;}
+    .field label{font-weight:850;color:#334155;font-size:.9rem;}
+    .field select,.field input{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 13px;font-weight:850;color:var(--ink);outline:none;}
+    .field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    .toggle{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:14px;background:white;}
+    .toggle input{margin-top:3px;transform:scale(1.12);accent-color:var(--blue);}
+    .toggle strong{display:block;font-size:.92rem;}.toggle span{display:block;color:var(--muted);font-size:.8rem;line-height:1.35;margin-top:2px;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:100;display:none;place-items:center;padding:20px;backdrop-filter:blur(7px);}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(760px,100%);max-height:min(92vh,900px);overflow:auto;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:30px;box-shadow:0 34px 90px rgba(15,23,42,.34);padding:24px;}
+    .modal.narrow{width:min(560px,100%);}
+    .modal h2{margin:0 0 6px;font-size:clamp(1.65rem,3vw,2.35rem);font-weight:950;letter-spacing:-.05em;}
+    .modal p{margin:0;color:#64748b;font-weight:750;line-height:1.45;}
+    .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;}
+    .mode-card{border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);border-radius:24px;padding:18px;min-height:190px;text-align:left;color:var(--ink);display:grid;align-content:start;gap:10px;box-shadow:0 14px 32px rgba(15,23,42,.08);transition:.16s ease;}
+    .mode-card:hover{transform:translateY(-3px);border-color:#bfdbfe;box-shadow:0 22px 44px rgba(37,99,235,.14);}
+    .mode-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:2rem;background:#eef2ff;color:#2563eb;}
+    .mode-card:nth-child(1) .mode-icon{background:#fef3c7;color:#b45309;}
+    .mode-card:nth-child(2) .mode-icon{background:#dcfce7;color:#15803d;}
+    .mode-card:nth-child(3) .mode-icon{background:#f3e8ff;color:#7c3aed;}
+    .mode-title{font-size:1.25rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-copy{font-size:.94rem;color:#64748b;font-weight:750;line-height:1.36;}
+    .form-grid{display:grid;gap:14px;margin-top:18px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .room-code-display{display:none;margin-top:14px;padding:14px 16px;border-radius:18px;background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;font-weight:950;font-size:1.2rem;text-align:center;}
+    .room-code-display.show{display:block;}
+    .error-text{display:none;background:#fff1f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:10px 12px;font-weight:850;margin-top:10px;}
+    .error-text.show{display:block;}
+
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:120;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media(max-width:1280px){
+      .play-area{grid-template-columns:210px auto 300px;gap:14px;}
+      .board-card{width:min(690px,calc(100vh - 230px),calc(100vw - 600px));min-width:460px;}
+      .roll-card{width:292px;}
+      .choice-card span{font-size:1.35rem;}
+    }
+    @media(max-width:1080px){
+      body{overflow:auto;}
+      .app{min-height:100vh;height:auto;}
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;gap:8px;min-height:unset;padding:10px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 22px);overflow:visible;display:block;}
+      .play-area{display:grid;grid-template-columns:1fr;justify-items:center;overflow:visible;padding:0 14px 18px;}
+      .score-column{width:min(640px,100%);grid-template-columns:1fr 1fr;order:2;}
+      .info-card{grid-column:1/-1;}
+      .board-card{order:1;width:min(720px,calc(100vw - 52px));min-width:0;}
+      .roll-card{order:3;width:min(420px,100%);}
+      .brand-footer{width:calc(100vw - 22px);}
+      .mode-grid{grid-template-columns:1fr;}
+    }
+    @media(max-width:640px){
+      .mmtBrandText span{display:none;}
+      .mmtTopTitle{font-size:1.25rem;}
+      .actions .btn{font-size:13px;padding:9px 10px;}
+      .status-card{margin:12px 12px 8px;padding:10px 12px;}
+      .score-column{grid-template-columns:1fr;}
+      .form-row{grid-template-columns:1fr;}
+      .modal{padding:18px;border-radius:24px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" onerror="this.style.visibility='hidden'" />
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Capture the Grid</div>
+      <div class="actions">
+        <button class="btn" id="backMenuBtn" type="button">Back to menu</button>
+        <button class="btn btn-primary" id="newGameBtn" type="button">New Game</button>
+        <div style="position:relative;">
+          <button class="btn" id="settingsBtn" type="button" aria-expanded="false">Game settings</button>
+          <div class="settings-menu" id="settingsMenu">
+            <p class="settings-permission-note" id="settingsPermissionNote">In online multiplayer, only the room creator can change these settings. Changing settings resets the round.</p>
+            <div class="settings-group">
+              <div class="settings-title">Grid and dice</div>
+              <div class="field">
+                <label for="gridModeSelect">Grid mode</label>
+                <select id="gridModeSelect">
+                  <option value="first" selected>First quadrant: 0 to 6</option>
+                  <option value="four">Four quadrants: -6 to 6</option>
+                </select>
+              </div>
+              <p class="panel-note">Dice match the grid: 0–6 for first quadrant, or -6–6 for four quadrants.</p>
+            </div>
+            <div class="settings-group">
+              <div class="settings-title">Capture scoring</div>
+              <div class="field">
+                <label for="scoringModeSelect">Score by</label>
+                <select id="scoringModeSelect">
+                  <option value="area" selected>Area captured</option>
+                  <option value="captures">Number of captures</option>
+                  <option value="perimeter">Perimeter captured</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="targetScoreSelect">Win target</label>
+                <select id="targetScoreSelect">
+                  <option value="20">First to 20</option>
+                  <option value="30" selected>First to 30</option>
+                  <option value="40">First to 40</option>
+                  <option value="0">Board fills / highest score</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-group">
+              <div class="settings-title">Student support</div>
+              <label class="toggle">
+                <input id="hintDotsToggle" type="checkbox" />
+                <span><strong>Show possible dots</strong><span>Shows the two possible points after rolling. Off by default so students work out the coordinate first.</span></span>
+              </label>
+              <label class="toggle">
+                <input id="swapToggle" type="checkbox" checked />
+                <span><strong>Allow choosing either die as x</strong><span>Students may use the roll as either coordinate order.</span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="status-card">
+        <div class="player-dot p1-bg" id="turnDot"></div>
+        <div>
+          <div class="status-title" id="statusTitle">Choose a game mode</div>
+          <div class="status-subtitle" id="statusSubtitle">Capture rectangles by owning all four corners.</div>
+        </div>
+      </div>
+
+      <div class="play-area">
+        <aside class="score-column">
+          <div class="score-card p1">
+            <div>
+              <div class="score-name" id="p1Name">Player 1</div>
+              <div class="score-meta" id="p1Meta">0 captures</div>
+            </div>
+            <div class="score-value" id="p1Score">0</div>
+          </div>
+          <div class="score-card p2">
+            <div>
+              <div class="score-name" id="p2Name">Player 2</div>
+              <div class="score-meta" id="p2Meta">0 captures</div>
+            </div>
+            <div class="score-value" id="p2Score">0</div>
+          </div>
+          <div class="info-card">
+            <strong>How to score</strong>
+            Place counters on grid points. If your counters make all four corners of a rectangle, you capture it. Use settings to choose first quadrant or four-quadrant play.
+          </div>
+        </aside>
+
+        <section class="board-card">
+          <svg id="boardSvg" viewBox="0 0 720 720" role="img" aria-label="Capture the Grid coordinate board"></svg>
+        </section>
+
+        <aside class="roll-card">
+          <div class="dice-row">
+            <div class="die" id="dieA">?</div>
+            <div class="die" id="dieB">?</div>
+            <button class="btn btn-green" id="rollBtn" type="button">Roll</button>
+          </div>
+          <div class="choose-title">Choose to place</div>
+          <div class="choice-row">
+            <button class="choice-card" id="choiceA" type="button" disabled><small>OPTION 1</small><span>(x, y)</span></button>
+            <button class="choice-card" id="choiceB" type="button" disabled><small>OPTION 2</small><span>(x, y)</span></button>
+          </div>
+          <div class="message-card purple" id="messageBox">Choose a mode to start.</div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+  </div>
+
+  <div class="modal-backdrop open" id="modeModal">
+    <div class="modal">
+      <h2>Choose how to play</h2>
+      <p>Capture rectangles on the coordinate grid. Score by area, perimeter, or number of captured regions. Choose first-quadrant or four-quadrant play in settings.</p>
+      <div class="mode-grid">
+        <button class="mode-card" id="vsComputerBtn" type="button">
+          <div class="mode-icon">🤖</div>
+          <div class="mode-title">vs. Computer</div>
+          <div class="mode-copy">Play against a simple computer opponent that chooses the strongest available coordinate.</div>
+        </button>
+        <button class="mode-card" id="passPlayBtn" type="button">
+          <div class="mode-icon">🎲</div>
+          <div class="mode-title">Pass & Play</div>
+          <div class="mode-copy">Two students share one laptop and take turns rolling and placing counters.</div>
+        </button>
+        <button class="mode-card" id="onlineBtn" type="button">
+          <div class="mode-icon">🌐</div>
+          <div class="mode-title">Online Multiplayer</div>
+          <div class="mode-copy">Create a room code or join a room to play live on two laptops using Firebase.</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="namesModal">
+    <div class="modal narrow">
+      <h2>Player names</h2>
+      <p>Enter names for a pass-and-play match.</p>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="field"><label for="p1Input">Player 1</label><input id="p1Input" placeholder="Player 1 name" maxlength="18" /></div>
+          <div class="field"><label for="p2Input">Player 2</label><input id="p2Input" placeholder="Player 2 name" maxlength="18" /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-blue" id="startPassBtn" type="button">Start game</button>
+        <button class="btn btn-ghost" id="cancelNamesBtn" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="onlineModal">
+    <div class="modal narrow">
+      <h2>Online multiplayer</h2>
+      <p>Create a room code or join an existing game. Your name will appear on both laptops.</p>
+      <div class="form-grid">
+        <div class="field"><label for="onlineNameInput">Your name</label><input id="onlineNameInput" placeholder="Enter your name" maxlength="18" /></div>
+        <div class="form-row">
+          <button class="btn btn-blue" id="createRoomBtn" type="button">Generate game</button>
+          <button class="btn btn-ghost" id="leaveOnlineBtn" type="button">Back</button>
+        </div>
+        <div class="field"><label for="roomCodeInput">Room code</label><input id="roomCodeInput" placeholder="Enter room code" maxlength="6" style="text-transform:uppercase" /></div>
+        <button class="btn btn-green" id="joinRoomBtn" type="button">Join existing game</button>
+      </div>
+      <div class="room-code-display" id="roomCodeDisplay"></div>
+      <div class="error-text" id="onlineError"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZLYpzbeplXIq3V54yZOye5jH83wWrXJo",
+      authDomain: "coordinate-connect-4.firebaseapp.com",
+      projectId: "coordinate-connect-4",
+      storageBucket: "coordinate-connect-4.firebasestorage.app",
+      messagingSenderId: "798945723284",
+      appId: "1:798945723284:web:2140725b79cff78a100581",
+      measurementId: "G-RSMWF3LR5F"
+    };
+
+    const COLLECTION = 'captureGridRooms';
+    const SIZE = 720;
+    const PAD = 72;
+    const BOARD = SIZE - PAD * 2;
+    const FIRST_GRID = { min: 0, max: 6 };
+    const FOUR_QUADRANT_GRID = { min: -6, max: 6 };
+    const PLAYER_STYLE = {
+      1:{ cls:'p1', dot:'p1-bg', defaultName:'Player 1' },
+      2:{ cls:'p2', dot:'p2-bg', defaultName:'Player 2' }
+    };
+    const DEFAULT_SETTINGS = { gridMode:'first', scoringMode:'area', targetScore:30, hintDots:false, swap:true };
+
+    const $ = id => document.getElementById(id);
+    const svg = $('boardSvg');
+    const modeModal = $('modeModal');
+    const namesModal = $('namesModal');
+    const onlineModal = $('onlineModal');
+    const settingsMenu = $('settingsMenu');
+    const dieA = $('dieA');
+    const dieB = $('dieB');
+    const rollBtn = $('rollBtn');
+    const choiceA = $('choiceA');
+    const choiceB = $('choiceB');
+    const messageBox = $('messageBox');
+    const turnDot = $('turnDot');
+    const statusTitle = $('statusTitle');
+    const statusSubtitle = $('statusSubtitle');
+
+    let app, auth, db, uid, unsubRoom = null;
+    let rolling = false;
+    let onlineRole = null;
+    let currentRoom = null;
+    let suppressOnlineRender = false;
+
+    const state = {
+      mode:'menu',
+      currentPlayer:1,
+      players:{1:{name:'Player 1', type:'human'}, 2:{name:'Player 2', type:'human'}},
+      board:{},
+      captures:[],
+      scores:{1:0,2:0},
+      captureCounts:{1:0,2:0},
+      currentRoll:null,
+      winner:null,
+      status:'local',
+      lastMessage:'Choose a mode to start.',
+      settings:{...DEFAULT_SETTINGS}
+    };
+
+    function esc(text){ return String(text ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function cleanName(value, fallback){ const v = String(value || '').trim(); return v ? v.slice(0,18) : fallback; }
+    function coordKey(x,y){ return `${x},${y}`; }
+    function gridBounds(){ return state.settings.gridMode === 'four' ? FOUR_QUADRANT_GRID : FIRST_GRID; }
+    function gridMin(){ return gridBounds().min; }
+    function gridMax(){ return gridBounds().max; }
+    function range(){ const min = gridMin(), max = gridMax(); return Array.from({length:max-min+1},(_,i)=>min+i); }
+    function coordToPixel(x,y){ const min = gridMin(), max = gridMax(); const count = max - min; return { px: PAD + ((x - min) / count) * BOARD, py: SIZE - PAD - ((y - min) / count) * BOARD }; }
+    function pixelRadius(){ return state.settings.gridMode === 'four' ? 14 : 22; }
+    function diceValue(){
+      if(state.settings.gridMode === 'four') return Math.floor(Math.random() * 13) - 6;
+      return Math.floor(Math.random() * 7);
+    }
+    function rectId(x1,y1,x2,y2){ const ax=Math.min(x1,x2), bx=Math.max(x1,x2), ay=Math.min(y1,y2), by=Math.max(y1,y2); return `${ax},${ay},${bx},${by}`; }
+    function captureScore(c){ if(state.settings.scoringMode === 'captures') return 1; if(state.settings.scoringMode === 'perimeter') return c.perimeter; return c.area; }
+    function totalBoardPoints(){ const min = gridMin(), max = gridMax(); return (max - min + 1) ** 2; }
+    function activeName(){ return state.players[state.currentPlayer]?.name || PLAYER_STYLE[state.currentPlayer].defaultName; }
+    function isOnline(){ return state.mode === 'online'; }
+    function isOnlineHost(){ return isOnline() && onlineRole === 1; }
+    function canChangeSettings(){ return !isOnline() || isOnlineHost(); }
+    function isMyOnlineTurn(){ return !isOnline() || onlineRole === state.currentPlayer; }
+    function isComputerTurn(){ return state.mode === 'computer' && state.currentPlayer === 2 && !state.winner; }
+
+    function possibleCoords(){
+      if(!state.currentRoll) return [];
+      const {a,b} = state.currentRoll;
+      const opts = [{x:a,y:b,label:`(${a}, ${b})`}];
+      if(state.settings.swap && a !== b) opts.push({x:b,y:a,label:`(${b}, ${a})`});
+      return opts;
+    }
+    function availableCoords(){ return possibleCoords().filter(c => !state.board[coordKey(c.x,c.y)]); }
+
+    function setMessage(text, kind='normal'){
+      state.lastMessage = text;
+      messageBox.textContent = text;
+      messageBox.classList.toggle('good', kind === 'good');
+      messageBox.classList.toggle('purple', kind === 'purple');
+    }
+
+    function syncSettingsFromControls(){
+      state.settings.gridMode = $('gridModeSelect').value;
+      state.settings.scoringMode = $('scoringModeSelect').value;
+      state.settings.targetScore = Number($('targetScoreSelect').value);
+      state.settings.hintDots = $('hintDotsToggle').checked;
+      state.settings.swap = $('swapToggle').checked;
+    }
+    function syncControlsFromSettings(){
+      $('gridModeSelect').value = state.settings.gridMode || DEFAULT_SETTINGS.gridMode;
+      $('scoringModeSelect').value = state.settings.scoringMode || DEFAULT_SETTINGS.scoringMode;
+      $('targetScoreSelect').value = String(state.settings.targetScore ?? DEFAULT_SETTINGS.targetScore);
+      $('hintDotsToggle').checked = !!state.settings.hintDots;
+      $('swapToggle').checked = state.settings.swap !== false;
+      updateSettingsAccess();
+    }
+
+    function updateSettingsAccess(){
+      const locked = isOnline() && !isOnlineHost();
+      ['gridModeSelect','scoringModeSelect','targetScoreSelect','hintDotsToggle','swapToggle'].forEach(id => {
+        $(id).disabled = locked;
+      });
+      const note = $('settingsPermissionNote');
+      if(!note) return;
+      note.classList.toggle('locked', locked);
+      if(locked){
+        note.textContent = 'Only the room creator can change settings for this online match.';
+      } else if(isOnlineHost()){
+        note.textContent = 'You created this room, so you can change settings. Any change will reset the online game for both players.';
+      } else {
+        note.textContent = 'Changing settings resets the current game. Default grid is first quadrant with dice values 0–6.';
+      }
+    }
+
+    function baseGame(players, mode){
+      syncSettingsFromControls();
+      state.mode = mode;
+      state.currentPlayer = 1;
+      state.players = players;
+      state.board = {};
+      state.captures = [];
+      state.scores = {1:0,2:0};
+      state.captureCounts = {1:0,2:0};
+      state.currentRoll = null;
+      state.winner = null;
+      state.status = mode === 'online' ? 'waiting' : 'playing';
+      state.lastMessage = `${state.players[1].name}, roll the dice.`;
+      dieA.textContent = '?'; dieB.textContent = '?';
+      updateUI();
+    }
+
+    function resetRoundAfterSettingsChange(){
+      state.currentPlayer = 1;
+      state.board = {};
+      state.captures = [];
+      state.scores = {1:0,2:0};
+      state.captureCounts = {1:0,2:0};
+      state.currentRoll = null;
+      state.winner = null;
+      if(state.mode === 'online'){
+        state.status = state.players?.[2]?.uid ? 'playing' : 'waiting';
+      } else if(state.mode !== 'menu'){
+        state.status = 'playing';
+      }
+      dieA.textContent = '?';
+      dieB.textContent = '?';
+      const firstName = state.players?.[1]?.name || 'Player 1';
+      state.lastMessage = state.mode === 'online'
+        ? `Settings changed by the room creator. Game reset. ${firstName} rolls first.`
+        : `Settings changed. Game reset. ${firstName} rolls first.`;
+    }
+
+    function show(el){ el.classList.add('open'); }
+    function hide(el){ el.classList.remove('open'); }
+    function closeAllModals(){ hide(modeModal); hide(namesModal); hide(onlineModal); }
+    function showMainMenu(){
+      if(unsubRoom){ unsubRoom(); unsubRoom = null; }
+      onlineRole = null; currentRoom = null;
+      state.mode = 'menu';
+      state.currentRoll = null; state.winner = null;
+      state.lastMessage = 'Choose a mode to start.';
+      updateSettingsAccess();
+      updateUI();
+      closeAllModals(); show(modeModal);
+    }
+
+    function updateUI(){
+      syncControlsFromSettings();
+      $('p1Name').textContent = state.players[1]?.name || 'Player 1';
+      $('p2Name').textContent = state.players[2]?.name || 'Player 2';
+      $('p1Score').textContent = state.scores[1] ?? 0;
+      $('p2Score').textContent = state.scores[2] ?? 0;
+      $('p1Meta').textContent = `${state.captureCounts[1] ?? 0} capture${(state.captureCounts[1] ?? 0) === 1 ? '' : 's'}`;
+      $('p2Meta').textContent = `${state.captureCounts[2] ?? 0} capture${(state.captureCounts[2] ?? 0) === 1 ? '' : 's'}`;
+
+      turnDot.className = `player-dot ${state.currentPlayer === 2 ? 'p2-bg' : 'p1-bg'}`;
+      if(state.winner){
+        const winnerText = state.winner === 'draw' ? 'Draw game' : `${state.players[state.winner]?.name || 'Player'} wins!`;
+        statusTitle.textContent = winnerText;
+        statusSubtitle.textContent = state.winner === 'draw' ? 'The board is full.' : 'Captured enough regions to win.';
+      } else if(state.mode === 'online' && state.status === 'waiting'){
+        statusTitle.textContent = 'Waiting for Player 2';
+        statusSubtitle.textContent = currentRoom ? `Room code: ${currentRoom}` : 'Create or join a room.';
+      } else if(state.mode === 'online'){
+        statusTitle.textContent = onlineRole === state.currentPlayer ? 'Your turn' : `${activeName()}'s turn`;
+        statusSubtitle.textContent = onlineRole === state.currentPlayer ? 'Roll once, then choose the correct coordinate.' : 'Waiting for the other player to move.';
+      } else if(state.mode === 'computer' && state.currentPlayer === 2){
+        statusTitle.textContent = `Computer's turn`;
+        statusSubtitle.textContent = 'The computer is thinking.';
+      } else if(state.mode === 'menu'){
+        statusTitle.textContent = 'Choose a game mode';
+        statusSubtitle.textContent = 'Capture rectangles by owning all four corners.';
+      } else {
+        statusTitle.textContent = `${activeName()}'s turn`;
+        statusSubtitle.textContent = 'Roll once, then choose the correct coordinate.';
+      }
+
+      setMessage(state.lastMessage || 'Roll the dice.', state.lastMessage?.includes('captured') || state.lastMessage?.includes('wins') ? 'good' : 'purple');
+      updateChoices();
+      drawBoard();
+      maybeTriggerComputer();
+    }
+
+    function updateChoices(){
+      const opts = possibleCoords();
+      const canAct = state.mode !== 'menu' && !state.winner && !rolling && state.status !== 'waiting' && isMyOnlineTurn() && !isComputerTurn();
+      rollBtn.disabled = !canAct || !!state.currentRoll;
+      [choiceA, choiceB].forEach((btn, i) => {
+        const opt = opts[i];
+        const blocked = opt ? !!state.board[coordKey(opt.x,opt.y)] : false;
+        btn.disabled = !canAct || !opt || blocked;
+        btn.classList.toggle('blocked', !!blocked);
+        btn.innerHTML = `<small>OPTION ${i+1}</small><span>${opt ? esc(opt.label) : '(x, y)'}</span>`;
+        if(blocked) btn.innerHTML = `<small>TAKEN</small><span>${esc(opt.label)}</span>`;
+      });
+    }
+
+    function drawBoard(){
+      svg.innerHTML = '';
+      const NS = 'http://www.w3.org/2000/svg';
+      const mk = (tag, attrs, parent=svg) => { const n=document.createElementNS(NS,tag); Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,String(v))); parent.appendChild(n); return n; };
+      mk('rect',{x:PAD,y:PAD,width:BOARD,height:BOARD,rx:10,fill:'#fff'});
+
+      const orderedCaptures = [...state.captures].sort((a,b)=>a.area-b.area);
+      orderedCaptures.forEach(c => {
+        const p1 = coordToPixel(c.x1,c.y2);
+        const p2 = coordToPixel(c.x2,c.y1);
+        const rect = mk('rect',{x:p1.px,y:p1.py,width:p2.px-p1.px,height:p2.py-p1.py,class:`capture-fill p${c.player}`});
+        rect.setAttribute('opacity', .78);
+        const centre = coordToPixel((c.x1+c.x2)/2,(c.y1+c.y2)/2);
+        const label = state.settings.scoringMode === 'perimeter' ? `P=${c.perimeter}` : state.settings.scoringMode === 'captures' ? '+1' : `A=${c.area}`;
+        const t = mk('text',{x:centre.px,y:centre.py,class:`capture-label p${c.player}`});
+        t.textContent = label;
+      });
+
+      range().forEach(n => {
+        const vx=coordToPixel(n,gridMin()).px;
+        const hy=coordToPixel(gridMin(),n).py;
+        mk('line',{x1:vx,y1:PAD,x2:vx,y2:SIZE-PAD,class:n===0?'axis-line':'grid-line'});
+        mk('line',{x1:PAD,y1:hy,x2:SIZE-PAD,y2:hy,class:n===0?'axis-line':'grid-line'});
+      });
+      range().forEach(n => {
+        const px=coordToPixel(n,gridMin()).px;
+        const py=coordToPixel(gridMin(),n).py;
+        const tx = mk('text',{x:px,y:SIZE-PAD+31,class:'coord-label','text-anchor':'middle'}); tx.textContent = n;
+        const ty = mk('text',{x:PAD-30,y:py+5,class:'coord-label','text-anchor':'middle'}); ty.textContent = n;
+      });
+      const xlab = mk('text',{x:SIZE-PAD+29,y:SIZE-PAD+5,class:'axis-label','text-anchor':'middle'}); xlab.textContent='x';
+      const ylab = mk('text',{x:PAD-5,y:PAD-29,class:'axis-label','text-anchor':'middle'}); ylab.textContent='y';
+
+      const possible = possibleCoords();
+      range().forEach(y => range().forEach(x => {
+        const p=coordToPixel(x,y);
+        const hit = mk('circle',{cx:p.px,cy:p.py,r:26,class:'cell-hit'});
+        hit.addEventListener('click', () => {
+          if(!state.settings.hintDots) return;
+          const idx = possible.findIndex(c => c.x === x && c.y === y);
+          if(idx >= 0) chooseOption(idx);
+        });
+        if(state.settings.hintDots && state.currentRoll && possible.some(c=>c.x===x&&c.y===y) && !state.board[coordKey(x,y)]){
+          mk('circle',{cx:p.px,cy:p.py,r:pixelRadius(),class:`counter ghost p${state.currentPlayer}`});
+        }
+      }));
+
+      Object.entries(state.board).forEach(([key, player]) => {
+        const [x,y] = key.split(',').map(Number);
+        const p = coordToPixel(x,y);
+        mk('circle',{cx:p.px,cy:p.py,r:pixelRadius(),class:`counter p${player}`});
+      });
+    }
+
+    function findNewCaptures(x,y,player){
+      const capturedIds = new Set(state.captures.map(c => c.id));
+      const owned = new Set(Object.entries(state.board).filter(([,p]) => Number(p) === player).map(([k]) => k));
+      const found = [];
+      for(const key of owned){
+        const [ox,oy] = key.split(',').map(Number);
+        if(ox === x || oy === y) continue;
+        const c1 = coordKey(x,oy);
+        const c2 = coordKey(ox,y);
+        if(owned.has(c1) && owned.has(c2)){
+          const id = rectId(x,y,ox,oy);
+          if(capturedIds.has(id) || found.some(c => c.id === id)) continue;
+          const x1 = Math.min(x,ox), x2 = Math.max(x,ox), y1 = Math.min(y,oy), y2 = Math.max(y,oy);
+          const width = x2 - x1;
+          const height = y2 - y1;
+          found.push({ id, player, x1, y1, x2, y2, width, height, area: width * height, perimeter: 2 * (width + height) });
+        }
+      }
+      return found;
+    }
+
+    function placeCounter(x,y){
+      if(state.winner || rolling || state.status === 'waiting') return;
+      if(isOnline() && !isMyOnlineTurn()) return;
+      if(isComputerTurn()) return;
+      const valid = possibleCoords().some(c => c.x === x && c.y === y);
+      if(!valid){ setMessage('That coordinate is not one of the options from this roll.'); return; }
+      if(state.board[coordKey(x,y)]){ setMessage('That coordinate is already taken.'); return; }
+      applyMove(x,y,state.currentPlayer);
+    }
+
+    async function applyMove(x,y,player){
+      state.board[coordKey(x,y)] = player;
+      const newCaps = findNewCaptures(x,y,player);
+      if(newCaps.length){
+        state.captures.push(...newCaps);
+        state.captureCounts[player] = (state.captureCounts[player] || 0) + newCaps.length;
+        const points = newCaps.reduce((sum,c)=>sum+captureScore(c),0);
+        state.scores[player] = (state.scores[player] || 0) + points;
+        const detail = newCaps.length === 1
+          ? `${state.players[player].name} captured a ${newCaps[0].width} × ${newCaps[0].height} rectangle for ${points} point${points===1?'':'s'}!`
+          : `${state.players[player].name} captured ${newCaps.length} rectangles for ${points} points!`;
+        state.lastMessage = detail;
+      } else {
+        state.lastMessage = `${state.players[player].name} placed at (${x}, ${y}). No rectangle captured yet.`;
+      }
+
+      const target = Number(state.settings.targetScore || 0);
+      if(target > 0 && state.scores[player] >= target){
+        state.winner = player;
+        state.lastMessage = `${state.players[player].name} wins!`;
+        launchConfetti();
+      } else if(Object.keys(state.board).length >= totalBoardPoints()){
+        const p1 = state.scores[1] || 0, p2 = state.scores[2] || 0;
+        state.winner = p1 === p2 ? 'draw' : (p1 > p2 ? 1 : 2);
+        state.lastMessage = state.winner === 'draw' ? 'The board is full. Draw game!' : `${state.players[state.winner].name} wins when the board fills!`;
+        if(state.winner !== 'draw') launchConfetti();
+      } else {
+        state.currentPlayer = player === 1 ? 2 : 1;
+      }
+      state.currentRoll = null;
+      dieA.textContent='?'; dieB.textContent='?';
+      await persistIfOnline();
+      updateUI();
+    }
+
+    function chooseOption(index){
+      if(!state.currentRoll) return;
+      const opt = possibleCoords()[index];
+      if(!opt) return;
+      placeCounter(opt.x,opt.y);
+    }
+
+    function animateDice(callback){
+      rolling = true;
+      rollBtn.disabled = true;
+      dieA.classList.add('rolling'); dieB.classList.add('rolling');
+      let ticks = 0;
+      const ticker = setInterval(() => { dieA.textContent = diceValue(); dieB.textContent = diceValue(); ticks++; }, 75);
+      setTimeout(() => {
+        clearInterval(ticker);
+        dieA.classList.remove('rolling'); dieB.classList.remove('rolling');
+        rolling = false;
+        callback();
+      }, 650);
+    }
+
+    function rollDice(){
+      if(state.mode === 'menu' || state.winner || rolling || state.currentRoll || state.status === 'waiting') return;
+      if(isOnline() && !isMyOnlineTurn()) return;
+      if(isComputerTurn()) return;
+      animateDice(async () => {
+        const a = diceValue(), b = diceValue();
+        dieA.textContent = a; dieB.textContent = b;
+        state.currentRoll = {a,b};
+        const opts = availableCoords();
+        if(opts.length === 0){
+          state.lastMessage = `${activeName()} rolled (${a}, ${b}) but has no available coordinate. Turn missed.`;
+          state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+          state.currentRoll = null;
+          dieA.textContent='?'; dieB.textContent='?';
+          await persistIfOnline();
+          updateUI();
+          return;
+        }
+        state.lastMessage = `Choose to place: (${a}, ${b})${state.settings.swap && a !== b ? ` or (${b}, ${a})` : ''}.`;
+        await persistIfOnline();
+        updateUI();
+      });
+    }
+
+    function maybeTriggerComputer(){
+      if(!isComputerTurn() || rolling || state.currentRoll) return;
+      setTimeout(() => {
+        if(!isComputerTurn() || state.currentRoll || state.winner) return;
+        animateDice(() => {
+          const a = diceValue(), b = diceValue();
+          dieA.textContent = a; dieB.textContent = b;
+          state.currentRoll = {a,b};
+          updateUI();
+          setTimeout(() => computerChooseMove(), 700);
+        });
+      }, 600);
+    }
+
+    function computerChooseMove(){
+      if(!isComputerTurn() || !state.currentRoll || state.winner) return;
+      const opts = availableCoords();
+      if(opts.length === 0){
+        state.lastMessage = `Computer rolled (${state.currentRoll.a}, ${state.currentRoll.b}) but had no available coordinate. Turn missed.`;
+        state.currentPlayer = 1; state.currentRoll = null; dieA.textContent='?'; dieB.textContent='?'; updateUI(); return;
+      }
+      let best = opts[0], bestScore = -1;
+      for(const opt of opts){
+        const tempKey = coordKey(opt.x,opt.y);
+        state.board[tempKey] = 2;
+        const caps = findNewCaptures(opt.x,opt.y,2);
+        delete state.board[tempKey];
+        const value = caps.reduce((sum,c)=>sum+captureScore(c),0);
+        if(value > bestScore){ bestScore = value; best = opt; }
+      }
+      applyMove(best.x,best.y,2);
+    }
+
+    function newLocalGame(){
+      if(state.mode === 'computer') baseGame({1:{name:state.players[1]?.name || 'You', type:'human'},2:{name:'Computer', type:'computer'}}, 'computer');
+      else if(state.mode === 'pass') baseGame(state.players, 'pass');
+      else if(state.mode === 'online') resetOnlineRoom();
+      else showMainMenu();
+    }
+
+    async function initFirebase(){
+      if(db && auth && uid) return;
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      const cred = await signInAnonymously(auth);
+      uid = cred.user.uid;
+    }
+    function makeRoomCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for(let i=0;i<5;i++) code += chars[Math.floor(Math.random()*chars.length)];
+      return code;
+    }
+    function onlineSnapshotPayload(){
+      return {
+        status: state.status,
+        currentPlayer: state.currentPlayer,
+        players: state.players,
+        board: state.board,
+        captures: state.captures,
+        scores: state.scores,
+        captureCounts: state.captureCounts,
+        currentRoll: state.currentRoll,
+        winner: state.winner,
+        lastMessage: state.lastMessage,
+        settings: state.settings,
+        updatedAt: serverTimestamp()
+      };
+    }
+    async function persistIfOnline(){
+      if(!isOnline() || !currentRoom || suppressOnlineRender) return;
+      await updateDoc(doc(db, COLLECTION, currentRoom), onlineSnapshotPayload());
+    }
+    function applyRoomData(data){
+      if(!data) return;
+      suppressOnlineRender = true;
+      state.mode = 'online';
+      state.status = data.status || 'playing';
+      state.currentPlayer = data.currentPlayer || 1;
+      state.players = data.players || state.players;
+      state.board = data.board || {};
+      state.captures = Array.isArray(data.captures) ? data.captures : [];
+      state.scores = data.scores || {1:0,2:0};
+      state.captureCounts = data.captureCounts || {1:0,2:0};
+      state.currentRoll = data.currentRoll || null;
+      state.winner = data.winner || null;
+      state.lastMessage = data.lastMessage || 'Online game ready.';
+      state.settings = data.settings || state.settings;
+      if(state.currentRoll){ dieA.textContent = state.currentRoll.a; dieB.textContent = state.currentRoll.b; } else { dieA.textContent='?'; dieB.textContent='?'; }
+      syncControlsFromSettings();
+      suppressOnlineRender = false;
+      updateUI();
+    }
+    function subscribeToRoom(code){
+      if(unsubRoom) unsubRoom();
+      unsubRoom = onSnapshot(doc(db, COLLECTION, code), snap => {
+        if(!snap.exists()) return;
+        applyRoomData(snap.data());
+      });
+    }
+    async function createRoom(){
+      clearOnlineError();
+      const name = cleanName($('onlineNameInput').value, 'Player 1');
+      await initFirebase();
+      let code = makeRoomCode();
+      let ref = doc(db, COLLECTION, code);
+      let exists = await getDoc(ref);
+      while(exists.exists()) { code = makeRoomCode(); ref = doc(db, COLLECTION, code); exists = await getDoc(ref); }
+      state.settings = {...DEFAULT_SETTINGS};
+      syncControlsFromSettings();
+      currentRoom = code; onlineRole = 1;
+      baseGame({1:{name, type:'human', uid},2:{name:'Waiting...', type:'human', uid:null}}, 'online');
+      state.status = 'waiting';
+      state.lastMessage = `${name} created room ${code}. Waiting for Player 2.`;
+      await setDoc(ref, {...onlineSnapshotPayload(), roomCode:code, createdAt:serverTimestamp()});
+      $('roomCodeDisplay').textContent = `Room code: ${code}`;
+      $('roomCodeDisplay').classList.add('show');
+      subscribeToRoom(code);
+      closeAllModals();
+    }
+    async function joinRoom(){
+      clearOnlineError();
+      const name = cleanName($('onlineNameInput').value, 'Player 2');
+      const code = String($('roomCodeInput').value || '').trim().toUpperCase();
+      if(!code){ showOnlineError('Enter a room code.'); return; }
+      await initFirebase();
+      const ref = doc(db, COLLECTION, code);
+      const snap = await getDoc(ref);
+      if(!snap.exists()){ showOnlineError('No room found with that code.'); return; }
+      const data = snap.data();
+      const p1uid = data.players?.[1]?.uid;
+      const p2uid = data.players?.[2]?.uid;
+      if(p1uid === uid) onlineRole = 1;
+      else if(p2uid === uid) onlineRole = 2;
+      else if(!p2uid){ onlineRole = 2; }
+      else { showOnlineError('That room already has two players.'); return; }
+      currentRoom = code;
+      if(onlineRole === 2 && !p2uid){
+        const players = {...data.players, 2:{name, type:'human', uid}};
+        await updateDoc(ref, {players, status:'playing', lastMessage:`${name} joined. ${players[1].name} starts.`, updatedAt:serverTimestamp()});
+      }
+      subscribeToRoom(code);
+      closeAllModals();
+    }
+    async function resetOnlineRoom(){
+      if(!currentRoom || !isOnline()) return;
+      if(onlineRole !== 1){ setMessage('Only Player 1 can start a new online round.'); return; }
+      state.currentPlayer = 1;
+      state.board = {}; state.captures = []; state.scores = {1:0,2:0}; state.captureCounts = {1:0,2:0}; state.currentRoll=null; state.winner=null; state.status='playing'; state.lastMessage=`New round started. ${state.players[1].name} rolls first.`;
+      await persistIfOnline(); updateUI();
+    }
+    function showOnlineError(msg){ $('onlineError').textContent = msg; $('onlineError').classList.add('show'); }
+    function clearOnlineError(){ $('onlineError').classList.remove('show'); $('onlineError').textContent = ''; }
+
+    function launchConfetti(){
+      const colours = ['#ef4444','#2563eb','#22c55e','#f59e0b','#a855f7','#06b6d4'];
+      for(let i=0;i<90;i++){
+        const piece=document.createElement('div');
+        piece.className='confetti';
+        piece.style.left=Math.random()*100+'vw';
+        piece.style.background=colours[Math.floor(Math.random()*colours.length)];
+        piece.style.animationDelay=Math.random()*260+'ms';
+        piece.style.animationDuration=700+Math.random()*750+'ms';
+        document.body.appendChild(piece);
+        setTimeout(()=>piece.remove(),1700);
+      }
+    }
+
+    $('settingsBtn').addEventListener('click', e => { e.stopPropagation(); settingsMenu.classList.toggle('open'); $('settingsBtn').setAttribute('aria-expanded', settingsMenu.classList.contains('open') ? 'true' : 'false'); });
+    settingsMenu.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', () => settingsMenu.classList.remove('open'));
+    ['gridModeSelect','scoringModeSelect','targetScoreSelect','hintDotsToggle','swapToggle'].forEach(id => $(id).addEventListener('change', async () => {
+      if(!canChangeSettings()){
+        syncControlsFromSettings();
+        setMessage('Only the room creator can change settings for this online match.');
+        return;
+      }
+      syncSettingsFromControls();
+      resetRoundAfterSettingsChange();
+      await persistIfOnline();
+      updateUI();
+    }));
+
+    $('vsComputerBtn').addEventListener('click', () => {
+      const name = prompt('Enter your name:', 'You') || 'You';
+      closeAllModals();
+      baseGame({1:{name:cleanName(name,'You'), type:'human'}, 2:{name:'Computer', type:'computer'}}, 'computer');
+    });
+    $('passPlayBtn').addEventListener('click', () => { hide(modeModal); show(namesModal); setTimeout(()=>$('p1Input').focus(),50); });
+    $('onlineBtn').addEventListener('click', () => { hide(modeModal); show(onlineModal); setTimeout(()=>$('onlineNameInput').focus(),50); });
+    $('startPassBtn').addEventListener('click', () => {
+      const p1 = cleanName($('p1Input').value, 'Player 1');
+      const p2 = cleanName($('p2Input').value, 'Player 2');
+      closeAllModals();
+      baseGame({1:{name:p1,type:'human'},2:{name:p2,type:'human'}}, 'pass');
+    });
+    $('cancelNamesBtn').addEventListener('click', () => { hide(namesModal); show(modeModal); });
+    $('leaveOnlineBtn').addEventListener('click', () => { hide(onlineModal); show(modeModal); });
+    $('createRoomBtn').addEventListener('click', createRoom);
+    $('joinRoomBtn').addEventListener('click', joinRoom);
+    $('backMenuBtn').addEventListener('click', showMainMenu);
+    $('newGameBtn').addEventListener('click', newLocalGame);
+    rollBtn.addEventListener('click', rollDice);
+    choiceA.addEventListener('click', () => chooseOption(0));
+    choiceB.addEventListener('click', () => chooseOption(1));
+    window.addEventListener('keydown', e => {
+      if(e.key === 'Escape') { hide(namesModal); hide(onlineModal); settingsMenu.classList.remove('open'); }
+      if(e.key.toLowerCase() === 'r' && !e.target.matches('input,select,textarea')) rollDice();
+      if(e.key === '1' && !e.target.matches('input,select,textarea')) chooseOption(0);
+      if(e.key === '2' && !e.target.matches('input,select,textarea')) chooseOption(1);
+      if(e.key === 'Enter' && namesModal.classList.contains('open')) $('startPassBtn').click();
+    });
+
+    syncControlsFromSettings();
+    updateUI();
+  </script>
+</body>
+</html>
