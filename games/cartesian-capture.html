@@ -517,7 +517,7 @@
     function isOnline(){ return state.mode === 'online'; }
     function isOnlineHost(){ return isOnline() && onlineRole === 1; }
     function canChangeSettings(){ return !isOnline() || isOnlineHost(); }
-    function isMyOnlineTurn(){ return !isOnline() || onlineRole === state.currentPlayer; }
+    function isMyOnlineTurn(){ return !isOnline() || Number(onlineRole) === Number(state.currentPlayer); }
     function isComputerTurn(){ return state.mode === 'computer' && state.currentPlayer === 2 && !state.winner; }
 
     function possibleCoords(){
@@ -908,24 +908,45 @@
       };
     }
     async function persistIfOnline(){
-      if(!isOnline() || !currentRoom || suppressOnlineRender) return;
-      await updateDoc(doc(db, COLLECTION, currentRoom), onlineSnapshotPayload());
+      if(!isOnline() || !currentRoom || suppressOnlineRender) return true;
+      try{
+        await updateDoc(doc(db, COLLECTION, currentRoom), onlineSnapshotPayload());
+        return true;
+      } catch(err){
+        console.error('Online sync failed:', err);
+        state.lastMessage = 'Connection issue: this move did not sync. Check Firestore rules or internet connection, then try again.';
+        return false;
+      }
     }
     function applyRoomData(data){
       if(!data) return;
       suppressOnlineRender = true;
+
+      // Recover this browser's player role from the room document on every update.
+      // This prevents a greyed-out roll button if a laptop refreshes or receives an old local state.
+      const incomingPlayers = data.players || state.players;
+      const p1uid = incomingPlayers?.[1]?.uid || incomingPlayers?.['1']?.uid;
+      const p2uid = incomingPlayers?.[2]?.uid || incomingPlayers?.['2']?.uid;
+      if(uid && p1uid === uid) onlineRole = 1;
+      else if(uid && p2uid === uid) onlineRole = 2;
+
+      // Any fresh room snapshot is the source of truth. Clear any local animation lock.
+      rolling = false;
+      dieA.classList.remove('rolling');
+      dieB.classList.remove('rolling');
+
       state.mode = 'online';
       state.status = data.status || 'playing';
-      state.currentPlayer = data.currentPlayer || 1;
-      state.players = data.players || state.players;
+      state.currentPlayer = Number(data.currentPlayer || 1);
+      state.players = incomingPlayers;
       state.board = data.board || {};
       state.captures = Array.isArray(data.captures) ? data.captures : [];
       state.scores = data.scores || {1:0,2:0};
       state.captureCounts = data.captureCounts || {1:0,2:0};
-      state.currentRoll = data.currentRoll || null;
+      state.currentRoll = data.currentRoll ? { a:Number(data.currentRoll.a), b:Number(data.currentRoll.b) } : null;
       state.winner = data.winner || null;
       state.lastMessage = data.lastMessage || 'Online game ready.';
-      state.settings = data.settings || state.settings;
+      state.settings = {...DEFAULT_SETTINGS, ...(data.settings || {})};
       if(state.currentRoll){ dieA.textContent = state.currentRoll.a; dieB.textContent = state.currentRoll.b; } else { dieA.textContent='?'; dieB.textContent='?'; }
       syncControlsFromSettings();
       suppressOnlineRender = false;
