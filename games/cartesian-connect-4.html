@@ -116,6 +116,98 @@
       position:relative;
     }
 
+
+    .language-control{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      padding:6px 8px;
+      color:white;
+    }
+    .language-control label{
+      font-size:12px;
+      font-weight:950;
+      opacity:.9;
+      white-space:nowrap;
+      color:white;
+    }
+    .language-control select{
+      width:auto;
+      min-width:110px;
+      height:34px;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:10px;
+      background:white;
+      color:#1d4ed8;
+      font-weight:900;
+      padding:0 8px;
+      outline:none;
+    }
+    .i18n-dual{
+      display:inline-flex;
+      flex-direction:column;
+      gap:2px;
+      line-height:1.12;
+    }
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{
+      direction:rtl;
+      unicode-bidi:isolate;
+    }
+    .i18n-dual .english-under{
+      font-size:.72em;
+      opacity:.72;
+      font-weight:800;
+      line-height:1.12;
+    }
+    .status-title .english-under,
+    .status-subtitle .english-under,
+    .message .english-under{
+      display:block;
+      margin-top:3px;
+    }
+    .rules-list{
+      display:grid;
+      gap:12px;
+      margin:18px 0 0;
+      padding:0;
+      list-style:none;
+    }
+    .rules-list li{
+      padding:13px 14px;
+      border-radius:16px;
+      background:#f8fafc;
+      border:1px solid var(--border);
+      font-weight:850;
+      line-height:1.35;
+      color:#334155;
+    }
+    .rules-list .english-under{
+      display:block;
+      margin-top:5px;
+      color:#64748b;
+      font-size:.82em;
+    }
+    .choice-btn.shake-miss{
+      animation:missShake .38s ease-in-out 0s 2;
+      border-color:#ef4444!important;
+      background:linear-gradient(180deg,#fee2e2,#fff1f2)!important;
+      color:#991b1b!important;
+      box-shadow:0 0 0 5px rgba(239,68,68,.14),0 18px 34px rgba(239,68,68,.20)!important;
+    }
+    @keyframes missShake{
+      0%,100%{transform:translateX(0);}
+      20%{transform:translateX(-7px);}
+      40%{transform:translateX(7px);}
+      60%{transform:translateX(-5px);}
+      80%{transform:translateX(5px);}
+    }
+
+
     button,select,input{font:inherit;}
     button{
       border:1px solid transparent;
@@ -453,8 +545,8 @@
       color:#7c3aed;
       font-weight:950;
     }
-    #choiceXY::before{content:'Option 1';}
-    #choiceYX::before{content:'Option 2';}
+    #choiceXY::before{content:attr(data-label);}
+    #choiceYX::before{content:attr(data-label);}
     .choice-btn:not(:disabled):hover{
       border-color:#a78bfa;
       background:linear-gradient(180deg,#ede9fe,#ffffff);
@@ -462,7 +554,7 @@
     }
     .choice-btn.selected{border-color:var(--purple);background:linear-gradient(180deg,#ddd6fe,#f5f3ff);color:#4c1d95;}
     .choice-btn.blocked{border-color:#fecaca;background:linear-gradient(180deg,#fff1f2,#fff);color:#991b1b;}
-    .choice-btn.blocked::before{content:'Taken';color:#b91c1c;}
+    .choice-btn.blocked::before{content:attr(data-label);color:#b91c1c;}
     .message{padding:14px 16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:800;min-height:50px;display:flex;align-items:center;line-height:1.35;}
     .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
     .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
@@ -1031,6 +1123,15 @@
     <div class="mmtTopTitle">Coordinate Connect 4</div>
 
     <div class="actions">
+      <div class="language-control">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button">Rules</button>
       <button class="btn" id="undoBtn" type="button">Undo</button>
       <button class="btn btn-primary" id="newGameBtn" type="button">New Game</button>
       <button class="btn" id="backToMenuBtn" type="button">Back to menu</button>
@@ -1211,10 +1312,10 @@
       </div>
       <p class="setup-note">Enter two names, then share the same laptop or board.</p>
       <div class="setup-fields">
-        <label>Player 1 name
+        <label><span id="passP1NameLabel">Player 1 name</span>
           <input id="passP1Name" type="text" placeholder="Player 1" maxlength="24" autocomplete="off" />
         </label>
-        <label>Player 2 name
+        <label><span id="passP2NameLabel">Player 2 name</span>
           <input id="passP2Name" type="text" placeholder="Player 2" maxlength="24" autocomplete="off" />
         </label>
       </div>
@@ -1257,13 +1358,8 @@
         <h2 id="rulesTitle">Classroom rules</h2>
         <button class="btn-soft" id="closeRulesBtn">Close</button>
       </div>
-      <ul>
-        <li>Roll two dice.</li>
-        <li>You only get one roll on your turn.</li>
-        <li>Choose which rolled number is x and which rolled number is y.</li>
-        <li>If both possible coordinates are already taken, you miss your turn.</li>
-        <li>First player to connect the target number in a row wins.</li>
-      </ul>
+      <p id="rulesIntro">Use the dice to choose coordinates and connect counters in a row.</p>
+      <ul class="rules-list" id="rulesList"></ul>
     </div>
   </div>
 
@@ -1360,6 +1456,9 @@
     const sideToggleBtn = document.getElementById('sideToggleBtn');
     const sideReopenBtn = document.getElementById('sideReopenBtn');
     const backToMenuBtn = document.getElementById('backToMenuBtn');
+    const mainLanguageSelect = document.getElementById('mainLanguageSelect');
+    const languageMainLabel = document.getElementById('languageMainLabel');
+    const rulesBtn = document.getElementById('rulesBtn');
     const topP1Label = document.getElementById('topP1Label');
     const topP2Label = document.getElementById('topP2Label');
     const topP1Score = document.getElementById('topP1Score');
@@ -1413,6 +1512,350 @@
       data: null
     };
 
+    let uiLang = 'en';
+    let currentMessageText = 'Roll two dice to generate your coordinate.';
+    let currentMessageSuccess = false;
+
+    const TRANSLATIONS = {
+      ar: {
+        'Language':'اللغة',
+        'Rules':'القواعد',
+        'Undo':'تراجع',
+        'New Game':'لعبة جديدة',
+        'New Round':'جولة جديدة',
+        'Back to menu':'العودة إلى القائمة',
+        'Game settings':'إعدادات اللعبة',
+        'Settings':'الإعدادات',
+        'Close':'إغلاق',
+        'Board':'اللوحة',
+        'Grid mode':'نمط الشبكة',
+        'First quadrant: 0 to 6':'الربع الأول: 0 إلى 6',
+        'Four quadrants: -6 to 6':'الأرباع الأربعة: -6 إلى 6',
+        'Counters in a row to win':'عدد العدادات المتصلة للفوز',
+        '3 in a row':'3 على التوالي',
+        '4 in a row':'4 على التوالي',
+        '5 in a row':'5 على التوالي',
+        'Dice':'النرد',
+        'Dice values':'قيم النرد',
+        'Four quadrant dice: -6 to 6':'نرد الأرباع الأربعة: -6 إلى 6',
+        'Student support':'دعم الطالب',
+        'Swap choice':'اختيار التبديل',
+        'Students choose which number is x and which number is y.':'يختار الطلاب أي عدد يمثل x وأي عدد يمثل y.',
+        'Show possible dots':'إظهار النقاط الممكنة',
+        'Shows the possible grid points before choosing.':'يُظهر نقاط الشبكة الممكنة قبل الاختيار.',
+        'Classroom':'الفصل',
+        'Show classroom rules':'إظهار قواعد الفصل',
+        'Score':'النتيجة',
+        'Choose to place':'اختر مكان الوضع',
+        'Option 1':'الخيار 1',
+        'Option 2':'الخيار 2',
+        'Taken':'مأخوذ',
+        'Roll':'ارمِ',
+        'Choose a game mode':'اختر وضع اللعب',
+        'Select how you would like to play Coordinate Connect 4.':'اختر كيف تريد لعب Coordinate Connect 4.',
+        'vs. Computer':'ضد الكمبيوتر',
+        'Play against an automatic opponent.':'العب ضد خصم تلقائي.',
+        'Pass and Play':'مرّر والعب',
+        'Two players share one device.':'يتشارك لاعبان جهازاً واحداً.',
+        'Online Multiplayer':'لعب جماعي عبر الإنترنت',
+        'Create or join a room on two laptops.':'أنشئ غرفة أو انضم إليها على جهازين.',
+        'Pass and Play':'مرّر والعب',
+        'Enter two names, then share the same laptop or board.':'أدخل اسمين، ثم تشاركا نفس الجهاز أو اللوحة.',
+        'Player 1 name':'اسم اللاعب 1',
+        'Player 2 name':'اسم اللاعب 2',
+        'Start game':'ابدأ اللعبة',
+        'Back':'رجوع',
+        'Online Multiplayer':'لعب جماعي عبر الإنترنت',
+        'Enter your name, then create or join a room.':'أدخل اسمك، ثم أنشئ غرفة أو انضم إليها.',
+        'Your name':'اسمك',
+        'This name will appear on both laptops in the room.':'سيظهر هذا الاسم على الجهازين في الغرفة.',
+        'Generate Game':'إنشاء لعبة',
+        'Leave':'مغادرة',
+        'Room code':'رمز الغرفة',
+        'Join existing game':'انضم إلى لعبة موجودة',
+        'Copy':'نسخ',
+        'Classroom rules':'قواعد الفصل',
+        'Use the dice to choose coordinates and connect counters in a row.':'استخدم النرد لاختيار الإحداثيات وتوصيل العدادات في صف.',
+        'Roll two dice.':'ارمِ نردين.',
+        'You only get one roll on your turn.':'لديك رمية واحدة فقط في دورك.',
+        'Choose which rolled number is x and which rolled number is y.':'اختر أي عدد يمثل x وأي عدد يمثل y.',
+        'If you choose a coordinate that is already taken, your option shakes red and you miss your turn.':'إذا اخترت إحداثياً مأخوذاً بالفعل، يهتز الخيار باللون الأحمر ويفوتك الدور.',
+        'First player to connect the target number in a row wins.':'أول لاعب يوصل العدد المطلوب على التوالي يفوز.',
+        'Roll the dice, then choose the correct coordinate.':'ارمِ النرد، ثم اختر الإحداثي الصحيح.',
+        'Roll once, then choose the correct coordinate.':'ارمِ مرة واحدة، ثم اختر الإحداثي الصحيح.',
+        'Computer is rolling and choosing.':'الكمبيوتر يرمي ويختار.',
+        'Waiting for the other player.':'بانتظار اللاعب الآخر.',
+        'Your turn: roll once, then choose the correct coordinate.':'دورك: ارمِ مرة واحدة، ثم اختر الإحداثي الصحيح.',
+        'Waiting for Player 2':'بانتظار اللاعب 2',
+        'Share the room code with another student.':'شارك رمز الغرفة مع طالب آخر.',
+        'Start a new game to play again.':'ابدأ لعبة جديدة للعب مرة أخرى.',
+        'Player 1 can start a new round.':'يمكن للاعب 1 بدء جولة جديدة.',
+        'Draw game':'تعادل',
+        'The board is full. It is a draw!':'امتلأت اللوحة. إنها تعادل!',
+        'Roll two dice to generate your coordinate.':'ارمِ نردين لتوليد إحداثيك.',
+        'Rolling...':'جارٍ رمي النرد...',
+        'Locked in':'تم تثبيت',
+        'Selected':'تم اختيار',
+        'Share the room code with Player 2.':'شارك رمز الغرفة مع اللاعب 2.',
+        'Waiting for the room to start.':'بانتظار بدء الغرفة.',
+        'Your turn. Roll the dice.':'دورك. ارمِ النرد.',
+        'Room not found. Check the code and try again.':'لم يتم العثور على الغرفة. تحقق من الرمز وحاول مرة أخرى.',
+        'That room already has two players.':'تحتوي هذه الغرفة بالفعل على لاعبين.',
+        'Enter your name before creating or joining a game.':'أدخل اسمك قبل إنشاء لعبة أو الانضمام إليها.',
+        'Enter a room code first.':'أدخل رمز الغرفة أولاً.',
+        'Online play needs the Firebase config added to this HTML file first.':'يتطلب اللعب عبر الإنترنت إضافة إعداد Firebase إلى ملف HTML هذا أولاً.',
+        'You are not connected to a room.':'أنت غير متصل بغرفة.',
+        'It is not your turn.':'ليس دورك.',
+        'You have already rolled this turn.':'لقد رميت النرد بالفعل في هذا الدور.',
+        'Roll before placing a counter.':'ارمِ النرد قبل وضع العداد.',
+        'That coordinate does not match the roll.':'هذا الإحداثي لا يطابق الرمية.',
+        'That coordinate is already taken.':'هذا الإحداثي مأخوذ بالفعل.',
+        'That coordinate is not taken.':'هذا الإحداثي ليس مأخوذاً.'
+      },
+      fa: {
+        'Language':'زبان',
+        'Rules':'قوانین',
+        'Undo':'برگرداندن',
+        'New Game':'بازی جدید',
+        'New Round':'دور جدید',
+        'Back to menu':'بازگشت به منو',
+        'Game settings':'تنظیمات بازی',
+        'Settings':'تنظیمات',
+        'Close':'بستن',
+        'Board':'صفحه',
+        'Grid mode':'حالت شبکه',
+        'First quadrant: 0 to 6':'ربع اول: ۰ تا ۶',
+        'Four quadrants: -6 to 6':'چهار ربع: -۶ تا ۶',
+        'Counters in a row to win':'تعداد مهره پشت سر هم برای برد',
+        '3 in a row':'۳ پشت سر هم',
+        '4 in a row':'۴ پشت سر هم',
+        '5 in a row':'۵ پشت سر هم',
+        'Dice':'تاس',
+        'Dice values':'مقدارهای تاس',
+        'Four quadrant dice: -6 to 6':'تاس چهار ربع: -۶ تا ۶',
+        'Student support':'کمک به دانش‌آموز',
+        'Swap choice':'انتخاب جابه‌جایی',
+        'Students choose which number is x and which number is y.':'دانش‌آموزان انتخاب می‌کنند کدام عدد x و کدام عدد y است.',
+        'Show possible dots':'نمایش نقطه‌های ممکن',
+        'Shows the possible grid points before choosing.':'پیش از انتخاب، نقطه‌های ممکن روی شبکه را نشان می‌دهد.',
+        'Classroom':'کلاس',
+        'Show classroom rules':'نمایش قوانین کلاس',
+        'Score':'امتیاز',
+        'Choose to place':'محل قرار دادن را انتخاب کنید',
+        'Option 1':'گزینه ۱',
+        'Option 2':'گزینه ۲',
+        'Taken':'گرفته شده',
+        'Roll':'تاس بیندازید',
+        'Choose a game mode':'حالت بازی را انتخاب کنید',
+        'Select how you would like to play Coordinate Connect 4.':'انتخاب کنید چگونه می‌خواهید Coordinate Connect 4 را بازی کنید.',
+        'vs. Computer':'در برابر کامپیوتر',
+        'Play against an automatic opponent.':'در برابر یک حریف خودکار بازی کنید.',
+        'Pass and Play':'نوبتی روی یک دستگاه',
+        'Two players share one device.':'دو بازیکن از یک دستگاه استفاده می‌کنند.',
+        'Online Multiplayer':'چندنفره آنلاین',
+        'Create or join a room on two laptops.':'روی دو لپ‌تاپ اتاق بسازید یا وارد اتاق شوید.',
+        'Enter two names, then share the same laptop or board.':'دو نام وارد کنید، سپس از همان لپ‌تاپ یا صفحه استفاده کنید.',
+        'Player 1 name':'نام بازیکن ۱',
+        'Player 2 name':'نام بازیکن ۲',
+        'Start game':'شروع بازی',
+        'Back':'برگشت',
+        'Enter your name, then create or join a room.':'نام خود را وارد کنید، سپس یک اتاق بسازید یا وارد شوید.',
+        'Your name':'نام شما',
+        'This name will appear on both laptops in the room.':'این نام روی هر دو لپ‌تاپ در اتاق دیده می‌شود.',
+        'Generate Game':'ساخت بازی',
+        'Leave':'خروج',
+        'Room code':'کد اتاق',
+        'Join existing game':'پیوستن به بازی موجود',
+        'Copy':'کپی',
+        'Classroom rules':'قوانین کلاس',
+        'Use the dice to choose coordinates and connect counters in a row.':'از تاس برای انتخاب مختصات و وصل کردن مهره‌ها در یک ردیف استفاده کنید.',
+        'Roll two dice.':'دو تاس بیندازید.',
+        'You only get one roll on your turn.':'در نوبت خود فقط یک بار تاس می‌اندازید.',
+        'Choose which rolled number is x and which rolled number is y.':'انتخاب کنید کدام عدد x و کدام عدد y است.',
+        'If you choose a coordinate that is already taken, your option shakes red and you miss your turn.':'اگر مختصاتی را انتخاب کنید که قبلاً گرفته شده، گزینه قرمز می‌لرزد و نوبت شما از دست می‌رود.',
+        'First player to connect the target number in a row wins.':'اولین بازیکنی که تعداد هدف را پشت سر هم وصل کند برنده می‌شود.',
+        'Roll the dice, then choose the correct coordinate.':'تاس بیندازید، سپس مختصات درست را انتخاب کنید.',
+        'Roll once, then choose the correct coordinate.':'یک بار تاس بیندازید، سپس مختصات درست را انتخاب کنید.',
+        'Computer is rolling and choosing.':'کامپیوتر در حال تاس انداختن و انتخاب است.',
+        'Waiting for the other player.':'در انتظار بازیکن دیگر.',
+        'Your turn: roll once, then choose the correct coordinate.':'نوبت شما: یک بار تاس بیندازید، سپس مختصات درست را انتخاب کنید.',
+        'Waiting for Player 2':'در انتظار بازیکن ۲',
+        'Share the room code with another student.':'کد اتاق را با دانش‌آموز دیگر به اشتراک بگذارید.',
+        'Start a new game to play again.':'برای بازی دوباره، بازی جدیدی شروع کنید.',
+        'Player 1 can start a new round.':'بازیکن ۱ می‌تواند دور جدیدی شروع کند.',
+        'Draw game':'مساوی',
+        'The board is full. It is a draw!':'صفحه پر شده است. بازی مساوی است!',
+        'Roll two dice to generate your coordinate.':'دو تاس بیندازید تا مختصات ساخته شود.',
+        'Rolling...':'در حال تاس انداختن...',
+        'Locked in':'ثبت شد',
+        'Selected':'انتخاب شد',
+        'Share the room code with Player 2.':'کد اتاق را با بازیکن ۲ به اشتراک بگذارید.',
+        'Waiting for the room to start.':'در انتظار شروع اتاق.',
+        'Your turn. Roll the dice.':'نوبت شماست. تاس بیندازید.',
+        'Room not found. Check the code and try again.':'اتاق پیدا نشد. کد را بررسی کنید و دوباره تلاش کنید.',
+        'That room already has two players.':'این اتاق از قبل دو بازیکن دارد.',
+        'Enter your name before creating or joining a game.':'قبل از ساختن یا پیوستن به بازی، نام خود را وارد کنید.',
+        'Enter a room code first.':'ابتدا کد اتاق را وارد کنید.',
+        'Online play needs the Firebase config added to this HTML file first.':'برای بازی آنلاین، ابتدا تنظیمات Firebase را به این فایل HTML اضافه کنید.',
+        'You are not connected to a room.':'شما به اتاق وصل نیستید.',
+        'It is not your turn.':'نوبت شما نیست.',
+        'You have already rolled this turn.':'در این نوبت قبلاً تاس انداخته‌اید.',
+        'Roll before placing a counter.':'قبل از گذاشتن مهره تاس بیندازید.',
+        'That coordinate does not match the roll.':'این مختصات با تاس‌ها هماهنگ نیست.',
+        'That coordinate is already taken.':'این مختصات قبلاً گرفته شده است.',
+        'That coordinate is not taken.':'این مختصات گرفته نشده است.'
+      }
+    };
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+    }
+
+    function tr(en) {
+      if (uiLang === 'en') return en;
+      return TRANSLATIONS[uiLang]?.[en] || translateDynamic(en);
+    }
+
+    function translateDynamic(en) {
+      if (uiLang === 'en') return en;
+      let m = String(en).match(/^(.+)'s turn$/);
+      if (m) return uiLang === 'ar' ? `دور ${m[1]}` : `نوبت ${m[1]}`;
+      m = String(en).match(/^(.+) wins!$/);
+      if (m) return uiLang === 'ar' ? `${m[1]} فاز!` : `${m[1]} برنده شد!`;
+      m = String(en).match(/^(.+) wins by connecting (.+) in a row!$/);
+      if (m) return uiLang === 'ar' ? `${m[1]} فاز بتوصيل ${m[2]} على التوالي!` : `${m[1]} با وصل کردن ${m[2]} پشت سر هم برنده شد!`;
+      m = String(en).match(/^(.+), roll the dice for your turn\.$/);
+      if (m) return uiLang === 'ar' ? `${m[1]}، ارمِ النرد في دورك.` : `${m[1]}، برای نوبت خود تاس بیندازید.`;
+      m = String(en).match(/^(.+) missed a turn\. (.+), roll the dice\.$/);
+      if (m) return uiLang === 'ar' ? `${m[1]} فاته الدور. ${m[2]}، ارمِ النرد.` : `${m[1]} نوبتش را از دست داد. ${m[2]}، تاس بیندازید.`;
+      m = String(en).match(/^No available move from (.+)\. (.+) misses this turn\.$/);
+      if (m) return uiLang === 'ar' ? `لا توجد حركة متاحة من ${m[1]}. ${m[2]} يفوته الدور.` : `هیچ حرکت آزادی از ${m[1]} نیست. ${m[2]} نوبتش را از دست می‌دهد.`;
+      m = String(en).match(/^(.+) chose (.+), but it was already taken\. Turn missed\.$/);
+      if (m) return uiLang === 'ar' ? `${m[1]} اختار ${m[2]}، لكنه كان مأخوذاً بالفعل. فاته الدور.` : `${m[1]} ${m[2]} را انتخاب کرد، اما قبلاً گرفته شده بود. نوبت از دست رفت.`;
+      m = String(en).match(/^Choose where to place: (.+)\.$/);
+      if (m) return uiLang === 'ar' ? `اختر مكان الوضع: ${m[1]}.` : `محل قرار دادن را انتخاب کنید: ${m[1]}.`;
+      m = String(en).match(/^Your turn\. Choose where to place: (.+)\.$/);
+      if (m) return uiLang === 'ar' ? `دورك. اختر مكان الوضع: ${m[1]}.` : `نوبت شماست. محل قرار دادن را انتخاب کنید: ${m[1]}.`;
+      m = String(en).match(/^(.+) is choosing a coordinate\.$/);
+      if (m) return uiLang === 'ar' ? `${m[1]} يختار إحداثياً.` : `${m[1]} در حال انتخاب مختصات است.`;
+      m = String(en).match(/^Waiting for (.+) to roll\.$/);
+      if (m) return uiLang === 'ar' ? `بانتظار ${m[1]} ليرمي النرد.` : `در انتظار ${m[1]} برای تاس انداختن.`;
+      m = String(en).match(/^Selected (.+)\. Tap that point on the grid to place your counter\.$/);
+      if (m) return uiLang === 'ar' ? `تم اختيار ${m[1]}. انقر تلك النقطة على الشبكة لوضع العداد.` : `${m[1]} انتخاب شد. برای گذاشتن مهره روی آن نقطه در شبکه کلیک کنید.`;
+      m = String(en).match(/^Locked in (.+)\.$/);
+      if (m) return uiLang === 'ar' ? `تم تثبيت ${m[1]}.` : `${m[1]} ثبت شد.`;
+      m = String(en).match(/^Room (.+)\. You are (.+)\. Waiting for Player 2\.$/);
+      if (m) return uiLang === 'ar' ? `الغرفة ${m[1]}. أنت ${m[2]}. بانتظار اللاعب 2.` : `اتاق ${m[1]}. شما ${m[2]} هستید. در انتظار بازیکن ۲.`;
+      m = String(en).match(/^Room (.+)\. You are (.+)\. Game over\.$/);
+      if (m) return uiLang === 'ar' ? `الغرفة ${m[1]}. أنت ${m[2]}. انتهت اللعبة.` : `اتاق ${m[1]}. شما ${m[2]} هستید. بازی تمام شد.`;
+      m = String(en).match(/^Room (.+)\. You are (.+)\.$/);
+      if (m) return uiLang === 'ar' ? `الغرفة ${m[1]}. أنت ${m[2]}.` : `اتاق ${m[1]}. شما ${m[2]} هستید.`;
+      m = String(en).match(/^Copied room (.+)\.$/);
+      if (m) return uiLang === 'ar' ? `تم نسخ الغرفة ${m[1]}.` : `اتاق ${m[1]} کپی شد.`;
+      return en;
+    }
+
+    function i18nHTML(en) {
+      if (uiLang === 'en') return esc(en);
+      return `<span class="i18n-dual"><span class="native">${esc(tr(en))}</span><span class="english-under">${esc(en)}</span></span>`;
+    }
+
+    function setI18n(el, en) {
+      if (!el) return;
+      el.innerHTML = i18nHTML(en);
+    }
+
+    function setPlainI18n(el, en) {
+      if (!el) return;
+      el.textContent = uiLang === 'en' ? en : tr(en);
+    }
+
+    const RULES = [
+      'Roll two dice.',
+      'You only get one roll on your turn.',
+      'Choose which rolled number is x and which rolled number is y.',
+      'If you choose a coordinate that is already taken, your option shakes red and you miss your turn.',
+      'First player to connect the target number in a row wins.'
+    ];
+
+    function renderRules() {
+      setI18n(document.getElementById('rulesTitle'), 'Classroom rules');
+      setI18n(document.getElementById('rulesIntro'), 'Use the dice to choose coordinates and connect counters in a row.');
+      const list = document.getElementById('rulesList');
+      if (list) list.innerHTML = RULES.map(rule => `<li>${i18nHTML(rule)}</li>`).join('');
+      setI18n(closeRulesBtn, 'Close');
+    }
+
+    function refreshSelectLabels() {
+      if (modeSelect) {
+        modeSelect.options[0].textContent = uiLang === 'en' ? 'First quadrant: 0 to 6' : tr('First quadrant: 0 to 6');
+        modeSelect.options[1].textContent = uiLang === 'en' ? 'Four quadrants: -6 to 6' : tr('Four quadrants: -6 to 6');
+      }
+      if (winLengthSelect) {
+        winLengthSelect.options[0].textContent = uiLang === 'en' ? '3 in a row' : tr('3 in a row');
+        winLengthSelect.options[1].textContent = uiLang === 'en' ? '4 in a row' : tr('4 in a row');
+        winLengthSelect.options[2].textContent = uiLang === 'en' ? '5 in a row' : tr('5 in a row');
+      }
+    }
+
+    function applyLanguage() {
+      uiLang = mainLanguageSelect?.value || 'en';
+      document.documentElement.lang = uiLang;
+      document.documentElement.dir = 'ltr';
+      setI18n(languageMainLabel, 'Language');
+      setI18n(rulesBtn, 'Rules');
+      setI18n(undoBtn, 'Undo');
+      setI18n(newGameBtn, online.active ? 'New Round' : 'New Game');
+      setI18n(backToMenuBtn, 'Back to menu');
+      setI18n(settingsBtn, 'Game settings');
+      setI18n(closeSettingsBtn, 'Close');
+      setI18n(showRulesBtn, 'Show classroom rules');
+      setI18n(document.querySelector('.settings-header strong'), 'Settings');
+      setI18n(document.querySelector('#modeMenuTitle'), 'Choose a game mode');
+      const modeIntro = document.querySelector('.mode-modal-header p');
+      setI18n(modeIntro, 'Select how you would like to play Coordinate Connect 4.');
+      setI18n(document.querySelector('#chooseComputerBtn strong'), 'vs. Computer');
+      setI18n(document.querySelector('#chooseComputerBtn span:last-child'), 'Play against an automatic opponent.');
+      setI18n(document.querySelector('#choosePassPlayBtn strong'), 'Pass and Play');
+      setI18n(document.querySelector('#choosePassPlayBtn span:last-child'), 'Two players share one device.');
+      setI18n(document.querySelector('#chooseOnlineBtn strong'), 'Online Multiplayer');
+      setI18n(document.querySelector('#chooseOnlineBtn span:last-child'), 'Create or join a room on two laptops.');
+      setI18n(document.getElementById('passPlayTitle'), 'Pass and Play');
+      setI18n(passBackBtn, 'Back');
+      const passNote = passPlayModal?.querySelector('.setup-note');
+      setI18n(passNote, 'Enter two names, then share the same laptop or board.');
+      setI18n(document.getElementById('passP1NameLabel'), 'Player 1 name');
+      setI18n(document.getElementById('passP2NameLabel'), 'Player 2 name');
+      setI18n(startPassPlayBtn, 'Start game');
+      setI18n(document.getElementById('onlineSetupTitle'), 'Online Multiplayer');
+      setI18n(onlineBackBtn, 'Back');
+      setI18n(document.querySelector('label[for="playerNameInput"]'), 'Your name');
+      setI18n(document.querySelector('.name-helper'), 'This name will appear on both laptops in the room.');
+      setI18n(createOnlineBtn, 'Generate Game');
+      setI18n(leaveOnlineBtn, 'Leave');
+      setPlainI18n(roomCodeInput, ''); // no-op for input
+      if (roomCodeInput) roomCodeInput.placeholder = uiLang === 'en' ? 'Room code' : tr('Room code');
+      setI18n(joinOnlineBtn, 'Join existing game');
+      setI18n(copyRoomBtn, 'Copy');
+      setI18n(document.querySelector('.choice-title'), 'Choose to place');
+      refreshSelectLabels();
+      renderRules();
+
+      document.querySelectorAll('.settings-group-title').forEach(el => {
+        const text = el.textContent.trim();
+        if (['Board','Dice','Student support','Classroom'].includes(text)) setI18n(el, text);
+      });
+      document.querySelectorAll('label[for="modeSelect"]').forEach(el => setI18n(el, 'Grid mode'));
+      document.querySelectorAll('label[for="winLengthSelect"]').forEach(el => setI18n(el, 'Counters in a row to win'));
+      document.querySelectorAll('label[for="diceModeSelect"]').forEach(el => setI18n(el, 'Dice values'));
+      setI18n(diceStaticNote, 'Four quadrant dice: -6 to 6');
+
+      updateTurn();
+      updateChoices();
+      setMessage(currentMessageText, currentMessageSuccess);
+      updateOnlinePanel();
+    }
+
     function coordKey(x, y) { return `${x},${y}`; }
 
     function getRange() {
@@ -1432,7 +1875,9 @@
     }
 
     function setMessage(text, success = false) {
-      messageBox.textContent = text;
+      currentMessageText = text;
+      currentMessageSuccess = success;
+      if (messageBox) messageBox.innerHTML = i18nHTML(text);
       messageBox.classList.toggle('success', success);
     }
 
@@ -1477,7 +1922,7 @@
       diceModeSelect.innerHTML = '';
       const fourQuadrantMode = modeSelect.value === 'four';
       const options = fourQuadrantMode
-        ? [{ value: 'd13zero', label: '13-sided style: -6 to 6' }]
+        ? [{ value: 'd13zero', label: uiLang === 'en' ? '13-sided style: -6 to 6' : tr('Four quadrant dice: -6 to 6') }]
         : [
             { value: 'd6', label: 'Standard dice: 1 to 6' },
             { value: 'd7zero', label: '7-sided style: 0 to 6' }
@@ -1598,12 +2043,14 @@
       const c1Blocked = coords[1] && board.has(coordKey(coords[1].x, coords[1].y));
       choiceXY.classList.toggle('blocked', !!c0Blocked);
       choiceYX.classList.toggle('blocked', !!c1Blocked);
+      choiceXY.dataset.label = c0Blocked ? tr('Taken') : tr('Option 1');
+      choiceYX.dataset.label = c1Blocked ? tr('Taken') : tr('Option 2');
       choiceXY.classList.toggle('selected', selected && coords[0] && selected.x === coords[0].x && selected.y === coords[0].y);
       choiceYX.classList.toggle('selected', selected && coords[1] && selected.x === coords[1].x && selected.y === coords[1].y);
       selectedCoord.textContent = selected ? `Selected: (${selected.x}, ${selected.y})` : 'Selected: none';
       rollBtn.disabled = !canRoll();
       undoBtn.disabled = online.active || history.length === 0 || rolling;
-      newGameBtn.textContent = online.active ? 'New Round' : 'New Game';
+      setI18n(newGameBtn, online.active ? 'New Round' : 'New Game');
     }
 
     async function rollDice() {
@@ -1655,15 +2102,39 @@
       }, 720);
     }
 
-    function chooseCoord(index) {
+    function animateMissedChoice(index) {
+      const btn = index === 0 ? choiceXY : choiceYX;
+      if (!btn) return;
+      btn.classList.remove('shake-miss');
+      void btn.offsetWidth;
+      btn.classList.add('shake-miss');
+      setTimeout(() => btn.classList.remove('shake-miss'), 900);
+    }
+
+    async function handleTakenChoice(coord, index) {
+      if (!coord) return;
+      animateMissedChoice(index);
+      setMessage(`${PLAYERS[currentPlayer].name} chose ${coord.label}, but it was already taken. Turn missed.`);
+      if (online.active) {
+        try {
+          await commitOnlineTakenChoice(coord.x, coord.y);
+        } catch (err) {
+          console.error(err);
+          setMessage(err.message || 'That missed turn could not be saved. Try again.');
+        }
+        return;
+      }
+      setTimeout(() => endTurn(false), 700);
+    }
+
+    async function chooseCoord(index) {
       if (!currentRoll || winner || rolling || !isMyTurn()) return;
       const coords = possibleCoords();
       const coord = coords[index];
       if (!coord) return;
 
       if (board.has(coordKey(coord.x, coord.y))) {
-        setMessage(`${coord.label} is already taken. ${availableCoords().length ? 'Choose the other coordinate.' : 'No move is possible.'}`);
-        if (!online.active && availableCoords().length === 0) setTimeout(() => endTurn(false), 900);
+        await handleTakenChoice(coord, index);
         return;
       }
 
@@ -1695,8 +2166,8 @@
       }
 
       if (board.has(coordKey(x, y))) {
-        setMessage(`(${x}, ${y}) is already taken. Choose the other coordinate if possible.`);
-        if (!online.active && availableCoords().length === 0) setTimeout(() => endTurn(false), 900);
+        const idx = possibleCoords().findIndex(c => c.x === x && c.y === y);
+        await handleTakenChoice({ x, y, label: `(${x}, ${y})` }, idx >= 0 ? idx : 0);
         return;
       }
 
@@ -1862,19 +2333,19 @@
 
     function updateTurn() {
       if (online.active && online.data?.status === 'waiting') {
-        statusTitle.textContent = 'Waiting for Player 2';
-        statusSubtitle.textContent = 'Share the room code with another student.';
+        setI18n(statusTitle, 'Waiting for Player 2');
+        setI18n(statusSubtitle, 'Share the room code with another student.');
       } else if (winner && winner !== 'draw') {
-        statusTitle.textContent = `${PLAYERS[winner].name} wins!`;
-        statusSubtitle.textContent = online.active ? 'Player 1 can start a new round.' : 'Start a new game to play again.';
+        setI18n(statusTitle, `${PLAYERS[winner].name} wins!`);
+        setI18n(statusSubtitle, online.active ? 'Player 1 can start a new round.' : 'Start a new game to play again.');
       } else if (winner === 'draw') {
-        statusTitle.textContent = 'Draw game';
-        statusSubtitle.textContent = online.active ? 'Player 1 can start a new round.' : 'Start a new game to play again.';
+        setI18n(statusTitle, 'Draw game');
+        setI18n(statusSubtitle, online.active ? 'Player 1 can start a new round.' : 'Start a new game to play again.');
       } else {
-        statusTitle.textContent = `${PLAYERS[currentPlayer].name}'s turn`;
-        statusSubtitle.textContent = online.active
+        setI18n(statusTitle, `${PLAYERS[currentPlayer].name}'s turn`);
+        setI18n(statusSubtitle, online.active
           ? (isMyTurn() ? 'Your turn: roll once, then choose the correct coordinate.' : 'Waiting for the other player.')
-          : (isComputerTurn() ? 'Computer is rolling and choosing.' : 'Roll once, then choose the correct coordinate.');
+          : (isComputerTurn() ? 'Computer is rolling and choosing.' : 'Roll once, then choose the correct coordinate.'));
       }
       turnDot.className = `player-dot ${PLAYERS[currentPlayer].cls}`;
     }
@@ -2359,6 +2830,9 @@
         } else {
           setMessage(`${PLAYERS[currentPlayer].name} is choosing a coordinate.`);
         }
+      } else if (data.lastEvent?.type === 'missedTaken') {
+        const p = Number(data.lastEvent.player);
+        setMessage(`${PLAYERS[p]?.name || 'Player'} chose ${data.lastEvent.coord}, but it was already taken. Turn missed.`);
       } else {
         setMessage(isMyTurn() ? 'Your turn. Roll the dice.' : `Waiting for ${PLAYERS[currentPlayer].name} to roll.`);
       }
@@ -2481,6 +2955,40 @@
       });
     }
 
+
+    async function commitOnlineTakenChoice(x, y) {
+      if (!online.ref || !online.myPlayer) throw new Error('You are not connected to a room.');
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(online.ref);
+        if (!snap.exists()) throw new Error('Room not found.');
+        const data = snap.data();
+        if (data.status !== 'playing') throw new Error('This game is not currently playing.');
+        if (Number(data.currentPlayer) !== online.myPlayer) throw new Error('It is not your turn.');
+        if (!data.currentRoll) throw new Error('Roll before placing a counter.');
+        const playerKey = `p${online.myPlayer}`;
+        if (data.players?.[playerKey]?.uid !== online.uid) throw new Error('Player mismatch. Rejoin the room.');
+
+        const bmap = boardObjectToMap(data.board || {});
+        const key = coordKey(x, y);
+        const allowSwap = data.swapChoice !== false;
+        const valid = possibleCoordsFromRoll(data.currentRoll, allowSwap).some(c => c.x === x && c.y === y);
+        if (!valid) throw new Error('That coordinate does not match the roll.');
+        if (!bmap.has(key)) throw new Error('That coordinate is not taken.');
+
+        transaction.update(online.ref, {
+          currentRoll: null,
+          currentPlayer: online.myPlayer === 1 ? 2 : 1,
+          lastEvent: {
+            type: 'missedTaken',
+            player: online.myPlayer,
+            coord: `(${x}, ${y})`,
+            at: Date.now()
+          },
+          updatedAt: serverTimestamp()
+        });
+      });
+    }
+
     function scheduleOnlineAutoMissIfNeeded() {
       if (!online.active || !online.ref || !online.myPlayer || !isMyTurn() || !currentRoll || winner) return;
       if (availableCoords().length !== 0) return;
@@ -2511,6 +3019,12 @@
         transaction.update(online.ref, {
           currentRoll: null,
           currentPlayer: online.myPlayer === 1 ? 2 : 1,
+          lastEvent: {
+            type: 'missedBlocked',
+            player: online.myPlayer,
+            roll: `(${data.currentRoll.a}, ${data.currentRoll.b})`,
+            at: Date.now()
+          },
           updatedAt: serverTimestamp()
         });
       });
@@ -2597,10 +3111,14 @@
     settingsMenu.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('click', () => toggleSettings(false));
 
-    showRulesBtn.addEventListener('click', () => {
+    function openRulesModal() {
+      renderRules();
       rulesModal.classList.add('open');
       rulesModal.setAttribute('aria-hidden', 'false');
-    });
+    }
+    if (rulesBtn) rulesBtn.addEventListener('click', openRulesModal);
+    showRulesBtn.addEventListener('click', openRulesModal);
+    if (mainLanguageSelect) mainLanguageSelect.addEventListener('change', applyLanguage);
     closeRulesBtn.addEventListener('click', () => {
       rulesModal.classList.remove('open');
       rulesModal.setAttribute('aria-hidden', 'true');
@@ -2644,6 +3162,7 @@
 
     refreshPlayerLabels();
     setSidePanelHidden(true);
+    applyLanguage();
     await newGame(false);
     updateOnlinePanel();
     </script>
