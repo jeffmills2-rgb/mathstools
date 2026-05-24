@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dots and Boxes | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --green2:#49a529;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --p1:#ef4444;
+      --p2:#2563eb;
+      --dot:#020617;
+      --line:#94a3b8;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:12px 22px;
+      display:grid;
+      grid-template-columns:minmax(220px,1fr) auto minmax(420px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mmtBrand:hover{
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);
+    }
+    .mmtBrandLogo{
+      width:42px;
+      height:42px;
+      object-fit:contain;
+      background:white;
+      border-radius:6px;
+      padding:3px;
+      flex:0 0 auto;
+    }
+    .mmtBrandText strong{
+      display:block;
+      font-size:1.16rem;
+      line-height:1;
+      letter-spacing:-.03em;
+      color:white;
+    }
+    .mmtBrandText span{
+      display:block;
+      font-size:.78rem;
+      opacity:.82;
+      font-weight:650;
+      color:white;
+    }
+    .mmtTopTitle{
+      font-weight:850;
+      font-size:clamp(1.25rem,2vw,1.72rem);
+      letter-spacing:-.04em;
+      text-align:center;
+      color:white;
+      white-space:nowrap;
+    }
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+
+    button,select,input{font:inherit;}
+    button{
+      border:1px solid transparent;
+      cursor:pointer;
+      border-radius:14px;
+      padding:11px 15px;
+      font-weight:900;
+      font-size:15px;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+      font-family:var(--uiFont);
+    }
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{
+      border-color:rgba(15,23,42,.08);
+      background:var(--btn);
+      color:var(--ink);
+    }
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{
+      border-color:rgba(255,255,255,.18);
+      background:rgba(255,255,255,.14);
+      color:white;
+    }
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{
+      background:var(--blue);
+      color:white;
+      border-color:var(--blue);
+      box-shadow:0 10px 24px rgba(37,99,235,.20);
+    }
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#eef2ff;color:var(--blue2);}
+    .btn-green{
+      background:var(--green);
+      color:white;
+      border-color:var(--green);
+      box-shadow:0 10px 24px rgba(108,188,74,.22);
+    }
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .small-btn{padding:8px 12px;font-size:.88rem;}
+
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+    select,input[type="text"]{
+      width:100%;
+      border:1px solid var(--border);
+      background:white;
+      border-radius:14px;
+      padding:12px 14px;
+      color:var(--ink);
+      outline:none;
+      font-weight:800;
+      transition:border-color .16s ease,box-shadow .16s ease;
+    }
+    select:focus,input[type="text"]:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+
+    .layout{
+      width:min(1480px,calc(100vw - 42px));
+      margin:18px auto 12px;
+      display:grid;
+      grid-template-columns:minmax(580px,1fr) minmax(310px,370px);
+      gap:18px;
+      align-items:start;
+    }
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .board-wrap{padding:16px;}
+    .status-strip{display:block;margin-bottom:14px;}
+    .turn-card{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:13px 16px;
+      border-radius:20px;
+      background:linear-gradient(180deg,#fff,#f8fafc);
+      border:1px solid var(--border);
+      min-height:64px;
+    }
+    .player-dot{
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      box-shadow:inset 0 -4px 0 rgba(0,0,0,.16),0 5px 12px rgba(0,0,0,.16);
+      flex:0 0 auto;
+    }
+    .player-dot.p1{background:var(--p1);}
+    .player-dot.p2{background:var(--p2);}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+
+    .play-area{
+      display:grid;
+      grid-template-columns:minmax(130px,190px) minmax(480px,1fr);
+      gap:16px;
+      align-items:start;
+    }
+    .score-stack{display:grid;gap:10px;align-self:start;}
+    .top-score-card{
+      display:grid;
+      grid-template-columns:1fr auto;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--border);
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      border-radius:18px;
+      padding:12px 13px;
+      min-width:0;
+      min-height:70px;
+    }
+    .top-score-card.player-one{border-left:8px solid var(--p1);}
+    .top-score-card.player-two{border-left:8px solid var(--p2);}
+    .top-score-card span{
+      font-weight:950;
+      color:#334155;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .top-score-card strong{font-size:1.28rem;font-weight:950;color:var(--ink);white-space:nowrap;}
+    .metric-label{grid-column:1 / -1;color:var(--muted);font-size:.76rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;}
+    .mini-stat{
+      border:1px solid var(--border);
+      background:#f8fafc;
+      border-radius:16px;
+      padding:10px 12px;
+      color:#334155;
+      font-weight:850;
+      font-size:.9rem;
+      line-height:1.35;
+    }
+    .mini-stat strong{display:block;color:var(--ink);font-size:1rem;margin-top:2px;}
+
+    .board-and-message{display:grid;gap:12px;justify-items:center;}
+    .grid-holder{
+      position:relative;
+      width:100%;
+      max-width:min(820px,calc(100dvh - 170px));
+      aspect-ratio:1/1;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+      border-radius:22px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      touch-action:manipulation;
+    }
+    svg{width:100%;height:100%;display:block;user-select:none;}
+    .board-bg{fill:#fff;}
+    .box-value{font-family:var(--mathFont);font-weight:950;fill:#64748b;text-anchor:middle;dominant-baseline:middle;opacity:.92;pointer-events:none;}
+    .captured-rect.p1{fill:rgba(239,68,68,.14);stroke:rgba(239,68,68,.52);}
+    .captured-rect.p2{fill:rgba(37,99,235,.14);stroke:rgba(37,99,235,.52);}
+    .claimed-letter{font-family:var(--uiFont);font-weight:950;text-anchor:middle;dominant-baseline:middle;pointer-events:none;}
+    .claimed-letter.p1{fill:#b91c1c;}
+    .claimed-letter.p2{fill:#1d4ed8;}
+    .claimed-value{font-family:var(--mathFont);font-weight:950;text-anchor:end;dominant-baseline:hanging;pointer-events:none;opacity:.78;}
+    .claimed-value.p1{fill:#b91c1c;}
+    .claimed-value.p2{fill:#1d4ed8;}
+    .drawn-line{stroke-linecap:round;filter:drop-shadow(0 3px 4px rgba(15,23,42,.18));}
+    .drawn-line.p1{stroke:var(--p1);}
+    .drawn-line.p2{stroke:var(--p2);}
+    .preview-line{stroke:var(--purple);stroke-linecap:round;opacity:0;pointer-events:none;filter:drop-shadow(0 0 7px rgba(124,58,237,.45));}
+    .hit-line{stroke:transparent;stroke-linecap:round;cursor:pointer;}
+    .hit-line.locked{cursor:not-allowed;}
+    .dot{fill:var(--dot);filter:drop-shadow(0 2px 2px rgba(15,23,42,.22));}
+    .message{
+      width:100%;
+      padding:14px 16px;
+      border-radius:18px;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#9a3412;
+      font-weight:850;
+      min-height:50px;
+      display:flex;
+      align-items:center;
+      line-height:1.35;
+    }
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a;}
+
+    .side-panel{padding:16px;display:grid;gap:16px;position:sticky;top:92px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    h2,h3,p{margin-top:0;}
+    h2{font-size:1.15rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    h3{font-size:1rem;margin-bottom:8px;}
+    p,li{color:#475569;line-height:1.45;}
+    ul{padding-left:20px;margin-bottom:0;}
+    .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .pill{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:999px;background:#e2e8f0;color:#334155;font-weight:850;font-size:.9rem;}
+    .pill.p1{background:#fee2e2;color:#991b1b;}
+    .pill.p2{background:#dbeafe;color:#1e3a8a;}
+    .captured-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:30px;}
+    .value-chip{border-radius:999px;padding:5px 9px;font-weight:950;font-family:var(--mathFont);background:white;border:1px solid var(--border);color:#334155;}
+    .empty-values{color:#64748b;font-weight:800;font-size:.9rem;}
+    .rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(610px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .mode-modal{width:min(760px,100%);padding:26px;}
+    .mode-modal-header h2{font-size:1.9rem;margin:0 0 6px;font-weight:950;letter-spacing:-.04em;}
+    .mode-modal-header p{margin:0 0 18px;color:var(--muted);font-weight:750;}
+    .mode-card-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      grid-template-areas:"icon title" "icon desc";
+      gap:3px 16px;
+      text-align:left;
+      padding:18px 20px;
+      border-radius:22px;
+      border:2px solid var(--border);
+      background:linear-gradient(180deg,#fff,#f8fafc);
+      box-shadow:0 14px 28px rgba(15,23,42,.08);
+      color:var(--ink);
+    }
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .setup-note{margin:0 0 16px;color:var(--muted);font-weight:750;}
+    .setup-fields{display:grid;gap:12px;margin:12px 0 16px;}
+    .setup-fields label{display:grid;gap:8px;}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .setup-start{width:100%;padding:14px 18px;font-size:1.02rem;}
+    .field-help{margin-top:-4px;color:#64748b;font-size:.84rem;font-weight:750;}
+    .online-panel{display:grid;gap:12px;}
+    .online-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .join-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+    .room-badge{display:none;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;}
+    .room-badge.show{display:flex;}
+    .room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont);}
+    .online-status{padding:10px 12px;border-radius:16px;background:#f1f5f9;border:1px solid var(--border);color:#475569;font-weight:750;font-size:.92rem;line-height:1.35;}
+    .online-status.good{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .online-status.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .end-summary{display:grid;gap:10px;margin:14px 0;}
+    .summary-row{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:16px;border:1px solid var(--border);background:#f8fafc;font-weight:900;}
+
+    .brand-footer{width:min(1480px,calc(100vw - 42px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media(min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(360px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{font-size:14px;padding:9px 13px;}
+    }
+    @media(max-width:1180px){
+      .layout{grid-template-columns:1fr;}
+      .side-panel{position:static;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 28px);grid-template-columns:1fr;margin-top:14px;}
+      .play-area{grid-template-columns:1fr;}
+      .score-stack{width:min(100%,460px);justify-self:center;}
+      .grid-holder{max-width:720px;}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .actions button{font-size:14px;padding:10px 12px;}
+      .layout{width:calc(100vw - 20px);}
+      .board-wrap{padding:12px;}
+      .join-row,.online-actions,.two-col{grid-template-columns:1fr;}
+      .brand-footer{width:calc(100vw - 20px);padding:8px 10px;}
+      .mode-modal{padding:18px;}
+      .mode-card{grid-template-columns:1fr;grid-template-areas:"icon" "title" "desc";}
+    }
+    @media print{
+      .mmtTopbar,.side-panel,.status-strip,.modal-backdrop,.brand-footer{display:none!important;}
+      body{background:white;}
+      .layout{display:block;width:auto;margin:0;}
+      .card{box-shadow:none;border:0;}
+      .grid-holder{width:19cm;border:1px solid #000;}
+    }
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Dots and Boxes</div>
+    <div class="actions">
+      <button class="btn" id="rulesBtn" type="button">Rules</button>
+      <button class="btn" id="undoBtn" type="button">Undo</button>
+      <button class="btn btn-primary" id="newGameBtn" type="button">New Game</button>
+      <button class="btn" id="backToMenuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout" id="gameLayout">
+    <section class="card board-wrap">
+      <div class="status-strip">
+        <div class="turn-card" id="turnCard">
+          <div class="player-dot p1" id="turnDot"></div>
+          <div>
+            <div class="status-title" id="statusTitle">Choose a game mode</div>
+            <div class="status-subtitle" id="statusSubtitle">Select how you would like to play Dots and Boxes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="play-area">
+        <div class="score-stack" id="scoreStack">
+          <div class="top-score-card player-one">
+            <span id="topP1Label">Player 1</span>
+            <strong id="topP1Score">0</strong>
+            <div class="metric-label" id="topP1Metric">Boxes</div>
+          </div>
+          <div class="top-score-card player-two">
+            <span id="topP2Label">Player 2</span>
+            <strong id="topP2Score">0</strong>
+            <div class="metric-label" id="topP2Metric">Boxes</div>
+          </div>
+          <div class="mini-stat" id="gameTypeMini">Game type<strong>Standard Dots and Boxes</strong></div>
+          <div class="mini-stat" id="boardSizeMini">Board<strong>5 × 5 boxes</strong></div>
+        </div>
+
+        <div class="board-and-message">
+          <div class="grid-holder">
+            <svg id="boardSvg" viewBox="0 0 720 720" role="img" aria-label="Dots and Boxes game board"></svg>
+          </div>
+          <div class="message info" id="messageBox" aria-live="polite">Choose a game mode to begin.</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card side-panel" id="sidePanel">
+      <section class="panel-section">
+        <h2>Game details</h2>
+        <div class="badge-row">
+          <span class="pill" id="modeBadge">Menu</span>
+          <span class="pill" id="typeBadge">Standard</span>
+          <span class="pill" id="sizeBadge">5 × 5</span>
+        </div>
+      </section>
+      <section class="panel-section">
+        <h2>Captured values</h2>
+        <h3 id="p1ValuesHeading">Player 1</h3>
+        <div class="captured-list" id="p1ValuesList"><span class="empty-values">No boxes yet</span></div>
+        <h3 id="p2ValuesHeading" style="margin-top:14px;">Player 2</h3>
+        <div class="captured-list" id="p2ValuesList"><span class="empty-values">No boxes yet</span></div>
+      </section>
+      <section class="panel-section">
+        <h2>Quick rule</h2>
+        <p id="quickRule">Draw one line. If you complete a box, you capture it and take another turn.</p>
+      </section>
+    </aside>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop open" id="modeMenuModal" aria-hidden="false">
+    <div class="modal mode-modal" role="dialog" aria-modal="true" aria-labelledby="modeMenuTitle">
+      <div class="mode-modal-header">
+        <div>
+          <h2 id="modeMenuTitle">Choose a game mode</h2>
+          <p>Select how you would like to play Dots and Boxes.</p>
+        </div>
+      </div>
+      <div class="mode-card-grid">
+        <button class="mode-card" id="chooseComputerBtn" type="button">
+          <span class="mode-icon">🤖</span>
+          <strong>vs. Computer</strong>
+          <span>Play against an automatic opponent.</span>
+        </button>
+        <button class="mode-card" id="choosePassPlayBtn" type="button">
+          <span class="mode-icon">🔄</span>
+          <strong>Pass and Play</strong>
+          <span>Two players share one device.</span>
+        </button>
+        <button class="mode-card" id="chooseOnlineBtn" type="button">
+          <span class="mode-icon">🌐</span>
+          <strong>Online Multiplayer</strong>
+          <span>Create or join a room on two laptops.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="setupModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+      <div class="modal-header">
+        <h2 id="setupTitle">Game setup</h2>
+        <button class="btn-soft" id="setupBackBtn" type="button">Back</button>
+      </div>
+      <p class="setup-note" id="setupNote">Choose the Dots and Boxes version, board size and player names.</p>
+      <div class="setup-fields">
+        <label><span>Dots and Boxes type</span>
+          <select id="gameTypeSelect">
+            <option value="standard">Standard Dots and Boxes</option>
+            <option value="integer">Integer Sum</option>
+            <option value="mean">Mean Boxes</option>
+            <option value="median">Median Boxes</option>
+          </select>
+        </label>
+        <label><span>Board size</span>
+          <select id="boardSizeSelect">
+            <option value="3">3 × 3 boxes</option>
+            <option value="5" selected>5 × 5 boxes</option>
+            <option value="7">7 × 7 boxes</option>
+          </select>
+        </label>
+        <div class="two-col">
+          <label><span id="p1NameLabel">Player 1 name</span>
+            <input id="p1NameInput" type="text" placeholder="Player 1" maxlength="24" autocomplete="off" />
+          </label>
+          <label><span id="p2NameLabel">Player 2 name</span>
+            <input id="p2NameInput" type="text" placeholder="Player 2" maxlength="24" autocomplete="off" />
+          </label>
+        </div>
+        <label id="difficultyWrap"><span>Computer difficulty</span>
+          <select id="difficultySelect">
+            <option value="sweet">Sweet — random moves</option>
+            <option value="mild" selected>Mild — takes boxes and avoids easy gifts</option>
+            <option value="spicy">Spicy — stronger value-aware strategy</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn-primary setup-start" id="startLocalBtn" type="button">Start game</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="onlineSetupModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="onlineSetupTitle">
+      <div class="modal-header">
+        <h2 id="onlineSetupTitle">Online Multiplayer</h2>
+        <button class="btn-soft" id="onlineBackBtn" type="button">Back</button>
+      </div>
+      <div class="online-panel">
+        <div class="room-badge" id="roomBadge">
+          <span>Room <span class="room-code" id="onlineRoomCode">----</span></span>
+          <button class="btn-soft small-btn" id="copyRoomBtn" type="button">Copy</button>
+        </div>
+        <div class="online-status" id="onlineStatus">Enter your name, then create or join a room.</div>
+        <label><span>Your name</span>
+          <input id="onlineNameInput" type="text" placeholder="Enter your name before playing" maxlength="24" autocomplete="name" />
+        </label>
+        <div class="two-col">
+          <label><span>Game type for new room</span>
+            <select id="onlineGameTypeSelect">
+              <option value="standard">Standard Dots and Boxes</option>
+              <option value="integer">Integer Sum</option>
+              <option value="mean">Mean Boxes</option>
+              <option value="median">Median Boxes</option>
+            </select>
+          </label>
+          <label><span>Board size for new room</span>
+            <select id="onlineBoardSizeSelect">
+              <option value="3">3 × 3 boxes</option>
+              <option value="5" selected>5 × 5 boxes</option>
+              <option value="7">7 × 7 boxes</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-help">The host chooses the game type, board size and numbers. The joining player receives the same board.</div>
+        <div class="online-actions">
+          <button class="btn-primary" id="createOnlineBtn" type="button">Generate Game</button>
+          <button class="btn-soft" id="leaveOnlineBtn" type="button" disabled>Leave</button>
+        </div>
+        <div class="join-row">
+          <input id="roomCodeInput" type="text" placeholder="Room code" maxlength="6" autocomplete="off" />
+          <button class="btn-green" id="joinOnlineBtn" type="button">Join existing game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header">
+        <h2 id="rulesTitle">Dots and Boxes rules</h2>
+        <button class="btn-soft" id="closeRulesBtn" type="button">Close</button>
+      </div>
+      <p>Draw lines between neighbouring dots. Complete boxes, claim them, and try to finish with the best score.</p>
+      <ul class="rules-list" id="rulesList"></ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="endModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="modal-header">
+        <h2 id="endTitle">Game over</h2>
+        <button class="btn-soft" id="closeEndBtn" type="button">Close</button>
+      </div>
+      <p id="endMessage">The game has finished.</p>
+      <div class="end-summary" id="endSummary"></div>
+      <button class="btn-primary setup-start" id="playAgainBtn" type="button">Play again</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZLYpzbeplXIq3V54yZOye5jH83wWrXJo",
+      authDomain: "coordinate-connect-4.firebaseapp.com",
+      projectId: "coordinate-connect-4",
+      storageBucket: "coordinate-connect-4.firebasestorage.app",
+      messagingSenderId: "798945723284",
+      appId: "1:798945723284:web:2140725b79cff78a100581",
+      measurementId: "G-RSMWF3LR5F"
+    };
+
+    const FIREBASE_CONFIGURED = Boolean(
+      firebaseConfig.apiKey &&
+      firebaseConfig.projectId &&
+      !firebaseConfig.apiKey.includes('PASTE_') &&
+      !firebaseConfig.projectId.includes('PASTE_')
+    );
+
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let authReadyPromise = Promise.resolve(null);
+
+    const ROOM_COLLECTION = 'dotsAndBoxesGames';
+    const SIZE = 720;
+    const PAD = 72;
+    const BOARD = SIZE - PAD * 2;
+    const PLAYER_COLOURS = { 1: 'p1', 2: 'p2' };
+    const PLAYER_NAMES = { 1: 'Player 1', 2: 'Player 2' };
+
+    const svg = document.getElementById('boardSvg');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusSubtitle = document.getElementById('statusSubtitle');
+    const turnDot = document.getElementById('turnDot');
+    const messageBox = document.getElementById('messageBox');
+    const rulesBtn = document.getElementById('rulesBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const backToMenuBtn = document.getElementById('backToMenuBtn');
+    const topP1Label = document.getElementById('topP1Label');
+    const topP2Label = document.getElementById('topP2Label');
+    const topP1Score = document.getElementById('topP1Score');
+    const topP2Score = document.getElementById('topP2Score');
+    const topP1Metric = document.getElementById('topP1Metric');
+    const topP2Metric = document.getElementById('topP2Metric');
+    const gameTypeMini = document.getElementById('gameTypeMini');
+    const boardSizeMini = document.getElementById('boardSizeMini');
+    const modeBadge = document.getElementById('modeBadge');
+    const typeBadge = document.getElementById('typeBadge');
+    const sizeBadge = document.getElementById('sizeBadge');
+    const p1ValuesHeading = document.getElementById('p1ValuesHeading');
+    const p2ValuesHeading = document.getElementById('p2ValuesHeading');
+    const p1ValuesList = document.getElementById('p1ValuesList');
+    const p2ValuesList = document.getElementById('p2ValuesList');
+    const quickRule = document.getElementById('quickRule');
+
+    const modeMenuModal = document.getElementById('modeMenuModal');
+    const setupModal = document.getElementById('setupModal');
+    const onlineSetupModal = document.getElementById('onlineSetupModal');
+    const rulesModal = document.getElementById('rulesModal');
+    const endModal = document.getElementById('endModal');
+    const closeRulesBtn = document.getElementById('closeRulesBtn');
+    const closeEndBtn = document.getElementById('closeEndBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const rulesList = document.getElementById('rulesList');
+    const endTitle = document.getElementById('endTitle');
+    const endMessage = document.getElementById('endMessage');
+    const endSummary = document.getElementById('endSummary');
+
+    const chooseComputerBtn = document.getElementById('chooseComputerBtn');
+    const choosePassPlayBtn = document.getElementById('choosePassPlayBtn');
+    const chooseOnlineBtn = document.getElementById('chooseOnlineBtn');
+    const setupTitle = document.getElementById('setupTitle');
+    const setupNote = document.getElementById('setupNote');
+    const setupBackBtn = document.getElementById('setupBackBtn');
+    const gameTypeSelect = document.getElementById('gameTypeSelect');
+    const boardSizeSelect = document.getElementById('boardSizeSelect');
+    const p1NameInput = document.getElementById('p1NameInput');
+    const p2NameInput = document.getElementById('p2NameInput');
+    const p2NameLabel = document.getElementById('p2NameLabel');
+    const difficultyWrap = document.getElementById('difficultyWrap');
+    const difficultySelect = document.getElementById('difficultySelect');
+    const startLocalBtn = document.getElementById('startLocalBtn');
+
+    const onlineBackBtn = document.getElementById('onlineBackBtn');
+    const roomBadge = document.getElementById('roomBadge');
+    const onlineRoomCode = document.getElementById('onlineRoomCode');
+    const copyRoomBtn = document.getElementById('copyRoomBtn');
+    const onlineStatus = document.getElementById('onlineStatus');
+    const onlineNameInput = document.getElementById('onlineNameInput');
+    const onlineGameTypeSelect = document.getElementById('onlineGameTypeSelect');
+    const onlineBoardSizeSelect = document.getElementById('onlineBoardSizeSelect');
+    const createOnlineBtn = document.getElementById('createOnlineBtn');
+    const leaveOnlineBtn = document.getElementById('leaveOnlineBtn');
+    const roomCodeInput = document.getElementById('roomCodeInput');
+    const joinOnlineBtn = document.getElementById('joinOnlineBtn');
+
+    let state = makeEmptyState();
+    let pendingLocalMode = 'pass';
+    let computerThinking = false;
+    let endModalShownForGame = false;
+
+    const online = {
+      active: false,
+      roomCode: null,
+      ref: null,
+      unsub: null,
+      uid: null,
+      myPlayer: null,
+      data: null
+    };
+
+    if (FIREBASE_CONFIGURED) {
+      try {
+        firebaseApp = initializeApp(firebaseConfig);
+        auth = getAuth(firebaseApp);
+        db = getFirestore(firebaseApp);
+        authReadyPromise = new Promise((resolve) => {
+          onAuthStateChanged(auth, (user) => resolve(user));
+        });
+        signInAnonymously(auth).catch((err) => {
+          console.error(err);
+          setOnlineStatus('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'warn');
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function makeEmptyState(){
+      return {
+        gameMode: 'menu',
+        gameType: 'standard',
+        boardSize: 5,
+        difficulty: 'mild',
+        players: { 1: 'Player 1', 2: 'Player 2' },
+        currentPlayer: 1,
+        lines: {},
+        boxes: {},
+        values: [],
+        history: [],
+        gameOver: false,
+        onlineStatus: 'local'
+      };
+    }
+
+    function showModal(modal){
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+    }
+    function hideModal(modal){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+    }
+    function hideAllModals(){
+      [modeMenuModal, setupModal, onlineSetupModal, rulesModal, endModal].forEach(hideModal);
+    }
+
+    function typeName(type = state.gameType){
+      return {
+        standard: 'Standard Dots and Boxes',
+        integer: 'Integer Sum',
+        mean: 'Mean Boxes',
+        median: 'Median Boxes'
+      }[type] || 'Standard Dots and Boxes';
+    }
+    function shortTypeName(type = state.gameType){
+      return {
+        standard: 'Standard',
+        integer: 'Integer Sum',
+        mean: 'Mean',
+        median: 'Median'
+      }[type] || 'Standard';
+    }
+    function metricName(type = state.gameType){
+      return {
+        standard: 'Boxes',
+        integer: 'Total',
+        mean: 'Mean',
+        median: 'Median'
+      }[type] || 'Boxes';
+    }
+    function modeName(mode = state.gameMode){
+      return {
+        menu: 'Menu',
+        computer: 'vs. Computer',
+        pass: 'Pass and Play',
+        online: 'Online'
+      }[mode] || 'Menu';
+    }
+    function otherPlayer(player){ return player === 1 ? 2 : 1; }
+    function cleanName(value, fallback){
+      const cleaned = String(value || '').trim().replace(/\s+/g,' ');
+      return cleaned || fallback;
+    }
+    function getInitial(name, fallback){
+      const cleaned = String(name || '').trim();
+      return (cleaned[0] || fallback).toUpperCase();
+    }
+    function randomInt(min,max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function lineKey(type,r,c){ return `${type}-${r}-${c}`; }
+    function boxKey(r,c){ return `${r}-${c}`; }
+    function parseLineKey(key){
+      const [type,r,c] = String(key).split('-');
+      return { type, r:Number(r), c:Number(c) };
+    }
+    function parseBoxKey(key){
+      const [r,c] = String(key).split('-');
+      return { r:Number(r), c:Number(c) };
+    }
+    function cloneLines(lines = state.lines){ return { ...lines }; }
+    function cloneBoxes(boxes = state.boxes){ return { ...boxes }; }
+    function deepCloneValues(values = state.values){ return values.map(row => row.slice()); }
+    function makeValues(type, boardSize){
+      const values = [];
+      for (let r = 0; r < boardSize; r++) {
+        const row = [];
+        for (let c = 0; c < boardSize; c++) {
+          if (type === 'integer') row.push(randomInt(-9,9));
+          else if (type === 'mean') row.push(randomInt(1,9));
+          else if (type === 'median') row.push(randomInt(1,20));
+          else row.push(null);
+        }
+        values.push(row);
+      }
+      return values;
+    }
+
+    function startGame(options){
+      const players = options.players || { 1:'Player 1', 2:'Player 2' };
+      state = {
+        gameMode: options.gameMode || 'pass',
+        gameType: options.gameType || 'standard',
+        boardSize: Number(options.boardSize || 5),
+        difficulty: options.difficulty || 'mild',
+        players: { 1: players[1] || 'Player 1', 2: players[2] || 'Player 2' },
+        currentPlayer: 1,
+        lines: {},
+        boxes: {},
+        values: options.values ? deepCloneValues(options.values) : makeValues(options.gameType || 'standard', Number(options.boardSize || 5)),
+        history: [],
+        gameOver: false,
+        onlineStatus: options.onlineStatus || 'local'
+      };
+      computerThinking = false;
+      endModalShownForGame = false;
+      hideAllModals();
+      setMessage(`Draw one line between two neighbouring dots. ${state.players[1]} starts.`, 'info');
+      render();
+      maybeComputerMove();
+    }
+
+    function snapshotState(){
+      return {
+        currentPlayer: state.currentPlayer,
+        lines: cloneLines(),
+        boxes: cloneBoxes(),
+        gameOver: state.gameOver,
+        message: messageBox.textContent,
+        messageClass: [...messageBox.classList].filter(c => c !== 'message')
+      };
+    }
+    function restoreSnapshot(snap){
+      if (!snap) return;
+      state.currentPlayer = snap.currentPlayer;
+      state.lines = cloneLines(snap.lines);
+      state.boxes = cloneBoxes(snap.boxes);
+      state.gameOver = snap.gameOver;
+      messageBox.className = 'message';
+      (snap.messageClass || []).forEach(c => messageBox.classList.add(c));
+      messageBox.textContent = snap.message || 'Move undone.';
+      endModalShownForGame = false;
+      hideModal(endModal);
+      render();
+    }
+
+    function allLineKeys(boardSize = state.boardSize){
+      const keys = [];
+      for (let r = 0; r <= boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) keys.push(lineKey('h',r,c));
+      }
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c <= boardSize; c++) keys.push(lineKey('v',r,c));
+      }
+      return keys;
+    }
+    function legalLineKeys(game = state){
+      return allLineKeys(game.boardSize).filter(key => !game.lines[key]);
+    }
+    function adjacentBoxesForLine(key, boardSize = state.boardSize){
+      const { type, r, c } = parseLineKey(key);
+      const boxes = [];
+      if (type === 'h') {
+        if (r > 0) boxes.push(boxKey(r - 1, c));
+        if (r < boardSize) boxes.push(boxKey(r, c));
+      } else {
+        if (c > 0) boxes.push(boxKey(r, c - 1));
+        if (c < boardSize) boxes.push(boxKey(r, c));
+      }
+      return boxes;
+    }
+    function requiredLinesForBox(r,c){
+      return [
+        lineKey('h', r, c),
+        lineKey('h', r + 1, c),
+        lineKey('v', r, c),
+        lineKey('v', r, c + 1)
+      ];
+    }
+    function countBoxSides(lines, r, c){
+      return requiredLinesForBox(r,c).reduce((count, key) => count + (lines[key] ? 1 : 0), 0);
+    }
+    function isBoxComplete(lines, r, c){ return countBoxSides(lines, r, c) === 4; }
+    function simulateMove(game, key, player){
+      const lines = { ...game.lines, [key]: player };
+      const completed = [];
+      for (const bKey of adjacentBoxesForLine(key, game.boardSize)) {
+        if (game.boxes[bKey]) continue;
+        const { r, c } = parseBoxKey(bKey);
+        if (isBoxComplete(lines, r, c)) completed.push(bKey);
+      }
+      return { lines, completed };
+    }
+    function unclaimedThreeSidedBoxesAfter(game, lines){
+      const danger = [];
+      for (let r = 0; r < game.boardSize; r++) {
+        for (let c = 0; c < game.boardSize; c++) {
+          const bKey = boxKey(r,c);
+          if (!game.boxes[bKey] && countBoxSides(lines, r, c) === 3) danger.push(bKey);
+        }
+      }
+      return danger;
+    }
+
+    function handleLineChoice(key){
+      if (online.active) {
+        attemptOnlineLine(key);
+        return;
+      }
+      if (state.gameMode === 'menu' || state.gameOver || computerThinking) return;
+      if (state.gameMode === 'computer' && state.currentPlayer === 2) return;
+      placeLineLocal(key, state.currentPlayer);
+    }
+
+    function placeLineLocal(key, player, isComputer = false){
+      if (state.lines[key] || state.gameOver) return;
+      state.history.push(snapshotState());
+      const result = applyMoveToGame(state, key, player);
+      const captured = result.completed.length;
+      if (isGameFinished(state)) {
+        state.gameOver = true;
+        setMessage('All boxes have been captured. Game over!', 'success');
+        render();
+        showEndModal();
+        return;
+      }
+      if (captured > 0) {
+        const word = captured === 1 ? 'box' : 'boxes';
+        setMessage(`${state.players[player]} captured ${captured} ${word} and gets another turn.`, 'success');
+        launchConfetti();
+      } else {
+        state.currentPlayer = otherPlayer(player);
+        setMessage(`${state.players[state.currentPlayer]}'s turn. Draw one line.`, 'info');
+      }
+      render();
+      maybeComputerMove();
+    }
+
+    function applyMoveToGame(game, key, player){
+      if (game.lines[key] || game.gameOver) return { completed: [] };
+      game.lines[key] = player;
+      const completed = [];
+      for (const bKey of adjacentBoxesForLine(key, game.boardSize)) {
+        if (game.boxes[bKey]) continue;
+        const { r, c } = parseBoxKey(bKey);
+        if (isBoxComplete(game.lines, r, c)) {
+          game.boxes[bKey] = player;
+          completed.push(bKey);
+        }
+      }
+      return { completed };
+    }
+
+    function isGameFinished(game = state){
+      return Object.keys(game.boxes).length >= game.boardSize * game.boardSize;
+    }
+
+    function capturedBoxKeys(player, game = state){
+      return Object.entries(game.boxes).filter(([,owner]) => Number(owner) === player).map(([key]) => key);
+    }
+    function capturedValues(player, game = state){
+      return capturedBoxKeys(player, game).map(key => {
+        const { r, c } = parseBoxKey(key);
+        return game.values?.[r]?.[c];
+      }).filter(value => value !== null && value !== undefined);
+    }
+    function metricValue(player, game = state){
+      const boxes = capturedBoxKeys(player, game);
+      if (game.gameType === 'standard') return boxes.length;
+      const values = capturedValues(player, game);
+      if (values.length === 0) return null;
+      if (game.gameType === 'integer') return values.reduce((sum, value) => sum + Number(value), 0);
+      if (game.gameType === 'mean') return values.reduce((sum, value) => sum + Number(value), 0) / values.length;
+      if (game.gameType === 'median') {
+        const sorted = values.slice().sort((a,b) => a-b);
+        const mid = Math.floor(sorted.length / 2);
+        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      }
+      return boxes.length;
+    }
+    function formatMetric(value){
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return '—';
+      const rounded = Math.round(Number(value) * 10) / 10;
+      return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    }
+    function winnerInfo(game = state){
+      const p1 = metricValue(1, game);
+      const p2 = metricValue(2, game);
+      if (p1 === null && p2 === null) return { winner: null, tie: true, p1, p2 };
+      if (p1 === null) return { winner: 2, tie: false, p1, p2 };
+      if (p2 === null) return { winner: 1, tie: false, p1, p2 };
+      if (p1 === p2) return { winner: null, tie: true, p1, p2 };
+      return { winner: p1 > p2 ? 1 : 2, tie: false, p1, p2 };
+    }
+    function boxMoveValue(game, bKey){
+      if (game.gameType === 'standard') return 1;
+      const { r, c } = parseBoxKey(bKey);
+      return Number(game.values?.[r]?.[c] ?? 0);
+    }
+
+    function setMessage(text, type = ''){
+      messageBox.className = 'message';
+      if (type) messageBox.classList.add(type);
+      messageBox.textContent = text;
+    }
+
+    function render(){
+      renderBoard();
+      renderInfo();
+    }
+
+    function renderInfo(){
+      const p1Name = state.players[1] || 'Player 1';
+      const p2Name = state.players[2] || 'Player 2';
+      const p1Metric = metricValue(1);
+      const p2Metric = metricValue(2);
+      const metric = metricName();
+
+      topP1Label.textContent = p1Name;
+      topP2Label.textContent = p2Name;
+      topP1Score.textContent = formatMetric(p1Metric);
+      topP2Score.textContent = formatMetric(p2Metric);
+      topP1Metric.textContent = `${metric} • ${capturedBoxKeys(1).length} captured`;
+      topP2Metric.textContent = `${metric} • ${capturedBoxKeys(2).length} captured`;
+      p1ValuesHeading.textContent = p1Name;
+      p2ValuesHeading.textContent = p2Name;
+      renderValueList(p1ValuesList, 1);
+      renderValueList(p2ValuesList, 2);
+
+      gameTypeMini.innerHTML = `Game type<strong>${typeName()}</strong>`;
+      boardSizeMini.innerHTML = `Board<strong>${state.boardSize} × ${state.boardSize} boxes</strong>`;
+      modeBadge.textContent = modeName();
+      typeBadge.textContent = shortTypeName();
+      sizeBadge.textContent = `${state.boardSize} × ${state.boardSize}`;
+
+      const currentName = state.players[state.currentPlayer] || PLAYER_NAMES[state.currentPlayer];
+      turnDot.className = `player-dot ${PLAYER_COLOURS[state.currentPlayer] || 'p1'}`;
+
+      if (state.gameMode === 'menu') {
+        statusTitle.textContent = 'Choose a game mode';
+        statusSubtitle.textContent = 'Select how you would like to play Dots and Boxes.';
+      } else if (state.gameOver) {
+        statusTitle.textContent = 'Game over';
+        const info = winnerInfo();
+        statusSubtitle.textContent = info.tie ? 'The game finished as a draw.' : `${state.players[info.winner]} wins.`;
+      } else if (online.active && online.data?.status === 'waiting') {
+        statusTitle.textContent = 'Waiting for Player 2';
+        statusSubtitle.textContent = 'Share the room code so another player can join.';
+      } else if (state.gameMode === 'computer' && state.currentPlayer === 2) {
+        statusTitle.textContent = `${currentName}'s turn`;
+        statusSubtitle.textContent = computerThinking ? 'Computer is thinking...' : 'Computer will choose a line.';
+      } else {
+        statusTitle.textContent = `${currentName}'s turn`;
+        statusSubtitle.textContent = 'Draw one horizontal or vertical line between neighbouring dots.';
+      }
+
+      quickRule.textContent = ruleForCurrentType();
+      undoBtn.disabled = online.active || state.history.length === 0 || state.gameMode === 'menu' || computerThinking;
+      newGameBtn.disabled = state.gameMode === 'menu' || online.active && online.myPlayer !== 1;
+    }
+
+    function ruleForCurrentType(){
+      if (state.gameType === 'integer') return 'Integer Sum: capture box values from −9 to 9. Highest total wins, so negative boxes can hurt your score.';
+      if (state.gameType === 'mean') return 'Mean Boxes: capture values from 1 to 9. You need at least one captured box, and the highest mean wins.';
+      if (state.gameType === 'median') return 'Median Boxes: capture values from 1 to 20. Arrange your values and the highest median wins.';
+      return 'Standard: capture the most boxes. Completing a box gives you another turn.';
+    }
+
+    function renderValueList(container, player){
+      const values = capturedValues(player);
+      container.innerHTML = '';
+      if (state.gameType === 'standard') {
+        const span = document.createElement('span');
+        span.className = 'empty-values';
+        span.textContent = `${capturedBoxKeys(player).length} boxes captured`;
+        container.appendChild(span);
+        return;
+      }
+      if (values.length === 0) {
+        const span = document.createElement('span');
+        span.className = 'empty-values';
+        span.textContent = 'No boxes yet';
+        container.appendChild(span);
+        return;
+      }
+      values.forEach(value => {
+        const chip = document.createElement('span');
+        chip.className = 'value-chip';
+        chip.textContent = value;
+        container.appendChild(chip);
+      });
+    }
+
+    function renderBoard(){
+      svg.innerHTML = '';
+      const boardSize = state.boardSize;
+      const dots = boardSize + 1;
+      const step = BOARD / boardSize;
+      const dotRadius = boardSize <= 3 ? 8 : boardSize === 5 ? 6.5 : 5.3;
+      const lineWidth = boardSize <= 3 ? 9 : boardSize === 5 ? 7 : 5.8;
+      const hitWidth = boardSize <= 3 ? 34 : boardSize === 5 ? 28 : 22;
+      const valueFont = boardSize <= 3 ? 34 : boardSize === 5 ? 25 : 18;
+      const claimFont = boardSize <= 3 ? 39 : boardSize === 5 ? 30 : 22;
+
+      const bg = createSvg('rect', { x:0, y:0, width:SIZE, height:SIZE, class:'board-bg' });
+      svg.appendChild(bg);
+
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          const x = PAD + c * step;
+          const y = PAD + r * step;
+          const bKey = boxKey(r,c);
+          const owner = Number(state.boxes[bKey] || 0);
+          const value = state.values?.[r]?.[c];
+          if (owner) {
+            svg.appendChild(createSvg('rect', {
+              x:x + 7,
+              y:y + 7,
+              width:Math.max(4, step - 14),
+              height:Math.max(4, step - 14),
+              rx:Math.max(8, step * .09),
+              class:`captured-rect ${PLAYER_COLOURS[owner]}`,
+              'stroke-width':2
+            }));
+          }
+          if (state.gameType !== 'standard' && !owner) {
+            svg.appendChild(createSvg('text', {
+              x:x + step / 2,
+              y:y + step / 2,
+              class:'box-value',
+              'font-size':valueFont
+            }, value));
+          }
+          if (owner) {
+            svg.appendChild(createSvg('text', {
+              x:x + step / 2,
+              y:y + step / 2 + (state.gameType === 'standard' ? 0 : step * .08),
+              class:`claimed-letter ${PLAYER_COLOURS[owner]}`,
+              'font-size':claimFont
+            }, getInitial(state.players[owner], owner === 1 ? 'R' : 'B')));
+            if (state.gameType !== 'standard') {
+              svg.appendChild(createSvg('text', {
+                x:x + step - 12,
+                y:y + 10,
+                class:`claimed-value ${PLAYER_COLOURS[owner]}`,
+                'font-size':Math.max(12, valueFont * .68)
+              }, value));
+            }
+          }
+        }
+      }
+
+      for (const [key, owner] of Object.entries(state.lines)) {
+        const points = linePoints(key, step);
+        svg.appendChild(createSvg('line', {
+          x1:points.x1, y1:points.y1, x2:points.x2, y2:points.y2,
+          class:`drawn-line ${PLAYER_COLOURS[Number(owner)]}`,
+          'stroke-width':lineWidth
+        }));
+      }
+
+      const legal = legalLineKeys();
+      const boardLocked = isBoardLockedForInput();
+      for (const key of legal) {
+        const points = linePoints(key, step);
+        const preview = createSvg('line', {
+          x1:points.x1, y1:points.y1, x2:points.x2, y2:points.y2,
+          class:'preview-line',
+          'stroke-width':lineWidth
+        });
+        svg.appendChild(preview);
+        const hit = createSvg('line', {
+          x1:points.x1, y1:points.y1, x2:points.x2, y2:points.y2,
+          class:`hit-line ${boardLocked ? 'locked' : ''}`,
+          'stroke-width':hitWidth,
+          'data-key':key
+        });
+        hit.addEventListener('mouseenter', () => {
+          if (!isBoardLockedForInput()) preview.setAttribute('opacity','0.72');
+        });
+        hit.addEventListener('mouseleave', () => preview.setAttribute('opacity','0'));
+        hit.addEventListener('click', () => handleLineChoice(key));
+        svg.appendChild(hit);
+      }
+
+      for (let r = 0; r < dots; r++) {
+        for (let c = 0; c < dots; c++) {
+          svg.appendChild(createSvg('circle', {
+            cx:PAD + c * step,
+            cy:PAD + r * step,
+            r:dotRadius,
+            class:'dot'
+          }));
+        }
+      }
+    }
+
+    function linePoints(key, step){
+      const { type, r, c } = parseLineKey(key);
+      if (type === 'h') {
+        const y = PAD + r * step;
+        return { x1:PAD + c * step, y1:y, x2:PAD + (c + 1) * step, y2:y };
+      }
+      const x = PAD + c * step;
+      return { x1:x, y1:PAD + r * step, x2:x, y2:PAD + (r + 1) * step };
+    }
+
+    function createSvg(tag, attrs = {}, text = null){
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.entries(attrs).forEach(([key,value]) => el.setAttribute(key, value));
+      if (text !== null && text !== undefined) el.textContent = text;
+      return el;
+    }
+
+    function isBoardLockedForInput(){
+      if (state.gameMode === 'menu' || state.gameOver || computerThinking) return true;
+      if (online.active) {
+        if (online.data?.status !== 'playing') return true;
+        return Number(online.myPlayer) !== Number(state.currentPlayer);
+      }
+      if (state.gameMode === 'computer' && state.currentPlayer === 2) return true;
+      return false;
+    }
+
+    function maybeComputerMove(){
+      if (state.gameMode !== 'computer' || state.currentPlayer !== 2 || state.gameOver || computerThinking || online.active) return;
+      computerThinking = true;
+      renderInfo();
+      setTimeout(() => {
+        if (state.gameMode !== 'computer' || state.currentPlayer !== 2 || state.gameOver) {
+          computerThinking = false;
+          renderInfo();
+          return;
+        }
+        const key = chooseComputerMove();
+        computerThinking = false;
+        if (key) placeLineLocal(key, 2, true);
+        else renderInfo();
+      }, state.difficulty === 'spicy' ? 650 : 430);
+    }
+
+    function chooseComputerMove(){
+      const legal = legalLineKeys();
+      if (!legal.length) return null;
+      if (state.difficulty === 'sweet') return randomChoice(legal);
+
+      const capturing = legal.map(key => ({ key, sim: simulateMove(state, key, 2) })).filter(item => item.sim.completed.length > 0);
+      if (state.difficulty === 'mild') {
+        if (capturing.length) {
+          return bestBy(capturing, item => capturePreference(item.sim.completed, state)).key;
+        }
+        const safe = legal.filter(key => unclaimedThreeSidedBoxesAfter(state, simulateMove(state, key, 2).lines).length === 0);
+        return randomChoice(safe.length ? safe : legal);
+      }
+
+      return bestBy(legal.map(key => ({ key, score: spicyMoveScore(key) })), item => item.score).key;
+    }
+
+    function randomChoice(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+    function bestBy(arr, scorer){
+      let best = arr[0];
+      let bestScore = scorer(best);
+      for (let i = 1; i < arr.length; i++) {
+        const score = scorer(arr[i]);
+        if (score > bestScore) {
+          best = arr[i];
+          bestScore = score;
+        }
+      }
+      return best;
+    }
+    function capturePreference(completed, game){
+      if (game.gameType === 'standard') return completed.length;
+      return completed.reduce((sum, bKey) => sum + boxMoveValue(game, bKey), 0) + completed.length * .08;
+    }
+    function spicyMoveScore(key){
+      const sim = simulateMove(state, key, 2);
+      const captured = sim.completed;
+      const captureValue = capturePreference(captured, state);
+      const dangerBoxes = unclaimedThreeSidedBoxesAfter(state, sim.lines).filter(bKey => !captured.includes(bKey));
+      let danger = 0;
+      for (const bKey of dangerBoxes) {
+        if (state.gameType === 'standard') danger += 1;
+        else {
+          const value = boxMoveValue(state, bKey);
+          if (state.gameType === 'integer') danger += value;
+          else danger += Math.max(1, value);
+        }
+      }
+      const centreBonus = lineCentreBonus(key);
+      return captureValue * 40 + captured.length * 100 - danger * 24 + centreBonus + Math.random();
+    }
+    function lineCentreBonus(key){
+      const { type, r, c } = parseLineKey(key);
+      const mid = state.boardSize / 2;
+      const lr = type === 'h' ? r : r + .5;
+      const lc = type === 'h' ? c + .5 : c;
+      return -Math.hypot(lr - mid, lc - mid) * .2;
+    }
+
+    function showEndModal(){
+      if (endModalShownForGame) return;
+      endModalShownForGame = true;
+      const info = winnerInfo();
+      const metric = metricName();
+      endTitle.textContent = info.tie ? 'Game over — draw' : `Game over — ${state.players[info.winner]} wins!`;
+      endMessage.textContent = info.tie
+        ? `Both players finished with the same ${metric.toLowerCase()}.`
+        : `${state.players[info.winner]} had the highest ${metric.toLowerCase()}.`;
+      endSummary.innerHTML = '';
+      [1,2].forEach(player => {
+        const row = document.createElement('div');
+        row.className = 'summary-row';
+        row.innerHTML = `<span>${state.players[player]}</span><strong>${metric}: ${formatMetric(metricValue(player))} · Boxes: ${capturedBoxKeys(player).length}</strong>`;
+        endSummary.appendChild(row);
+      });
+      showModal(endModal);
+    }
+
+    function launchConfetti(){
+      const colours = ['#ef4444','#2563eb','#6cbc4a','#f59e0b','#7c3aed'];
+      for (let i = 0; i < 34; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.background = colours[i % colours.length];
+        piece.style.animationDelay = `${Math.random() * 180}ms`;
+        piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1200);
+      }
+    }
+
+    function populateRules(){
+      const rules = [
+        'Players take turns drawing one line between two neighbouring dots.',
+        'Lines can be horizontal or vertical. Diagonal lines are not allowed.',
+        'If your line completes the fourth side of a square, you capture that box.',
+        'If you capture a box, you take another turn immediately.',
+        'A single line can complete two boxes. If it does, you capture both.',
+        'The game ends when every box has been captured.',
+        state.gameType === 'standard' ? 'Standard Dots and Boxes: the player with the most boxes wins.' : ruleForCurrentType()
+      ];
+      rulesList.innerHTML = '';
+      rules.forEach(rule => {
+        const li = document.createElement('li');
+        li.textContent = rule;
+        rulesList.appendChild(li);
+      });
+    }
+
+    function openLocalSetup(mode){
+      pendingLocalMode = mode;
+      setupTitle.textContent = mode === 'computer' ? 'vs. Computer setup' : 'Pass and Play setup';
+      setupNote.textContent = mode === 'computer'
+        ? 'Choose the Dots and Boxes version, board size, your name and the computer level.'
+        : 'Choose the Dots and Boxes version, board size and player names.';
+      p2NameInput.value = mode === 'computer' ? 'Computer' : '';
+      p2NameInput.disabled = mode === 'computer';
+      p2NameLabel.textContent = mode === 'computer' ? 'Player 2' : 'Player 2 name';
+      difficultyWrap.style.display = mode === 'computer' ? 'grid' : 'none';
+      hideModal(modeMenuModal);
+      showModal(setupModal);
+      setTimeout(() => p1NameInput.focus(), 50);
+    }
+
+    async function ensureAuth(){
+      if (!FIREBASE_CONFIGURED || !auth || !db) throw new Error('Firebase is not configured.');
+      const user = await authReadyPromise;
+      if (user) return user;
+      return new Promise((resolve, reject) => {
+        const unsub = onAuthStateChanged(auth, (nextUser) => {
+          if (nextUser) {
+            unsub();
+            resolve(nextUser);
+          }
+        }, reject);
+      });
+    }
+
+    function setOnlineStatus(text, type = ''){
+      onlineStatus.className = 'online-status';
+      if (type) onlineStatus.classList.add(type);
+      onlineStatus.textContent = text;
+    }
+
+    async function createOnlineRoom(){
+      const name = cleanName(onlineNameInput.value, 'Player 1');
+      if (!FIREBASE_CONFIGURED) {
+        setOnlineStatus('Online play needs the Firebase configuration to be active.', 'warn');
+        return;
+      }
+      try {
+        createOnlineBtn.disabled = true;
+        setOnlineStatus('Creating room...', 'warn');
+        const user = await ensureAuth();
+        online.uid = user.uid;
+        const gameType = onlineGameTypeSelect.value;
+        const boardSize = Number(onlineBoardSizeSelect.value);
+        const values = makeValues(gameType, boardSize);
+        const code = await makeUniqueRoomCode();
+        const ref = doc(db, ROOM_COLLECTION, code);
+        await setDoc(ref, {
+          status: 'waiting',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          hostUid: user.uid,
+          gameType,
+          boardSize,
+          values,
+          currentPlayer: 1,
+          lines: {},
+          boxes: {},
+          gameOver: false,
+          players: {
+            '1': { uid: user.uid, name },
+            '2': { uid: null, name: 'Player 2' }
+          }
+        });
+        online.myPlayer = 1;
+        subscribeRoom(code);
+        roomBadge.classList.add('show');
+        onlineRoomCode.textContent = code;
+        leaveOnlineBtn.disabled = false;
+        setOnlineStatus('Room created. Share this room code with Player 2.', 'good');
+      } catch (err) {
+        console.error(err);
+        setOnlineStatus(err.message || 'Could not create the room.', 'warn');
+      } finally {
+        createOnlineBtn.disabled = false;
+      }
+    }
+
+    async function makeUniqueRoomCode(){
+      for (let i = 0; i < 12; i++) {
+        const code = Math.random().toString(36).slice(2,8).toUpperCase().replace(/[^A-Z0-9]/g,'').padEnd(6,'X').slice(0,6);
+        const ref = doc(db, ROOM_COLLECTION, code);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return code;
+      }
+      throw new Error('Could not make a unique room code. Try again.');
+    }
+
+    async function joinOnlineRoom(){
+      const name = cleanName(onlineNameInput.value, 'Player 2');
+      const code = roomCodeInput.value.trim().toUpperCase();
+      if (!code) {
+        setOnlineStatus('Enter a room code first.', 'warn');
+        return;
+      }
+      if (!FIREBASE_CONFIGURED) {
+        setOnlineStatus('Online play needs the Firebase configuration to be active.', 'warn');
+        return;
+      }
+      try {
+        joinOnlineBtn.disabled = true;
+        setOnlineStatus('Joining room...', 'warn');
+        const user = await ensureAuth();
+        online.uid = user.uid;
+        const ref = doc(db, ROOM_COLLECTION, code);
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(ref);
+          if (!snap.exists()) throw new Error('Room not found. Check the code and try again.');
+          const data = snap.data();
+          const p1Uid = data.players?.['1']?.uid;
+          const p2Uid = data.players?.['2']?.uid;
+          if (p1Uid === user.uid) {
+            online.myPlayer = 1;
+            return;
+          }
+          if (p2Uid && p2Uid !== user.uid) throw new Error('This room already has two players.');
+          online.myPlayer = 2;
+          transaction.update(ref, {
+            status: 'playing',
+            updatedAt: serverTimestamp(),
+            'players.2': { uid: user.uid, name }
+          });
+        });
+        subscribeRoom(code);
+        roomBadge.classList.add('show');
+        onlineRoomCode.textContent = code;
+        leaveOnlineBtn.disabled = false;
+        setOnlineStatus('Joined room. The shared game board is ready.', 'good');
+      } catch (err) {
+        console.error(err);
+        setOnlineStatus(err.message || 'Could not join the room.', 'warn');
+      } finally {
+        joinOnlineBtn.disabled = false;
+      }
+    }
+
+    function subscribeRoom(code){
+      if (online.unsub) online.unsub();
+      online.active = true;
+      online.roomCode = code;
+      online.ref = doc(db, ROOM_COLLECTION, code);
+      online.unsub = onSnapshot(online.ref, (snap) => {
+        if (!snap.exists()) {
+          setOnlineStatus('This room no longer exists.', 'warn');
+          leaveOnlineRoom(false);
+          return;
+        }
+        const data = snap.data();
+        online.data = data;
+        state = stateFromOnlineData(data);
+        endModalShownForGame = false;
+        hideModal(modeMenuModal);
+        hideModal(setupModal);
+        if (data.status === 'playing') hideModal(onlineSetupModal);
+        if (data.status === 'waiting') {
+          setMessage('Waiting for Player 2 to join. Share the room code.', 'info');
+        } else if (data.gameOver) {
+          setMessage('All boxes have been captured. Game over!', 'success');
+        } else if (Number(online.myPlayer) === Number(data.currentPlayer)) {
+          setMessage('Your turn. Draw one line.', 'info');
+        } else {
+          setMessage(`${state.players[state.currentPlayer]}'s turn. Waiting for their move.`, 'info');
+        }
+        render();
+        if (data.gameOver) showEndModal();
+      }, (err) => {
+        console.error(err);
+        setOnlineStatus('Lost connection to the room.', 'warn');
+      });
+    }
+
+    function stateFromOnlineData(data){
+      return {
+        gameMode: 'online',
+        gameType: data.gameType || 'standard',
+        boardSize: Number(data.boardSize || 5),
+        difficulty: 'mild',
+        players: {
+          1: data.players?.['1']?.name || 'Player 1',
+          2: data.players?.['2']?.name || 'Player 2'
+        },
+        currentPlayer: Number(data.currentPlayer || 1),
+        lines: data.lines || {},
+        boxes: data.boxes || {},
+        values: data.values || makeValues(data.gameType || 'standard', Number(data.boardSize || 5)),
+        history: [],
+        gameOver: Boolean(data.gameOver),
+        onlineStatus: data.status || 'waiting'
+      };
+    }
+
+    async function attemptOnlineLine(key){
+      if (!online.active || !online.ref || state.gameOver) return;
+      if (online.data?.status !== 'playing') {
+        setMessage('Wait for another player to join before starting.', 'info');
+        return;
+      }
+      if (Number(online.myPlayer) !== Number(state.currentPlayer)) {
+        setMessage('It is not your turn yet.', 'info');
+        return;
+      }
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(online.ref);
+          if (!snap.exists()) throw new Error('Room not found.');
+          const data = snap.data();
+          if (data.status !== 'playing') throw new Error('This game is not ready yet.');
+          const player = Number(online.myPlayer);
+          if (Number(data.currentPlayer) !== player) throw new Error('It is not your turn.');
+          if (data.gameOver) throw new Error('The game has finished.');
+          const game = stateFromOnlineData(data);
+          if (game.lines[key]) throw new Error('That line has already been drawn.');
+          const result = applyMoveToGame(game, key, player);
+          let nextPlayer = player;
+          if (result.completed.length === 0) nextPlayer = otherPlayer(player);
+          const gameOver = isGameFinished(game);
+          transaction.update(online.ref, {
+            lines: game.lines,
+            boxes: game.boxes,
+            currentPlayer: nextPlayer,
+            gameOver,
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        setMessage(err.message || 'Move could not be played.', 'info');
+      }
+    }
+
+    function leaveOnlineRoom(showMenu = true){
+      if (online.unsub) online.unsub();
+      online.active = false;
+      online.roomCode = null;
+      online.ref = null;
+      online.unsub = null;
+      online.myPlayer = null;
+      online.data = null;
+      roomBadge.classList.remove('show');
+      onlineRoomCode.textContent = '----';
+      leaveOnlineBtn.disabled = true;
+      if (showMenu) {
+        state = makeEmptyState();
+        setMessage('Choose a game mode to begin.', 'info');
+        render();
+        hideAllModals();
+        showModal(modeMenuModal);
+      }
+    }
+
+    chooseComputerBtn.addEventListener('click', () => openLocalSetup('computer'));
+    choosePassPlayBtn.addEventListener('click', () => openLocalSetup('pass'));
+    chooseOnlineBtn.addEventListener('click', () => {
+      hideModal(modeMenuModal);
+      showModal(onlineSetupModal);
+      setTimeout(() => onlineNameInput.focus(), 50);
+    });
+    setupBackBtn.addEventListener('click', () => {
+      hideModal(setupModal);
+      showModal(modeMenuModal);
+    });
+    onlineBackBtn.addEventListener('click', () => {
+      hideModal(onlineSetupModal);
+      showModal(modeMenuModal);
+    });
+    startLocalBtn.addEventListener('click', () => {
+      const players = {
+        1: cleanName(p1NameInput.value, 'Player 1'),
+        2: pendingLocalMode === 'computer' ? 'Computer' : cleanName(p2NameInput.value, 'Player 2')
+      };
+      startGame({
+        gameMode: pendingLocalMode,
+        gameType: gameTypeSelect.value,
+        boardSize: Number(boardSizeSelect.value),
+        difficulty: difficultySelect.value,
+        players
+      });
+    });
+    rulesBtn.addEventListener('click', () => {
+      populateRules();
+      showModal(rulesModal);
+    });
+    closeRulesBtn.addEventListener('click', () => hideModal(rulesModal));
+    closeEndBtn.addEventListener('click', () => hideModal(endModal));
+    playAgainBtn.addEventListener('click', () => {
+      hideModal(endModal);
+      if (online.active) {
+        if (online.myPlayer === 1) resetOnlineGame();
+        return;
+      }
+      startGame({
+        gameMode: state.gameMode,
+        gameType: state.gameType,
+        boardSize: state.boardSize,
+        difficulty: state.difficulty,
+        players: state.players
+      });
+    });
+    undoBtn.addEventListener('click', () => {
+      if (online.active || computerThinking) return;
+      const snap = state.history.pop();
+      restoreSnapshot(snap);
+      setMessage('Move undone.', 'info');
+    });
+    newGameBtn.addEventListener('click', () => {
+      if (online.active) {
+        if (online.myPlayer === 1) resetOnlineGame();
+        else setMessage('Only the host can start a new online game.', 'info');
+        return;
+      }
+      if (state.gameMode === 'menu') return;
+      startGame({
+        gameMode: state.gameMode,
+        gameType: state.gameType,
+        boardSize: state.boardSize,
+        difficulty: state.difficulty,
+        players: state.players
+      });
+    });
+    backToMenuBtn.addEventListener('click', () => {
+      if (online.active) leaveOnlineRoom(false);
+      state = makeEmptyState();
+      computerThinking = false;
+      endModalShownForGame = false;
+      setMessage('Choose a game mode to begin.', 'info');
+      render();
+      hideAllModals();
+      showModal(modeMenuModal);
+    });
+    createOnlineBtn.addEventListener('click', createOnlineRoom);
+    joinOnlineBtn.addEventListener('click', joinOnlineRoom);
+    leaveOnlineBtn.addEventListener('click', () => leaveOnlineRoom(true));
+    copyRoomBtn.addEventListener('click', async () => {
+      const code = onlineRoomCode.textContent.trim();
+      if (!code || code === '----') return;
+      try {
+        await navigator.clipboard.writeText(code);
+        setOnlineStatus('Room code copied.', 'good');
+      } catch {
+        setOnlineStatus(`Room code: ${code}`, 'good');
+      }
+    });
+
+    async function resetOnlineGame(){
+      if (!online.active || !online.ref || online.myPlayer !== 1) return;
+      const values = makeValues(state.gameType, state.boardSize);
+      await updateDoc(online.ref, {
+        lines: {},
+        boxes: {},
+        values,
+        currentPlayer: 1,
+        gameOver: false,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
