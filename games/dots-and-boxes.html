@@ -256,6 +256,72 @@
       line-height:1.35;
     }
     .mini-stat strong{display:block;color:var(--ink);font-size:1rem;margin-top:2px;}
+    .dice-panel{
+      display:none;
+      border:1px solid #bfdbfe;
+      background:linear-gradient(180deg,#eff6ff,#ffffff 72%);
+      border-radius:26px;
+      padding:18px;
+      gap:16px;
+      box-shadow:0 18px 42px rgba(37,99,235,.12);
+    }
+    .dice-panel.show{display:grid;}
+    .dice-title{font-weight:950;color:#1e3a8a;line-height:1.1;font-size:1.35rem;letter-spacing:-.03em;}
+    .dice-subtitle{font-size:.94rem;color:#475569;font-weight:800;line-height:1.35;}
+    .dice-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .die{
+      min-height:96px;
+      border-radius:22px;
+      background:white;
+      border:3px solid #dbeafe;
+      display:grid;
+      place-items:center;
+      font-size:3rem;
+      font-weight:950;
+      color:#0f172a;
+      box-shadow:inset 0 -6px 0 rgba(37,99,235,.10),0 12px 24px rgba(37,99,235,.14);
+    }
+    .die.rolling{animation:diceWobble .28s ease-in-out infinite;}
+    @keyframes diceWobble{
+      0%{transform:translateY(0) rotate(0deg) scale(1);}
+      35%{transform:translateY(-5px) rotate(-6deg) scale(1.04);}
+      70%{transform:translateY(3px) rotate(5deg) scale(.98);}
+      100%{transform:translateY(0) rotate(0deg) scale(1);}
+    }
+    .dice-answer-label{display:grid;gap:7px;font-weight:950;color:#334155;}
+    .dice-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}
+    .dice-answer-input{
+      width:100%;
+      min-height:56px;
+      border:2px solid #dbeafe;
+      border-radius:18px;
+      background:white;
+      color:#0f172a;
+      font-size:1.3rem;
+      font-weight:950;
+      text-align:center;
+      padding:10px 12px;
+    }
+    .dice-answer-input.correct{border-color:#86efac;background:#dcfce7;color:#166534;box-shadow:0 0 0 4px rgba(34,197,94,.14);}
+    .dice-answer-input.incorrect{border-color:#fca5a5;background:#fee2e2;color:#991b1b;animation:answerShake .34s ease-in-out;box-shadow:0 0 0 4px rgba(239,68,68,.12);}
+    @keyframes answerShake{
+      0%,100%{transform:translateX(0);} 20%{transform:translateX(-7px);} 40%{transform:translateX(7px);} 60%{transform:translateX(-5px);} 80%{transform:translateX(5px);}
+    }
+    .dice-feedback{
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      border-radius:18px;
+      padding:12px 14px;
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      color:#1e3a8a;
+      font-weight:850;
+      line-height:1.35;
+    }
+    .dice-feedback.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .dice-feedback.error{background:#fee2e2;border-color:#fca5a5;color:#991b1b;}
+    .dice-action{width:100%;padding:13px 14px;font-size:1rem;}
 
     .board-and-message{display:grid;gap:12px;justify-items:center;}
     .grid-holder{
@@ -284,9 +350,10 @@
     .drawn-line.p1{stroke:var(--p1);}
     .drawn-line.p2{stroke:var(--p2);}
     .preview-line{stroke:var(--purple);stroke-linecap:round;opacity:0;pointer-events:none;filter:drop-shadow(0 0 5px rgba(124,58,237,.22));transition:opacity .12s ease;}
-    .preview-line.preview-visible{opacity:.32;}
+    .preview-line.target-ready{stroke:var(--green);opacity:.18;}
+    .preview-line.preview-visible{opacity:.48;}
     .hit-line{stroke:transparent;stroke-linecap:round;cursor:pointer;pointer-events:stroke;}
-    .hit-line.locked{cursor:not-allowed;}
+    .hit-line.locked,.hit-line.unavailable{cursor:not-allowed;}
     .dot{fill:var(--dot);filter:drop-shadow(0 2px 2px rgba(15,23,42,.22));}
     .message{
       width:100%;
@@ -303,8 +370,10 @@
     }
     .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
     .message.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a;}
+    .board-and-message .message{display:none;}
 
     .side-panel{padding:16px;display:grid;gap:16px;position:sticky;top:92px;}
+    .side-panel.hidden{display:none;}
     .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
     h2,h3,p{margin-top:0;}
     h2{font-size:1.15rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
@@ -465,25 +534,35 @@
     </section>
 
     <aside class="card side-panel" id="sidePanel">
-      <section class="panel-section">
-        <h2>Game details</h2>
-        <div class="badge-row">
-          <span class="pill" id="modeBadge">Menu</span>
-          <span class="pill" id="typeBadge">Standard</span>
-          <span class="pill" id="sizeBadge">5 × 5</span>
+      <div class="dice-panel" id="dicePanel">
+        <div>
+          <div class="dice-title" id="diceTitle">Roll for target</div>
+          <div class="dice-subtitle" id="diceSubtitle">Roll two dice, then enter the product.</div>
         </div>
-      </section>
-      <section class="panel-section">
-        <h2>Captured values</h2>
+        <div class="dice-row" aria-live="polite">
+          <div class="die" id="dieOne">–</div>
+          <div class="die" id="dieTwo">–</div>
+        </div>
+        <button class="btn-primary dice-action" id="rollDiceBtn" type="button">Roll dice</button>
+        <label class="dice-answer-label" for="diceAnswerInput">
+          <span>Enter the product</span>
+          <div class="dice-answer-row">
+            <input class="dice-answer-input" id="diceAnswerInput" type="text" inputmode="numeric" autocomplete="off" placeholder="?" />
+            <button class="btn-green" id="checkProductBtn" type="button">Check</button>
+          </div>
+        </label>
+        <div class="dice-feedback" id="diceFeedback" aria-live="polite">Roll the dice to begin.</div>
+      </div>
+      <div hidden>
+        <span id="modeBadge">Menu</span>
+        <span id="typeBadge">Standard</span>
+        <span id="sizeBadge">5 × 5</span>
         <h3 id="p1ValuesHeading">Player 1</h3>
-        <div class="captured-list" id="p1ValuesList"><span class="empty-values">No boxes yet</span></div>
-        <h3 id="p2ValuesHeading" style="margin-top:14px;">Player 2</h3>
-        <div class="captured-list" id="p2ValuesList"><span class="empty-values">No boxes yet</span></div>
-      </section>
-      <section class="panel-section">
-        <h2>Quick rule</h2>
-        <p id="quickRule">Draw one line. If you complete a box, you capture it and take another turn.</p>
-      </section>
+        <div id="p1ValuesList"></div>
+        <h3 id="p2ValuesHeading">Player 2</h3>
+        <div id="p2ValuesList"></div>
+        <p id="quickRule"></p>
+      </div>
     </aside>
   </main>
 
@@ -531,6 +610,14 @@
             <option value="integer">Integer Sum</option>
             <option value="mean">Mean Boxes</option>
             <option value="median">Median Boxes</option>
+            <option value="multiples">Multiples Capture</option>
+          </select>
+        </label>
+        <label id="multiplesDiceWrap"><span>Dice / times table size</span>
+          <select id="multiplesDiceSelect">
+            <option value="6" selected>1–6 dice / times table</option>
+            <option value="10">1–10 dice / times table</option>
+            <option value="12">1–12 dice / times table</option>
           </select>
         </label>
         <label><span>Board size</span>
@@ -582,6 +669,14 @@
               <option value="integer">Integer Sum</option>
               <option value="mean">Mean Boxes</option>
               <option value="median">Median Boxes</option>
+              <option value="multiples">Multiples Capture</option>
+            </select>
+          </label>
+          <label id="onlineMultiplesDiceWrap"><span>Dice / times table size</span>
+            <select id="onlineMultiplesDiceSelect">
+              <option value="6" selected>1–6 dice / times table</option>
+              <option value="10">1–10 dice / times table</option>
+              <option value="12">1–12 dice / times table</option>
             </select>
           </label>
           <label><span>Board size for new room</span>
@@ -667,6 +762,7 @@
     const statusSubtitle = document.getElementById('statusSubtitle');
     const turnDot = document.getElementById('turnDot');
     const messageBox = document.getElementById('messageBox');
+    const sidePanel = document.getElementById('sidePanel');
     const rulesBtn = document.getElementById('rulesBtn');
     const undoBtn = document.getElementById('undoBtn');
     const newGameBtn = document.getElementById('newGameBtn');
@@ -687,6 +783,15 @@
     const p1ValuesList = document.getElementById('p1ValuesList');
     const p2ValuesList = document.getElementById('p2ValuesList');
     const quickRule = document.getElementById('quickRule');
+    const dicePanel = document.getElementById('dicePanel');
+    const diceTitle = document.getElementById('diceTitle');
+    const diceSubtitle = document.getElementById('diceSubtitle');
+    const dieOne = document.getElementById('dieOne');
+    const dieTwo = document.getElementById('dieTwo');
+    const rollDiceBtn = document.getElementById('rollDiceBtn');
+    const diceAnswerInput = document.getElementById('diceAnswerInput');
+    const checkProductBtn = document.getElementById('checkProductBtn');
+    const diceFeedback = document.getElementById('diceFeedback');
 
     const modeMenuModal = document.getElementById('modeMenuModal');
     const setupModal = document.getElementById('setupModal');
@@ -708,6 +813,8 @@
     const setupNote = document.getElementById('setupNote');
     const setupBackBtn = document.getElementById('setupBackBtn');
     const gameTypeSelect = document.getElementById('gameTypeSelect');
+    const multiplesDiceWrap = document.getElementById('multiplesDiceWrap');
+    const multiplesDiceSelect = document.getElementById('multiplesDiceSelect');
     const boardSizeSelect = document.getElementById('boardSizeSelect');
     const p1NameInput = document.getElementById('p1NameInput');
     const p2NameInput = document.getElementById('p2NameInput');
@@ -723,6 +830,8 @@
     const onlineStatus = document.getElementById('onlineStatus');
     const onlineNameInput = document.getElementById('onlineNameInput');
     const onlineGameTypeSelect = document.getElementById('onlineGameTypeSelect');
+    const onlineMultiplesDiceWrap = document.getElementById('onlineMultiplesDiceWrap');
+    const onlineMultiplesDiceSelect = document.getElementById('onlineMultiplesDiceSelect');
     const onlineBoardSizeSelect = document.getElementById('onlineBoardSizeSelect');
     const createOnlineBtn = document.getElementById('createOnlineBtn');
     const leaveOnlineBtn = document.getElementById('leaveOnlineBtn');
@@ -732,6 +841,8 @@
     let state = makeEmptyState();
     let pendingLocalMode = 'pass';
     let computerThinking = false;
+    let diceAnimating = false;
+    let lastDiceRollSignature = '';
     let endModalShownForGame = false;
 
     const online = {
@@ -766,6 +877,8 @@
         gameMode: 'menu',
         gameType: 'standard',
         boardSize: 5,
+        diceSides: 6,
+        diceRoll: null,
         difficulty: 'mild',
         players: { 1: 'Player 1', 2: 'Player 2' },
         currentPlayer: 1,
@@ -795,7 +908,8 @@
         standard: 'Standard Dots and Boxes',
         integer: 'Integer Sum',
         mean: 'Mean Boxes',
-        median: 'Median Boxes'
+        median: 'Median Boxes',
+        multiples: 'Multiples Capture'
       }[type] || 'Standard Dots and Boxes';
     }
     function shortTypeName(type = state.gameType){
@@ -803,7 +917,8 @@
         standard: 'Standard',
         integer: 'Integer Sum',
         mean: 'Mean',
-        median: 'Median'
+        median: 'Median',
+        multiples: 'Multiples'
       }[type] || 'Standard';
     }
     function metricName(type = state.gameType){
@@ -811,7 +926,8 @@
         standard: 'Boxes',
         integer: 'Total',
         mean: 'Mean',
-        median: 'Median'
+        median: 'Median',
+        multiples: 'Boxes'
       }[type] || 'Boxes';
     }
     function modeName(mode = state.gameMode){
@@ -845,19 +961,30 @@
     function cloneLines(lines = state.lines){ return { ...lines }; }
     function cloneBoxes(boxes = state.boxes){ return { ...boxes }; }
     function deepCloneValues(values = state.values){ return values.map(row => row.slice()); }
-    function makeValues(type, boardSize){
+    function makeValues(type, boardSize, diceSides = 6){
       const values = [];
+      const productPool = type === 'multiples' ? makeProductPool(diceSides) : [];
       for (let r = 0; r < boardSize; r++) {
         const row = [];
         for (let c = 0; c < boardSize; c++) {
           if (type === 'integer') row.push(randomInt(-9,9));
           else if (type === 'mean') row.push(randomInt(1,9));
           else if (type === 'median') row.push(randomInt(1,20));
+          else if (type === 'multiples') row.push(randomChoice(productPool));
           else row.push(null);
         }
         values.push(row);
       }
       return values;
+    }
+
+    function makeProductPool(diceSides){
+      const sides = Number(diceSides || 6);
+      const pool = [];
+      for (let a = 1; a <= sides; a++) {
+        for (let b = 1; b <= sides; b++) pool.push(a * b);
+      }
+      return pool;
     }
 
     function encodeValuesForFirestore(values){
@@ -871,7 +998,7 @@
       };
     }
 
-    function decodeValuesFromFirestore(storedValues, gameType, boardSize){
+    function decodeValuesFromFirestore(storedValues, gameType, boardSize, diceSides = 6){
       if (Array.isArray(storedValues) && Array.isArray(storedValues[0])) {
         return storedValues.map(row => row.slice());
       }
@@ -887,7 +1014,7 @@
           return values;
         }
       }
-      return makeValues(gameType || 'standard', Number(boardSize || 5));
+      return makeValues(gameType || 'standard', Number(boardSize || 5), Number(diceSides || 6));
     }
 
     function startGame(options){
@@ -896,12 +1023,14 @@
         gameMode: options.gameMode || 'pass',
         gameType: options.gameType || 'standard',
         boardSize: Number(options.boardSize || 5),
+        diceSides: Number(options.diceSides || 6),
+        diceRoll: options.diceRoll || null,
         difficulty: options.difficulty || 'mild',
         players: { 1: players[1] || 'Player 1', 2: players[2] || 'Player 2' },
         currentPlayer: 1,
         lines: {},
         boxes: {},
-        values: options.values ? deepCloneValues(options.values) : makeValues(options.gameType || 'standard', Number(options.boardSize || 5)),
+        values: options.values ? deepCloneValues(options.values) : makeValues(options.gameType || 'standard', Number(options.boardSize || 5), Number(options.diceSides || 6)),
         history: [],
         gameOver: false,
         onlineStatus: options.onlineStatus || 'local'
@@ -909,14 +1038,18 @@
       computerThinking = false;
       endModalShownForGame = false;
       hideAllModals();
-      setMessage(`Draw one line between two neighbouring dots. ${state.players[1]} starts.`, 'info');
-      render();
+      setMessage(state.gameType === 'multiples'
+        ? `${state.players[1]} starts. Roll the dice to find your dice product.`
+        : `Draw one line between two neighbouring dots. ${state.players[1]} starts.`, 'info');
+      updateMultiplesSetupVisibility();
+    render();
       maybeComputerMove();
     }
 
     function snapshotState(){
       return {
         currentPlayer: state.currentPlayer,
+        diceRoll: state.diceRoll ? { ...state.diceRoll } : null,
         lines: cloneLines(),
         boxes: cloneBoxes(),
         gameOver: state.gameOver,
@@ -927,6 +1060,7 @@
     function restoreSnapshot(snap){
       if (!snap) return;
       state.currentPlayer = snap.currentPlayer;
+      state.diceRoll = snap.diceRoll ? { ...snap.diceRoll } : null;
       state.lines = cloneLines(snap.lines);
       state.boxes = cloneBoxes(snap.boxes);
       state.gameOver = snap.gameOver;
@@ -996,6 +1130,47 @@
       return danger;
     }
 
+
+    function isMultiplesMode(game = state){
+      return game.gameType === 'multiples';
+    }
+
+    function rollTwoDice(diceSides = state.diceSides){
+      const sides = Number(diceSides || 6);
+      const a = randomInt(1, sides);
+      const b = randomInt(1, sides);
+      return { a, b, target: a * b, sides };
+    }
+
+    function lineTouchesTargetValue(game, key, target){
+      return adjacentBoxesForLine(key, game.boardSize).some(bKey => {
+        if (game.boxes[bKey]) return false;
+        const { r, c } = parseBoxKey(bKey);
+        return Number(game.values?.[r]?.[c]) === Number(target);
+      });
+    }
+
+    function isRollVerified(game = state){
+      return Boolean(game.diceRoll && game.diceRoll.verified);
+    }
+
+    function availableTargetLineKeys(game = state, requireVerified = true){
+      if (!isMultiplesMode(game) || !game.diceRoll) return [];
+      if (requireVerified && !isRollVerified(game)) return [];
+      return legalLineKeys(game).filter(key => lineTouchesTargetValue(game, key, game.diceRoll.target));
+    }
+
+    function canChooseLineForCurrentRoll(key, game = state){
+      if (!isMultiplesMode(game)) return true;
+      if (!game.diceRoll || !isRollVerified(game)) return false;
+      return lineTouchesTargetValue(game, key, game.diceRoll.target);
+    }
+
+    function clearDiceRoll(game = state){
+      game.diceRoll = null;
+      lastDiceRollSignature = '';
+    }
+
     function handleLineChoice(key){
       if (online.active) {
         attemptOnlineLine(key);
@@ -1003,6 +1178,21 @@
       }
       if (state.gameMode === 'menu' || state.gameOver || computerThinking) return;
       if (state.gameMode === 'computer' && state.currentPlayer === 2) return;
+      if (isMultiplesMode()) {
+        if (!state.diceRoll) {
+          setDiceFeedback(`${state.players[state.currentPlayer]} needs to roll the dice first.`, '');
+          return;
+        }
+        if (!isRollVerified()) {
+          setDiceFeedback('Enter the product correctly before choosing an edge.', 'error');
+          markAnswerState('incorrect');
+          return;
+        }
+        if (!canChooseLineForCurrentRoll(key)) {
+          setDiceFeedback(`Choose an edge touching an unclaimed ${state.diceRoll.target} box.`, '');
+          return;
+        }
+      }
       placeLineLocal(key, state.currentPlayer);
     }
 
@@ -1013,6 +1203,7 @@
       const captured = result.completed.length;
       if (isGameFinished(state)) {
         state.gameOver = true;
+        clearDiceRoll();
         setMessage('All boxes have been captured. Game over!', 'success');
         render();
         showEndModal();
@@ -1020,11 +1211,17 @@
       }
       if (captured > 0) {
         const word = captured === 1 ? 'box' : 'boxes';
-        setMessage(`${state.players[player]} captured ${captured} ${word} and gets another turn.`, 'success');
+        clearDiceRoll();
+        setMessage(isMultiplesMode()
+          ? `${state.players[player]} captured ${captured} ${word} and gets another turn. Roll again.`
+          : `${state.players[player]} captured ${captured} ${word} and gets another turn.`, 'success');
         launchConfetti();
       } else {
         state.currentPlayer = otherPlayer(player);
-        setMessage(`${state.players[state.currentPlayer]}'s turn. Draw one line.`, 'info');
+        clearDiceRoll();
+        setMessage(isMultiplesMode()
+          ? `${state.players[state.currentPlayer]}'s turn. Roll the dice to find your dice product.`
+          : `${state.players[state.currentPlayer]}'s turn. Draw one line.`, 'info');
       }
       render();
       maybeComputerMove();
@@ -1060,7 +1257,7 @@
     }
     function metricValue(player, game = state){
       const boxes = capturedBoxKeys(player, game);
-      if (game.gameType === 'standard') return boxes.length;
+      if (game.gameType === 'standard' || game.gameType === 'multiples') return boxes.length;
       const values = capturedValues(player, game);
       if (values.length === 0) return null;
       if (game.gameType === 'integer') return values.reduce((sum, value) => sum + Number(value), 0);
@@ -1122,7 +1319,9 @@
       renderValueList(p2ValuesList, 2);
 
       gameTypeMini.innerHTML = `Game type<strong>${typeName()}</strong>`;
-      boardSizeMini.innerHTML = `Board<strong>${state.boardSize} × ${state.boardSize} boxes</strong>`;
+      boardSizeMini.innerHTML = isMultiplesMode()
+        ? `Board<strong>${state.boardSize} × ${state.boardSize} boxes · ${state.diceSides}-sided dice</strong>`
+        : `Board<strong>${state.boardSize} × ${state.boardSize} boxes</strong>`;
       modeBadge.textContent = modeName();
       typeBadge.textContent = shortTypeName();
       sizeBadge.textContent = `${state.boardSize} × ${state.boardSize}`;
@@ -1142,21 +1341,65 @@
         statusSubtitle.textContent = 'Share the room code so another player can join.';
       } else if (state.gameMode === 'computer' && state.currentPlayer === 2) {
         statusTitle.textContent = `${currentName}'s turn`;
-        statusSubtitle.textContent = computerThinking ? 'Computer is thinking...' : 'Computer will choose a line.';
+        statusSubtitle.textContent = computerThinking ? 'Computer is thinking...' : (isMultiplesMode() ? 'Computer will roll and choose a matching edge.' : 'Computer will choose a line.');
       } else {
         statusTitle.textContent = `${currentName}'s turn`;
-        statusSubtitle.textContent = 'Draw one horizontal or vertical line between neighbouring dots.';
+        statusSubtitle.textContent = isMultiplesMode()
+          ? (state.diceRoll ? (isRollVerified() ? 'Product correct. Choose a matching edge.' : 'Enter the product of the dice roll.') : 'Roll two dice, then enter the product.')
+          : 'Draw one horizontal or vertical line between neighbouring dots.';
       }
 
+      renderDicePanel();
       quickRule.textContent = ruleForCurrentType();
       undoBtn.disabled = online.active || state.history.length === 0 || state.gameMode === 'menu' || computerThinking;
       newGameBtn.disabled = state.gameMode === 'menu' || online.active && online.myPlayer !== 1;
+    }
+
+    function renderDicePanel(){
+      const showDice = isMultiplesMode() && state.gameMode !== 'menu';
+      dicePanel.classList.toggle('show', showDice);
+      sidePanel.classList.toggle('hidden', !showDice);
+      if (!showDice) return;
+      const roll = state.diceRoll;
+      const currentName = state.players[state.currentPlayer] || PLAYER_NAMES[state.currentPlayer];
+      const currentOnlineTurn = !online.active || (online.data?.status === 'playing' && Number(online.myPlayer) === Number(state.currentPlayer));
+      const canInteract = !state.gameOver && !computerThinking && !diceAnimating && currentOnlineTurn && !(state.gameMode === 'computer' && state.currentPlayer === 2);
+      const signature = roll ? `${state.currentPlayer}-${roll.a}-${roll.b}-${roll.target}-${roll.verified ? 'ready' : 'answer'}` : `none-${state.currentPlayer}`;
+
+      diceTitle.textContent = `${currentName}'s dice roll`;
+      dieOne.textContent = roll ? roll.a : '–';
+      dieTwo.textContent = roll ? roll.b : '–';
+      dieOne.classList.toggle('rolling', diceAnimating);
+      dieTwo.classList.toggle('rolling', diceAnimating);
+      diceSubtitle.textContent = roll
+        ? (roll.verified ? 'Correct. Now choose a matching edge.' : `Enter the product of the two ${state.diceSides}-sided dice.`)
+        : `Roll two ${state.diceSides}-sided dice. If there is no matching edge after a correct answer, the turn is missed.`;
+
+      if (signature !== lastDiceRollSignature) {
+        diceAnswerInput.value = roll && roll.verified ? String(roll.target) : '';
+        diceAnswerInput.classList.remove('correct','incorrect');
+        if (roll && roll.verified) diceAnswerInput.classList.add('correct');
+        lastDiceRollSignature = signature;
+      }
+
+      rollDiceBtn.disabled = !canInteract || Boolean(roll);
+      diceAnswerInput.disabled = !canInteract || !roll || Boolean(roll.verified);
+      checkProductBtn.disabled = !canInteract || !roll || Boolean(roll.verified);
+
+      if (!roll) {
+        setDiceFeedback('Roll the dice to find your calculation.', '');
+      } else if (roll.verified) {
+        setDiceFeedback(`Correct. Choose an edge touching an unclaimed ${roll.target} box.`, 'success');
+      } else {
+        setDiceFeedback('Type the product, then press Check.', '');
+      }
     }
 
     function ruleForCurrentType(){
       if (state.gameType === 'integer') return 'Integer Sum: capture box values from −9 to 9. Highest total wins, so negative boxes can hurt your score.';
       if (state.gameType === 'mean') return 'Mean Boxes: capture values from 1 to 9. You need at least one captured box, and the highest mean wins.';
       if (state.gameType === 'median') return 'Median Boxes: capture values from 1 to 20. Arrange your values and the highest median wins.';
+      if (state.gameType === 'multiples') return `Multiples Capture: roll two ${state.diceSides}-sided dice. Choose an edge touching that product. If no matching edge is available, you miss your turn.`;
       return 'Standard: capture the most boxes. Completing a box gives you another turn.';
     }
 
@@ -1255,22 +1498,25 @@
 
       const legal = legalLineKeys();
       const boardLocked = isBoardLockedForInput();
+      const targetKeys = isMultiplesMode() && state.diceRoll && isRollVerified() ? new Set(availableTargetLineKeys()) : new Set();
       for (const key of legal) {
         const points = linePoints(key, step);
+        const targetReady = isMultiplesMode() && state.diceRoll && isRollVerified() && targetKeys.has(key);
+        const unavailable = isMultiplesMode() && (!state.diceRoll || !isRollVerified() || !targetReady);
         const preview = createSvg('line', {
           x1:points.x1, y1:points.y1, x2:points.x2, y2:points.y2,
-          class:'preview-line',
+          class:`preview-line ${targetReady ? 'target-ready' : ''}`,
           'stroke-width':lineWidth
         });
         svg.appendChild(preview);
         const hit = createSvg('line', {
           x1:points.x1, y1:points.y1, x2:points.x2, y2:points.y2,
-          class:`hit-line ${boardLocked ? 'locked' : ''}`,
+          class:`hit-line ${boardLocked ? 'locked' : ''} ${unavailable ? 'unavailable' : ''}`,
           'stroke-width':hitWidth,
           'data-key':key
         });
         const showPreview = () => {
-          if (!isBoardLockedForInput()) preview.classList.add('preview-visible');
+          if (!isBoardLockedForInput() && (!isMultiplesMode() || targetReady)) preview.classList.add('preview-visible');
         };
         const hidePreview = () => preview.classList.remove('preview-visible');
         hit.addEventListener('pointerenter', showPreview);
@@ -1311,12 +1557,13 @@
     }
 
     function isBoardLockedForInput(){
-      if (state.gameMode === 'menu' || state.gameOver || computerThinking) return true;
+      if (state.gameMode === 'menu' || state.gameOver || computerThinking || diceAnimating) return true;
       if (online.active) {
         if (online.data?.status !== 'playing') return true;
-        return Number(online.myPlayer) !== Number(state.currentPlayer);
+        if (Number(online.myPlayer) !== Number(state.currentPlayer)) return true;
       }
       if (state.gameMode === 'computer' && state.currentPlayer === 2) return true;
+      if (isMultiplesMode() && !isRollVerified()) return true;
       return false;
     }
 
@@ -1330,6 +1577,22 @@
           renderInfo();
           return;
         }
+        if (isMultiplesMode() && !state.diceRoll) {
+          const roll = { ...rollTwoDice(state.diceSides), verified: true };
+          state.diceRoll = roll;
+          const available = availableTargetLineKeys();
+          render();
+          if (!available.length) {
+            setTimeout(() => {
+              state.currentPlayer = 1;
+              clearDiceRoll();
+              computerThinking = false;
+              setMessage(`Computer rolled ${roll.a} × ${roll.b}. No matching edge was available, so Computer missed a turn. ${state.players[1]}'s turn.`, 'info');
+              render();
+            }, 650);
+            return;
+          }
+        }
         const key = chooseComputerMove();
         computerThinking = false;
         if (key) placeLineLocal(key, 2, true);
@@ -1338,7 +1601,7 @@
     }
 
     function chooseComputerMove(){
-      const legal = legalLineKeys();
+      const legal = isMultiplesMode() && state.diceRoll ? availableTargetLineKeys() : legalLineKeys();
       if (!legal.length) return null;
       if (state.difficulty === 'sweet') return randomChoice(legal);
 
@@ -1368,7 +1631,7 @@
       return best;
     }
     function capturePreference(completed, game){
-      if (game.gameType === 'standard') return completed.length;
+      if (game.gameType === 'standard' || game.gameType === 'multiples') return completed.length;
       return completed.reduce((sum, bKey) => sum + boxMoveValue(game, bKey), 0) + completed.length * .08;
     }
     function spicyMoveScore(key){
@@ -1378,7 +1641,7 @@
       const dangerBoxes = unclaimedThreeSidedBoxesAfter(state, sim.lines).filter(bKey => !captured.includes(bKey));
       let danger = 0;
       for (const bKey of dangerBoxes) {
-        if (state.gameType === 'standard') danger += 1;
+        if (state.gameType === 'standard' || state.gameType === 'multiples') danger += 1;
         else {
           const value = boxMoveValue(state, bKey);
           if (state.gameType === 'integer') danger += value;
@@ -1437,8 +1700,9 @@
         'If you capture a box, you take another turn immediately.',
         'A single line can complete two boxes. If it does, you capture both.',
         'The game ends when every box has been captured.',
-        state.gameType === 'standard' ? 'Standard Dots and Boxes: the player with the most boxes wins.' : ruleForCurrentType()
-      ];
+        state.gameType === 'standard' ? 'Standard Dots and Boxes: the player with the most boxes wins.' : ruleForCurrentType(),
+        state.gameType === 'multiples' ? 'If the rolled product has no available edge touching an unclaimed matching box, that player misses their turn.' : null
+      ].filter(Boolean);
       rulesList.innerHTML = '';
       rules.forEach(rule => {
         const li = document.createElement('li');
@@ -1457,9 +1721,130 @@
       p2NameInput.disabled = mode === 'computer';
       p2NameLabel.textContent = mode === 'computer' ? 'Player 2' : 'Player 2 name';
       difficultyWrap.style.display = mode === 'computer' ? 'grid' : 'none';
+      updateMultiplesSetupVisibility();
       hideModal(modeMenuModal);
       showModal(setupModal);
       setTimeout(() => p1NameInput.focus(), 50);
+    }
+
+
+
+    function updateMultiplesSetupVisibility(){
+      multiplesDiceWrap.style.display = gameTypeSelect.value === 'multiples' ? 'grid' : 'none';
+      onlineMultiplesDiceWrap.style.display = onlineGameTypeSelect.value === 'multiples' ? 'grid' : 'none';
+    }
+
+    function setDiceFeedback(text, type = ''){
+      if (!diceFeedback) return;
+      diceFeedback.className = 'dice-feedback';
+      if (type === 'success') diceFeedback.classList.add('success');
+      if (type === 'error') diceFeedback.classList.add('error');
+      diceFeedback.textContent = text;
+    }
+
+    function markAnswerState(type){
+      if (!diceAnswerInput) return;
+      diceAnswerInput.classList.remove('correct','incorrect');
+      if (type) {
+        void diceAnswerInput.offsetWidth;
+        diceAnswerInput.classList.add(type);
+      }
+    }
+
+    function animateDiceRoll(finalRoll, done){
+      diceAnimating = true;
+      rollDiceBtn.disabled = true;
+      checkProductBtn.disabled = true;
+      diceAnswerInput.disabled = true;
+      diceAnswerInput.value = '';
+      markAnswerState('');
+      dieOne.classList.add('rolling');
+      dieTwo.classList.add('rolling');
+      const sides = Number(finalRoll.sides || state.diceSides || 6);
+      const start = Date.now();
+      const timer = setInterval(() => {
+        dieOne.textContent = randomInt(1, sides);
+        dieTwo.textContent = randomInt(1, sides);
+        if (Date.now() - start > 720) {
+          clearInterval(timer);
+          dieOne.textContent = finalRoll.a;
+          dieTwo.textContent = finalRoll.b;
+          dieOne.classList.remove('rolling');
+          dieTwo.classList.remove('rolling');
+          diceAnimating = false;
+          done(finalRoll);
+        }
+      }, 75);
+    }
+
+    function finishMissedTurnAfterAnswer(missedPlayer, text){
+      setTimeout(() => {
+        if (state.gameOver) return;
+        state.currentPlayer = otherPlayer(missedPlayer);
+        clearDiceRoll();
+        setMessage(text || `${state.players[missedPlayer]} missed a turn. ${state.players[state.currentPlayer]}'s turn.`, 'info');
+        render();
+        maybeComputerMove();
+      }, 900);
+    }
+
+    function checkMultiplesProductAnswer(){
+      if (online.active) {
+        attemptOnlineProductCheck();
+        return;
+      }
+      if (!isMultiplesMode() || state.gameOver || state.gameMode === 'menu' || computerThinking || diceAnimating) return;
+      if (state.gameMode === 'computer' && state.currentPlayer === 2) return;
+      if (!state.diceRoll) {
+        setDiceFeedback('Roll the dice first.', '');
+        return;
+      }
+      if (isRollVerified()) {
+        setDiceFeedback(`Already correct. Choose an edge touching ${state.diceRoll.target}.`, 'success');
+        return;
+      }
+      const raw = String(diceAnswerInput.value || '').trim();
+      const answer = Number(raw);
+      if (!raw || !Number.isFinite(answer) || answer !== Number(state.diceRoll.target)) {
+        const missedPlayer = state.currentPlayer;
+        markAnswerState('incorrect');
+        setDiceFeedback(`Not quite. ${state.players[missedPlayer]} misses this turn.`, 'error');
+        finishMissedTurnAfterAnswer(missedPlayer, `${state.players[missedPlayer]} entered an incorrect product and missed a turn. ${state.players[otherPlayer(missedPlayer)]}'s turn.`);
+        return;
+      }
+      state.diceRoll.verified = true;
+      markAnswerState('correct');
+      const available = availableTargetLineKeys();
+      if (!available.length) {
+        const missedPlayer = state.currentPlayer;
+        setDiceFeedback(`Correct — ${state.diceRoll.a} × ${state.diceRoll.b} = ${state.diceRoll.target}. No matching edge is available, so ${state.players[missedPlayer]} misses this turn.`, 'success');
+        finishMissedTurnAfterAnswer(missedPlayer, `${state.players[missedPlayer]} answered correctly, but no matching edge was available. ${state.players[otherPlayer(missedPlayer)]}'s turn.`);
+        return;
+      }
+      setDiceFeedback(`Correct — ${state.diceRoll.a} × ${state.diceRoll.b} = ${state.diceRoll.target}. Choose a matching edge.`, 'success');
+      render();
+    }
+
+    function newMultiplesRollForLocal(){
+      if (!isMultiplesMode() || state.gameOver || state.gameMode === 'menu' || computerThinking || diceAnimating) return;
+      if (online.active) {
+        attemptOnlineRoll();
+        return;
+      }
+      if (state.gameMode === 'computer' && state.currentPlayer === 2) return;
+      if (state.diceRoll) {
+        setDiceFeedback(isRollVerified() ? 'You already answered correctly. Choose a matching edge.' : 'Enter the product for this roll.', '');
+        return;
+      }
+      state.history.push(snapshotState());
+      const roll = rollTwoDice(state.diceSides);
+      setDiceFeedback('Rolling...', '');
+      animateDiceRoll(roll, (finalRoll) => {
+        state.diceRoll = { ...finalRoll, verified: false };
+        setMessage(`${state.players[state.currentPlayer]} rolled ${finalRoll.a} and ${finalRoll.b}. Enter the product.`, 'info');
+        render();
+        setTimeout(() => diceAnswerInput.focus(), 0);
+      });
     }
 
     async function ensureAuth(){
@@ -1495,7 +1880,8 @@
         online.uid = user.uid;
         const gameType = onlineGameTypeSelect.value;
         const boardSize = Number(onlineBoardSizeSelect.value);
-        const values = makeValues(gameType, boardSize);
+        const diceSides = Number(onlineMultiplesDiceSelect.value || 6);
+        const values = makeValues(gameType, boardSize, diceSides);
         const code = await makeUniqueRoomCode();
         const ref = doc(db, ROOM_COLLECTION, code);
         await setDoc(ref, {
@@ -1505,6 +1891,8 @@
           hostUid: user.uid,
           gameType,
           boardSize,
+          diceSides,
+          diceRoll: null,
           values: encodeValuesForFirestore(values),
           currentPlayer: 1,
           lines: {},
@@ -1609,8 +1997,10 @@
           setMessage('Waiting for Player 2 to join. Share the room code.', 'info');
         } else if (data.gameOver) {
           setMessage('All boxes have been captured. Game over!', 'success');
+        } else if (data.lastEvent?.text) {
+          setMessage(data.lastEvent.text, data.lastEvent.type || 'info');
         } else if (Number(online.myPlayer) === Number(data.currentPlayer)) {
-          setMessage('Your turn. Draw one line.', 'info');
+          setMessage(isMultiplesMode(state) ? 'Your turn. Roll the dice.' : 'Your turn. Draw one line.', 'info');
         } else {
           setMessage(`${state.players[state.currentPlayer]}'s turn. Waiting for their move.`, 'info');
         }
@@ -1627,6 +2017,8 @@
         gameMode: 'online',
         gameType: data.gameType || 'standard',
         boardSize: Number(data.boardSize || 5),
+        diceSides: Number(data.diceSides || 6),
+        diceRoll: data.diceRoll || null,
         difficulty: 'mild',
         players: {
           1: data.players?.['1']?.name || 'Player 1',
@@ -1635,7 +2027,7 @@
         currentPlayer: Number(data.currentPlayer || 1),
         lines: data.lines || {},
         boxes: data.boxes || {},
-        values: decodeValuesFromFirestore(data.values, data.gameType || 'standard', Number(data.boardSize || 5)),
+        values: decodeValuesFromFirestore(data.values, data.gameType || 'standard', Number(data.boardSize || 5), Number(data.diceSides || 6)),
         history: [],
         gameOver: Boolean(data.gameOver),
         onlineStatus: data.status || 'waiting'
@@ -1663,15 +2055,27 @@
           if (data.gameOver) throw new Error('The game has finished.');
           const game = stateFromOnlineData(data);
           if (game.lines[key]) throw new Error('That line has already been drawn.');
+          if (isMultiplesMode(game)) {
+            if (!game.diceRoll) throw new Error('Roll the dice before choosing an edge.');
+            if (!canChooseLineForCurrentRoll(key, game)) throw new Error(`Choose an edge touching an unclaimed ${game.diceRoll.target} box.`);
+          }
           const result = applyMoveToGame(game, key, player);
           let nextPlayer = player;
+          const playerName = game.players[player] || `Player ${player}`;
           if (result.completed.length === 0) nextPlayer = otherPlayer(player);
           const gameOver = isGameFinished(game);
+          const lineText = gameOver
+            ? 'All boxes have been captured. Game over!'
+            : result.completed.length > 0
+              ? `${playerName} captured ${result.completed.length} ${result.completed.length === 1 ? 'box' : 'boxes'} and gets another turn.${isMultiplesMode(game) ? ' Roll again.' : ''}`
+              : `${game.players[nextPlayer]}'s turn.${isMultiplesMode(game) ? ' Roll the dice.' : ' Draw one line.'}`;
           transaction.update(online.ref, {
             lines: game.lines,
             boxes: game.boxes,
+            diceRoll: null,
             currentPlayer: nextPlayer,
             gameOver,
+            lastEvent: { text: lineText, type: result.completed.length > 0 || gameOver ? 'success' : 'info', nonce: Math.random() },
             updatedAt: serverTimestamp()
           });
         });
@@ -1679,6 +2083,138 @@
         console.error(err);
         setMessage(err.message || 'Move could not be played.', 'info');
       }
+    }
+
+
+
+    async function attemptOnlineRoll(){
+      if (!online.active || !online.ref || state.gameOver || !isMultiplesMode() || diceAnimating) return;
+      if (online.data?.status !== 'playing') {
+        setMessage('Wait for another player to join before rolling.', 'info');
+        return;
+      }
+      if (Number(online.myPlayer) !== Number(state.currentPlayer)) {
+        setMessage('It is not your turn yet.', 'info');
+        return;
+      }
+      if (state.diceRoll) {
+        setDiceFeedback(isRollVerified() ? 'You already answered correctly. Choose a matching edge.' : 'Enter the product for this roll.', '');
+        return;
+      }
+      try {
+        rollDiceBtn.disabled = true;
+        const localRoll = rollTwoDice(state.diceSides);
+        setDiceFeedback('Rolling...', '');
+        animateDiceRoll(localRoll, async (animatedRoll) => {
+          try {
+            await runTransaction(db, async (transaction) => {
+              const snap = await transaction.get(online.ref);
+              if (!snap.exists()) throw new Error('Room not found.');
+              const data = snap.data();
+              if (data.status !== 'playing') throw new Error('This game is not ready yet.');
+              const player = Number(online.myPlayer);
+              if (Number(data.currentPlayer) !== player) throw new Error('It is not your turn.');
+              if (data.gameOver) throw new Error('The game has finished.');
+              const game = stateFromOnlineData(data);
+              if (!isMultiplesMode(game)) throw new Error('This game does not use dice rolls.');
+              if (game.diceRoll) throw new Error('The dice have already been rolled.');
+              const roll = { ...animatedRoll, verified: false };
+              const playerName = game.players[player] || `Player ${player}`;
+              transaction.update(online.ref, {
+                diceRoll: roll,
+                lastEvent: { text: `${playerName} rolled ${roll.a} and ${roll.b}. Enter the product.`, type: 'info', nonce: Math.random() },
+                updatedAt: serverTimestamp()
+              });
+            });
+          } catch (err) {
+            console.error(err);
+            setMessage(err.message || 'Could not roll the dice.', 'info');
+            renderInfo();
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        setMessage(err.message || 'Could not roll the dice.', 'info');
+        renderInfo();
+      }
+    }
+
+    async function attemptOnlineProductCheck(){
+      if (!online.active || !online.ref || state.gameOver || !isMultiplesMode() || diceAnimating) return;
+      if (online.data?.status !== 'playing') {
+        setMessage('Wait for another player to join.', 'info');
+        return;
+      }
+      if (Number(online.myPlayer) !== Number(state.currentPlayer)) {
+        setMessage('It is not your turn yet.', 'info');
+        return;
+      }
+      if (!state.diceRoll) {
+        setDiceFeedback('Roll the dice first.', '');
+        return;
+      }
+      if (isRollVerified()) {
+        setDiceFeedback(`Already correct. Choose an edge touching ${state.diceRoll.target}.`, 'success');
+        return;
+      }
+      const raw = String(diceAnswerInput.value || '').trim();
+      const answer = Number(raw);
+      const localIncorrect = !raw || !Number.isFinite(answer) || answer !== Number(state.diceRoll.target);
+      if (localIncorrect) {
+        markAnswerState('incorrect');
+        setDiceFeedback(`Not quite. ${state.players[state.currentPlayer]} misses this turn.`, 'error');
+      } else {
+        markAnswerState('correct');
+        setDiceFeedback(`Correct — ${state.diceRoll.a} × ${state.diceRoll.b} = ${state.diceRoll.target}.`, 'success');
+      }
+      setTimeout(async () => {
+        try {
+          await runTransaction(db, async (transaction) => {
+            const snap = await transaction.get(online.ref);
+            if (!snap.exists()) throw new Error('Room not found.');
+            const data = snap.data();
+            if (data.status !== 'playing') throw new Error('This game is not ready yet.');
+            const player = Number(online.myPlayer);
+            if (Number(data.currentPlayer) !== player) throw new Error('It is not your turn.');
+            if (data.gameOver) throw new Error('The game has finished.');
+            const game = stateFromOnlineData(data);
+            if (!isMultiplesMode(game)) throw new Error('This game does not use dice rolls.');
+            if (!game.diceRoll) throw new Error('Roll the dice before checking.');
+            const playerName = game.players[player] || `Player ${player}`;
+            const nextPlayer = otherPlayer(player);
+            const submitted = Number(raw);
+            if (!raw || !Number.isFinite(submitted) || submitted !== Number(game.diceRoll.target)) {
+              transaction.update(online.ref, {
+                diceRoll: null,
+                currentPlayer: nextPlayer,
+                lastEvent: { text: `${playerName} entered an incorrect product and missed a turn. ${game.players[nextPlayer]}'s turn.`, type: 'info', nonce: Math.random() },
+                updatedAt: serverTimestamp()
+              });
+              return;
+            }
+            game.diceRoll = { ...game.diceRoll, verified: true };
+            const available = availableTargetLineKeys(game);
+            if (!available.length) {
+              transaction.update(online.ref, {
+                diceRoll: null,
+                currentPlayer: nextPlayer,
+                lastEvent: { text: `${playerName} answered correctly, but no matching edge was available. ${game.players[nextPlayer]}'s turn.`, type: 'info', nonce: Math.random() },
+                updatedAt: serverTimestamp()
+              });
+              return;
+            }
+            transaction.update(online.ref, {
+              diceRoll: game.diceRoll,
+              lastEvent: { text: `${playerName} answered correctly. Choose an edge touching an unclaimed ${game.diceRoll.target} box.`, type: 'success', nonce: Math.random() },
+              updatedAt: serverTimestamp()
+            });
+          });
+        } catch (err) {
+          console.error(err);
+          setMessage(err.message || 'Could not check the product.', 'info');
+          renderInfo();
+        }
+      }, localIncorrect ? 650 : 450);
     }
 
     function leaveOnlineRoom(showMenu = true){
@@ -1725,6 +2261,7 @@
         gameMode: pendingLocalMode,
         gameType: gameTypeSelect.value,
         boardSize: Number(boardSizeSelect.value),
+        diceSides: Number(multiplesDiceSelect.value || 6),
         difficulty: difficultySelect.value,
         players
       });
@@ -1745,6 +2282,7 @@
         gameMode: state.gameMode,
         gameType: state.gameType,
         boardSize: state.boardSize,
+        diceSides: state.diceSides,
         difficulty: state.difficulty,
         players: state.players
       });
@@ -1766,6 +2304,7 @@
         gameMode: state.gameMode,
         gameType: state.gameType,
         boardSize: state.boardSize,
+        diceSides: state.diceSides,
         difficulty: state.difficulty,
         players: state.players
       });
@@ -1779,6 +2318,13 @@
       render();
       hideAllModals();
       showModal(modeMenuModal);
+    });
+    gameTypeSelect.addEventListener('change', updateMultiplesSetupVisibility);
+    onlineGameTypeSelect.addEventListener('change', updateMultiplesSetupVisibility);
+    rollDiceBtn.addEventListener('click', newMultiplesRollForLocal);
+    checkProductBtn.addEventListener('click', checkMultiplesProductAnswer);
+    diceAnswerInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') checkMultiplesProductAnswer();
     });
     createOnlineBtn.addEventListener('click', createOnlineRoom);
     joinOnlineBtn.addEventListener('click', joinOnlineRoom);
@@ -1796,13 +2342,15 @@
 
     async function resetOnlineGame(){
       if (!online.active || !online.ref || online.myPlayer !== 1) return;
-      const values = makeValues(state.gameType, state.boardSize);
+      const values = makeValues(state.gameType, state.boardSize, state.diceSides);
       await updateDoc(online.ref, {
         lines: {},
         boxes: {},
+        diceRoll: null,
         values: encodeValuesForFirestore(values),
         currentPlayer: 1,
         gameOver: false,
+        lastEvent: { text: state.gameType === 'multiples' ? `${state.players[1]} starts. Roll the dice.` : `${state.players[1]} starts. Draw one line.`, type: 'info', nonce: Math.random() },
         updatedAt: serverTimestamp()
       });
     }
