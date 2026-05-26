@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Coordinate Battleships</title>
-  <!-- Build: coordinate-battleships-attack-card-highlight-2026-05-25 -->
+  <!-- Build: coordinate-battleships-firestore-map-storage-fix-2026-05-26 -->
   <style>
     :root{
       --bg:#f8fafc;
@@ -337,7 +337,7 @@
 <body>
   <header class="mmtTopbar">
     <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
-      <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" />
+      <img class="mmtBrandLogo" src="/mmt.png" alt="Mills Maths Tools logo" />
       <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
     </a>
     <div class="mmtTopTitle" data-i18n="Coordinate Battleships">Coordinate Battleships</div>
@@ -775,13 +775,103 @@
     }
 
     function createEmptyFleet(){ return SHIPS.map(s => ({ id:s.id, name:s.name, size:s.size, short:s.short, coords:[] })); }
+
+    function decodeCoord(value){
+      if (Array.isArray(value)) return [Number(value[0]), Number(value[1])];
+      if (value && typeof value === 'object') return [Number(value.x), Number(value.y)];
+      return [NaN, NaN];
+    }
+
+    function decodeCoordList(value){
+      if (Array.isArray(value)) {
+        return value.map(decodeCoord).filter(c => Number.isFinite(c[0]) && Number.isFinite(c[1]));
+      }
+      if (value && typeof value === 'object') {
+        return Object.keys(value)
+          .sort((a,b) => {
+            const na = Number(String(a).replace(/\D/g,''));
+            const nb = Number(String(b).replace(/\D/g,''));
+            return (Number.isFinite(na) ? na : 0) - (Number.isFinite(nb) ? nb : 0);
+          })
+          .map(k => decodeCoord(value[k]))
+          .filter(c => Number.isFinite(c[0]) && Number.isFinite(c[1]));
+      }
+      return [];
+    }
+
     function cloneFleet(fleet){
       return SHIPS.map(base => {
-        const found = (fleet || []).find(s => s.id === base.id) || {};
-        return { id:base.id, name:base.name, size:base.size, short:base.short, coords:Array.isArray(found.coords) ? found.coords.map(c => [Number(c[0]),Number(c[1])]) : [] };
+        let found = {};
+        if (Array.isArray(fleet)) found = fleet.find(s => s.id === base.id) || {};
+        else if (fleet && typeof fleet === 'object') found = fleet[base.id] || {};
+        return { id:base.id, name:base.name, size:base.size, short:base.short, coords:decodeCoordList(found.coords) };
       });
     }
-    function coordKey(c){ return `${Number(c[0])},${Number(c[1])}`; }
+
+    function encodeCoordForFirestore(coord){
+      const [x,y] = decodeCoord(coord);
+      return { x:Number(x), y:Number(y) };
+    }
+
+    function encodeCoordListForFirestore(coords){
+      const out = {};
+      (coords || []).forEach((coord, index) => {
+        out[`c${String(index).padStart(2,'0')}`] = encodeCoordForFirestore(coord);
+      });
+      return out;
+    }
+
+    function encodeFleetForFirestore(fleet){
+      const out = {};
+      cloneFleet(fleet).forEach(ship => {
+        out[ship.id] = {
+          id:ship.id,
+          name:ship.name,
+          size:ship.size,
+          short:ship.short,
+          coords:encodeCoordListForFirestore(ship.coords)
+        };
+      });
+      return out;
+    }
+
+    function decodeShotFromFirestore(shot){
+      if (!shot || typeof shot !== 'object') return null;
+      return { ...shot, coord:decodeCoord(shot.coord) };
+    }
+
+    function decodeShotsFromFirestore(shots){
+      if (Array.isArray(shots)) return shots.map(decodeShotFromFirestore).filter(Boolean);
+      if (shots && typeof shots === 'object') {
+        return Object.keys(shots)
+          .sort((a,b) => {
+            const na = Number(String(a).replace(/\D/g,''));
+            const nb = Number(String(b).replace(/\D/g,''));
+            return (Number.isFinite(na) ? na : 0) - (Number.isFinite(nb) ? nb : 0);
+          })
+          .map(k => decodeShotFromFirestore(shots[k]))
+          .filter(Boolean);
+      }
+      return [];
+    }
+
+    function encodeShotForFirestore(shot){
+      const encoded = { ...shot, coord:encodeCoordForFirestore(shot.coord) };
+      Object.keys(encoded).forEach(key => {
+        if (encoded[key] === undefined) delete encoded[key];
+      });
+      return encoded;
+    }
+
+    function encodeShotsForFirestore(shots){
+      const out = {};
+      (shots || []).forEach((shot, index) => {
+        out[`s${String(index).padStart(3,'0')}`] = encodeShotForFirestore(shot);
+      });
+      return out;
+    }
+
+    function coordKey(c){ const [x,y] = decodeCoord(c); return `${Number(x)},${Number(y)}`; }
     function coordText(c){ return `(${Number(c[0])},${Number(c[1])})`; }
     function gridConfig(){ return GRID_MODES[state.gridMode] || GRID_MODES.first; }
     function gridValues(){ const g = gridConfig(); return Array.from({length:g.max-g.min+1}, (_,i)=>g.min+i); }
@@ -1086,7 +1176,7 @@
       let snap = await getDoc(ref);
       let guard = 0;
       while (snap.exists() && guard < 10) { code = randomCode(); ref = doc(db, ROOM_COLLECTION, code); snap = await getDoc(ref); guard++; }
-      await setDoc(ref, { status:'setup', gridMode:onlineGridModeSelect?.value || 'first', createdAt:serverTimestamp(), updatedAt:serverTimestamp(), currentPlayer:1, winner:null, players:{ p1:{ uid, name, connected:true, ready:false }, p2:null }, fleets:{ p1:null, p2:null }, shots:{ p1:[], p2:[] }, lastEvent:null });
+      await setDoc(ref, { status:'setup', gridMode:onlineGridModeSelect?.value || 'first', createdAt:serverTimestamp(), updatedAt:serverTimestamp(), currentPlayer:1, winner:null, players:{ p1:{ uid, name, connected:true, ready:false }, p2:null }, fleets:{ p1:null, p2:null }, shots:{ p1:{}, p2:{} }, lastEvent:null });
       connectOnlineRoom(code, 1, name);
       setOnlineStatus('Room created. Share the code, then place your ships.','good');
     }
@@ -1151,6 +1241,31 @@
       const p2 = data.players?.p2;
       const my = online.myPlayer || 1;
       const mineReady = Boolean(data.players?.[`p${my}`]?.ready);
+
+      // Safety repair: if both players have submitted complete fleets but the room
+      // is still marked as setup, Player 1 promotes the room to battle mode.
+      // This prevents rooms becoming stuck when ready updates arrive close together.
+      const p1FleetPlaced = allShipsPlaced(cloneFleet(data.fleets?.p1 || []));
+      const p2FleetPlaced = allShipsPlaced(cloneFleet(data.fleets?.p2 || []));
+      if (
+        data.status === 'setup' &&
+        p1?.ready &&
+        p2?.ready &&
+        p1FleetPlaced &&
+        p2FleetPlaced &&
+        online.myPlayer === 1 &&
+        online.ref
+      ) {
+        updateDoc(online.ref, {
+          status:'playing',
+          currentPlayer:1,
+          winner:null,
+          lastEvent:{ message:'Both players are ready. Battle begins!', at:Date.now() },
+          updatedAt:serverTimestamp()
+        }).catch(console.error);
+        return;
+      }
+
       state.players[1].name = p1?.name || 'Player 1';
       state.players[2].name = p2?.name || 'Player 2';
       state.currentPlayer = data.currentPlayer || 1;
@@ -1161,14 +1276,19 @@
       state.phase = data.status === 'playing' ? 'battle' : data.status === 'finished' ? 'finished' : 'setup';
       if (data.fleets?.p1) state.fleets[1] = cloneFleet(data.fleets.p1);
       if (data.fleets?.p2) state.fleets[2] = cloneFleet(data.fleets.p2);
-      state.shots[1] = Array.isArray(data.shots?.p1) ? data.shots.p1 : [];
-      state.shots[2] = Array.isArray(data.shots?.p2) ? data.shots.p2 : [];
+      state.shots[1] = decodeShotsFromFirestore(data.shots?.p1);
+      state.shots[2] = decodeShotsFromFirestore(data.shots?.p2);
       state.lastEvent = data.lastEvent || null;
 
       if (state.phase === 'setup') {
         setGameView(mineReady ? 'battle' : 'setup');
-        if (mineReady) showBattleMessage(p2 ? 'Waiting for the other player to place ships.' : 'Waiting for Player 2.','info');
-        else if (!p2 && my === 1) showSetupMessage('Waiting for Player 2.','info');
+        if (mineReady) {
+          showBattleMessage(p2 ? 'Waiting for the other player to place ships.' : 'Waiting for Player 2.','info');
+        } else if (!p2 && my === 1) {
+          showSetupMessage('Waiting for Player 2.','info');
+        } else if (lastSetupMessage === 'Waiting for Player 2.') {
+          showSetupMessage('Drag each ship onto the coordinate grid.','info');
+        }
       } else {
         setGameView('battle');
       }
@@ -1182,20 +1302,57 @@
     }
 
     async function onlineReady(){
-      if (!online.ref || !online.myPlayer) return showSetupMessage('You are not connected to a room.','warn');
-      const other = getOpponent(online.myPlayer);
-      const data = online.data;
-      if (!data?.players?.[`p${other}`]) return showSetupMessage('Both players must be connected first.','warn');
-      const myFleet = cloneFleet(state.fleets[online.myPlayer]);
-      if (!allShipsPlaced(myFleet)) return showSetupMessage('Place all five ships before you are ready.','warn');
-      const patch = { [`fleets.p${online.myPlayer}`]: myFleet, [`players.p${online.myPlayer}.ready`]: true, updatedAt:serverTimestamp() };
-      const otherReady = data.players?.[`p${other}`]?.ready;
-      const otherFleet = data.fleets?.[`p${other}`];
-      if (otherReady && otherFleet) { patch.status = 'playing'; patch.currentPlayer = 1; patch.lastEvent = { message:'Both players are ready. Battle begins!', at:Date.now() }; }
-      await updateDoc(online.ref, patch);
-      setGameView('battle');
-      showBattleMessage('Waiting for the other player to place ships.','info');
-      renderAll();
+      if (!online.ref || !online.myPlayer) {
+        return showSetupMessage('You are not connected to a room.','warn');
+      }
+
+      const my = online.myPlayer;
+      const other = getOpponent(my);
+      const myKey = `p${my}`;
+      const otherKey = `p${other}`;
+      const myFleet = cloneFleet(state.fleets[my]);
+
+      if (!allShipsPlaced(myFleet)) {
+        return showSetupMessage('Place all five ships before you are ready.','warn');
+      }
+
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(online.ref);
+          if (!snap.exists()) throw new Error('MISSING');
+
+          const data = snap.data();
+          if (!data.players?.[otherKey]) throw new Error('NO_OTHER_PLAYER');
+
+          const otherReady = Boolean(data.players?.[otherKey]?.ready);
+          const otherFleet = cloneFleet(data.fleets?.[otherKey] || []);
+          const otherFleetPlaced = allShipsPlaced(otherFleet);
+
+          const patch = {
+            [`fleets.${myKey}`]: encodeFleetForFirestore(myFleet),
+            [`players.${myKey}.ready`]: true,
+            updatedAt:serverTimestamp()
+          };
+
+          if (otherReady && otherFleetPlaced) {
+            patch.status = 'playing';
+            patch.currentPlayer = 1;
+            patch.winner = null;
+            patch.lastEvent = { message:'Both players are ready. Battle begins!', at:Date.now() };
+          }
+
+          transaction.update(online.ref, patch);
+        });
+
+        setGameView('battle');
+        showBattleMessage('Waiting for the other player to place ships.','info');
+        renderAll();
+      } catch (err) {
+        if (err.message === 'MISSING') return showSetupMessage('That room does not exist.','warn');
+        if (err.message === 'NO_OTHER_PLAYER') return showSetupMessage('Both players must be connected first.','warn');
+        console.error(err);
+        showSetupMessage('Could not submit your fleet. Check the console for details.','warn');
+      }
     }
 
     async function onlineAttack(){
@@ -1216,7 +1373,7 @@
           const attackerKey = `p${my}`;
           const defender = getOpponent(my);
           const defenderKey = `p${defender}`;
-          const shots = Array.isArray(data.shots?.[attackerKey]) ? [...data.shots[attackerKey]] : [];
+          const shots = decodeShotsFromFirestore(data.shots?.[attackerKey]);
           if (shots.some(s => coordKey(s.coord) === key)) throw new Error('REPEAT');
           const defenderFleet = cloneFleet(data.fleets?.[defenderKey] || []);
           const hitShip = defenderFleet.find(ship => ship.coords.some(c => coordKey(c) === key));
@@ -1232,7 +1389,7 @@
           const nextShots = [...shots, shot];
           const hitKeys = new Set(nextShots.filter(s => s.result === 'hit').map(s => coordKey(s.coord)));
           const won = defenderFleet.every(ship => ship.coords.length === ship.size && ship.coords.every(c => hitKeys.has(coordKey(c))));
-          transaction.update(online.ref, { [`shots.${attackerKey}`]:nextShots, currentPlayer:won ? my : defender, winner:won ? my : null, status:won ? 'finished' : 'playing', lastEvent:{ attacker:my, defender, shot, at:Date.now() }, updatedAt:serverTimestamp() });
+          transaction.update(online.ref, { [`shots.${attackerKey}`]:encodeShotsForFirestore(nextShots), currentPlayer:won ? my : defender, winner:won ? my : null, status:won ? 'finished' : 'playing', lastEvent:{ attacker:my, defender, shot:encodeShotForFirestore(shot), at:Date.now() }, updatedAt:serverTimestamp() });
         });
         attackInput.value = '';
       } catch (err) {
@@ -1247,7 +1404,7 @@
       if (!online.ref || online.myPlayer !== 1) return showBattleMessage('Player 1 can start a new game.','warn');
       state.fleets = { 1:createEmptyFleet(), 2:createEmptyFleet() };
       state.shots = { 1:[], 2:[] };
-      await updateDoc(online.ref, { status:'setup', currentPlayer:1, winner:null, fleets:{ p1:null, p2:null }, shots:{ p1:[], p2:[] }, 'players.p1.ready':false, 'players.p2.ready':false, lastEvent:null, updatedAt:serverTimestamp() });
+      await updateDoc(online.ref, { status:'setup', currentPlayer:1, winner:null, fleets:{ p1:null, p2:null }, shots:{ p1:{}, p2:{} }, 'players.p1.ready':false, 'players.p2.ready':false, lastEvent:null, updatedAt:serverTimestamp() });
     }
 
     function setOnlineStatus(text, tone=''){
@@ -1900,6 +2057,15 @@
     updateStaticText();
     showMenu();
   </script>
-  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
+  <!-- Cloudflare Web Analytics: only load on http/https so local file testing does not create CORS errors. -->
+  <script>
+    if (location.protocol === 'https:' || location.protocol === 'http:') {
+      const cf = document.createElement('script');
+      cf.defer = true;
+      cf.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+      cf.dataset.cfBeacon = '{"token":"c7e5713b5e4f4993907eb285797dc89b"}';
+      document.head.appendChild(cf);
+    }
+  </script>
 </body>
 </html>
