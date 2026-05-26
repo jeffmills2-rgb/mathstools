@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Shikaku v2: side draw/erase tools, modal menu, race waiting overlay, countdown -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shikaku v2 | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --green2:#49a529;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --grid:#b7c7dc;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(240px,1fr) auto minmax(460px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+    }
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    .language-control{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:6px 8px;color:white;}
+    .language-control label{font-size:12px;font-weight:950;opacity:.9;white-space:nowrap;color:white;}
+    .language-control select{width:auto;min-width:110px;height:34px;border:1px solid rgba(255,255,255,.25);border-radius:10px;background:white;color:#1d4ed8;font-weight:900;padding:0 8px;outline:none;}
+
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+    .message .english-under,.status-title .english-under,.status-subtitle .english-under{display:block;margin-top:3px;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#eef2ff;color:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.18);}
+    .btn-active{background:#fef3c7!important;border-color:#f59e0b!important;color:#92400e!important;box-shadow:0 0 0 4px rgba(245,158,11,.16)!important;}
+
+    input[type="text"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;transition:border-color .16s ease,box-shadow .16s ease;}
+    input[type="text"]:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .menu-card{padding:28px;display:grid;gap:22px;min-height:620px;place-items:center;position:relative;}
+    .hero{display:grid;grid-template-columns:1fr;gap:22px;align-items:stretch;width:min(980px,100%);}
+    .hero-main{display:none;}
+    .eyebrow{display:inline-flex;width:max-content;padding:8px 12px;border-radius:999px;background:white;color:#1d4ed8;font-weight:950;border:1px solid #bfdbfe;}
+    h1,h2,h3,p{margin-top:0;}
+    h1{font-size:clamp(2rem,4vw,3.4rem);line-height:.95;letter-spacing:-.07em;margin-bottom:4px;}
+    .hero-main p{font-size:1.05rem;font-weight:750;color:#475569;line-height:1.5;max-width:680px;margin-bottom:0;}
+    .mode-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .menu-panel{border-radius:26px;background:#f8fafc;border:1px solid var(--border);padding:20px;display:grid;gap:16px;}
+    .menu-center-panel{width:min(980px,100%);background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(15,23,42,.12);padding:28px;border:1px solid #dbe3ef;}
+    .setup-modal-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 36px));max-height:calc(100vh - 48px);overflow:auto;display:none;z-index:95;background:white;box-shadow:0 34px 90px rgba(15,23,42,.25);padding:28px;}
+    .setup-modal-panel.open{display:grid;}
+    .setup-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .setup-modal-head h2{margin-bottom:0;}
+    .setup-modal-back{padding:10px 14px;}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+    .level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:6px;padding:16px;border-radius:18px;align-content:start;}
+    .level-icon{width:44px;height:44px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;font-size:1.55rem;box-shadow:inset 0 -3px 0 rgba(15,23,42,.06);}
+    .level-title-row{display:flex;align-items:center;gap:12px;}
+    .level-copy{display:grid;gap:2px;}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn.selected .level-icon{background:#ede9fe;}
+    .level-btn strong{font-size:1rem;}
+    .level-btn span{font-size:.78rem;color:var(--muted);font-weight:850;}
+
+    .game-card{display:grid;grid-template-rows:auto minmax(0,1fr);padding:18px;gap:16px;}
+    .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:68px;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+    .toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+    .game-area{display:grid;grid-template-columns:minmax(560px,1fr) 340px;gap:20px;align-items:start;}
+    .board-stage{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:18px;align-items:start;}
+    .board-shell{display:grid;gap:12px;position:relative;}
+    .tool-rail{display:grid;gap:12px;align-self:start;justify-items:center;padding-top:8px;}
+    .tool-btn{width:68px;height:68px;border-radius:20px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);display:grid;place-items:center;box-shadow:0 12px 28px rgba(15,23,42,.08);font-size:1.85rem;color:#334155;}
+    .tool-btn.active{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10),0 12px 28px rgba(15,23,42,.08);}
+    .tool-btn:disabled{opacity:.45;}
+    .waiting-overlay{position:absolute;inset:0;display:none;place-items:center;z-index:8;padding:24px;background:rgba(255,255,255,.82);backdrop-filter:blur(3px);border-radius:24px;}
+    .waiting-overlay.show{display:grid;}
+    .waiting-card{width:min(520px,100%);background:rgba(255,255,255,.98);border:1px solid #dbe3ef;border-radius:28px;box-shadow:0 30px 90px rgba(15,23,42,.18);padding:24px;display:grid;gap:14px;}
+    .waiting-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .waiting-title{font-size:1.55rem;font-weight:950;letter-spacing:-.04em;margin:0;}
+    .waiting-sub{margin:0;color:var(--muted);font-weight:750;line-height:1.4;}
+    .waiting-players{display:grid;gap:10px;}
+    .waiting-player{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:900;}
+    .waiting-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .board-wrap{position:relative;width:100%;max-width:760px;margin:0 auto;aspect-ratio:1/1;background:linear-gradient(180deg,#ffffff,#f9fafb);border-radius:24px;border:1px solid var(--border);overflow:hidden;touch-action:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);}
+    svg{width:100%;height:100%;display:block;user-select:none;}
+    .grid-line{stroke:var(--grid);stroke-width:1.5;}
+    .cell-fill{stroke:rgba(15,23,42,.22);stroke-width:2;rx:10;ry:10;filter:drop-shadow(0 8px 9px rgba(15,23,42,.12));}
+    .cell-fill.solution{stroke:#92400e;stroke-dasharray:7 5;filter:none;opacity:.78;}
+    .preview-rect{fill:rgba(37,99,235,.14);stroke:#2563eb;stroke-width:4;stroke-dasharray:8 7;rx:10;ry:10;pointer-events:none;}
+    .bad-preview{fill:rgba(239,68,68,.16);stroke:#ef4444;stroke-width:4;rx:10;ry:10;pointer-events:none;animation:missShake .38s ease-in-out 0s 2;}
+    .clue-disc{fill:white;stroke:#cbd5e1;stroke-width:2;filter:drop-shadow(0 3px 5px rgba(15,23,42,.10));}
+    .clue-text{font-family:var(--mathFont);font-weight:950;font-size:30px;fill:#0f172a;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+    .board-capture{fill:transparent;cursor:crosshair;}
+    .board-capture.locked{cursor:not-allowed;}
+    @keyframes missShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-7px);}40%{transform:translateX(7px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+
+    .message{padding:14px 16px;border-radius:18px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-weight:850;min-height:52px;display:flex;align-items:center;line-height:1.35;}
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .message.error{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+
+    .side-panel{display:grid;gap:16px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    .panel-section h2{font-size:1.1rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .stat-card{border-radius:18px;padding:14px;background:white;border:1px solid var(--border);}
+    .stat-card span{display:block;color:#334155;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .stat-card strong{display:block;font-size:1.55rem;margin-top:3px;}
+    .progress-list{display:grid;gap:12px;}
+    .progress-item{display:grid;gap:6px;}
+    .progress-top{display:flex;justify-content:space-between;gap:8px;font-weight:950;color:#334155;}
+    .progress-bar{height:13px;border-radius:999px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1;}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),#a3e635);border-radius:999px;transition:width .25s ease;}
+    .progress-fill.opponent{background:linear-gradient(90deg,var(--purple),#60a5fa);}
+    .room-badge{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;}
+    .room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont);}
+    .player-list{display:grid;gap:10px;}
+    .player-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:16px;background:white;border:1px solid var(--border);font-weight:900;}
+    .pill{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:999px;background:#e2e8f0;color:#334155;font-weight:900;font-size:.86rem;}
+    .pill.good{background:#dcfce7;color:#166534;}
+    .pill.warn{background:#fff7ed;color:#9a3412;}
+    .lobby-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+
+    .race-setup{display:none;}
+    .race-setup.open{display:grid;gap:14px;}
+    .race-join{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;}
+    .setup-fields{display:grid;gap:12px;}
+    .form-note{font-size:.86rem;color:var(--muted);font-weight:750;line-height:1.35;margin:0;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(620px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155;}
+    .rules-list .english-under{display:block;margin-top:5px;color:#64748b;font-size:.82em;}
+    .end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .countdown{position:absolute;inset:0;background:rgba(255,255,255,.60);display:none;place-items:center;z-index:9;font-size:clamp(4rem,12vw,8rem);font-weight:950;color:#4c1d95;text-shadow:0 12px 28px rgba(124,58,237,.18);}
+    .countdown.show{display:grid;}
+    .brand-footer{width:min(1340px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .hidden{display:none!important;}
+
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{width:min(1500px,calc(100vw - 36px));margin:12px auto 8px;}
+      .board-wrap{max-width:min(760px,calc(100dvh - 180px));}
+      .brand-footer{width:min(1500px,calc(100vw - 36px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 28px);margin-top:14px;}
+      .hero{grid-template-columns:1fr;}
+      .game-area{grid-template-columns:1fr;}
+      .board-wrap{width:100%;}
+      .status-strip{grid-template-columns:1fr;}
+      .toolbar{justify-content:center;}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .actions button{font-size:14px;padding:10px 12px;}
+      .board-stage{grid-template-columns:1fr;}
+      .tool-rail{grid-template-columns:repeat(2,68px);justify-content:center;}
+      .layout{width:calc(100vw - 20px);}
+      .menu-card,.game-card{padding:14px;}
+      .hero-main{padding:20px;}
+      .level-grid,.stat-grid,.lobby-actions{grid-template-columns:1fr;}
+      .race-join{grid-template-columns:1fr;}
+      .brand-footer{width:calc(100vw - 20px);padding:8px 10px;}
+    }
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle" data-i18n="Shikaku">Shikaku</div>
+    <div class="actions">
+      <div class="language-control">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button" data-i18n="Rules">Rules</button>
+      <button class="btn hidden" id="undoBtn" type="button" data-i18n="Undo">Undo</button>
+      <button class="btn hidden" id="eraseBtn" type="button" data-i18n="Erase">Erase</button>
+      <button class="btn btn-primary hidden" id="newPuzzleBtn" type="button" data-i18n="New Puzzle">New Puzzle</button>
+      <button class="btn" id="backToMenuBtn" type="button" data-i18n="Back to menu">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card menu-card" id="menuPage">
+      <div class="hero">
+        <div class="hero-main">
+          <span class="eyebrow" data-i18n="Rectangle logic puzzle">Rectangle logic puzzle</span>
+          <h1 data-i18n="Fill the board with rectangles.">Fill the board with rectangles.</h1>
+          <p data-i18n="Each rectangle must contain exactly one number, and its area must equal that number.">Each rectangle must contain exactly one number, and its area must equal that number.</p>
+        </div>
+        <div class="menu-panel menu-center-panel">
+          <h2 data-i18n="Choose a game mode">Choose a game mode</h2>
+          <div class="mode-grid">
+            <button class="mode-card" id="singleModeBtn" type="button">
+              <span class="mode-icon">🧩</span>
+              <strong data-i18n="Single Player">Single Player</strong>
+              <span data-i18n="Solve a Shikaku puzzle at your own pace.">Solve a Shikaku puzzle at your own pace.</span>
+            </button>
+            <button class="mode-card" id="raceModeBtn" type="button">
+              <span class="mode-icon">🏁</span>
+              <strong data-i18n="Race Mode">Race Mode</strong>
+              <span data-i18n="Two players solve the same puzzle on separate boards.">Two players solve the same puzzle on separate boards.</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-panel setup-modal-panel" id="singleSetupPanel">
+        <div class="setup-modal-head"><h2 data-i18n="Choose difficulty">Choose difficulty</h2><button class="btn-soft setup-modal-back" id="singleSetupBackBtn" type="button" data-i18n="Back">Back</button></div>
+        <p class="form-note" data-i18n="Choose how difficult you would like the puzzle to be.">Choose how difficult you would like the puzzle to be.</p>
+        <p class="form-note" data-i18n="Choose a level. Mild uses 7 by 7, Medium uses 10 by 10, and Spicy uses 14 by 14.">Choose a level. Mild uses 7 by 7, Medium uses 10 by 10, and Spicy uses 14 by 14.</p>
+        <div class="level-grid" id="singleLevelGrid">
+          <button class="level-btn selected" data-level="mild" type="button">
+            <div class="level-title-row">
+              <div class="level-icon" aria-hidden="true">🍃</div>
+              <div class="level-copy"><strong data-i18n="Mild">Mild</strong><span data-i18n="More clues, smaller regions">More clues, smaller regions</span></div>
+            </div>
+          </button>
+          <button class="level-btn" data-level="medium" type="button">
+            <div class="level-title-row">
+              <div class="level-icon" aria-hidden="true">🌶️</div>
+              <div class="level-copy"><strong data-i18n="Medium">Medium</strong><span data-i18n="10 by 10, more factor options">10 by 10, more factor options</span></div>
+            </div>
+          </button>
+          <button class="level-btn" data-level="spicy" type="button">
+            <div class="level-title-row">
+              <div class="level-icon" aria-hidden="true">🔥</div>
+              <div class="level-copy"><strong data-i18n="Spicy">Spicy</strong><span data-i18n="14 by 14, fewer obvious starts">14 by 14, fewer obvious starts</span></div>
+            </div>
+          </button>
+        </div>
+        <button class="btn-primary" id="startSingleBtn" type="button" data-i18n="Start Single Player">Start Single Player</button>
+      </div>
+
+      <div class="menu-panel setup-modal-panel race-setup" id="raceSetupPanel">
+        <div class="setup-modal-head"><h2 data-i18n="Race Mode setup">Race Mode setup</h2><button class="btn-soft setup-modal-back" id="raceSetupBackBtn" type="button" data-i18n="Back">Back</button></div>
+        <p class="form-note" data-i18n="Create a room or join with a code. Both players receive the same puzzle for the selected difficulty.">Create a room or join with a code. Both players receive the same puzzle for the selected difficulty.</p>
+        <div class="setup-fields">
+          <label><span data-i18n="Your name">Your name</span><input id="raceNameInput" type="text" placeholder="Player name" maxlength="24" autocomplete="name" /></label>
+          <label><span data-i18n="Race difficulty">Race difficulty</span>
+            <select id="raceLevelSelect">
+              <option value="mild">Mild (7 × 7)</option>
+              <option value="medium" selected>Medium (10 × 10)</option>
+              <option value="spicy">Spicy (14 × 14)</option>
+            </select>
+          </label>
+        </div>
+        <div class="lobby-actions">
+          <button class="btn-primary" id="createRoomBtn" type="button" data-i18n="Create Room">Create Room</button>
+          <button class="btn-soft" id="restoreRoomBtn" type="button" data-i18n="Restore last room">Restore last room</button>
+        </div>
+        <div class="race-join">
+          <label><span data-i18n="Room code">Room code</span><input id="roomCodeInput" type="text" placeholder="ABCD" maxlength="6" autocomplete="off" /></label>
+          <button class="btn-green" id="joinRoomBtn" type="button" data-i18n="Join Room">Join Room</button>
+        </div>
+        <div class="message" id="raceSetupMessage">Enter your name, then create or join a room.</div>
+      </div>
+          <div class="modal-backdrop" id="setupModalBackdrop" aria-hidden="true"></div>
+    </section>
+
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">🧩</div>
+          <div>
+            <div class="status-title" id="statusTitle">Draw a rectangle around one clue.</div>
+            <div class="status-subtitle" id="statusSubtitle">The area must match the clue number.</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn-soft hidden" id="copyRoomBtn" type="button" data-i18n="Copy room code">Copy room code</button>
+          <button class="btn-green hidden" id="readyBtn" type="button" data-i18n="Ready">Ready</button>
+          <button class="btn-purple hidden" id="playAgainBtn" type="button" data-i18n="Play Again">Play Again</button>
+          <button class="btn-soft hidden" id="viewSolutionBtn" type="button" data-i18n="View Solution">View Solution</button>
+          <button class="btn-red hidden" id="leaveRoomBtn" type="button" data-i18n="Leave room">Leave room</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="board-stage">
+          <div class="board-shell" id="boardShell">
+            <div class="board-wrap">
+              <svg id="boardSvg" viewBox="0 0 720 720" role="img" aria-label="Shikaku board"></svg>
+              <div class="countdown" id="countdownOverlay">3</div>
+            </div>
+            <div class="waiting-overlay hidden" id="waitingOverlay">
+              <div class="waiting-card">
+                <div class="waiting-top">
+                  <div>
+                    <p class="pill" style="width:max-content;margin:0;"><span data-i18n="Room">Room</span>&nbsp;<span class="room-code" id="waitingRoomCode">----</span></p>
+                  </div>
+                </div>
+                <h2 class="waiting-title" id="waitingTitle">Waiting for player 2</h2>
+                <p class="waiting-sub" id="waitingSubtitle">Both players will start together. Press Ready when both players have joined.</p>
+                <div class="waiting-players" id="waitingPlayers"></div>
+                <div class="waiting-actions">
+                  <button class="btn-soft" id="overlayCopyRoomBtn" type="button" data-i18n="Copy room code">Copy room code</button>
+                  <button class="btn-green" id="overlayReadyBtn" type="button" data-i18n="Ready">Ready</button>
+                </div>
+              </div>
+            </div>
+            <div class="message" id="messageBox" aria-live="polite">Click and drag to draw a rectangle.</div>
+          </div>
+          <div class="tool-rail" aria-label="Tools">
+            <button class="tool-btn active" id="drawToolBtn" type="button" title="Draw tool" aria-label="Draw tool"><span aria-hidden="true">✏️</span><span class="sr-only">Draw</span></button>
+            <button class="tool-btn" id="eraseToolBtn" type="button" title="Erase tool" aria-label="Erase tool"><span aria-hidden="true">⌫</span><span class="sr-only">Erase</span></button>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="panel-section hidden" id="roomPanel">
+            <div class="room-badge"><span><span data-i18n="Room">Room</span> <span class="room-code" id="roomCodeBadge">----</span></span><span class="pill" id="roomStatusPill">waiting</span></div>
+          </section>
+
+          <section class="panel-section hidden" id="playersPanel">
+            <h2 data-i18n="Players">Players</h2>
+            <div class="player-list" id="playerList"></div>
+          </section>
+
+          <section class="panel-section">
+            <h2 data-i18n="Progress">Progress</h2>
+            <div class="progress-list" id="progressList"></div>
+          </section>
+
+          <section class="panel-section">
+            <h2 data-i18n="Puzzle stats">Puzzle stats</h2>
+            <div class="stat-grid">
+              <div class="stat-card"><span data-i18n="Score">Score</span><strong id="scoreStat">0</strong></div>
+              <div class="stat-card"><span data-i18n="Timer">Timer</span><strong id="timerStat">00:00</strong></div>
+              <div class="stat-card"><span data-i18n="Cells">Cells</span><strong id="cellsStat">0/49</strong></div>
+              <div class="stat-card"><span data-i18n="Clues">Clues</span><strong id="cluesStat">0</strong></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header">
+        <h2 id="rulesTitle" data-i18n="Shikaku rules">Shikaku rules</h2>
+        <button class="btn-soft" id="closeRulesBtn" type="button" data-i18n="Close">Close</button>
+      </div>
+      <p id="rulesIntro" data-i18n="Fill the whole board with rectangles that match the clues.">Fill the whole board with rectangles that match the clues.</p>
+      <ul class="rules-list" id="rulesList"></ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="endModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="modal-header">
+        <h2 id="endTitle">Puzzle complete!</h2>
+        <button class="btn-soft" id="closeEndBtn" type="button" data-i18n="Close">Close</button>
+      </div>
+      <div id="endBody"></div>
+      <div class="end-actions">
+        <button class="btn-primary" id="endPlayAgainBtn" type="button" data-i18n="Play Again">Play Again</button>
+        <button class="btn-soft" id="endViewSolutionBtn" type="button" data-i18n="View Solution">View Solution</button>
+        <button class="btn-soft" id="endBackMenuBtn" type="button" data-i18n="Back to menu">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZLYpzbeplXIq3V54yZOye5jH83wWrXJo",
+      authDomain: "coordinate-connect-4.firebaseapp.com",
+      projectId: "coordinate-connect-4",
+      storageBucket: "coordinate-connect-4.firebasestorage.app",
+      messagingSenderId: "798945723284",
+      appId: "1:798945723284:web:2140725b79cff78a100581",
+      measurementId: "G-RSMWF3LR5F"
+    };
+
+    const FIREBASE_CONFIGURED = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes('PASTE_'));
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let authReadyPromise = Promise.resolve(null);
+
+    if (FIREBASE_CONFIGURED) {
+      try {
+        firebaseApp = initializeApp(firebaseConfig);
+        auth = getAuth(firebaseApp);
+        db = getFirestore(firebaseApp);
+        authReadyPromise = new Promise((resolve) => onAuthStateChanged(auth, (user) => resolve(user)));
+        signInAnonymously(auth).catch((err) => {
+          console.error(err);
+          setRaceSetupMessage('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'error');
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    const ROOM_COLLECTION = 'shikakuRaceRooms';
+    const PAD = 54;
+    const SIZE = 720;
+    const BOARD = SIZE - PAD * 2;
+    const TOTAL_CELLS = 49;
+    const RECT_COLORS = ['#bfdbfe','#ddd6fe','#bbf7d0','#fde68a','#fecaca','#bae6fd','#fbcfe8','#fed7aa','#c7d2fe','#d9f99d','#e0e7ff','#ccfbf1','#fae8ff','#fef3c7','#dcfce7','#e2e8f0','#cffafe','#f5d0fe'];
+
+    const I18N = {
+      ar: {
+        'Shikaku':'شيكاكو','Language':'اللغة','Rules':'القواعد','Undo':'تراجع','Erase':'مسح','New Puzzle':'لغز جديد','Back to menu':'العودة إلى القائمة','Rectangle logic puzzle':'لغز منطقي بالمستطيلات','Fill the board with rectangles.':'املأ اللوحة بالمستطيلات.','Each rectangle must contain exactly one number, and its area must equal that number.':'يجب أن يحتوي كل مستطيل على رقم واحد فقط، وأن تساوي مساحته ذلك الرقم.','Choose a game mode':'اختر وضع اللعب','Single Player':'لاعب واحد','Solve a Shikaku puzzle at your own pace.':'حل لغز شيكاكو 7 في 7 بالسرعة التي تناسبك.','Race Mode':'وضع السباق','Two players solve the same puzzle on separate boards.':'يحلان اللاعبان اللغز نفسه على لوحتين منفصلتين.','Single Player setup':'إعداد اللاعب الواحد','Choose a level. Mild uses 7 by 7, Medium uses 10 by 10, and Spicy uses 14 by 14.':'اختر مستوى. كل المستويات تستخدم لوحة 7 في 7؛ المستويات الأصعب تستخدم مستطيلات أكبر وأقل توقعاً.','Mild':'سهل','Medium':'متوسط','Spicy':'صعب','More clues, smaller regions':'أدلة أكثر ومناطق أصغر','Balanced regions':'مناطق متوازنة','Larger, trickier regions':'مناطق أكبر وأكثر صعوبة','Start Single Player':'ابدأ لاعب واحد','Race Mode setup':'إعداد وضع السباق','Create a room or join with a code. Both players receive the same puzzle for the selected difficulty.':'أنشئ غرفة أو انضم برمز. سيحصل اللاعبان على نفس لغز 7 في 7.','Your name':'اسمك','Race difficulty':'صعوبة السباق','Create Room':'أنشئ غرفة','Restore last room':'استعادة آخر غرفة','Room code':'رمز الغرفة','Join Room':'انضم إلى الغرفة','Enter your name, then create or join a room.':'أدخل اسمك، ثم أنشئ غرفة أو انضم إليها.','Copy room code':'نسخ رمز الغرفة','Ready':'جاهز','Play Again':'العب مرة أخرى','View Solution':'عرض الحل','Leave room':'مغادرة الغرفة','Room':'الغرفة','Players':'اللاعبون','Progress':'التقدم','Puzzle stats':'إحصاءات اللغز','Score':'النقاط','Timer':'المؤقت','Cells':'الخلايا','Clues':'الأدلة','Shikaku rules':'قواعد شيكاكو','Close':'إغلاق','Fill the whole board with rectangles that match the clues.':'املأ اللوحة كلها بمستطيلات تطابق الأدلة.','Draw a rectangle around one clue.':'ارسم مستطيلاً حول دليل واحد.','The area must match the clue number.':'يجب أن تطابق المساحة رقم الدليل.','Click and drag to draw a rectangle.':'انقر واسحب لرسم مستطيل.','Waiting for another player.':'في انتظار لاعب آخر.','Press Ready when you are prepared to race.':'اضغط جاهز عندما تكون مستعداً للسباق.','The race is on!':'بدأ السباق!','The board is locked.':'اللوحة مقفلة.','Puzzle complete!':'اكتمل اللغز!','You solved the Shikaku first.':'لقد حللت شيكاكو أولاً.','Your board has been locked.':'تم قفل لوحتك.','completed it first!':'أكمل اللغز أولاً!','Final score':'النقاط النهائية','Time':'الوقت','You':'أنت','Not ready':'غير جاهز','Room is already full.':'هذه الغرفة ممتلئة بالفعل.','This room does not exist.':'هذه الغرفة غير موجودة.','This rectangle contains more than one number.':'يحتوي هذا المستطيل على أكثر من رقم.','This rectangle does not contain a number.':'لا يحتوي هذا المستطيل على رقم.','This rectangle overlaps an existing rectangle.':'يتداخل هذا المستطيل مع مستطيل موجود.','This rectangle is outside the board.':'هذا المستطيل خارج اللوحة.','This rectangle has an area of {area}, but the clue says {value}.':'مساحة هذا المستطيل {area}، لكن الدليل يقول {value}.','Accepted.':'تم قبولها.','Nice rectangle.':'مستطيل رائع.','That move was removed.':'تمت إزالة هذه الحركة.','There is nothing to undo.':'لا يوجد شيء للتراجع عنه.','Ready status updated.':'تم تحديث حالة الجاهزية.','Room code copied.':'تم نسخ رمز الغرفة.','Both players need to press Play Again.':'يجب على كلا اللاعبين الضغط على اللعب مرة أخرى.','A new puzzle is ready. Press Ready when prepared.':'لغز جديد جاهز. اضغط جاهز عندما تستعد.','Every rectangle must contain exactly one clue.':'يجب أن يحتوي كل مستطيل على دليل واحد فقط.','The area of the rectangle must equal the clue number.':'يجب أن تساوي مساحة المستطيل رقم الدليل.','Rectangles cannot overlap.':'لا يمكن أن تتداخل المستطيلات.','Cover every cell on the board to solve the puzzle.':'غطِّ كل خلية في اللوحة لحل اللغز.','In Race Mode, both players get the same puzzle, but each board is separate.':'في وضع السباق، يحصل اللاعبان على نفس اللغز، لكن كل لوحة منفصلة.','Choose difficulty':'اختر الصعوبة','Choose how difficult you would like the puzzle to be.':'اختر مدى صعوبة اللغز الذي تريده.','Back':'رجوع','Waiting for player 2':'بانتظار اللاعب 2','Both players will start together. Press Ready when both players have joined.':'سيبدأ اللاعبان معًا. اضغط جاهز عندما ينضم اللاعبان.','Draw':'رسم','Solve a Shikaku puzzle at your own pace.':'حل لغز شيكاكو بالسرعة التي تناسبك.','Choose a level. Mild uses 7 by 7, Medium uses 10 by 10, and Spicy uses 14 by 14.':'اختر مستوى. السهل يستخدم 7 في 7، والمتوسط 10 في 10، والصعب 14 في 14.','Create a room or join with a code. Both players receive the same puzzle for the selected difficulty.':'أنشئ غرفة أو انضم برمز. يحصل اللاعبان على نفس اللغز للمستوى المحدد.','10 by 10, more factor options':'10 في 10، خيارات عوامل أكثر','14 by 14, fewer obvious starts':'14 في 14، بدايات واضحة أقل'
+      },
+      fa: {
+        'Shikaku':'شیکاکو','Language':'زبان','Rules':'قوانین','Undo':'بازگشت','Erase':'پاک کردن','New Puzzle':'معمای جدید','Back to menu':'بازگشت به منو','Rectangle logic puzzle':'معمای منطقی مستطیل‌ها','Fill the board with rectangles.':'صفحه را با مستطیل‌ها پر کنید.','Each rectangle must contain exactly one number, and its area must equal that number.':'هر مستطیل باید دقیقاً یک عدد داشته باشد و مساحت آن برابر همان عدد باشد.','Choose a game mode':'یک حالت بازی انتخاب کنید','Single Player':'تک‌نفره','Solve a Shikaku puzzle at your own pace.':'یک معمای شیکاکو ۷ در ۷ را با سرعت خود حل کنید.','Race Mode':'حالت مسابقه','Two players solve the same puzzle on separate boards.':'دو بازیکن همان معما را روی صفحه‌های جداگانه حل می‌کنند.','Single Player setup':'تنظیم تک‌نفره','Choose a level. Mild uses 7 by 7, Medium uses 10 by 10, and Spicy uses 14 by 14.':'یک سطح انتخاب کنید. همه سطح‌ها صفحه ۷ در ۷ دارند؛ سطح‌های سخت‌تر مستطیل‌های بزرگ‌تر و کمتر قابل پیش‌بینی دارند.','Mild':'ملایم','Medium':'متوسط','Spicy':'تند','More clues, smaller regions':'راهنماهای بیشتر، ناحیه‌های کوچک‌تر','Balanced regions':'ناحیه‌های متعادل','Larger, trickier regions':'ناحیه‌های بزرگ‌تر و دشوارتر','Start Single Player':'شروع تک‌نفره','Race Mode setup':'تنظیم حالت مسابقه','Create a room or join with a code. Both players receive the same puzzle for the selected difficulty.':'یک اتاق بسازید یا با کد وارد شوید. هر دو بازیکن همان معمای ۷ در ۷ را می‌گیرند.','Your name':'نام شما','Race difficulty':'سختی مسابقه','Create Room':'ساخت اتاق','Restore last room':'بازیابی آخرین اتاق','Room code':'کد اتاق','Join Room':'ورود به اتاق','Enter your name, then create or join a room.':'نام خود را وارد کنید، سپس اتاق بسازید یا وارد شوید.','Copy room code':'کپی کد اتاق','Ready':'آماده','Play Again':'دوباره بازی کن','View Solution':'نمایش پاسخ','Leave room':'ترک اتاق','Room':'اتاق','Players':'بازیکنان','Progress':'پیشرفت','Puzzle stats':'آمار معما','Score':'امتیاز','Timer':'زمان','Cells':'خانه‌ها','Clues':'راهنماها','Shikaku rules':'قوانین شیکاکو','Close':'بستن','Fill the whole board with rectangles that match the clues.':'همه صفحه را با مستطیل‌هایی پر کنید که با راهنماها جور هستند.','Draw a rectangle around one clue.':'دور یک راهنما مستطیل بکشید.','The area must match the clue number.':'مساحت باید با عدد راهنما برابر باشد.','Click and drag to draw a rectangle.':'برای کشیدن مستطیل کلیک کنید و بکشید.','Waiting for another player.':'در انتظار بازیکن دیگر.','Press Ready when you are prepared to race.':'وقتی آماده مسابقه هستید، آماده را بزنید.','The race is on!':'مسابقه شروع شد!','The board is locked.':'صفحه قفل شده است.','Puzzle complete!':'معما کامل شد!','You solved the Shikaku first.':'شما اول شیکاکو را حل کردید.','Your board has been locked.':'صفحه شما قفل شده است.','completed it first!':'اول کامل کرد!','Final score':'امتیاز نهایی','Time':'زمان','You':'شما','Not ready':'آماده نیست','Room is already full.':'این اتاق پر است.','This room does not exist.':'این اتاق وجود ندارد.','This rectangle contains more than one number.':'این مستطیل بیش از یک عدد دارد.','This rectangle does not contain a number.':'این مستطیل هیچ عددی ندارد.','This rectangle overlaps an existing rectangle.':'این مستطیل با مستطیل دیگری هم‌پوشانی دارد.','This rectangle is outside the board.':'این مستطیل خارج از صفحه است.','This rectangle has an area of {area}, but the clue says {value}.':'مساحت این مستطیل {area} است، اما راهنما {value} می‌گوید.','Accepted.':'پذیرفته شد.','Nice rectangle.':'مستطیل خوبی است.','That move was removed.':'آن حرکت حذف شد.','There is nothing to undo.':'چیزی برای بازگشت نیست.','Ready status updated.':'وضعیت آماده به‌روزرسانی شد.','Room code copied.':'کد اتاق کپی شد.','Both players need to press Play Again.':'هر دو بازیکن باید دوباره بازی کن را بزنند.','A new puzzle is ready. Press Ready when prepared.':'معمای جدید آماده است. وقتی آماده هستید، آماده را بزنید.','Every rectangle must contain exactly one clue.':'هر مستطیل باید دقیقاً یک راهنما داشته باشد.','The area of the rectangle must equal the clue number.':'مساحت مستطیل باید برابر عدد راهنما باشد.','Rectangles cannot overlap.':'مستطیل‌ها نباید هم‌پوشانی داشته باشند.','Cover every cell on the board to solve the puzzle.':'برای حل معما همه خانه‌های صفحه را بپوشانید.','In Race Mode, both players get the same puzzle, but each board is separate.':'در حالت مسابقه، هر دو بازیکن همان معما را می‌گیرند، اما صفحه‌ها جدا هستند.','Choose difficulty':'انتخاب سختی','Choose how difficult you would like the puzzle to be.':'سختی معما را انتخاب کنید.','Back':'بازگشت','Waiting for player 2':'در انتظار بازیکن ۲','Both players will start together. Press Ready when both players have joined.':'هر دو بازیکن با هم شروع می‌کنند. وقتی هر دو وارد شدند، روی آماده بزنید.','Draw':'رسم','Solve a Shikaku puzzle at your own pace.':'یک معمای شیکاکو را با سرعت خود حل کنید.','Choose a level. Mild uses 7 by 7, Medium uses 10 by 10, and Spicy uses 14 by 14.':'یک سطح انتخاب کنید. ملایم ۷ در ۷، متوسط ۱۰ در ۱۰، و تند ۱۴ در ۱۴ است.','Create a room or join with a code. Both players receive the same puzzle for the selected difficulty.':'یک اتاق بسازید یا با کد وارد شوید. هر دو بازیکن همان معمای سطح انتخاب‌شده را دریافت می‌کنند.','10 by 10, more factor options':'۱۰ در ۱۰، گزینه‌های عامل بیشتر','14 by 14, fewer obvious starts':'۱۴ در ۱۴، شروع‌های آشکار کمتر'
+      }
+    };
+
+    const el = (id) => document.getElementById(id);
+    const menuPage = el('menuPage');
+    const gamePage = el('gamePage');
+    const boardSvg = el('boardSvg');
+    const messageBox = el('messageBox');
+    const statusTitle = el('statusTitle');
+    const statusSubtitle = el('statusSubtitle');
+    const statusIcon = el('statusIcon');
+    const undoBtn = el('undoBtn');
+    const eraseBtn = el('eraseBtn');
+    const drawToolBtn = el('drawToolBtn');
+    const eraseToolBtn = el('eraseToolBtn');
+    const newPuzzleBtn = el('newPuzzleBtn');
+    const backToMenuBtn = el('backToMenuBtn');
+    const countdownOverlay = el('countdownOverlay');
+    const setupModalBackdrop = el('setupModalBackdrop');
+    const singleSetupPanel = el('singleSetupPanel');
+    const raceSetupPanel = el('raceSetupPanel');
+    const boardShell = el('boardShell');
+    const waitingOverlay = el('waitingOverlay');
+    const waitingRoomCode = el('waitingRoomCode');
+    const waitingTitle = el('waitingTitle');
+    const waitingSubtitle = el('waitingSubtitle');
+    const waitingPlayers = el('waitingPlayers');
+    const overlayReadyBtn = el('overlayReadyBtn');
+    const overlayCopyRoomBtn = el('overlayCopyRoomBtn');
+
+    const state = {
+      lang: 'en',
+      mode: 'menu',
+      level: 'mild',
+      puzzle: null,
+      rectangles: [],
+      dragging: null,
+      preview: null,
+      badPreview: null,
+      eraseMode: false,
+      showSolution: false,
+      singleStartMs: null,
+      singleFinished: false,
+      localTimer: null,
+      messageKey: 'Click and drag to draw a rectangle.',
+      messageType: '',
+      countdownReady: true
+    };
+
+    const race = {
+      active: false,
+      uid: null,
+      roomCode: null,
+      ref: null,
+      unsub: null,
+      data: null,
+      localName: '',
+      countdownTimer: null,
+      renderTicker: null
+    };
+
+    function t(key, params = {}) {
+      let value = state.lang === 'en' ? key : (I18N[state.lang]?.[key] || key);
+      Object.entries(params).forEach(([k,v]) => value = value.replaceAll(`{${k}}`, String(v)));
+      return value;
+    }
+    function esc(str){return String(str).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+    function dual(key, params = {}) {
+      if (state.lang === 'en') return esc(t(key, params));
+      return `<span class="i18n-dual"><span class="native">${esc(t(key, params))}</span><span class="english-under">${esc(key.replace(/\{(.*?)\}/g, (_,k) => params[k] ?? `{${k}}`))}</span></span>`;
+    }
+    function applyTranslations(){
+      document.documentElement.lang = state.lang;
+      document.documentElement.dir = state.lang === 'ar' || state.lang === 'fa' ? 'rtl' : 'ltr';
+      el('languageMainLabel').innerHTML = dual('Language');
+      document.querySelectorAll('[data-i18n]').forEach(node => node.innerHTML = dual(node.dataset.i18n));
+      updateRulesList();
+      renderAll();
+    }
+
+    function setMessage(key, type = '', params = {}) {
+      state.messageKey = key;
+      state.messageType = type;
+      state.messageParams = params;
+      messageBox.className = `message ${type}`.trim();
+      messageBox.innerHTML = dual(key, params);
+    }
+    function setRaceSetupMessage(key, type = '', params = {}) {
+      const box = el('raceSetupMessage');
+      if (!box) return;
+      box.className = `message ${type}`.trim();
+      box.innerHTML = dual(key, params);
+    }
+
+
+    function openSetupModal(which) {
+      setupModalBackdrop?.classList.add('open');
+      setupModalBackdrop?.setAttribute('aria-hidden','false');
+      singleSetupPanel?.classList.remove('open');
+      raceSetupPanel?.classList.remove('open');
+      if (which === 'single') singleSetupPanel?.classList.add('open');
+      if (which === 'race') raceSetupPanel?.classList.add('open');
+    }
+    function closeSetupModal() {
+      setupModalBackdrop?.classList.remove('open');
+      setupModalBackdrop?.setAttribute('aria-hidden','true');
+      singleSetupPanel?.classList.remove('open');
+      raceSetupPanel?.classList.remove('open');
+    }
+    async function copyRoomCodeToClipboard() {
+      if (!race.roomCode) return;
+      try { await navigator.clipboard.writeText(race.roomCode); } catch {}
+      setMessage('Room code copied.', 'success');
+    }
+
+    function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+    function shuffle(arr){const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a;}
+    function area(rect){return (rect.r2-rect.r1+1)*(rect.c2-rect.c1+1);}
+    function normRect(a,b){return {r1:Math.min(a.r,b.r),c1:Math.min(a.c,b.c),r2:Math.max(a.r,b.r),c2:Math.max(a.c,b.c)};}
+    function rectKey(rect){return `${rect.r1},${rect.c1},${rect.r2},${rect.c2}`;}
+    function overlaps(a,b){return !(a.r2 < b.r1 || a.r1 > b.r2 || a.c2 < b.c1 || a.c1 > b.c2);}
+    function containsCell(rect, r, c){return r>=rect.r1 && r<=rect.r2 && c>=rect.c1 && c<=rect.c2;}
+
+    function levelConfig(level = 'mild') {
+      return {
+        mild:   { rows:7,  cols:7,  target:17, maxArea:6,  minArea:1, minAreaToSplit:3,  attempts:1,  maxSmall:99 },
+        medium: { rows:10, cols:10, target:22, maxArea:12, minArea:2, minAreaToSplit:4,  attempts:24, maxSmall:7  },
+        spicy:  { rows:14, cols:14, target:20, maxArea:30, minArea:6, minAreaToSplit:12, attempts:90, maxSmall:0  }
+      }[level] || { rows:10, cols:10, target:22, maxArea:12, minArea:2, minAreaToSplit:4, attempts:24, maxSmall:7 };
+    }
+
+    function factorPairCount(n) {
+      let count = 0;
+      for (let i=1;i<=Math.sqrt(n);i++) {
+        if (n % i === 0) count += (i === n/i) ? 1 : 2;
+      }
+      return count;
+    }
+
+    function edgeDistance(r, c, rows, cols) {
+      return Math.min(r, c, rows-1-r, cols-1-c);
+    }
+
+    function weightedPick(items, scoreFn) {
+      if (!items.length) return null;
+      const weights = items.map(item => Math.max(0.05, scoreFn(item)));
+      const total = weights.reduce((a,b)=>a+b,0);
+      let roll = Math.random() * total;
+      for (let i=0;i<items.length;i++) {
+        roll -= weights[i];
+        if (roll <= 0) return items[i];
+      }
+      return items[items.length-1];
+    }
+
+    function splitRect(rect, level, config = levelConfig(level)){
+      const h = rect.r2 - rect.r1 + 1;
+      const w = rect.c2 - rect.c1 + 1;
+      const minArea = config.minArea || 1;
+      const splitOptions = [];
+
+      for (let cut=1; cut<w; cut++) {
+        const parts = [
+          {r1:rect.r1,c1:rect.c1,r2:rect.r2,c2:rect.c1+cut-1},
+          {r1:rect.r1,c1:rect.c1+cut,r2:rect.r2,c2:rect.c2}
+        ];
+        if (parts.every(p => area(p) >= minArea)) splitOptions.push({dir:'v', cut, parts});
+      }
+      for (let cut=1; cut<h; cut++) {
+        const parts = [
+          {r1:rect.r1,c1:rect.c1,r2:rect.r1+cut-1,c2:rect.c2},
+          {r1:rect.r1+cut,c1:rect.c1,r2:rect.r2,c2:rect.c2}
+        ];
+        if (parts.every(p => area(p) >= minArea)) splitOptions.push({dir:'h', cut, parts});
+      }
+      if (!splitOptions.length) return null;
+
+      if (level === 'mild') {
+        const balanced = splitOptions.map(o => {
+          const a = area(o.parts[0]);
+          const b = area(o.parts[1]);
+          return {...o, balance: Math.abs(a-b)};
+        }).sort((a,b)=>a.balance-b.balance);
+        return balanced[randInt(0, Math.min(2, balanced.length-1))].parts;
+      }
+
+      const chosen = weightedPick(splitOptions, (o) => {
+        const areas = o.parts.map(area);
+        const dims = o.parts.map(p => ({h:p.r2-p.r1+1,w:p.c2-p.c1+1}));
+        let score = 1;
+        areas.forEach((a, idx) => {
+          const d = dims[idx];
+          const skinnyPenalty = Math.min(d.h,d.w) === 1 ? (level === 'spicy' ? 0.15 : 0.45) : 1;
+          const factorScore = factorPairCount(a);
+          const preferredArea = level === 'spicy'
+            ? (a >= 4 && a <= config.maxArea ? 2.4 : .7)
+            : (a >= 2 && a <= config.maxArea ? 1.7 : .8);
+          const smallPenalty = (level === 'spicy' && a <= 3) ? 0.05 : 1;
+          score *= preferredArea * (1 + factorScore * (level === 'spicy' ? .34 : .18)) * skinnyPenalty * smallPenalty;
+        });
+        return score;
+      });
+      return chosen.parts;
+    }
+
+    function chooseClueCell(rect, rows, cols, level) {
+      if (level === 'mild') {
+        return { r: Math.floor((rect.r1 + rect.r2)/2), c: Math.floor((rect.c1 + rect.c2)/2) };
+      }
+      const cells = [];
+      for (let r=rect.r1;r<=rect.r2;r++) for (let c=rect.c1;c<=rect.c2;c++) {
+        const globalEdge = edgeDistance(r,c,rows,cols);
+        const localEdge = Math.min(r-rect.r1, c-rect.c1, rect.r2-r, rect.c2-c);
+        const centrePull = -0.04 * (Math.abs(r-(rows-1)/2) + Math.abs(c-(cols-1)/2));
+        let score = 1 + globalEdge * (level === 'spicy' ? 2.5 : 1.1) + localEdge * .8 + centrePull + Math.random()*.8;
+        if (level === 'spicy' && globalEdge === 0) score *= .12;
+        if (level === 'spicy' && globalEdge === 1) score *= .45;
+        cells.push({r,c,score});
+      }
+      cells.sort((a,b)=>b.score-a.score);
+      const pickPool = cells.slice(0, Math.max(1, Math.min(level === 'spicy' ? 4 : 8, cells.length)));
+      return pickPool[randInt(0, pickPool.length-1)];
+    }
+
+    function localOptionCountForClue(clue, clues, rows, cols) {
+      const n = clue.value;
+      let count = 0;
+      for (let h=1; h<=n; h++) {
+        if (n % h !== 0) continue;
+        const w = n / h;
+        if (h > rows || w > cols) continue;
+        for (let r1=clue.r-h+1; r1<=clue.r; r1++) {
+          const r2 = r1 + h - 1;
+          if (r1 < 0 || r2 >= rows) continue;
+          for (let c1=clue.c-w+1; c1<=clue.c; c1++) {
+            const c2 = c1 + w - 1;
+            if (c1 < 0 || c2 >= cols) continue;
+            const inside = clues.filter(other => other.r>=r1 && other.r<=r2 && other.c>=c1 && other.c<=c2);
+            if (inside.length === 1 && inside[0].id === clue.id) count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function puzzleHardnessScore(puzzle) {
+      const {rows, cols, clues, solution, level} = puzzle;
+      if (level === 'mild') return 0;
+      let score = 0;
+      let smallClues = 0;
+      const valueCounts = new Map();
+      clues.forEach(cl => valueCounts.set(cl.value, (valueCounts.get(cl.value)||0)+1));
+      for (const cl of clues) {
+        const options = localOptionCountForClue(cl, clues, rows, cols);
+        const factors = factorPairCount(cl.value);
+        const edge = edgeDistance(cl.r, cl.c, rows, cols);
+        if (cl.value <= 3) smallClues++;
+        score += Math.log2(1 + options) * 6;
+        score += factors * 2.2;
+        score += Math.min(edge, 4) * 1.8;
+        if (cl.value >= 6 && cl.value <= 24) score += 4;
+        if ([8,9,10,12,14,15,16,18,20,21,22,24].includes(cl.value)) score += 4;
+        if (cl.value <= 3) score -= (level === 'spicy' ? 16 : 5);
+        if (edge === 0) score -= (level === 'spicy' ? 10 : 3);
+        if ((valueCounts.get(cl.value)||0) > 1 && cl.value >= 4) score += 3;
+      }
+      solution.forEach(rect => {
+        const h = rect.r2-rect.r1+1;
+        const w = rect.c2-rect.c1+1;
+        const a = area(rect);
+        if (Math.min(h,w) === 1 && level === 'spicy') score -= 5;
+        if (a >= 10) score += 3;
+      });
+      if (level === 'spicy') {
+        score -= Math.max(0, smallClues - 2) * 28;
+        score += Math.min(clues.length, 28);
+      }
+      return score;
+    }
+
+    function generatePuzzleCandidate(level = 'mild') {
+      const config = levelConfig(level);
+      const rows = config.rows, cols = config.cols;
+      let solution = [{ id:'s0', r1:0,c1:0,r2:rows-1,c2:cols-1 }];
+      let guard = 0;
+      while ((solution.length < config.target || solution.some(r => area(r) > config.maxArea)) && guard < 1800) {
+        guard++;
+        const candidates = solution
+          .map((r,i) => ({r,i,a:area(r)}))
+          .filter(x => x.a >= config.minAreaToSplit && x.a >= (config.minArea || 1) * 2 && ((x.r.r2-x.r.r1+1)>1 || (x.r.c2-x.r.c1+1)>1));
+        if (!candidates.length) break;
+        candidates.sort((a,b) => b.a - a.a);
+        const pool = candidates.slice(0, Math.min(level === 'spicy' ? 8 : 5, candidates.length));
+        const pick = weightedPick(pool, x => {
+          let score = x.a;
+          if (x.a > config.maxArea) score *= 4;
+          if (level === 'spicy' && x.a <= config.maxArea && solution.length >= config.target) score *= .2;
+          return score;
+        });
+        const parts = splitRect(pick.r, level, config);
+        if (!parts || parts.some(p => area(p) < (config.minArea || 1))) continue;
+        solution.splice(pick.i, 1, parts[0], parts[1]);
+      }
+
+      // One cleanup pass: if hard levels accidentally create tiny pieces, merge is difficult,
+      // so regenerate scoring will strongly reject them. This keeps generation quick.
+      solution = solution.map((r,i) => ({...r, id:`sol${i}`}));
+      const clues = solution.map((r,i) => {
+        const cell = chooseClueCell(r, rows, cols, level);
+        return { id:`clue${i}`, r:cell.r, c:cell.c, value:area(r), solutionId:r.id };
+      });
+      return { rows, cols, level, clues, solution, createdAtMs: Date.now(), hardnessScore: 0 };
+    }
+
+    function generatePuzzle(level = 'mild') {
+      const config = levelConfig(level);
+      let best = null;
+      let bestScore = -Infinity;
+      const attempts = config.attempts || 1;
+      for (let i=0;i<attempts;i++) {
+        const candidate = generatePuzzleCandidate(level);
+        const smallCount = candidate.clues.filter(cl => cl.value <= 3).length;
+        const allWithinMax = candidate.solution.every(rect => area(rect) <= config.maxArea);
+        let score = puzzleHardnessScore(candidate);
+        if (!allWithinMax) score -= 200;
+        if (level === 'spicy' && smallCount > config.maxSmall) score -= (smallCount - config.maxSmall) * 80;
+        if (candidate.solution.length < Math.floor(config.target*.82)) score -= 120;
+        if (score > bestScore) { best = candidate; bestScore = score; }
+      }
+      best.hardnessScore = Math.round(bestScore);
+      return best;
+    }
+
+    function validateRectangle(rect, clues, rows, cols, existingRectangles = [], ignoreId = null) {
+      if (rect.r1 < 0 || rect.c1 < 0 || rect.r2 >= rows || rect.c2 >= cols) {
+        return { valid:false, reason:'This rectangle is outside the board.' };
+      }
+      const rectArea = area(rect);
+      const cluesInside = clues.filter(cl => containsCell(rect, cl.r, cl.c));
+      if (cluesInside.length === 0) return { valid:false, reason:'This rectangle does not contain a number.' };
+      if (cluesInside.length > 1) return { valid:false, reason:'This rectangle contains more than one number.' };
+      const clue = cluesInside[0];
+      if (clue.value !== rectArea) return { valid:false, reason:'This rectangle has an area of {area}, but the clue says {value}.', params:{area:rectArea,value:clue.value} };
+      const overlapping = existingRectangles.some(ex => ex.id !== ignoreId && overlaps(rect, ex));
+      if (overlapping) return { valid:false, reason:'This rectangle overlaps an existing rectangle.' };
+      return { valid:true, clue, area:rectArea };
+    }
+
+    function validateSolvedBoard(rectangles, puzzle) {
+      if (!puzzle) return false;
+      const rows = puzzle.rows, cols = puzzle.cols;
+      const cells = new Set();
+      const clueUse = new Map();
+      for (const rect of rectangles) {
+        const validation = validateRectangle(rect, puzzle.clues, rows, cols, rectangles, rect.id);
+        if (!validation.valid) return false;
+        clueUse.set(validation.clue.id, (clueUse.get(validation.clue.id)||0)+1);
+        for (let r=rect.r1;r<=rect.r2;r++) for (let c=rect.c1;c<=rect.c2;c++) {
+          const key = `${r},${c}`;
+          if (cells.has(key)) return false;
+          cells.add(key);
+        }
+      }
+      if (cells.size !== rows * cols) return false;
+      return puzzle.clues.every(cl => clueUse.get(cl.id) === 1);
+    }
+
+    function calcStats(rectangles, puzzle) {
+      const score = rectangles.reduce((sum,r) => sum + area(r), 0);
+      const cellsCovered = rectangles.reduce((sum,r) => sum + area(r), 0);
+      const completedClues = rectangles.length;
+      const percent = puzzle ? Math.round((cellsCovered / (puzzle.rows*puzzle.cols)) * 100) : 0;
+      return { score, cellsCovered, completedClues, percent };
+    }
+
+    function cellFromEvent(evt) {
+      const pt = boardSvg.createSVGPoint();
+      pt.x = evt.clientX;
+      pt.y = evt.clientY;
+      const svgP = pt.matrixTransform(boardSvg.getScreenCTM().inverse());
+      const puzzle = state.puzzle;
+      if (!puzzle) return null;
+      const cell = BOARD / puzzle.cols;
+      const c = Math.floor((svgP.x - PAD) / cell);
+      const r = Math.floor((svgP.y - PAD) / cell);
+      if (r < 0 || c < 0 || r >= puzzle.rows || c >= puzzle.cols) return null;
+      return {r,c};
+    }
+
+    function isBoardLocked() {
+      if (!state.puzzle) return true;
+      if (state.showSolution) return true;
+      if (state.mode === 'single') return state.singleFinished;
+      if (state.mode !== 'race') return true;
+      if (!race.data || !race.uid) return true;
+      const me = race.data.players?.[race.uid];
+      if (!me) return true;
+      if (race.data.status !== 'playing') return true;
+      if (me.solved) return true;
+      if (race.data.winnerId) return true;
+      const gate = race.data.startGateAtMs || race.data.startedAtMs || 0;
+      return Date.now() < gate;
+    }
+
+    function rectAtCell(r,c) {
+      return state.rectangles.find(rect => containsCell(rect,r,c));
+    }
+
+    function svgRect(rect, attrs = {}) {
+      const cell = BOARD / state.puzzle.cols;
+      const x = PAD + rect.c1 * cell + 4;
+      const y = PAD + rect.r1 * cell + 4;
+      const w = (rect.c2-rect.c1+1) * cell - 8;
+      const h = (rect.r2-rect.r1+1) * cell - 8;
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" ${Object.entries(attrs).map(([k,v]) => `${k}="${esc(v)}"`).join(' ')}></rect>`;
+    }
+
+    function renderBoard() {
+      if (!state.puzzle) { boardSvg.innerHTML = ''; return; }
+      const {rows, cols, clues} = state.puzzle;
+      const cell = BOARD / cols;
+      const locked = isBoardLocked();
+      const rectsToShow = state.showSolution ? state.puzzle.solution.map((r,i)=>({...r,id:r.id,colorIndex:i})) : state.rectangles;
+      let html = `<rect x="0" y="0" width="720" height="720" fill="transparent"></rect>`;
+
+      rectsToShow.forEach((rect, i) => {
+        const color = RECT_COLORS[(rect.colorIndex ?? i) % RECT_COLORS.length];
+        html += svgRect(rect, { class: `cell-fill ${state.showSolution ? 'solution' : ''}`, fill: color, 'data-id': rect.id });
+      });
+
+      for (let i=0;i<=rows;i++) {
+        const y = PAD + i * cell;
+        html += `<line class="grid-line" x1="${PAD}" y1="${y}" x2="${PAD+BOARD}" y2="${y}"></line>`;
+      }
+      for (let i=0;i<=cols;i++) {
+        const x = PAD + i * cell;
+        html += `<line class="grid-line" x1="${x}" y1="${PAD}" x2="${x}" y2="${PAD+BOARD}"></line>`;
+      }
+
+      clues.forEach(cl => {
+        const cx = PAD + (cl.c + .5) * cell;
+        const cy = PAD + (cl.r + .5) * cell;
+        const discR = Math.max(10, Math.min(24, cell * .34));
+        const fontSize = Math.max(14, Math.min(30, cell * .44));
+        html += `<circle class="clue-disc" cx="${cx}" cy="${cy}" r="${discR}"></circle>`;
+        html += `<text class="clue-text" x="${cx}" y="${cy}" style="font-size:${fontSize}px">${cl.value}</text>`;
+      });
+
+      if (state.preview) html += svgRect(state.preview, { class:'preview-rect' });
+      if (state.badPreview) html += svgRect(state.badPreview, { class:'bad-preview' });
+      html += `<rect class="board-capture ${locked ? 'locked' : ''}" x="${PAD}" y="${PAD}" width="${BOARD}" height="${BOARD}"></rect>`;
+      boardSvg.innerHTML = html;
+    }
+
+    
+    function renderTools() {
+      const inGame = state.mode === 'single' || state.mode === 'race';
+      if (drawToolBtn) {
+        drawToolBtn.classList.toggle('active', !state.eraseMode);
+        drawToolBtn.disabled = !inGame || isBoardLocked();
+      }
+      if (eraseToolBtn) {
+        eraseToolBtn.classList.toggle('active', state.eraseMode);
+        eraseToolBtn.disabled = !inGame || isBoardLocked();
+      }
+    }
+
+    function renderWaitingOverlay() {
+      if (!waitingOverlay) return;
+      const show = state.mode === 'race' && race.data && race.data.status !== 'playing' && race.data.status !== 'finished';
+      waitingOverlay.classList.toggle('show', Boolean(show));
+      waitingOverlay.classList.toggle('hidden', !show);
+      if (!show) return;
+      const players = race.data.players || {};
+      const entries = Object.entries(players).sort((a,b)=>(a[1].joinedAtMs||0)-(b[1].joinedAtMs||0));
+      waitingRoomCode.textContent = race.roomCode || race.data.roomCode || '----';
+      const playerCount = entries.length;
+      const allJoined = playerCount >= 2;
+      const readyCount = entries.filter(([,p]) => p.ready).length;
+      const me = players[race.uid];
+      waitingTitle.innerHTML = dual(allJoined ? (me?.ready ? 'Waiting for another player.' : 'Press Ready when you are prepared to race.') : 'Waiting for player 2');
+      waitingSubtitle.innerHTML = dual(allJoined ? 'Both players will start together. Press Ready when both players have joined.' : 'Both players will start together. Press Ready when both players have joined.');
+      waitingPlayers.innerHTML = entries.map(([uid,p]) => `<div class="waiting-player"><span>${esc(p.name || 'Player')}${uid===race.uid ? ` (${esc(t('You'))})` : ''}</span><span class="pill ${p.ready ? 'good' : ''}">${esc(p.ready ? t('Ready') : t('Not ready'))}</span></div>`).join('') || `<div class="waiting-player"><span>${esc(t('Waiting for another player.'))}</span><span class="pill">1/2</span></div>`;
+      overlayReadyBtn.disabled = Boolean(me?.ready) || !allJoined;
+      overlayCopyRoomBtn.disabled = !race.roomCode;
+    }
+
+function renderStats() {
+      const puzzle = state.puzzle;
+      if (!puzzle) return;
+      const stats = calcStats(state.rectangles, puzzle);
+      el('scoreStat').textContent = stats.score;
+      el('cellsStat').textContent = `${stats.cellsCovered}/${puzzle.rows*puzzle.cols}`;
+      el('cluesStat').textContent = `${stats.completedClues}/${puzzle.clues.length}`;
+
+      const progressList = el('progressList');
+      if (state.mode === 'race' && race.data) {
+        const players = race.data.players || {};
+        const entries = Object.entries(players).sort((a,b) => (a[1].joinedAtMs||0) - (b[1].joinedAtMs||0));
+        progressList.innerHTML = entries.map(([uid,p]) => {
+          const isMe = uid === race.uid;
+          const cells = p.cellsCovered || 0;
+          const pct = Math.round((cells / (puzzle.rows*puzzle.cols)) * 100);
+          const label = isMe ? t('You') : (p.name || 'Player');
+          return `<div class="progress-item">
+            <div class="progress-top"><span>${esc(label)}</span><span>${cells}/${puzzle.rows*puzzle.cols} · ${p.score||0}</span></div>
+            <div class="progress-bar"><div class="progress-fill ${isMe ? '' : 'opponent'}" style="width:${pct}%"></div></div>
+          </div>`;
+        }).join('');
+      } else {
+        progressList.innerHTML = `<div class="progress-item">
+          <div class="progress-top"><span>${esc(t('You'))}</span><span>${stats.cellsCovered}/${puzzle.rows*puzzle.cols} · ${stats.percent}%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${stats.percent}%"></div></div>
+        </div>`;
+      }
+    }
+
+    function renderLobby() {
+      const roomPanel = el('roomPanel');
+      const playersPanel = el('playersPanel');
+      if (state.mode === 'race' && race.data) {
+        roomPanel.classList.remove('hidden');
+        playersPanel.classList.remove('hidden');
+        el('roomCodeBadge').textContent = race.roomCode || race.data.roomCode || '----';
+        el('roomStatusPill').textContent = race.data.status || 'waiting';
+        el('roomStatusPill').className = `pill ${(race.data.status === 'playing') ? 'good' : (race.data.status === 'finished' ? 'warn' : '')}`;
+        const players = race.data.players || {};
+        const entries = Object.entries(players).sort((a,b) => (a[1].joinedAtMs||0) - (b[1].joinedAtMs||0));
+        el('playerList').innerHTML = entries.map(([uid,p]) => `<div class="player-row"><span>${esc(p.name || 'Player')}${uid===race.uid ? ` (${esc(t('You'))})` : ''}</span><span class="pill ${p.ready ? 'good' : ''}">${esc(p.ready ? t('Ready') : t('Not ready'))}</span></div>`).join('');
+      } else {
+        roomPanel.classList.add('hidden');
+        playersPanel.classList.add('hidden');
+      }
+    }
+
+    function renderStatus() {
+      if (state.mode === 'race' && race.data) {
+        const status = race.data.status;
+        const players = race.data.players || {};
+        const me = players[race.uid];
+        const playerCount = Object.keys(players).length;
+        statusIcon.textContent = status === 'finished' ? '🏁' : status === 'playing' ? '⏱️' : '👥';
+        if (status === 'waiting' || playerCount < 2) {
+          statusTitle.innerHTML = dual('Waiting for player 2');
+          statusSubtitle.innerHTML = dual('Both players will start together. Press Ready when both players have joined.');
+        } else if (status === 'ready') {
+          statusTitle.innerHTML = dual(me?.ready ? 'Waiting for another player.' : 'Press Ready when you are prepared to race.');
+          statusSubtitle.textContent = `${Object.values(players).filter(p=>p.ready).length}/${Object.keys(players).length} ready`;
+        } else if (status === 'playing') {
+          const locked = isBoardLocked();
+          statusTitle.innerHTML = dual(locked ? 'The board is locked.' : 'The race is on!');
+          statusSubtitle.innerHTML = dual(locked ? 'The area must match the clue number.' : 'Click and drag to draw a rectangle.');
+        } else if (status === 'finished') {
+          if (race.data.winnerId === race.uid) {
+            statusTitle.innerHTML = dual('Puzzle complete!');
+            statusSubtitle.innerHTML = dual('You solved the Shikaku first.');
+          } else {
+            statusTitle.innerHTML = `${esc(race.data.winnerName || 'Someone')} ${dual('completed it first!')}`;
+            statusSubtitle.innerHTML = dual('Your board has been locked.');
+          }
+        }
+      } else if (state.mode === 'single') {
+        statusIcon.textContent = state.singleFinished ? '🎉' : '🧩';
+        statusTitle.innerHTML = dual(state.singleFinished ? 'Puzzle complete!' : 'Draw a rectangle around one clue.');
+        statusSubtitle.innerHTML = dual(state.singleFinished ? 'View Solution' : 'The area must match the clue number.');
+      }
+    }
+
+    function renderButtons() {
+      const inGame = state.mode === 'single' || state.mode === 'race';
+      undoBtn.classList.add('hidden');
+      eraseBtn.classList.add('hidden');
+      newPuzzleBtn.classList.toggle('hidden', state.mode !== 'single');
+      if (eraseBtn) eraseBtn.classList.toggle('btn-active', state.eraseMode);
+      el('copyRoomBtn').classList.add('hidden');
+      el('readyBtn').classList.add('hidden');
+      el('leaveRoomBtn').classList.toggle('hidden', state.mode !== 'race' || !race.roomCode);
+      el('playAgainBtn').classList.toggle('hidden', state.mode !== 'race' || !race.data || race.data.status !== 'finished');
+      el('viewSolutionBtn').classList.toggle('hidden', !((state.mode === 'race' && race.data?.status === 'finished') || (state.mode === 'single' && state.singleFinished)));
+      const me = race.data?.players?.[race.uid];
+      el('readyBtn').disabled = Boolean(me?.ready) || !race.data || Object.keys(race.data.players || {}).length < 1;
+      undoBtn.disabled = isBoardLocked() || state.rectangles.length === 0;
+      if (eraseBtn) eraseBtn.disabled = isBoardLocked();
+    }
+
+    function renderTimer() {
+      let elapsed = 0;
+      if (state.mode === 'single' && state.singleStartMs) {
+        elapsed = state.singleFinishedAtMs ? state.singleFinishedAtMs - state.singleStartMs : Date.now() - state.singleStartMs;
+      } else if (state.mode === 'race' && race.data) {
+        const start = race.data.startGateAtMs || race.data.startedAtMs;
+        if (start) {
+          const end = race.data.finishedAtMs || Date.now();
+          elapsed = Math.max(0, end - start);
+        }
+      }
+      el('timerStat').textContent = formatTime(elapsed);
+    }
+
+    function renderCountdown() {
+      if (!(state.mode === 'race' && race.data?.status === 'playing')) {
+        countdownOverlay.classList.remove('show');
+        return;
+      }
+      const gate = race.data.startGateAtMs || 0;
+      const left = gate - Date.now();
+      if (left <= -800) {
+        countdownOverlay.classList.remove('show');
+        return;
+      }
+      countdownOverlay.classList.add('show');
+      if (left > 0) {
+        const sec = Math.min(3, Math.max(1, Math.ceil(left / 1000)));
+        countdownOverlay.textContent = sec;
+      } else {
+        countdownOverlay.textContent = 'Go!';
+      }
+    }
+
+    function renderAll() {
+      renderBoard();
+      renderStats();
+      renderLobby();
+      renderStatus();
+      renderButtons();
+      renderTools();
+      renderTimer();
+      renderCountdown();
+      renderWaitingOverlay();
+      if (state.messageKey) setMessage(state.messageKey, state.messageType, state.messageParams || {});
+    }
+
+    function formatTime(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function showGame() {
+      menuPage.classList.add('hidden');
+      gamePage.classList.remove('hidden');
+      renderAll();
+      startRenderTicker();
+    }
+    function showMenu() {
+      if (race.unsub) { race.unsub(); race.unsub = null; }
+      race.active = false; race.roomCode = null; race.ref = null; race.data = null;
+      state.mode = 'menu'; state.puzzle = null; state.rectangles = []; state.showSolution = false; state.singleFinished = false; state.eraseMode = false;
+      menuPage.classList.remove('hidden'); gamePage.classList.add('hidden');
+      closeSetupModal();
+      stopRenderTicker();
+      applyTranslations();
+    }
+
+    function startSingle(level = state.level) {
+      state.mode = 'single';
+      state.level = level;
+      state.puzzle = generatePuzzle(level);
+      state.rectangles = [];
+      state.showSolution = false;
+      state.singleFinished = false;
+      state.singleStartMs = Date.now();
+      state.singleFinishedAtMs = null;
+      state.eraseMode = false;
+      closeSetupModal();
+      setMessage('Click and drag to draw a rectangle.');
+      showGame();
+    }
+
+    function newSinglePuzzle() { startSingle(state.level); }
+
+    async function ensureAuth() {
+      if (!FIREBASE_CONFIGURED) throw new Error('Firebase is not configured.');
+      const user = await authReadyPromise;
+      if (!user) throw new Error('Could not sign in to Firebase.');
+      race.uid = user.uid;
+      return user.uid;
+    }
+
+    function cleanRoomCode(value) { return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); }
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i=0;i<4;i++) code += chars[randInt(0,chars.length-1)];
+      return code;
+    }
+    function playerName() { return (el('raceNameInput').value || '').trim().slice(0,24) || 'Player'; }
+
+    async function createRoom() {
+      try {
+        const uid = await ensureAuth();
+        const name = playerName();
+        const level = el('raceLevelSelect').value || 'medium';
+        let code = generateRoomCode();
+        let ref = doc(db, ROOM_COLLECTION, code);
+        for (let i=0;i<5;i++) {
+          const snap = await getDoc(ref);
+          if (!snap.exists()) break;
+          code = generateRoomCode(); ref = doc(db, ROOM_COLLECTION, code);
+        }
+        const puzzle = generatePuzzle(level);
+        const room = {
+          roomCode: code,
+          status: 'waiting',
+          puzzle,
+          settings: { level, rows: puzzle.rows, cols: puzzle.cols },
+          players: {
+            [uid]: { name, ready:false, score:0, rectangles:[], solved:false, cellsCovered:0, completedClues:0, joinedAt:serverTimestamp(), joinedAtMs:Date.now(), finishedAt:null, finishedAtMs:null, rematchReady:false }
+          },
+          winnerId:null,
+          winnerName:null,
+          startedAt:null,
+          startedAtMs:null,
+          startGateAtMs:null,
+          finishedAt:null,
+          finishedAtMs:null,
+          createdAt:serverTimestamp(),
+          createdAtMs:Date.now()
+        };
+        await setDoc(ref, room);
+        localStorage.setItem('mmtShikakuRaceSession', JSON.stringify({ roomCode:code, uid, name }));
+        attachRoom(code);
+        setRaceSetupMessage('Room code copied.', 'success');
+      } catch (err) {
+        console.error(err);
+        setRaceSetupMessage(err.message || 'Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'error');
+      }
+    }
+
+    async function joinRoom() {
+      try {
+        const uid = await ensureAuth();
+        const name = playerName();
+        const code = cleanRoomCode(el('roomCodeInput').value);
+        if (!code) { setRaceSetupMessage('Room code', 'warn'); return; }
+        const ref = doc(db, ROOM_COLLECTION, code);
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists()) throw new Error(t('This room does not exist.'));
+          const data = snap.data();
+          const players = data.players || {};
+          const alreadyIn = Boolean(players[uid]);
+          if (!alreadyIn && Object.keys(players).length >= 2) throw new Error(t('Room is already full.'));
+          const nextStatus = data.status === 'waiting' && (!alreadyIn && Object.keys(players).length + 1 >= 2) ? 'ready' : data.status;
+          tx.update(ref, {
+            [`players.${uid}`]: { name, ready:false, score:0, rectangles:[], solved:false, cellsCovered:0, completedClues:0, joinedAt:serverTimestamp(), joinedAtMs:Date.now(), finishedAt:null, finishedAtMs:null, rematchReady:false },
+            status: nextStatus
+          });
+        });
+        localStorage.setItem('mmtShikakuRaceSession', JSON.stringify({ roomCode:code, uid, name }));
+        attachRoom(code);
+      } catch (err) {
+        console.error(err);
+        setRaceSetupMessage(err.message || 'This room does not exist.', 'error');
+      }
+    }
+
+    async function restoreRoom() {
+      try {
+        const session = JSON.parse(localStorage.getItem('mmtShikakuRaceSession') || '{}');
+        if (!session.roomCode) { setRaceSetupMessage('This room does not exist.', 'warn'); return; }
+        await ensureAuth();
+        attachRoom(session.roomCode);
+      } catch (err) {
+        console.error(err);
+        setRaceSetupMessage('This room does not exist.', 'error');
+      }
+    }
+
+    function attachRoom(code) {
+      if (race.unsub) race.unsub();
+      race.roomCode = code;
+      race.ref = doc(db, ROOM_COLLECTION, code);
+      race.active = true;
+      state.mode = 'race';
+      state.rectangles = [];
+      state.showSolution = false;
+      race.unsub = onSnapshot(race.ref, (snap) => {
+        if (!snap.exists()) {
+          setRaceSetupMessage('This room does not exist.', 'error');
+          showMenu();
+          return;
+        }
+        race.data = snap.data();
+        state.puzzle = race.data.puzzle;
+        const me = race.data.players?.[race.uid];
+        state.rectangles = me?.rectangles || [];
+        if (race.data.status !== 'finished') state.showSolution = false;
+        showGame();
+        closeSetupModal();
+        if (race.data.status === 'finished') maybeShowRaceEnd();
+      }, (err) => {
+        console.error(err);
+        setRaceSetupMessage('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'error');
+      });
+    }
+
+    async function setReady() {
+      if (!race.ref || !race.uid) return;
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(race.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status === 'finished' || data.status === 'playing') return;
+          const players = data.players || {};
+          if (!players[race.uid]) return;
+          players[race.uid] = {...players[race.uid], ready:true, rematchReady:false};
+          const playerValues = Object.values(players);
+          const bothReady = playerValues.length === 2 && playerValues.every(p => p.ready);
+          const updates = { [`players.${race.uid}.ready`]: true, [`players.${race.uid}.rematchReady`]: false };
+          if (bothReady) {
+            updates.status = 'playing';
+            updates.startedAt = serverTimestamp();
+            updates.startedAtMs = Date.now();
+            updates.startGateAtMs = Date.now() + 3300;
+          } else if (playerValues.length >= 2) {
+            updates.status = 'ready';
+          }
+          tx.update(race.ref, updates);
+        });
+        setMessage('Ready status updated.', 'success');
+      } catch (err) { console.error(err); setMessage(err.message, 'error'); }
+    }
+
+    async function playAgain() {
+      if (state.mode === 'single') { startSingle(state.level); return; }
+      if (!race.ref || !race.uid || !race.data) return;
+      try {
+        const newPuzzle = generatePuzzle(race.data.settings?.level || 'medium');
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(race.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status !== 'finished') return;
+          const players = data.players || {};
+          if (!players[race.uid]) return;
+          players[race.uid] = {...players[race.uid], rematchReady:true};
+          const both = Object.values(players).length === 2 && Object.values(players).every(p => p.rematchReady);
+          if (!both) {
+            tx.update(race.ref, { [`players.${race.uid}.rematchReady`]: true });
+            return;
+          }
+          const resetPlayers = {};
+          Object.entries(players).forEach(([uid,p]) => {
+            resetPlayers[uid] = { ...p, ready:false, score:0, rectangles:[], solved:false, cellsCovered:0, completedClues:0, finishedAt:null, finishedAtMs:null, rematchReady:false };
+          });
+          tx.update(race.ref, {
+            status: 'ready',
+            puzzle: newPuzzle,
+            players: resetPlayers,
+            winnerId: null,
+            winnerName: null,
+            startedAt: null,
+            startedAtMs: null,
+            startGateAtMs: null,
+            finishedAt: null,
+            finishedAtMs: null
+          });
+        });
+        setMessage('Both players need to press Play Again.', 'success');
+      } catch (err) { console.error(err); setMessage(err.message, 'error'); }
+    }
+
+    async function leaveRoom() {
+      try {
+        if (race.ref && race.uid && race.data && race.data.status !== 'playing') {
+          await updateDoc(race.ref, { [`players.${race.uid}`]: deleteField() });
+        }
+      } catch (err) { console.warn(err); }
+      localStorage.removeItem('mmtShikakuRaceSession');
+      showMenu();
+    }
+
+    function acceptLocalRectangle(rect, validation) {
+      const next = { ...rect, id:`rect_${Date.now()}_${Math.random().toString(36).slice(2,7)}`, clueId:validation.clue.id, value:validation.clue.value, colorIndex:state.rectangles.length };
+      state.rectangles.push(next);
+      setMessage(Math.random() < .5 ? 'Accepted.' : 'Nice rectangle.', 'success');
+      if (validateSolvedBoard(state.rectangles, state.puzzle)) {
+        state.singleFinished = true;
+        state.singleFinishedAtMs = Date.now();
+        setMessage('Puzzle complete!', 'success');
+        launchConfetti();
+        showEndModal('single');
+      }
+      renderAll();
+    }
+
+    async function acceptRaceRectangle(rect, validation) {
+      if (!race.ref || !race.uid) return;
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(race.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status !== 'playing' || data.winnerId) return;
+          const players = data.players || {};
+          const player = players[race.uid];
+          if (!player || player.solved) return;
+          const existing = player.rectangles || [];
+          const serverValidation = validateRectangle(rect, data.puzzle.clues, data.puzzle.rows, data.puzzle.cols, existing);
+          if (!serverValidation.valid) throw new Error(t(serverValidation.reason, serverValidation.params || {}));
+          const nextRect = { ...rect, id:`rect_${Date.now()}_${Math.random().toString(36).slice(2,7)}`, clueId:serverValidation.clue.id, value:serverValidation.clue.value, colorIndex:existing.length };
+          const nextRects = [...existing, nextRect];
+          const stats = calcStats(nextRects, data.puzzle);
+          const solved = validateSolvedBoard(nextRects, data.puzzle);
+          const updates = {
+            [`players.${race.uid}.rectangles`]: nextRects,
+            [`players.${race.uid}.score`]: stats.score,
+            [`players.${race.uid}.cellsCovered`]: stats.cellsCovered,
+            [`players.${race.uid}.completedClues`]: stats.completedClues,
+            [`players.${race.uid}.solved`]: solved
+          };
+          if (solved && !data.winnerId) {
+            updates.status = 'finished';
+            updates.winnerId = race.uid;
+            updates.winnerName = player.name || 'Player';
+            updates.finishedAt = serverTimestamp();
+            updates.finishedAtMs = Date.now();
+            updates[`players.${race.uid}.finishedAt`] = serverTimestamp();
+            updates[`players.${race.uid}.finishedAtMs`] = Date.now();
+          }
+          tx.update(race.ref, updates);
+        });
+        setMessage(Math.random() < .5 ? 'Accepted.' : 'Nice rectangle.', 'success');
+      } catch (err) {
+        console.error(err);
+        setMessage(err.message || 'This rectangle overlaps an existing rectangle.', 'error');
+      }
+    }
+
+    async function removeRectangle(rectId) {
+      if (isBoardLocked()) return;
+      if (state.mode === 'single') {
+        const idx = state.rectangles.findIndex(r => r.id === rectId);
+        if (idx >= 0) state.rectangles.splice(idx,1);
+        setMessage('That move was removed.', 'warn');
+        renderAll();
+        return;
+      }
+      if (state.mode === 'race' && race.ref && race.uid) {
+        try {
+          await runTransaction(db, async (tx) => {
+            const snap = await tx.get(race.ref);
+            if (!snap.exists()) return;
+            const data = snap.data();
+            if (data.status !== 'playing' || data.winnerId) return;
+            const player = data.players?.[race.uid];
+            if (!player) return;
+            const nextRects = (player.rectangles || []).filter(r => r.id !== rectId).map((r,i)=>({...r,colorIndex:i}));
+            const stats = calcStats(nextRects, data.puzzle);
+            tx.update(race.ref, {
+              [`players.${race.uid}.rectangles`]: nextRects,
+              [`players.${race.uid}.score`]: stats.score,
+              [`players.${race.uid}.cellsCovered`]: stats.cellsCovered,
+              [`players.${race.uid}.completedClues`]: stats.completedClues,
+              [`players.${race.uid}.solved`]: false
+            });
+          });
+          setMessage('That move was removed.', 'warn');
+        } catch (err) { console.error(err); setMessage(err.message, 'error'); }
+      }
+    }
+
+    function undoMove() {
+      if (isBoardLocked()) return;
+      const last = state.rectangles[state.rectangles.length-1];
+      if (!last) { setMessage('There is nothing to undo.', 'warn'); return; }
+      removeRectangle(last.id);
+    }
+
+    function handlePointerDown(evt) {
+      if (isBoardLocked()) return;
+      const cell = cellFromEvent(evt);
+      if (!cell) return;
+      const hit = rectAtCell(cell.r, cell.c);
+      if (state.eraseMode) {
+        if (hit) { removeRectangle(hit.id); }
+        return;
+      }
+      state.dragging = { start:cell, current:cell };
+      state.preview = normRect(cell,cell);
+      state.badPreview = null;
+      boardSvg.setPointerCapture?.(evt.pointerId);
+      renderBoard();
+    }
+    function handlePointerMove(evt) {
+      if (!state.dragging) return;
+      const cell = cellFromEvent(evt);
+      if (!cell) return;
+      state.dragging.current = cell;
+      state.preview = normRect(state.dragging.start, cell);
+      renderBoard();
+    }
+    async function handlePointerUp(evt) {
+      if (!state.dragging) return;
+      const cell = cellFromEvent(evt) || state.dragging.current;
+      const rect = normRect(state.dragging.start, cell);
+      state.dragging = null;
+      state.preview = null;
+      const validation = validateRectangle(rect, state.puzzle.clues, state.puzzle.rows, state.puzzle.cols, state.rectangles);
+      if (!validation.valid) {
+        state.badPreview = rect;
+        setMessage(validation.reason, 'error', validation.params || {});
+        renderBoard();
+        setTimeout(() => { state.badPreview = null; renderBoard(); }, 760);
+        return;
+      }
+      if (state.mode === 'single') acceptLocalRectangle(rect, validation);
+      else await acceptRaceRectangle(rect, validation);
+      renderAll();
+    }
+
+    function showEndModal(kind) {
+      const modal = el('endModal');
+      const title = el('endTitle');
+      const body = el('endBody');
+      if (kind === 'single') {
+        const stats = calcStats(state.rectangles, state.puzzle);
+        title.innerHTML = dual('Puzzle complete!');
+        body.innerHTML = `<p><strong>${dual('Final score')}:</strong> ${stats.score}</p><p><strong>${dual('Time')}:</strong> ${formatTime((state.singleFinishedAtMs||Date.now()) - state.singleStartMs)}</p>`;
+      } else {
+        const me = race.data?.players?.[race.uid] || {};
+        const winnerName = race.data?.winnerName || 'Player';
+        const winner = race.data?.winnerId === race.uid;
+        title.innerHTML = winner ? dual('Puzzle complete!') : `${esc(winnerName)} ${dual('completed it first!')}`;
+        const elapsed = (race.data?.finishedAtMs || Date.now()) - (race.data?.startGateAtMs || race.data?.startedAtMs || Date.now());
+        if (winner) {
+          body.innerHTML = `<p>${dual('You solved the Shikaku first.')}</p><p><strong>${dual('Final score')}:</strong> ${me.score || 0}</p><p><strong>${dual('Time')}:</strong> ${formatTime(elapsed)}</p>`;
+        } else {
+          const winnerPlayer = race.data?.players?.[race.data?.winnerId] || {};
+          body.innerHTML = `<p>${dual('Your board has been locked.')}</p><p><strong>${esc(t('You'))}:</strong> ${me.score || 0}</p><p><strong>${esc(winnerName)}:</strong> ${winnerPlayer.score || (state.puzzle ? state.puzzle.rows * state.puzzle.cols : 0)}</p>`;
+        }
+      }
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+    }
+    function maybeShowRaceEnd() {
+      if (!race.data || race.data.status !== 'finished') return;
+      if (!race._endShownFor || race._endShownFor !== `${race.roomCode}_${race.data.finishedAtMs}`) {
+        race._endShownFor = `${race.roomCode}_${race.data.finishedAtMs}`;
+        launchConfetti();
+        showEndModal('race');
+      }
+    }
+
+    function launchConfetti() {
+      const colors = ['#2563eb','#7c3aed','#6cbc4a','#f59e0b','#ef4444','#14b8a6'];
+      for (let i=0;i<90;i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random()*100}vw`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random()*260}ms`;
+        piece.style.transform = `rotate(${Math.random()*180}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(()=>piece.remove(), 1300);
+      }
+    }
+
+    function viewSolution() {
+      if (state.mode === 'race' && race.data?.status !== 'finished') return;
+      if (state.mode === 'single' && !state.singleFinished) return;
+      state.showSolution = true;
+      renderAll();
+      el('endModal').classList.remove('open');
+    }
+
+    function updateRulesList() {
+      const rules = [
+        'Every rectangle must contain exactly one clue.',
+        'The area of the rectangle must equal the clue number.',
+        'Rectangles cannot overlap.',
+        'Cover every cell on the board to solve the puzzle.',
+        'In Race Mode, both players get the same puzzle, but each board is separate.'
+      ];
+      el('rulesList').innerHTML = rules.map(rule => `<li>${dual(rule)}</li>`).join('');
+    }
+
+    function startRenderTicker() {
+      if (race.renderTicker) return;
+      race.renderTicker = setInterval(() => { renderTimer(); renderCountdown(); renderButtons(); }, 250);
+    }
+    function stopRenderTicker() {
+      if (race.renderTicker) clearInterval(race.renderTicker);
+      race.renderTicker = null;
+    }
+
+    boardSvg.addEventListener('pointerdown', handlePointerDown);
+    boardSvg.addEventListener('pointermove', handlePointerMove);
+    boardSvg.addEventListener('pointerup', handlePointerUp);
+    boardSvg.addEventListener('pointercancel', () => { state.dragging=null; state.preview=null; renderBoard(); });
+
+    el('mainLanguageSelect').addEventListener('change', (e) => { state.lang = e.target.value; applyTranslations(); });
+    el('rulesBtn').addEventListener('click', () => { el('rulesModal').classList.add('open'); el('rulesModal').setAttribute('aria-hidden','false'); });
+    el('closeRulesBtn').addEventListener('click', () => { el('rulesModal').classList.remove('open'); el('rulesModal').setAttribute('aria-hidden','true'); });
+    el('singleModeBtn').addEventListener('click', () => openSetupModal('single'));
+    el('raceModeBtn').addEventListener('click', () => openSetupModal('race'));
+    el('singleSetupBackBtn').addEventListener('click', closeSetupModal);
+    el('raceSetupBackBtn').addEventListener('click', closeSetupModal);
+    setupModalBackdrop?.addEventListener('click', closeSetupModal);
+    document.querySelectorAll('#singleLevelGrid .level-btn').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('#singleLevelGrid .level-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.level = btn.dataset.level;
+    }));
+    el('startSingleBtn').addEventListener('click', () => startSingle(state.level));
+    el('newPuzzleBtn').addEventListener('click', newSinglePuzzle);
+    drawToolBtn?.addEventListener('click', () => { state.eraseMode = false; renderAll(); });
+    eraseToolBtn?.addEventListener('click', () => { if (!isBoardLocked()) { state.eraseMode = true; renderAll(); } });
+    el('backToMenuBtn').addEventListener('click', showMenu);
+    el('createRoomBtn').addEventListener('click', createRoom);
+    el('joinRoomBtn').addEventListener('click', joinRoom);
+    el('restoreRoomBtn').addEventListener('click', restoreRoom);
+    el('readyBtn').addEventListener('click', setReady);
+    overlayReadyBtn?.addEventListener('click', setReady);
+    el('leaveRoomBtn').addEventListener('click', leaveRoom);
+    el('playAgainBtn').addEventListener('click', playAgain);
+    el('copyRoomBtn').addEventListener('click', copyRoomCodeToClipboard);
+    overlayCopyRoomBtn?.addEventListener('click', copyRoomCodeToClipboard);
+    el('viewSolutionBtn').addEventListener('click', viewSolution);
+    el('endViewSolutionBtn').addEventListener('click', viewSolution);
+    el('endPlayAgainBtn').addEventListener('click', () => { el('endModal').classList.remove('open'); playAgain(); });
+    el('endBackMenuBtn').addEventListener('click', () => { el('endModal').classList.remove('open'); showMenu(); });
+    el('closeEndBtn').addEventListener('click', () => el('endModal').classList.remove('open'));
+
+    applyTranslations();
+  </script>
+</body>
+</html>
