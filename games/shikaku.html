@@ -479,17 +479,51 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    /*
+      FIREBASE SETUP
+      --------------
+      This file now uses the clean MMT Firebase Games project structure:
+
+        /games/shikaku/rooms/{roomCode}
+
+      In Firebase, the Firestore rules should include:
+
+        match /games/{gameId}/rooms/{roomCode} {
+          allow read, write: if request.auth != null;
+        }
+
+      Paste the config from your new Firebase Web App below.
+      Firebase Console → Project Overview → Add app / App settings → SDK setup and configuration.
+    */
     const firebaseConfig = {
-      apiKey: "AIzaSyDZLYpzbeplXIq3V54yZOye5jH83wWrXJo",
-      authDomain: "coordinate-connect-4.firebaseapp.com",
-      projectId: "coordinate-connect-4",
-      storageBucket: "coordinate-connect-4.firebasestorage.app",
-      messagingSenderId: "798945723284",
-      appId: "1:798945723284:web:2140725b79cff78a100581",
-      measurementId: "G-RSMWF3LR5F"
+      apiKey: "PASTE_NEW_API_KEY_HERE",
+      authDomain: "PASTE_NEW_PROJECT_ID.firebaseapp.com",
+      projectId: "PASTE_NEW_PROJECT_ID",
+      storageBucket: "PASTE_NEW_PROJECT_ID.firebasestorage.app",
+      messagingSenderId: "PASTE_NEW_MESSAGING_SENDER_ID",
+      appId: "PASTE_NEW_APP_ID"
     };
 
-    const FIREBASE_CONFIGURED = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes('PASTE_'));
+    const FIREBASE_CONFIGURED = Boolean(
+      firebaseConfig.apiKey &&
+      firebaseConfig.projectId &&
+      !Object.values(firebaseConfig).some(value => String(value).includes('PASTE_NEW_')) &&
+      firebaseConfig.projectId !== 'coordinate-connect-4'
+    );
+
+    function firebaseErrorMessage(err) {
+      const code = err?.code || '';
+      const msg = err?.message || String(err || '');
+      const extra = {
+        'auth/operation-not-allowed': 'Anonymous Authentication is probably not enabled.',
+        'auth/unauthorized-domain': 'Add millsmathstools.au and www.millsmathstools.au to Authentication → Settings → Authorised domains.',
+        'auth/network-request-failed': 'The browser or school network may be blocking Firebase.',
+        'permission-denied': 'Check the Firestore Rules match /games/{gameId}/rooms/{roomCode}.',
+        'unavailable': 'Firebase may be temporarily unavailable or blocked by the network.'
+      }[code] || 'Check the Firebase config, Authentication, Authorised domains, and Firestore rules.';
+      return `Firebase error${code ? ` (${code})` : ''}: ${msg}. ${extra}`;
+    }
+
     let firebaseApp = null;
     let auth = null;
     let db = null;
@@ -500,17 +534,22 @@
         firebaseApp = initializeApp(firebaseConfig);
         auth = getAuth(firebaseApp);
         db = getFirestore(firebaseApp);
-        authReadyPromise = new Promise((resolve) => onAuthStateChanged(auth, (user) => resolve(user)));
-        signInAnonymously(auth).catch((err) => {
-          console.error(err);
-          setRaceSetupMessage('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'error');
-        });
+        authReadyPromise = signInAnonymously(auth)
+          .then((credential) => credential.user)
+          .catch((err) => {
+            console.error('Firebase sign-in failed:', err);
+            setRaceSetupMessage(firebaseErrorMessage(err), 'error');
+            throw err;
+          });
       } catch (err) {
-        console.error(err);
+        console.error('Firebase initialisation failed:', err);
       }
     }
 
-    const ROOM_COLLECTION = 'shikakuRaceRooms';
+    const GAME_ID = 'shikaku';
+    function roomRef(code) {
+      return doc(db, 'games', GAME_ID, 'rooms', code);
+    }
     const PAD = 54;
     const SIZE = 720;
     const BOARD = SIZE - PAD * 2;
@@ -1196,11 +1235,17 @@ function renderStats() {
     function newSinglePuzzle() { startSingle(state.level); }
 
     async function ensureAuth() {
-      if (!FIREBASE_CONFIGURED) throw new Error('Firebase is not configured.');
-      const user = await authReadyPromise;
-      if (!user) throw new Error('Could not sign in to Firebase.');
-      race.uid = user.uid;
-      return user.uid;
+      if (!FIREBASE_CONFIGURED) {
+        throw new Error('Firebase is not configured. Paste the new MMT Firebase Games firebaseConfig into this file first.');
+      }
+      try {
+        const user = await authReadyPromise;
+        if (!user) throw new Error('No Firebase user was returned after anonymous sign-in.');
+        race.uid = user.uid;
+        return user.uid;
+      } catch (err) {
+        throw new Error(firebaseErrorMessage(err));
+      }
     }
 
     function cleanRoomCode(value) { return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); }
@@ -1218,11 +1263,11 @@ function renderStats() {
         const name = playerName();
         const level = el('raceLevelSelect').value || 'medium';
         let code = generateRoomCode();
-        let ref = doc(db, ROOM_COLLECTION, code);
+        let ref = roomRef(code);
         for (let i=0;i<5;i++) {
           const snap = await getDoc(ref);
           if (!snap.exists()) break;
-          code = generateRoomCode(); ref = doc(db, ROOM_COLLECTION, code);
+          code = generateRoomCode(); ref = roomRef(code);
         }
         const puzzle = generatePuzzle(level);
         const room = {
@@ -1259,7 +1304,7 @@ function renderStats() {
         const name = playerName();
         const code = cleanRoomCode(el('roomCodeInput').value);
         if (!code) { setRaceSetupMessage('Room code', 'warn'); return; }
-        const ref = doc(db, ROOM_COLLECTION, code);
+        const ref = roomRef(code);
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(ref);
           if (!snap.exists()) throw new Error(t('This room does not exist.'));
@@ -1296,7 +1341,7 @@ function renderStats() {
     function attachRoom(code) {
       if (race.unsub) race.unsub();
       race.roomCode = code;
-      race.ref = doc(db, ROOM_COLLECTION, code);
+      race.ref = roomRef(code);
       race.active = true;
       state.mode = 'race';
       state.rectangles = [];
@@ -1317,7 +1362,7 @@ function renderStats() {
         if (race.data.status === 'finished') maybeShowRaceEnd();
       }, (err) => {
         console.error(err);
-        setRaceSetupMessage('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'error');
+        setRaceSetupMessage(firebaseErrorMessage(err), 'error');
       });
     }
 
