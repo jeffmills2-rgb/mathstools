@@ -695,7 +695,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
@@ -712,7 +712,12 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db = initializeFirestore(app, {
+      // School networks and some iPad/Chrome setups can delay Firestore's default streaming listener.
+      // Auto-detect long polling keeps room updates responsive for student devices.
+      experimentalAutoDetectLongPolling: true,
+      useFetchStreams: false
+    });
 
     let uid = null;
     let authReady = false;
@@ -748,7 +753,7 @@
     let studentPlayerId = null;
     let lastSeenRollKey = '';
     let currentLang = 'en';
-    let localRollingTimeout = null;
+    let revealRenderTimeout = null;
 
     const TRANSLATIONS = {
       ar: {
@@ -857,6 +862,8 @@
         roundTotal: 0,
         latestRoll: null,
         rollId: 0,
+        rollRevealAt: 0,
+        previousRoundTotal: 0,
         message: 'Waiting for students to join.',
         players: {}
       };
@@ -969,6 +976,7 @@
     function renderLeaderboard(game){
       const players = sortedPlayers(game);
       const isStudent = role === 'student';
+      const revealPending = isRevealPending(game);
       const visible = isStudent ? players.slice(0,6) : players;
       const maxScore = Math.max(1, ...players.map(p => p.totalScore));
       els.leaderboardTitle.innerHTML = isStudent ? t('Top 6') : 'Leaderboard';
@@ -984,7 +992,7 @@
           <div class="rank-badge">${p.rank}</div>
           <div>
             <div class="leader-name">${escapeHtml(p.name || 'Student')}</div>
-            <div class="leader-meta">${statusLabel(p.status, false)}${p.roundScore ? ` · banked ${p.roundScore}` : ''}</div>
+            <div class="leader-meta">${statusLabel(revealPending && p.status === 'busted' ? 'standing' : p.status, false)}${p.roundScore ? ` · banked ${p.roundScore}` : ''}</div>
           </div>
           <div class="leader-score">${p.totalScore}</div>
         </div>`;
@@ -996,15 +1004,55 @@
       return translated ? t(key) : key;
     }
 
+
+    function rollRevealAtMs(game){
+      const raw = game?.rollRevealAt;
+      if(typeof raw === 'number') return raw;
+      if(raw && typeof raw.toMillis === 'function') return raw.toMillis();
+      return 0;
+    }
+
+    function isRevealPending(game){
+      return rollRevealAtMs(game) > Date.now();
+    }
+
+    function displayRoundTotal(game){
+      return isRevealPending(game)
+        ? Number(game.previousRoundTotal ?? game.roundTotal ?? 0)
+        : Number(game.roundTotal || 0);
+    }
+
+    function isPoisonVisible(game){
+      return !isRevealPending(game) && game.latestRoll === POISON;
+    }
+
+    function scheduleRevealRender(game){
+      if(revealRenderTimeout) clearTimeout(revealRenderTimeout);
+      const wait = rollRevealAtMs(game) - Date.now();
+      if(wait > 0 && wait < 6000){
+        revealRenderTimeout = setTimeout(() => {
+          revealRenderTimeout = null;
+          if(!localGame) return;
+          if(role === 'teacher') renderTeacher(localGame);
+          if(role === 'student') renderStudent(localGame);
+          renderLeaderboard(localGame);
+        }, wait + 60);
+      }
+    }
+
     function renderTeacher(game){
       showGameWithPanel();
       const players = sortedPlayers(game);
+      scheduleRevealRender(game);
       const inLobby = game.state === 'lobby';
-      const isRolling = game.state === 'rolling';
-      const roundFinished = game.state === 'poison' || game.state === 'roundEnd';
+      const isRolling = isRevealPending(game);
+      const visiblePoison = isPoisonVisible(game);
+      const shownRoundTotal = displayRoundTotal(game);
+      const roundFinished = !isRolling && (game.state === 'poison' || game.state === 'roundEnd');
       const isFinished = game.state === 'finished';
       const latest = game.latestRoll ?? '?';
-      const canRoll = game.state === 'active';
+      const shownLatest = isRolling ? '?' : latest;
+      const canRoll = game.state === 'active' && !isRolling;
       const canStart = inLobby && players.length > 0;
       const nextText = game.currentRound >= game.totalRounds ? 'Show Winners' : 'Start Next Round';
 
@@ -1021,18 +1069,18 @@
         </div>
         <div class="stat-grid">
           <div class="stat-card"><div class="label">Round</div><div class="value">${game.currentRound || 0}/${game.totalRounds}</div></div>
-          <div class="stat-card round-total"><div class="label">Round total</div><div class="value">${game.roundTotal || 0}</div></div>
-          <div class="stat-card"><div class="label">Latest roll</div><div class="value">${latest}</div></div>
+          <div class="stat-card round-total"><div class="label">Round total</div><div class="value">${shownRoundTotal}</div></div>
+          <div class="stat-card"><div class="label">Latest roll</div><div class="value">${shownLatest}</div></div>
           <div class="stat-card status"><div class="label">Students</div><div class="value">${players.length}/${MAX_PLAYERS}</div></div>
         </div>
         <div class="hero">
           <div class="dice-stage">
-            <div class="big-die ${isRolling ? 'rolling' : ''} ${game.latestRoll === POISON ? 'poison' : ''}" id="mainDie">${isRolling ? '?' : latest}</div>
-            <div class="explosion ${game.state === 'poison' ? 'show' : ''}" id="mainExplosion">💥</div>
+            <div class="big-die ${isRolling ? 'rolling' : ''} ${visiblePoison ? 'poison' : ''}" id="mainDie">${shownLatest}</div>
+            <div class="explosion ${visiblePoison ? 'show' : ''}" id="mainExplosion">💥</div>
           </div>
           <div class="hero-left teacher-controls">
             <h1 class="hero-title">Teacher <span>Screen</span></h1>
-            <div class="callout ${game.state === 'poison' ? 'red' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(game.message || stateMessage(game))}</div>
+            <div class="callout ${visiblePoison ? 'red' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(isRolling ? 'Rolling... student Bank buttons are locked.' : (game.message || stateMessage(game)))}</div>
             <div class="controls-row">
               <button class="btn-primary" id="startGameBtn" type="button" ${canStart ? '' : 'disabled'}>${inLobby ? 'Start Game' : 'Game Started'}</button>
               <button class="btn-green roll-button" id="rollTeacherBtn" type="button" ${canRoll ? '' : 'disabled'}>${isRolling ? 'Rolling...' : 'Roll'}</button>
@@ -1048,20 +1096,24 @@
 
     function renderStudent(game){
       showGameWithPanel();
+      scheduleRevealRender(game);
       const player = game.players?.[studentPlayerId];
       if(!player){
         els.gameContent.innerHTML = `<div class="callout red">${t('This player was not found in the room. Please rejoin.')}</div>`;
         return;
       }
-      const isRolling = game.state === 'rolling';
+      const isRolling = isRevealPending(game);
+      const visiblePoison = isPoisonVisible(game);
+      const shownRoundTotal = displayRoundTotal(game);
       const latest = game.latestRoll ?? '?';
-      const bankEnabled = game.state === 'active' && player.status === 'standing' && Number(game.roundTotal || 0) > 0;
+      const shownLatest = isRolling ? '?' : latest;
+      const bankEnabled = game.state === 'active' && !isRolling && player.status === 'standing' && Number(game.roundTotal || 0) > 0;
       const status = player.status || 'waiting';
       const statusKey = status === 'standing' ? 'Standing' : status === 'banked' ? 'Banked' : status === 'busted' ? 'Busted' : 'Waiting';
       let studentMsg = 'Waiting for your teacher to roll.';
       if(isRolling) studentMsg = 'The dice is rolling. Bank is locked.';
       if(status === 'banked') studentMsg = 'You are safe this round.';
-      if(game.state === 'poison') studentMsg = 'Poison number! Standing players score 0 this round.';
+      if(visiblePoison) studentMsg = 'Poison number! Standing players score 0 this round.';
       if(game.state === 'finished'){
         els.gameContent.innerHTML = renderFinished(game, false);
         return;
@@ -1069,20 +1121,20 @@
       els.gameContent.innerHTML = `
         <div class="stat-grid">
           <div class="stat-card"><div class="label">${t('Round')}</div><div class="value">${game.currentRound || 0}/${game.totalRounds}</div></div>
-          <div class="stat-card round-total"><div class="label">${t('Round total')}</div><div class="value">${game.roundTotal || 0}</div></div>
+          <div class="stat-card round-total"><div class="label">${t('Round total')}</div><div class="value">${shownRoundTotal}</div></div>
           <div class="stat-card total-score"><div class="label">${t('Your total')}</div><div class="value">${Number(player.totalScore || 0)}</div></div>
           <div class="stat-card status"><div class="label">${t('Status')}</div><div class="value"><span class="status-pill ${status}">${statusLabel(status)}</span></div></div>
         </div>
         <div class="hero">
           <div class="dice-stage">
-            <div class="big-die ${isRolling ? 'rolling' : ''} ${game.latestRoll === POISON ? 'poison' : ''}" id="studentDie">${isRolling ? '?' : latest}</div>
-            <div class="explosion ${game.state === 'poison' ? 'show' : ''}" id="studentExplosion">💥</div>
+            <div class="big-die ${isRolling ? 'rolling' : ''} ${visiblePoison ? 'poison' : ''}" id="studentDie">${shownLatest}</div>
+            <div class="explosion ${visiblePoison ? 'show' : ''}" id="studentExplosion">💥</div>
           </div>
           <div class="hero-left">
             <h1 class="hero-title">${escapeHtml(player.name)} <span>🐷</span></h1>
-            <div class="callout ${game.state === 'poison' ? 'red' : status === 'banked' ? 'good' : 'blue'}">${t(studentMsg)}</div>
+            <div class="callout ${visiblePoison ? 'red' : status === 'banked' ? 'good' : 'blue'}">${t(studentMsg)}</div>
             <button class="btn-green bank-button ${bankEnabled ? 'pulse' : ''}" id="bankBtn" type="button" ${bankEnabled ? '' : 'disabled'}>${t('Bank')}</button>
-            <div class="callout purple">${t('Latest roll')}: <strong>${isRolling ? '?' : latest}</strong></div>
+            <div class="callout purple">${t('Latest roll')}: <strong>${shownLatest}</strong></div>
           </div>
         </div>`;
       const bankBtn = $('bankBtn');
@@ -1161,6 +1213,8 @@
         roundTotal:0,
         latestRoll:null,
         rollId:0,
+        rollRevealAt:0,
+        previousRoundTotal:0,
         players,
         message:'Round 1 has started. Students are standing.',
         updatedAt:serverTimestamp()
@@ -1168,59 +1222,60 @@
     }
 
     async function teacherRoll(){
-      if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid) return;
-      const roll = Math.floor(Math.random() * 6) + 1;
-      const rollId = Number(localGame.rollId || 0) + 1;
-      await updateDoc(roomRef, {
-        state:'rolling',
-        latestRoll:null,
-        rollId,
-        message:'Rolling... student Bank buttons are locked.',
-        updatedAt:serverTimestamp()
-      });
-      clearTimeout(localRollingTimeout);
-      localRollingTimeout = setTimeout(() => finaliseRoll(roll, rollId), 2000);
-    }
+      if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid || isRevealPending(localGame)) return;
 
-    async function finaliseRoll(roll, rollId){
-      if(!roomRef) return;
+      const roll = Math.floor(Math.random() * 6) + 1;
+      const revealAt = Date.now() + 1800;
+
       await runTransaction(db, async tx => {
         const snap = await tx.get(roomRef);
         if(!snap.exists()) return;
         const data = snap.data();
-        if(data.rollId !== rollId || data.state !== 'rolling') return;
+        if(data.teacherUid !== uid || data.state !== 'active') return;
+        if(Number(data.rollRevealAt || 0) > Date.now()) return;
+
         const players = {...(data.players || {})};
+        const previousRoundTotal = Number(data.roundTotal || 0);
+        const rollId = Number(data.rollId || 0) + 1;
+
+        const baseUpdate = {
+          latestRoll: roll,
+          rollId,
+          rollRevealAt: revealAt,
+          previousRoundTotal,
+          updatedAt: serverTimestamp()
+        };
+
         if(roll === POISON){
           Object.keys(players).forEach(id => {
             if(players[id].status === 'standing') players[id] = {...players[id], status:'busted', roundScore:0};
           });
           tx.update(roomRef, {
+            ...baseUpdate,
             state:'poison',
-            latestRoll:roll,
             players,
-            message:'💥 Poison number 2! Standing players score 0 for this round.',
-            updatedAt:serverTimestamp()
+            message:'💥 Poison number 2! Standing players score 0 for this round.'
           });
         }else{
-          const newTotal = Number(data.roundTotal || 0) + roll;
+          const newTotal = previousRoundTotal + roll;
           tx.update(roomRef, {
+            ...baseUpdate,
             state:'active',
-            latestRoll:roll,
             roundTotal:newTotal,
-            message:`Rolled ${roll}. Round total is now ${newTotal}.`,
-            updatedAt:serverTimestamp()
+            message:`Rolled ${roll}. Round total is now ${newTotal}.`
           });
         }
       });
     }
 
     async function endRoundBankStanding(){
-      if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid) return;
+      if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid || isRevealPending(localGame)) return;
       await runTransaction(db, async tx => {
         const snap = await tx.get(roomRef);
         if(!snap.exists()) return;
         const data = snap.data();
         if(data.state !== 'active') return;
+        if(Number(data.rollRevealAt || 0) > Date.now()) return;
         const players = {...(data.players || {})};
         const roundTotal = Number(data.roundTotal || 0);
         Object.keys(players).forEach(id => {
@@ -1255,6 +1310,8 @@
         currentRound:nextRound,
         roundTotal:0,
         latestRoll:null,
+        rollRevealAt:0,
+        previousRoundTotal:0,
         players,
         message:`Round ${nextRound} has started. Students are standing.`,
         updatedAt:serverTimestamp()
@@ -1289,6 +1346,7 @@
         const players = {...(data.players || {})};
         const p = players[studentPlayerId];
         if(!p || data.state !== 'active' || p.status !== 'standing') return;
+        if(Number(data.rollRevealAt || 0) > Date.now()) return;
         const roundTotal = Number(data.roundTotal || 0);
         if(roundTotal <= 0) return;
         players[studentPlayerId] = {
@@ -1307,7 +1365,8 @@
       if(key === lastSeenRollKey) return;
       lastSeenRollKey = key;
       if(game.state === 'poison' && game.latestRoll === POISON){
-        setTimeout(() => explosionBurst(), 30);
+        const wait = Math.max(30, rollRevealAtMs(game) - Date.now() + 40);
+        setTimeout(() => explosionBurst(), wait);
       }
       if(game.state === 'finished'){
         setTimeout(() => confettiBurst(90), 180);
