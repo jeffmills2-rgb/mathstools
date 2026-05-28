@@ -534,6 +534,30 @@
     .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
     @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
 
+    /* Compact in-game layout: keeps teacher and student screens visible at 100% zoom. */
+    #gameScreen.main-card{padding:14px;}
+    #gameScreen .room-code-box{padding:10px 14px;margin-bottom:10px;border-radius:18px;}
+    #gameScreen .room-code{font-size:1.48rem;}
+    #gameScreen .stat-grid{gap:10px;margin-bottom:12px;}
+    #gameScreen .stat-card{min-height:68px;padding:10px 12px;border-radius:17px;}
+    #gameScreen .stat-card .label{font-size:.74rem;}
+    #gameScreen .stat-card .value{font-size:1.45rem;}
+    #gameScreen .hero{min-height:305px;grid-template-columns:minmax(320px,1.28fr) minmax(270px,.72fr);gap:14px;}
+    #gameScreen .dice-stage{min-height:305px;border-radius:22px;}
+    #gameScreen .big-die{width:clamp(110px,12vw,155px);height:clamp(110px,12vw,155px);border-radius:28px;font-size:clamp(3.7rem,6vw,6.1rem);}
+    #gameScreen .hero-left{min-height:305px;padding:18px;gap:12px;border-radius:22px;}
+    #gameScreen .hero-title{font-size:clamp(2.05rem,4.2vw,3.35rem);}
+    #gameScreen .callout{padding:11px 13px;border-radius:16px;}
+    #gameScreen .controls-row{gap:8px;margin-top:10px;}
+    #gameScreen .teacher-controls .btn{min-width:120px;padding:11px 13px;font-size:.95rem;border-radius:15px;}
+    #gameScreen .roll-button{min-width:145px;padding:13px 17px;font-size:1rem;}
+    #gameScreen .bank-button{padding:15px 18px;font-size:1.18rem;margin-top:10px;}
+
+    @media (min-width:1081px){
+      .layout{width:min(1320px,calc(100vw - 32px));margin:14px auto 10px;gap:16px;grid-template-columns:minmax(420px,1fr) minmax(280px,360px);}
+      .brand-footer{width:min(1320px,calc(100vw - 32px));margin-bottom:12px;}
+      .panel-card{top:82px;max-height:calc(100dvh - 96px);}
+    }
     @media (min-width:1081px){
       .mmtTopbar{padding:8px 18px;min-height:66px;grid-template-columns:minmax(190px,1fr) auto minmax(360px,1fr);gap:14px;}
       .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
@@ -595,7 +619,7 @@
         <div class="hero-left">
           <h1 class="hero-title">Greedy <span>Pig</span></h1>
           <p class="hero-subtitle">A teacher-led risk and reward dice game. Students decide when to bank before the poison number wipes out the standing players.</p>
-          <div class="callout blue"><strong>Poison number:</strong> 2. Rolls of 1, 3, 4, 5 and 6 add to the round total.</div>
+          <div class="callout blue"><strong>Poison number:</strong> 2. If 2 is rolled first in a round, it is safe and adds 2 to the round total. After that, 2 wipes out standing players.</div>
           <div class="hero-actions">
             <button class="btn-primary" id="homeTeacherBtn" type="button">Teacher: Create Game</button>
             <button class="btn-green" id="homeStudentBtn" type="button">Student: Join Game</button>
@@ -668,7 +692,7 @@
   <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
       <h2 id="rulesTitle">Greedy Pig rules</h2>
-      <p id="rulesText">Students start each round standing. The teacher rolls the die. If the roll is 1, 3, 4, 5 or 6, it is added to the round total. Students may press Bank to safely add the current round total to their score. If the poison number 2 is rolled, students still standing score 0 for that round. After the chosen number of rounds, the highest total wins.</p>
+      <p id="rulesText">Students start each round standing. The teacher rolls the die. If the roll is 1, 3, 4, 5 or 6, it is added to the round total. If 2 is rolled as the first roll of a round, it is safe and adds 2 to the round total. After the first roll, 2 is the poison number: students still standing score 0 for that round. Students may press Bank to safely add the current round total to their score. After the chosen number of rounds, the highest total wins.</p>
       <button class="btn-primary" id="closeRulesBtn" type="button">Close</button>
     </div>
   </div>
@@ -754,6 +778,7 @@
     let lastSeenRollKey = '';
     let currentLang = 'en';
     let revealRenderTimeout = null;
+    let autoFinishTimeout = null;
 
     const TRANSLATIONS = {
       ar: {
@@ -1023,7 +1048,7 @@
     }
 
     function isPoisonVisible(game){
-      return !isRevealPending(game) && game.latestRoll === POISON;
+      return !isRevealPending(game) && game.state === 'poison' && game.latestRoll === POISON;
     }
 
     function scheduleRevealRender(game){
@@ -1040,6 +1065,24 @@
       }
     }
 
+
+    function scheduleAutoFinish(game){
+      if(!roomRef || !game || role !== 'teacher' || game.teacherUid !== uid) return;
+      const finalRoundComplete = !isRevealPending(game)
+        && (game.state === 'poison' || game.state === 'roundEnd')
+        && Number(game.currentRound || 0) >= Number(game.totalRounds || 0);
+      if(!finalRoundComplete) return;
+      if(autoFinishTimeout) return;
+      autoFinishTimeout = setTimeout(() => {
+        autoFinishTimeout = null;
+        if(!localGame || localGame.teacherUid !== uid) return;
+        const stillFinalComplete = !isRevealPending(localGame)
+          && (localGame.state === 'poison' || localGame.state === 'roundEnd')
+          && Number(localGame.currentRound || 0) >= Number(localGame.totalRounds || 0);
+        if(stillFinalComplete) finishGame();
+      }, 1200);
+    }
+
     function renderTeacher(game){
       showGameWithPanel();
       const players = sortedPlayers(game);
@@ -1049,12 +1092,13 @@
       const visiblePoison = isPoisonVisible(game);
       const shownRoundTotal = displayRoundTotal(game);
       const roundFinished = !isRolling && (game.state === 'poison' || game.state === 'roundEnd');
+      const finalRoundComplete = roundFinished && Number(game.currentRound || 0) >= Number(game.totalRounds || 0);
       const isFinished = game.state === 'finished';
       const latest = game.latestRoll ?? '?';
       const shownLatest = isRolling ? '?' : latest;
       const canRoll = game.state === 'active' && !isRolling;
       const canStart = inLobby && players.length > 0;
-      const nextText = game.currentRound >= game.totalRounds ? 'Show Winners' : 'Start Next Round';
+      scheduleAutoFinish(game);
 
       if(isFinished){
         els.gameContent.innerHTML = renderFinished(game, true);
@@ -1079,13 +1123,13 @@
             <div class="explosion ${visiblePoison ? 'show' : ''}" id="mainExplosion">💥</div>
           </div>
           <div class="hero-left teacher-controls">
-            <h1 class="hero-title">Teacher <span>Screen</span></h1>
-            <div class="callout ${visiblePoison ? 'red' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(isRolling ? 'Rolling... student Bank buttons are locked.' : (game.message || stateMessage(game)))}</div>
+            <h1 class="hero-title">Greedy <span>Pig</span></h1>
+            <div class="callout ${visiblePoison ? 'red' : finalRoundComplete ? 'good' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(isRolling ? 'Rolling... student Bank buttons are locked.' : finalRoundComplete ? 'Final round complete. Winners will appear now.' : (game.message || stateMessage(game)))}</div>
             <div class="controls-row">
-              <button class="btn-primary" id="startGameBtn" type="button" ${canStart ? '' : 'disabled'}>${inLobby ? 'Start Game' : 'Game Started'}</button>
-              <button class="btn-green roll-button" id="rollTeacherBtn" type="button" ${canRoll ? '' : 'disabled'}>${isRolling ? 'Rolling...' : 'Roll'}</button>
-              <button class="btn-amber" id="endRoundBtn" type="button" ${canRoll ? '' : 'disabled'}>End Round & Bank Standing Players</button>
-              <button class="btn-primary" id="nextRoundBtn" type="button" ${roundFinished ? '' : 'disabled'}>${nextText}</button>
+              ${inLobby ? `<button class="btn-primary" id="startGameBtn" type="button" ${canStart ? '' : 'disabled'}>Start Game</button>` : ''}
+              ${!roundFinished ? `<button class="btn-green roll-button" id="rollTeacherBtn" type="button" ${canRoll ? '' : 'disabled'}>${isRolling ? 'Rolling...' : 'Roll'}</button>` : ''}
+              ${!roundFinished ? `<button class="btn-amber" id="endRoundBtn" type="button" ${canRoll ? '' : 'disabled'}>End Round & Bank Standing Players</button>` : ''}
+              ${roundFinished && !finalRoundComplete ? `<button class="btn-primary" id="nextRoundBtn" type="button">Start Next Round</button>` : ''}
               <button class="btn-red" id="resetGameBtn" type="button">Reset / New Game</button>
             </div>
             <div class="callout purple"><strong>Reminder:</strong> Students only need to press <em>Bank</em>. If they do nothing, they are still standing and risking the next roll.</div>
@@ -1246,7 +1290,15 @@
           updatedAt: serverTimestamp()
         };
 
-        if(roll === POISON){
+        if(roll === POISON && previousRoundTotal <= 0){
+          const newTotal = previousRoundTotal + roll;
+          tx.update(roomRef, {
+            ...baseUpdate,
+            state:'active',
+            roundTotal:newTotal,
+            message:`Rolled ${roll} as the first roll. Safe roll — round total is now ${newTotal}.`
+          });
+        }else if(roll === POISON){
           Object.keys(players).forEach(id => {
             if(players[id].status === 'standing') players[id] = {...players[id], status:'busted', roundScore:0};
           });
@@ -1298,6 +1350,7 @@
     }
 
     async function nextRoundOrFinish(){
+      if(autoFinishTimeout){ clearTimeout(autoFinishTimeout); autoFinishTimeout = null; }
       if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
       if(localGame.currentRound >= localGame.totalRounds) return finishGame();
       const players = {...(localGame.players || {})};
@@ -1319,11 +1372,13 @@
     }
 
     async function finishGame(){
+      if(autoFinishTimeout){ clearTimeout(autoFinishTimeout); autoFinishTimeout = null; }
       if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
       await updateDoc(roomRef, {state:'finished', message:'Game finished. Winners revealed!', updatedAt:serverTimestamp()});
     }
 
     async function resetGame(){
+      if(autoFinishTimeout){ clearTimeout(autoFinishTimeout); autoFinishTimeout = null; }
       if(!roomRef || !confirm('Reset this room and return to the menu?')) return;
       try{ await deleteDoc(roomRef); }catch(err){ console.error(err); }
       roomCode = null;
