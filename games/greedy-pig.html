@@ -741,6 +741,7 @@
     const POISON = 2;
     const DEFAULT_DICE_SIDES = 6;
     const VALID_DICE_SIDES = [6, 10];
+    const AUTO_ROUND_ADVANCE_MS = 2400;
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -787,6 +788,7 @@
     let currentLang = 'en';
     let revealRenderTimeout = null;
     let autoFinishTimeout = null;
+    let autoAdvanceTimeout = null;
 
     const TRANSLATIONS = {
       ar: {
@@ -795,7 +797,8 @@
         'Leaderboard':'لوحة المتصدرين', 'Top 6':'أفضل 6', 'Round':'الجولة', 'Round total':'مجموع الجولة', 'Your total':'مجموعك', 'Status':'الحالة',
         'Standing':'واقف', 'Banked':'تم الحفظ', 'Busted':'خاسر', 'Waiting':'انتظار', 'Bank':'احفظ النقاط', 'Waiting for your teacher to roll.':'انتظر المعلم ليرمي النرد.',
         'The dice is rolling. Bank is locked.':'النرد يتحرك. زر الحفظ مقفل.', 'You are safe this round.':'أنت آمن في هذه الجولة.', 'Poison number! Standing players score 0 this round.':'رقم سام! اللاعبون الواقفون يحصلون على 0 في هذه الجولة.',
-        'Game finished':'انتهت اللعبة', 'Current roll':'الرمي الحالي', 'Latest roll':'آخر رمية', 'Students':'الطلاب', 'Total score':'المجموع الكلي'
+        'Game finished':'انتهت اللعبة', 'Current roll':'الرمي الحالي', 'Latest roll':'آخر رمية', 'Students':'الطلاب', 'Total score':'المجموع الكلي',
+        'All players have banked':'قام جميع اللاعبين بحفظ نقاطهم'
       },
       fa: {
         'Language':'زبان', 'Join Game':'پیوستن به بازی', "Enter the room code and your name to join your teacher's game.":'کد اتاق و نام خود را وارد کنید تا به بازی معلم بپیوندید.',
@@ -803,7 +806,8 @@
         'Leaderboard':'جدول رتبه‌بندی', 'Top 6':'۶ نفر برتر', 'Round':'دور', 'Round total':'امتیاز این دور', 'Your total':'امتیاز شما', 'Status':'وضعیت',
         'Standing':'ایستاده', 'Banked':'ذخیره شده', 'Busted':'سوخت', 'Waiting':'در انتظار', 'Bank':'ذخیره', 'Waiting for your teacher to roll.':'منتظر بمانید تا معلم تاس بیندازد.',
         'The dice is rolling. Bank is locked.':'تاس در حال چرخش است. دکمه ذخیره قفل است.', 'You are safe this round.':'شما در این دور امن هستید.', 'Poison number! Standing players score 0 this round.':'عدد سمی! بازیکنان ایستاده در این دور ۰ می‌گیرند.',
-        'Game finished':'بازی تمام شد', 'Current roll':'رول فعلی', 'Latest roll':'آخرین رول', 'Students':'دانش‌آموزان', 'Total score':'امتیاز کل'
+        'Game finished':'بازی تمام شد', 'Current roll':'رول فعلی', 'Latest roll':'آخرین رول', 'Students':'دانش‌آموزان', 'Total score':'امتیاز کل',
+        'All players have banked':'همه بازیکنان امتیاز خود را ذخیره کردند'
       }
     };
 
@@ -1095,8 +1099,16 @@
     }
 
 
+    function clearAutoAdvanceTimeout(){
+      if(autoAdvanceTimeout){
+        clearTimeout(autoAdvanceTimeout);
+        autoAdvanceTimeout = null;
+      }
+    }
+
     function scheduleAutoFinish(game){
       if(!roomRef || !game || role !== 'teacher' || game.teacherUid !== uid) return;
+      if(game.autoAdvanceReason === 'allBanked') return;
       const finalRoundComplete = !isRevealPending(game)
         && (game.state === 'poison' || game.state === 'roundEnd')
         && Number(game.currentRound || 0) >= Number(game.totalRounds || 0);
@@ -1104,12 +1116,32 @@
       if(autoFinishTimeout) return;
       autoFinishTimeout = setTimeout(() => {
         autoFinishTimeout = null;
-        if(!localGame || localGame.teacherUid !== uid) return;
+        if(!localGame || localGame.teacherUid !== uid || localGame.autoAdvanceReason === 'allBanked') return;
         const stillFinalComplete = !isRevealPending(localGame)
           && (localGame.state === 'poison' || localGame.state === 'roundEnd')
           && Number(localGame.currentRound || 0) >= Number(localGame.totalRounds || 0);
         if(stillFinalComplete) finishGame();
       }, 1200);
+    }
+
+    function scheduleAutoAdvance(game){
+      if(!roomRef || !game || role !== 'teacher' || game.teacherUid !== uid) return;
+      const shouldAdvance = !isRevealPending(game)
+        && game.state === 'roundEnd'
+        && game.autoAdvanceReason === 'allBanked';
+      if(!shouldAdvance){
+        clearAutoAdvanceTimeout();
+        return;
+      }
+      if(autoAdvanceTimeout) return;
+      autoAdvanceTimeout = setTimeout(() => {
+        autoAdvanceTimeout = null;
+        if(!localGame || localGame.teacherUid !== uid) return;
+        const stillShouldAdvance = !isRevealPending(localGame)
+          && localGame.state === 'roundEnd'
+          && localGame.autoAdvanceReason === 'allBanked';
+        if(stillShouldAdvance) nextRoundOrFinish();
+      }, AUTO_ROUND_ADVANCE_MS);
     }
 
     function renderTeacher(game){
@@ -1129,6 +1161,15 @@
       const canRoll = game.state === 'active' && !isRolling;
       const canStart = inLobby && players.length > 0;
       scheduleAutoFinish(game);
+      scheduleAutoAdvance(game);
+      const autoAdvancing = game.state === 'roundEnd' && game.autoAdvanceReason === 'allBanked';
+      const teacherNotice = isRolling
+        ? 'Rolling... student Bank buttons are locked.'
+        : autoAdvancing
+          ? (game.message || 'All players have banked. Starting next round...')
+          : finalRoundComplete
+            ? 'Final round complete. Winners will appear now.'
+            : (game.message || stateMessage(game));
 
       if(isFinished){
         els.gameContent.innerHTML = renderFinished(game, true);
@@ -1154,12 +1195,12 @@
           </div>
           <div class="hero-left teacher-controls">
             <h1 class="hero-title">Greedy <span>Pig</span></h1>
-            <div class="callout ${visiblePoison ? 'red' : finalRoundComplete ? 'good' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(isRolling ? 'Rolling... student Bank buttons are locked.' : finalRoundComplete ? 'Final round complete. Winners will appear now.' : (game.message || stateMessage(game)))}</div>
+            <div class="callout ${visiblePoison ? 'red' : finalRoundComplete ? 'good' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(teacherNotice)}</div>
             <div class="controls-row">
               ${inLobby ? `<button class="btn-primary" id="startGameBtn" type="button" ${canStart ? '' : 'disabled'}>Start Game</button>` : ''}
               ${!roundFinished ? `<button class="btn-green roll-button" id="rollTeacherBtn" type="button" ${canRoll ? '' : 'disabled'}>${isRolling ? 'Rolling...' : 'Roll'}</button>` : ''}
               ${!roundFinished ? `<button class="btn-amber" id="endRoundBtn" type="button" ${canRoll ? '' : 'disabled'}>End Round & Bank Standing Players</button>` : ''}
-              ${roundFinished && !finalRoundComplete ? `<button class="btn-primary" id="nextRoundBtn" type="button">Start Next Round</button>` : ''}
+              ${roundFinished && !finalRoundComplete && !autoAdvancing ? `<button class="btn-primary" id="nextRoundBtn" type="button">Start Next Round</button>` : ''}
               <button class="btn-red" id="resetGameBtn" type="button">Reset / New Game</button>
             </div>
             <div class="callout purple"><strong>Reminder:</strong> Students only need to press <em>Bank</em>. If they do nothing, they are still standing and risking the next roll.</div>
@@ -1189,6 +1230,7 @@
       if(isRolling) studentMsg = 'The dice is rolling. Bank is locked.';
       if(status === 'banked') studentMsg = 'You are safe this round.';
       if(visiblePoison) studentMsg = 'Poison number! Standing players score 0 this round.';
+      if(game.state === 'roundEnd' && game.autoAdvanceReason === 'allBanked') studentMsg = 'All players have banked';
       if(game.state === 'finished'){
         els.gameContent.innerHTML = renderFinished(game, false);
         return;
@@ -1221,6 +1263,7 @@
       if(game.state === 'active') return 'Roll the die or end the round.';
       if(game.state === 'rolling') return 'Rolling... student Bank buttons are locked.';
       if(game.state === 'poison') return 'Poison number! Standing players scored 0 for this round.';
+      if(game.state === 'roundEnd' && game.autoAdvanceReason === 'allBanked') return 'All players have banked. Starting next round...';
       if(game.state === 'roundEnd') return 'Round ended. Standing players were banked.';
       if(game.state === 'finished') return 'Game finished.';
       return '';
@@ -1290,6 +1333,7 @@
         rollId:0,
         rollRevealAt:0,
         previousRoundTotal:0,
+        autoAdvanceReason:null,
         players,
         message:'Round 1 has started. Students are standing.',
         updatedAt:serverTimestamp()
@@ -1320,6 +1364,7 @@
           rollId,
           rollRevealAt: revealAt,
           previousRoundTotal,
+          autoAdvanceReason:null,
           updatedAt: serverTimestamp()
         };
 
@@ -1375,6 +1420,7 @@
         });
         tx.update(roomRef, {
           state:'roundEnd',
+          autoAdvanceReason:null,
           players,
           message:'Round ended. Standing players were banked.',
           updatedAt:serverTimestamp()
@@ -1384,6 +1430,7 @@
 
     async function nextRoundOrFinish(){
       if(autoFinishTimeout){ clearTimeout(autoFinishTimeout); autoFinishTimeout = null; }
+      clearAutoAdvanceTimeout();
       if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
       if(localGame.currentRound >= localGame.totalRounds) return finishGame();
       const players = {...(localGame.players || {})};
@@ -1398,6 +1445,7 @@
         latestRoll:null,
         rollRevealAt:0,
         previousRoundTotal:0,
+        autoAdvanceReason:null,
         players,
         message:`Round ${nextRound} has started. Students are standing.`,
         updatedAt:serverTimestamp()
@@ -1406,12 +1454,14 @@
 
     async function finishGame(){
       if(autoFinishTimeout){ clearTimeout(autoFinishTimeout); autoFinishTimeout = null; }
+      clearAutoAdvanceTimeout();
       if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
       await updateDoc(roomRef, {state:'finished', message:'Game finished. Winners revealed!', updatedAt:serverTimestamp()});
     }
 
     async function resetGame(){
       if(autoFinishTimeout){ clearTimeout(autoFinishTimeout); autoFinishTimeout = null; }
+      clearAutoAdvanceTimeout();
       if(!roomRef || !confirm('Reset this room and return to the menu?')) return;
       try{ await deleteDoc(roomRef); }catch(err){ console.error(err); }
       roomCode = null;
@@ -1444,7 +1494,20 @@
           totalScore:Number(p.totalScore || 0) + roundTotal,
           lastSeen:Date.now()
         };
-        tx.update(roomRef, {players, updatedAt:serverTimestamp()});
+        const allPlayersBanked = Object.keys(players).length > 0
+          && Object.values(players).every(player => player.status === 'banked');
+        if(allPlayersBanked){
+          const isFinalRound = Number(data.currentRound || 0) >= Number(data.totalRounds || 0);
+          tx.update(roomRef, {
+            state:'roundEnd',
+            players,
+            autoAdvanceReason:'allBanked',
+            message:isFinalRound ? 'All players have banked. Final results will appear now.' : 'All players have banked. Starting next round...',
+            updatedAt:serverTimestamp()
+          });
+        }else{
+          tx.update(roomRef, {players, updatedAt:serverTimestamp()});
+        }
       });
     }
 
@@ -1536,7 +1599,8 @@
 
     showScreen('homeScreen', true);
   </script>
-  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics --></body>
-
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c7e5713b5e4f4993907eb285797dc89b"}'></script>
+  <!-- End Cloudflare Web Analytics -->
 </body>
 </html>
