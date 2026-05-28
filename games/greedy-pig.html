@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Greedy Pig | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --green2:#49a529;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --pink:#ec4899;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.16),transparent 32rem),
+        radial-gradient(circle at top right,rgba(236,72,153,.13),transparent 33rem),
+        radial-gradient(circle at 50% 10%,rgba(245,158,11,.14),transparent 30rem),
+        var(--bg);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(240px,1fr) auto minmax(320px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mmtBrand:hover{
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);
+    }
+    .mmtBrandLogo{
+      width:44px;
+      height:44px;
+      object-fit:contain;
+      background:white;
+      border-radius:6px;
+      padding:3px;
+      flex:0 0 auto;
+    }
+    .mmtBrandText strong{
+      display:block;
+      font-size:1.18rem;
+      line-height:1;
+      letter-spacing:-.03em;
+      color:white;
+    }
+    .mmtBrandText span{
+      display:block;
+      font-size:.78rem;
+      opacity:.82;
+      font-weight:650;
+      color:white;
+    }
+    .mmtTopTitle{
+      font-weight:900;
+      font-size:clamp(1.25rem,2vw,1.8rem);
+      letter-spacing:-.045em;
+      text-align:center;
+      color:white;
+      white-space:nowrap;
+    }
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+
+    .language-control{
+      display:none;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      padding:6px 8px;
+      color:white;
+    }
+    body.student-mode .language-control{display:flex;}
+    .language-control label{
+      font-size:12px;
+      font-weight:950;
+      opacity:.9;
+      white-space:nowrap;
+      color:white;
+    }
+    .language-control select{
+      width:auto;
+      min-width:120px;
+      height:34px;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:10px;
+      background:white;
+      color:#1d4ed8;
+      font-weight:900;
+      padding:0 8px;
+      outline:none;
+    }
+
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+
+    button,select,input{font:inherit;}
+    button{
+      border:1px solid transparent;
+      cursor:pointer;
+      border-radius:14px;
+      padding:11px 15px;
+      font-weight:900;
+      font-size:15px;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease,border-color .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+      font-family:var(--uiFont);
+    }
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+
+    .btn,.btn-soft{
+      border-color:rgba(15,23,42,.08);
+      background:var(--btn);
+      color:var(--ink);
+    }
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{
+      border-color:rgba(255,255,255,.18);
+      background:rgba(255,255,255,.14);
+      color:white;
+    }
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{
+      background:var(--blue);
+      color:white;
+      border-color:var(--blue);
+      box-shadow:0 10px 24px rgba(37,99,235,.20);
+    }
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#eef2ff;color:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);box-shadow:0 10px 24px rgba(239,68,68,.20);}
+    .btn-amber{background:var(--amber);color:white;border-color:var(--amber);box-shadow:0 10px 24px rgba(245,158,11,.20);}
+
+    input,select{
+      width:100%;
+      border:1px solid var(--border);
+      background:white;
+      border-radius:14px;
+      padding:12px 14px;
+      color:var(--ink);
+      outline:none;
+      font-weight:800;
+      transition:border-color .16s ease,box-shadow .16s ease;
+    }
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{display:grid;gap:7px;color:#334155;font-weight:900;font-size:.92rem;}
+
+    .layout{
+      width:min(1440px,calc(100vw - 42px));
+      margin:22px auto 14px;
+      display:grid;
+      grid-template-columns:minmax(420px,1fr) minmax(300px,380px);
+      gap:20px;
+      align-items:start;
+    }
+    .layout.single{grid-template-columns:minmax(420px,980px);justify-content:center;}
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .hidden{display:none!important;}
+
+    .main-card{padding:20px;}
+    .panel-card{padding:16px;position:sticky;top:96px;max-height:calc(100dvh - 116px);overflow:auto;}
+    .hero{
+      min-height:420px;
+      display:grid;
+      grid-template-columns:minmax(280px,1fr) minmax(260px,360px);
+      gap:20px;
+      align-items:stretch;
+    }
+    .hero-left{
+      border-radius:24px;
+      padding:22px;
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      border:1px solid var(--border);
+      display:grid;
+      align-content:start;
+      gap:16px;
+      min-height:360px;
+    }
+    .hero-title{
+      font-size:clamp(2rem,5vw,4.2rem);
+      line-height:.95;
+      font-weight:1000;
+      letter-spacing:-.075em;
+      margin:0;
+    }
+    .hero-title span{color:var(--pink);}
+    .hero-subtitle{font-size:1.08rem;color:var(--muted);font-weight:760;line-height:1.45;max-width:680px;margin:0;}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
+    .callout{
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid #fed7aa;
+      background:#fff7ed;
+      color:#9a3412;
+      font-weight:850;
+      line-height:1.35;
+    }
+    .callout.good{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .callout.blue{background:#eef6ff;border-color:#bfdbfe;color:#1e3a8a;}
+    .callout.purple{background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6;}
+    .callout.red{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+
+    .dice-stage{
+      position:relative;
+      display:grid;
+      place-items:center;
+      min-height:360px;
+      border-radius:24px;
+      border:1px solid #ddd6fe;
+      background:
+        radial-gradient(circle at 30% 22%,rgba(255,255,255,.95),transparent 28%),
+        linear-gradient(145deg,#f5f3ff,#fff7ed 60%,#eff6ff);
+      box-shadow:inset 0 -18px 34px rgba(124,58,237,.06);
+      overflow:hidden;
+    }
+    .dice-stage::before,
+    .dice-stage::after{
+      content:"";
+      position:absolute;
+      width:170px;
+      height:170px;
+      border-radius:50%;
+      opacity:.24;
+      filter:blur(2px);
+    }
+    .dice-stage::before{background:var(--blue);left:-60px;top:-44px;}
+    .dice-stage::after{background:var(--pink);right:-62px;bottom:-48px;}
+    .big-die{
+      width:clamp(120px,17vw,190px);
+      height:clamp(120px,17vw,190px);
+      border-radius:34px;
+      background:white;
+      display:grid;
+      place-items:center;
+      font-weight:1000;
+      font-size:clamp(4rem,8vw,7.4rem);
+      color:#111827;
+      box-shadow:inset 0 -14px 0 rgba(15,23,42,.08),0 24px 42px rgba(15,23,42,.18);
+      border:2px solid rgba(226,232,240,.95);
+      position:relative;
+      z-index:2;
+      font-family:var(--mathFont);
+    }
+    .big-die.rolling{animation:diceShake .42s ease-in-out infinite;}
+    .big-die.poison{
+      color:white;
+      background:linear-gradient(145deg,#991b1b,#ef4444);
+      border-color:#fecaca;
+      box-shadow:inset 0 -14px 0 rgba(0,0,0,.16),0 24px 56px rgba(239,68,68,.34),0 0 0 10px rgba(239,68,68,.10);
+      animation:poisonPulse .75s ease-in-out infinite;
+    }
+    @keyframes diceShake{
+      0%{transform:rotate(0deg) translate(0,0);}
+      25%{transform:rotate(-12deg) translate(-4px,4px);}
+      50%{transform:rotate(9deg) translate(4px,-4px);}
+      75%{transform:rotate(-6deg) translate(2px,4px);}
+      100%{transform:rotate(0deg) translate(0,0);}
+    }
+    @keyframes poisonPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.04);}}
+    .explosion{
+      position:absolute;
+      inset:0;
+      z-index:8;
+      display:none;
+      place-items:center;
+      pointer-events:none;
+      font-size:clamp(5rem,12vw,10rem);
+      animation:boom .95s ease forwards;
+      text-shadow:0 10px 32px rgba(239,68,68,.38);
+    }
+    .explosion.show{display:grid;}
+    @keyframes boom{
+      0%{opacity:0;transform:scale(.25) rotate(-12deg);}
+      32%{opacity:1;transform:scale(1.24) rotate(5deg);}
+      70%{opacity:1;transform:scale(.95) rotate(-3deg);}
+      100%{opacity:0;transform:scale(1.08) rotate(0deg);}
+    }
+
+    .stat-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;margin:0 0 16px;}
+    .stat-card{
+      border:1px solid var(--border);
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      border-radius:20px;
+      padding:13px 15px;
+      min-height:84px;
+      display:grid;
+      align-content:center;
+      gap:4px;
+    }
+    .stat-card .label{color:#64748b;font-weight:900;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;}
+    .stat-card .value{font-weight:1000;font-size:1.65rem;letter-spacing:-.04em;line-height:1;}
+    .stat-card.round-total{border-color:#a7f3d0;background:linear-gradient(180deg,#ecfdf5,#ffffff);}
+    .stat-card.total-score{border-color:#bfdbfe;background:linear-gradient(180deg,#eff6ff,#ffffff);}
+    .stat-card.status{border-color:#ddd6fe;background:linear-gradient(180deg,#f5f3ff,#ffffff);}
+
+    .controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;}
+    .teacher-controls .btn{min-width:138px;}
+    .roll-button{
+      min-width:170px;
+      padding:15px 22px;
+      font-size:1.08rem;
+      border-radius:18px;
+    }
+    .bank-button{
+      width:100%;
+      padding:18px 22px;
+      font-size:1.35rem;
+      border-radius:20px;
+      margin-top:14px;
+    }
+    .bank-button.pulse{animation:bankPulse 1.4s ease-in-out infinite;}
+    @keyframes bankPulse{0%,100%{box-shadow:0 10px 24px rgba(108,188,74,.22);}50%{box-shadow:0 12px 28px rgba(108,188,74,.36),0 0 0 8px rgba(108,188,74,.10);}}
+
+    .room-code-box{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 16px;
+      border-radius:20px;
+      background:#eef6ff;
+      border:1px solid #bfdbfe;
+      color:#1e3a8a;
+      font-weight:950;
+      margin-bottom:14px;
+    }
+    .room-code{
+      letter-spacing:.16em;
+      font-size:1.7rem;
+      font-family:var(--mathFont);
+      font-weight:1000;
+    }
+    .form-grid{display:grid;gap:14px;max-width:520px;}
+    .join-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
+
+    .leader-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .leader-title h2{font-size:1.2rem;margin:0;font-weight:1000;letter-spacing:-.03em;}
+    .leader-list{display:grid;gap:9px;}
+    .leader-row{
+      position:relative;
+      display:grid;
+      grid-template-columns:42px minmax(0,1fr) auto;
+      align-items:center;
+      gap:10px;
+      padding:11px 12px;
+      border:1px solid var(--border);
+      border-radius:17px;
+      background:white;
+      overflow:hidden;
+    }
+    .leader-row::before{
+      content:"";
+      position:absolute;
+      inset:0 auto 0 0;
+      width:var(--bar,0%);
+      background:linear-gradient(90deg,rgba(37,99,235,.13),rgba(124,58,237,.08));
+      pointer-events:none;
+    }
+    .leader-row > *{position:relative;z-index:1;}
+    .rank-badge{
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:#f1f5f9;
+      color:#334155;
+      font-weight:1000;
+      font-family:var(--mathFont);
+    }
+    .leader-row.first .rank-badge{background:#fef3c7;color:#92400e;}
+    .leader-row.second .rank-badge{background:#e5e7eb;color:#374151;}
+    .leader-row.third .rank-badge{background:#ffedd5;color:#9a3412;}
+    .leader-name{font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .leader-meta{font-size:.78rem;color:#64748b;font-weight:850;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .leader-score{font-weight:1000;font-size:1.25rem;font-family:var(--mathFont);}
+    .empty-list{padding:18px;border-radius:18px;background:#f8fafc;border:1px dashed #cbd5e1;color:#64748b;font-weight:850;text-align:center;}
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:7px 11px;
+      border-radius:999px;
+      background:#e2e8f0;
+      color:#334155;
+      font-weight:950;
+      font-size:.82rem;
+      white-space:nowrap;
+    }
+    .status-pill.standing{background:#dcfce7;color:#166534;}
+    .status-pill.banked{background:#dbeafe;color:#1e40af;}
+    .status-pill.busted{background:#fee2e2;color:#991b1b;}
+    .status-pill.waiting{background:#f1f5f9;color:#475569;}
+
+    .podium-wrap{display:grid;gap:18px;}
+    .podium-stage{
+      display:grid;
+      grid-template-columns:1fr 1.15fr 1fr;
+      gap:12px;
+      align-items:end;
+      min-height:330px;
+      padding:18px;
+      border-radius:24px;
+      border:1px solid #fde68a;
+      background:linear-gradient(180deg,#fff7ed,#ffffff);
+      overflow:hidden;
+      position:relative;
+    }
+    .podium-card{
+      border-radius:24px 24px 16px 16px;
+      border:1px solid var(--border);
+      background:white;
+      box-shadow:0 18px 34px rgba(15,23,42,.12);
+      display:grid;
+      align-content:start;
+      justify-items:center;
+      text-align:center;
+      gap:8px;
+      padding:16px 12px;
+      min-height:180px;
+    }
+    .podium-card.place-1{min-height:270px;background:linear-gradient(180deg,#fef3c7,#ffffff);border-color:#fbbf24;}
+    .podium-card.place-2{min-height:225px;background:linear-gradient(180deg,#f1f5f9,#ffffff);}
+    .podium-card.place-3{min-height:200px;background:linear-gradient(180deg,#ffedd5,#ffffff);border-color:#fdba74;}
+    .podium-medal{font-size:2.8rem;line-height:1;}
+    .podium-place{font-weight:1000;font-size:1.25rem;}
+    .podium-names{font-weight:1000;font-size:1.1rem;line-height:1.25;word-break:break-word;}
+    .podium-score{color:#64748b;font-weight:900;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(760px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:24px;}
+    .modal h2{margin:0 0 8px;font-size:1.85rem;font-weight:1000;letter-spacing:-.04em;}
+    .modal p{margin:0 0 18px;color:#64748b;font-weight:760;line-height:1.45;}
+    .mode-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .mode-card{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      grid-template-areas:"icon title" "icon desc";
+      gap:4px 16px;
+      text-align:left;
+      padding:20px;
+      border-radius:22px;
+      border:2px solid var(--border);
+      background:linear-gradient(180deg,#fff,#f8fafc);
+      box-shadow:0 14px 28px rgba(15,23,42,.08);
+      color:var(--ink);
+    }
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:1000;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:#64748b;font-size:.95rem;font-weight:750;}
+
+    .brand-footer{width:min(1440px,calc(100vw - 42px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:66px;grid-template-columns:minmax(190px,1fr) auto minmax(360px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout,.layout.single{width:calc(100vw - 24px);grid-template-columns:1fr;margin-top:14px;}
+      .panel-card{position:static;max-height:none;}
+      .hero{grid-template-columns:1fr;}
+      .stat-grid{grid-template-columns:repeat(2,minmax(120px,1fr));}
+      .join-grid{grid-template-columns:1fr;}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .layout,.layout.single{width:calc(100vw - 18px);}
+      .main-card{padding:14px;}
+      .mode-card-grid{grid-template-columns:1fr;}
+      .mode-card{grid-template-columns:1fr;grid-template-areas:"icon" "title" "desc";}
+      .stat-grid{grid-template-columns:1fr;}
+      .hero-left{padding:16px;}
+      .podium-stage{grid-template-columns:1fr;}
+      .podium-card,.podium-card.place-1,.podium-card.place-2,.podium-card.place-3{min-height:auto;}
+      .brand-footer{width:calc(100vw - 18px);padding:8px 10px;}
+    }
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Greedy Pig</div>
+    <div class="actions">
+      <div class="language-control" id="languageControl">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button">Rules</button>
+      <button class="btn btn-primary" id="menuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout single" id="appLayout">
+    <section class="card main-card" id="homeScreen">
+      <div class="hero">
+        <div class="hero-left">
+          <h1 class="hero-title">Greedy <span>Pig</span></h1>
+          <p class="hero-subtitle">A teacher-led risk and reward dice game. Students decide when to bank before the poison number wipes out the standing players.</p>
+          <div class="callout blue"><strong>Poison number:</strong> 2. Rolls of 1, 3, 4, 5 and 6 add to the round total.</div>
+          <div class="hero-actions">
+            <button class="btn-primary" id="homeTeacherBtn" type="button">Teacher: Create Game</button>
+            <button class="btn-green" id="homeStudentBtn" type="button">Student: Join Game</button>
+          </div>
+        </div>
+        <div class="dice-stage">
+          <div class="big-die" id="homeDie">2</div>
+          <div class="explosion" id="homeExplosion">💥</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card main-card hidden" id="teacherSetupScreen">
+      <div class="hero-left">
+        <h1 class="hero-title">Create <span>Game</span></h1>
+        <p class="hero-subtitle">Choose the number of rounds, generate a room code, and let students join from their own devices.</p>
+        <div class="form-grid">
+          <label>Number of rounds
+            <select id="roundsSelect">
+              <option value="1">1 round</option>
+              <option value="2">2 rounds</option>
+              <option value="3">3 rounds</option>
+              <option value="4">4 rounds</option>
+              <option value="5" selected>5 rounds</option>
+              <option value="6">6 rounds</option>
+              <option value="7">7 rounds</option>
+              <option value="8">8 rounds</option>
+              <option value="9">9 rounds</option>
+              <option value="10">10 rounds</option>
+            </select>
+          </label>
+          <button class="btn-primary" id="createRoomBtn" type="button">Generate Game Code</button>
+          <div class="callout" id="teacherSetupMessage">Anonymous Firebase sign-in will start automatically when this page loads.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card main-card hidden" id="studentJoinScreen">
+      <div class="hero-left">
+        <h1 class="hero-title" data-student-i18n="Join Game">Join <span>Game</span></h1>
+        <p class="hero-subtitle" id="studentJoinIntro" data-student-i18n="Enter the room code and your name to join your teacher's game.">Enter the room code and your name to join your teacher's game.</p>
+        <div class="join-grid">
+          <label><span data-student-i18n="Room code">Room code</span>
+            <input id="studentRoomCodeInput" type="text" maxlength="6" placeholder="ABC123" autocomplete="off" />
+          </label>
+          <label><span data-student-i18n="Your name">Your name</span>
+            <input id="studentNameInput" type="text" maxlength="24" placeholder="Name" autocomplete="name" />
+          </label>
+          <button class="btn-green" id="joinRoomBtn" type="button" data-student-i18n="Join">Join</button>
+        </div>
+        <div class="callout" id="studentJoinMessage" data-student-i18n="Ask your teacher for the game code.">Ask your teacher for the game code.</div>
+      </div>
+    </section>
+
+    <section class="card main-card hidden" id="gameScreen">
+      <div id="gameContent"></div>
+    </section>
+
+    <aside class="card panel-card hidden" id="sidePanel">
+      <div class="leader-title">
+        <h2 id="leaderboardTitle">Leaderboard</h2>
+        <span class="status-pill" id="studentCountPill">0 students</span>
+      </div>
+      <div class="leader-list" id="leaderList"></div>
+    </aside>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <h2 id="rulesTitle">Greedy Pig rules</h2>
+      <p id="rulesText">Students start each round standing. The teacher rolls the die. If the roll is 1, 3, 4, 5 or 6, it is added to the round total. Students may press Bank to safely add the current round total to their score. If the poison number 2 is rolled, students still standing score 0 for that round. After the chosen number of rounds, the highest total wins.</p>
+      <button class="btn-primary" id="closeRulesBtn" type="button">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop open" id="modeModal" aria-hidden="false">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modeTitle">
+      <h2 id="modeTitle">Choose your screen</h2>
+      <p>Teachers create the room and roll the die. Students join with a code and decide when to bank.</p>
+      <div class="mode-card-grid">
+        <button class="mode-card" id="chooseTeacherBtn" type="button">
+          <span class="mode-icon">🎲</span>
+          <strong>Teacher: Create Game</strong>
+          <span>Roll the die, control rounds, and view the class leaderboard.</span>
+        </button>
+        <button class="mode-card" id="chooseStudentBtn" type="button">
+          <span class="mode-icon">🐷</span>
+          <strong>Student: Join Game</strong>
+          <span>Enter the room code, then decide when to bank.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+      authDomain: "mmt-firebase-games.firebaseapp.com",
+      projectId: "mmt-firebase-games",
+      storageBucket: "mmt-firebase-games.firebasestorage.app",
+      messagingSenderId: "980506958719",
+      appId: "1:980506958719:web:ddbc808acaff3ca3ba584a"
+    };
+
+    const COLLECTION = 'greedyPigGames';
+    const MAX_PLAYERS = 30;
+    const POISON = 2;
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let uid = null;
+    let authReady = false;
+    let authReadyPromiseResolve;
+    const authReadyPromise = new Promise(resolve => { authReadyPromiseResolve = resolve; });
+    signInAnonymously(auth).catch(err => {
+      showMessage('teacherSetupMessage', 'Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'red');
+      showMessage('studentJoinMessage', 'Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'red');
+      console.error(err);
+    });
+    onAuthStateChanged(auth, user => {
+      uid = user ? user.uid : null;
+      authReady = Boolean(user);
+      authReadyPromiseResolve(user);
+    });
+
+    const $ = id => document.getElementById(id);
+    const els = {
+      appLayout:$('appLayout'), homeScreen:$('homeScreen'), teacherSetupScreen:$('teacherSetupScreen'), studentJoinScreen:$('studentJoinScreen'), gameScreen:$('gameScreen'), sidePanel:$('sidePanel'),
+      gameContent:$('gameContent'), leaderList:$('leaderList'), leaderboardTitle:$('leaderboardTitle'), studentCountPill:$('studentCountPill'), modeModal:$('modeModal'),
+      homeTeacherBtn:$('homeTeacherBtn'), homeStudentBtn:$('homeStudentBtn'), chooseTeacherBtn:$('chooseTeacherBtn'), chooseStudentBtn:$('chooseStudentBtn'),
+      createRoomBtn:$('createRoomBtn'), roundsSelect:$('roundsSelect'), teacherSetupMessage:$('teacherSetupMessage'),
+      studentRoomCodeInput:$('studentRoomCodeInput'), studentNameInput:$('studentNameInput'), joinRoomBtn:$('joinRoomBtn'), studentJoinMessage:$('studentJoinMessage'),
+      rulesBtn:$('rulesBtn'), rulesModal:$('rulesModal'), closeRulesBtn:$('closeRulesBtn'), menuBtn:$('menuBtn'),
+      mainLanguageSelect:$('mainLanguageSelect'), languageMainLabel:$('languageMainLabel'), homeDie:$('homeDie'), homeExplosion:$('homeExplosion')
+    };
+
+    let role = null;
+    let roomCode = null;
+    let roomRef = null;
+    let unsubscribeRoom = null;
+    let localGame = null;
+    let studentPlayerId = null;
+    let lastSeenRollKey = '';
+    let currentLang = 'en';
+    let localRollingTimeout = null;
+
+    const TRANSLATIONS = {
+      ar: {
+        'Language':'اللغة', 'Join Game':'انضم إلى اللعبة', "Enter the room code and your name to join your teacher's game.":'أدخل رمز الغرفة واسمك للانضمام إلى لعبة معلمك.',
+        'Room code':'رمز الغرفة', 'Your name':'اسمك', 'Join':'انضمام', 'Ask your teacher for the game code.':'اطلب من معلمك رمز اللعبة.',
+        'Leaderboard':'لوحة المتصدرين', 'Top 6':'أفضل 6', 'Round':'الجولة', 'Round total':'مجموع الجولة', 'Your total':'مجموعك', 'Status':'الحالة',
+        'Standing':'واقف', 'Banked':'تم الحفظ', 'Busted':'خاسر', 'Waiting':'انتظار', 'Bank':'احفظ النقاط', 'Waiting for your teacher to roll.':'انتظر المعلم ليرمي النرد.',
+        'The dice is rolling. Bank is locked.':'النرد يتحرك. زر الحفظ مقفل.', 'You are safe this round.':'أنت آمن في هذه الجولة.', 'Poison number! Standing players score 0 this round.':'رقم سام! اللاعبون الواقفون يحصلون على 0 في هذه الجولة.',
+        'Game finished':'انتهت اللعبة', 'Current roll':'الرمي الحالي', 'Latest roll':'آخر رمية', 'Students':'الطلاب', 'Total score':'المجموع الكلي'
+      },
+      fa: {
+        'Language':'زبان', 'Join Game':'پیوستن به بازی', "Enter the room code and your name to join your teacher's game.":'کد اتاق و نام خود را وارد کنید تا به بازی معلم بپیوندید.',
+        'Room code':'کد اتاق', 'Your name':'نام شما', 'Join':'پیوستن', 'Ask your teacher for the game code.':'کد بازی را از معلم خود بپرسید.',
+        'Leaderboard':'جدول رتبه‌بندی', 'Top 6':'۶ نفر برتر', 'Round':'دور', 'Round total':'امتیاز این دور', 'Your total':'امتیاز شما', 'Status':'وضعیت',
+        'Standing':'ایستاده', 'Banked':'ذخیره شده', 'Busted':'سوخت', 'Waiting':'در انتظار', 'Bank':'ذخیره', 'Waiting for your teacher to roll.':'منتظر بمانید تا معلم تاس بیندازد.',
+        'The dice is rolling. Bank is locked.':'تاس در حال چرخش است. دکمه ذخیره قفل است.', 'You are safe this round.':'شما در این دور امن هستید.', 'Poison number! Standing players score 0 this round.':'عدد سمی! بازیکنان ایستاده در این دور ۰ می‌گیرند.',
+        'Game finished':'بازی تمام شد', 'Current roll':'رول فعلی', 'Latest roll':'آخرین رول', 'Students':'دانش‌آموزان', 'Total score':'امتیاز کل'
+      }
+    };
+
+    function escapeHtml(str){
+      return String(str ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+    }
+
+    function t(key){
+      if(currentLang === 'en') return escapeHtml(key);
+      const native = TRANSLATIONS[currentLang]?.[key] || key;
+      return `<span class="i18n-dual"><span class="native">${escapeHtml(native)}</span><span class="english-under">${escapeHtml(key)}</span></span>`;
+    }
+
+    function applyStudentLanguage(){
+      document.documentElement.lang = currentLang;
+      els.languageMainLabel.innerHTML = t('Language');
+      document.querySelectorAll('[data-student-i18n]').forEach(el => {
+        const key = el.dataset.studentI18n;
+        if(el.tagName === 'INPUT') return;
+        if(key === 'Join Game') el.innerHTML = currentLang === 'en' ? 'Join <span>Game</span>' : t('Join Game');
+        else el.innerHTML = t(key);
+      });
+      if(role === 'student' && localGame) renderStudent(localGame);
+    }
+
+    function setRole(nextRole){
+      role = nextRole;
+      document.body.classList.toggle('student-mode', role === 'student');
+      els.modeModal.classList.remove('open');
+      if(nextRole === 'teacher') showScreen('teacherSetupScreen', true);
+      if(nextRole === 'student') showScreen('studentJoinScreen', true);
+      applyStudentLanguage();
+    }
+
+    function showScreen(screenId, single=false){
+      ['homeScreen','teacherSetupScreen','studentJoinScreen','gameScreen'].forEach(id => $(id).classList.add('hidden'));
+      $(screenId).classList.remove('hidden');
+      els.sidePanel.classList.add('hidden');
+      els.appLayout.classList.toggle('single', single);
+    }
+
+    function showGameWithPanel(){
+      showScreen('gameScreen', false);
+      els.sidePanel.classList.remove('hidden');
+      els.appLayout.classList.remove('single');
+    }
+
+    function showMessage(id, message, type=''){
+      const el = $(id);
+      if(!el) return;
+      el.className = 'callout' + (type ? ` ${type}` : '');
+      el.textContent = message;
+    }
+
+    function makeCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let out = '';
+      for(let i=0;i<6;i++) out += chars[Math.floor(Math.random()*chars.length)];
+      return out;
+    }
+
+    function normaliseName(name){
+      return String(name || '').trim().replace(/\s+/g,' ').slice(0,24);
+    }
+
+    async function createRoom(){
+      await authReadyPromise;
+      if(!authReady || !uid) return showMessage('teacherSetupMessage','Could not sign in to Firebase yet. Try again in a moment.','red');
+      const totalRounds = Number(els.roundsSelect.value || 5);
+      let code = makeCode();
+      let ref = doc(db, COLLECTION, code);
+      for(let i=0;i<8;i++){
+        const snap = await getDoc(ref);
+        if(!snap.exists()) break;
+        code = makeCode();
+        ref = doc(db, COLLECTION, code);
+      }
+      const base = {
+        roomCode: code,
+        teacherUid: uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        state: 'lobby',
+        locked: false,
+        maxPlayers: MAX_PLAYERS,
+        poisonNumber: POISON,
+        totalRounds,
+        currentRound: 0,
+        roundTotal: 0,
+        latestRoll: null,
+        rollId: 0,
+        message: 'Waiting for students to join.',
+        players: {}
+      };
+      await setDoc(ref, base);
+      roomCode = code;
+      roomRef = ref;
+      subscribeToRoom(code);
+      showGameWithPanel();
+    }
+
+    async function joinRoom(){
+      await authReadyPromise;
+      const code = els.studentRoomCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+      const name = normaliseName(els.studentNameInput.value);
+      if(code.length !== 6) return setStudentJoinMessage('Please enter the 6-character room code.', 'red');
+      if(!name) return setStudentJoinMessage('Please enter your name.', 'red');
+      if(!authReady || !uid) return setStudentJoinMessage('Could not sign in to Firebase yet. Try again in a moment.', 'red');
+      const ref = doc(db, COLLECTION, code);
+      const playerId = uid;
+      try{
+        await runTransaction(db, async tx => {
+          const snap = await tx.get(ref);
+          if(!snap.exists()) throw new Error('ROOM_NOT_FOUND');
+          const data = snap.data();
+          const players = {...(data.players || {})};
+          const existingOwn = players[playerId];
+          const duplicate = Object.entries(players).find(([id,p]) => normaliseName(p.name).toLowerCase() === name.toLowerCase() && id !== playerId);
+          if(duplicate) throw new Error('DUPLICATE_NAME');
+          if(data.state !== 'lobby' && !existingOwn) throw new Error('GAME_STARTED');
+          if(data.locked && !existingOwn) throw new Error('GAME_LOCKED');
+          if(!existingOwn && Object.keys(players).length >= MAX_PLAYERS) throw new Error('GAME_FULL');
+          players[playerId] = {
+            ...(existingOwn || {}),
+            name,
+            nameKey: name.toLowerCase(),
+            uid,
+            status: existingOwn?.status || (data.state === 'lobby' ? 'waiting' : 'standing'),
+            totalScore: Number(existingOwn?.totalScore || 0),
+            roundScore: Number(existingOwn?.roundScore || 0),
+            joinedAt: existingOwn?.joinedAt || Date.now(),
+            lastSeen: Date.now()
+          };
+          tx.update(ref, {players, updatedAt: serverTimestamp()});
+        });
+        roomCode = code;
+        roomRef = ref;
+        studentPlayerId = playerId;
+        localStorage.setItem(`greedyPig:${code}:playerId`, playerId);
+        localStorage.setItem(`greedyPig:${code}:name`, name);
+        subscribeToRoom(code);
+        showGameWithPanel();
+      }catch(err){
+        console.error(err);
+        const messages = {
+          ROOM_NOT_FOUND: 'Room not found. Check the code with your teacher.',
+          DUPLICATE_NAME: 'That name is already taken. Please choose a different name.',
+          GAME_STARTED: 'This game has already started. Please ask your teacher to start a new room.',
+          GAME_LOCKED: 'This game is locked. Please ask your teacher.',
+          GAME_FULL: 'This game is full. Please ask your teacher to start a new room.'
+        };
+        setStudentJoinMessage(messages[err.message] || 'Could not join the game. Please try again.', 'red');
+      }
+    }
+
+    function setStudentJoinMessage(message, type=''){
+      els.studentJoinMessage.className = 'callout' + (type ? ` ${type}` : '');
+      els.studentJoinMessage.textContent = message;
+    }
+
+    function subscribeToRoom(code){
+      if(unsubscribeRoom) unsubscribeRoom();
+      roomRef = doc(db, COLLECTION, code);
+      unsubscribeRoom = onSnapshot(roomRef, snap => {
+        if(!snap.exists()){
+          localGame = null;
+          if(role === 'student'){
+            setStudentJoinMessage('This game has ended or was reset by the teacher.', 'red');
+            showScreen('studentJoinScreen', true);
+          }else{
+            showMessage('teacherSetupMessage','The current game was reset. You can create a new one.','blue');
+            showScreen('teacherSetupScreen', true);
+          }
+          return;
+        }
+        localGame = snap.data();
+        maybeShowRollEffects(localGame);
+        if(role === 'teacher') renderTeacher(localGame);
+        if(role === 'student') renderStudent(localGame);
+        renderLeaderboard(localGame);
+      }, err => {
+        console.error(err);
+      });
+    }
+
+    function sortedPlayers(game){
+      const players = Object.entries(game.players || {}).map(([id,p]) => ({id,...p,totalScore:Number(p.totalScore||0),roundScore:Number(p.roundScore||0)}));
+      players.sort((a,b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name));
+      let lastScore = null;
+      let lastRank = 0;
+      players.forEach((p,index) => {
+        if(lastScore === null || p.totalScore !== lastScore){
+          lastRank = index + 1;
+          lastScore = p.totalScore;
+        }
+        p.rank = lastRank;
+      });
+      return players;
+    }
+
+    function renderLeaderboard(game){
+      const players = sortedPlayers(game);
+      const isStudent = role === 'student';
+      const visible = isStudent ? players.slice(0,6) : players;
+      const maxScore = Math.max(1, ...players.map(p => p.totalScore));
+      els.leaderboardTitle.innerHTML = isStudent ? t('Top 6') : 'Leaderboard';
+      els.studentCountPill.textContent = `${players.length} student${players.length === 1 ? '' : 's'}`;
+      if(players.length === 0){
+        els.leaderList.innerHTML = `<div class="empty-list">No students have joined yet.</div>`;
+        return;
+      }
+      els.leaderList.innerHTML = visible.map(p => {
+        const placeCls = p.rank === 1 ? 'first' : p.rank === 2 ? 'second' : p.rank === 3 ? 'third' : '';
+        const pct = Math.max(8, Math.round((p.totalScore / maxScore) * 100));
+        return `<div class="leader-row ${placeCls}" style="--bar:${pct}%">
+          <div class="rank-badge">${p.rank}</div>
+          <div>
+            <div class="leader-name">${escapeHtml(p.name || 'Student')}</div>
+            <div class="leader-meta">${statusLabel(p.status, false)}${p.roundScore ? ` · banked ${p.roundScore}` : ''}</div>
+          </div>
+          <div class="leader-score">${p.totalScore}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function statusLabel(status, translated=true){
+      const key = status === 'standing' ? 'Standing' : status === 'banked' ? 'Banked' : status === 'busted' ? 'Busted' : 'Waiting';
+      return translated ? t(key) : key;
+    }
+
+    function renderTeacher(game){
+      showGameWithPanel();
+      const players = sortedPlayers(game);
+      const inLobby = game.state === 'lobby';
+      const isRolling = game.state === 'rolling';
+      const roundFinished = game.state === 'poison' || game.state === 'roundEnd';
+      const isFinished = game.state === 'finished';
+      const latest = game.latestRoll ?? '?';
+      const canRoll = game.state === 'active';
+      const canStart = inLobby && players.length > 0;
+      const nextText = game.currentRound >= game.totalRounds ? 'Show Winners' : 'Start Next Round';
+
+      if(isFinished){
+        els.gameContent.innerHTML = renderFinished(game, true);
+        attachTeacherButtonHandlers();
+        return;
+      }
+
+      els.gameContent.innerHTML = `
+        <div class="room-code-box">
+          <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span></span>
+          <button class="btn-soft" id="copyCodeBtn" type="button">Copy code</button>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Round</div><div class="value">${game.currentRound || 0}/${game.totalRounds}</div></div>
+          <div class="stat-card round-total"><div class="label">Round total</div><div class="value">${game.roundTotal || 0}</div></div>
+          <div class="stat-card"><div class="label">Latest roll</div><div class="value">${latest}</div></div>
+          <div class="stat-card status"><div class="label">Students</div><div class="value">${players.length}/${MAX_PLAYERS}</div></div>
+        </div>
+        <div class="hero">
+          <div class="dice-stage">
+            <div class="big-die ${isRolling ? 'rolling' : ''} ${game.latestRoll === POISON ? 'poison' : ''}" id="mainDie">${isRolling ? '?' : latest}</div>
+            <div class="explosion ${game.state === 'poison' ? 'show' : ''}" id="mainExplosion">💥</div>
+          </div>
+          <div class="hero-left teacher-controls">
+            <h1 class="hero-title">Teacher <span>Screen</span></h1>
+            <div class="callout ${game.state === 'poison' ? 'red' : game.state === 'active' ? 'good' : 'blue'}">${escapeHtml(game.message || stateMessage(game))}</div>
+            <div class="controls-row">
+              <button class="btn-primary" id="startGameBtn" type="button" ${canStart ? '' : 'disabled'}>${inLobby ? 'Start Game' : 'Game Started'}</button>
+              <button class="btn-green roll-button" id="rollTeacherBtn" type="button" ${canRoll ? '' : 'disabled'}>${isRolling ? 'Rolling...' : 'Roll'}</button>
+              <button class="btn-amber" id="endRoundBtn" type="button" ${canRoll ? '' : 'disabled'}>End Round & Bank Standing Players</button>
+              <button class="btn-primary" id="nextRoundBtn" type="button" ${roundFinished ? '' : 'disabled'}>${nextText}</button>
+              <button class="btn-red" id="resetGameBtn" type="button">Reset / New Game</button>
+            </div>
+            <div class="callout purple"><strong>Reminder:</strong> Students only need to press <em>Bank</em>. If they do nothing, they are still standing and risking the next roll.</div>
+          </div>
+        </div>`;
+      attachTeacherButtonHandlers();
+    }
+
+    function renderStudent(game){
+      showGameWithPanel();
+      const player = game.players?.[studentPlayerId];
+      if(!player){
+        els.gameContent.innerHTML = `<div class="callout red">${t('This player was not found in the room. Please rejoin.')}</div>`;
+        return;
+      }
+      const isRolling = game.state === 'rolling';
+      const latest = game.latestRoll ?? '?';
+      const bankEnabled = game.state === 'active' && player.status === 'standing' && Number(game.roundTotal || 0) > 0;
+      const status = player.status || 'waiting';
+      const statusKey = status === 'standing' ? 'Standing' : status === 'banked' ? 'Banked' : status === 'busted' ? 'Busted' : 'Waiting';
+      let studentMsg = 'Waiting for your teacher to roll.';
+      if(isRolling) studentMsg = 'The dice is rolling. Bank is locked.';
+      if(status === 'banked') studentMsg = 'You are safe this round.';
+      if(game.state === 'poison') studentMsg = 'Poison number! Standing players score 0 this round.';
+      if(game.state === 'finished'){
+        els.gameContent.innerHTML = renderFinished(game, false);
+        return;
+      }
+      els.gameContent.innerHTML = `
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">${t('Round')}</div><div class="value">${game.currentRound || 0}/${game.totalRounds}</div></div>
+          <div class="stat-card round-total"><div class="label">${t('Round total')}</div><div class="value">${game.roundTotal || 0}</div></div>
+          <div class="stat-card total-score"><div class="label">${t('Your total')}</div><div class="value">${Number(player.totalScore || 0)}</div></div>
+          <div class="stat-card status"><div class="label">${t('Status')}</div><div class="value"><span class="status-pill ${status}">${statusLabel(status)}</span></div></div>
+        </div>
+        <div class="hero">
+          <div class="dice-stage">
+            <div class="big-die ${isRolling ? 'rolling' : ''} ${game.latestRoll === POISON ? 'poison' : ''}" id="studentDie">${isRolling ? '?' : latest}</div>
+            <div class="explosion ${game.state === 'poison' ? 'show' : ''}" id="studentExplosion">💥</div>
+          </div>
+          <div class="hero-left">
+            <h1 class="hero-title">${escapeHtml(player.name)} <span>🐷</span></h1>
+            <div class="callout ${game.state === 'poison' ? 'red' : status === 'banked' ? 'good' : 'blue'}">${t(studentMsg)}</div>
+            <button class="btn-green bank-button ${bankEnabled ? 'pulse' : ''}" id="bankBtn" type="button" ${bankEnabled ? '' : 'disabled'}>${t('Bank')}</button>
+            <div class="callout purple">${t('Latest roll')}: <strong>${isRolling ? '?' : latest}</strong></div>
+          </div>
+        </div>`;
+      const bankBtn = $('bankBtn');
+      if(bankBtn) bankBtn.addEventListener('click', bankStudentScore);
+    }
+
+    function stateMessage(game){
+      if(game.state === 'lobby') return 'Waiting for students to join.';
+      if(game.state === 'active') return 'Roll the die or end the round.';
+      if(game.state === 'rolling') return 'Rolling... student Bank buttons are locked.';
+      if(game.state === 'poison') return 'Poison number! Standing players scored 0 for this round.';
+      if(game.state === 'roundEnd') return 'Round ended. Standing players were banked.';
+      if(game.state === 'finished') return 'Game finished.';
+      return '';
+    }
+
+    function renderFinished(game, teacherView){
+      const podium = buildPodium(game);
+      setTimeout(() => confettiBurst(80), 120);
+      return `<div class="podium-wrap">
+        <div class="callout good"><strong>${teacherView ? 'Game finished!' : t('Game finished')}</strong> ${teacherView ? 'Here are the final results.' : ''}</div>
+        <div class="podium-stage">
+          ${podium.map(place => `
+            <div class="podium-card place-${place.place}">
+              <div class="podium-medal">${place.place === 1 ? '🥇' : place.place === 2 ? '🥈' : '🥉'}</div>
+              <div class="podium-place">${place.place}${ordinalSuffix(place.place)}</div>
+              <div class="podium-names">${place.names.map(escapeHtml).join('<br>')}</div>
+              <div class="podium-score">${place.score} points</div>
+            </div>`).join('')}
+        </div>
+        ${teacherView ? '<button class="btn-red" id="resetGameBtn" type="button">Reset / New Game</button>' : ''}
+      </div>`;
+    }
+
+    function buildPodium(game){
+      const players = sortedPlayers(game);
+      if(players.length === 0) return [{place:1,names:['No players'],score:0},{place:2,names:['—'],score:0},{place:3,names:['—'],score:0}];
+      const groups = [];
+      for(const p of players){
+        const existing = groups.find(g => g.rank === p.rank);
+        if(existing) existing.names.push(p.name);
+        else groups.push({rank:p.rank, names:[p.name], score:p.totalScore});
+      }
+      const podiumRanks = groups.filter(g => g.rank <= 3).map(g => ({place:g.rank,names:g.names,score:g.score}));
+      [1,2,3].forEach(place => { if(!podiumRanks.find(p => p.place === place)) podiumRanks.push({place,names:['—'],score:0}); });
+      const order = {2:0,1:1,3:2};
+      return podiumRanks.sort((a,b) => order[a.place] - order[b.place]);
+    }
+
+    function ordinalSuffix(n){
+      return n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th';
+    }
+
+    function attachTeacherButtonHandlers(){
+      $('copyCodeBtn')?.addEventListener('click', async () => {
+        try{ await navigator.clipboard.writeText(roomCode || localGame?.roomCode || ''); }catch(e){}
+      });
+      $('startGameBtn')?.addEventListener('click', startGame);
+      $('rollTeacherBtn')?.addEventListener('click', teacherRoll);
+      $('endRoundBtn')?.addEventListener('click', endRoundBankStanding);
+      $('nextRoundBtn')?.addEventListener('click', nextRoundOrFinish);
+      $('resetGameBtn')?.addEventListener('click', resetGame);
+    }
+
+    async function startGame(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
+      const players = {...(localGame.players || {})};
+      if(Object.keys(players).length === 0) return;
+      Object.keys(players).forEach(id => {
+        players[id] = {...players[id], status:'standing', totalScore:0, roundScore:0};
+      });
+      await updateDoc(roomRef, {
+        state:'active',
+        locked:true,
+        currentRound:1,
+        roundTotal:0,
+        latestRoll:null,
+        rollId:0,
+        players,
+        message:'Round 1 has started. Students are standing.',
+        updatedAt:serverTimestamp()
+      });
+    }
+
+    async function teacherRoll(){
+      if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid) return;
+      const roll = Math.floor(Math.random() * 6) + 1;
+      const rollId = Number(localGame.rollId || 0) + 1;
+      await updateDoc(roomRef, {
+        state:'rolling',
+        latestRoll:null,
+        rollId,
+        message:'Rolling... student Bank buttons are locked.',
+        updatedAt:serverTimestamp()
+      });
+      clearTimeout(localRollingTimeout);
+      localRollingTimeout = setTimeout(() => finaliseRoll(roll, rollId), 2000);
+    }
+
+    async function finaliseRoll(roll, rollId){
+      if(!roomRef) return;
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists()) return;
+        const data = snap.data();
+        if(data.rollId !== rollId || data.state !== 'rolling') return;
+        const players = {...(data.players || {})};
+        if(roll === POISON){
+          Object.keys(players).forEach(id => {
+            if(players[id].status === 'standing') players[id] = {...players[id], status:'busted', roundScore:0};
+          });
+          tx.update(roomRef, {
+            state:'poison',
+            latestRoll:roll,
+            players,
+            message:'💥 Poison number 2! Standing players score 0 for this round.',
+            updatedAt:serverTimestamp()
+          });
+        }else{
+          const newTotal = Number(data.roundTotal || 0) + roll;
+          tx.update(roomRef, {
+            state:'active',
+            latestRoll:roll,
+            roundTotal:newTotal,
+            message:`Rolled ${roll}. Round total is now ${newTotal}.`,
+            updatedAt:serverTimestamp()
+          });
+        }
+      });
+    }
+
+    async function endRoundBankStanding(){
+      if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid) return;
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists()) return;
+        const data = snap.data();
+        if(data.state !== 'active') return;
+        const players = {...(data.players || {})};
+        const roundTotal = Number(data.roundTotal || 0);
+        Object.keys(players).forEach(id => {
+          if(players[id].status === 'standing'){
+            players[id] = {
+              ...players[id],
+              status:'banked',
+              roundScore:roundTotal,
+              totalScore:Number(players[id].totalScore || 0) + roundTotal
+            };
+          }
+        });
+        tx.update(roomRef, {
+          state:'roundEnd',
+          players,
+          message:'Round ended. Standing players were banked.',
+          updatedAt:serverTimestamp()
+        });
+      });
+    }
+
+    async function nextRoundOrFinish(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
+      if(localGame.currentRound >= localGame.totalRounds) return finishGame();
+      const players = {...(localGame.players || {})};
+      Object.keys(players).forEach(id => {
+        players[id] = {...players[id], status:'standing', roundScore:0};
+      });
+      const nextRound = Number(localGame.currentRound || 0) + 1;
+      await updateDoc(roomRef, {
+        state:'active',
+        currentRound:nextRound,
+        roundTotal:0,
+        latestRoll:null,
+        players,
+        message:`Round ${nextRound} has started. Students are standing.`,
+        updatedAt:serverTimestamp()
+      });
+    }
+
+    async function finishGame(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
+      await updateDoc(roomRef, {state:'finished', message:'Game finished. Winners revealed!', updatedAt:serverTimestamp()});
+    }
+
+    async function resetGame(){
+      if(!roomRef || !confirm('Reset this room and return to the menu?')) return;
+      try{ await deleteDoc(roomRef); }catch(err){ console.error(err); }
+      roomCode = null;
+      roomRef = null;
+      localGame = null;
+      if(unsubscribeRoom) unsubscribeRoom();
+      unsubscribeRoom = null;
+      els.modeModal.classList.add('open');
+      role = null;
+      document.body.classList.remove('student-mode');
+      showScreen('homeScreen', true);
+    }
+
+    async function bankStudentScore(){
+      if(!roomRef || !studentPlayerId) return;
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists()) return;
+        const data = snap.data();
+        const players = {...(data.players || {})};
+        const p = players[studentPlayerId];
+        if(!p || data.state !== 'active' || p.status !== 'standing') return;
+        const roundTotal = Number(data.roundTotal || 0);
+        if(roundTotal <= 0) return;
+        players[studentPlayerId] = {
+          ...p,
+          status:'banked',
+          roundScore:roundTotal,
+          totalScore:Number(p.totalScore || 0) + roundTotal,
+          lastSeen:Date.now()
+        };
+        tx.update(roomRef, {players, updatedAt:serverTimestamp()});
+      });
+    }
+
+    function maybeShowRollEffects(game){
+      const key = `${game.roomCode}:${game.rollId}:${game.state}:${game.latestRoll}`;
+      if(key === lastSeenRollKey) return;
+      lastSeenRollKey = key;
+      if(game.state === 'poison' && game.latestRoll === POISON){
+        setTimeout(() => explosionBurst(), 30);
+      }
+      if(game.state === 'finished'){
+        setTimeout(() => confettiBurst(90), 180);
+      }
+    }
+
+    function explosionBurst(){
+      const emojis = ['💥','🔥','✨','💣'];
+      for(let i=0;i<28;i++){
+        const piece = document.createElement('div');
+        piece.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        piece.style.position = 'fixed';
+        piece.style.left = `${45 + Math.random()*10}vw`;
+        piece.style.top = `${35 + Math.random()*18}vh`;
+        piece.style.zIndex = '120';
+        piece.style.fontSize = `${20 + Math.random()*30}px`;
+        piece.style.pointerEvents = 'none';
+        piece.style.transition = 'transform 900ms ease-out, opacity 900ms ease-out';
+        document.body.appendChild(piece);
+        requestAnimationFrame(() => {
+          const x = (Math.random()-.5) * 520;
+          const y = (Math.random()-.5) * 360;
+          piece.style.transform = `translate(${x}px,${y}px) rotate(${Math.random()*720}deg)`;
+          piece.style.opacity = '0';
+        });
+        setTimeout(() => piece.remove(), 950);
+      }
+    }
+
+    function confettiBurst(count=60){
+      const colors = ['#ef4444','#2563eb','#6cbc4a','#f59e0b','#7c3aed','#ec4899'];
+      for(let i=0;i<count;i++){
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random()*100}vw`;
+        piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+        piece.style.animationDelay = `${Math.random()*240}ms`;
+        piece.style.animationDuration = `${700 + Math.random()*700}ms`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1600);
+      }
+    }
+
+    function homeDiceLoop(){
+      const roll = Math.floor(Math.random()*6)+1;
+      els.homeDie.classList.add('rolling');
+      setTimeout(() => {
+        els.homeDie.classList.remove('rolling','poison');
+        els.homeDie.textContent = roll;
+        if(roll === POISON){
+          els.homeDie.classList.add('poison');
+          els.homeExplosion.classList.add('show');
+          setTimeout(() => els.homeExplosion.classList.remove('show'), 950);
+        }
+      }, 550);
+    }
+    setInterval(homeDiceLoop, 2600);
+
+    els.chooseTeacherBtn.addEventListener('click', () => setRole('teacher'));
+    els.chooseStudentBtn.addEventListener('click', () => setRole('student'));
+    els.homeTeacherBtn.addEventListener('click', () => setRole('teacher'));
+    els.homeStudentBtn.addEventListener('click', () => setRole('student'));
+    els.createRoomBtn.addEventListener('click', createRoom);
+    els.joinRoomBtn.addEventListener('click', joinRoom);
+    els.studentRoomCodeInput.addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); });
+    els.studentRoomCodeInput.addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
+    els.studentNameInput.addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
+    els.rulesBtn.addEventListener('click', () => els.rulesModal.classList.add('open'));
+    els.closeRulesBtn.addEventListener('click', () => els.rulesModal.classList.remove('open'));
+    els.menuBtn.addEventListener('click', () => {
+      els.modeModal.classList.add('open');
+      showScreen('homeScreen', true);
+      els.sidePanel.classList.add('hidden');
+    });
+    els.mainLanguageSelect.addEventListener('change', e => {
+      currentLang = e.target.value;
+      applyStudentLanguage();
+    });
+
+    showScreen('homeScreen', true);
+  </script>
+</body>
+</html>
