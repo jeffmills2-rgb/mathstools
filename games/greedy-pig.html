@@ -619,7 +619,7 @@
         <div class="hero-left">
           <h1 class="hero-title">Greedy <span>Pig</span></h1>
           <p class="hero-subtitle">A teacher-led risk and reward dice game. Students decide when to bank before the poison number wipes out the standing players.</p>
-          <div class="callout blue"><strong>Poison number:</strong> 2. If 2 is rolled first in a round, it is safe and adds 2 to the round total. After that, 2 wipes out standing players.</div>
+          <div class="callout blue"><strong>Poison number:</strong> 2. Teachers can choose a 6-sided or 10-sided die. If 2 is rolled first in a round, it is safe and adds 2 to the round total. After that, 2 wipes out standing players.</div>
           <div class="hero-actions">
             <button class="btn-primary" id="homeTeacherBtn" type="button">Teacher: Create Game</button>
             <button class="btn-green" id="homeStudentBtn" type="button">Student: Join Game</button>
@@ -635,7 +635,7 @@
     <section class="card main-card hidden" id="teacherSetupScreen">
       <div class="hero-left">
         <h1 class="hero-title">Create <span>Game</span></h1>
-        <p class="hero-subtitle">Choose the number of rounds, generate a room code, and let students join from their own devices.</p>
+        <p class="hero-subtitle">Choose the number of rounds and dice type, generate a room code, and let students join from their own devices.</p>
         <div class="form-grid">
           <label>Number of rounds
             <select id="roundsSelect">
@@ -649,6 +649,12 @@
               <option value="8">8 rounds</option>
               <option value="9">9 rounds</option>
               <option value="10">10 rounds</option>
+            </select>
+          </label>
+          <label>Dice type
+            <select id="diceSidesSelect">
+              <option value="6" selected>6-sided die</option>
+              <option value="10">10-sided die</option>
             </select>
           </label>
           <button class="btn-primary" id="createRoomBtn" type="button">Generate Game Code</button>
@@ -692,7 +698,7 @@
   <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
       <h2 id="rulesTitle">Greedy Pig rules</h2>
-      <p id="rulesText">Students start each round standing. The teacher rolls the die. If the roll is 1, 3, 4, 5 or 6, it is added to the round total. If 2 is rolled as the first roll of a round, it is safe and adds 2 to the round total. After the first roll, 2 is the poison number: students still standing score 0 for that round. Students may press Bank to safely add the current round total to their score. After the chosen number of rounds, the highest total wins.</p>
+      <p id="rulesText">Students start each round standing. The teacher chooses either a 6-sided or 10-sided die when creating the room, then rolls the die. If a non-poison number is rolled, it is added to the round total. If 2 is rolled as the first roll of a round, it is safe and adds 2 to the round total. After the first roll, 2 is the poison number: students still standing score 0 for that round. Students may press Bank to safely add the current round total to their score. After the chosen number of rounds, the highest total wins.</p>
       <button class="btn-primary" id="closeRulesBtn" type="button">Close</button>
     </div>
   </div>
@@ -733,6 +739,8 @@
     const COLLECTION = 'greedyPigGames';
     const MAX_PLAYERS = 30;
     const POISON = 2;
+    const DEFAULT_DICE_SIDES = 6;
+    const VALID_DICE_SIDES = [6, 10];
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -763,7 +771,7 @@
       appLayout:$('appLayout'), homeScreen:$('homeScreen'), teacherSetupScreen:$('teacherSetupScreen'), studentJoinScreen:$('studentJoinScreen'), gameScreen:$('gameScreen'), sidePanel:$('sidePanel'),
       gameContent:$('gameContent'), leaderList:$('leaderList'), leaderboardTitle:$('leaderboardTitle'), studentCountPill:$('studentCountPill'), modeModal:$('modeModal'),
       homeTeacherBtn:$('homeTeacherBtn'), homeStudentBtn:$('homeStudentBtn'), chooseTeacherBtn:$('chooseTeacherBtn'), chooseStudentBtn:$('chooseStudentBtn'),
-      createRoomBtn:$('createRoomBtn'), roundsSelect:$('roundsSelect'), teacherSetupMessage:$('teacherSetupMessage'),
+      createRoomBtn:$('createRoomBtn'), roundsSelect:$('roundsSelect'), diceSidesSelect:$('diceSidesSelect'), teacherSetupMessage:$('teacherSetupMessage'),
       studentRoomCodeInput:$('studentRoomCodeInput'), studentNameInput:$('studentNameInput'), joinRoomBtn:$('joinRoomBtn'), studentJoinMessage:$('studentJoinMessage'),
       rulesBtn:$('rulesBtn'), rulesModal:$('rulesModal'), closeRulesBtn:$('closeRulesBtn'), menuBtn:$('menuBtn'),
       mainLanguageSelect:$('mainLanguageSelect'), languageMainLabel:$('languageMainLabel'), homeDie:$('homeDie'), homeExplosion:$('homeExplosion')
@@ -861,10 +869,30 @@
       return String(name || '').trim().replace(/\s+/g,' ').slice(0,24);
     }
 
+    function getDiceSides(game){
+      const sides = Number(game?.diceSides || DEFAULT_DICE_SIDES);
+      return VALID_DICE_SIDES.includes(sides) ? sides : DEFAULT_DICE_SIDES;
+    }
+
+    function rollDie(sides = DEFAULT_DICE_SIDES){
+      const safeSides = VALID_DICE_SIDES.includes(Number(sides)) ? Number(sides) : DEFAULT_DICE_SIDES;
+      if(window.crypto && typeof window.crypto.getRandomValues === 'function'){
+        const values = new Uint32Array(1);
+        const range = 0x100000000;
+        const limit = range - (range % safeSides);
+        do{
+          window.crypto.getRandomValues(values);
+        }while(values[0] >= limit);
+        return (values[0] % safeSides) + 1;
+      }
+      return Math.floor(Math.random() * safeSides) + 1;
+    }
+
     async function createRoom(){
       await authReadyPromise;
       if(!authReady || !uid) return showMessage('teacherSetupMessage','Could not sign in to Firebase yet. Try again in a moment.','red');
       const totalRounds = Number(els.roundsSelect.value || 5);
+      const diceSides = getDiceSides({diceSides: Number(els.diceSidesSelect.value || DEFAULT_DICE_SIDES)});
       let code = makeCode();
       let ref = doc(db, COLLECTION, code);
       for(let i=0;i<8;i++){
@@ -882,6 +910,7 @@
         locked: false,
         maxPlayers: MAX_PLAYERS,
         poisonNumber: POISON,
+        diceSides,
         totalRounds,
         currentRound: 0,
         roundTotal: 0,
@@ -1096,6 +1125,7 @@
       const isFinished = game.state === 'finished';
       const latest = game.latestRoll ?? '?';
       const shownLatest = isRolling ? '?' : latest;
+      const diceSides = getDiceSides(game);
       const canRoll = game.state === 'active' && !isRolling;
       const canStart = inLobby && players.length > 0;
       scheduleAutoFinish(game);
@@ -1108,7 +1138,7 @@
 
       els.gameContent.innerHTML = `
         <div class="room-code-box">
-          <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span></span>
+          <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span> · d${diceSides}</span>
           <button class="btn-soft" id="copyCodeBtn" type="button">Copy code</button>
         </div>
         <div class="stat-grid">
@@ -1151,6 +1181,7 @@
       const shownRoundTotal = displayRoundTotal(game);
       const latest = game.latestRoll ?? '?';
       const shownLatest = isRolling ? '?' : latest;
+      const diceSides = getDiceSides(game);
       const bankEnabled = game.state === 'active' && !isRolling && player.status === 'standing' && Number(game.roundTotal || 0) > 0;
       const status = player.status || 'waiting';
       const statusKey = status === 'standing' ? 'Standing' : status === 'banked' ? 'Banked' : status === 'busted' ? 'Busted' : 'Waiting';
@@ -1178,7 +1209,7 @@
             <h1 class="hero-title">${escapeHtml(player.name)} <span>🐷</span></h1>
             <div class="callout ${visiblePoison ? 'red' : status === 'banked' ? 'good' : 'blue'}">${t(studentMsg)}</div>
             <button class="btn-green bank-button ${bankEnabled ? 'pulse' : ''}" id="bankBtn" type="button" ${bankEnabled ? '' : 'disabled'}>${t('Bank')}</button>
-            <div class="callout purple">${t('Latest roll')}: <strong>${shownLatest}</strong></div>
+            <div class="callout purple">d${diceSides} · ${t('Latest roll')}: <strong>${shownLatest}</strong></div>
           </div>
         </div>`;
       const bankBtn = $('bankBtn');
@@ -1268,7 +1299,6 @@
     async function teacherRoll(){
       if(!roomRef || !localGame || localGame.state !== 'active' || localGame.teacherUid !== uid || isRevealPending(localGame)) return;
 
-      const roll = Math.floor(Math.random() * 6) + 1;
       const revealAt = Date.now() + 1800;
 
       await runTransaction(db, async tx => {
@@ -1279,10 +1309,13 @@
         if(Number(data.rollRevealAt || 0) > Date.now()) return;
 
         const players = {...(data.players || {})};
+        const diceSides = getDiceSides(data);
+        const roll = rollDie(diceSides);
         const previousRoundTotal = Number(data.roundTotal || 0);
         const rollId = Number(data.rollId || 0) + 1;
 
         const baseUpdate = {
+          diceSides,
           latestRoll: roll,
           rollId,
           rollRevealAt: revealAt,
@@ -1466,7 +1499,7 @@
     }
 
     function homeDiceLoop(){
-      const roll = Math.floor(Math.random()*6)+1;
+      const roll = rollDie(DEFAULT_DICE_SIDES);
       els.homeDie.classList.add('rolling');
       setTimeout(() => {
         els.homeDie.classList.remove('rolling','poison');
