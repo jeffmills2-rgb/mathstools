@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Memory</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --green2:#49a529;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --p1:#16a34a;
+      --p2:#2563eb;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(240px,1fr) auto minmax(420px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mmtBrand:hover{
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);
+    }
+    .mmtBrandLogo{
+      width:44px;
+      height:44px;
+      object-fit:contain;
+      background:white;
+      border-radius:6px;
+      padding:3px;
+      flex:0 0 auto;
+    }
+    .mmtBrandText strong{
+      display:block;
+      font-size:1.18rem;
+      line-height:1;
+      letter-spacing:-.03em;
+      color:white;
+    }
+    .mmtBrandText span{
+      display:block;
+      font-size:.78rem;
+      opacity:.82;
+      font-weight:650;
+      color:white;
+    }
+    .mmtTopTitle{
+      font-weight:850;
+      font-size:clamp(1.25rem,2vw,1.7rem);
+      letter-spacing:-.04em;
+      text-align:center;
+      color:white;
+      white-space:nowrap;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+
+    .language-control{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      padding:6px 8px;
+      color:white;
+    }
+    .language-control label{
+      font-size:12px;
+      font-weight:950;
+      opacity:.9;
+      white-space:nowrap;
+      color:white;
+    }
+    .language-control select{
+      width:auto;
+      min-width:112px;
+      height:34px;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:10px;
+      background:white;
+      color:#1d4ed8;
+      font-weight:900;
+      padding:0 8px;
+      outline:none;
+    }
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+
+    button,select,input{font:inherit;}
+    button{
+      border:1px solid transparent;
+      cursor:pointer;
+      border-radius:14px;
+      padding:11px 15px;
+      font-weight:900;
+      font-size:15px;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+      font-family:var(--uiFont);
+    }
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+
+    .btn,.btn-soft{
+      border-color:rgba(15,23,42,.08);
+      background:var(--btn);
+      color:var(--ink);
+    }
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{
+      border-color:rgba(255,255,255,.18);
+      background:rgba(255,255,255,.14);
+      color:white;
+    }
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#eef2ff;color:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+
+    .settings-wrap{position:relative;}
+    .settings-menu{
+      position:absolute;
+      top:calc(100% + 10px);
+      right:0;
+      width:min(430px,calc(100vw - 26px));
+      max-height:calc(100vh - 110px);
+      overflow:auto;
+      background:rgba(255,255,255,.98);
+      border:1px solid rgba(226,232,240,.95);
+      border-radius:18px;
+      box-shadow:0 18px 45px rgba(15,23,42,.18);
+      padding:14px;
+      z-index:60;
+      opacity:0;
+      transform:translateY(-8px) scale(.98);
+      pointer-events:none;
+      transition:.18s ease;
+      display:grid;
+      gap:12px;
+    }
+    .settings-menu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+    .settings-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border);color:var(--ink);}
+    .settings-header strong{font-size:1.15rem;font-weight:950;}
+    .settings-group{display:grid;gap:10px;border-radius:16px;padding:13px;background:#f8fafc;border:1px solid var(--border);color:var(--ink);}
+    .settings-group-title{font-weight:950;color:var(--ink);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+    select,input[type="text"]{
+      width:100%;
+      border:1px solid var(--border);
+      background:white;
+      border-radius:14px;
+      padding:12px 14px;
+      color:var(--ink);
+      outline:none;
+      font-weight:800;
+      transition:border-color .16s ease,box-shadow .16s ease;
+    }
+    select:focus,input[type="text"]:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+
+    .layout{
+      width:min(1440px,calc(100vw - 48px));
+      margin:24px auto 14px;
+      display:grid;
+      grid-template-columns:minmax(420px,1fr) 330px;
+      gap:22px;
+      align-items:start;
+      position:relative;
+    }
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .board-wrap{padding:18px;}
+    .status-strip{display:block;margin-bottom:18px;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:68px;}
+    .player-dot{width:32px;height:32px;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.16),0 5px 12px rgba(0,0,0,.16);flex:0 0 auto;}
+    .player-dot.p1{background:var(--p1);}
+    .player-dot.p2{background:var(--p2);}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+    .status-title .english-under,.status-subtitle .english-under,.message .english-under{display:block;margin-top:3px;}
+
+    .game-table{
+      display:grid;
+      grid-template-columns:minmax(520px,1fr) minmax(240px,300px);
+      gap:18px;
+      align-items:start;
+    }
+    .memory-board{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(72px,1fr));
+      grid-template-rows:repeat(4,minmax(92px,1fr));
+      gap:12px;
+      width:100%;
+      min-height:540px;
+      padding:14px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+      border:1px solid var(--border);
+      border-radius:24px;
+    }
+    .memory-card{
+      position:relative;
+      border:0;
+      padding:0;
+      border-radius:18px;
+      background:transparent;
+      min-height:92px;
+      perspective:900px;
+      transform:none!important;
+    }
+    .memory-card:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.18);}
+    .card-inner{
+      position:absolute;
+      inset:0;
+      border-radius:18px;
+      transform-style:preserve-3d;
+      transition:transform .32s cubic-bezier(.2,.75,.2,1), box-shadow .18s ease;
+      box-shadow:0 12px 22px rgba(15,23,42,.12);
+    }
+    .memory-card:not(:disabled):hover .card-inner{box-shadow:0 18px 30px rgba(37,99,235,.18);}
+    .memory-card.flipped .card-inner,
+    .memory-card.matched .card-inner{transform:rotateY(180deg);}
+    .card-face{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      border-radius:18px;
+      backface-visibility:hidden;
+      overflow:hidden;
+      border:2px solid transparent;
+    }
+    .card-back{
+      color:white;
+      background:
+        radial-gradient(circle at 28% 20%,rgba(255,255,255,.38),transparent 32%),
+        linear-gradient(135deg,#1d4ed8,#7c3aed);
+      border-color:rgba(255,255,255,.22);
+      font-weight:950;
+      font-size:2rem;
+      text-shadow:0 2px 10px rgba(15,23,42,.35);
+    }
+    .card-back::before{content:"MMT";font-size:.75rem;letter-spacing:.16em;position:absolute;top:13px;left:13px;opacity:.78;font-family:var(--uiFont);}
+    .card-back::after{content:"?";font-size:2.3rem;}
+    .card-front{
+      transform:rotateY(180deg);
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      border-color:#dbeafe;
+      color:#0f172a;
+      font-family:var(--mathFont);
+      font-size:clamp(1.25rem,2vw,2rem);
+      font-weight:950;
+      text-align:center;
+      padding:8px;
+    }
+    .card-front.answer-card{background:linear-gradient(180deg,#ecfdf5,#ffffff);border-color:#bbf7d0;color:#166534;}
+    .card-front.question-card{background:linear-gradient(180deg,#eff6ff,#ffffff);border-color:#bfdbfe;color:#1e3a8a;}
+
+    .card-front.clock-analogue-card{background:linear-gradient(180deg,#fff7ed,#ffffff);border-color:#fed7aa;color:#7c2d12;padding:5px;}
+    .card-front.digital-clock-card{background:linear-gradient(180deg,#f0fdf4,#ffffff);border-color:#bbf7d0;color:#14532d;font-family:var(--uiFont);}
+    .analogue-clock-svg{width:min(100%,88px);height:auto;max-height:88px;display:block;}
+    .clock-rim{fill:#f8fafc;stroke:#0f172a;stroke-width:2.4;}
+    .clock-face{fill:white;stroke:#cbd5e1;stroke-width:1.2;}
+    .clock-tick{stroke:#64748b;stroke-width:1.4;stroke-linecap:round;}
+    .clock-tick.major{stroke:#0f172a;stroke-width:2;}
+    .clock-number{font-family:var(--uiFont);font-size:8.5px;font-weight:950;fill:#0f172a;text-anchor:middle;dominant-baseline:middle;}
+    .clock-hand{stroke-linecap:round;filter:drop-shadow(0 1px 1px rgba(15,23,42,.25));}
+    .hour-hand{stroke:#0f172a;stroke-width:4.3;}
+    .minute-hand{stroke:#2563eb;stroke-width:2.8;}
+    .clock-centre{fill:#ef4444;stroke:white;stroke-width:1;}
+    .digital-clock-display{display:inline-grid;place-items:center;min-width:4.5rem;padding:.36rem .52rem;border-radius:13px;background:#0f172a;color:white;border:3px solid #334155;box-shadow:inset 0 -4px 0 rgba(255,255,255,.08),0 7px 12px rgba(15,23,42,.14);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:clamp(1.35rem,2.2vw,2.15rem);font-weight:950;letter-spacing:.02em;}
+    .card-front.fraction-card{background:linear-gradient(180deg,#f5f3ff,#ffffff);border-color:#ddd6fe;color:#4c1d95;}
+    .card-front.decimal-card{background:linear-gradient(180deg,#eff6ff,#ffffff);border-color:#bfdbfe;color:#1e3a8a;font-family:var(--uiFont);}
+    .card-front.percentage-card{background:linear-gradient(180deg,#ecfdf5,#ffffff);border-color:#bbf7d0;color:#166534;font-family:var(--uiFont);}
+    .card-front.square-expression-card{background:linear-gradient(180deg,#fff7ed,#ffffff);border-color:#fed7aa;color:#9a3412;}
+    .card-front.root-expression-card{background:linear-gradient(180deg,#f0f9ff,#ffffff);border-color:#bae6fd;color:#075985;}
+    .card-front.power-answer-card{background:linear-gradient(180deg,#f0fdf4,#ffffff);border-color:#bbf7d0;color:#14532d;font-family:var(--uiFont);}
+    .card-front.shape-image-card{background:linear-gradient(180deg,#f8fafc,#ffffff);border-color:#facc15;color:#0f172a;padding:4px;}
+    .card-front.shape-name-card{background:linear-gradient(180deg,#f5f3ff,#ffffff);border-color:#ddd6fe;color:#4c1d95;font-family:var(--uiFont);font-size:clamp(.78rem,1.08vw,1.22rem);line-height:1;padding:5px;}
+    .shape-display{display:grid;place-items:center;width:100%;height:100%;}
+    .shape-svg{width:min(100%,132px);height:auto;max-height:108px;display:block;overflow:visible;}
+    .shape-fill{fill:#69aeea;stroke:#111827;stroke-width:4.8;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 4px 5px rgba(15,23,42,.16));}
+    .shape-right-angle{fill:none;stroke:#facc15;stroke-width:5.2;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke;filter:drop-shadow(0 0 1px rgba(17,24,39,.9));}
+    .shape-angle-mark{fill:none;stroke:#facc15;stroke-width:6.2;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke;filter:drop-shadow(0 0 1px rgba(17,24,39,.9));}
+    .shape-angle-fill{fill:#facc15;stroke:#111827;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+    .shape-side-tick{fill:none;stroke:#111827;stroke-width:4.8;stroke-linecap:round;stroke-linejoin:round;}
+    .shape-side-tick.subtle{stroke-width:3.8;opacity:.9;}
+    .shape-kite-single,.shape-kite-double{fill:none;stroke:#111827;stroke-width:4.8;stroke-linecap:round;stroke-linejoin:round;}
+    .shape-diagonal{fill:none;stroke:#2563eb;stroke-width:2.6;stroke-linecap:round;opacity:.28;}
+    .shape-name-display{display:inline-grid;place-items:center;width:calc(100% - 6px);max-width:100%;min-height:2.75rem;padding:.34rem .38rem;border-radius:14px;background:white;border:2px solid currentColor;box-shadow:0 7px 12px rgba(15,23,42,.10);font-weight:950;text-wrap:balance;white-space:normal;overflow-wrap:break-word;word-break:normal;hyphens:auto;}
+    .shape-name-display.long{font-size:clamp(.7rem,.98vw,1.02rem);line-height:.98;}
+    .shape-name-display.extra-long{font-size:clamp(.62rem,.88vw,.92rem);line-height:.94;padding:.28rem .3rem;}
+    .fraction-display{display:inline-grid;grid-template-rows:auto 3px auto;gap:4px;align-items:center;justify-items:center;min-width:2.35em;line-height:1;font-family:var(--mathFont);font-weight:950;}
+    .fraction-top,.fraction-bottom{font-size:1.08em;}
+    .fraction-bar{width:100%;height:3px;border-radius:999px;background:currentColor;}
+    .decimal-display,.percentage-display{display:inline-grid;place-items:center;min-width:4rem;padding:.28rem .46rem;border-radius:13px;background:white;border:2px solid currentColor;box-shadow:0 7px 12px rgba(15,23,42,.10);font-size:clamp(1.35rem,2.2vw,2.1rem);font-weight:950;line-height:1.1;}
+    .power-display,.root-display,.power-answer-display{display:inline-grid;place-items:center;min-width:4.2rem;padding:.28rem .48rem;border-radius:14px;background:white;border:2px solid currentColor;box-shadow:0 7px 12px rgba(15,23,42,.10);font-family:var(--mathFont);font-size:clamp(1.45rem,2.4vw,2.25rem);font-weight:950;line-height:1;}
+    .power-display{display:inline-flex;align-items:flex-start;justify-content:center;gap:.02em;}
+    .power-display sup{font-size:.56em;line-height:1;transform:translateY(-.08em);}
+    .root-display{display:inline-flex;align-items:center;justify-content:center;gap:.03em;padding-left:.38rem;}
+    .root-display.sqrt-wrap{padding:.18rem .32rem;}
+    .sqrt-svg{width:clamp(5.2rem,7.6vw,7.1rem);height:auto;overflow:visible;display:block;}
+    .sqrt-mark{fill:none;stroke:currentColor;stroke-width:5.8;stroke-linecap:round;stroke-linejoin:round;}
+    .sqrt-text{fill:currentColor;font-family:var(--mathFont);font-weight:950;font-size:31px;dominant-baseline:middle;}
+    .root-symbol{font-size:1.12em;line-height:1;}
+    .root-radicand{display:inline-block;border-top:3px solid currentColor;padding:.08em .08em 0 .16em;margin-left:-.06em;}
+    .power-answer-display{font-family:var(--uiFont);}
+    .repeating-decimal{position:relative;padding-top:.5rem;}
+    .repeat-digit{position:relative;display:inline-block;}
+    .repeat-digit::before{content:"";position:absolute;left:50%;top:-.28em;transform:translateX(-50%);width:.22em;height:.22em;border-radius:999px;background:currentColor;}
+
+    .memory-card.matched .card-front{border-color:#fbbf24;box-shadow:inset 0 0 0 3px rgba(251,191,36,.45);}
+    .memory-card.matched.won-by-1 .card-front{
+      background:linear-gradient(180deg,#dcfce7,#f0fdf4)!important;
+      border-color:#86efac!important;
+      box-shadow:inset 0 0 0 3px rgba(22,163,74,.26),0 12px 24px rgba(22,163,74,.12)!important;
+    }
+    .memory-card.matched.won-by-2 .card-front{
+      background:linear-gradient(180deg,#dbeafe,#eff6ff)!important;
+      border-color:#93c5fd!important;
+      box-shadow:inset 0 0 0 3px rgba(37,99,235,.24),0 12px 24px rgba(37,99,235,.12)!important;
+    }
+    .memory-card.matched.won-by-1::after{background:var(--p1);}
+    .memory-card.matched.won-by-2::after{background:var(--p2);}
+    .memory-card.matched::after{
+      content:"✓";
+      position:absolute;
+      top:8px;
+      right:8px;
+      z-index:3;
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:#22c55e;
+      color:white;
+      font-weight:950;
+      box-shadow:0 8px 18px rgba(34,197,94,.3);
+    }
+
+    .control-panel{display:grid;gap:14px;}
+    .score-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+    .score-card{border-radius:18px;padding:14px;background:white;border:1px solid var(--border);display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;}
+    .score-card.player-one{border-left:8px solid var(--p1);}
+    .score-card.player-two{border-left:8px solid var(--p2);}
+    .score-card span{display:block;color:#334155;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .score-card strong{display:block;font-size:1.65rem;line-height:1;}
+    .info-box{padding:14px 16px;border-radius:18px;background:#f8fafc;border:1px solid var(--border);color:#475569;font-weight:800;line-height:1.38;}
+    .message{padding:14px 16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:850;min-height:54px;display:flex;align-items:center;line-height:1.35;}
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.good{background:#eef6ff;border-color:#bfdbfe;color:#1e3a8a;}
+    .message.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .message.error{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+    .small-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .small-stat{padding:12px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);}
+    .small-stat span{display:block;color:#64748b;font-size:.82rem;font-weight:900;}
+    .small-stat strong{display:block;font-size:1.2rem;font-weight:950;margin-top:2px;}
+    .topic-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:950;font-size:.9rem;}
+
+    .online-panel{display:grid;gap:12px;}
+    .name-field{display:grid;gap:7px;}
+    .name-helper{font-size:.82rem;color:var(--muted);font-weight:750;line-height:1.35;margin-top:-2px;}
+    .online-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .join-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+    .room-badge{display:none;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;}
+    .room-badge.show{display:flex;}
+    .room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont);}
+    .online-status{padding:10px 12px;border-radius:16px;background:#f1f5f9;border:1px solid var(--border);color:#475569;font-weight:750;font-size:.92rem;line-height:1.35;}
+    .online-status.good{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .online-status.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .online-status.error{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+    .small-btn{padding:8px 12px;font-size:.88rem;}
+
+    .rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155;}
+    .rules-list .english-under{display:block;margin-top:5px;color:#64748b;font-size:.82em;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(560px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin:0;font-size:1.45rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-modal{width:min(760px,100%);padding:26px;}
+    .mode-modal-header h2{font-size:1.9rem;margin:0 0 6px;font-weight:950;letter-spacing:-.04em;}
+    .mode-modal-header p{margin:0 0 18px;color:var(--muted);font-weight:750;}
+    .mode-card-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .game-choice-hero{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin:12px 0 18px;padding:18px 20px;border-radius:24px;background:linear-gradient(135deg,#eef6ff,#f5f3ff 55%,#ecfdf5);border:1px solid #bfdbfe;box-shadow:0 18px 36px rgba(37,99,235,.12);}
+    .game-choice-icon{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:white;box-shadow:0 14px 28px rgba(15,23,42,.12);font-size:2.35rem;}
+    .game-choice-hero strong{display:block;font-size:1.55rem;font-weight:950;letter-spacing:-.04em;color:#0f172a;}
+    .game-choice-hero span:last-child{display:block;margin-top:3px;color:#475569;font-weight:850;}
+    .game-select-panel{display:grid;gap:12px;padding:18px;border-radius:24px;background:#f8fafc;border:1px solid var(--border);}
+    .game-select-panel label{font-size:1rem;font-weight:950;color:#334155;}
+    .game-select-panel select{font-size:1.05rem;font-weight:950;padding:14px 16px;border-radius:18px;background:white;}
+    .game-select-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:2px;}
+    [hidden]{display:none!important;}
+    .computer-difficulty-panel{display:grid;gap:8px;padding:14px 16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;}
+    .computer-difficulty-panel label{font-size:.98rem;font-weight:950;color:#9a3412;}
+    .computer-difficulty-panel select{font-size:1rem;font-weight:950;padding:12px 14px;border-radius:16px;background:white;}
+    .computer-difficulty-help{margin:0;color:#9a3412;font-weight:800;font-size:.9rem;line-height:1.35;}
+    .game-select-actions .btn-primary{min-width:150px;}
+
+    .setup-modal{width:min(590px,100%);}
+    .setup-note{margin:0 0 16px;color:var(--muted);font-weight:750;}
+    .setup-fields{display:grid;gap:12px;margin:12px 0 16px;}
+    .setup-fields label{display:grid;gap:8px;}
+    .setup-start{width:100%;padding:14px 18px;font-size:1.02rem;}
+
+    .winner-card{text-align:center;display:grid;gap:12px;}
+    .winner-emoji{font-size:4rem;line-height:1;}
+    .winner-title{font-size:2rem;font-weight:950;letter-spacing:-.04em;margin:0;}
+    .winner-subtitle{color:#475569;font-weight:850;margin:0;}
+    .winner-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+
+    .brand-footer{width:min(1440px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(360px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{font-size:14px;padding:9px 13px;}
+      .layout{width:min(1550px,calc(100vw - 32px));margin:12px auto 8px;grid-template-columns:minmax(0,1fr) 318px;gap:16px;}
+      .board-wrap{padding:14px;}
+      .turn-card{min-height:58px;padding:10px 14px;border-radius:18px;}
+      .status-strip{margin-bottom:12px;}
+      .game-table{grid-template-columns:minmax(540px,1fr) minmax(248px,300px);gap:16px;}
+      .memory-board{min-height:calc(100dvh - 185px);max-height:760px;gap:10px;padding:12px;}
+      .memory-card{min-height:78px;}
+      .control-panel{gap:12px;}
+      .score-card{padding:12px;border-radius:17px;}
+      .brand-footer{width:min(1550px,calc(100vw - 32px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 28px);grid-template-columns:1fr;margin-top:14px;}
+      .game-table{grid-template-columns:1fr;}
+      .memory-board{min-height:520px;}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .actions button{font-size:14px;padding:10px 12px;}
+      .layout{width:calc(100vw - 20px);}
+      .board-wrap{padding:12px;}
+      .memory-board{gap:8px;padding:9px;grid-template-columns:repeat(5,minmax(48px,1fr));grid-template-rows:repeat(4,72px);min-height:auto;}
+      .memory-card{min-height:72px;}
+      .card-front{font-size:1.05rem;}
+      .analogue-clock-svg{max-height:72px;}
+      .shape-svg{max-height:86px;}
+      .shape-name-display.long{font-size:.72rem;}
+      .shape-name-display.extra-long{font-size:.64rem;}
+      .digital-clock-display,.decimal-display,.percentage-display{font-size:1.2rem;min-width:4rem;}
+      .game-choice-hero{grid-template-columns:1fr;text-align:center;justify-items:center;padding:16px;}
+      .game-choice-icon{width:64px;height:64px;font-size:2rem;}
+      .game-select-actions{justify-content:stretch;}
+      .game-select-actions button{width:100%;}
+      .card-back::before{display:none;}
+      .online-actions,.join-row,.small-stat-row{grid-template-columns:1fr;}
+      .mode-modal{padding:18px;}
+      .mode-card{grid-template-columns:1fr;grid-template-areas:"icon" "title" "desc";}
+      .brand-footer{width:calc(100vw - 20px);padding:8px 10px;}
+    }
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+
+    <div class="mmtTopTitle" id="pageTitle">Math Memory</div>
+
+    <div class="actions">
+      <div class="language-control">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button">Rules</button>
+      <button class="btn btn-primary" id="newGameBtn" type="button">New Game</button>
+      <button class="btn" id="backToMenuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout" id="gameLayout">
+    <section class="card board-wrap">
+      <div class="status-strip">
+        <div class="turn-card" id="turnCard">
+          <div class="player-dot p1" id="turnDot"></div>
+          <div>
+            <div class="status-title" id="statusTitle">Choose a game mode</div>
+            <div class="status-subtitle" id="statusSubtitle">Select how you would like to play Math Memory.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-table">
+        <div class="memory-board" id="memoryBoard" aria-label="Math Memory card grid"></div>
+        <aside class="control-panel">
+          <div class="score-grid">
+            <div class="score-card player-one">
+              <span id="p1Label">Player 1</span>
+              <strong id="p1Score">0</strong>
+            </div>
+            <div class="score-card player-two">
+              <span id="p2Label">Player 2</span>
+              <strong id="p2Score">0</strong>
+            </div>
+          </div>
+          <div class="message good" id="messageBox" aria-live="polite">Choose a game mode to begin.</div>
+          <div class="info-box" id="gameInfoBox">
+            <span class="topic-pill" id="topicPill">Multiplication</span>
+            <p id="gameInfoText" style="margin:10px 0 0;">Find a multiplication sentence and its matching value.</p>
+          </div>
+          <div class="small-stat-row">
+            <div class="small-stat"><span id="matchedMiniLabel">Matched</span><strong id="matchedCount">0/10</strong></div>
+            <div class="small-stat"><span id="turnMiniLabel">Turn</span><strong id="turnCount">1</strong></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop open" id="modeMenuModal" aria-hidden="false">
+    <div class="modal mode-modal" role="dialog" aria-modal="true" aria-labelledby="modeMenuTitle">
+      <div class="mode-modal-header">
+        <div>
+          <h2 id="modeMenuTitle">Choose a game mode</h2>
+          <p id="modeMenuIntro">Select how you would like to play Math Memory.</p>
+        </div>
+      </div>
+      <div class="mode-card-grid">
+        <button class="mode-card" id="chooseComputerBtn" type="button">
+          <span class="mode-icon">🤖</span>
+          <strong id="computerModeTitle">vs. Computer</strong>
+          <span id="computerModeDesc">Play against a computer with adjustable memory.</span>
+        </button>
+        <button class="mode-card" id="choosePassPlayBtn" type="button">
+          <span class="mode-icon">🔄</span>
+          <strong id="passModeTitle">Pass and Play</strong>
+          <span id="passModeDesc">Two players share one device.</span>
+        </button>
+        <button class="mode-card" id="chooseOnlineBtn" type="button">
+          <span class="mode-icon">🌐</span>
+          <strong id="onlineModeTitle">Online Multiplayer</strong>
+          <span id="onlineModeDesc">Create or join a room on two laptops.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="gameChoiceModal" aria-hidden="true">
+    <div class="modal mode-modal" role="dialog" aria-modal="true" aria-labelledby="gameChoiceTitle">
+      <div class="modal-header mode-modal-header">
+        <div>
+          <h2 id="gameChoiceTitle">Choose a game</h2>
+          <p id="gameChoiceIntro">Select the card set you would like to play.</p>
+        </div>
+        <button class="btn-soft" id="gameChoiceBackBtn" type="button">Back</button>
+      </div>
+      <div class="game-choice-hero">
+        <div class="game-choice-icon">🧠</div>
+        <div>
+          <strong id="selectGameHeroTitle">Select your game below</strong>
+          <span id="selectGameHeroText">Choose a card set, then start matching.</span>
+        </div>
+      </div>
+      <div class="game-select-panel">
+        <label id="gameSelectLabel" for="gameSelect">Card set</label>
+        <select id="gameSelect">
+          <option value="multiplication">Multiplication facts</option>
+          <option value="clockDigital">Analogue clock to digital clock</option>
+          <option value="fractionDecimal">Fraction to decimal</option>
+          <option value="decimalPercentage">Decimal to percentage</option>
+          <option value="squaresRoots">Squares and square roots</option>
+          <option value="shapesNames">Shapes and their names</option>
+        </select>
+        <div class="computer-difficulty-panel" id="computerDifficultyPanel" hidden>
+          <label id="computerDifficultyLabel" for="computerDifficultySelect">Computer difficulty</label>
+          <select id="computerDifficultySelect">
+            <option value="sweet">Sweet - random guesses</option>
+            <option value="mild">Mild - remembers 40%</option>
+            <option value="medium">Medium - remembers 75%</option>
+            <option value="spicy" selected>Spicy - perfect memory</option>
+          </select>
+          <p class="computer-difficulty-help" id="computerDifficultyHelp">Choose how often the computer uses remembered pairs.</p>
+        </div>
+        <div class="game-select-actions">
+          <button class="btn-primary" id="startChosenGameBtn" type="button">Start game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="passPlayModal" aria-hidden="true">
+    <div class="modal setup-modal" role="dialog" aria-modal="true" aria-labelledby="passPlayTitle">
+      <div class="modal-header">
+        <h2 id="passPlayTitle">Pass and Play</h2>
+        <button class="btn-soft" id="passBackBtn" type="button">Back</button>
+      </div>
+      <p class="setup-note" id="passPlayNote">Enter two names, then share the same laptop or board.</p>
+      <div class="setup-fields">
+        <label><span id="passP1NameLabel">Player 1 name</span>
+          <input id="passP1Name" type="text" placeholder="Player 1" maxlength="24" autocomplete="off" />
+        </label>
+        <label><span id="passP2NameLabel">Player 2 name</span>
+          <input id="passP2Name" type="text" placeholder="Player 2" maxlength="24" autocomplete="off" />
+        </label>
+      </div>
+      <button class="btn-primary setup-start" id="startPassPlayBtn" type="button">Start game</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="onlineSetupModal" aria-hidden="true">
+    <div class="modal setup-modal" role="dialog" aria-modal="true" aria-labelledby="onlineSetupTitle">
+      <div class="modal-header">
+        <h2 id="onlineSetupTitle">Online Multiplayer</h2>
+        <button class="btn-soft" id="onlineBackBtn" type="button">Back</button>
+      </div>
+      <div class="online-panel setup-online-panel">
+        <div class="room-badge" id="roomBadge">
+          <span><span id="roomLabel">Room</span> <span class="room-code" id="onlineRoomCode">----</span></span>
+          <button class="btn-soft small-btn" id="copyRoomBtn" type="button">Copy</button>
+        </div>
+        <div class="online-status" id="onlineStatus">Enter your name, then create or join a room.</div>
+        <div class="name-field">
+          <label id="playerNameLabel" for="playerNameInput">Your name</label>
+          <input id="playerNameInput" type="text" placeholder="Enter your name before playing" maxlength="24" autocomplete="name" />
+          <div class="name-helper" id="playerNameHelper">This name will appear on both laptops in the room.</div>
+        </div>
+        <div class="online-actions">
+          <button class="btn-primary" id="createOnlineBtn" type="button">Generate Game</button>
+          <button class="btn-soft" id="leaveOnlineBtn" type="button" disabled>Leave</button>
+        </div>
+        <div class="join-row">
+          <input id="roomCodeInput" type="text" placeholder="Room code" maxlength="6" autocomplete="off" />
+          <button class="btn-green" id="joinOnlineBtn" type="button">Join existing game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header">
+        <h2 id="rulesTitle">Classroom rules</h2>
+        <button class="btn-soft" id="closeRulesBtn" type="button">Close</button>
+      </div>
+      <p id="rulesIntro">Use your memory to find multiplication matches.</p>
+      <ul class="rules-list" id="rulesList"></ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="winnerModal" aria-hidden="true">
+    <div class="modal winner-card" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+      <div class="winner-emoji" id="winnerEmoji">🏆</div>
+      <h2 class="winner-title" id="winnerTitle">Winner!</h2>
+      <p class="winner-subtitle" id="winnerSubtitle">Great memory work.</p>
+      <div class="winner-actions">
+        <button class="btn-primary" id="playAgainBtn" type="button">Play again</button>
+        <button class="btn-soft" id="winnerMenuBtn" type="button">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./engines/clock-engine.js"></script>
+  <script src="./engines/fdp-engine.js"></script>
+  <script src="./engines/powers-engine.js"></script>
+  <script src="./engines/shapes-engine.js"></script>
+  <script>
+    let initializeApp, getAuth, signInAnonymously, onAuthStateChanged;
+    let getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp;
+    const createClockPairs = window.MathMemoryClockEngine?.createClockPairs || (() => []);
+    const renderAnalogueClock = window.MathMemoryClockEngine?.renderAnalogueClock || ((hour, minute) => `<span>${hour}:${String(minute).padStart(2, '0')}</span>`);
+    const renderDigitalClock = window.MathMemoryClockEngine?.renderDigitalClock || ((hour, minute) => `<span>${hour}:${String(minute).padStart(2, '0')}</span>`);
+    const getClockTimeLabel = window.MathMemoryClockEngine?.getClockTimeLabel || ((hour, minute) => `${hour}:${String(minute).padStart(2, '0')}`);
+    const createFractionDecimalPairs = window.MathMemoryFdpEngine?.createFractionDecimalPairs || (() => []);
+    const createDecimalPercentagePairs = window.MathMemoryFdpEngine?.createDecimalPercentagePairs || (() => []);
+    const renderFraction = window.MathMemoryFdpEngine?.renderFraction || ((n, d) => `<span>${n}/${d}</span>`);
+    const renderDecimal = window.MathMemoryFdpEngine?.renderDecimal || ((value) => `<span>${value?.label || value}</span>`);
+    const renderPercentage = window.MathMemoryFdpEngine?.renderPercentage || ((percent) => `<span>${percent}%</span>`);
+    const createSquaresRootsPairs = window.MathMemoryPowersEngine?.createSquaresRootsPairs || (() => []);
+    const renderSquareExpression = window.MathMemoryPowersEngine?.renderSquareExpression || ((base) => `<span>${base}<sup>2</sup></span>`);
+    const renderSquareRootExpression = window.MathMemoryPowersEngine?.renderSquareRootExpression || ((radicand) => `<span>√${radicand}</span>`);
+    const renderPowerAnswer = window.MathMemoryPowersEngine?.renderPowerAnswer || ((value) => `<span>${value}</span>`);
+    const createShapeNamePairs = window.MathMemoryShapesEngine?.createShapeNamePairs || (() => []);
+    const renderShapeImage = window.MathMemoryShapesEngine?.renderShapeImage || ((shapeKey) => `<span>${shapeKey}</span>`);
+    const renderShapeName = window.MathMemoryShapesEngine?.renderShapeName || ((name) => `<span>${name}</span>`);
+
+    /*
+      Firebase setup for Math Memory.
+      Paste the web app config for the new Math Memory app in the MMT Firebase Games project.
+      The Firestore collection for this game is mathMemoryGames, so it will not overwrite other games.
+    */
+    const firebaseConfig = {
+      apiKey: "PASTE_MATH_MEMORY_API_KEY",
+      authDomain: "mmt-firebase-games.firebaseapp.com",
+      projectId: "mmt-firebase-games",
+      storageBucket: "mmt-firebase-games.firebasestorage.app",
+      messagingSenderId: "980506958719",
+      appId: "PASTE_MATH_MEMORY_APP_ID"
+    };
+
+    const FIREBASE_CONFIGURED = Boolean(
+      firebaseConfig.apiKey &&
+      firebaseConfig.projectId &&
+      firebaseConfig.appId &&
+      !firebaseConfig.apiKey.includes('PASTE_') &&
+      !firebaseConfig.appId.includes('PASTE_')
+    );
+
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let authReadyPromise = Promise.resolve(null);
+
+    let firebaseLoadPromise = null;
+
+    async function loadFirebase(){
+      if (!FIREBASE_CONFIGURED) return null;
+      if (db && auth) return authReadyPromise;
+      if (!firebaseLoadPromise){
+        firebaseLoadPromise = (async () => {
+          try {
+            const [appMod, authMod, fsMod] = await Promise.all([
+              import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+              import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'),
+              import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
+            ]);
+
+            initializeApp = appMod.initializeApp;
+            getAuth = authMod.getAuth;
+            signInAnonymously = authMod.signInAnonymously;
+            onAuthStateChanged = authMod.onAuthStateChanged;
+            getFirestore = fsMod.getFirestore;
+            doc = fsMod.doc;
+            getDoc = fsMod.getDoc;
+            setDoc = fsMod.setDoc;
+            updateDoc = fsMod.updateDoc;
+            onSnapshot = fsMod.onSnapshot;
+            runTransaction = fsMod.runTransaction;
+            serverTimestamp = fsMod.serverTimestamp;
+
+            firebaseApp = initializeApp(firebaseConfig);
+            auth = getAuth(firebaseApp);
+            db = getFirestore(firebaseApp);
+            authReadyPromise = new Promise((resolve) => {
+              onAuthStateChanged(auth, (user) => resolve(user));
+            });
+            await signInAnonymously(auth);
+            return authReadyPromise;
+          } catch (err) {
+            console.error(err);
+            if (typeof setOnlineStatus === 'function') {
+              setOnlineStatus('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'warn');
+            }
+            return null;
+          }
+        })();
+      }
+      return firebaseLoadPromise;
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      memoryBoard: $('memoryBoard'),
+      statusTitle: $('statusTitle'),
+      statusSubtitle: $('statusSubtitle'),
+      turnDot: $('turnDot'),
+      messageBox: $('messageBox'),
+      p1Label: $('p1Label'),
+      p2Label: $('p2Label'),
+      p1Score: $('p1Score'),
+      p2Score: $('p2Score'),
+      matchedCount: $('matchedCount'),
+      turnCount: $('turnCount'),
+      mainLanguageSelect: $('mainLanguageSelect'),
+      languageMainLabel: $('languageMainLabel'),
+      rulesBtn: $('rulesBtn'),
+      newGameBtn: $('newGameBtn'),
+      backToMenuBtn: $('backToMenuBtn'),
+      gameChoiceModal: $('gameChoiceModal'),
+      gameChoiceBackBtn: $('gameChoiceBackBtn'),
+      gameSelect: $('gameSelect'),
+      computerDifficultyPanel: $('computerDifficultyPanel'),
+      computerDifficultySelect: $('computerDifficultySelect'),
+      startChosenGameBtn: $('startChosenGameBtn'),
+      modeMenuModal: $('modeMenuModal'),
+      passPlayModal: $('passPlayModal'),
+      onlineSetupModal: $('onlineSetupModal'),
+      rulesModal: $('rulesModal'),
+      winnerModal: $('winnerModal'),
+      chooseComputerBtn: $('chooseComputerBtn'),
+      choosePassPlayBtn: $('choosePassPlayBtn'),
+      chooseOnlineBtn: $('chooseOnlineBtn'),
+      passBackBtn: $('passBackBtn'),
+      onlineBackBtn: $('onlineBackBtn'),
+      passP1Name: $('passP1Name'),
+      passP2Name: $('passP2Name'),
+      startPassPlayBtn: $('startPassPlayBtn'),
+      onlineStatus: $('onlineStatus'),
+      roomBadge: $('roomBadge'),
+      onlineRoomCode: $('onlineRoomCode'),
+      copyRoomBtn: $('copyRoomBtn'),
+      createOnlineBtn: $('createOnlineBtn'),
+      joinOnlineBtn: $('joinOnlineBtn'),
+      leaveOnlineBtn: $('leaveOnlineBtn'),
+      roomCodeInput: $('roomCodeInput'),
+      playerNameInput: $('playerNameInput'),
+      closeRulesBtn: $('closeRulesBtn'),
+      rulesList: $('rulesList'),
+      playAgainBtn: $('playAgainBtn'),
+      winnerMenuBtn: $('winnerMenuBtn'),
+      winnerEmoji: $('winnerEmoji'),
+      winnerTitle: $('winnerTitle'),
+      winnerSubtitle: $('winnerSubtitle')
+    };
+
+    const PAIR_COUNT = 10;
+    const CARD_COUNT = 20;
+    const MISMATCH_DELAY = 1200;
+    const ROOM_COLLECTION = 'mathMemoryGames';
+    const COMPUTER_DIFFICULTY_CONFIG = {
+      sweet: { label: 'Sweet - random guesses', memoryChance: 0 },
+      mild: { label: 'Mild - remembers 40%', memoryChance: 0.4 },
+      medium: { label: 'Medium - remembers 75%', memoryChance: 0.75 },
+      spicy: { label: 'Spicy - perfect memory', memoryChance: 1 }
+    };
+
+    let uiLang = 'en';
+    let gameMode = 'menu';
+    let pendingGameMode = null;
+    let currentTopic = 'multiplication';
+    let computerDifficulty = 'spicy';
+    let state = buildEmptyState();
+    let computerMemory = new Map();
+    let computerThinking = false;
+    let winnerShownForTurn = null;
+    let currentMessageKey = 'Choose a game mode to begin.';
+    let currentMessageTone = 'good';
+    let scheduledMismatchToken = null;
+
+    const online = {
+      active:false,
+      roomCode:null,
+      ref:null,
+      unsub:null,
+      uid:null,
+      myPlayer:null,
+      data:null
+    };
+
+    const TOPIC_CONFIG = {
+      multiplication: {
+        selectLabel: 'Multiplication facts',
+        pill: 'Multiplication',
+        note: 'Multiplication facts use 2 × 2 up to 10 × 10 with no duplicate answers.',
+        info: 'Find a multiplication sentence and its matching value.',
+        rulesIntro: 'Use your memory to find multiplication matches.'
+      },
+      clockDigital: {
+        selectLabel: 'Analogue clock to digital clock',
+        pill: 'Clocks',
+        note: 'Clock cards use only o’clock, quarter past, half past and quarter to times.',
+        info: 'Match each analogue clock with its digital time.',
+        rulesIntro: 'Use your memory to match analogue clocks with digital times.'
+      },
+      fractionDecimal: {
+        selectLabel: 'Fraction to decimal',
+        pill: 'Fractions and decimals',
+        note: 'Fractions use denominators of 2, 3, 4, 5 and 10. The only recurring decimal included is one third.',
+        info: 'Match each fraction with its decimal form.',
+        rulesIntro: 'Use your memory to match fractions with decimals.'
+      },
+      decimalPercentage: {
+        selectLabel: 'Decimal to percentage',
+        pill: 'Decimals and percentages',
+        note: 'Percentages are from 5% to 100% in 5% increments, with mostly multiples of 10%.',
+        info: 'Match each decimal with its percentage form.',
+        rulesIntro: 'Use your memory to match decimals with percentages.'
+      },
+      squaresRoots: {
+        selectLabel: 'Squares and square roots',
+        pill: 'Squares and roots',
+        note: 'Square cards match to their value, and square root cards match to the root. Symbol notation is used throughout.',
+        info: 'Match each square or square root expression with its value.',
+        rulesIntro: 'Use your memory to match squares and square roots with their values.'
+      },
+      shapesNames: {
+        selectLabel: 'Shapes and their names',
+        pill: 'Shapes',
+        note: 'Ten shapes are randomly chosen from eleven options. Match each crisp shape image with its name.',
+        info: 'Match each shape image with its correct name.',
+        rulesIntro: 'Use your memory to match shapes with their names.'
+      }
+    };
+
+    const TRANSLATIONS = {
+      ar: {
+        'Math Memory':'ذاكرة الرياضيات',
+        'Choose a game':'اختر لعبة',
+        'Select the card set you would like to play.':'اختر مجموعة البطاقات التي تريد لعبها.',
+        'Match a multiplication sentence with its value.':'طابق جملة ضرب مع قيمتها.',
+        'Match an analogue clock with its digital time.':'طابق ساعة تناظرية مع وقتها الرقمي.',
+        'Language':'اللغة',
+        'Rules':'القواعد',
+        'New Game':'لعبة جديدة',
+        'Back to menu':'العودة إلى القائمة',
+        'Close':'إغلاق',
+        'Topic':'الموضوع',
+        'Question type':'نوع السؤال',
+        'Multiplication facts':'حقائق الضرب',
+        'Choose multiplication facts or analogue clock to digital clock pairs.':'الإصدار الأول يستخدم 10 أزواج ضرب من 2 × 2 إلى 10 × 10.',
+        'Board':'اللوحة',
+        'Pairs':'الأزواج',
+        'Cards':'البطاقات',
+        'Game rule':'قاعدة اللعبة',
+        'A correct match gives that player another turn.':'المطابقة الصحيحة تعطي اللاعب دوراً آخر.',
+        'Choose a game mode':'اختر وضع اللعب',
+        'Select how you would like to play Math Memory.':'اختر كيف تريد لعب ذاكرة الرياضيات.',
+        'vs. Computer':'ضد الكمبيوتر',
+        'Play against a computer with adjustable memory.':'العب ضد كمبيوتر يتذكر البطاقات التي رآها.',
+        'Pass and Play':'مرّر والعب',
+        'Two players share one device.':'يتشارك لاعبان جهازاً واحداً.',
+        'Online Multiplayer':'لعب جماعي عبر الإنترنت',
+        'Create or join a room on two laptops.':'أنشئ غرفة أو انضم إليها على جهازين.',
+        'Pass and Play':'مرّر والعب',
+        'Enter two names, then share the same laptop or board.':'أدخل اسمين، ثم تشاركا نفس الجهاز أو اللوحة.',
+        'Player 1 name':'اسم اللاعب 1',
+        'Player 2 name':'اسم اللاعب 2',
+        'Start game':'ابدأ اللعبة',
+        'Back':'رجوع',
+        'Online Multiplayer':'لعب جماعي عبر الإنترنت',
+        'Enter your name, then create or join a room.':'أدخل اسمك، ثم أنشئ غرفة أو انضم إليها.',
+        'Your name':'اسمك',
+        'Enter your name before playing':'أدخل اسمك قبل اللعب',
+        'This name will appear on both laptops in the room.':'سيظهر هذا الاسم على جهازي الغرفة.',
+        'Generate Game':'أنشئ لعبة',
+        'Leave':'مغادرة',
+        'Room code':'رمز الغرفة',
+        'Join existing game':'انضم إلى لعبة موجودة',
+        'Room':'الغرفة',
+        'Copy':'نسخ',
+        'Classroom rules':'قواعد الفصل',
+        'Use your memory to find multiplication matches.':'استخدم ذاكرتك لإيجاد مطابقات الضرب.',
+        'Play again':'العب مرة أخرى',
+        'Winner!':'الفائز!',
+        'It is a draw!':'تعادل!',
+        'Great memory work.':'عمل رائع في التذكر.',
+        'Choose a game mode to begin.':'اختر وضع اللعب للبدء.',
+        'Multiplication':'الضرب',
+        'Find a multiplication sentence and its matching value.':'ابحث عن جملة ضرب وقيمتها المطابقة.',
+        'Matched':'تمت المطابقة',
+        'Turn':'الدور',
+        '{name}\'s turn':'دور {name}',
+        'Your turn':'دورك',
+        'Computer\'s turn':'دور الكمبيوتر',
+        'Flip two cards.':'اقلب بطاقتين.',
+        'Good match! Have another turn.':'مطابقة صحيحة! لديك دور آخر.',
+        'Not a match. Remember those cards.':'ليست مطابقة. تذكّر مكان البطاقتين.',
+        'Waiting for player 2 to join...':'في انتظار انضمام اللاعب 2...',
+        'Only the current player can flip a card.':'يمكن للاعب الحالي فقط قلب بطاقة.',
+        'All pairs have been found.':'تم العثور على كل الأزواج.',
+        'Firebase is not configured yet. Paste the Math Memory app config into the file.':'لم يتم إعداد Firebase بعد. الصق إعدادات تطبيق Math Memory في الملف.',
+        'Room created. Share the code with player 2.':'تم إنشاء الغرفة. شارك الرمز مع اللاعب 2.',
+        'Joined room. Waiting for the game to start.':'تم الانضمام للغرفة. في انتظار بدء اللعبة.',
+        'Room not found. Check the code and try again.':'لم يتم العثور على الغرفة. تحقق من الرمز وحاول مرة أخرى.',
+        'That room is already full.':'هذه الغرفة ممتلئة بالفعل.',
+        'Enter your name first.':'أدخل اسمك أولاً.',
+        'Enter a room code.':'أدخل رمز الغرفة.',
+        'Copied!':'تم النسخ!'
+      },
+      fa: {
+        'Math Memory':'حافظه ریاضی',
+        'Choose a game':'یک بازی انتخاب کنید',
+        'Select the card set you would like to play.':'مجموعه کارت‌هایی را که می‌خواهید بازی کنید انتخاب کنید.',
+        'Match a multiplication sentence with its value.':'یک عبارت ضرب را با مقدار آن تطبیق دهید.',
+        'Match an analogue clock with its digital time.':'یک ساعت عقربه‌ای را با زمان دیجیتال آن تطبیق دهید.',
+        'Language':'زبان',
+        'Rules':'قوانین',
+        'New Game':'بازی جدید',
+        'Back to menu':'بازگشت به فهرست',
+        'Close':'بستن',
+        'Topic':'موضوع',
+        'Question type':'نوع سؤال',
+        'Multiplication facts':'حقایق ضرب',
+        'Choose multiplication facts or analogue clock to digital clock pairs.':'نسخه ۱ از ۱۰ جفت ضرب از ۲ × ۲ تا ۱۰ × ۱۰ استفاده می‌کند.',
+        'Board':'صفحه',
+        'Pairs':'جفت‌ها',
+        'Cards':'کارت‌ها',
+        'Game rule':'قانون بازی',
+        'A correct match gives that player another turn.':'یک تطبیق درست به همان بازیکن یک نوبت دیگر می‌دهد.',
+        'Choose a game mode':'حالت بازی را انتخاب کنید',
+        'Select how you would like to play Math Memory.':'انتخاب کنید چگونه می‌خواهید حافظه ریاضی را بازی کنید.',
+        'vs. Computer':'در برابر کامپیوتر',
+        'Play against a computer with adjustable memory.':'در برابر کامپیوتری بازی کنید که کارت‌های دیده‌شده را به خاطر می‌سپارد.',
+        'Pass and Play':'نوبتی بازی کنید',
+        'Two players share one device.':'دو بازیکن از یک دستگاه استفاده می‌کنند.',
+        'Online Multiplayer':'چندنفره آنلاین',
+        'Create or join a room on two laptops.':'روی دو لپ‌تاپ اتاق بسازید یا وارد شوید.',
+        'Enter two names, then share the same laptop or board.':'دو نام وارد کنید، سپس از یک لپ‌تاپ یا صفحه مشترک استفاده کنید.',
+        'Player 1 name':'نام بازیکن ۱',
+        'Player 2 name':'نام بازیکن ۲',
+        'Start game':'شروع بازی',
+        'Back':'بازگشت',
+        'Enter your name, then create or join a room.':'نام خود را وارد کنید، سپس اتاق بسازید یا وارد شوید.',
+        'Your name':'نام شما',
+        'Enter your name before playing':'پیش از بازی نام خود را وارد کنید',
+        'This name will appear on both laptops in the room.':'این نام در هر دو لپ‌تاپ اتاق نمایش داده می‌شود.',
+        'Generate Game':'ساخت بازی',
+        'Leave':'خروج',
+        'Room code':'کد اتاق',
+        'Join existing game':'ورود به بازی موجود',
+        'Room':'اتاق',
+        'Copy':'کپی',
+        'Classroom rules':'قوانین کلاس',
+        'Use your memory to find multiplication matches.':'از حافظه خود برای پیدا کردن تطبیق‌های ضرب استفاده کنید.',
+        'Play again':'دوباره بازی کنید',
+        'Winner!':'برنده!',
+        'It is a draw!':'مساوی شد!',
+        'Great memory work.':'کار حافظه‌ای عالی.',
+        'Choose a game mode to begin.':'برای شروع حالت بازی را انتخاب کنید.',
+        'Multiplication':'ضرب',
+        'Find a multiplication sentence and its matching value.':'یک عبارت ضرب و مقدار مطابق آن را پیدا کنید.',
+        'Matched':'تطبیق داده شد',
+        'Turn':'نوبت',
+        '{name}\'s turn':'نوبت {name}',
+        'Your turn':'نوبت شما',
+        'Computer\'s turn':'نوبت کامپیوتر',
+        'Flip two cards.':'دو کارت را برگردانید.',
+        'Good match! Have another turn.':'تطبیق درست! یک نوبت دیگر دارید.',
+        'Not a match. Remember those cards.':'تطبیق ندارد. جای کارت‌ها را به خاطر بسپارید.',
+        'Waiting for player 2 to join...':'در انتظار پیوستن بازیکن ۲...',
+        'Only the current player can flip a card.':'فقط بازیکن فعلی می‌تواند کارت را برگرداند.',
+        'All pairs have been found.':'همه جفت‌ها پیدا شدند.',
+        'Firebase is not configured yet. Paste the Math Memory app config into the file.':'Firebase هنوز تنظیم نشده است. تنظیمات برنامه Math Memory را در فایل جای‌گذاری کنید.',
+        'Room created. Share the code with player 2.':'اتاق ساخته شد. کد را با بازیکن ۲ به اشتراک بگذارید.',
+        'Joined room. Waiting for the game to start.':'وارد اتاق شدید. منتظر شروع بازی بمانید.',
+        'Room not found. Check the code and try again.':'اتاق پیدا نشد. کد را بررسی کنید و دوباره تلاش کنید.',
+        'That room is already full.':'این اتاق پر است.',
+        'Enter your name first.':'ابتدا نام خود را وارد کنید.',
+        'Enter a room code.':'کد اتاق را وارد کنید.',
+        'Copied!':'کپی شد!'
+      }
+    };
+
+    const STATIC_LABELS = [
+      ['pageTitle','Math Memory'],
+      ['languageMainLabel','Language'],
+      ['rulesBtn','Rules'],
+      ['newGameBtn','New Game'],
+      ['backToMenuBtn','Back to menu'],
+      ['modeMenuTitle','Choose a game mode'],
+      ['modeMenuIntro','Select how you would like to play Math Memory.'],
+      ['computerModeTitle','vs. Computer'],
+      ['computerModeDesc','Play against a computer with adjustable memory.'],
+      ['passModeTitle','Pass and Play'],
+      ['passModeDesc','Two players share one device.'],
+      ['onlineModeTitle','Online Multiplayer'],
+      ['onlineModeDesc','Create or join a room on two laptops.'],
+      ['gameChoiceTitle','Choose a game'],
+      ['gameChoiceIntro','Select the card set you would like to play.'],
+      ['gameChoiceBackBtn','Back'],
+      ['selectGameHeroTitle','Select your game below'],
+      ['selectGameHeroText','Choose a card set, then start matching.'],
+      ['gameSelectLabel','Card set'],
+      ['computerDifficultyLabel','Computer difficulty'],
+      ['computerDifficultyHelp','Choose how often the computer uses remembered pairs.'],
+      ['startChosenGameBtn','Start game'],
+      ['passPlayTitle','Pass and Play'],
+      ['passBackBtn','Back'],
+      ['passPlayNote','Enter two names, then share the same laptop or board.'],
+      ['passP1NameLabel','Player 1 name'],
+      ['passP2NameLabel','Player 2 name'],
+      ['startPassPlayBtn','Start game'],
+      ['onlineSetupTitle','Online Multiplayer'],
+      ['onlineBackBtn','Back'],
+      ['roomLabel','Room'],
+      ['copyRoomBtn','Copy'],
+      ['playerNameLabel','Your name'],
+      ['playerNameHelper','This name will appear on both laptops in the room.'],
+      ['createOnlineBtn','Generate Game'],
+      ['leaveOnlineBtn','Leave'],
+      ['joinOnlineBtn','Join existing game'],
+      ['rulesTitle','Classroom rules'],
+      ['closeRulesBtn','Close'],
+      ['rulesIntro','Use your memory to find multiplication matches.'],
+      ['topicPill','Multiplication'],
+      ['gameInfoText','Find a multiplication sentence and its matching value.'],
+      ['matchedMiniLabel','Matched'],
+      ['turnMiniLabel','Turn'],
+      ['playAgainBtn','Play again'],
+      ['winnerMenuBtn','Back to menu']
+    ];
+
+    const RULES = [
+      'Cards are placed face down in a 5 by 4 grid.',
+      'On your turn, flip two cards so everyone can see them.',
+      'A multiplication sentence matches its value, such as 6 × 3 and 18.',
+      'If the cards match, you keep the pair and have another turn.',
+      'If the cards do not match, they turn back over after a short pause.',
+      'The winner is the player with the most matching pairs when all pairs are found.'
+    ];
+    TRANSLATIONS.ar['Cards are placed face down in a 5 by 4 grid.'] = 'توضع البطاقات مقلوبة في شبكة 5 في 4.';
+    TRANSLATIONS.ar['On your turn, flip two cards so everyone can see them.'] = 'في دورك، اقلب بطاقتين حتى يراهما الجميع.';
+    TRANSLATIONS.ar['A multiplication sentence matches its value, such as 6 × 3 and 18.'] = 'تطابق جملة الضرب قيمتها، مثل 6 × 3 و 18.';
+    TRANSLATIONS.ar['If the cards match, you keep the pair and have another turn.'] = 'إذا تطابقت البطاقتان، تحتفظ بالزوج وتحصل على دور آخر.';
+    TRANSLATIONS.ar['If the cards do not match, they turn back over after a short pause.'] = 'إذا لم تتطابق البطاقتان، تعودان مقلوبتين بعد توقف قصير.';
+    TRANSLATIONS.ar['The winner is the player with the most matching pairs when all pairs are found.'] = 'الفائز هو اللاعب الذي لديه أكبر عدد من الأزواج عند العثور على كل الأزواج.';
+    TRANSLATIONS.fa['Cards are placed face down in a 5 by 4 grid.'] = 'کارت‌ها در یک شبکه ۵ در ۴ به پشت قرار می‌گیرند.';
+    TRANSLATIONS.fa['On your turn, flip two cards so everyone can see them.'] = 'در نوبت خود، دو کارت را برگردانید تا همه آن‌ها را ببینند.';
+    TRANSLATIONS.fa['A multiplication sentence matches its value, such as 6 × 3 and 18.'] = 'یک عبارت ضرب با مقدارش تطبیق دارد، مانند ۶ × ۳ و ۱۸.';
+    TRANSLATIONS.fa['If the cards match, you keep the pair and have another turn.'] = 'اگر کارت‌ها تطبیق داشتند، جفت را نگه می‌دارید و یک نوبت دیگر دارید.';
+    TRANSLATIONS.fa['If the cards do not match, they turn back over after a short pause.'] = 'اگر کارت‌ها تطبیق نداشتند، پس از مکث کوتاه دوباره برمی‌گردند.';
+    TRANSLATIONS.fa['The winner is the player with the most matching pairs when all pairs are found.'] = 'وقتی همه جفت‌ها پیدا شدند، بازیکنی که بیشترین جفت را دارد برنده است.';
+
+
+    Object.assign(TRANSLATIONS.ar, {
+      'Shapes and their names':'الأشكال وأسماؤها',
+      'Shapes':'الأشكال',
+      'Ten shapes are randomly chosen from eleven options. Match each crisp shape image with its name.':'يتم اختيار عشرة أشكال عشوائياً من أحد عشر خياراً. طابق كل صورة شكل واضحة مع اسمها.',
+      'Match each shape image with its correct name.':'طابق كل صورة شكل مع اسمها الصحيح.',
+      'Use your memory to match shapes with their names.':'استخدم ذاكرتك لمطابقة الأشكال مع أسمائها.',
+      'A shape image matches its name, such as a hexagon and Hexagon.':'صورة الشكل تطابق اسمها، مثل شكل سداسي واسم سداسي.',
+      'Ten shapes are randomly chosen from eleven possible shapes each game.':'يتم اختيار عشرة أشكال عشوائياً من أحد عشر شكلاً ممكناً في كل لعبة.'
+    });
+
+    Object.assign(TRANSLATIONS.fa, {
+      'Shapes and their names':'شکل‌ها و نام آن‌ها',
+      'Shapes':'شکل‌ها',
+      'Ten shapes are randomly chosen from eleven options. Match each crisp shape image with its name.':'در هر بازی ده شکل از میان یازده گزینه به طور تصادفی انتخاب می‌شود. هر تصویر واضح شکل را با نام آن تطبیق دهید.',
+      'Match each shape image with its correct name.':'هر تصویر شکل را با نام درست آن تطبیق دهید.',
+      'Use your memory to match shapes with their names.':'از حافظه خود برای تطبیق شکل‌ها با نام آن‌ها استفاده کنید.',
+      'A shape image matches its name, such as a hexagon and Hexagon.':'تصویر یک شکل با نام آن تطبیق دارد، مانند شش‌ضلعی و نام شش‌ضلعی.',
+      'Ten shapes are randomly chosen from eleven possible shapes each game.':'در هر بازی ده شکل از میان یازده شکل ممکن به طور تصادفی انتخاب می‌شود.'
+    });
+
+
+    const RULES_BY_TOPIC = {
+      multiplication: [
+        'Cards are placed face down in a 5 by 4 grid.',
+        'On your turn, flip two cards so everyone can see them.',
+        'A multiplication sentence matches its value, such as 6 × 3 and 18.',
+        'If the cards match, you keep the pair and have another turn.',
+        'If the cards do not match, they turn back over after a short pause.',
+        'The winner is the player with the most matching pairs when all pairs are found.'
+      ],
+      clockDigital: [
+        'Cards are placed face down in a 5 by 4 grid.',
+        'On your turn, flip two cards so everyone can see them.',
+        'An analogue clock matches its digital time, such as quarter past 6 and 6:15.',
+        'If the cards match, you keep the pair and have another turn.',
+        'If the cards do not match, they turn back over after a short pause.',
+        'The winner is the player with the most matching pairs when all pairs are found.'
+      ],
+      fractionDecimal: [
+        'Cards are placed face down in a 5 by 4 grid.',
+        'On your turn, flip two cards so everyone can see them.',
+        'A fraction matches its decimal form, such as 3/4 and 0.75.',
+        'If the cards match, you keep the pair and have another turn.',
+        'If the cards do not match, they turn back over after a short pause.',
+        'The winner is the player with the most matching pairs when all pairs are found.'
+      ],
+      decimalPercentage: [
+        'Cards are placed face down in a 5 by 4 grid.',
+        'On your turn, flip two cards so everyone can see them.',
+        'A decimal matches its percentage form, such as 0.35 and 35%.',
+        'If the cards match, you keep the pair and have another turn.',
+        'If the cards do not match, they turn back over after a short pause.',
+        'The winner is the player with the most matching pairs when all pairs are found.'
+      ],
+      squaresRoots: [
+        'Cards are placed face down in a 5 by 4 grid.',
+        'On your turn, flip two cards so everyone can see them.',
+        'A square expression matches its value, such as 3² and 9.',
+        'A square root expression matches its value, such as √36 and 6.',
+        'If the cards match, you keep the pair and have another turn.',
+        'If the cards do not match, they turn back over after a short pause.',
+        'The winner is the player with the most matching pairs when all pairs are found.'
+      ],
+      shapesNames: [
+        'Cards are placed face down in a 5 by 4 grid.',
+        'On your turn, flip two cards so everyone can see them.',
+        'A shape image matches its name, such as a hexagon and Hexagon.',
+        'Ten shapes are randomly chosen from eleven possible shapes each game.',
+        'If the cards match, you keep the pair and have another turn.',
+        'If the cards do not match, they turn back over after a short pause.',
+        'The winner is the player with the most matching pairs when all pairs are found.'
+      ]
+    };
+
+    Object.assign(TRANSLATIONS.ar, {
+      'Card set':'مجموعة البطاقات',
+      'Analogue clock to digital clock':'من الساعة التناظرية إلى الساعة الرقمية',
+      'Choose multiplication facts or analogue clock to digital clock pairs.':'اختر حقائق الضرب أو أزواج الساعة التناظرية والرقمية.',
+      'Clock cards use only o’clock, quarter past, half past and quarter to times.':'تستخدم بطاقات الساعة الوقت بالساعة تماماً، والربع، والنصف، وإلا الربع فقط.',
+      'Clocks':'الساعات',
+      'Match each analogue clock with its digital time.':'طابق كل ساعة تناظرية مع وقتها الرقمي.',
+      'Use your memory to match analogue clocks with digital times.':'استخدم ذاكرتك لمطابقة الساعات التناظرية مع الأوقات الرقمية.',
+      'An analogue clock matches its digital time, such as quarter past 6 and 6:15.':'تطابق الساعة التناظرية وقتها الرقمي، مثل السادسة والربع و 6:15.'
+    });
+    Object.assign(TRANSLATIONS.fa, {
+      'Card set':'مجموعه کارت‌ها',
+      'Analogue clock to digital clock':'ساعت عقربه‌ای به ساعت دیجیتال',
+      'Choose multiplication facts or analogue clock to digital clock pairs.':'حقایق ضرب یا جفت‌های ساعت عقربه‌ای و دیجیتال را انتخاب کنید.',
+      'Clock cards use only o’clock, quarter past, half past and quarter to times.':'کارت‌های ساعت فقط از زمان‌های رأس ساعت، ربع گذشته، نیم، و یک ربع به استفاده می‌کنند.',
+      'Clocks':'ساعت‌ها',
+      'Match each analogue clock with its digital time.':'هر ساعت عقربه‌ای را با زمان دیجیتال آن تطبیق دهید.',
+      'Use your memory to match analogue clocks with digital times.':'از حافظه خود برای تطبیق ساعت‌های عقربه‌ای با زمان‌های دیجیتال استفاده کنید.',
+      'An analogue clock matches its digital time, such as quarter past 6 and 6:15.':'یک ساعت عقربه‌ای با زمان دیجیتال آن تطبیق دارد، مانند ۶:۱۵.'
+    });
+
+
+    Object.assign(TRANSLATIONS.ar, {
+      'Select your game below':'اختر لعبتك أدناه',
+      'Choose a card set, then start matching.':'اختر مجموعة البطاقات، ثم ابدأ المطابقة.',
+      'Start game':'ابدأ اللعبة',
+      'Computer difficulty':'صعوبة الكمبيوتر',
+      'Choose how often the computer uses remembered pairs.':'اختر عدد المرات التي يستخدم فيها الكمبيوتر الأزواج التي يتذكرها.',
+      'Sweet - random guesses':'سهل جداً - تخمين عشوائي',
+      'Mild - remembers 40%':'خفيف - يتذكر 40%',
+      'Medium - remembers 75%':'متوسط - يتذكر 75%',
+      'Spicy - perfect memory':'حار - ذاكرة كاملة',
+      'Fraction to decimal':'من الكسر إلى العدد العشري',
+      'Decimal to percentage':'من العدد العشري إلى النسبة المئوية',
+      'Fractions and decimals':'الكسور والأعداد العشرية',
+      'Decimals and percentages':'الأعداد العشرية والنسب المئوية',
+      'Match each fraction with its decimal form.':'طابق كل كسر مع صورته العشرية.',
+      'Match each decimal with its percentage form.':'طابق كل عدد عشري مع صورته كنسبة مئوية.',
+      'Use your memory to match fractions with decimals.':'استخدم ذاكرتك لمطابقة الكسور مع الأعداد العشرية.',
+      'Use your memory to match decimals with percentages.':'استخدم ذاكرتك لمطابقة الأعداد العشرية مع النسب المئوية.',
+      'Fractions use denominators of 2, 3, 4, 5 and 10. The only recurring decimal included is one third.':'تستخدم الكسور مقامات 2 و3 و4 و5 و10. العدد العشري الدوري الوحيد هو الثلث.',
+      'Percentages are from 5% to 100% in 5% increments, with mostly multiples of 10%.':'النسب المئوية من 5% إلى 100% بفواصل 5%، ومعظمها من مضاعفات 10%.',
+      'A fraction matches its decimal form, such as 3/4 and 0.75.':'يطابق الكسر صورته العشرية، مثل 3/4 و0.75.',
+      'A decimal matches its percentage form, such as 0.35 and 35%.':'يطابق العدد العشري صورته كنسبة مئوية، مثل 0.35 و35%.',
+      'Multiplication facts use 2 × 2 up to 10 × 10 with no duplicate answers.':'تستخدم حقائق الضرب من 2 × 2 إلى 10 × 10 دون إجابات مكررة.',
+      'Squares and square roots':'المربعات والجذور التربيعية',
+      'Squares and roots':'المربعات والجذور',
+      'Match each square or square root expression with its value.':'طابق كل تعبير مربع أو جذر تربيعي مع قيمته.',
+      'Use your memory to match squares and square roots with their values.':'استخدم ذاكرتك لمطابقة المربعات والجذور التربيعية مع قيمها.',
+      'Square cards match to their value, and square root cards match to the root. Symbol notation is used throughout.':'بطاقات المربعات تطابق قيمتها، وبطاقات الجذور التربيعية تطابق الجذر. تُستخدم الرموز الرياضية في كل البطاقات.',
+      'A square expression matches its value, such as 3² and 9.':'يطابق تعبير المربع قيمته، مثل 3² و9.',
+      'A square root expression matches its value, such as √36 and 6.':'يطابق تعبير الجذر التربيعي قيمته، مثل √36 و6.'
+    });
+    Object.assign(TRANSLATIONS.fa, {
+      'Select your game below':'بازی خود را در زیر انتخاب کنید',
+      'Choose a card set, then start matching.':'یک مجموعه کارت انتخاب کنید، سپس تطبیق را شروع کنید.',
+      'Computer difficulty':'سختی کامپیوتر',
+      'Choose how often the computer uses remembered pairs.':'انتخاب کنید کامپیوتر چند بار از جفت‌هایی که به یاد دارد استفاده کند.',
+      'Sweet - random guesses':'شیرین - حدس تصادفی',
+      'Mild - remembers 40%':'ملایم - ۴۰٪ به یاد می‌آورد',
+      'Medium - remembers 75%':'متوسط - ۷۵٪ به یاد می‌آورد',
+      'Spicy - perfect memory':'تند - حافظه کامل',
+      'Fraction to decimal':'کسر به عدد اعشاری',
+      'Decimal to percentage':'عدد اعشاری به درصد',
+      'Fractions and decimals':'کسرها و عددهای اعشاری',
+      'Decimals and percentages':'عددهای اعشاری و درصدها',
+      'Match each fraction with its decimal form.':'هر کسر را با شکل اعشاری آن تطبیق دهید.',
+      'Match each decimal with its percentage form.':'هر عدد اعشاری را با شکل درصدی آن تطبیق دهید.',
+      'Use your memory to match fractions with decimals.':'از حافظه خود برای تطبیق کسرها با عددهای اعشاری استفاده کنید.',
+      'Use your memory to match decimals with percentages.':'از حافظه خود برای تطبیق عددهای اعشاری با درصدها استفاده کنید.',
+      'Fractions use denominators of 2, 3, 4, 5 and 10. The only recurring decimal included is one third.':'کسرها از مخرج‌های ۲، ۳، ۴، ۵ و ۱۰ استفاده می‌کنند. تنها اعشار تکرارشونده یک سوم است.',
+      'Percentages are from 5% to 100% in 5% increments, with mostly multiples of 10%.':'درصدها از ۵٪ تا ۱۰۰٪ با فاصله‌های ۵٪ هستند و بیشتر آن‌ها مضرب‌های ۱۰٪ هستند.',
+      'A fraction matches its decimal form, such as 3/4 and 0.75.':'یک کسر با شکل اعشاری خود تطبیق دارد، مانند 3/4 و 0.75.',
+      'A decimal matches its percentage form, such as 0.35 and 35%.':'یک عدد اعشاری با شکل درصدی خود تطبیق دارد، مانند 0.35 و 35%.',
+      'Multiplication facts use 2 × 2 up to 10 × 10 with no duplicate answers.':'حقایق ضرب از 2 × 2 تا 10 × 10 بدون پاسخ‌های تکراری استفاده می‌کنند.',
+      'Squares and square roots':'توان‌های دو و ریشه‌های دوم',
+      'Squares and roots':'توان‌های دو و ریشه‌ها',
+      'Match each square or square root expression with its value.':'هر عبارت توان دو یا ریشه دوم را با مقدار آن تطبیق دهید.',
+      'Use your memory to match squares and square roots with their values.':'از حافظه خود برای تطبیق توان‌های دو و ریشه‌های دوم با مقدارشان استفاده کنید.',
+      'Square cards match to their value, and square root cards match to the root. Symbol notation is used throughout.':'کارت‌های توان دو با مقدارشان و کارت‌های ریشه دوم با ریشه خود تطبیق دارند. در همه کارت‌ها از نماد ریاضی استفاده شده است.',
+      'A square expression matches its value, such as 3² and 9.':'یک عبارت توان دو با مقدارش تطبیق دارد، مانند 3² و 9.',
+      'A square root expression matches its value, such as √36 and 6.':'یک عبارت ریشه دوم با مقدارش تطبیق دارد، مانند √36 و 6.'
+    });
+
+    function escapeHtml(value){
+      return String(value)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+    }
+
+    function interpolate(template, vars = {}){
+      return String(template).replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? '');
+    }
+
+    function tr(key, vars = {}){
+      const english = interpolate(key, vars);
+      if (uiLang === 'en') return escapeHtml(english);
+      const nativeTemplate = TRANSLATIONS[uiLang]?.[key] || key;
+      const native = interpolate(nativeTemplate, vars);
+      return `<span class="i18n-dual"><span class="native">${escapeHtml(native)}</span><span class="english-under">${escapeHtml(english)}</span></span>`;
+    }
+
+    function tPlain(key, vars = {}){
+      if (uiLang === 'en') return interpolate(key, vars);
+      return interpolate(TRANSLATIONS[uiLang]?.[key] || key, vars);
+    }
+
+    function setModal(modal, open){
+      modal.classList.toggle('open', open);
+      modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    function buildEmptyState(){
+      return {
+        topic: currentTopic,
+        cards: [],
+        currentPlayer: 1,
+        players: { 1: 'Player 1', 2: 'Player 2' },
+        scores: { 1: 0, 2: 0 },
+        flipped: [],
+        matchedPairs: 0,
+        totalPairs: PAIR_COUNT,
+        turnNumber: 1,
+        status: 'idle',
+        winner: null,
+        mismatchToken: 0
+      };
+    }
+
+    function shuffle(array){
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function getActiveTopic(){
+      return state.topic || currentTopic || 'multiplication';
+    }
+
+    function generateMultiplicationPairs(){
+      const pool = [];
+      for (let a = 2; a <= 10; a++){
+        for (let b = 2; b <= 10; b++){
+          pool.push({ a, b, product: a * b, expression: `${a} × ${b}` });
+        }
+      }
+      const selected = [];
+      const usedProducts = new Set();
+      for (const fact of shuffle(pool)){
+        if (usedProducts.has(fact.product)) continue;
+        selected.push(fact);
+        usedProducts.add(fact.product);
+        if (selected.length === PAIR_COUNT) break;
+      }
+      return selected.map((fact, index) => {
+        const pairId = `mul-${index}-${fact.a}-${fact.b}`;
+        return {
+          pairId,
+          cards: [
+            { id:`${pairId}-question`, pairId, topic:'multiplication', kind:'question', text:fact.expression, answer:fact.product, revealed:false, matched:false },
+            { id:`${pairId}-answer`, pairId, topic:'multiplication', kind:'answer', text:String(fact.product), answer:fact.product, revealed:false, matched:false }
+          ]
+        };
+      });
+    }
+
+    function buildCards(topic = currentTopic){
+      let pairs;
+      if (topic === 'clockDigital') pairs = createClockPairs(PAIR_COUNT);
+      else if (topic === 'fractionDecimal') pairs = createFractionDecimalPairs(PAIR_COUNT);
+      else if (topic === 'decimalPercentage') pairs = createDecimalPercentagePairs(PAIR_COUNT);
+      else if (topic === 'squaresRoots') pairs = createSquaresRootsPairs(PAIR_COUNT);
+      else if (topic === 'shapesNames') pairs = createShapeNamePairs(PAIR_COUNT);
+      else pairs = generateMultiplicationPairs();
+      return shuffle(pairs.flatMap(pair => pair.cards));
+    }
+
+    function buildFreshState(names = { 1:'Player 1', 2:'Player 2' }, status = 'active', topic = currentTopic){
+      const deckTopic = topic || 'multiplication';
+      return {
+        topic: deckTopic,
+        cards: buildCards(deckTopic),
+        currentPlayer: 1,
+        players: { 1:names[1] || 'Player 1', 2:names[2] || 'Player 2' },
+        scores: { 1: 0, 2: 0 },
+        flipped: [],
+        matchedPairs: 0,
+        totalPairs: PAIR_COUNT,
+        turnNumber: 1,
+        status,
+        winner: null,
+        mismatchToken: 0
+      };
+    }
+
+    function getPlayerName(player){
+      return state.players?.[player] || `Player ${player}`;
+    }
+
+    function otherPlayer(player){ return player === 1 ? 2 : 1; }
+
+    function isMyTurn(){
+      if (state.status !== 'active') return false;
+      if (gameMode === 'computer') return state.currentPlayer === 1 && !computerThinking;
+      if (gameMode === 'pass') return true;
+      if (gameMode === 'online') return online.active && state.currentPlayer === online.myPlayer;
+      return false;
+    }
+
+    function updateGameSelectOptions(){
+      if (!els.gameSelect) return;
+      Array.from(els.gameSelect.options).forEach((option) => {
+        const config = TOPIC_CONFIG[option.value] || TOPIC_CONFIG.multiplication;
+        option.textContent = tPlain(config.selectLabel);
+      });
+    }
+
+    function updateComputerDifficultyOptions(){
+      if (!els.computerDifficultySelect) return;
+      Array.from(els.computerDifficultySelect.options).forEach((option) => {
+        const config = COMPUTER_DIFFICULTY_CONFIG[option.value] || COMPUTER_DIFFICULTY_CONFIG.spicy;
+        option.textContent = tPlain(config.label);
+      });
+    }
+
+    function updateLanguage(){
+      uiLang = els.mainLanguageSelect.value || 'en';
+      document.documentElement.lang = uiLang;
+      STATIC_LABELS.forEach(([id, key]) => {
+        const el = $(id);
+        if (el) el.innerHTML = tr(key);
+      });
+      updateGameSelectOptions();
+      updateComputerDifficultyOptions();
+      els.passP1Name.placeholder = tPlain('Player 1 name');
+      els.passP2Name.placeholder = tPlain('Player 2 name');
+      els.playerNameInput.placeholder = tPlain('Enter your name before playing');
+      els.roomCodeInput.placeholder = tPlain('Room code');
+      updateTopicUI();
+      renderRules();
+      renderStatus();
+      showMessage(currentMessageKey, currentMessageTone, false);
+      updateWinnerText();
+    }
+
+    function updateTopicUI(){
+      const topic = getActiveTopic();
+      const config = TOPIC_CONFIG[topic] || TOPIC_CONFIG.multiplication;
+      const topicPill = $('topicPill');
+      const gameInfoText = $('gameInfoText');
+      const topicNote = $('topicNote');
+      const rulesIntro = $('rulesIntro');
+      if (topicPill) topicPill.innerHTML = tr(config.pill);
+      if (gameInfoText) gameInfoText.innerHTML = tr(config.info);
+      if (topicNote) topicNote.innerHTML = tr(config.note);
+      if (rulesIntro) rulesIntro.innerHTML = tr(config.rulesIntro);
+    }
+
+    function renderRules(){
+      const topic = getActiveTopic();
+      const rules = RULES_BY_TOPIC[topic] || RULES_BY_TOPIC.multiplication;
+      els.rulesList.innerHTML = rules.map(rule => `<li>${tr(rule)}</li>`).join('');
+    }
+
+    function render(){
+      updateTopicUI();
+      renderBoard();
+      renderScores();
+      renderStatus();
+      maybeStartComputerTurn();
+    }
+
+    function getCardLabel(card){
+      if (card.kind === 'analogueClock') return `Analogue clock showing ${getClockTimeLabel(card.hour, card.minute)}`;
+      if (card.kind === 'digitalClock') return `Digital clock showing ${getClockTimeLabel(card.hour, card.minute)}`;
+      if (card.kind === 'fraction') return `Fraction ${card.label || card.text}`;
+      if (card.kind === 'decimal' || card.kind === 'decimalPercent') return card.label || `Decimal ${card.text}`;
+      if (card.kind === 'percentage') return card.label || `${card.text}`;
+      if (card.kind === 'squareExpression') return card.label || `${card.base} squared`;
+      if (card.kind === 'rootExpression') return card.label || `square root of ${card.radicand}`;
+      if (card.kind === 'powerAnswer') return card.label || String(card.value);
+      if (card.kind === 'shapeImage') return `${card.shapeName || card.text} shape image`;
+      if (card.kind === 'shapeName') return card.shapeName || card.text || 'Shape name';
+      return card.text || 'Hidden card';
+    }
+
+    function getCardFrontClass(card){
+      if (card.kind === 'answer') return 'answer-card';
+      if (card.kind === 'question') return 'question-card';
+      if (card.kind === 'analogueClock') return 'clock-analogue-card';
+      if (card.kind === 'digitalClock') return 'digital-clock-card';
+      if (card.kind === 'fraction') return 'fraction-card';
+      if (card.kind === 'decimal' || card.kind === 'decimalPercent') return 'decimal-card';
+      if (card.kind === 'percentage') return 'percentage-card';
+      if (card.kind === 'squareExpression') return 'square-expression-card';
+      if (card.kind === 'rootExpression') return 'root-expression-card';
+      if (card.kind === 'powerAnswer') return 'power-answer-card';
+      if (card.kind === 'shapeImage') return 'shape-image-card';
+      if (card.kind === 'shapeName') return 'shape-name-card';
+      return '';
+    }
+
+    function renderCardFace(card){
+      if (card.kind === 'analogueClock') return renderAnalogueClock(card.hour, card.minute);
+      if (card.kind === 'digitalClock') return renderDigitalClock(card.hour, card.minute);
+      if (card.kind === 'fraction') return renderFraction(card.numerator, card.denominator);
+      if (card.kind === 'decimal' || card.kind === 'decimalPercent') return renderDecimal(card.decimal);
+      if (card.kind === 'percentage') return renderPercentage(card.percent);
+      if (card.kind === 'squareExpression') return renderSquareExpression(card.base);
+      if (card.kind === 'rootExpression') return renderSquareRootExpression(card.radicand);
+      if (card.kind === 'powerAnswer') return renderPowerAnswer(card.value);
+      if (card.kind === 'shapeImage') return renderShapeImage(card.shapeKey);
+      if (card.kind === 'shapeName') return renderShapeName(card.shapeName || card.text);
+      return escapeHtml(card.text);
+    }
+
+    function renderBoard(){
+      const canClick = isMyTurn();
+      els.memoryBoard.innerHTML = state.cards.map((card) => {
+        const flipped = card.revealed || card.matched;
+        const disabled = !canClick || flipped || state.flipped.length >= 2;
+        const frontClass = getCardFrontClass(card);
+        const ownerClass = card.matchedBy ? `won-by-${card.matchedBy}` : '';
+        const label = flipped ? getCardLabel(card) : 'Hidden card';
+        return `
+          <button class="memory-card ${flipped ? 'flipped' : ''} ${card.matched ? 'matched' : ''} ${ownerClass}" data-card-id="${escapeHtml(card.id)}" ${disabled ? 'disabled' : ''} aria-label="${escapeHtml(label)}">
+            <span class="card-inner">
+              <span class="card-face card-back" aria-hidden="true"></span>
+              <span class="card-face card-front ${frontClass}">${renderCardFace(card)}</span>
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      els.memoryBoard.querySelectorAll('.memory-card').forEach(btn => {
+        btn.addEventListener('click', () => handleCardClick(btn.dataset.cardId));
+      });
+    }
+
+    function renderScores(){
+      const p1 = getPlayerName(1);
+      const p2 = getPlayerName(2);
+      els.p1Label.textContent = p1;
+      els.p2Label.textContent = gameMode === 'computer' ? `${p2} 🤖` : p2;
+      els.p1Score.textContent = state.scores?.[1] ?? 0;
+      els.p2Score.textContent = state.scores?.[2] ?? 0;
+      els.matchedCount.textContent = `${state.matchedPairs || 0}/${state.totalPairs || PAIR_COUNT}`;
+      els.turnCount.textContent = state.turnNumber || 1;
+    }
+
+    function renderStatus(){
+      els.turnDot.classList.toggle('p1', state.currentPlayer === 1);
+      els.turnDot.classList.toggle('p2', state.currentPlayer === 2);
+
+      if (gameMode === 'menu' || state.status === 'idle'){
+        els.statusTitle.innerHTML = tr('Choose a game mode');
+        els.statusSubtitle.innerHTML = tr('Select how you would like to play Math Memory.');
+        return;
+      }
+      if (state.status === 'waiting'){
+        els.statusTitle.innerHTML = tr('Waiting for player 2 to join...');
+        els.statusSubtitle.innerHTML = tr('Share the room code with player 2.');
+        return;
+      }
+      if (state.status === 'gameOver'){
+        els.statusTitle.innerHTML = tr('All pairs have been found.');
+        els.statusSubtitle.innerHTML = getWinnerSentence();
+        return;
+      }
+      if (state.status === 'checking'){
+        els.statusTitle.innerHTML = tr('Not a match. Remember those cards.');
+        els.statusSubtitle.innerHTML = tr('The cards will flip back soon.');
+        return;
+      }
+
+      const name = getPlayerName(state.currentPlayer);
+      if (gameMode === 'computer' && state.currentPlayer === 1){
+        els.statusTitle.innerHTML = tr('Your turn');
+      } else if (gameMode === 'computer' && state.currentPlayer === 2){
+        els.statusTitle.innerHTML = tr('Computer\'s turn');
+      } else {
+        els.statusTitle.innerHTML = tr('{name}\'s turn', { name });
+      }
+      els.statusSubtitle.innerHTML = tr('Flip two cards.');
+    }
+
+    function showMessage(key, tone = 'good', remember = true){
+      if (remember){
+        currentMessageKey = key;
+        currentMessageTone = tone;
+      }
+      els.messageBox.className = `message ${tone || 'good'}`;
+      els.messageBox.innerHTML = tr(key);
+    }
+
+    function handleCardClick(cardId){
+      if (gameMode === 'online'){
+        onlineFlipCard(cardId);
+        return;
+      }
+      localFlipCard(cardId, 'human');
+    }
+
+    function localFlipCard(cardId, actor = 'human'){
+      if (state.status !== 'active') return;
+      if (gameMode === 'computer' && actor !== 'computer' && state.currentPlayer !== 1) return;
+      if (state.flipped.length >= 2) return;
+
+      const card = state.cards.find(c => c.id === cardId);
+      if (!card || card.revealed || card.matched) return;
+
+      card.revealed = true;
+      state.flipped.push(cardId);
+      rememberCard(card);
+      showMessage('Flip two cards.', 'good');
+      render();
+
+      if (state.flipped.length === 2){
+        evaluateLocalFlip();
+      }
+    }
+
+    function evaluateLocalFlip(){
+      const [firstId, secondId] = state.flipped;
+      const first = state.cards.find(c => c.id === firstId);
+      const second = state.cards.find(c => c.id === secondId);
+      if (!first || !second) return;
+
+      const isMatch = first.pairId === second.pairId && first.kind !== second.kind;
+      if (isMatch){
+        first.matched = true;
+        second.matched = true;
+        first.matchedBy = state.currentPlayer;
+        second.matchedBy = state.currentPlayer;
+        state.scores[state.currentPlayer] = (state.scores[state.currentPlayer] || 0) + 1;
+        state.matchedPairs += 1;
+        state.flipped = [];
+        forgetMatchedCards();
+        showMessage('Good match! Have another turn.', 'success');
+        checkForWinner();
+        render();
+      } else {
+        state.status = 'checking';
+        state.mismatchToken += 1;
+        const token = state.mismatchToken;
+        showMessage('Not a match. Remember those cards.', 'warn');
+        render();
+        setTimeout(() => {
+          if (state.mismatchToken !== token || state.status !== 'checking') return;
+          first.revealed = false;
+          second.revealed = false;
+          state.flipped = [];
+          state.currentPlayer = otherPlayer(state.currentPlayer);
+          state.turnNumber += 1;
+          state.status = 'active';
+          showMessage('Flip two cards.', 'good');
+          render();
+        }, MISMATCH_DELAY);
+      }
+    }
+
+    function checkForWinner(){
+      if (state.matchedPairs < state.totalPairs) return;
+      state.status = 'gameOver';
+      const p1 = state.scores[1] || 0;
+      const p2 = state.scores[2] || 0;
+      state.winner = p1 === p2 ? 'draw' : (p1 > p2 ? 1 : 2);
+      showMessage('All pairs have been found.', 'success');
+      setTimeout(() => showWinner(), 450);
+    }
+
+    function getWinnerSentence(){
+      if (!state.winner) return tr('Great memory work.');
+      if (state.winner === 'draw') return tr('It is a draw!');
+      const name = getPlayerName(state.winner);
+      return tr('{name} wins with the most matching pairs.', { name });
+    }
+    TRANSLATIONS.ar['{name} wins with the most matching pairs.'] = 'يفوز {name} بأكبر عدد من الأزواج المطابقة.';
+    TRANSLATIONS.fa['{name} wins with the most matching pairs.'] = '{name} با بیشترین جفت‌های مطابق برنده می‌شود.';
+    TRANSLATIONS.ar['Share the room code with player 2.'] = 'شارك رمز الغرفة مع اللاعب 2.';
+    TRANSLATIONS.fa['Share the room code with player 2.'] = 'کد اتاق را با بازیکن ۲ به اشتراک بگذارید.';
+    TRANSLATIONS.ar['The cards will flip back soon.'] = 'ستعود البطاقات مقلوبة قريباً.';
+    TRANSLATIONS.fa['The cards will flip back soon.'] = 'کارت‌ها به‌زودی برمی‌گردند.';
+
+    function showWinner(){
+      if (winnerShownForTurn === `${gameMode}-${state.winner}-${state.turnNumber}`) return;
+      winnerShownForTurn = `${gameMode}-${state.winner}-${state.turnNumber}`;
+      updateWinnerText();
+      setModal(els.winnerModal, true);
+      launchConfetti();
+    }
+
+    function updateWinnerText(){
+      if (!els.winnerTitle) return;
+      if (state.status !== 'gameOver') return;
+      if (state.winner === 'draw'){
+        els.winnerEmoji.textContent = '🤝';
+        els.winnerTitle.innerHTML = tr('It is a draw!');
+        els.winnerSubtitle.innerHTML = tr('Great memory work.');
+      } else {
+        const name = getPlayerName(state.winner);
+        els.winnerEmoji.textContent = '🏆🙂';
+        els.winnerTitle.innerHTML = tr('Winner!');
+        els.winnerSubtitle.innerHTML = tr('{name} wins with the most matching pairs.', { name });
+      }
+    }
+
+    function launchConfetti(){
+      const colors = ['#2563eb','#7c3aed','#22c55e','#f59e0b','#ef4444','#06b6d4'];
+      for (let i = 0; i < 90; i++){
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = `${Math.random() * 320}ms`;
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1300);
+      }
+    }
+
+    function rememberCard(card){
+      if (gameMode !== 'computer') return;
+      if (card.matched) return;
+      computerMemory.set(card.id, { id:card.id, pairId:card.pairId, kind:card.kind });
+    }
+
+    function forgetMatchedCards(){
+      for (const card of state.cards){
+        if (card.matched) computerMemory.delete(card.id);
+      }
+    }
+
+    function findKnownComputerMatch(){
+      const known = [...computerMemory.values()].filter(info => {
+        const card = state.cards.find(c => c.id === info.id);
+        return card && !card.matched && !card.revealed;
+      });
+      for (let i = 0; i < known.length; i++){
+        for (let j = i + 1; j < known.length; j++){
+          if (known[i].pairId === known[j].pairId && known[i].kind !== known[j].kind){
+            return [known[i].id, known[j].id];
+          }
+        }
+      }
+      return null;
+    }
+
+    function findKnownMateFor(cardId){
+      const first = state.cards.find(c => c.id === cardId);
+      if (!first) return null;
+      for (const info of computerMemory.values()){
+        if (info.id === cardId) continue;
+        const card = state.cards.find(c => c.id === info.id);
+        if (!card || card.matched || card.revealed) continue;
+        if (info.pairId === first.pairId && info.kind !== first.kind) return info.id;
+      }
+      return null;
+    }
+
+    function randomHiddenCard(exclude = new Set()){
+      const hidden = state.cards.filter(c => !c.matched && !c.revealed && !exclude.has(c.id));
+      if (!hidden.length) return null;
+      return hidden[Math.floor(Math.random() * hidden.length)].id;
+    }
+
+    function maybeStartComputerTurn(){
+      if (gameMode !== 'computer') return;
+      if (state.status !== 'active') return;
+      if (state.currentPlayer !== 2) return;
+      if (computerThinking) return;
+      runComputerTurn();
+    }
+
+    async function runComputerTurn(){
+      computerThinking = true;
+      renderStatus();
+      await delay(650);
+      if (gameMode !== 'computer' || state.status !== 'active' || state.currentPlayer !== 2){
+        computerThinking = false;
+        return;
+      }
+
+      const memoryChance = COMPUTER_DIFFICULTY_CONFIG[computerDifficulty]?.memoryChance ?? 1;
+      const knownMatch = findKnownComputerMatch();
+      const shouldUseKnownMatch = knownMatch && Math.random() < memoryChance;
+
+      if (shouldUseKnownMatch){
+        localFlipCard(knownMatch[0], 'computer');
+        await delay(700);
+        localFlipCard(knownMatch[1], 'computer');
+      } else {
+        const firstId = randomHiddenCard();
+        if (!firstId){ computerThinking = false; return; }
+        localFlipCard(firstId, 'computer');
+        await delay(850);
+        const mateId = findKnownMateFor(firstId);
+        const shouldUseKnownMate = mateId && Math.random() < memoryChance;
+        const secondId = shouldUseKnownMate ? mateId : randomHiddenCard(new Set([firstId]));
+        if (secondId) localFlipCard(secondId, 'computer');
+      }
+
+      setTimeout(() => {
+        computerThinking = false;
+        render();
+      }, MISMATCH_DELAY + 250);
+    }
+
+    function delay(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    function openGameChoice(nextMode){
+      pendingGameMode = nextMode;
+      setModal(els.modeMenuModal, false);
+      setModal(els.passPlayModal, false);
+      setModal(els.onlineSetupModal, false);
+      setModal(els.winnerModal, false);
+      if (els.gameSelect) els.gameSelect.value = currentTopic || 'multiplication';
+      if (els.computerDifficultySelect) els.computerDifficultySelect.value = computerDifficulty || 'spicy';
+      if (els.computerDifficultyPanel) els.computerDifficultyPanel.hidden = nextMode !== 'computer';
+      setModal(els.gameChoiceModal, true);
+      showMessage('Choose a game mode to begin.', 'good', false);
+    }
+
+    function chooseTopicAndContinue(topic){
+      currentTopic = topic || 'multiplication';
+      if (pendingGameMode === 'computer' && els.computerDifficultySelect){
+        computerDifficulty = els.computerDifficultySelect.value || 'spicy';
+      }
+      state = buildEmptyState();
+      updateTopicUI();
+      renderRules();
+      setModal(els.gameChoiceModal, false);
+
+      if (pendingGameMode === 'computer'){
+        startComputerGame();
+      } else if (pendingGameMode === 'pass'){
+        setModal(els.passPlayModal, true);
+        setTimeout(() => els.passP1Name.focus(), 80);
+      } else if (pendingGameMode === 'online'){
+        setModal(els.onlineSetupModal, true);
+        setOnlineStatus(FIREBASE_CONFIGURED ? 'Enter your name, then create or join a room.' : 'Firebase is not configured yet. Paste the Math Memory app config into the file.', FIREBASE_CONFIGURED ? '' : 'warn');
+        setTimeout(() => els.playerNameInput.focus(), 80);
+      } else {
+        openModeMenu();
+      }
+    }
+
+    function startComputerGame(){
+      leaveOnline(false);
+      gameMode = 'computer';
+      computerMemory = new Map();
+      computerThinking = false;
+      winnerShownForTurn = null;
+      state = buildFreshState({ 1:'You', 2:'Computer' }, 'active', currentTopic);
+      setModal(els.modeMenuModal, false);
+      setModal(els.gameChoiceModal, false);
+      setModal(els.winnerModal, false);
+      showMessage('Flip two cards.', 'good');
+      render();
+    }
+
+    function startPassGame(){
+      leaveOnline(false);
+      const p1 = els.passP1Name.value.trim() || 'Player 1';
+      const p2 = els.passP2Name.value.trim() || 'Player 2';
+      gameMode = 'pass';
+      winnerShownForTurn = null;
+      state = buildFreshState({ 1:p1, 2:p2 }, 'active', currentTopic);
+      setModal(els.passPlayModal, false);
+      setModal(els.modeMenuModal, false);
+      setModal(els.gameChoiceModal, false);
+      setModal(els.winnerModal, false);
+      showMessage('Flip two cards.', 'good');
+      render();
+    }
+
+    function restartCurrentGame(){
+      setModal(els.winnerModal, false);
+      winnerShownForTurn = null;
+      if (gameMode === 'computer'){
+        startComputerGame();
+      } else if (gameMode === 'pass'){
+        const names = { 1:getPlayerName(1), 2:getPlayerName(2) };
+        state = buildFreshState(names, 'active', currentTopic);
+        showMessage('Flip two cards.', 'good');
+        render();
+      } else if (gameMode === 'online' && online.active && online.ref){
+        resetOnlineRoom();
+      } else {
+        openModeMenu();
+      }
+    }
+
+    function openModeMenu(){
+      leaveOnline(false);
+      gameMode = 'menu';
+      state = buildEmptyState();
+      setModal(els.winnerModal, false);
+      setModal(els.passPlayModal, false);
+      setModal(els.onlineSetupModal, false);
+      setModal(els.gameChoiceModal, false);
+      setModal(els.modeMenuModal, true);
+      showMessage('Choose a game mode to begin.', 'good');
+      render();
+    }
+
+    function cleanName(){
+      return els.playerNameInput.value.trim().slice(0, 24);
+    }
+
+    async function ensureAuth(){
+      if (!FIREBASE_CONFIGURED){
+        setOnlineStatus('Firebase is not configured yet. Paste the Math Memory app config into the file.', 'warn');
+        return null;
+      }
+      await loadFirebase();
+      if (!auth || !db || !onAuthStateChanged){
+        setOnlineStatus('Firebase sign-in failed. Check the Firebase config and Anonymous Authentication.', 'warn');
+        return null;
+      }
+      const user = await authReadyPromise;
+      if (user) return user;
+      return new Promise((resolve) => {
+        const unsub = onAuthStateChanged(auth, (u) => {
+          unsub();
+          resolve(u);
+        });
+      });
+    }
+
+    function generateRoomCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
+
+    async function createOnlineRoom(){
+      const name = cleanName();
+      if (!name){ setOnlineStatus('Enter your name first.', 'warn'); return; }
+      const user = await ensureAuth();
+      if (!user) return;
+      online.uid = user.uid;
+
+      try {
+        let code = generateRoomCode();
+        let roomRef = doc(db, ROOM_COLLECTION, code);
+        for (let attempts = 0; attempts < 5; attempts++){
+          const existing = await getDoc(roomRef);
+          if (!existing.exists()) break;
+          code = generateRoomCode();
+          roomRef = doc(db, ROOM_COLLECTION, code);
+        }
+
+        const freshState = buildFreshState({ 1:name, 2:'Player 2' }, 'waiting', currentTopic);
+        await setDoc(roomRef, {
+          roomCode: code,
+          status: 'waiting',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          players: {
+            1: { uid:user.uid, name },
+            2: null
+          },
+          state: freshState,
+          cardSet: currentTopic
+        });
+
+        connectToRoom(roomRef, code, 1);
+        setOnlineStatus('Room created. Share the code with player 2.', 'good');
+        els.roomBadge.classList.add('show');
+        els.onlineRoomCode.textContent = code;
+        els.leaveOnlineBtn.disabled = false;
+      } catch (err){
+        console.error(err);
+        setOnlineStatus(err.message || 'Could not create the room.', 'error');
+      }
+    }
+
+    async function joinOnlineRoom(){
+      const name = cleanName();
+      const code = els.roomCodeInput.value.trim().toUpperCase();
+      if (!name){ setOnlineStatus('Enter your name first.', 'warn'); return; }
+      if (!code){ setOnlineStatus('Enter a room code.', 'warn'); return; }
+      const user = await ensureAuth();
+      if (!user) return;
+      online.uid = user.uid;
+
+      const roomRef = doc(db, ROOM_COLLECTION, code);
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(roomRef);
+          if (!snap.exists()) throw new Error('ROOM_NOT_FOUND');
+          const data = snap.data();
+          if (data.players?.[1]?.uid === user.uid){
+            return;
+          }
+          if (data.players?.[2] && data.players[2].uid !== user.uid) throw new Error('ROOM_FULL');
+          const s = JSON.parse(JSON.stringify(data.state));
+          s.players[2] = name;
+          s.status = 'active';
+          transaction.update(roomRef, {
+            status: 'active',
+            players: { ...data.players, 2: { uid:user.uid, name } },
+            state: s,
+            updatedAt: serverTimestamp()
+          });
+        });
+        connectToRoom(roomRef, code, 2);
+        setOnlineStatus('Joined room. Waiting for the game to start.', 'good');
+        els.roomBadge.classList.add('show');
+        els.onlineRoomCode.textContent = code;
+        els.leaveOnlineBtn.disabled = false;
+      } catch (err){
+        console.error(err);
+        if (err.message === 'ROOM_NOT_FOUND') setOnlineStatus('Room not found. Check the code and try again.', 'error');
+        else if (err.message === 'ROOM_FULL') setOnlineStatus('That room is already full.', 'error');
+        else setOnlineStatus(err.message || 'Could not join the room.', 'error');
+      }
+    }
+
+    function connectToRoom(roomRef, code, playerNumber){
+      if (online.unsub) online.unsub();
+      online.active = true;
+      online.roomCode = code;
+      online.ref = roomRef;
+      online.myPlayer = playerNumber;
+      gameMode = 'online';
+      winnerShownForTurn = null;
+      scheduledMismatchToken = null;
+
+      online.unsub = onSnapshot(roomRef, (snap) => {
+        if (!snap.exists()){
+          setOnlineStatus('Room not found. Check the code and try again.', 'error');
+          leaveOnline(false);
+          return;
+        }
+        online.data = snap.data();
+        state = online.data.state || buildEmptyState();
+        if (state.topic) currentTopic = state.topic;
+        if (state.status === 'active' || state.status === 'checking' || state.status === 'gameOver'){
+          setModal(els.onlineSetupModal, false);
+          setModal(els.modeMenuModal, false);
+          setModal(els.gameChoiceModal, false);
+        }
+        if (state.status === 'waiting'){
+          setOnlineStatus('Waiting for player 2 to join...', 'good');
+        }
+        if (state.status === 'checking') maybeResolveOnlineMismatch(state.mismatchToken);
+        if (state.status === 'gameOver') setTimeout(() => showWinner(), 450);
+        render();
+      });
+    }
+
+    function setOnlineStatus(key, tone = ''){
+      els.onlineStatus.className = `online-status ${tone || ''}`;
+      els.onlineStatus.innerHTML = tr(key);
+    }
+
+    async function onlineFlipCard(cardId){
+      if (!online.active || !online.ref){ return; }
+      if (!isMyTurn()){
+        showMessage('Only the current player can flip a card.', 'warn');
+        return;
+      }
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(online.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          const s = JSON.parse(JSON.stringify(data.state));
+          if (s.status !== 'active') return;
+          if (s.currentPlayer !== online.myPlayer) return;
+          if ((s.flipped || []).length >= 2) return;
+
+          const card = s.cards.find(c => c.id === cardId);
+          if (!card || card.revealed || card.matched) return;
+          card.revealed = true;
+          s.flipped = s.flipped || [];
+          s.flipped.push(cardId);
+
+          if (s.flipped.length === 2){
+            const [firstId, secondId] = s.flipped;
+            const first = s.cards.find(c => c.id === firstId);
+            const second = s.cards.find(c => c.id === secondId);
+            const isMatch = first && second && first.pairId === second.pairId && first.kind !== second.kind;
+            if (isMatch){
+              first.matched = true;
+              second.matched = true;
+              first.matchedBy = s.currentPlayer;
+              second.matchedBy = s.currentPlayer;
+              s.scores[s.currentPlayer] = (s.scores[s.currentPlayer] || 0) + 1;
+              s.matchedPairs += 1;
+              s.flipped = [];
+              if (s.matchedPairs >= s.totalPairs){
+                s.status = 'gameOver';
+                const p1 = s.scores[1] || 0;
+                const p2 = s.scores[2] || 0;
+                s.winner = p1 === p2 ? 'draw' : (p1 > p2 ? 1 : 2);
+              }
+            } else {
+              s.status = 'checking';
+              s.mismatchToken = (s.mismatchToken || 0) + 1;
+            }
+          }
+
+          transaction.update(online.ref, { state:s, updatedAt:serverTimestamp() });
+        });
+      } catch (err){
+        console.error(err);
+        showMessage('Only the current player can flip a card.', 'warn');
+      }
+    }
+
+    function maybeResolveOnlineMismatch(token){
+      if (!token || scheduledMismatchToken === token) return;
+      scheduledMismatchToken = token;
+      setTimeout(async () => {
+        if (!online.active || !online.ref) return;
+        try {
+          await runTransaction(db, async (transaction) => {
+            const snap = await transaction.get(online.ref);
+            if (!snap.exists()) return;
+            const data = snap.data();
+            const s = JSON.parse(JSON.stringify(data.state));
+            if (s.status !== 'checking' || s.mismatchToken !== token) return;
+            for (const id of s.flipped || []){
+              const card = s.cards.find(c => c.id === id);
+              if (card && !card.matched) card.revealed = false;
+            }
+            s.flipped = [];
+            s.currentPlayer = otherPlayer(s.currentPlayer);
+            s.turnNumber = (s.turnNumber || 1) + 1;
+            s.status = 'active';
+            transaction.update(online.ref, { state:s, updatedAt:serverTimestamp() });
+          });
+        } catch (err){ console.error(err); }
+      }, MISMATCH_DELAY);
+    }
+
+    async function resetOnlineRoom(){
+      if (!online.active || !online.ref || !online.data) return;
+      const names = {
+        1: online.data.players?.[1]?.name || getPlayerName(1),
+        2: online.data.players?.[2]?.name || getPlayerName(2)
+      };
+      const freshState = buildFreshState(names, online.data.players?.[2] ? 'active' : 'waiting', online.data.state?.topic || currentTopic);
+      await updateDoc(online.ref, { state:freshState, status:freshState.status, cardSet:freshState.topic, updatedAt:serverTimestamp() });
+    }
+
+    function leaveOnline(resetUi = true){
+      if (online.unsub){ online.unsub(); online.unsub = null; }
+      online.active = false;
+      online.roomCode = null;
+      online.ref = null;
+      online.myPlayer = null;
+      online.data = null;
+      scheduledMismatchToken = null;
+      els.roomBadge.classList.remove('show');
+      els.onlineRoomCode.textContent = '----';
+      els.leaveOnlineBtn.disabled = true;
+      if (resetUi){
+        setOnlineStatus('Enter your name, then create or join a room.');
+        openModeMenu();
+      }
+    }
+
+    function copyRoomCode(){
+      const code = online.roomCode || els.onlineRoomCode.textContent;
+      if (!code || code === '----') return;
+      navigator.clipboard?.writeText(code).then(() => {
+        setOnlineStatus('Copied!', 'good');
+      });
+    }
+
+
+    function handleTopicChange(){
+      // Topic selection now happens on the Choose a game screen, before the game starts.
+      updateTopicUI();
+    }
+
+    function bindEvents(){
+      els.mainLanguageSelect.addEventListener('change', updateLanguage);
+      els.rulesBtn.addEventListener('click', () => setModal(els.rulesModal, true));
+      els.closeRulesBtn.addEventListener('click', () => setModal(els.rulesModal, false));
+      els.chooseComputerBtn.addEventListener('click', () => openGameChoice('computer'));
+      els.choosePassPlayBtn.addEventListener('click', () => openGameChoice('pass'));
+      els.chooseOnlineBtn.addEventListener('click', () => openGameChoice('online'));
+      els.startChosenGameBtn.addEventListener('click', () => chooseTopicAndContinue(els.gameSelect.value || 'multiplication'));
+      els.gameSelect.addEventListener('keydown', (event) => { if (event.key === 'Enter') chooseTopicAndContinue(els.gameSelect.value || 'multiplication'); });
+      els.gameChoiceBackBtn.addEventListener('click', () => { setModal(els.gameChoiceModal, false); setModal(els.modeMenuModal, true); });
+      els.passBackBtn.addEventListener('click', () => { setModal(els.passPlayModal, false); setModal(els.gameChoiceModal, true); });
+      els.onlineBackBtn.addEventListener('click', () => { setModal(els.onlineSetupModal, false); setModal(els.gameChoiceModal, true); });
+      els.startPassPlayBtn.addEventListener('click', startPassGame);
+      els.passP2Name.addEventListener('keydown', (event) => { if (event.key === 'Enter') startPassGame(); });
+      els.newGameBtn.addEventListener('click', restartCurrentGame);
+      els.backToMenuBtn.addEventListener('click', openModeMenu);
+      els.playAgainBtn.addEventListener('click', restartCurrentGame);
+      els.winnerMenuBtn.addEventListener('click', openModeMenu);
+      els.createOnlineBtn.addEventListener('click', createOnlineRoom);
+      els.joinOnlineBtn.addEventListener('click', joinOnlineRoom);
+      els.leaveOnlineBtn.addEventListener('click', () => leaveOnline(true));
+      els.copyRoomBtn.addEventListener('click', copyRoomCode);
+      els.roomCodeInput.addEventListener('input', () => { els.roomCodeInput.value = els.roomCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g,''); });
+      els.roomCodeInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') joinOnlineRoom(); });
+    }
+
+    bindEvents();
+    updateLanguage();
+    render();
+  </script>
+</body>
+</html>
