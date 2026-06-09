@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ROWCO v10 | Mills Maths Tools</title>
+<style>
+  :root{
+    --bg:#f8fafc;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--border:#e2e8f0;
+    --shadow:0 18px 45px rgba(15,23,42,.13);--blue:#2563eb;--blue2:#1d4ed8;
+    --green:#16a34a;--green2:#15803d;--red:#ef4444;--amber:#f59e0b;
+    --p1:#16a34a;--p1soft:#dcfce7;--p2:#2563eb;--p2soft:#dbeafe;
+    --paper:#fffdf8;--gold:#ffdf70;--uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{min-height:100%}
+  body{margin:0;font-family:var(--uiFont);color:var(--ink);background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),radial-gradient(circle at top right,rgba(108,188,74,.14),transparent 34rem),var(--bg)}
+  .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:10px 18px;display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);align-items:center;gap:14px;box-shadow:0 10px 28px rgba(15,23,42,.22)}
+  .mmtBrand{display:flex;align-items:center;gap:9px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:5px 9px;margin-left:-9px;font-weight:900;user-select:none}.mmtBrand:hover{background:rgba(255,255,255,.12)}
+  .mmtBrandLogo{width:36px;height:36px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto}.mmtBrandText strong{display:block;font-size:1.05rem;line-height:1;letter-spacing:-.03em}.mmtBrandText span{display:block;font-size:.72rem;opacity:.82;font-weight:650}
+  .mmtTopTitle{font-weight:850;font-size:clamp(1.2rem,2vw,1.55rem);letter-spacing:-.04em;text-align:center;white-space:nowrap}.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+  button,select,input{font:inherit}button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:10px 14px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none}button:hover{transform:translateY(-1px)}button:active{transform:translateY(0)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:#eef2f7;color:var(--ink)}.mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white}.btn:hover,.btn-soft:hover{background:#e5ebf3}.mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22)}
+  .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20)}.btn-primary:hover{background:var(--blue2)}.btn-green{background:var(--green);color:white;border-color:var(--green)}.btn-green:hover{background:var(--green2)}.btn-red{background:var(--red);color:white;border-color:var(--red)}
+  input,select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800}label{color:#334155;font-weight:850;font-size:.92rem}
+  .layout{width:min(1500px,calc(100vw - 36px));margin:14px auto 10px}.game-card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);padding:18px;display:grid;gap:16px}
+  .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch}.turn-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:68px}.status-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto}.status-title{font-weight:950;font-size:1.15rem;line-height:1.1;letter-spacing:-.02em}.status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750}.toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .game-area{display:grid;grid-template-columns:minmax(560px,1fr) 360px;gap:20px;align-items:start}.board-wrap{background:linear-gradient(180deg,#fff,#f9fafb);border-radius:24px;border:1px solid var(--border);box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);padding:16px;max-width:min(760px,calc(100dvh - 130px));width:100%;margin:0 auto}.board{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;aspect-ratio:1/1;width:100%}
+  .cell{border:0;border-radius:14px;background:var(--paper);box-shadow:0 3px 10px rgba(15,23,42,.15),inset 0 0 0 1px #e5e7eb;font-size:clamp(20px,4.2vw,46px);font-weight:850;display:flex;align-items:center;justify-content:center;cursor:default;transition:.15s transform,.15s box-shadow,.15s background;position:relative;min-width:0}.cell.card.legal{cursor:pointer;box-shadow:0 0 0 4px var(--gold),0 8px 20px rgba(15,23,42,.16);transform:translateY(-1px)}.cell.card.legal:hover{transform:translateY(-4px) scale(1.03)}.cell.empty{background:#f3f4f6;color:#cbd5e1;box-shadow:inset 0 0 0 1px #e5e7eb}.cell.marker{background:#111827;color:white;font-size:clamp(12px,1.8vw,24px);font-weight:1000;line-height:1.05;text-align:center;letter-spacing:.05em;box-shadow:0 8px 18px rgba(15,23,42,.32)}
+  .cell.activeRow{background:var(--p1soft)}.cell.activeCol{background:var(--p2soft)}.cell.activeRow.activeCol{background:#111827;color:white}.cell.negative{color:#7f1d1d}.cell.positive{color:#111827}.cell.zero{color:#6b7280}
+  .side-panel{display:grid;gap:16px}.panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border)}.panel-section h2{font-size:1.1rem;margin:0 0 10px;font-weight:950;letter-spacing:-.02em}.scoreGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.score{border-radius:18px;padding:14px;background:white;border:2px solid var(--border);text-align:center}.score.p1{border-left:8px solid var(--p1)}.score.p2{border-left:8px solid var(--p2)}.score.active.p1{border-color:var(--p1);background:var(--p1soft)}.score.active.p2{border-color:var(--p2);background:var(--p2soft)}.score .role{font-weight:950;color:#334155}.score .points{font-size:2.5rem;font-weight:1000;color:#111827;line-height:1}.scoreManual{display:none;margin-top:10px;gap:8px}.score.manualActive .scoreManual{display:grid}.scoreManual input{width:100%;text-align:center;font-size:1.4rem;font-weight:950;border:2px solid var(--border);border-radius:14px;padding:8px;background:white;color:var(--ink)}.scoreManual button{width:100%;padding:9px 10px;border-radius:14px}.lastMove{font-size:1.05rem;font-weight:900;color:#334155}.hint{color:var(--muted);line-height:1.35;font-weight:750;margin:0}.paul-card{display:grid;gap:10px}.paul-card img{width:100%;max-height:115px;object-fit:contain;border-radius:16px;background:#22a6b8}.paul-card a{color:var(--blue2);font-weight:950;text-decoration:none}.paul-card a:hover{text-decoration:underline}.small{font-size:.9rem}.hidden{display:none!important}
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.42);display:grid;place-items:center;padding:18px;z-index:90}.modalBox{width:min(760px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:24px}.modalBox h2{margin:0 0 8px;font-size:1.8rem;letter-spacing:-.05em}.setup-grid{display:grid;gap:12px}.end-actions,.mode-actions{display:grid;gap:12px;margin-top:18px}.end-actions{display:flex;flex-wrap:wrap}.winner{font-size:2.2rem;font-weight:1000;letter-spacing:-.05em}.winner.p1{color:var(--p1)}.winner.p2{color:var(--p2)}.winner.draw{color:#92400e}.podium-wrap{display:grid;place-items:center;margin:10px 0 16px}.podium{position:relative;width:min(360px,100%);min-height:190px;display:grid;place-items:end center}.trophy{font-size:4.2rem;filter:drop-shadow(0 10px 16px rgba(245,158,11,.28));animation:trophyPop .55s ease both}.winner-name{font-size:1.45rem;font-weight:1000;color:#0f172a;text-align:center;margin-top:4px}.podium-block{width:170px;height:86px;background:linear-gradient(180deg,#fef3c7,#f59e0b);border:3px solid #d97706;border-radius:18px 18px 12px 12px;display:grid;place-items:center;box-shadow:0 16px 30px rgba(15,23,42,.16), inset 0 -8px 0 rgba(146,64,14,.12)}.podium-number{font-size:3.6rem;font-weight:1000;color:#78350f;line-height:1}.podium.draw .podium-block{background:linear-gradient(180deg,#e2e8f0,#cbd5e1);border-color:#94a3b8}.podium.draw .trophy{filter:grayscale(.25)}@keyframes trophyPop{0%{transform:translateY(18px) scale(.75);opacity:0}70%{transform:translateY(-5px) scale(1.08);opacity:1}100%{transform:translateY(0) scale(1)}}.mode-card{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink)}.mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff)}.mode-icon{grid-row:1/3;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem}.mode-card strong{font-size:1.35rem;font-weight:950;letter-spacing:-.03em}.mode-card span:last-child{color:var(--muted);font-size:.95rem;font-weight:750}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settings-card{border:1px solid var(--border);border-radius:18px;padding:14px;background:#f8fafc;display:grid;gap:10px}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:900}.switch{position:relative;display:inline-flex;align-items:center;width:100px;height:44px;border-radius:999px;background:#b91c1c;box-shadow:inset 0 3px 8px rgba(0,0,0,.18);cursor:pointer;flex:0 0 auto}.switch input{position:absolute;opacity:0;width:0;height:0}.switch .knob{position:absolute;left:5px;width:34px;height:34px;border-radius:50%;background:linear-gradient(180deg,#fff,#dbe4f0);box-shadow:0 4px 10px rgba(0,0,0,.25);transition:left .2s ease}.switch .switchText{position:absolute;right:13px;color:white;font-weight:1000;letter-spacing:.03em}.switch input:checked + .knob{left:60px}.switch input:checked ~ .switchText{left:15px;right:auto}.switch:has(input:checked){background:#49a529}.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.level-btn{border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);color:var(--ink);text-align:left;padding:18px;border-radius:22px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;min-height:92px}.level-btn .level-icon{grid-row:1/3;width:52px;height:52px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:1.75rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.06)}.level-btn strong{font-size:1.25rem}.level-btn span:last-child{color:var(--muted);font-weight:850}.level-btn.selected{border-color:#7c3aed;background:#f5f3ff;box-shadow:0 0 0 4px rgba(124,58,237,.12)}.manual-entry{display:grid;gap:10px;margin-top:12px}.manual-entry .target{font-size:1.1rem;font-weight:950;color:#334155}.screen-shake{animation:screenShake .34s ease-in-out 0s 2}.penalty-flash{box-shadow:0 0 0 5px rgba(239,68,68,.28)!important;background:#fee2e2!important}.confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:120;animation:fall 1000ms linear forwards;border-radius:3px}@keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0}}@keyframes screenShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}.room-code{font-size:1.8rem;font-weight:1000;letter-spacing:.12em;color:var(--blue2)}
+  .brand-footer{width:min(1500px,calc(100vw - 36px));margin:0 auto 8px;display:flex;align-items:center;justify-content:center;min-height:30px;font-size:12px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center}.brand-footer a{color:var(--blue);text-decoration:none;font-weight:950}
+  @media(max-width:1080px){.mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px}.mmtBrand{justify-self:center;margin-left:0}.actions{justify-content:center}.layout{width:calc(100vw - 28px);margin-top:14px}.game-area{grid-template-columns:1fr}.status-strip{grid-template-columns:1fr}.toolbar{justify-content:center}.board-wrap{max-width:760px}.side-panel{grid-template-columns:1fr 1fr}.paul-card img{max-height:90px}}
+  @media(max-width:700px){.mmtBrandText span{display:none}.layout{width:calc(100vw - 20px)}.game-card{padding:14px}.board{gap:6px}.cell{border-radius:10px}.side-panel,.scoreGrid,.two-col{grid-template-columns:1fr}.brand-footer{width:calc(100vw - 20px);padding:8px 10px}}
+</style>
+</head>
+<body>
+<header class="mmtTopbar">
+  <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools"><img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" /><span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span></a>
+  <div class="mmtTopTitle">ROWCO</div>
+  <div class="actions"><button class="btn" id="rulesBtn" type="button">Rules</button><button class="btn btn-primary" id="newBtn" type="button">New game</button><button class="btn-soft" id="backMenuBtn" type="button">Back to menu</button></div>
+</header>
+<main class="layout">
+  <section class="game-card">
+    <div class="status-strip">
+      <div class="turn-card"><div class="status-icon" id="statusIcon">↔️</div><div><div class="status-title" id="turnText">Choose a game mode</div><div class="status-subtitle" id="moveHint">Single Player, Pass and Play, or Online Multiplayer.</div></div></div>
+      <div class="toolbar"><button class="btn-soft" id="resetSameBtn" type="button">Reset same players</button></div>
+    </div>
+    <div class="game-area">
+      <div class="board-wrap"><div id="board" class="board" aria-label="ROWCO board"></div></div>
+      <aside class="side-panel">
+        <section class="panel-section"><div class="lastMove" id="lastMove">Welcome to ROWCO.</div></section>
+        <section class="panel-section scoreGrid"><div class="score p1" id="p1Score"><div class="role" id="p1Role">ROWS</div><div id="p1Name">Player 1</div><div class="points" id="p1Points">0</div><div class="scoreManual" id="p1ManualBox"><input id="p1ManualInput" type="number" inputmode="numeric" placeholder="New total"><button class="btn-green" id="p1ManualEnter" type="button">Enter</button></div></div><div class="score p2" id="p2Score"><div class="role" id="p2Role">COLUMNS</div><div id="p2Name">Player 2</div><div class="points" id="p2Points">0</div><div class="scoreManual" id="p2ManualBox"><input id="p2ManualInput" type="number" inputmode="numeric" placeholder="New total"><button class="btn-primary" id="p2ManualEnter" type="button">Enter</button></div></div></section>
+        <section class="panel-section paul-card"><img src="swan.png" alt="Dr Paul Swan" /><p class="hint small">ROWCO is the product of <strong>Dr Paul Swan</strong>. This digital version is an unofficial classroom adaptation.</p><p class="hint small"><a href="https://drpaulswan.com.au/shop/rowco-8-pack/" target="_blank" rel="noopener">View the official ROWCO card game</a></p><p class="hint small"><strong>Cards left:</strong> <span id="cardsLeft">48</span></p></section>
+      </aside>
+    </div>
+  </section>
+</main>
+<div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+<div class="modal" id="modeModal"><div class="modalBox"><h2>Choose a game mode</h2><p class="hint">Select how you would like to play ROWCO.</p><div class="mode-actions"><button class="mode-card" id="singleModeBtn" type="button"><span class="mode-icon">🎯</span><strong>Single Player</strong><span>Play against the computer on one device.</span></button><button class="mode-card" id="passModeBtn" type="button"><span class="mode-icon">🔄</span><strong>Pass and Play</strong><span>Two players share one device and take turns.</span></button><button class="mode-card" id="onlineModeBtn" type="button"><span class="mode-icon">🌐</span><strong>Online Multiplayer</strong><span>Create or join a room on two devices.</span></button></div></div></div>
+
+<div class="modal hidden" id="setupModal"><div class="modalBox"><h2 id="setupTitle">Start ROWCO</h2><div class="setup-grid"><label id="p1Label">Player 1 name<input id="p1" value="Player 1"></label><label id="p2Label">Player 2 name<input id="p2" value="Player 2"></label><div id="singleLevelPanel" class="settings-card hidden"><strong>Choose difficulty</strong><p class="hint small">Choose how strategically the computer will play.</p><div class="level-grid"><button class="level-btn selected" data-level="mild" type="button"><span class="level-icon">🍃</span><strong>Mild</strong><span>Random choices</span></button><button class="level-btn" data-level="medium" type="button"><span class="level-icon">🌶️</span><strong>Medium</strong><span>Chooses the highest value</span></button><button class="level-btn" data-level="spicy" type="button"><span class="level-icon">🔥</span><strong>Spicy</strong><span>Looks one move ahead</span></button></div></div><label>Who is the Rows player?<select id="rowsChooser"><option value="p1">Player 1</option><option value="p2">Player 2</option><option value="random">Random</option></select></label><div class="settings-card"><div class="toggle-row"><span>Manual addition</span><label class="switch"><input id="manualToggle" type="checkbox"><span class="knob"></span><span class="switchText">OFF</span></label></div><p class="hint small">When ON, students must enter the new total after taking a card. Correct answers get confetti. Incorrect answers receive a -5 penalty.</p></div><p class="hint">Board: 7×7 with the marker in the centre. Player 1 is green. Player 2 is blue.</p><div class="end-actions"><button class="btn-primary" id="startBtn" type="button">Start game</button><button class="btn-soft" id="setupBackBtn" type="button">Back</button></div></div></div></div>
+
+<div class="modal hidden" id="onlineModal"><div class="modalBox"><h2>Online Multiplayer</h2><p class="hint">Create a room or join using a room code. Player 1 is green. Player 2 is blue.</p><div class="setup-grid"><label>Your name<input id="onlineName" value="Player 1"></label><div class="settings-card"><div class="toggle-row"><span>Manual addition</span><label class="switch"><input id="onlineManualToggle" type="checkbox"><span class="knob"></span><span class="switchText">OFF</span></label></div><p class="hint small">All human players must enter their new total after taking a card.</p></div><div class="two-col"><button class="btn-primary" id="createRoomBtn" type="button">Create room</button><label>Room code<input id="joinCode" placeholder="ABCD" maxlength="6"></label></div><button class="btn-green" id="joinRoomBtn" type="button">Join room</button><button class="btn-soft" id="onlineBackBtn" type="button">Back</button><div class="panel-section hidden" id="roomWaiting"><div class="hint">Room code</div><div class="room-code" id="roomCodeDisplay">----</div><p class="hint" id="roomStatus">Waiting for Player 2...</p><button class="btn-primary hidden" id="hostStartBtn" type="button">Start game</button></div></div></div></div>
+
+<div class="modal hidden" id="endModal"><div class="modalBox"><div class="winner" id="winnerText"></div><div class="podium-wrap"><div class="podium" id="winnerPodium"><div><div class="trophy" id="winnerTrophy">🏆</div><div class="winner-name" id="winnerName">Winner</div></div><div class="podium-block"><div class="podium-number">1</div></div></div></div><p id="endDetails"></p><div class="end-actions"><button class="btn-primary" id="againBtn" type="button">Play Again</button><button class="btn-soft" id="exitBtn" type="button">Exit</button></div></div></div>
+
+<div class="modal hidden" id="rulesModal"><div class="modalBox"><h2>Rules</h2><p>Rows and Columns are fixed for the whole game. The Rows player can only take a card from the marker’s row. The Columns player can only take a card from the marker’s column.</p><p>Take the card, add its value to your total, and move the marker to that card’s square. If it is your turn and your active row or column has no cards left, the game ends. Highest total wins.</p><button class="btn-primary" id="closeRules" type="button">Close</button></div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+  authDomain: "mmt-firebase-games.firebaseapp.com",
+  projectId: "mmt-firebase-games",
+  storageBucket: "mmt-firebase-games.firebasestorage.app",
+  messagingSenderId: "980506958719",
+  appId: "1:980506958719:web:f7b7e0abfd9c5ddaba584a"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let uid = null;
+let authReady = signInAnonymously(auth)
+  .then(c => { uid = c.user.uid; return uid; })
+  .catch(err => { showLast(`Firebase sign-in failed: ${err.code || ''} ${err.message}`); throw err; });
+function firebaseMessage(err){
+  const code = err?.code || '';
+  const msg = err?.message || String(err || 'Unknown error');
+  if(code === 'permission-denied') return `Firebase permission denied. Check Firestore rules for /games/rowco/rooms/{roomCode}. ${msg}`;
+  if(code === 'auth/operation-not-allowed') return `Anonymous sign-in is not enabled for this Firebase project. ${msg}`;
+  if(code === 'auth/unauthorized-domain') return `This domain is not authorised in Firebase Authentication settings. ${msg}`;
+  return `Firebase error ${code}: ${msg}`;
+}
+
+const SIZE = 7, CENTRE = 3, GAME_ID='rowco';
+const ROWCO_DECK = [12,10,10,9,9,8,8,8,7,7,7,6,6,6,6,5,5,5,5,4,4,4,4,3,3,3,2,2,2,2,1,1,1,0,0,0,-1,-1,-2,-2,-3,-3,-4,-4,-5,-5,-6,-7];
+let board=null, marker={r:CENTRE,c:CENTRE}, rowsPlayer='p1', colsPlayer='p2', currentRole='rows', scores={rows:0,cols:0}, names={p1:'Player 1',p2:'Player 2'}, gameOver=false, aiLevel='mild', manualAddition=false, pendingMove=null, endConfettiShown=false;
+let mode='menu', localPlayer='p1', roomCode=null, roomUnsub=null, lastSetup={mode:'pass',p1:'Player 1',p2:'Player 2',rowsChoice:'p1',aiLevel:'mild',manualAddition:false};
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function roomRef(code){return doc(db,'games',GAME_ID,'rooms',code);}
+function playerForRole(role){return role==='rows'?rowsPlayer:colsPlayer;}
+function roleForPlayer(p){return rowsPlayer===p?'rows':'cols';}
+function roleLabel(p){return rowsPlayer===p?'ROWS':'COLUMNS';}
+function canMoveLocal(){ if(gameOver) return false; if(mode==='single') return playerForRole(currentRole)==='p1'; if(mode==='online') return playerForRole(currentRole)===localPlayer; return mode==='pass'; }
+function showLast(txt){$('lastMove').textContent=txt;}
+function makeNewBoard(){const deck=shuffle([...ROWCO_DECK]); const fresh=Array.from({length:SIZE},()=>Array(SIZE).fill(null)); for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){if(r===CENTRE&&c===CENTRE)continue; fresh[r][c]=deck.pop();} return fresh;}
+function flattenBoard(grid){
+  if(!grid) return null;
+  return grid.flat();
+}
+function unflattenBoard(saved){
+  if(!saved) return null;
+  // Backwards compatible: older local code used a 7 x 7 nested array.
+  if(Array.isArray(saved[0])) return saved;
+  const fresh=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+  for(let i=0;i<Math.min(saved.length,SIZE*SIZE);i++){
+    fresh[Math.floor(i/SIZE)][i%SIZE]=saved[i];
+  }
+  return fresh;
+}
+function applyGameData(data){board=unflattenBoard(data.board); marker=data.marker; rowsPlayer=data.rowsPlayer; colsPlayer=data.colsPlayer; currentRole=data.currentRole; scores=data.scores; names=data.names; gameOver=!!data.gameOver; manualAddition=!!data.manualAddition; aiLevel=data.aiLevel||aiLevel||'mild'; render(); if(data.lastMove) showLast(data.lastMove); if(data.gameOver) showEnd(data.end || {});}
+function gameData(extra={}){return {board:flattenBoard(board),marker,rowsPlayer,colsPlayer,currentRole,scores,names,gameOver,manualAddition,aiLevel,...extra};}
+function openMode(){endConfettiShown=false; mode='menu'; $('modeModal').classList.remove('hidden'); $('setupModal').classList.add('hidden'); $('onlineModal').classList.add('hidden'); $('endModal').classList.add('hidden'); if(roomUnsub){roomUnsub(); roomUnsub=null;} renderEmpty();}
+function configureLocal(which){mode=which; $('modeModal').classList.add('hidden'); $('setupModal').classList.remove('hidden'); $('setupTitle').textContent=which==='single'?'Single Player':'Pass and Play'; $('p2Label').style.display=which==='single'?'none':''; $('singleLevelPanel').classList.toggle('hidden', which!=='single'); $('p1').value=which==='single'?'Player 1':lastSetup.p1; $('p2').value=lastSetup.p2; $('rowsChooser').value=lastSetup.rowsChoice; $('manualToggle').checked=!!lastSetup.manualAddition; syncSwitchLabels(); setLevel(lastSetup.aiLevel||'mild');}
+function startGame(useLast=false){
+  endConfettiShown=false;
+  if(!useLast){lastSetup={mode,p1:$('p1').value.trim()||'Player 1',p2: mode==='single'?'Computer':($('p2').value.trim()||'Player 2'),rowsChoice:$('rowsChooser').value,aiLevel,manualAddition:$('manualToggle').checked};}
+  mode=lastSetup.mode||mode||'pass'; aiLevel=lastSetup.aiLevel||'mild'; manualAddition=!!lastSetup.manualAddition; let choice=lastSetup.rowsChoice; if(choice==='random') choice=Math.random()<0.5?'p1':'p2';
+  rowsPlayer=choice==='p1'?'p1':'p2'; colsPlayer=rowsPlayer==='p1'?'p2':'p1'; names={p1:lastSetup.p1,p2:lastSetup.p2}; scores={rows:0,cols:0}; currentRole='rows'; marker={r:CENTRE,c:CENTRE}; gameOver=false; endConfettiShown=false; board=makeNewBoard();
+  $('setupModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('modeModal').classList.add('hidden'); showLast('Game started. Rows plays first.'); render(); checkNoMoves(); maybeComputerMove();
+}
+function legalCells(){const cells=[]; if(!board) return new Set(); if(currentRole==='rows'){for(let c=0;c<SIZE;c++) if(board[marker.r][c]!==null) cells.push(`${marker.r},${c}`);} else{for(let r=0;r<SIZE;r++) if(board[r][marker.c]!==null) cells.push(`${r},${marker.c}`);} return new Set(cells);}
+function renderEmpty(){board=Array.from({length:SIZE},()=>Array(SIZE).fill(null)); marker={r:CENTRE,c:CENTRE}; render(); $('turnText').textContent='Choose a game mode'; $('moveHint').textContent='Single Player, Pass and Play, or Online Multiplayer.'; $('cardsLeft').textContent='48';}
+function render(){
+  const legal=legalCells(); const b=$('board'); b.innerHTML='';
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+    const cell=document.createElement('button'); cell.className='cell'; cell.type='button';
+    if(r===marker.r) cell.classList.add('activeRow'); if(c===marker.c) cell.classList.add('activeCol');
+    if(r===marker.r&&c===marker.c){cell.classList.add('marker'); cell.innerHTML='ROW<br>CO';}
+    else if(!board || board[r][c]===null){cell.classList.add('empty'); cell.textContent='';}
+    else{const v=board[r][c]; cell.classList.add('card',v<0?'negative':v>0?'positive':'zero'); cell.textContent=v; if(legal.has(`${r},${c}`)&&canMoveLocal()&&!pendingMove){cell.classList.add('legal'); cell.onclick=()=>makeMove(r,c);}}
+    b.appendChild(cell);
+  }
+  $('p1Name').textContent=names.p1; $('p2Name').textContent=names.p2; $('p1Role').textContent=roleLabel('p1'); $('p2Role').textContent=roleLabel('p2'); $('p1Points').textContent=scores[roleForPlayer('p1')]||0; $('p2Points').textContent=scores[roleForPlayer('p2')]||0;
+  $('p1Score').className='score p1'+(playerForRole(currentRole)==='p1'?' active':'')+(pendingMove&&playerForRole(pendingMove.role)==='p1'?' manualActive':''); $('p2Score').className='score p2'+(playerForRole(currentRole)==='p2'?' active':'')+(pendingMove&&playerForRole(pendingMove.role)==='p2'?' manualActive':'');
+  if(board){const playerName=names[playerForRole(currentRole)]; $('turnText').textContent=gameOver?'Game over':`${playerName}'s turn · ${currentRole.toUpperCase()}`; $('statusIcon').textContent=currentRole==='rows'?'↔️':'↕️'; $('moveHint').textContent=gameOver?'No legal moves remain.':(currentRole==='rows'?'Choose any available card in the highlighted row.':'Choose any available card in the highlighted column.'); $('cardsLeft').textContent=board.flat().filter(v=>v!==null).length;}
+}
+async function makeMove(r,c,forceComputer=false){
+  if(gameOver || pendingMove || (!forceComputer && !canMoveLocal()))return; const legal=legalCells(); if(!legal.has(`${r},${c}`))return;
+  const value=board[r][c]; const role=currentRole; const who=names[playerForRole(role)]; const oldTotal=scores[role]||0; const expected=oldTotal+value;
+  const player=playerForRole(role);
+  const needsManual = manualAddition && !(mode==='single' && player==='p2');
+  if(needsManual){
+    pendingMove={r,c,value,role,who,oldTotal,expected};
+    showLast(`${who} took ${value>0?`+${value}`:value}. Enter the new total in the score card.`);
+    render();
+    const input=$(player==='p1'?'p1ManualInput':'p2ManualInput');
+    input.value=''; input.placeholder=`${oldTotal} ${value>=0?'+':'−'} ${Math.abs(value)}`;
+    setTimeout(()=>input.focus(),50);
+    return;
+  }
+  await completeMove(r,c,value,role,who,0);
+}
+async function completeMove(r,c,value,role,who,penalty=0){
+  board[r][c]=null; scores[role]=(scores[role]||0)+value+penalty; marker={r,c};
+  const lastMove=penalty ? `${who} took ${value>0?`+${value}`:value}, but entered the wrong total. -5 penalty.` : `${who} took ${value>0?`+${value}`:value}.`;
+  currentRole=role==='rows'?'cols':'rows';
+  showLast(lastMove);
+
+  // Important: after the marker moves, the next player may have no cards in their active line.
+  // In that case the game must end immediately across Single Player, Pass and Play, and Online Multiplayer.
+  const end=checkNoMoves(false);
+  render();
+
+  if(mode==='online' && roomCode){
+    await updateDoc(roomRef(roomCode), gameData({lastMove, end: end || null, updatedAt:serverTimestamp()}));
+  }
+
+  if(end){
+    showEnd(end);
+    return;
+  }
+
+  maybeComputerMove();
+}
+async function checkManualAnswer(){
+  if(!pendingMove) return; const move=pendingMove; const player=playerForRole(move.role); const input=$(player==='p1'?'p1ManualInput':'p2ManualInput');
+  const entered=Number(input.value);
+  pendingMove=null;
+  if(entered===move.expected){launchConfetti(); await completeMove(move.r,move.c,move.value,move.role,move.who,0);}
+  else{flashPenalty(move.role); await completeMove(move.r,move.c,move.value,move.role,move.who,-5);}
+}
+function checkNoMoves(show=true){if(legalCells().size>0)return null; gameOver=true; const blocked=names[playerForRole(currentRole)]; let result='It is a draw!', cls='draw', winner='draw'; if(scores.rows>scores.cols){winner=rowsPlayer; result=`${names[rowsPlayer]} wins!`;cls=winner;} if(scores.cols>scores.rows){winner=colsPlayer; result=`${names[colsPlayer]} wins!`;cls=winner;} const end={result,cls,blocked,winner,rows:scores.rows,cols:scores.cols}; if(show) showEnd(end); return end;}
+function showEnd(end){
+  const winnerKey=end.winner;
+  const isDraw=winnerKey==='draw' || !winnerKey;
+  const winnerName=isDraw?'Draw':(names[winnerKey]||'Winner');
+  $('winnerText').textContent=end.result||'Game over';
+  $('winnerText').className=`winner ${end.cls||'draw'}`;
+  $('winnerName').textContent=isDraw?'No single winner':winnerName;
+  $('winnerTrophy').textContent=isDraw?'🤝':'🏆';
+  $('winnerPodium').className=`podium ${isDraw?'draw':''}`.trim();
+  $('endDetails').textContent=`${end.blocked||names[playerForRole(currentRole)]} had no legal move. Final score: Rows ${end.rows??scores.rows}, Columns ${end.cols??scores.cols}.`;
+  $('endModal').classList.remove('hidden');
+  if(!endConfettiShown){endConfettiShown=true; launchConfetti(120);}
+}
+function evaluateImmediateValue(grid, m, role){
+  const vals=[];
+  if(role==='rows'){for(let c=0;c<SIZE;c++) if(grid[m.r][c]!==null) vals.push(grid[m.r][c]);}
+  else{for(let r=0;r<SIZE;r++) if(grid[r][m.c]!==null) vals.push(grid[r][m.c]);}
+  return vals.length?Math.max(...vals):0;
+}
+function chooseComputerMove(){
+  const cells=[...legalCells()].map(s=>s.split(',').map(Number));
+  if(!cells.length) return null;
+  if(aiLevel==='mild') return cells[Math.floor(Math.random()*cells.length)];
+  if(aiLevel==='medium'){
+    cells.sort((a,b)=>(board[b[0]][b[1]]??-999)-(board[a[0]][a[1]]??-999));
+    return cells[0];
+  }
+  const nextHumanRole=currentRole==='rows'?'cols':'rows';
+  let best=null, bestScore=-Infinity;
+  for(const cell of cells){
+    const [r,c]=cell; const value=board[r][c]??0;
+    const grid=board.map(row=>row.slice()); grid[r][c]=null;
+    const opponentBest=evaluateImmediateValue(grid,{r,c},nextHumanRole);
+    const score=value-opponentBest;
+    if(score>bestScore){bestScore=score; best=cell;}
+  }
+  return best;
+}
+function maybeComputerMove(){
+  if(mode!=='single' || gameOver || playerForRole(currentRole)!=='p2') return;
+  setTimeout(()=>{const pick=chooseComputerMove(); if(!pick){checkNoMoves(); return;} makeMove(pick[0],pick[1],true);},650);
+}
+function launchConfetti(amount=70){
+  const colors=['#16a34a','#2563eb','#f59e0b','#ef4444','#7c3aed','#facc15'];
+  for(let i=0;i<amount;i++){ const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=colors[i%colors.length];d.style.animationDelay=(Math.random()*220)+'ms';document.body.appendChild(d);setTimeout(()=>d.remove(),1300);}
+}
+function flashPenalty(role){
+  document.body.classList.add('screen-shake'); const player=playerForRole(role); const box=$(player==='p1'?'p1Score':'p2Score'); box.classList.add('penalty-flash'); setTimeout(()=>{document.body.classList.remove('screen-shake');box.classList.remove('penalty-flash');},850);
+}
+function setLevel(level){aiLevel=level; 
+function syncSwitchLabels(){document.querySelectorAll('.switch').forEach(sw=>{const input=sw.querySelector('input'); const txt=sw.querySelector('.switchText'); if(txt) txt.textContent=input.checked?'ON':'OFF';});}
+document.addEventListener('change',e=>{if(e.target && (e.target.id==='manualToggle'||e.target.id==='onlineManualToggle')) syncSwitchLabels();});
+document.querySelectorAll('.level-btn').forEach(btn=>btn.classList.toggle('selected',btn.dataset.level===level));}
+function exitToMain(){gameOver=true; $('endModal').classList.add('hidden'); openMode();}
+function code(){return Math.random().toString(36).slice(2,6).toUpperCase();}
+async function createRoom(){
+  try{
+    showLast('Connecting to Firebase...');
+    if(!uid) await authReady;
+    if(!uid) {showLast('Firebase is still connecting. Try again in a moment.'); return;}
+    mode='online'; localPlayer='p1'; manualAddition=$('onlineManualToggle').checked; names={p1:$('onlineName').value.trim()||'Player 1',p2:'Player 2'}; roomCode=code();
+    rowsPlayer='p1'; colsPlayer='p2'; currentRole='rows'; scores={rows:0,cols:0}; marker={r:CENTRE,c:CENTRE}; board=makeNewBoard(); gameOver=false;
+    await setDoc(roomRef(roomCode), {...gameData({status:'waiting',host:uid,players:{p1:{uid,name:names.p1},p2:null},lastMove:'Room created. Waiting for Player 2.'}), createdAt:serverTimestamp(), updatedAt:serverTimestamp()});
+    subscribeRoom(roomCode); $('roomWaiting').classList.remove('hidden'); $('roomCodeDisplay').textContent=roomCode; $('hostStartBtn').classList.remove('hidden'); $('roomStatus').textContent='Waiting for Player 2...';
+    showLast(`Room ${roomCode} created. Waiting for Player 2.`);
+  }catch(err){
+    console.error('Create room failed', err);
+    showLast(firebaseMessage(err));
+  }
+}
+async function joinRoom(){
+  try{
+    if(!uid) await authReady;
+    if(!uid) {showLast('Firebase is still connecting. Try again in a moment.'); return;}
+    const codeVal=$('joinCode').value.trim().toUpperCase(); if(!codeVal)return;
+    const ref=roomRef(codeVal); const snap=await getDoc(ref); if(!snap.exists()){showLast('That room code does not exist.'); return;} const data=snap.data(); if(data.players?.p2?.uid && data.players.p2.uid!==uid){showLast('That room is already full.'); return;}
+    localPlayer='p2'; mode='online'; roomCode=codeVal; const p2Name=$('onlineName').value.trim()||'Player 2'; await updateDoc(ref,{['players.p2']:{uid,name:p2Name},['names.p2']:p2Name,status:'ready',lastMove:'Player 2 joined. Host can start the game.',updatedAt:serverTimestamp()});
+    subscribeRoom(codeVal); $('onlineModal').classList.add('hidden');
+  }catch(err){
+    console.error('Join room failed', err);
+    showLast(firebaseMessage(err));
+  }
+}
+function subscribeRoom(codeVal){
+  if(roomUnsub) roomUnsub(); roomCode=codeVal; roomUnsub=onSnapshot(roomRef(codeVal),(snap)=>{if(!snap.exists())return; const data=snap.data(); applyGameData(data); const p2Joined=!!data.players?.p2; if($('onlineModal').classList.contains('hidden')===false){$('roomStatus').textContent=p2Joined?'Player 2 has joined. Press Start game.':'Waiting for Player 2...';} if(data.status==='playing'){$('onlineModal').classList.add('hidden'); $('modeModal').classList.add('hidden'); $('setupModal').classList.add('hidden'); $('endModal').classList.toggle('hidden',!data.gameOver);} });
+}
+async function hostStart(){try{if(!roomCode)return; await updateDoc(roomRef(roomCode),{status:'playing',lastMove:'Game started. Rows plays first.',updatedAt:serverTimestamp()}); $('onlineModal').classList.add('hidden');}catch(err){console.error('Start room failed', err); showLast(firebaseMessage(err));}}
+async function playAgain(){
+  if(mode==='online' && roomCode && localPlayer==='p1'){board=makeNewBoard(); marker={r:CENTRE,c:CENTRE}; currentRole='rows'; scores={rows:0,cols:0}; gameOver=false; await updateDoc(roomRef(roomCode), gameData({status:'playing',lastMove:'New game started. Rows plays first.',end:null,updatedAt:serverTimestamp()})); $('endModal').classList.add('hidden'); return;}
+  if(mode==='online'){showLast('Ask Player 1 to press Play Again.'); return;}
+  startGame(true);
+}
+$('singleModeBtn').onclick=()=>configureLocal('single'); $('passModeBtn').onclick=()=>configureLocal('pass'); $('onlineModeBtn').onclick=()=>{$('modeModal').classList.add('hidden'); $('onlineModal').classList.remove('hidden');};
+$('setupBackBtn').onclick=openMode; $('onlineBackBtn').onclick=openMode; $('startBtn').onclick=()=>startGame(false); $('newBtn').onclick=openMode; $('backMenuBtn').onclick=openMode; $('resetSameBtn').onclick=()=>{ if(mode==='online') return; startGame(true); };
+
+function syncSwitchLabels(){document.querySelectorAll('.switch').forEach(sw=>{const input=sw.querySelector('input'); const txt=sw.querySelector('.switchText'); if(txt) txt.textContent=input.checked?'ON':'OFF';});}
+document.addEventListener('change',e=>{if(e.target && (e.target.id==='manualToggle'||e.target.id==='onlineManualToggle')) syncSwitchLabels();});
+document.querySelectorAll('.level-btn').forEach(btn=>btn.onclick=()=>setLevel(btn.dataset.level)); $('p1ManualEnter').onclick=checkManualAnswer; $('p2ManualEnter').onclick=checkManualAnswer; $('p1ManualInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkManualAnswer();}); $('p2ManualInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkManualAnswer();}); $('againBtn').onclick=playAgain; $('exitBtn').onclick=exitToMain; $('rulesBtn').onclick=()=>$('rulesModal').classList.remove('hidden'); $('closeRules').onclick=()=>$('rulesModal').classList.add('hidden'); $('createRoomBtn').onclick=createRoom; $('joinRoomBtn').onclick=joinRoom; $('hostStartBtn').onclick=hostStart;
+renderEmpty();
+</script>
+</body>
+</html>
