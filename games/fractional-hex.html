@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fraction Hex Path | Mills Maths Tools</title>
+<style>
+  :root{
+    --bg:#f8fafc;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--border:#e2e8f0;
+    --shadow:0 18px 45px rgba(15,23,42,.13);--blue:#2563eb;--blue2:#1d4ed8;
+    --green:#16a34a;--green2:#15803d;--red:#ef4444;--amber:#f59e0b;--amber2:#d97706;
+    --p1:#2563eb;--p1soft:#dbeafe;--p2:#f59e0b;--p2soft:#ffedd5;
+    --paper:#ffffff;--gold:#ffdf70;--boardPurple:#5b21b6;--boardPurple2:#6d28d9;--boardPurple3:#8b5cf6;--uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{min-height:100%}
+  body{margin:0;font-family:var(--uiFont);color:var(--ink);background:radial-gradient(circle at top left,rgba(124,58,237,.22),transparent 34rem),radial-gradient(circle at top right,rgba(37,99,235,.13),transparent 34rem),linear-gradient(180deg,#f8fafc,#f5f3ff)}
+  .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:10px 18px;display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);align-items:center;gap:14px;box-shadow:0 10px 28px rgba(15,23,42,.22)}
+  .mmtBrand{display:flex;align-items:center;gap:9px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:5px 9px;margin-left:-9px;font-weight:900;user-select:none}.mmtBrand:hover{background:rgba(255,255,255,.12)}
+  .mmtBrandLogo{width:36px;height:36px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto}.mmtBrandText strong{display:block;font-size:1.05rem;line-height:1;letter-spacing:-.03em}.mmtBrandText span{display:block;font-size:.72rem;opacity:.82;font-weight:650}
+  .mmtTopTitle{font-weight:850;font-size:clamp(1.2rem,2vw,1.55rem);letter-spacing:-.04em;text-align:center;white-space:nowrap}.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+  button,select,input{font:inherit}button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:10px 14px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none}button:hover{transform:translateY(-1px)}button:active{transform:translateY(0)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:#eef2f7;color:var(--ink)}.mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white}.btn:hover,.btn-soft:hover{background:#e5ebf3}.mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22)}
+  .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20)}.btn-primary:hover{background:var(--blue2)}.btn-green{background:var(--green);color:white;border-color:var(--green)}.btn-green:hover{background:var(--green2)}.btn-orange{background:var(--amber);color:white;border-color:var(--amber);box-shadow:0 10px 24px rgba(245,158,11,.20)}.btn-orange:hover{background:var(--amber2)}.btn-red{background:var(--red);color:white;border-color:var(--red)}
+  input,select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800}label{color:#334155;font-weight:850;font-size:.92rem}
+  input:focus,select:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.12)}.hidden{display:none!important}.small{font-size:.9rem}.hint{color:var(--muted);line-height:1.35;font-weight:750;margin:0}
+  .layout{width:min(1600px,calc(100vw - 36px));margin:14px auto 10px}.game-card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);padding:18px;display:grid;gap:16px}
+  .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch}.turn-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:68px}.status-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto}.status-title{font-weight:950;font-size:1.15rem;line-height:1.1;letter-spacing:-.02em}.status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750}.toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .game-area{display:grid;grid-template-columns:minmax(820px,1fr) minmax(360px,410px);gap:20px;align-items:start}.board-panel{background:radial-gradient(circle at 24% 18%,rgba(255,255,255,.18),transparent 18rem),linear-gradient(135deg,var(--boardPurple),var(--boardPurple2) 58%,var(--boardPurple3));border-radius:24px;border:1px solid rgba(216,180,254,.82);box-shadow:0 18px 42px rgba(91,33,182,.22),inset 0 0 0 1px rgba(255,255,255,.16);padding:18px;min-width:0;overflow:visible}.side-panel{display:grid;gap:16px}.panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border)}.panel-section h2{font-size:1.1rem;margin:0 0 10px;font-weight:950;letter-spacing:-.02em}.lastMove{font-size:1.05rem;font-weight:900;color:#334155}
+  .goal-frame{display:grid;grid-template-columns:74px minmax(0,1fr) 74px;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;align-items:stretch;overflow:visible}.top-goal,.bottom-goal,.left-goal,.right-goal{display:flex;justify-content:center;align-items:center;text-align:center;font-weight:950;font-size:.78rem;letter-spacing:.04em;border-radius:15px;border:1px solid rgba(255,255,255,.72);background:rgba(255,255,255,.94);color:#334155;text-transform:uppercase;min-height:42px;box-shadow:0 10px 22px rgba(15,23,42,.18)}.top-goal{grid-column:2;grid-row:1;color:#9a5209;background:rgba(255,247,237,.96);border-color:#fed7aa}.bottom-goal{grid-column:2;grid-row:3;color:#9a5209;background:rgba(255,247,237,.96);border-color:#fed7aa}.left-goal{grid-column:1;grid-row:2;color:#125f99;background:rgba(239,246,255,.96);border-color:#bfdbfe;writing-mode:vertical-rl;transform:rotate(180deg)}.right-goal{grid-column:3;grid-row:2;color:#125f99;background:rgba(239,246,255,.96);border-color:#bfdbfe;writing-mode:vertical-rl}.board-wrap{grid-column:2;grid-row:2;position:relative;overflow-x:auto;overflow-y:visible;padding:20px 10px;display:flex;justify-content:center;min-width:0;border-radius:20px;background:rgba(46,16,101,.20);box-shadow:inset 0 0 38px rgba(17,24,39,.18)}.board{--hex-w:96px;--hex-h:90px;--hex-gap:6px;--hex-overlap:calc(var(--hex-w)*-.20);--row-rise:calc(var(--hex-h)*-.22);--hex-offset:calc(var(--hex-w)*.40);display:flex;flex-direction:column;align-items:flex-start;width:max-content;max-width:none;margin:0 auto;padding:14px 22px 14px 8px}.board.size-5{--hex-w:108px;--hex-h:102px;--hex-gap:6px}.board.size-6{--hex-w:92px;--hex-h:86px;--hex-gap:5px}.board.size-7{--hex-w:78px;--hex-h:74px;--hex-gap:4px}.hex-row{display:flex;gap:calc(var(--hex-gap) + var(--hex-overlap));margin-left:calc(var(--row-index)*var(--hex-offset))}.hex-row+.hex-row{margin-top:var(--row-rise)}
+  .tile{position:relative;width:var(--hex-w);height:var(--hex-h);flex:0 0 auto;border:2px solid rgba(255,255,255,.94);background:linear-gradient(180deg,#ffffff,#f8fafc);clip-path:polygon(24% 5%,76% 5%,100% 50%,76% 95%,24% 95%,0 50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;user-select:none;box-shadow:0 10px 22px rgba(15,23,42,.24),inset 0 0 0 2px rgba(255,255,255,.92);transition:transform .15s ease,border .15s ease,box-shadow .15s ease,background .15s ease,opacity .15s ease;overflow:hidden;color:var(--ink)}.tile:hover{transform:translateY(-2px);border-color:#e9d5ff;box-shadow:0 14px 26px rgba(15,23,42,.26),0 0 0 4px rgba(255,255,255,.16)}.tile.open:not(.disabled):hover{transform:translateY(-4px) scale(1.02)}.tile.selected{border-color:#facc15;box-shadow:0 0 0 5px rgba(250,204,21,.32),0 14px 26px rgba(15,23,42,.28)}.tile.open:not(.selected)::after{content:"";position:absolute;inset:7px 10px;clip-path:polygon(24% 5%,76% 5%,100% 50%,76% 95%,24% 95%,0 50%);border:2px dashed rgba(124,58,237,.30);pointer-events:none}.tile.p1{background:linear-gradient(135deg,#dbeafe,#ffffff);border-color:#60a5fa;color:#1e3a8a}.tile.p2{background:linear-gradient(135deg,#ffedd5,#ffffff);border-color:#f59e0b;color:#7c2d12}.tile.disabled{cursor:not-allowed;opacity:.72}.tile.p1::before,.tile.p2::before{position:absolute;top:9px;right:14px;font-weight:1000;font-size:.66rem;border-radius:999px;padding:3px 5px;line-height:1}.tile.p1::before{content:attr(data-p1-label);background:#bfdbfe;color:#1e40af}.tile.p2::before{content:attr(data-p2-label);background:#fed7aa;color:#9a3412}.tile.winning{animation:pulseWin .7s ease-in-out infinite alternate;box-shadow:0 0 0 5px rgba(22,163,74,.20),0 12px 22px rgba(15,23,42,.18)}@keyframes pulseWin{from{transform:scale(1)}to{transform:scale(1.035)}}
+  .frac{display:inline-grid;grid-template-rows:auto auto auto;align-items:center;justify-items:center;min-width:32px;font-family:"Cambria Math","Times New Roman",serif;font-size:clamp(.95rem,1.75vw,1.35rem);line-height:1;font-weight:900;color:currentColor}.frac .bar{width:100%;height:2px;background:currentColor;margin:3px 0 4px;border-radius:99px}.tile small{color:currentColor;opacity:.72;font-weight:850;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}.board.size-6 .frac{font-size:1.16rem}.board.size-7 .frac{font-size:1.03rem}.board.size-7 .tile small{font-size:.54rem;margin-top:1px}.board.size-7 .tile.p1::before,.board.size-7 .tile.p2::before{font-size:.56rem;top:7px;right:12px;padding:2px 4px}
+  .turn-banner{padding:12px 14px;border-radius:17px;border:1px solid #d8edf5;background:#f5fbff;margin-bottom:12px;font-weight:900;display:flex;align-items:center;justify-content:space-between;gap:8px}.turn-banner span{display:inline-flex;align-items:center;gap:7px}.dot{width:12px;height:12px;border-radius:50%;background:var(--p1);display:inline-block}.dot.p2{background:var(--p2)}
+  .scoreGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.score{border-radius:18px;padding:14px;background:white;border:2px solid var(--border);text-align:center}.score.p1{border-left:8px solid var(--p1)}.score.p2{border-left:8px solid var(--p2)}.score.active.p1{border-color:var(--p1);background:var(--p1soft)}.score.active.p2{border-color:var(--p2);background:var(--p2soft)}.score .role{font-weight:950;color:#334155}.score .player-name{font-weight:850;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.score .points{font-size:2.35rem;font-weight:1000;color:#111827;line-height:1}.score .label{font-size:.76rem;font-weight:1000;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.stat-box{background:white;border:1px solid var(--border);border-radius:16px;padding:10px;text-align:center}.stat-box strong{display:block;font-size:1.4rem;line-height:1;color:#184a68}.stat-box span{color:var(--muted);font-size:.72rem;font-weight:850;text-transform:uppercase;letter-spacing:.04em}
+  .selected-question{padding:14px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #d9ecf4;margin-bottom:14px}.selected-question h2{font-size:1rem;margin:0 0 8px;color:#31566f}.big-fraction-wrap{display:flex;align-items:center;justify-content:center;min-height:82px}.big-fraction-wrap .frac{font-size:2.2rem;min-width:56px}.answer-form{display:grid;gap:10px}.answer-form .inline-row{display:grid;grid-template-columns:1fr auto;gap:8px}.message{min-height:76px;border-radius:16px;padding:12px;background:#fff;border:1px solid var(--border);color:#31566f;font-weight:750;line-height:1.35;margin-top:12px}.message.good{background:#dcfce7;border-color:#86efac;color:#14532d}.message.bad{background:#fee2e2;border-color:#fecaca;color:#7f1d1d}.message.win{background:linear-gradient(135deg,#e6f7ff,#e7fff0);border-color:#a9dfc3;color:#0f6c42}.message.p2{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.room-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:8px 12px;font-weight:1000}.room-code{font-size:1.8rem;font-weight:1000;letter-spacing:.12em;color:var(--blue2)}
+  .brand-footer{width:min(1600px,calc(100vw - 36px));margin:0 auto 8px;display:flex;align-items:center;justify-content:center;min-height:30px;font-size:12px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center}.brand-footer a{color:var(--blue);text-decoration:none;font-weight:950}
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.42);display:grid;place-items:center;padding:18px;z-index:90}.modalBox{width:min(760px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:24px}.modalBox h2{margin:0 0 8px;font-size:1.8rem;letter-spacing:-.05em}.modalBox.stepBox{width:min(820px,calc(100vw - 34px));max-height:calc(100dvh - 36px);overflow:auto;padding:22px;border-radius:26px}.modalBox.modeStepBox{width:min(720px,calc(100vw - 34px))}.step-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}.step-head h2{margin:0;font-size:clamp(1.55rem,3vw,2.05rem);letter-spacing:-.055em;line-height:1}.step-pill{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border-radius:999px;padding:8px 12px;background:#eef2ff;color:#1d4ed8;font-weight:1000;border:1px solid #bfdbfe;font-size:.88rem}.workflow-subtitle{margin:4px 0 0;color:var(--muted);font-weight:850;line-height:1.32}.workflow-panel{border:1px solid var(--border);border-radius:22px;background:linear-gradient(180deg,#fff,#f8fafc);padding:16px;display:grid;gap:12px;margin-top:12px}.setup-grid{display:grid;gap:12px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}.setup-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.setup-actions .primary-wide{flex:1 1 230px}.setup-actions .back-small{flex:0 0 auto;min-width:110px}.mode-actions{display:grid;gap:12px;margin-top:14px}.mode-card{display:grid;grid-template-columns:auto 1fr auto;gap:4px 16px;align-items:center;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink)}.mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff)}.mode-icon{grid-row:1/3;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem}.mode-card strong{font-size:1.35rem;font-weight:950;letter-spacing:-.03em}.mode-card span:last-child,.mode-copy span{color:var(--muted);font-size:.95rem;font-weight:750}.mode-card .mode-copy{display:grid;gap:4px}.mode-arrow{font-size:1.8rem;color:#94a3b8;font-weight:1000}.mode-card:hover .mode-arrow{color:var(--blue)}.mode-intro{border:1px solid #bfdbfe;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-radius:22px;padding:14px;display:flex;align-items:center;gap:12px;margin:10px 0 14px}.mode-intro-icon{width:54px;height:54px;border-radius:18px;background:white;border:1px solid var(--border);display:grid;place-items:center;font-size:1.85rem;box-shadow:0 10px 20px rgba(15,23,42,.07);flex:0 0 auto}.mode-intro strong{display:block;font-weight:1000;font-size:1.02rem}.mode-intro span{display:block;color:var(--muted);font-weight:850;line-height:1.25;margin-top:2px}.settings-card{border:1px solid var(--border);border-radius:18px;padding:14px;background:#f8fafc;display:grid;gap:10px}.settings-card strong{font-weight:1000;color:#0f172a}.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.online-choice-grid{display:grid;grid-template-columns:1fr;gap:14px;align-items:stretch}.lobby-card{border:1px solid var(--border);border-radius:22px;padding:16px;background:linear-gradient(180deg,#fff,#f8fafc);display:grid;gap:12px}.lobby-card h3{margin:0;font-size:1.25rem;letter-spacing:-.035em}.lobby-card p{margin:0;color:var(--muted);font-weight:800}.join-card{background:linear-gradient(135deg,#fff7ed,#fff);border-color:#fed7aa;box-shadow:0 16px 34px rgba(249,115,22,.12)}.join-card h3{color:#9a3412}.host-card{background:linear-gradient(135deg,#f5f3ff,#fff);border-color:#ddd6fe;box-shadow:0 16px 34px rgba(124,58,237,.12)}.host-card h3{color:#5b21b6}.join-room-row{display:grid;grid-template-columns:1fr minmax(150px,auto);gap:12px;align-items:end}.room-wait{border:1px solid var(--border);border-radius:22px;background:#f8fafc;padding:16px;display:grid;gap:10px}.winner{font-size:2.2rem;font-weight:1000;letter-spacing:-.05em}.winner.p1{color:var(--p1)}.winner.p2{color:var(--p2)}.podium-wrap{display:grid;place-items:center;margin:10px 0 16px}.podium{position:relative;width:min(360px,100%);min-height:190px;display:grid;place-items:end center}.trophy{font-size:4.2rem;filter:drop-shadow(0 10px 16px rgba(245,158,11,.28));animation:trophyPop .55s ease both}.winner-name{font-size:1.45rem;font-weight:1000;color:#0f172a;text-align:center;margin-top:4px}.podium-block{width:170px;height:86px;background:linear-gradient(180deg,#fef3c7,#f59e0b);border:3px solid #d97706;border-radius:18px 18px 12px 12px;display:grid;place-items:center;box-shadow:0 16px 30px rgba(15,23,42,.16),inset 0 -8px 0 rgba(146,64,14,.12)}.podium-number{font-size:3.6rem;font-weight:1000;color:#78350f;line-height:1}.end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}@keyframes trophyPop{0%{transform:translateY(18px) scale(.75);opacity:0}70%{transform:translateY(-5px) scale(1.08);opacity:1}100%{transform:translateY(0) scale(1)}}.confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:120;animation:fall 1000ms linear forwards;border-radius:3px}@keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0}}
+
+  .answerModal .modalBox{width:min(560px,calc(100vw - 34px));border-radius:28px;padding:24px}.answerModalHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.answerModalHead h2{margin:0;font-size:1.45rem;letter-spacing:-.04em}.answerModalHead p{margin:4px 0 0;color:var(--muted);font-weight:850}.answerModalClose{width:42px;height:42px;border-radius:14px;padding:0;background:#f1f5f9;color:#334155;border:1px solid var(--border);font-size:1.5rem;line-height:1}.answerTileCard{border-radius:24px;background:linear-gradient(135deg,#f5f3ff,#eff6ff);border:1px solid #ddd6fe;padding:18px;display:grid;place-items:center;min-height:128px;margin-bottom:14px}.answerTileCard .frac{font-size:2.45rem}.answerModal .answer-form{gap:12px}.answerModal .answer-form .inline-row{grid-template-columns:1fr auto}.answerModal .message{margin-top:14px;min-height:64px}.answerModal.shake .modalBox{animation:modalShake .34s ease-in-out 0s 2}@keyframes modalShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+  @media(max-width:1180px){.mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px}.mmtBrand{justify-self:center;margin-left:0}.actions{justify-content:center}.layout{width:calc(100vw - 28px);margin-top:14px}.game-area{grid-template-columns:1fr}.status-strip{grid-template-columns:1fr}.toolbar{justify-content:center}.side-panel{grid-template-columns:1fr 1fr}.board-panel{overflow-x:auto}.board-wrap{justify-content:flex-start}.goal-frame{min-width:max-content}}
+  @media(max-width:760px){.layout{width:calc(100vw - 20px)}.game-card{padding:14px}.side-panel,.scoreGrid,.two-col,.level-grid{grid-template-columns:1fr}.brand-footer{width:calc(100vw - 20px);padding:8px 10px}.modal{padding:10px;align-items:start;overflow:auto}.modalBox.stepBox{width:min(700px,calc(100vw - 24px));padding:18px;margin:8px 0;max-height:none}.mode-card{padding:14px 16px}.mode-icon{width:48px;height:48px;font-size:1.55rem}.join-room-row{grid-template-columns:1fr}.goal-frame{grid-template-columns:48px minmax(0,1fr) 48px}.top-goal,.bottom-goal,.left-goal,.right-goal{font-size:.64rem;border-radius:11px;min-height:34px}.board.size-5,.board.size-6,.board.size-7{--hex-w:64px;--hex-h:60px;--hex-gap:3px}.tile small{display:none}.tile.p1::before,.tile.p2::before{font-size:.52rem;top:6px;right:10px;padding:2px 4px}.frac{font-size:.9rem!important}}
+</style>
+</head>
+<body>
+<header class="mmtTopbar">
+  <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools"><img class="mmtBrandLogo" src="mmt.png" alt="Mills Maths Tools logo" /><span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span></a>
+  <div class="mmtTopTitle">Fraction Hex Path</div>
+  <div class="actions"><button class="btn" id="rulesBtn" type="button">Rules</button><button class="btn btn-primary" id="newBtn" type="button">New game</button><button class="btn-soft" id="backMenuBtn" type="button">Back to menu</button></div>
+</header>
+<main class="layout">
+  <section class="game-card">
+    <div class="status-strip">
+      <div class="turn-card"><div class="status-icon" id="statusIcon">🔷</div><div><div class="status-title" id="turnText">Choose a game mode</div><div class="status-subtitle" id="moveHint">Vs Computer, Pass and Play, or Online Multiplayer.</div></div></div>
+      <div class="toolbar"><span class="room-chip hidden" id="roomChip">Room <strong id="roomChipCode">----</strong></span><button class="btn-soft" id="resetSameBtn" type="button">Reset same settings</button></div>
+    </div>
+    <div class="game-area">
+      <section class="board-panel">
+        <div class="goal-frame" aria-label="Game goals">
+          <div class="top-goal" id="topGoal">P2 Start</div>
+          <div class="left-goal" id="leftGoal">P1 Start</div>
+          <div class="board-wrap"><div id="board" class="board" aria-label="Fraction Hex Path board"></div></div>
+          <div class="right-goal" id="rightGoal">P1 Finish</div>
+          <div class="bottom-goal" id="bottomGoal">P2 Finish</div>
+        </div>
+      </section>
+      <aside class="side-panel">
+        <section class="panel-section"><div class="lastMove" id="lastMove">Welcome to Fraction Hex Path.</div></section>
+        <section class="panel-section scoreGrid">
+          <div class="score p1" id="p1Score"><div class="role">LEFT → RIGHT</div><div class="player-name" id="p1Name">Player 1</div><div class="points" id="p1Points">0</div><div class="label">tiles</div></div>
+          <div class="score p2" id="p2Score"><div class="role">TOP → BOTTOM</div><div class="player-name" id="p2Name">Player 2</div><div class="points" id="p2Points">0</div><div class="label">tiles</div></div>
+        </section>
+        <section class="panel-section">
+          <div id="turnBanner" class="turn-banner"><span><i class="dot"></i>Your turn</span><small>Choose any open hex</small></div>
+          <div class="stat-grid"><div class="stat-box"><strong id="p1Mistakes">0</strong><span>P1 mistakes</span></div><div class="stat-box"><strong id="p2Mistakes">0</strong><span>P2 mistakes</span></div></div>
+          <div id="sideMessage" class="message" style="margin-top:14px" role="note">Choose any open hex on the board. A pop-up will ask you to simplify it.</div>
+        </section>
+      </aside>
+    </div>
+  </section>
+</main>
+<div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+<div class="modal" id="modeModal"><div class="modalBox stepBox modeStepBox">
+  <div class="step-head"><div><h2>Choose a game mode</h2><p class="workflow-subtitle">Simplify fractions, claim hexes, and build an unbroken path.</p></div><span class="step-pill">Start</span></div>
+  <div class="mode-intro"><div class="mode-intro-icon">🔷</div><div><strong>Hex removes the stalemate problem.</strong><span>Player 1 connects left to right. Player 2 connects top to bottom. A completed blocking chain is also a winning chain.</span></div></div>
+  <div class="mode-actions">
+    <button class="mode-card" id="singleModeBtn" type="button"><span class="mode-icon">🎯</span><span class="mode-copy"><strong>Vs Computer</strong><span>Play against a friendly or tactical computer.</span></span><span class="mode-arrow">›</span></button>
+    <button class="mode-card" id="passModeBtn" type="button"><span class="mode-icon">👥</span><span class="mode-copy"><strong>Pass and Play</strong><span>Two players share one device and take turns answering.</span></span><span class="mode-arrow">›</span></button>
+    <button class="mode-card" id="onlineModeBtn" type="button"><span class="mode-icon">🌐</span><span class="mode-copy"><strong>Online Multiplayer</strong><span>Create or join a live room on two devices.</span></span><span class="mode-arrow">›</span></button>
+  </div>
+</div></div>
+
+<div class="modal hidden" id="setupModal"><div class="modalBox stepBox"><div id="localSetupContent"></div></div></div>
+<div class="modal hidden" id="onlineModal"><div class="modalBox stepBox"><div id="onlineSetupContent"></div></div></div>
+
+<div class="modal hidden answerModal" id="answerModal"><div class="modalBox">
+  <div class="answerModalHead"><div><h2>Simplify this fraction</h2><p id="answerModalSub">Type the simplest form to claim the hex.</p></div><button class="answerModalClose" id="answerCloseBtn" type="button" aria-label="Close">×</button></div>
+  <div class="answerTileCard"><div class="big-fraction-wrap" id="selectedFraction"><span style="color:#64748b;font-weight:800;">Choose any open hex</span></div></div>
+  <form id="answerForm" class="answer-form">
+    <div class="control-group"><label for="answerInput">Write the fraction in simplest form</label><div class="inline-row"><input id="answerInput" type="text" inputmode="text" autocomplete="off" placeholder="e.g. 3/4" /><button id="checkBtn" class="btn-primary" type="submit">Check</button></div></div>
+    <div class="button-row"><button id="hintBtn" type="button" class="btn-orange">Hint</button><button id="clearBtn" type="button" class="btn-soft">Clear</button></div>
+  </form>
+  <div id="message" class="message" role="status">Choose any open hex. The pop-up will ask you to simplify it.</div>
+</div></div>
+<div class="modal hidden" id="endModal"><div class="modalBox"><div class="winner" id="winnerText"></div><div class="podium-wrap"><div class="podium"><div><div class="trophy" id="winnerTrophy">🏆</div><div class="winner-name" id="winnerName">Winner</div></div><div class="podium-block"><div class="podium-number">1</div></div></div></div><p id="endDetails"></p><div class="end-actions"><button class="btn-primary" id="againBtn" type="button">Play again</button><button class="btn-soft" id="exitBtn" type="button">Exit</button></div></div></div>
+<div class="modal hidden" id="rulesModal"><div class="modalBox"><h2>Rules</h2><p><strong>Player 1</strong> is trying to connect the left side to the right side. <strong>Player 2</strong> is trying to connect the top to the bottom.</p><p>On your turn, choose any open hex. A pop-up will ask you to type the fraction in simplest form. If you are correct, you claim the hex. If you are wrong, the pop-up shakes and you try again. In Pressure mode, a wrong answer gives the computer a turn.</p><p>Hexes connect through their six sides. This is important: a full hex board cannot end in a stalemate, because one of the two players must have a completed path.</p><button class="btn-primary" id="closeRules" type="button">Close</button></div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+  authDomain: "mmt-firebase-games.firebaseapp.com",
+  projectId: "mmt-firebase-games",
+  storageBucket: "mmt-firebase-games.firebasestorage.app",
+  messagingSenderId: "980506958719",
+  appId: "1:980506958719:web:3e3c1abc7de10f21ba584a"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let uid = null;
+let authReady = signInAnonymously(auth).then(c => { uid = c.user.uid; return uid; }).catch(err => { setMessage(firebaseMessage(err),'bad'); throw err; });
+function firebaseMessage(err){
+  const code = err?.code || '';
+  const msg = err?.message || String(err || 'Unknown error');
+  if(code === 'permission-denied') return `Firebase permission denied. Check Firestore rules for /games/fraction-hex-path/rooms/{roomCode}. ${msg}`;
+  if(code === 'auth/operation-not-allowed') return `Anonymous sign-in is not enabled for this Firebase project. ${msg}`;
+  if(code === 'auth/unauthorized-domain') return `This domain is not authorised in Firebase Authentication settings. ${msg}`;
+  return `Firebase error ${code}: ${msg}`;
+}
+
+const GAME_ID = 'fraction-hex-path';
+const $ = id => document.getElementById(id);
+const DEFAULT_PLAYERS = {p1:'Player 1', p2:'Computer'};
+let state = freshBlankState();
+let localPlayer = 'p1';
+let roomCode = null;
+let roomUnsub = null;
+let isHost = false;
+let lastSetup = {mode:'single',p1:'Player 1',p2:'Player 2',size:5,difficulty:'mild',computerLevel:'tactical',mistakeMode:'practice'};
+let onlineDraft = {name:'Player 1',joinCode:'',size:5,difficulty:'mild'};
+
+function freshBlankState(){
+  return {mode:'menu',status:'menu',size:5,difficulty:'mild',computerLevel:'tactical',mistakeMode:'practice',board:[],selected:null,turn:'p1',mistakes:{p1:0,p2:0},players:{...DEFAULT_PLAYERS},playerUids:{p1:null,p2:null},gameOver:false,winner:null,winningPath:[],lastMove:'Welcome to Fraction Hex Path.'};
+}
+function escapeHTML(value){return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function escapeAttr(value){return escapeHTML(value).replace(/`/g,'&#96;');}
+function clampName(value, fallback){const txt=String(value||'').trim(); return txt ? txt.slice(0,28) : fallback;}
+function roomRef(code){return doc(db,'games',GAME_ID,'rooms',code);}
+
+$('singleModeBtn').addEventListener('click',()=>openLocalSetup('single'));
+$('passModeBtn').addEventListener('click',()=>openLocalSetup('pass'));
+$('onlineModeBtn').addEventListener('click',openOnlineSetup);
+$('newBtn').addEventListener('click',openMode);
+$('backMenuBtn').addEventListener('click',openMode);
+$('resetSameBtn').addEventListener('click',resetSameSettings);
+$('rulesBtn').addEventListener('click',()=>$('rulesModal').classList.remove('hidden'));
+$('closeRules').addEventListener('click',()=>$('rulesModal').classList.add('hidden'));
+$('againBtn').addEventListener('click',()=>{ $('endModal').classList.add('hidden'); resetSameSettings(); });
+$('exitBtn').addEventListener('click',()=>{ $('endModal').classList.add('hidden'); openMode(); });
+$('hintBtn').addEventListener('click',showHint);
+$('clearBtn').addEventListener('click',()=>{ $('answerInput').value=''; $('answerInput').focus(); });
+$('answerCloseBtn').addEventListener('click',()=>closeAnswerModal(true));
+$('answerForm').addEventListener('submit',event=>{event.preventDefault(); checkAnswer();});
+
+function openMode(){
+  if(roomUnsub){roomUnsub(); roomUnsub=null;}
+  roomCode=null; isHost=false; localPlayer='p1';
+  state=freshBlankState();
+  $('modeModal').classList.remove('hidden'); $('setupModal').classList.add('hidden'); $('onlineModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('answerModal').classList.add('hidden'); $('roomChip').classList.add('hidden');
+  render();
+}
+function resetSameSettings(){
+  if(state.mode==='online'){
+    if(isHost && roomCode){
+      const fresh = buildNewState({mode:'online',status:'waiting',players:state.players,playerUids:state.playerUids,size:state.size,difficulty:state.difficulty,computerLevel:'tactical',mistakeMode:'practice'});
+      setDoc(roomRef(roomCode), {...serialiseState(fresh), roomCode, createdAt:serverTimestamp(), updatedAt:serverTimestamp()}).catch(err=>setMessage(firebaseMessage(err),'bad'));
+    } else {
+      setMessage('Only the host can reset the online room.','bad');
+    }
+    return;
+  }
+  if(lastSetup.mode==='single' || lastSetup.mode==='pass') startLocalGame(lastSetup.mode);
+  else openMode();
+}
+function openLocalSetup(kind){
+  lastSetup.mode = kind;
+  $('modeModal').classList.add('hidden'); $('setupModal').classList.remove('hidden');
+  renderLocalSetup(kind);
+}
+function renderLocalSetup(kind){
+  const isSingle = kind==='single';
+  const content = `
+    <div class="step-head"><div><h2>${isSingle?'Vs Computer':'Pass and Play'}</h2><p class="workflow-subtitle">Choose the fraction difficulty and board size. Player 1 connects left to right. ${isSingle?'The computer connects top to bottom.':'Player 2 connects top to bottom.'}</p></div><span class="step-pill">Setup</span></div>
+    <div class="workflow-panel">
+      <div class="two-col">
+        <label>Player 1 name<input id="setupP1" value="${escapeAttr(lastSetup.p1||'Player 1')}" placeholder="Player 1"></label>
+        ${isSingle ? `<label>Computer name<input id="setupP2" value="Computer" disabled></label>` : `<label>Player 2 name<input id="setupP2" value="${escapeAttr(lastSetup.p2||'Player 2')}" placeholder="Player 2"></label>`}
+      </div>
+      <div class="two-col">
+        <label>Fraction difficulty<select id="setupDifficulty"><option value="mild" ${lastSetup.difficulty==='mild'?'selected':''}>Mild</option><option value="medium" ${lastSetup.difficulty==='medium'?'selected':''}>Medium</option><option value="spicy" ${lastSetup.difficulty==='spicy'?'selected':''}>Spicy</option></select></label>
+        <label>Board size<select id="setupSize"><option value="5" ${Number(lastSetup.size)===5?'selected':''}>5 × 5</option><option value="6" ${Number(lastSetup.size)===6?'selected':''}>6 × 6</option><option value="7" ${Number(lastSetup.size)===7?'selected':''}>7 × 7</option></select></label>
+      </div>
+      ${isSingle ? `<div class="two-col"><label>Computer<select id="setupComputer"><option value="friendly" ${lastSetup.computerLevel==='friendly'?'selected':''}>Friendly</option><option value="tactical" ${lastSetup.computerLevel==='tactical'?'selected':''}>Tactical</option></select></label><label>Mistakes<select id="setupMistake"><option value="practice" ${lastSetup.mistakeMode==='practice'?'selected':''}>Practice: try again</option><option value="pressure" ${lastSetup.mistakeMode==='pressure'?'selected':''}>Pressure: CPU moves</option></select></label></div>` : `<p class="hint">In Pass and Play, mistakes are counted but the same player keeps trying. This keeps the turn fair because both players are practising the same skill.</p>`}
+    </div>
+    <div class="setup-actions"><button class="btn-soft back-small" id="setupBackBtn" type="button">Back</button><button class="btn-primary primary-wide" id="startLocalBtn" type="button">Start game</button></div>`;
+  $('localSetupContent').innerHTML = content;
+  $('setupBackBtn').onclick = openMode;
+  $('startLocalBtn').onclick = ()=>captureAndStartLocal(kind);
+}
+function captureAndStartLocal(kind){
+  lastSetup.mode=kind;
+  lastSetup.p1=clampName($('setupP1').value,'Player 1');
+  lastSetup.p2=kind==='single'?'Computer':clampName($('setupP2').value,'Player 2');
+  lastSetup.size=Number($('setupSize').value);
+  lastSetup.difficulty=$('setupDifficulty').value;
+  lastSetup.computerLevel=kind==='single'?$('setupComputer').value:'tactical';
+  lastSetup.mistakeMode=kind==='single'?$('setupMistake').value:'practice';
+  startLocalGame(kind);
+}
+function startLocalGame(kind){
+  if(roomUnsub){roomUnsub(); roomUnsub=null;}
+  roomCode=null; isHost=false; localPlayer='p1';
+  state = buildNewState({mode:kind,status:'playing',players:{p1:lastSetup.p1,p2:lastSetup.p2},playerUids:{p1:null,p2:null},size:Number(lastSetup.size),difficulty:lastSetup.difficulty,computerLevel:lastSetup.computerLevel,mistakeMode:lastSetup.mistakeMode});
+  $('setupModal').classList.add('hidden'); $('modeModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('answerModal').classList.add('hidden'); $('roomChip').classList.add('hidden');
+  render();
+}
+function openOnlineSetup(){
+  $('modeModal').classList.add('hidden'); $('onlineModal').classList.remove('hidden'); renderOnlineSetup();
+}
+function renderOnlineSetup(){
+  $('onlineSetupContent').innerHTML = `
+    <div class="step-head"><div><h2>Online Multiplayer</h2><p class="workflow-subtitle">Create or join a Fraction Hex Path room. The host chooses the settings.</p></div><span class="step-pill">Online</span></div>
+    <div class="workflow-panel"><label>Your display name<input id="onlineName" value="${escapeAttr(onlineDraft.name)}" placeholder="Your name"></label></div>
+    <div class="online-choice-grid">
+      <div class="lobby-card join-card"><h3>🚪 Join a Game</h3><p class="hint">Enter the room code from the host.</p><div class="join-room-row"><label>Room code<input id="joinCode" placeholder="ABCD" maxlength="6" value="${escapeAttr(onlineDraft.joinCode)}"></label><button class="btn-green" id="joinRoomBtn" type="button">Join room</button></div></div>
+      <div class="lobby-card host-card"><h3>🏠 Host a Game</h3><p class="hint">Choose settings, create a room, then share the code.</p><div class="two-col"><label>Fraction difficulty<select id="onlineDifficulty"><option value="mild" ${onlineDraft.difficulty==='mild'?'selected':''}>Mild</option><option value="medium" ${onlineDraft.difficulty==='medium'?'selected':''}>Medium</option><option value="spicy" ${onlineDraft.difficulty==='spicy'?'selected':''}>Spicy</option></select></label><label>Board size<select id="onlineSize"><option value="5" ${Number(onlineDraft.size)===5?'selected':''}>5 × 5</option><option value="6" ${Number(onlineDraft.size)===6?'selected':''}>6 × 6</option><option value="7" ${Number(onlineDraft.size)===7?'selected':''}>7 × 7</option></select></label></div><button class="btn-primary" id="createRoomBtn" type="button">Create room</button></div>
+    </div>
+    <div class="room-wait hidden" id="roomWaiting"><div class="hint">Room code</div><div class="room-code" id="roomCodeDisplay">----</div><p class="hint" id="roomStatus">Waiting for Player 2.</p><button class="btn-primary hidden" id="hostStartBtn" type="button">Start game</button></div>
+    <div class="setup-actions"><button class="btn-soft back-small" id="onlineBackBtn" type="button">Back</button></div>`;
+  $('onlineName').addEventListener('input',()=>onlineDraft.name=$('onlineName').value);
+  $('joinCode').addEventListener('input',()=>onlineDraft.joinCode=$('joinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''));
+  $('onlineDifficulty').addEventListener('change',()=>onlineDraft.difficulty=$('onlineDifficulty').value);
+  $('onlineSize').addEventListener('change',()=>onlineDraft.size=Number($('onlineSize').value));
+  $('onlineBackBtn').onclick=openMode;
+  $('createRoomBtn').onclick=createRoom;
+  $('joinRoomBtn').onclick=joinRoom;
+  $('hostStartBtn').onclick=hostStart;
+}
+async function createRoom(){
+  try{
+    await authReady;
+    captureOnlineDraft();
+    const name=clampName(onlineDraft.name,'Player 1');
+    let code='';
+    for(let i=0;i<12;i++){
+      code=randomRoomCode();
+      const snap=await getDoc(roomRef(code));
+      if(!snap.exists()) break;
+    }
+    roomCode=code; isHost=true; localPlayer='p1';
+    state=buildNewState({mode:'online',status:'waiting',players:{p1:name,p2:'Player 2'},playerUids:{p1:uid,p2:null},size:Number(onlineDraft.size),difficulty:onlineDraft.difficulty,computerLevel:'tactical',mistakeMode:'practice'});
+    await setDoc(roomRef(roomCode), {...serialiseState(state), roomCode, createdAt:serverTimestamp(), updatedAt:serverTimestamp()});
+    listenRoom(roomCode);
+    $('roomWaiting').classList.remove('hidden'); $('roomCodeDisplay').textContent=roomCode; $('roomStatus').textContent='Waiting for Player 2 to join.'; $('hostStartBtn').classList.add('hidden');
+    $('roomChip').classList.remove('hidden'); $('roomChipCode').textContent=roomCode;
+    setMessage(`Room ${roomCode} created. Share the code with Player 2.`, 'good');
+  }catch(err){ setMessage(firebaseMessage(err),'bad'); }
+}
+async function joinRoom(){
+  try{
+    await authReady;
+    captureOnlineDraft();
+    const code=(onlineDraft.joinCode||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(!code){setMessage('Enter a room code first.','bad');return;}
+    const snap=await getDoc(roomRef(code));
+    if(!snap.exists()){setMessage(`Room ${code} was not found. Check the code with the host.`, 'bad');return;}
+    const data=snap.data();
+    if(data.playerUids?.p2 && data.playerUids.p2 !== uid){setMessage('That room already has a Player 2.', 'bad');return;}
+    roomCode=code; isHost=false; localPlayer='p2';
+    await updateDoc(roomRef(roomCode), {players:{...(data.players||{}),p2:clampName(onlineDraft.name,'Player 2')}, playerUids:{...(data.playerUids||{}),p2:uid}, lastMove:`${clampName(onlineDraft.name,'Player 2')} joined the room.`, updatedAt:serverTimestamp()});
+    listenRoom(roomCode);
+    $('onlineModal').classList.add('hidden'); $('modeModal').classList.add('hidden');
+    $('roomChip').classList.remove('hidden'); $('roomChipCode').textContent=roomCode;
+    setMessage(`Joined room ${roomCode}. Waiting for the host to start.`, 'good');
+  }catch(err){ setMessage(firebaseMessage(err),'bad'); }
+}
+function captureOnlineDraft(){
+  if($('onlineName')) onlineDraft.name=$('onlineName').value;
+  if($('joinCode')) onlineDraft.joinCode=$('joinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if($('onlineDifficulty')) onlineDraft.difficulty=$('onlineDifficulty').value;
+  if($('onlineSize')) onlineDraft.size=Number($('onlineSize').value);
+}
+async function hostStart(){
+  if(!isHost || !roomCode) return;
+  if(!state.playerUids?.p2){setMessage('Wait for Player 2 to join before starting.', 'bad'); return;}
+  try{
+    state.status='playing'; state.turn='p1'; state.lastMove='Game started. Player 1 plays first.';
+    await updateDoc(roomRef(roomCode), {status:'playing',turn:'p1',lastMove:state.lastMove,updatedAt:serverTimestamp()});
+    $('onlineModal').classList.add('hidden');
+  }catch(err){setMessage(firebaseMessage(err),'bad');}
+}
+function listenRoom(code){
+  if(roomUnsub) roomUnsub();
+  roomUnsub = onSnapshot(roomRef(code), snap=>{
+    if(!snap.exists()){setMessage('This room no longer exists.', 'bad'); return;}
+    applyRoomData(snap.data());
+    roomCode=code; state.mode='online';
+    $('roomChip').classList.remove('hidden'); $('roomChipCode').textContent=code;
+    if(isHost && $('roomWaiting')){
+      $('roomWaiting').classList.remove('hidden'); $('roomCodeDisplay').textContent=code;
+      const hasP2=!!state.playerUids?.p2;
+      $('roomStatus').textContent=hasP2 ? `${state.players.p2} has joined. You can start the game.` : 'Waiting for Player 2 to join.';
+      $('hostStartBtn').classList.toggle('hidden', !hasP2 || state.status==='playing' || state.status==='ended');
+      if(state.status==='playing') $('onlineModal').classList.add('hidden');
+    }
+    render();
+    if(state.status==='ended' && state.winner) showEnd(false);
+  }, err=>setMessage(firebaseMessage(err),'bad'));
+}
+function randomRoomCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function buildNewState(opts){
+  const size=Number(opts.size||5), difficulty=opts.difficulty||'mild';
+  const fresh={mode:opts.mode||'single',status:opts.status||'playing',size,difficulty,computerLevel:opts.computerLevel||'tactical',mistakeMode:opts.mistakeMode||'practice',board:[],selected:null,turn:'p1',mistakes:{p1:0,p2:0},players:{...(opts.players||DEFAULT_PLAYERS)},playerUids:{...(opts.playerUids||{p1:null,p2:null})},gameOver:false,winner:null,winningPath:[],lastMove:'Game started. Player 1 plays first.'};
+  for(let r=0;r<size;r++){
+    const row=[];
+    for(let c=0;c<size;c++) row.push({row:r,col:c,owner:null,...generateQuestion(difficulty)});
+    fresh.board.push(row);
+  }
+  return fresh;
+}
+function serialiseState(src=state){
+  return {mode:src.mode,status:src.status,size:src.size,difficulty:src.difficulty,computerLevel:src.computerLevel,mistakeMode:src.mistakeMode,boardFlat:src.board.flat().map(t=>({row:t.row,col:t.col,owner:t.owner,shownN:t.shownN,shownD:t.shownD,answerN:t.answerN,answerD:t.answerD,hcf:t.hcf})),turn:src.turn,mistakes:src.mistakes,players:src.players,playerUids:src.playerUids,gameOver:src.gameOver,winner:src.winner,winningPath:src.winningPath,lastMove:src.lastMove};
+}
+function applyRoomData(data){
+  const boardFlat=data.boardFlat||[];
+  const board=[];
+  for(let r=0;r<Number(data.size||5);r++) board.push([]);
+  for(const tile of boardFlat){ if(board[tile.row]) board[tile.row][tile.col]={...tile}; }
+  state={...state,mode:'online',status:data.status||'waiting',size:Number(data.size||5),difficulty:data.difficulty||'mild',computerLevel:data.computerLevel||'tactical',mistakeMode:data.mistakeMode||'practice',board,selected:null,turn:data.turn||'p1',mistakes:data.mistakes||{p1:0,p2:0},players:data.players||{p1:'Player 1',p2:'Player 2'},playerUids:data.playerUids||{p1:null,p2:null},gameOver:!!data.gameOver,winner:data.winner||null,winningPath:data.winningPath||[],lastMove:data.lastMove||''};
+  closeAnswerModal(false);
+}
+async function saveRoom(){
+  if(state.mode!=='online' || !roomCode) return;
+  await updateDoc(roomRef(roomCode), {...serialiseState(state), updatedAt:serverTimestamp()});
+}
+
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b!==0){const t=b;b=a%b;a=t;}return a||1;}
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function choose(arr){return arr[randInt(0,arr.length-1)];}
+function generateQuestion(difficulty){
+  let simpleN, simpleD, multiplier;
+  if(difficulty==='mild'){
+    simpleD=randInt(2,12); simpleN=randInt(1,simpleD-1); multiplier=choose([2,2,3,4,5]);
+  }else if(difficulty==='medium'){
+    simpleD=randInt(3,16); simpleN=randInt(1,simpleD-1); multiplier=randInt(3,10);
+  }else{
+    simpleD=randInt(2,18); simpleN=randInt(1,Math.floor(simpleD*1.6)); multiplier=randInt(4,12);
+  }
+  while(gcd(simpleN,simpleD)!==1) simpleN=randInt(1,difficulty==='spicy'?Math.floor(simpleD*1.6):simpleD-1);
+  const shownN=simpleN*multiplier, shownD=simpleD*multiplier, hcf=gcd(shownN,shownD);
+  return {shownN,shownD,answerN:shownN/hcf,answerD:shownD/hcf,hcf};
+}
+function makeFractionHTML(n,d){ if(d===1) return `<span class="frac"><span>${n}</span></span>`; return `<span class="frac"><span>${n}</span><span class="bar"></span><span>${d}</span></span>`; }
+function formatAnswer(n,d){return d===1?`${n}`:`${n}/${d}`;}
+function tileLabel(tile){return `${String.fromCharCode(65+tile.row)}${tile.col+1}`;}
+function countOwner(player){return state.board.flat().filter(t=>t.owner===player).length;}
+function playerLabel(player){ if(state.mode==='single' && player==='p2') return 'CPU'; return player.toUpperCase(); }
+function playerName(player){return state.players?.[player] || (player==='p1'?'Player 1':'Player 2');}
+function currentPlayerCanAct(){
+  if(state.gameOver || state.status==='ended') return false;
+  if(state.status==='waiting') return false;
+  if(state.mode==='single') return state.turn==='p1';
+  if(state.mode==='online') return state.turn===localPlayer;
+  if(state.mode==='pass') return true;
+  return false;
+}
+function render(){
+  if(!state.board?.length){renderEmptyBoard(); return;}
+  const boardEl=$('board'); boardEl.innerHTML=''; boardEl.className=`board size-${state.size}`;
+  const winSet=new Set((state.winningPath||[]).map(([r,c])=>`${r},${c}`));
+  for(let r=0;r<state.size;r++){
+    const rowEl=document.createElement('div'); rowEl.className='hex-row'; rowEl.style.setProperty('--row-index',r);
+    for(let c=0;c<state.size;c++){
+      const tile=state.board[r][c];
+      const tileEl=document.createElement('button'); tileEl.type='button'; tileEl.className='tile'; tileEl.dataset.row=r; tileEl.dataset.col=c; tileEl.dataset.p1Label=playerLabel('p1'); tileEl.dataset.p2Label=playerLabel('p2');
+      if(!tile.owner && !state.gameOver && state.status==='playing') tileEl.classList.add('open');
+      if(!currentPlayerCanAct()) tileEl.classList.add('disabled');
+      if(tile.owner==='p1') tileEl.classList.add('p1');
+      if(tile.owner==='p2') tileEl.classList.add('p2');
+      if(state.selected && state.selected.row===r && state.selected.col===c) tileEl.classList.add('selected');
+      if(winSet.has(`${r},${c}`)) tileEl.classList.add('winning');
+      const contentN=tile.owner?tile.answerN:tile.shownN;
+      const contentD=tile.owner?tile.answerD:tile.shownD;
+      let label='open'; if(tile.owner==='p1') label=playerLabel('p1'); if(tile.owner==='p2') label=playerLabel('p2');
+      tileEl.innerHTML=`${makeFractionHTML(contentN,contentD)}<small>${label}</small>`;
+      tileEl.addEventListener('click',()=>selectTile(tile));
+      rowEl.appendChild(tileEl);
+    }
+    boardEl.appendChild(rowEl);
+  }
+  $('p1Name').textContent=playerName('p1'); $('p2Name').textContent=playerName('p2');
+  $('p1Points').textContent=countOwner('p1'); $('p2Points').textContent=countOwner('p2');
+  $('p1Mistakes').textContent=state.mistakes?.p1||0; $('p2Mistakes').textContent=state.mistakes?.p2||0;
+  $('p1Score').className='score p1'+(state.turn==='p1'&&!state.gameOver&&state.status==='playing'?' active':'');
+  $('p2Score').className='score p2'+(state.turn==='p2'&&!state.gameOver&&state.status==='playing'?' active':'');
+  $('lastMove').textContent=state.lastMove || 'Choose an open hex and simplify the fraction.';
+  $('topGoal').textContent=`${playerName('p2')} start`; $('bottomGoal').textContent=`${playerName('p2')} finish`; $('leftGoal').textContent=`${playerName('p1')} start`; $('rightGoal').textContent=`${playerName('p1')} finish`;
+  if(state.selected && !state.selected.owner) $('selectedFraction').innerHTML=makeFractionHTML(state.selected.shownN,state.selected.shownD); else $('selectedFraction').innerHTML='<span style="color:#64748b;font-weight:800;">Choose any open hex</span>';
+  updateTurnText();
+  const disabled=!currentPlayerCanAct(); $('answerInput').disabled=disabled; $('checkBtn').disabled=disabled;
+}
+function renderEmptyBoard(){
+  const boardEl=$('board'); boardEl.innerHTML=''; boardEl.className='board size-5';
+  for(let r=0;r<5;r++){const rowEl=document.createElement('div');rowEl.className='hex-row';rowEl.style.setProperty('--row-index',r);for(let c=0;c<5;c++){const cell=document.createElement('button');cell.type='button';cell.className='tile disabled';cell.innerHTML='<small>open</small>';rowEl.appendChild(cell);}boardEl.appendChild(rowEl);}
+  $('turnText').textContent='Choose a game mode'; $('moveHint').textContent='Vs Computer, Pass and Play, or Online Multiplayer.'; $('statusIcon').textContent='🔷'; $('p1Name').textContent='Player 1'; $('p2Name').textContent='Player 2'; $('p1Points').textContent='0'; $('p2Points').textContent='0'; $('p1Mistakes').textContent='0'; $('p2Mistakes').textContent='0'; $('lastMove').textContent='Welcome to Fraction Hex Path.';
+}
+function updateTurnText(){
+  if(state.status==='waiting'){
+    $('statusIcon').textContent='⏳'; $('turnText').textContent='Waiting for players'; $('moveHint').textContent=isHost?'Share the room code with Player 2.':'Waiting for the host to start.';
+    $('turnBanner').innerHTML='<span><i class="dot"></i>Waiting</span><small>Online room</small>'; return;
+  }
+  if(state.gameOver || state.status==='ended'){
+    $('statusIcon').textContent='🏆'; $('turnText').textContent='Game over'; $('moveHint').textContent=state.winner?`${playerName(state.winner)} completed a path.`:'Game ended.'; $('turnBanner').innerHTML='<span><i class="dot"></i>Game over</span><small>New game to reset</small>'; return;
+  }
+  const current=state.turn; const name=playerName(current); const isP2=current==='p2';
+  $('statusIcon').textContent=isP2?'🟧':'🔷'; $('turnText').textContent=`${name}'s turn`; $('moveHint').textContent=current==='p1'?'Connect left to right.':'Connect top to bottom.';
+  const dotClass=isP2?'dot p2':'dot';
+  let bannerSmall='Choose any open hex';
+  if(state.mode==='single' && current==='p2') bannerSmall='CPU is choosing';
+  if(state.mode==='online') bannerSmall=current===localPlayer?'Your turn':'Waiting for opponent';
+  $('turnBanner').innerHTML=`<span><i class="${dotClass}"></i>${state.mode==='online'&&current===localPlayer?'Your turn':escapeHTML(name)}</span><small>${bannerSmall}</small>`;
+}
+function selectTile(tile){
+  if(!currentPlayerCanAct()){setMessage(state.status==='waiting'?'Wait for the game to start.':'It is not your turn right now.', state.turn==='p2'?'p2':'');return;}
+  if(tile.owner){setMessage(`That hex already belongs to ${playerName(tile.owner)}. It simplifies to ${formatAnswer(tile.answerN,tile.answerD)}.`, tile.owner==='p2'?'p2':'good');return;}
+  state.selected=tile;
+  $('answerInput').value='';
+  setMessage('Type the simplified fraction, then press Check.','');
+  openAnswerModal(true);
+  render();
+  setTimeout(()=>$('answerInput').focus(),0);
+}
+function openAnswerModal(focusInput=true){
+  $('answerModal').classList.remove('hidden');
+  $('answerModal').classList.remove('shake');
+  if(focusInput) setTimeout(()=>$('answerInput').focus(),0);
+}
+function closeAnswerModal(clearSelection=true){
+  if(!$('answerModal')) return;
+  $('answerModal').classList.add('hidden');
+  $('answerModal').classList.remove('shake');
+  if(clearSelection && state?.selected){state.selected=null; render();}
+}
+function shakeAnswerModal(){
+  return new Promise(resolve=>{
+    const modal=$('answerModal');
+    modal.classList.remove('shake');
+    void modal.offsetWidth;
+    modal.classList.add('shake');
+    setTimeout(()=>{modal.classList.remove('shake'); resolve();},720);
+  });
+}
+function parseAnswer(raw){
+  const text=raw.trim().replace(/\s+/g,''); if(!text) return null;
+  if(/^\d+$/.test(text)) return {n:Number(text),d:1};
+  const match=text.match(/^(\d+)\/(\d+)$/); if(!match) return null;
+  const n=Number(match[1]), d=Number(match[2]); if(!Number.isInteger(n)||!Number.isInteger(d)||d===0) return null; return {n,d};
+}
+async function checkAnswer(){
+  if(!currentPlayerCanAct()) return;
+  if(!state.selected || state.selected.owner){setMessage('Choose an open hex first.','bad');return;}
+  const parsed=parseAnswer($('answerInput').value);
+  if(!parsed){setMessage('Use fraction form like 3/4. If the answer is a whole number, you can type the whole number.','bad');return;}
+  const inputGcd=gcd(parsed.n,parsed.d), simplifiedInputN=parsed.n/inputGcd, simplifiedInputD=parsed.d/inputGcd, tile=state.selected;
+  const equivalent=simplifiedInputN===tile.answerN && simplifiedInputD===tile.answerD;
+  const exact=parsed.n===tile.answerN && parsed.d===tile.answerD;
+  if(equivalent && exact && inputGcd===1){burstConfetti(38); closeAnswerModal(false); await claimTile(state.turn); return;}
+  state.mistakes[state.turn]=(state.mistakes[state.turn]||0)+1;
+  if(equivalent && !exact) setMessage('That is equivalent, but it is not in simplest form yet. Keep dividing the top and bottom by the same number.','bad');
+  else setMessage(`Not quite. Hint: ${tile.shownN} and ${tile.shownD} have a common factor of ${tile.hcf}.`,'bad');
+  await shakeAnswerModal();
+  if(state.mode==='single' && state.mistakeMode==='pressure'){
+    closeAnswerModal(false);
+    state.selected=null; state.turn='p2'; state.lastMove='A mistake gave the computer a turn.'; render(); setTimeout(()=>computerMove('Your mistake gave the computer a turn.'),220); return;
+  }
+  if(state.mode==='online') await saveRoom().catch(err=>setMessage(firebaseMessage(err),'bad'));
+  render();
+}
+async function claimTile(player){
+  const tile=state.selected; tile.owner=player; state.selected=null; $('answerInput').value='';
+  const path=getWinningPath(player);
+  if(path){
+    state.gameOver=true; state.status='ended'; state.winner=player; state.winningPath=path; state.lastMove=`${playerName(player)} connected ${player==='p1'?'left to right':'top to bottom'} and won.`;
+    setMessage(`${playerName(player)} wins!`, 'win');
+    if(state.mode==='online') await saveRoom().catch(err=>setMessage(firebaseMessage(err),'bad'));
+    render(); showEnd(true); return;
+  }
+  const correctText=`Correct! ${tile.shownN}/${tile.shownD} simplifies to ${formatAnswer(tile.answerN,tile.answerD)}.`;
+  state.turn=player==='p1'?'p2':'p1'; state.lastMove=`${playerName(player)} claimed ${tileLabel(tile)}. ${correctText}`;
+  setMessage(correctText, player==='p1'?'good':'p2'); render();
+  if(state.mode==='online') await saveRoom().catch(err=>setMessage(firebaseMessage(err),'bad'));
+  if(state.mode==='single' && state.turn==='p2') setTimeout(()=>computerMove(),650);
+}
+function computerMove(prefix=''){
+  if(state.gameOver || state.mode!=='single') return;
+  const tile=chooseComputerTile();
+  if(!tile){state.gameOver=true; state.status='ended'; state.lastMove='No tiles remain. Press New Game to reset.'; render(); return;}
+  tile.owner='p2';
+  const path=getWinningPath('p2');
+  if(path){state.gameOver=true; state.status='ended'; state.winner='p2'; state.winningPath=path; state.lastMove=`${prefix?prefix+' ':''}The computer connected top to bottom and won.`; setMessage(state.lastMove,'p2'); render(); showEnd(false); return;}
+  state.turn='p1'; state.lastMove=`${prefix?prefix+' ':''}Computer claimed ${tileLabel(tile)}. Choose any open hex for your next move.`; setMessage(state.lastMove,'p2'); render();
+}
+function getOpenTiles(){return state.board.flat().filter(t=>!t.owner);}
+function shuffle(arr){const copy=[...arr];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}return copy;}
+function chooseComputerTile(){
+  const open=getOpenTiles(); if(!open.length) return null;
+  if(state.computerLevel==='friendly' && Math.random()<.72) return choose(open);
+  for(const tile of shuffle(open)){tile.owner='p2'; const wins=!!getWinningPath('p2'); tile.owner=null; if(wins) return tile;}
+  for(const tile of shuffle(open)){tile.owner='p1'; const humanWins=!!getWinningPath('p1'); tile.owner=null; if(humanWins) return tile;}
+  let best=[], bestScore=Infinity;
+  for(const tile of open){
+    tile.owner='p2'; const cpuScore=shortestConnectionCost('p2'), p1Score=shortestConnectionCost('p1'); tile.owner=null;
+    const centre=(state.size-1)/2, centrePenalty=Math.abs(tile.row-centre)+Math.abs(tile.col-centre);
+    const score=(cpuScore*10)-(p1Score*2)+centrePenalty*.15;
+    if(score<bestScore-.0001){bestScore=score;best=[tile];} else if(Math.abs(score-bestScore)<.0001) best.push(tile);
+  }
+  return choose(best.length?best:open);
+}
+function neighbours(r,c){return [[r,c-1],[r,c+1],[r-1,c],[r+1,c],[r-1,c+1],[r+1,c-1]].filter(([nr,nc])=>nr>=0&&nr<state.size&&nc>=0&&nc<state.size);}
+function getWinningPath(owner){
+  const queue=[], visited=new Set(), parent=new Map();
+  if(owner==='p1'){
+    for(let r=0;r<state.size;r++){const tile=state.board[r][0]; if(tile.owner===owner){queue.push(tile); visited.add(`${r},0`); parent.set(`${r},0`,null);}}
+  }else{
+    for(let c=0;c<state.size;c++){const tile=state.board[0][c]; if(tile.owner===owner){queue.push(tile); visited.add(`0,${c}`); parent.set(`0,${c}`,null);}}
+  }
+  while(queue.length){
+    const tile=queue.shift(), key=`${tile.row},${tile.col}`;
+    const reached=owner==='p1'?tile.col===state.size-1:tile.row===state.size-1;
+    if(reached){const path=[];let cur=key;while(cur){const [r,c]=cur.split(',').map(Number);path.push([r,c]);cur=parent.get(cur);}return path.reverse();}
+    for(const [nr,nc] of neighbours(tile.row,tile.col)){const next=state.board[nr][nc], nextKey=`${nr},${nc}`; if(!visited.has(nextKey)&&next.owner===owner){visited.add(nextKey);parent.set(nextKey,key);queue.push(next);}}
+  }
+  return null;
+}
+function shortestConnectionCost(owner){
+  const n=state.size, dist=Array.from({length:n},()=>Array(n).fill(Infinity)), queue=[];
+  function costOf(tile){if(tile.owner===owner)return 0;if(tile.owner===null)return 1;return 999;}
+  if(owner==='p1'){for(let r=0;r<n;r++){dist[r][0]=costOf(state.board[r][0]);queue.push([dist[r][0],r,0]);}}
+  else{for(let c=0;c<n;c++){dist[0][c]=costOf(state.board[0][c]);queue.push([dist[0][c],0,c]);}}
+  while(queue.length){queue.sort((a,b)=>a[0]-b[0]);const [d,r,c]=queue.shift(); if(d!==dist[r][c]) continue; for(const [nr,nc] of neighbours(r,c)){const nd=d+costOf(state.board[nr][nc]); if(nd<dist[nr][nc]){dist[nr][nc]=nd; queue.push([nd,nr,nc]);}}}
+  return owner==='p1'?Math.min(...Array.from({length:n},(_,r)=>dist[r][n-1])):Math.min(...Array.from({length:n},(_,c)=>dist[n-1][c]));
+}
+function showHint(){
+  if(!state.selected){setMessage('Choose a tile first, then ask for a hint.','');return;}
+  const t=state.selected;
+  if(t.owner){setMessage(`This tile is already simplified: ${formatAnswer(t.answerN,t.answerD)}.`,t.owner==='p2'?'p2':'good');return;}
+  const factors=[]; for(let i=2;i<=Math.min(t.shownN,t.shownD);i++){if(t.shownN%i===0&&t.shownD%i===0) factors.push(i);}
+  setMessage(`Look for a number that divides both ${t.shownN} and ${t.shownD}. Some possible common factors: ${factors.slice(0,4).join(', ') || 'no factor greater than 1'}.`, '');
+}
+function setMessage(text,type){const el=$('message'); el.textContent=text; el.className='message'; if(type) el.classList.add(type); const side=$('sideMessage'); if(side && $('answerModal').classList.contains('hidden')){side.textContent=text; side.className='message'; side.style.marginTop='14px'; if(type) side.classList.add(type);}}
+function showEnd(withConfetti){
+  if(!state.winner) return;
+  const winner=state.winner;
+  $('winnerText').textContent=`${playerName(winner)} wins!`; $('winnerText').className=`winner ${winner}`; $('winnerName').textContent=playerName(winner); $('winnerTrophy').textContent=winner==='p1'?'🏆':'🏆';
+  $('endDetails').textContent=`${playerName(winner)} connected ${winner==='p1'?'left to right':'top to bottom'} with ${countOwner(winner)} tiles. Final tiles: ${playerName('p1')} ${countOwner('p1')}, ${playerName('p2')} ${countOwner('p2')}.`;
+  $('endModal').classList.remove('hidden');
+  if(withConfetti || winner==='p1') burstConfetti();
+}
+function burstConfetti(count=90){
+  const colours=['#2563eb','#16a34a','#f59e0b','#7c3aed','#ef4444'];
+  for(let i=0;i<count;i++){const piece=document.createElement('div');piece.className='confetti';piece.style.left=`${Math.random()*100}%`;piece.style.background=colours[i%colours.length];piece.style.animationDelay=`${Math.random()*350}ms`;piece.style.transform=`rotate(${Math.random()*360}deg)`;document.body.appendChild(piece);setTimeout(()=>piece.remove(),1600);}
+}
+openMode();
+</script>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
