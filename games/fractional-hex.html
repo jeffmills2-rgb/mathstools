@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Fraction Hex Path | Mills Maths Tools</title>
+<title>Fraction Hex Path v11 | Mills Maths Tools</title>
 <style>
   :root{
     --bg:#f8fafc;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--border:#e2e8f0;
@@ -39,6 +39,221 @@
   .answerModal .modalBox{width:min(560px,calc(100vw - 34px));border-radius:28px;padding:24px}.answerModalHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.answerModalHead h2{margin:0;font-size:1.45rem;letter-spacing:-.04em}.answerModalHead p{margin:4px 0 0;color:var(--muted);font-weight:850}.answerModalClose{width:42px;height:42px;border-radius:14px;padding:0;background:#f1f5f9;color:#334155;border:1px solid var(--border);font-size:1.5rem;line-height:1}.answerTileCard{border-radius:24px;background:linear-gradient(135deg,#f5f3ff,#eff6ff);border:1px solid #ddd6fe;padding:18px;display:grid;place-items:center;min-height:128px;margin-bottom:14px}.answerTileCard .frac{font-size:2.45rem}.answerModal .answer-form{gap:12px}.answerModal .answer-form .inline-row{grid-template-columns:1fr auto}.answerModal .message{margin-top:14px;min-height:64px}.answerModal.shake .modalBox{animation:modalShake .34s ease-in-out 0s 2}@keyframes modalShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
   @media(max-width:1180px){.mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px}.mmtBrand{justify-self:center;margin-left:0}.actions{justify-content:center}.layout{width:calc(100vw - 28px);margin-top:14px}.game-area{grid-template-columns:1fr}.status-strip{grid-template-columns:1fr}.toolbar{justify-content:center}.side-panel{grid-template-columns:1fr 1fr}.board-panel{overflow-x:auto}.board-wrap{justify-content:flex-start}.goal-frame{min-width:max-content}}
   @media(max-width:760px){.layout{width:calc(100vw - 20px)}.game-card{padding:14px}.side-panel,.scoreGrid,.two-col,.level-grid{grid-template-columns:1fr}.brand-footer{width:calc(100vw - 20px);padding:8px 10px}.modal{padding:10px;align-items:start;overflow:auto}.modalBox.stepBox{width:min(700px,calc(100vw - 24px));padding:18px;margin:8px 0;max-height:none}.mode-card{padding:14px 16px}.mode-icon{width:48px;height:48px;font-size:1.55rem}.join-room-row{grid-template-columns:1fr}.goal-frame{grid-template-columns:48px minmax(0,1fr) 48px}.top-goal,.bottom-goal,.left-goal,.right-goal{font-size:.64rem;border-radius:11px;min-height:34px}.board.size-5,.board.size-6,.board.size-7{--hex-w:64px;--hex-h:60px;--hex-gap:3px}.tile small{display:none}.tile.p1::before,.tile.p2::before{font-size:.52rem;top:6px;right:10px;padding:2px 4px}.frac{font-size:.9rem!important}}
+
+
+  /* v9 polish: calmer board, clearer captures, compact hex answer modal */
+  :root{
+    --boardPurple:#4c2a86;
+    --boardPurple2:#5f3bb2;
+    --boardPurple3:#7256cf;
+    --tileOpen:#fffdf7;
+    --tileOpen2:#fff7e6;
+  }
+  .board-panel{
+    background:
+      radial-gradient(circle at 22% 18%,rgba(255,255,255,.20),transparent 17rem),
+      radial-gradient(circle at 78% 82%,rgba(255,255,255,.10),transparent 18rem),
+      linear-gradient(135deg,var(--boardPurple),var(--boardPurple2) 55%,var(--boardPurple3));
+    border:1px solid rgba(196,181,253,.92);
+    box-shadow:0 18px 42px rgba(76,42,134,.24),inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  .board-wrap{
+    background:
+      radial-gradient(circle at 50% 48%,rgba(255,255,255,.11),transparent 25rem),
+      rgba(37,16,76,.30);
+    box-shadow:inset 0 0 46px rgba(17,24,39,.20),inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .top-goal,.bottom-goal,.left-goal,.right-goal{
+    box-shadow:0 8px 18px rgba(15,23,42,.12);
+    opacity:.95;
+  }
+  .goal-frame{grid-template-columns:64px minmax(0,1fr) 64px;gap:10px;}
+  .tile{
+    background:linear-gradient(180deg,var(--tileOpen),var(--tileOpen2));
+    border:3px solid rgba(221,214,254,.98);
+    color:#111827;
+    box-shadow:0 10px 18px rgba(15,23,42,.22),inset 0 0 0 1px rgba(255,255,255,.85);
+  }
+  .tile.open:not(.selected)::after{
+    inset:7px 10px;
+    border:2px solid rgba(139,92,246,.42);
+    border-style:solid;
+  }
+  .tile:hover{
+    border-color:#f5d0fe;
+    box-shadow:0 14px 26px rgba(15,23,42,.26),0 0 0 4px rgba(255,255,255,.18);
+  }
+  .tile.p1{
+    background:linear-gradient(180deg,#bfdbfe,#dbeafe);
+    border-color:#2563eb;
+    color:#0f2f67;
+    box-shadow:0 0 0 4px rgba(37,99,235,.28),0 12px 20px rgba(15,23,42,.22),inset 0 0 0 2px rgba(255,255,255,.45);
+  }
+  .tile.p2{
+    background:linear-gradient(180deg,#fed7aa,#ffedd5);
+    border-color:#f97316;
+    color:#7c2d12;
+    box-shadow:0 0 0 4px rgba(249,115,22,.28),0 12px 20px rgba(15,23,42,.22),inset 0 0 0 2px rgba(255,255,255,.45);
+  }
+  .tile.p1::before,.tile.p2::before{
+    top:7px;right:12px;font-size:.72rem;padding:3px 7px;border:1px solid rgba(255,255,255,.75);
+    box-shadow:0 4px 9px rgba(15,23,42,.12);
+  }
+  .tile.p1::before{background:#1d4ed8;color:white;}
+  .tile.p2::before{background:#ea580c;color:white;}
+  .tile.p1 small,.tile.p2 small{opacity:.90;font-weight:1000;}
+  .tile.last-move{animation:lastMovePop 1.45s ease-out 1;}
+  .tile.p1.last-move{box-shadow:0 0 0 7px rgba(37,99,235,.36),0 16px 26px rgba(15,23,42,.26),inset 0 0 0 2px rgba(255,255,255,.6);}
+  .tile.p2.last-move{box-shadow:0 0 0 7px rgba(249,115,22,.36),0 16px 26px rgba(15,23,42,.26),inset 0 0 0 2px rgba(255,255,255,.6);}
+  @keyframes lastMovePop{0%{transform:scale(.94)}35%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+  .answerModal{background:rgba(15,23,42,.48);}
+  .answerModal .modalBox{
+    width:min(500px,calc(100vw - 34px));
+    border-radius:30px;
+    padding:20px;
+    border:3px solid #bfdbfe;
+    box-shadow:0 34px 80px rgba(15,23,42,.34);
+  }
+  .answerModal.p2turn .modalBox{border-color:#fdba74;}
+  .answerModalHead{margin-bottom:10px;align-items:center;}
+  .answerModalHead h2{font-size:1.38rem;margin:0;}
+  .answerModalHead p{font-size:.94rem;margin-top:2px;}
+  .answerModalClose{width:40px;height:40px;border-radius:15px;font-size:1.35rem;}
+  .answerTileCard{
+    width:196px;
+    height:168px;
+    min-height:0;
+    margin:8px auto 14px;
+    padding:0;
+    border:0;
+    clip-path:polygon(24% 5%,76% 5%,100% 50%,76% 95%,24% 95%,0 50%);
+    background:linear-gradient(180deg,#fffdf7,#eff6ff);
+    box-shadow:0 18px 34px rgba(15,23,42,.16),0 0 0 5px rgba(37,99,235,.12);
+    position:relative;
+  }
+  .answerModal.p2turn .answerTileCard{background:linear-gradient(180deg,#fffdf7,#ffedd5);box-shadow:0 18px 34px rgba(15,23,42,.16),0 0 0 5px rgba(249,115,22,.14);}
+  .answerTileCard::after{
+    content:"";
+    position:absolute;
+    inset:8px;
+    clip-path:polygon(24% 5%,76% 5%,100% 50%,76% 95%,24% 95%,0 50%);
+    border:3px solid rgba(37,99,235,.45);
+    pointer-events:none;
+  }
+  .answerModal.p2turn .answerTileCard::after{border-color:rgba(249,115,22,.50);}
+  .answerTileCard .big-fraction-wrap{height:100%;min-height:0;}
+  .answerTileCard .frac{font-size:2.2rem;}
+  .answerModal .answer-form{gap:10px;}
+  .answerModal .control-group label{display:grid;gap:7px;font-size:.94rem;font-weight:950;color:#334155;}
+  .answerModal .answer-form .inline-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;}
+  .answerModal input{font-size:1.2rem;padding:12px 14px;border:2px solid #bfdbfe;}
+  .answerModal.p2turn input:focus{border-color:#fdba74;box-shadow:0 0 0 4px rgba(249,115,22,.14);}
+  .answerModal #checkBtn{min-width:112px;font-size:1rem;border-radius:16px;}
+  .button-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .button-row button{padding:10px 14px;border-radius:15px;}
+  .answerModal .message{
+    margin-top:12px;
+    min-height:48px;
+    padding:10px 12px;
+    border-radius:16px;
+    font-size:.95rem;
+  }
+  @media(max-width:620px){
+    .answerModal .answer-form .inline-row{grid-template-columns:1fr;}
+    .answerModal #checkBtn{width:100%;}
+    .answerTileCard{width:176px;height:152px;}
+  }
+
+
+  /* v10 colour refresh: light green game board + high-contrast captured tiles */
+  :root{
+    --boardGreen:#b9dfb5;
+    --boardGreen2:#a7d8ad;
+    --boardGreen3:#93cfa6;
+    --tileOpen:#fffdf8;
+    --tileOpen2:#ffffff;
+    --p1:#0f3f8c;
+    --p2:#b45309;
+  }
+  body{
+    background:
+      radial-gradient(circle at top left,rgba(185,223,181,.58),transparent 34rem),
+      radial-gradient(circle at top right,rgba(147,207,166,.42),transparent 34rem),
+      linear-gradient(180deg,#f7fff5,#effaf0);
+  }
+  .board-panel{
+    background:
+      radial-gradient(circle at 22% 18%,rgba(255,255,255,.42),transparent 17rem),
+      radial-gradient(circle at 78% 82%,rgba(255,255,255,.25),transparent 18rem),
+      linear-gradient(135deg,var(--boardGreen),var(--boardGreen2) 56%,var(--boardGreen3));
+    border:1px solid rgba(74,151,92,.46);
+    box-shadow:0 18px 42px rgba(34,94,54,.18),inset 0 0 0 1px rgba(255,255,255,.36);
+  }
+  .board-wrap{
+    background:
+      radial-gradient(circle at 50% 48%,rgba(255,255,255,.34),transparent 25rem),
+      rgba(255,255,255,.20);
+    box-shadow:inset 0 0 44px rgba(22,101,52,.12),inset 0 0 0 1px rgba(255,255,255,.28);
+  }
+  .tile{
+    background:linear-gradient(180deg,#ffffff,#fffdf7);
+    border-color:rgba(109,40,217,.50);
+    box-shadow:0 10px 18px rgba(15,23,42,.18),inset 0 0 0 1px rgba(255,255,255,.9);
+  }
+  .tile.open:not(.selected)::after{
+    border-color:rgba(109,40,217,.40);
+  }
+  .tile.p1{
+    background:linear-gradient(180deg,#174ea6,#0b2f6b);
+    border-color:#082f6f;
+    color:#ffffff;
+    box-shadow:0 0 0 4px rgba(15,63,140,.30),0 12px 20px rgba(15,23,42,.26),inset 0 0 0 2px rgba(255,255,255,.10);
+  }
+  .tile.p2{
+    background:linear-gradient(180deg,#d97706,#9a3412);
+    border-color:#7c2d12;
+    color:#ffffff;
+    box-shadow:0 0 0 4px rgba(180,83,9,.30),0 12px 20px rgba(15,23,42,.26),inset 0 0 0 2px rgba(255,255,255,.10);
+  }
+  .tile.p1::before{background:rgba(219,234,254,.96);color:#0b2f6b;border-color:rgba(255,255,255,.70);}
+  .tile.p2::before{background:rgba(255,237,213,.96);color:#7c2d12;border-color:rgba(255,255,255,.70);}
+  .tile.p1 small,.tile.p2 small{color:#ffffff;opacity:.96;font-weight:1000;}
+  .tile.p1 .frac,.tile.p2 .frac{color:#ffffff;}
+  .tile.p1.last-move{box-shadow:0 0 0 7px rgba(15,63,140,.42),0 16px 26px rgba(15,23,42,.28),inset 0 0 0 2px rgba(255,255,255,.12);}
+  .tile.p2.last-move{box-shadow:0 0 0 7px rgba(180,83,9,.42),0 16px 26px rgba(15,23,42,.28),inset 0 0 0 2px rgba(255,255,255,.12);}
+
+
+  /* v11 publishing polish: winning path, stats, setup samples, sound toggle */
+  .board.has-winner .tile:not(.winning){opacity:.34;filter:saturate(.65);}
+  .board.has-winner .tile.winning{opacity:1;filter:none;z-index:2;animation:winningPulse .72s ease-in-out infinite alternate;}
+  @keyframes winningPulse{from{transform:scale(1);box-shadow:0 0 0 5px rgba(255,255,255,.25),0 12px 22px rgba(15,23,42,.22)}to{transform:scale(1.055);box-shadow:0 0 0 9px rgba(22,163,74,.30),0 18px 34px rgba(15,23,42,.28)}}
+  .tile.selected{animation:selectedHexPulse .42s ease-out 1;}
+  @keyframes selectedHexPulse{0%{transform:scale(.96)}70%{transform:scale(1.08)}100%{transform:scale(1)}}
+  .setup-helper-card{border:1px solid #bfdbfe;background:linear-gradient(135deg,#eff6ff,#f8fafc);border-radius:18px;padding:12px 14px;color:#334155;font-weight:850;line-height:1.35;}
+  .setup-helper-card strong{color:#0f172a;font-weight:1000;}
+  .difficulty-samples{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .difficulty-sample-pill{display:inline-flex;align-items:center;justify-content:center;border:1px solid #dbeafe;background:white;border-radius:999px;padding:7px 10px;font-weight:1000;color:#1e3a8a;font-family:"Cambria Math","Times New Roman",serif;}
+  .rulesBox{width:min(880px,calc(100vw - 34px));}
+  .rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+  .rules-grid section{border:1px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);border-radius:18px;padding:14px;}
+  .rules-grid h3{margin:0 0 6px;font-size:1.05rem;font-weight:1000;color:#0f172a;}
+  .rules-grid p{margin:6px 0;color:#475569;font-weight:800;line-height:1.32;}
+  .endBox{width:min(860px,calc(100vw - 34px));}
+  .end-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+  .end-stat-card{border:2px solid var(--border);border-left-width:8px;background:linear-gradient(180deg,#fff,#f8fafc);border-radius:20px;padding:14px;box-shadow:0 10px 22px rgba(15,23,42,.08);}
+  .end-stat-card.p1{border-left-color:var(--p1);}
+  .end-stat-card.p2{border-left-color:var(--p2);}
+  .end-stat-card.winner-card{border-color:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.14),0 12px 28px rgba(15,23,42,.12);}
+  .end-stat-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:1000;color:#0f172a;margin-bottom:10px;}
+  .end-stat-role{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;}
+  .end-stat-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .end-stat-metric{border:1px solid var(--border);background:#f8fafc;border-radius:14px;padding:9px;text-align:center;}
+  .end-stat-metric strong{display:block;font-size:1.35rem;line-height:1;color:#0f172a;}
+  .end-stat-metric span{display:block;margin-top:4px;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-weight:1000;}
+  #soundToggle[aria-pressed="true"]{background:#dcfce7;color:#14532d;border-color:#86efac;}
+  @media(max-width:760px){.rules-grid,.end-stats-grid{grid-template-columns:1fr}.end-stat-metrics{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -51,7 +266,7 @@
   <section class="game-card">
     <div class="status-strip">
       <div class="turn-card"><div class="status-icon" id="statusIcon">🔷</div><div><div class="status-title" id="turnText">Choose a game mode</div><div class="status-subtitle" id="moveHint">Vs Computer, Pass and Play, or Online Multiplayer.</div></div></div>
-      <div class="toolbar"><span class="room-chip hidden" id="roomChip">Room <strong id="roomChipCode">----</strong></span><button class="btn-soft" id="resetSameBtn" type="button">Reset same settings</button></div>
+      <div class="toolbar"><span class="room-chip hidden" id="roomChip">Room <strong id="roomChipCode">----</strong></span><button class="btn-soft" id="soundToggle" type="button" aria-pressed="false">🔇 Sound off</button><button class="btn-soft" id="resetSameBtn" type="button">Reset same settings</button></div>
     </div>
     <div class="game-area">
       <section class="board-panel">
@@ -72,7 +287,7 @@
         <section class="panel-section">
           <div id="turnBanner" class="turn-banner"><span><i class="dot"></i>Your turn</span><small>Choose any open hex</small></div>
           <div class="stat-grid"><div class="stat-box"><strong id="p1Mistakes">0</strong><span>P1 mistakes</span></div><div class="stat-box"><strong id="p2Mistakes">0</strong><span>P2 mistakes</span></div></div>
-          <div id="sideMessage" class="message" style="margin-top:14px" role="note">Choose any open hex on the board. A pop-up will ask you to simplify it.</div>
+          <div class="message" style="margin-top:14px" role="note">Choose any open hex on the board. A pop-up will ask you to simplify it.</div>
         </section>
       </aside>
     </div>
@@ -102,8 +317,8 @@
   </form>
   <div id="message" class="message" role="status">Choose any open hex. The pop-up will ask you to simplify it.</div>
 </div></div>
-<div class="modal hidden" id="endModal"><div class="modalBox"><div class="winner" id="winnerText"></div><div class="podium-wrap"><div class="podium"><div><div class="trophy" id="winnerTrophy">🏆</div><div class="winner-name" id="winnerName">Winner</div></div><div class="podium-block"><div class="podium-number">1</div></div></div></div><p id="endDetails"></p><div class="end-actions"><button class="btn-primary" id="againBtn" type="button">Play again</button><button class="btn-soft" id="exitBtn" type="button">Exit</button></div></div></div>
-<div class="modal hidden" id="rulesModal"><div class="modalBox"><h2>Rules</h2><p><strong>Player 1</strong> is trying to connect the left side to the right side. <strong>Player 2</strong> is trying to connect the top to the bottom.</p><p>On your turn, choose any open hex. A pop-up will ask you to type the fraction in simplest form. If you are correct, you claim the hex. If you are wrong, the pop-up shakes and you try again. In Pressure mode, a wrong answer gives the computer a turn.</p><p>Hexes connect through their six sides. This is important: a full hex board cannot end in a stalemate, because one of the two players must have a completed path.</p><button class="btn-primary" id="closeRules" type="button">Close</button></div></div>
+<div class="modal hidden" id="endModal"><div class="modalBox endBox"><div class="winner" id="winnerText"></div><div class="podium-wrap"><div class="podium"><div><div class="trophy" id="winnerTrophy">🏆</div><div class="winner-name" id="winnerName">Winner</div></div><div class="podium-block"><div class="podium-number">1</div></div></div></div><p id="endDetails"></p><div class="end-stats-grid" id="endStatsGrid" aria-label="Final game statistics"></div><div class="end-actions"><button class="btn-primary" id="againBtn" type="button">Play again</button><button class="btn-soft" id="exitBtn" type="button">Exit</button></div></div></div>
+<div class="modal hidden" id="rulesModal"><div class="modalBox rulesBox"><h2>Rules</h2><div class="rules-grid"><section><h3>How to win</h3><p><strong>Player 1</strong> wins by making an unbroken chain from the left side to the right side.</p><p><strong>Player 2</strong> wins by making an unbroken chain from the top to the bottom.</p></section><section><h3>How to play</h3><p>On your turn, choose any open hex. A pop-up asks you to simplify the fraction. A correct answer claims the hex for your colour.</p><p>Hexes connect through their six sides. Building a blocking wall is also building a possible winning chain, so there are no stalemates.</p></section><section><h3>Mistake modes</h3><p><strong>Practice Mode:</strong> mistakes shake the pop-up and you try again.</p><p><strong>Pressure Mode:</strong> in Vs Computer, a mistake loses your turn and the computer moves.</p></section><section><h3>Strategy tip</h3><p>You can claim any open hex. Think about creating your own path while interrupting your opponent’s path.</p></section></div><button class="btn-primary" id="closeRules" type="button">Close</button></div></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -144,12 +359,77 @@ let lastSetup = {mode:'single',p1:'Player 1',p2:'Player 2',size:5,difficulty:'mi
 let onlineDraft = {name:'Player 1',joinCode:'',size:5,difficulty:'mild'};
 
 function freshBlankState(){
-  return {mode:'menu',status:'menu',size:5,difficulty:'mild',computerLevel:'tactical',mistakeMode:'practice',board:[],selected:null,turn:'p1',mistakes:{p1:0,p2:0},players:{...DEFAULT_PLAYERS},playerUids:{p1:null,p2:null},gameOver:false,winner:null,winningPath:[],lastMove:'Welcome to Fraction Hex Path.'};
+  return {mode:'menu',status:'menu',size:5,difficulty:'mild',computerLevel:'tactical',mistakeMode:'practice',board:[],selected:null,turn:'p1',mistakes:{p1:0,p2:0},players:{...DEFAULT_PLAYERS},playerUids:{p1:null,p2:null},gameOver:false,winner:null,winningPath:[],lastClaim:null,stats:blankStats(),lastMove:'Welcome to Fraction Hex Path.'};
 }
 function escapeHTML(value){return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function escapeAttr(value){return escapeHTML(value).replace(/`/g,'&#96;');}
 function clampName(value, fallback){const txt=String(value||'').trim(); return txt ? txt.slice(0,28) : fallback;}
 function roomRef(code){return doc(db,'games',GAME_ID,'rooms',code);}
+function blankPlayerStats(){return {attempts:0,correct:0,currentStreak:0,bestStreak:0};}
+function blankStats(){return {p1:blankPlayerStats(),p2:blankPlayerStats()};}
+function normaliseStats(stats){
+  const source=stats||{};
+  return {
+    p1:{...blankPlayerStats(),...(source.p1||{})},
+    p2:{...blankPlayerStats(),...(source.p2||{})}
+  };
+}
+function ensureStats(){state.stats=normaliseStats(state.stats); return state.stats;}
+function recordAttempt(player, correct){
+  const stats=ensureStats();
+  const s=stats[player]||blankPlayerStats();
+  s.attempts += 1;
+  if(correct){s.correct += 1; s.currentStreak += 1; s.bestStreak=Math.max(s.bestStreak,s.currentStreak);}
+  else{s.currentStreak=0;}
+  stats[player]=s;
+}
+let soundOn=false;
+let audioContext=null;
+function toggleSound(){
+  soundOn=!soundOn;
+  const btn=$('soundToggle');
+  btn.setAttribute('aria-pressed', soundOn?'true':'false');
+  btn.textContent=soundOn?'🔊 Sound on':'🔇 Sound off';
+  if(soundOn) playSound('click');
+}
+function playSound(kind){
+  if(!soundOn) return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    if(!audioContext) audioContext=new AC();
+    if(audioContext.state==='suspended') audioContext.resume();
+    const now=audioContext.currentTime;
+    const osc=audioContext.createOscillator();
+    const gain=audioContext.createGain();
+    const settings={
+      click:[440,.045,'sine'],
+      correct:[660,.11,'triangle'],
+      wrong:[150,.16,'sawtooth'],
+      win:[880,.22,'triangle']
+    }[kind] || [440,.06,'sine'];
+    osc.frequency.setValueAtTime(settings[0],now);
+    osc.type=settings[2];
+    gain.gain.setValueAtTime(0.0001,now);
+    gain.gain.exponentialRampToValueAtTime(kind==='wrong'?0.08:0.12,now+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+settings[1]);
+    osc.connect(gain).connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now+settings[1]+0.02);
+    if(kind==='win'){
+      setTimeout(()=>{ if(soundOn) playSound('correct'); },110);
+    }
+  }catch(err){}
+}
+function difficultySampleHTML(level){
+  const samples={
+    mild:['4/8','6/10','9/12'],
+    medium:['18/24','28/42','35/49'],
+    spicy:['45/60','54/72','18/12']
+  }[level] || ['4/8','6/10','9/12'];
+  const label={mild:'Mild',medium:'Medium',spicy:'Spicy'}[level]||'Mild';
+  return `<div class="setup-helper-card"><strong>${label} sample fractions</strong><div class="difficulty-samples">${samples.map(x=>`<span class="difficulty-sample-pill">${x}</span>`).join('')}</div></div>`;
+}
 
 $('singleModeBtn').addEventListener('click',()=>openLocalSetup('single'));
 $('passModeBtn').addEventListener('click',()=>openLocalSetup('pass'));
@@ -157,6 +437,7 @@ $('onlineModeBtn').addEventListener('click',openOnlineSetup);
 $('newBtn').addEventListener('click',openMode);
 $('backMenuBtn').addEventListener('click',openMode);
 $('resetSameBtn').addEventListener('click',resetSameSettings);
+$('soundToggle').addEventListener('click',toggleSound);
 $('rulesBtn').addEventListener('click',()=>$('rulesModal').classList.remove('hidden'));
 $('closeRules').addEventListener('click',()=>$('rulesModal').classList.add('hidden'));
 $('againBtn').addEventListener('click',()=>{ $('endModal').classList.add('hidden'); resetSameSettings(); });
@@ -170,7 +451,7 @@ function openMode(){
   if(roomUnsub){roomUnsub(); roomUnsub=null;}
   roomCode=null; isHost=false; localPlayer='p1';
   state=freshBlankState();
-  $('modeModal').classList.remove('hidden'); $('setupModal').classList.add('hidden'); $('onlineModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('answerModal').classList.add('hidden'); $('roomChip').classList.add('hidden');
+  $('modeModal').classList.remove('hidden'); $('setupModal').classList.add('hidden'); $('onlineModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('roomChip').classList.add('hidden');
   render();
 }
 function resetSameSettings(){
@@ -204,11 +485,13 @@ function renderLocalSetup(kind){
         <label>Fraction difficulty<select id="setupDifficulty"><option value="mild" ${lastSetup.difficulty==='mild'?'selected':''}>Mild</option><option value="medium" ${lastSetup.difficulty==='medium'?'selected':''}>Medium</option><option value="spicy" ${lastSetup.difficulty==='spicy'?'selected':''}>Spicy</option></select></label>
         <label>Board size<select id="setupSize"><option value="5" ${Number(lastSetup.size)===5?'selected':''}>5 × 5</option><option value="6" ${Number(lastSetup.size)===6?'selected':''}>6 × 6</option><option value="7" ${Number(lastSetup.size)===7?'selected':''}>7 × 7</option></select></label>
       </div>
-      ${isSingle ? `<div class="two-col"><label>Computer<select id="setupComputer"><option value="friendly" ${lastSetup.computerLevel==='friendly'?'selected':''}>Friendly</option><option value="tactical" ${lastSetup.computerLevel==='tactical'?'selected':''}>Tactical</option></select></label><label>Mistakes<select id="setupMistake"><option value="practice" ${lastSetup.mistakeMode==='practice'?'selected':''}>Practice: try again</option><option value="pressure" ${lastSetup.mistakeMode==='pressure'?'selected':''}>Pressure: CPU moves</option></select></label></div>` : `<p class="hint">In Pass and Play, mistakes are counted but the same player keeps trying. This keeps the turn fair because both players are practising the same skill.</p>`}
+      <div id="localDifficultyPreview">${difficultySampleHTML(lastSetup.difficulty)}</div>
+      ${isSingle ? `<div class="two-col"><label>Computer<select id="setupComputer"><option value="friendly" ${lastSetup.computerLevel==='friendly'?'selected':''}>Friendly computer</option><option value="tactical" ${lastSetup.computerLevel==='tactical'?'selected':''}>Tactical computer</option></select></label><label>Mistakes<select id="setupMistake"><option value="practice" ${lastSetup.mistakeMode==='practice'?'selected':''}>Practice Mode — mistakes let you try again</option><option value="pressure" ${lastSetup.mistakeMode==='pressure'?'selected':''}>Pressure Mode — mistake loses your turn</option></select></label></div><div class="setup-helper-card"><strong>Practice Mode:</strong> students can keep trying after an error. <strong>Pressure Mode:</strong> an error gives the computer a move.</div>` : `<p class="hint">In Pass and Play, mistakes are counted but the same player keeps trying. This keeps the turn fair because both players are practising the same skill.</p>`}
     </div>
     <div class="setup-actions"><button class="btn-soft back-small" id="setupBackBtn" type="button">Back</button><button class="btn-primary primary-wide" id="startLocalBtn" type="button">Start game</button></div>`;
   $('localSetupContent').innerHTML = content;
   $('setupBackBtn').onclick = openMode;
+  $('setupDifficulty').addEventListener('change',()=>{ $('localDifficultyPreview').innerHTML=difficultySampleHTML($('setupDifficulty').value); });
   $('startLocalBtn').onclick = ()=>captureAndStartLocal(kind);
 }
 function captureAndStartLocal(kind){
@@ -225,7 +508,7 @@ function startLocalGame(kind){
   if(roomUnsub){roomUnsub(); roomUnsub=null;}
   roomCode=null; isHost=false; localPlayer='p1';
   state = buildNewState({mode:kind,status:'playing',players:{p1:lastSetup.p1,p2:lastSetup.p2},playerUids:{p1:null,p2:null},size:Number(lastSetup.size),difficulty:lastSetup.difficulty,computerLevel:lastSetup.computerLevel,mistakeMode:lastSetup.mistakeMode});
-  $('setupModal').classList.add('hidden'); $('modeModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('answerModal').classList.add('hidden'); $('roomChip').classList.add('hidden');
+  $('setupModal').classList.add('hidden'); $('modeModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('roomChip').classList.add('hidden');
   render();
 }
 function openOnlineSetup(){
@@ -237,13 +520,13 @@ function renderOnlineSetup(){
     <div class="workflow-panel"><label>Your display name<input id="onlineName" value="${escapeAttr(onlineDraft.name)}" placeholder="Your name"></label></div>
     <div class="online-choice-grid">
       <div class="lobby-card join-card"><h3>🚪 Join a Game</h3><p class="hint">Enter the room code from the host.</p><div class="join-room-row"><label>Room code<input id="joinCode" placeholder="ABCD" maxlength="6" value="${escapeAttr(onlineDraft.joinCode)}"></label><button class="btn-green" id="joinRoomBtn" type="button">Join room</button></div></div>
-      <div class="lobby-card host-card"><h3>🏠 Host a Game</h3><p class="hint">Choose settings, create a room, then share the code.</p><div class="two-col"><label>Fraction difficulty<select id="onlineDifficulty"><option value="mild" ${onlineDraft.difficulty==='mild'?'selected':''}>Mild</option><option value="medium" ${onlineDraft.difficulty==='medium'?'selected':''}>Medium</option><option value="spicy" ${onlineDraft.difficulty==='spicy'?'selected':''}>Spicy</option></select></label><label>Board size<select id="onlineSize"><option value="5" ${Number(onlineDraft.size)===5?'selected':''}>5 × 5</option><option value="6" ${Number(onlineDraft.size)===6?'selected':''}>6 × 6</option><option value="7" ${Number(onlineDraft.size)===7?'selected':''}>7 × 7</option></select></label></div><button class="btn-primary" id="createRoomBtn" type="button">Create room</button></div>
+      <div class="lobby-card host-card"><h3>🏠 Host a Game</h3><p class="hint">Choose settings, create a room, then share the code.</p><div class="two-col"><label>Fraction difficulty<select id="onlineDifficulty"><option value="mild" ${onlineDraft.difficulty==='mild'?'selected':''}>Mild</option><option value="medium" ${onlineDraft.difficulty==='medium'?'selected':''}>Medium</option><option value="spicy" ${onlineDraft.difficulty==='spicy'?'selected':''}>Spicy</option></select></label><label>Board size<select id="onlineSize"><option value="5" ${Number(onlineDraft.size)===5?'selected':''}>5 × 5</option><option value="6" ${Number(onlineDraft.size)===6?'selected':''}>6 × 6</option><option value="7" ${Number(onlineDraft.size)===7?'selected':''}>7 × 7</option></select></label></div><div id="onlineDifficultyPreview">${difficultySampleHTML(onlineDraft.difficulty)}</div><button class="btn-primary" id="createRoomBtn" type="button">Create room</button></div>
     </div>
     <div class="room-wait hidden" id="roomWaiting"><div class="hint">Room code</div><div class="room-code" id="roomCodeDisplay">----</div><p class="hint" id="roomStatus">Waiting for Player 2.</p><button class="btn-primary hidden" id="hostStartBtn" type="button">Start game</button></div>
     <div class="setup-actions"><button class="btn-soft back-small" id="onlineBackBtn" type="button">Back</button></div>`;
   $('onlineName').addEventListener('input',()=>onlineDraft.name=$('onlineName').value);
   $('joinCode').addEventListener('input',()=>onlineDraft.joinCode=$('joinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''));
-  $('onlineDifficulty').addEventListener('change',()=>onlineDraft.difficulty=$('onlineDifficulty').value);
+  $('onlineDifficulty').addEventListener('change',()=>{ onlineDraft.difficulty=$('onlineDifficulty').value; $('onlineDifficultyPreview').innerHTML=difficultySampleHTML(onlineDraft.difficulty); });
   $('onlineSize').addEventListener('change',()=>onlineDraft.size=Number($('onlineSize').value));
   $('onlineBackBtn').onclick=openMode;
   $('createRoomBtn').onclick=createRoom;
@@ -328,7 +611,7 @@ function randomRoomCode(){
 
 function buildNewState(opts){
   const size=Number(opts.size||5), difficulty=opts.difficulty||'mild';
-  const fresh={mode:opts.mode||'single',status:opts.status||'playing',size,difficulty,computerLevel:opts.computerLevel||'tactical',mistakeMode:opts.mistakeMode||'practice',board:[],selected:null,turn:'p1',mistakes:{p1:0,p2:0},players:{...(opts.players||DEFAULT_PLAYERS)},playerUids:{...(opts.playerUids||{p1:null,p2:null})},gameOver:false,winner:null,winningPath:[],lastMove:'Game started. Player 1 plays first.'};
+  const fresh={mode:opts.mode||'single',status:opts.status||'playing',size,difficulty,computerLevel:opts.computerLevel||'tactical',mistakeMode:opts.mistakeMode||'practice',board:[],selected:null,turn:'p1',mistakes:{p1:0,p2:0},players:{...(opts.players||DEFAULT_PLAYERS)},playerUids:{...(opts.playerUids||{p1:null,p2:null})},gameOver:false,winner:null,winningPath:[],lastClaim:null,stats:blankStats(),lastMove:'Game started. Player 1 plays first.'};
   for(let r=0;r<size;r++){
     const row=[];
     for(let c=0;c<size;c++) row.push({row:r,col:c,owner:null,...generateQuestion(difficulty)});
@@ -337,14 +620,14 @@ function buildNewState(opts){
   return fresh;
 }
 function serialiseState(src=state){
-  return {mode:src.mode,status:src.status,size:src.size,difficulty:src.difficulty,computerLevel:src.computerLevel,mistakeMode:src.mistakeMode,boardFlat:src.board.flat().map(t=>({row:t.row,col:t.col,owner:t.owner,shownN:t.shownN,shownD:t.shownD,answerN:t.answerN,answerD:t.answerD,hcf:t.hcf})),turn:src.turn,mistakes:src.mistakes,players:src.players,playerUids:src.playerUids,gameOver:src.gameOver,winner:src.winner,winningPath:src.winningPath,lastMove:src.lastMove};
+  return {mode:src.mode,status:src.status,size:src.size,difficulty:src.difficulty,computerLevel:src.computerLevel,mistakeMode:src.mistakeMode,boardFlat:src.board.flat().map(t=>({row:t.row,col:t.col,owner:t.owner,shownN:t.shownN,shownD:t.shownD,answerN:t.answerN,answerD:t.answerD,hcf:t.hcf})),turn:src.turn,mistakes:src.mistakes,players:src.players,playerUids:src.playerUids,gameOver:src.gameOver,winner:src.winner,winningPath:src.winningPath,lastClaim:src.lastClaim||null,stats:normaliseStats(src.stats),lastMove:src.lastMove};
 }
 function applyRoomData(data){
   const boardFlat=data.boardFlat||[];
   const board=[];
   for(let r=0;r<Number(data.size||5);r++) board.push([]);
   for(const tile of boardFlat){ if(board[tile.row]) board[tile.row][tile.col]={...tile}; }
-  state={...state,mode:'online',status:data.status||'waiting',size:Number(data.size||5),difficulty:data.difficulty||'mild',computerLevel:data.computerLevel||'tactical',mistakeMode:data.mistakeMode||'practice',board,selected:null,turn:data.turn||'p1',mistakes:data.mistakes||{p1:0,p2:0},players:data.players||{p1:'Player 1',p2:'Player 2'},playerUids:data.playerUids||{p1:null,p2:null},gameOver:!!data.gameOver,winner:data.winner||null,winningPath:data.winningPath||[],lastMove:data.lastMove||''};
+  state={...state,mode:'online',status:data.status||'waiting',size:Number(data.size||5),difficulty:data.difficulty||'mild',computerLevel:data.computerLevel||'tactical',mistakeMode:data.mistakeMode||'practice',board,selected:null,turn:data.turn||'p1',mistakes:data.mistakes||{p1:0,p2:0},players:data.players||{p1:'Player 1',p2:'Player 2'},playerUids:data.playerUids||{p1:null,p2:null},gameOver:!!data.gameOver,winner:data.winner||null,winningPath:data.winningPath||[],lastClaim:data.lastClaim||null,stats:normaliseStats(data.stats),lastMove:data.lastMove||''};
   closeAnswerModal(false);
 }
 async function saveRoom(){
@@ -384,7 +667,7 @@ function currentPlayerCanAct(){
 }
 function render(){
   if(!state.board?.length){renderEmptyBoard(); return;}
-  const boardEl=$('board'); boardEl.innerHTML=''; boardEl.className=`board size-${state.size}`;
+  const boardEl=$('board'); boardEl.innerHTML=''; boardEl.className=`board size-${state.size}${state.gameOver && state.winningPath?.length ? ' has-winner' : ''}`;
   const winSet=new Set((state.winningPath||[]).map(([r,c])=>`${r},${c}`));
   for(let r=0;r<state.size;r++){
     const rowEl=document.createElement('div'); rowEl.className='hex-row'; rowEl.style.setProperty('--row-index',r);
@@ -397,6 +680,7 @@ function render(){
       if(tile.owner==='p2') tileEl.classList.add('p2');
       if(state.selected && state.selected.row===r && state.selected.col===c) tileEl.classList.add('selected');
       if(winSet.has(`${r},${c}`)) tileEl.classList.add('winning');
+      if(state.lastClaim && state.lastClaim.row===r && state.lastClaim.col===c){ tileEl.classList.add('last-move', `last-${state.lastClaim.player}`); }
       const contentN=tile.owner?tile.answerN:tile.shownN;
       const contentD=tile.owner?tile.answerD:tile.shownD;
       let label='open'; if(tile.owner==='p1') label=playerLabel('p1'); if(tile.owner==='p2') label=playerLabel('p2');
@@ -441,22 +725,26 @@ function updateTurnText(){
 function selectTile(tile){
   if(!currentPlayerCanAct()){setMessage(state.status==='waiting'?'Wait for the game to start.':'It is not your turn right now.', state.turn==='p2'?'p2':'');return;}
   if(tile.owner){setMessage(`That hex already belongs to ${playerName(tile.owner)}. It simplifies to ${formatAnswer(tile.answerN,tile.answerD)}.`, tile.owner==='p2'?'p2':'good');return;}
+  playSound('click');
   state.selected=tile;
   $('answerInput').value='';
-  setMessage('Type the simplified fraction, then press Check.','');
-  openAnswerModal(true);
+  setMessage('Simplify the selected fraction to claim this hex.','');
   render();
-  setTimeout(()=>$('answerInput').focus(),0);
+  setTimeout(()=>{
+    if(state.selected && state.selected.row===tile.row && state.selected.col===tile.col && currentPlayerCanAct()) openAnswerModal(true);
+  },160);
 }
 function openAnswerModal(focusInput=true){
-  $('answerModal').classList.remove('hidden');
-  $('answerModal').classList.remove('shake');
+  const modal=$('answerModal');
+  modal.classList.remove('hidden','shake','p1turn','p2turn');
+  modal.classList.add(state.turn==='p2'?'p2turn':'p1turn');
+  $('answerModalSub').textContent=`${playerName(state.turn)}: type the simplest form to claim this hex.`;
   if(focusInput) setTimeout(()=>$('answerInput').focus(),0);
 }
 function closeAnswerModal(clearSelection=true){
   if(!$('answerModal')) return;
   $('answerModal').classList.add('hidden');
-  $('answerModal').classList.remove('shake');
+  $('answerModal').classList.remove('shake','p1turn','p2turn');
   if(clearSelection && state?.selected){state.selected=null; render();}
 }
 function shakeAnswerModal(){
@@ -482,10 +770,11 @@ async function checkAnswer(){
   const inputGcd=gcd(parsed.n,parsed.d), simplifiedInputN=parsed.n/inputGcd, simplifiedInputD=parsed.d/inputGcd, tile=state.selected;
   const equivalent=simplifiedInputN===tile.answerN && simplifiedInputD===tile.answerD;
   const exact=parsed.n===tile.answerN && parsed.d===tile.answerD;
-  if(equivalent && exact && inputGcd===1){burstConfetti(38); closeAnswerModal(false); await claimTile(state.turn); return;}
+  if(equivalent && exact && inputGcd===1){recordAttempt(state.turn,true); playSound('correct'); burstConfetti(38); closeAnswerModal(false); await claimTile(state.turn); return;}
+  recordAttempt(state.turn,false); playSound('wrong');
   state.mistakes[state.turn]=(state.mistakes[state.turn]||0)+1;
-  if(equivalent && !exact) setMessage('That is equivalent, but it is not in simplest form yet. Keep dividing the top and bottom by the same number.','bad');
-  else setMessage(`Not quite. Hint: ${tile.shownN} and ${tile.shownD} have a common factor of ${tile.hcf}.`,'bad');
+  if(equivalent && !exact) setMessage('Equivalent, but not simplest form yet. Keep dividing the top and bottom.','bad');
+  else setMessage(`Not quite. ${tile.shownN} and ${tile.shownD} have a common factor of ${tile.hcf}.`,'bad');
   await shakeAnswerModal();
   if(state.mode==='single' && state.mistakeMode==='pressure'){
     closeAnswerModal(false);
@@ -495,13 +784,13 @@ async function checkAnswer(){
   render();
 }
 async function claimTile(player){
-  const tile=state.selected; tile.owner=player; state.selected=null; $('answerInput').value='';
+  const tile=state.selected; tile.owner=player; state.lastClaim={player,row:tile.row,col:tile.col}; state.selected=null; $('answerInput').value='';
   const path=getWinningPath(player);
   if(path){
     state.gameOver=true; state.status='ended'; state.winner=player; state.winningPath=path; state.lastMove=`${playerName(player)} connected ${player==='p1'?'left to right':'top to bottom'} and won.`;
     setMessage(`${playerName(player)} wins!`, 'win');
     if(state.mode==='online') await saveRoom().catch(err=>setMessage(firebaseMessage(err),'bad'));
-    render(); showEnd(true); return;
+    render(); setTimeout(()=>showEnd(true),650); return;
   }
   const correctText=`Correct! ${tile.shownN}/${tile.shownD} simplifies to ${formatAnswer(tile.answerN,tile.answerD)}.`;
   state.turn=player==='p1'?'p2':'p1'; state.lastMove=`${playerName(player)} claimed ${tileLabel(tile)}. ${correctText}`;
@@ -514,8 +803,10 @@ function computerMove(prefix=''){
   const tile=chooseComputerTile();
   if(!tile){state.gameOver=true; state.status='ended'; state.lastMove='No tiles remain. Press New Game to reset.'; render(); return;}
   tile.owner='p2';
+  playSound('click');
+  state.lastClaim={player:'p2',row:tile.row,col:tile.col};
   const path=getWinningPath('p2');
-  if(path){state.gameOver=true; state.status='ended'; state.winner='p2'; state.winningPath=path; state.lastMove=`${prefix?prefix+' ':''}The computer connected top to bottom and won.`; setMessage(state.lastMove,'p2'); render(); showEnd(false); return;}
+  if(path){state.gameOver=true; state.status='ended'; state.winner='p2'; state.winningPath=path; state.lastMove=`${prefix?prefix+' ':''}The computer connected top to bottom and won.`; setMessage(state.lastMove,'p2'); render(); setTimeout(()=>showEnd(false),650); return;}
   state.turn='p1'; state.lastMove=`${prefix?prefix+' ':''}Computer claimed ${tileLabel(tile)}. Choose any open hex for your next move.`; setMessage(state.lastMove,'p2'); render();
 }
 function getOpenTiles(){return state.board.flat().filter(t=>!t.owner);}
@@ -565,12 +856,26 @@ function showHint(){
   const factors=[]; for(let i=2;i<=Math.min(t.shownN,t.shownD);i++){if(t.shownN%i===0&&t.shownD%i===0) factors.push(i);}
   setMessage(`Look for a number that divides both ${t.shownN} and ${t.shownD}. Some possible common factors: ${factors.slice(0,4).join(', ') || 'no factor greater than 1'}.`, '');
 }
-function setMessage(text,type){const el=$('message'); el.textContent=text; el.className='message'; if(type) el.classList.add(type); const side=$('sideMessage'); if(side && $('answerModal').classList.contains('hidden')){side.textContent=text; side.className='message'; side.style.marginTop='14px'; if(type) side.classList.add(type);}}
+function setMessage(text,type){const el=$('message'); el.textContent=text; el.className='message'; if(type) el.classList.add(type);}
+function accuracyText(player){
+  const s=ensureStats()[player] || blankPlayerStats();
+  if(!s.attempts) return '—';
+  return `${Math.round((s.correct/s.attempts)*100)}%`;
+}
+function endStatCard(player){
+  const s=ensureStats()[player] || blankPlayerStats();
+  const isWinner=state.winner===player;
+  return `<div class="end-stat-card ${player} ${isWinner?'winner-card':''}"><div class="end-stat-head"><span>${escapeHTML(playerName(player))}</span><span class="end-stat-role">${player==='p1'?'Left → Right':'Top → Bottom'}</span></div><div class="end-stat-metrics"><div class="end-stat-metric"><strong>${countOwner(player)}</strong><span>tiles</span></div><div class="end-stat-metric"><strong>${state.mistakes?.[player]||0}</strong><span>mistakes</span></div><div class="end-stat-metric"><strong>${accuracyText(player)}</strong><span>accuracy</span></div><div class="end-stat-metric"><strong>${s.bestStreak||0}</strong><span>best streak</span></div></div></div>`;
+}
 function showEnd(withConfetti){
   if(!state.winner) return;
   const winner=state.winner;
-  $('winnerText').textContent=`${playerName(winner)} wins!`; $('winnerText').className=`winner ${winner}`; $('winnerName').textContent=playerName(winner); $('winnerTrophy').textContent=winner==='p1'?'🏆':'🏆';
-  $('endDetails').textContent=`${playerName(winner)} connected ${winner==='p1'?'left to right':'top to bottom'} with ${countOwner(winner)} tiles. Final tiles: ${playerName('p1')} ${countOwner('p1')}, ${playerName('p2')} ${countOwner('p2')}.`;
+  playSound('win');
+  $('winnerText').textContent=`${playerName(winner)} wins!`; $('winnerText').className=`winner ${winner}`; $('winnerName').textContent=playerName(winner); $('winnerTrophy').textContent='🏆';
+  const direction=winner==='p1'?'left to right':'top to bottom';
+  const pathLength=state.winningPath?.length || countOwner(winner);
+  $('endDetails').textContent=`${playerName(winner)} connected ${direction}. Winning path length: ${pathLength} hexes. Final tiles: ${playerName('p1')} ${countOwner('p1')}, ${playerName('p2')} ${countOwner('p2')}.`;
+  $('endStatsGrid').innerHTML=endStatCard('p1')+endStatCard('p2');
   $('endModal').classList.remove('hidden');
   if(withConfetti || winner==='p1') burstConfetti();
 }
