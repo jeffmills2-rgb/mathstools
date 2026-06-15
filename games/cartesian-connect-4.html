@@ -1375,17 +1375,16 @@
 
     /*
       Firebase setup:
-      Paste your existing Mills Maths Tools Firebase web config here.
-      Online play will stay in local mode until these placeholder values are replaced.
+      This standalone HTML uses CDN module imports, while the configuration below
+      points to the shared mmt-firebase-games Firebase project.
     */
     const firebaseConfig = {
-      apiKey: "AIzaSyDZLYpzbeplXIq3V54yZOye5jH83wWrXJo",
-      authDomain: "coordinate-connect-4.firebaseapp.com",
-      projectId: "coordinate-connect-4",
-      storageBucket: "coordinate-connect-4.firebasestorage.app",
-      messagingSenderId: "798945723284",
-      appId: "1:798945723284:web:2140725b79cff78a100581",
-      measurementId: "G-RSMWF3LR5F"
+      apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+      authDomain: "mmt-firebase-games.firebaseapp.com",
+      projectId: "mmt-firebase-games",
+      storageBucket: "mmt-firebase-games.firebasestorage.app",
+      messagingSenderId: "980506958719",
+      appId: "1:980506958719:web:c7fe79361d0dbe68ba584a"
     };
 
     const FIREBASE_CONFIGURED = Boolean(
@@ -1483,7 +1482,13 @@
     const PAD = 72;
     const SIZE = 720;
     const BOARD = SIZE - PAD * 2;
-    const ROOM_COLLECTION = 'coordinateConnect4Games';
+    const GAME_COLLECTION = 'games';
+    const GAME_ID = 'cartesianConnect4';
+    const ROOM_COLLECTION = 'rooms';
+
+    function roomDocRef(code) {
+      return doc(db, GAME_COLLECTION, GAME_ID, ROOM_COLLECTION, code);
+    }
     const PLAYERS = {
       1: { name: 'Player 1', cls: 'p1' },
       2: { name: 'Player 2', cls: 'p2' }
@@ -2687,12 +2692,12 @@
         const user = await ensureOnlineReady();
         updateModeDetails();
         let code = makeRoomCode();
-        let ref = doc(db, ROOM_COLLECTION, code);
+        let ref = roomDocRef(code);
         for (let attempt = 0; attempt < 8; attempt++) {
           const existing = await getDoc(ref);
           if (!existing.exists()) break;
           code = makeRoomCode();
-          ref = doc(db, ROOM_COLLECTION, code);
+          ref = roomDocRef(code);
         }
 
         const gameData = {
@@ -2738,7 +2743,7 @@
 
       try {
         const user = await ensureOnlineReady();
-        const ref = doc(db, ROOM_COLLECTION, code);
+        const ref = roomDocRef(code);
         await runTransaction(db, async (transaction) => {
           const snap = await transaction.get(ref);
           if (!snap.exists()) throw new Error('Room not found. Check the code and try again.');
@@ -2764,7 +2769,7 @@
       if (online.unsub) online.unsub();
       online.active = true;
       online.roomCode = code;
-      online.ref = doc(db, ROOM_COLLECTION, code);
+      online.ref = roomDocRef(code);
       onlineRoomCode.textContent = code;
       roomBadge.classList.add('show');
       setOnlineStatus('Connecting to room...', 'warn');
