@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taxed by the King | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#16a34a;
+      --green2:#15803d;
+      --red:#dc2626;
+      --amber:#f59e0b;
+      --orange:#f97316;
+      --gold:#fbbf24;
+      --pink:#ec4899;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.16),transparent 32rem),
+        radial-gradient(circle at top right,rgba(220,38,38,.12),transparent 33rem),
+        radial-gradient(circle at 50% 8%,rgba(251,191,36,.18),transparent 30rem),
+        linear-gradient(180deg,#fff7ed 0%,#f8fafc 26%,#eef6ff 100%);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#111827,#6d1d1d 48%,#b91c1c 100%);
+      color:white;
+      padding:10px 18px;
+      min-height:68px;
+      display:grid;
+      grid-template-columns:minmax(210px,1fr) auto minmax(360px,1fr);
+      align-items:center;
+      gap:14px;
+      box-shadow:0 10px 28px rgba(15,23,42,.24);
+    }
+
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:6px 10px;
+      margin-left:-8px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);}
+    .mmtBrandLogo{width:38px;height:38px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.08rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.72rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:1000;font-size:clamp(1.2rem,2vw,1.65rem);letter-spacing:-.045em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;position:relative;}
+
+    .language-control{display:none;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:6px 8px;color:white;}
+    body.student-mode .language-control{display:flex;}
+    .language-control label{font-size:12px;font-weight:950;opacity:.9;white-space:nowrap;color:white;}
+    .language-control select{width:auto;min-width:120px;height:34px;border:1px solid rgba(255,255,255,.25);border-radius:10px;background:white;color:#991b1b;font-weight:900;padding:0 8px;outline:none;}
+
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:10px 14px;font-weight:900;font-size:14px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease,border-color .18s ease;user-select:none;-webkit-user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.16);}
+
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--red);color:white;border-color:var(--red);box-shadow:0 10px 24px rgba(220,38,38,.20);}
+    .btn-primary:hover{background:#b91c1c;}
+    .mmtTopbar .btn-primary{background:white;color:#991b1b;border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#fff7ed;color:#991b1b;}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(22,163,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);box-shadow:0 10px 24px rgba(220,38,38,.20);}
+    .btn-amber{background:var(--amber);color:white;border-color:var(--amber);box-shadow:0 10px 24px rgba(245,158,11,.20);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.20);}
+
+    input,select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;transition:border-color .16s ease,box-shadow .16s ease;}
+    input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 4px rgba(220,38,38,.12);}
+    label{display:grid;gap:7px;color:#334155;font-weight:900;font-size:.92rem;}
+
+    .layout{width:min(1360px,calc(100vw - 32px));margin:16px auto 12px;display:grid;grid-template-columns:minmax(420px,1fr) minmax(300px,380px);gap:16px;align-items:start;}
+    .layout.single{grid-template-columns:minmax(420px,980px);justify-content:center;}
+    .card{background:rgba(255,255,255,.95);border:1px solid rgba(226,232,240,.95);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .hidden{display:none!important;}
+    .main-card{padding:16px;}
+    .panel-card{padding:16px;position:sticky;top:84px;max-height:calc(100dvh - 100px);overflow:auto;}
+
+    .hero{min-height:360px;display:grid;grid-template-columns:minmax(300px,1fr) minmax(260px,360px);gap:16px;align-items:stretch;}
+    .hero-left{border-radius:24px;padding:20px;background:linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid var(--border);display:grid;align-content:start;gap:14px;min-height:340px;}
+    .hero-title{font-size:clamp(2rem,5vw,4rem);line-height:.95;font-weight:1000;letter-spacing:-.075em;margin:0;}
+    .hero-title span{color:var(--red);}
+    .hero-subtitle{font-size:1.05rem;color:var(--muted);font-weight:760;line-height:1.45;max-width:700px;margin:0;}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
+    .callout{padding:13px 15px;border-radius:18px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;font-weight:850;line-height:1.35;}
+    .callout.good{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .callout.blue{background:#eef6ff;border-color:#bfdbfe;color:#1e3a8a;}
+    .callout.purple{background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6;}
+    .callout.red{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+    .callout.gold{background:#fef3c7;border-color:#fbbf24;color:#92400e;}
+
+    .card-stage{position:relative;display:grid;place-items:center;min-height:340px;border-radius:24px;border:1px solid #fde68a;background:radial-gradient(circle at 35% 18%,rgba(255,255,255,.96),transparent 28%),linear-gradient(145deg,#fff7ed,#f8fafc 52%,#fee2e2);box-shadow:inset 0 -18px 34px rgba(220,38,38,.07);overflow:hidden;}
+    .card-stage::before,.card-stage::after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;opacity:.18;filter:blur(2px);}
+    .card-stage::before{background:var(--gold);left:-60px;top:-44px;}
+    .card-stage::after{background:var(--red);right:-62px;bottom:-48px;}
+
+    .playing-card{width:clamp(130px,17vw,185px);height:clamp(185px,24vw,260px);border-radius:18px;background:white;border:2px solid #d1d5db;box-shadow:inset 0 -10px 0 rgba(15,23,42,.06),0 24px 44px rgba(15,23,42,.20);position:relative;z-index:2;display:grid;place-items:center;overflow:hidden;transform-style:preserve-3d;}
+    .playing-card.flipping{animation:cardFlip .75s ease-in-out;}
+    @keyframes cardFlip{0%{transform:rotateY(0deg) scale(1);}48%{transform:rotateY(88deg) scale(1.03);}52%{transform:rotateY(92deg) scale(1.03);}100%{transform:rotateY(0deg) scale(1);}}
+    .playing-card.back{background:repeating-linear-gradient(45deg,#991b1b 0 10px,#b91c1c 10px 20px);border-color:#7f1d1d;box-shadow:inset 0 0 0 10px white,inset 0 0 0 14px #991b1b,0 24px 44px rgba(15,23,42,.20);}
+    .playing-card.back::after{content:"♛";font-size:4.8rem;color:white;text-shadow:0 5px 14px rgba(0,0,0,.25);}
+    .playing-card.red-card{color:#dc2626;}
+    .playing-card.black-card{color:#111827;}
+    .corner{position:absolute;display:grid;justify-items:center;font-weight:1000;font-family:var(--mathFont);line-height:.9;}
+    .corner.top{left:11px;top:10px;}
+    .corner.bottom{right:11px;bottom:10px;transform:rotate(180deg);}
+    .corner .rank{font-size:1.45rem;}
+    .corner .suit{font-size:1.2rem;}
+    .card-center{display:grid;justify-items:center;gap:8px;font-family:var(--mathFont);}
+    .card-center .big-rank{font-size:clamp(4rem,8vw,7rem);font-weight:1000;line-height:.78;}
+    .card-center .big-suit{font-size:clamp(3.2rem,6vw,5.4rem);line-height:.8;}
+    .card-center .special-label{font-family:var(--uiFont);font-weight:1000;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:#64748b;}
+    .playing-card.joker-card{background:linear-gradient(180deg,#ffffff,#fff7ed);color:#7c2d12;border-color:#fbbf24;}
+    .playing-card.joker-card .big-rank{font-family:var(--uiFont);font-size:clamp(2.4rem,5vw,4rem);}
+    .joker-face{font-size:clamp(4rem,7vw,6.5rem);line-height:1;filter:drop-shadow(0 8px 10px rgba(15,23,42,.18));}
+
+    .event-stamp{position:absolute;z-index:8;display:none;place-items:center;text-align:center;padding:18px 24px;border:7px double currentColor;border-radius:18px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;transform:rotate(-9deg) scale(.8);background:rgba(255,255,255,.86);box-shadow:0 20px 48px rgba(15,23,42,.22);pointer-events:none;max-width:min(520px,90%);}
+    .event-stamp.king{color:#991b1b;font-size:clamp(1.7rem,4vw,3.2rem);}
+    .event-stamp.jack,.event-stamp.queen{color:#92400e;font-size:clamp(1.4rem,3.2vw,2.6rem);}
+    .event-stamp.show{display:grid;animation:stampIn 2s ease forwards;}
+    @keyframes stampIn{0%{opacity:0;transform:rotate(-18deg) scale(.2);}22%{opacity:1;transform:rotate(-8deg) scale(1.1);}42%{transform:rotate(-9deg) scale(.98);}80%{opacity:1;}100%{opacity:0;transform:rotate(-9deg) scale(1.02);}}
+
+    .joker-runner{position:fixed;left:-180px;top:40%;z-index:110;display:none;align-items:center;justify-content:center;width:130px;height:180px;border-radius:18px;background:linear-gradient(180deg,#ffffff,#fff7ed);border:3px solid #fbbf24;box-shadow:0 28px 50px rgba(15,23,42,.24);font-size:4.6rem;transform:rotate(-8deg);pointer-events:none;}
+    .joker-runner::before{content:"JOKER";position:absolute;top:8px;left:9px;font-size:13px;font-weight:1000;color:#7c2d12;letter-spacing:.08em;}
+    .joker-runner::after{content:"-20";position:absolute;bottom:9px;right:10px;font-size:25px;font-weight:1000;color:#dc2626;font-family:var(--mathFont);}
+    .joker-runner.show{display:flex;animation:jokerRun 1.65s cubic-bezier(.15,.82,.28,.98) forwards;}
+    @keyframes jokerRun{0%{left:-180px;transform:translateY(0) rotate(-8deg);}18%{transform:translateY(-18px) rotate(8deg);}38%{transform:translateY(14px) rotate(-5deg);}58%{transform:translateY(-12px) rotate(7deg);}82%{transform:translateY(8px) rotate(-3deg);}100%{left:calc(100vw + 180px);transform:translateY(0) rotate(8deg);}}
+
+    .money{position:fixed;top:-40px;z-index:100;pointer-events:none;font-size:2rem;animation:moneyFall 2s linear forwards;}
+    @keyframes moneyFall{0%{transform:translateY(-40px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .sparkle{position:fixed;z-index:100;pointer-events:none;font-size:1.6rem;animation:spark 980ms ease-out forwards;}
+    @keyframes spark{0%{opacity:0;transform:translateY(0) scale(.3) rotate(0deg);}30%{opacity:1;}100%{opacity:0;transform:translateY(-70px) scale(1.35) rotate(160deg);}}
+    .pulse-gold{animation:pulseGold 820ms ease-in-out 2;}
+    @keyframes pulseGold{0%,100%{box-shadow:inset 0 -10px 0 rgba(15,23,42,.06),0 24px 44px rgba(15,23,42,.20);}50%{box-shadow:inset 0 -10px 0 rgba(15,23,42,.06),0 24px 44px rgba(15,23,42,.20),0 0 0 12px rgba(251,191,36,.22),0 0 44px rgba(251,191,36,.5);transform:scale(1.04);}}
+
+    .stat-grid{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));gap:10px;margin:0 0 12px;}
+    .stat-card{border:1px solid var(--border);background:linear-gradient(180deg,#ffffff,#f8fafc);border-radius:18px;padding:11px 12px;min-height:72px;display:grid;align-content:center;gap:4px;}
+    .stat-card .label{color:#64748b;font-weight:900;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;}
+    .stat-card .value{font-weight:1000;font-size:1.45rem;letter-spacing:-.04em;line-height:1;}
+    .stat-card.round-total{border-color:#a7f3d0;background:linear-gradient(180deg,#ecfdf5,#ffffff);}
+    .stat-card.total-score{border-color:#bfdbfe;background:linear-gradient(180deg,#eff6ff,#ffffff);}
+    .stat-card.status{border-color:#ddd6fe;background:linear-gradient(180deg,#f5f3ff,#ffffff);}
+
+    .controls-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:10px;}
+    .teacher-controls .btn{min-width:128px;}
+    .turn-button{min-width:160px;padding:13px 18px;font-size:1.03rem;border-radius:18px;}
+    .bank-button{width:100%;padding:17px 22px;font-size:1.25rem;border-radius:20px;margin-top:10px;}
+    .bank-button.pulse{animation:bankPulse 1.4s ease-in-out infinite;}
+    @keyframes bankPulse{0%,100%{box-shadow:0 10px 24px rgba(22,163,74,.22);}50%{box-shadow:0 12px 28px rgba(22,163,74,.36),0 0 0 8px rgba(22,163,74,.10);}}
+
+    .room-code-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:20px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;margin-bottom:12px;}
+    .room-code{letter-spacing:.16em;font-size:1.45rem;font-family:var(--mathFont);font-weight:1000;}
+    .form-grid{display:grid;gap:14px;max-width:650px;}
+    .join-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
+    .toggle-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--border);background:#fff;border-radius:18px;}
+    .toggle-row strong{display:block;font-weight:1000;}
+    .toggle-row span{display:block;color:#64748b;font-size:.86rem;font-weight:760;line-height:1.3;margin-top:2px;}
+    .switch{position:relative;width:58px;height:32px;display:inline-block;}
+    .switch input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;transition:.2s;border-radius:999px;box-shadow:inset 0 2px 6px rgba(15,23,42,.14);}
+    .slider::before{position:absolute;content:"";height:26px;width:26px;left:3px;top:3px;background:white;transition:.2s;border-radius:50%;box-shadow:0 4px 10px rgba(15,23,42,.18);}
+    .switch input:checked + .slider{background:#16a34a;}
+    .switch input:checked + .slider::before{transform:translateX(26px);}
+
+    .leader-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+    .leader-title h2{font-size:1.2rem;margin:0;font-weight:1000;letter-spacing:-.03em;}
+    .leader-list{display:grid;gap:9px;}
+    .leader-row{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:17px;background:white;overflow:hidden;}
+    .leader-row::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--bar,0%);background:linear-gradient(90deg,rgba(220,38,38,.13),rgba(251,191,36,.10));pointer-events:none;}
+    .leader-row > *{position:relative;z-index:1;}
+    .rank-badge{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:#f1f5f9;color:#334155;font-weight:1000;font-family:var(--mathFont);}
+    .leader-row.first .rank-badge{background:#fef3c7;color:#92400e;}
+    .leader-row.second .rank-badge{background:#e5e7eb;color:#374151;}
+    .leader-row.third .rank-badge{background:#ffedd5;color:#9a3412;}
+    .leader-name{font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .leader-meta{font-size:.78rem;color:#64748b;font-weight:850;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .leader-score{font-weight:1000;font-size:1.2rem;font-family:var(--mathFont);}
+    .empty-list{padding:18px;border-radius:18px;background:#f8fafc;border:1px dashed #cbd5e1;color:#64748b;font-weight:850;text-align:center;}
+
+    .status-pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 11px;border-radius:999px;background:#e2e8f0;color:#334155;font-weight:950;font-size:.82rem;white-space:nowrap;}
+    .status-pill.standing{background:#dcfce7;color:#166534;}
+    .status-pill.banked{background:#dbeafe;color:#1e40af;}
+    .status-pill.busted{background:#fee2e2;color:#991b1b;}
+    .status-pill.waiting{background:#f1f5f9;color:#475569;}
+
+    .prob-panel{display:grid;gap:10px;padding:13px 14px;border-radius:20px;background:linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid #cbd5e1;}
+    .prob-title{font-weight:1000;letter-spacing:-.03em;}
+    .prob-grid{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px;}
+    .prob-chip{border:1px solid var(--border);border-radius:15px;padding:9px 10px;background:white;display:grid;gap:3px;}
+    .prob-chip .small{font-size:.73rem;color:#64748b;font-weight:950;text-transform:uppercase;letter-spacing:.04em;}
+    .prob-chip .big{font-size:1.2rem;font-weight:1000;font-family:var(--mathFont);}
+    .risk-label{display:flex;justify-content:space-between;gap:10px;font-weight:1000;color:#334155;}
+    .risk-shell{height:18px;background:#e5e7eb;border-radius:999px;overflow:hidden;border:1px solid #d1d5db;}
+    .risk-fill{height:100%;width:var(--riskWidth,0%);border-radius:999px;transition:width .25s ease,background .25s ease;}
+    .risk-fill.risk-green{background:#22c55e;}
+    .risk-fill.risk-yellow{background:#eab308;}
+    .risk-fill.risk-orange{background:#f97316;}
+    .risk-fill.risk-red{background:#dc2626;}
+
+    .history-wrap{display:grid;gap:8px;}
+    .history-title{font-weight:1000;color:#334155;}
+    .history-row{display:flex;gap:8px;overflow-x:auto;padding:8px;border:1px solid var(--border);border-radius:18px;background:#f8fafc;min-height:84px;align-items:center;}
+    .mini-card{width:48px;height:68px;border-radius:8px;background:white;border:1px solid #cbd5e1;display:grid;place-items:center;flex:0 0 auto;font-family:var(--mathFont);font-weight:1000;line-height:.9;box-shadow:0 6px 12px rgba(15,23,42,.08);position:relative;}
+    .mini-card.red-card{color:#dc2626;}
+    .mini-card.black-card{color:#111827;}
+    .mini-card.joker{font-family:var(--uiFont);color:#7c2d12;border-color:#fbbf24;background:#fff7ed;}
+    .mini-card.king{box-shadow:0 0 0 2px rgba(220,38,38,.25),0 6px 12px rgba(15,23,42,.08);}
+    .mini-card span{display:block;text-align:center;}
+    .mini-card .rank{font-size:1.15rem;}
+    .mini-card .suit{font-size:1rem;}
+
+    .podium-wrap{display:grid;gap:18px;}
+    .podium-stage{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;min-height:330px;padding:18px;border-radius:24px;border:1px solid #fde68a;background:linear-gradient(180deg,#fff7ed,#ffffff);overflow:hidden;position:relative;}
+    .podium-card{border-radius:24px 24px 16px 16px;border:1px solid var(--border);background:white;box-shadow:0 18px 34px rgba(15,23,42,.12);display:grid;align-content:start;justify-items:center;text-align:center;gap:8px;padding:16px 12px;min-height:180px;}
+    .podium-card.place-1{min-height:270px;background:linear-gradient(180deg,#fef3c7,#ffffff);border-color:#fbbf24;}
+    .podium-card.place-2{min-height:225px;background:linear-gradient(180deg,#f1f5f9,#ffffff);}
+    .podium-card.place-3{min-height:200px;background:linear-gradient(180deg,#ffedd5,#ffffff);border-color:#fdba74;}
+    .podium-medal{font-size:2.8rem;line-height:1;}
+    .podium-place{font-weight:1000;font-size:1.25rem;}
+    .podium-names{font-weight:1000;font-size:1.1rem;line-height:1.25;word-break:break-word;}
+    .podium-score{color:#64748b;font-weight:900;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(820px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:24px;}
+    .modal h2{margin:0 0 8px;font-size:1.85rem;font-weight:1000;letter-spacing:-.04em;}
+    .modal p{margin:0 0 14px;color:#64748b;font-weight:760;line-height:1.45;}
+    .rules-list{margin:0 0 18px;padding-left:20px;color:#334155;font-weight:780;line-height:1.45;}
+    .rules-list li{margin:7px 0;}
+    .mode-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:4px 16px;text-align:left;padding:20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#fecaca;background:linear-gradient(180deg,#fff7ed,#fff);box-shadow:0 18px 36px rgba(220,38,38,.14);}
+    .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#fff7ed;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:1000;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:#64748b;font-size:.95rem;font-weight:750;}
+
+    .brand-footer{width:min(1360px,calc(100vw - 32px));margin:0 auto 12px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--red);text-decoration:none;font-weight:950;}
+
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout,.layout.single{width:calc(100vw - 24px);grid-template-columns:1fr;margin-top:14px;}
+      .panel-card{position:static;max-height:none;}
+      .hero{grid-template-columns:1fr;}
+      .stat-grid{grid-template-columns:repeat(2,minmax(120px,1fr));}
+      .prob-grid{grid-template-columns:repeat(2,minmax(120px,1fr));}
+      .join-grid{grid-template-columns:1fr;}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .layout,.layout.single{width:calc(100vw - 18px);}
+      .main-card{padding:12px;}
+      .mode-card-grid{grid-template-columns:1fr;}
+      .mode-card{grid-template-columns:1fr;grid-template-areas:"icon" "title" "desc";}
+      .stat-grid{grid-template-columns:1fr;}
+      .prob-grid{grid-template-columns:1fr;}
+      .hero-left{padding:16px;}
+      .podium-stage{grid-template-columns:1fr;}
+      .podium-card,.podium-card.place-1,.podium-card.place-2,.podium-card.place-3{min-height:auto;}
+      .brand-footer{width:calc(100vw - 18px);padding:8px 10px;}
+    }
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../mmt.png" alt="Mills Maths Tools logo" onerror="this.style.display='none'" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Taxed by the King</div>
+    <div class="actions">
+      <div class="language-control" id="languageControl">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button">Rules</button>
+      <button class="btn btn-primary" id="menuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout single" id="appLayout">
+    <section class="card main-card" id="homeScreen">
+      <div class="hero">
+        <div class="hero-left">
+          <h1 class="hero-title">Taxed by <span>the King</span></h1>
+          <p class="hero-subtitle">A teacher-led probability game with a changing deck. Students decide when to bank before the King collects his tax.</p>
+          <div class="callout gold"><strong>Risk and reward:</strong> number cards add money, Jacks give a bonus, Queens double the round total, Jokers take money away, and Kings tax anyone still standing.</div>
+          <div class="hero-actions">
+            <button class="btn-primary" id="homeTeacherBtn" type="button">Teacher: Create Game</button>
+            <button class="btn-green" id="homeStudentBtn" type="button">Student: Join Game</button>
+          </div>
+        </div>
+        <div class="card-stage">
+          <div id="homeCardHost"></div>
+          <div class="event-stamp king">The King Collects His Tax</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card main-card hidden" id="teacherSetupScreen">
+      <div class="hero-left">
+        <h1 class="hero-title">Create <span>Game</span></h1>
+        <p class="hero-subtitle">Generate a room code, choose whether probabilities are shown, and decide whether Jokers can make the round total negative.</p>
+        <div class="form-grid">
+          <div class="toggle-row">
+            <div><strong>Show probability panel</strong><span>Students and teacher will see P(King next), P(Queen next), cards left, kings revealed, and the risk bar.</span></div>
+            <label class="switch" aria-label="Show probability panel"><input id="probabilityToggle" type="checkbox" /><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><strong>Pulling Joker allows negatives</strong><span>Off: the Joker cannot take the round total below $0. On: the Joker can create a negative round total.</span></div>
+            <label class="switch" aria-label="Pulling Joker allows negatives"><input id="jokerNegativesToggle" type="checkbox" /><span class="slider"></span></label>
+          </div>
+          <button class="btn-primary" id="createRoomBtn" type="button">Generate Game Code</button>
+          <div class="callout" id="teacherSetupMessage">Anonymous Firebase sign-in will start automatically when this page loads.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card main-card hidden" id="studentJoinScreen">
+      <div class="hero-left">
+        <h1 class="hero-title" data-student-i18n="Join Game">Join <span>Game</span></h1>
+        <p class="hero-subtitle" id="studentJoinIntro" data-student-i18n="Enter the room code and your name to join your teacher's game.">Enter the room code and your name to join your teacher's game.</p>
+        <div class="join-grid">
+          <label><span data-student-i18n="Room code">Room code</span>
+            <input id="studentRoomCodeInput" type="text" maxlength="6" placeholder="ABC123" autocomplete="off" />
+          </label>
+          <label><span data-student-i18n="Your name">Your name</span>
+            <input id="studentNameInput" type="text" maxlength="24" placeholder="Name" autocomplete="name" />
+          </label>
+          <button class="btn-green" id="joinRoomBtn" type="button" data-student-i18n="Join">Join</button>
+        </div>
+        <div class="callout" id="studentJoinMessage" data-student-i18n="Ask your teacher for the game code.">Ask your teacher for the game code.</div>
+      </div>
+    </section>
+
+    <section class="card main-card hidden" id="gameScreen">
+      <div id="gameContent"></div>
+    </section>
+
+    <aside class="card panel-card hidden" id="sidePanel">
+      <div class="leader-title">
+        <h2 id="leaderboardTitle">Leaderboard</h2>
+        <span class="status-pill" id="studentCountPill">0 students</span>
+      </div>
+      <div class="leader-list" id="leaderList"></div>
+    </aside>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <h2 id="rulesTitle">Taxed by the King rules</h2>
+      <p>A card-based risk and reward game for exploring probability, dependent probability, addition, doubling, negative numbers, and strategic thinking.</p>
+      <ul class="rules-list">
+        <li>The teacher creates a room and students join with a game code.</li>
+        <li>The teacher starts each round and turns over one card at a time from a shuffled 54-card deck.</li>
+        <li>Ace is worth $1. Number cards 2–10 are worth their face value.</li>
+        <li>Jack adds a $20 bonus to the current round total.</li>
+        <li>Queen doubles the current round total. If the total is negative, the Queen doubles the negative.</li>
+        <li>Joker takes $20 from the current round total. The teacher can choose whether Jokers are allowed to make the total negative.</li>
+        <li>King collects his tax. Students still standing get $0 for that round. Students who already banked are safe.</li>
+        <li>Students may bank at any time after a card has resolved. Once banked, they are safe until the next round.</li>
+        <li>If all students bank, the round ends. The teacher presses Start Next Round to continue.</li>
+        <li>The game ends immediately when the fourth King is revealed.</li>
+      </ul>
+      <p><strong>Acknowledgement:</strong> Inspired by Toby Russo / SURF Maths and the card-based probability game <em>The King’s Tax</em>. Video: <a href="https://www.youtube.com/watch?v=kAcBuOXiLwk" target="_blank" rel="noopener">watch here</a>.</p>
+      <button class="btn-primary" id="closeRulesBtn" type="button">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop open" id="modeModal" aria-hidden="false">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modeTitle">
+      <h2 id="modeTitle">Choose your screen</h2>
+      <p>Teachers create the room and turn cards. Students join with a code and decide when to bank.</p>
+      <div class="mode-card-grid">
+        <button class="mode-card" id="chooseTeacherBtn" type="button">
+          <span class="mode-icon">♛</span>
+          <strong>Teacher: Create Game</strong>
+          <span>Turn cards, control rounds, and view the class leaderboard.</span>
+        </button>
+        <button class="mode-card" id="chooseStudentBtn" type="button">
+          <span class="mode-icon">🂠</span>
+          <strong>Student: Join Game</strong>
+          <span>Enter the room code, then decide when to bank.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="joker-runner" id="jokerRunner">🃏</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+      authDomain: "mmt-firebase-games.firebaseapp.com",
+      projectId: "mmt-firebase-games",
+      storageBucket: "mmt-firebase-games.firebasestorage.app",
+      messagingSenderId: "980506958719",
+      appId: "1:980506958719:web:1c86c6397b2f9ae0ba584a"
+    };
+
+    const COLLECTION = 'taxedByKingGames';
+    const MAX_PLAYERS = 30;
+    const REVEAL_MS = 1300;
+    const EFFECT_MS = 2100;
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true,
+      useFetchStreams: false
+    });
+
+    let uid = null;
+    let authReady = false;
+    let authReadyPromiseResolve;
+    const authReadyPromise = new Promise(resolve => { authReadyPromiseResolve = resolve; });
+
+    signInAnonymously(auth).catch(err => {
+      showMessage('teacherSetupMessage', 'Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'red');
+      showMessage('studentJoinMessage', 'Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'red');
+      console.error(err);
+    });
+
+    onAuthStateChanged(auth, user => {
+      uid = user ? user.uid : null;
+      authReady = Boolean(user);
+      authReadyPromiseResolve(user);
+    });
+
+    const $ = id => document.getElementById(id);
+    const els = {
+      appLayout:$('appLayout'), homeScreen:$('homeScreen'), teacherSetupScreen:$('teacherSetupScreen'), studentJoinScreen:$('studentJoinScreen'), gameScreen:$('gameScreen'), sidePanel:$('sidePanel'),
+      gameContent:$('gameContent'), leaderList:$('leaderList'), leaderboardTitle:$('leaderboardTitle'), studentCountPill:$('studentCountPill'), modeModal:$('modeModal'),
+      homeTeacherBtn:$('homeTeacherBtn'), homeStudentBtn:$('homeStudentBtn'), chooseTeacherBtn:$('chooseTeacherBtn'), chooseStudentBtn:$('chooseStudentBtn'),
+      createRoomBtn:$('createRoomBtn'), probabilityToggle:$('probabilityToggle'), jokerNegativesToggle:$('jokerNegativesToggle'), teacherSetupMessage:$('teacherSetupMessage'),
+      studentRoomCodeInput:$('studentRoomCodeInput'), studentNameInput:$('studentNameInput'), joinRoomBtn:$('joinRoomBtn'), studentJoinMessage:$('studentJoinMessage'),
+      rulesBtn:$('rulesBtn'), rulesModal:$('rulesModal'), closeRulesBtn:$('closeRulesBtn'), menuBtn:$('menuBtn'),
+      mainLanguageSelect:$('mainLanguageSelect'), languageMainLabel:$('languageMainLabel'), homeCardHost:$('homeCardHost'), jokerRunner:$('jokerRunner')
+    };
+
+    let role = null;
+    let roomCode = null;
+    let roomRef = null;
+    let unsubscribeRoom = null;
+    let localGame = null;
+    let studentPlayerId = null;
+    let currentLang = 'en';
+    let revealRenderTimeout = null;
+    let finishEffectTimeout = null;
+    let lastEffectKey = '';
+
+    const TRANSLATIONS = {
+      ar: {
+        'Language':'اللغة', 'Join Game':'انضم إلى اللعبة', "Enter the room code and your name to join your teacher's game.":'أدخل رمز الغرفة واسمك للانضمام إلى لعبة معلمك.',
+        'Room code':'رمز الغرفة', 'Your name':'اسمك', 'Join':'انضمام', 'Ask your teacher for the game code.':'اطلب من معلمك رمز اللعبة.',
+        'Leaderboard':'لوحة المتصدرين', 'Top 6':'أفضل 6', 'Round':'الجولة', 'Round total':'مجموع الجولة', 'Your total':'مجموعك', 'Status':'الحالة',
+        'Standing':'مستمر', 'Banked':'تم الحفظ', 'Busted':'خاسر', 'Waiting':'انتظار', 'Bank':'احفظ', 'Cards left':'البطاقات المتبقية', 'Kings revealed':'الملوك المكشوفون',
+        'Waiting for your teacher to start the round.':'انتظر المعلم ليبدأ الجولة.', 'Waiting for your teacher to turn a card.':'انتظر المعلم ليقلب بطاقة.',
+        'The card is being turned. Bank is locked.':'يتم قلب البطاقة. زر الحفظ مقفل.', 'The King collects his tax! Standing players get $0 for this round.':'الملك يجمع الضريبة! اللاعبون المستمرون يحصلون على ٠ دولار في هذه الجولة.',
+        'All players have banked. Wait for your teacher to start the next round.':'كل اللاعبين حفظوا نقاطهم. انتظر المعلم ليبدأ الجولة التالية.', 'Game finished':'انتهت اللعبة',
+        'Latest card':'آخر بطاقة', 'Current card':'البطاقة الحالية', 'P(King next)':'احتمال الملك التالي', 'P(Queen next)':'احتمال الملكة التالية', 'Probability next card is a King':'احتمال أن تكون البطاقة التالية ملكاً',
+        'You are safe from the King\'s Tax.':'أنت آمن من ضريبة الملك.'
+      },
+      fa: {
+        'Language':'زبان', 'Join Game':'پیوستن به بازی', "Enter the room code and your name to join your teacher's game.":'کد اتاق و نام خود را وارد کنید تا به بازی معلم بپیوندید.',
+        'Room code':'کد اتاق', 'Your name':'نام شما', 'Join':'پیوستن', 'Ask your teacher for the game code.':'کد بازی را از معلم خود بپرسید.',
+        'Leaderboard':'جدول رتبه‌بندی', 'Top 6':'۶ نفر برتر', 'Round':'دور', 'Round total':'امتیاز این دور', 'Your total':'امتیاز شما', 'Status':'وضعیت',
+        'Standing':'در بازی', 'Banked':'ذخیره شده', 'Busted':'سوخت', 'Waiting':'در انتظار', 'Bank':'ذخیره', 'Cards left':'کارت‌های باقی‌مانده', 'Kings revealed':'شاه‌های آشکارشده',
+        'Waiting for your teacher to start the round.':'منتظر بمانید تا معلم دور را شروع کند.', 'Waiting for your teacher to turn a card.':'منتظر بمانید تا معلم کارت را برگرداند.',
+        'The card is being turned. Bank is locked.':'کارت در حال برگردانده شدن است. دکمه ذخیره قفل است.', 'The King collects his tax! Standing players get $0 for this round.':'شاه مالیاتش را می‌گیرد! بازیکنان در بازی برای این دور ۰ دلار می‌گیرند.',
+        'All players have banked. Wait for your teacher to start the next round.':'همه بازیکنان امتیاز خود را ذخیره کردند. منتظر شروع دور بعدی باشید.', 'Game finished':'بازی تمام شد',
+        'Latest card':'آخرین کارت', 'Current card':'کارت فعلی', 'P(King next)':'احتمال شاه بعدی', 'P(Queen next)':'احتمال بی‌بی بعدی', 'Probability next card is a King':'احتمال اینکه کارت بعدی شاه باشد',
+        'You are safe from the King\'s Tax.':'شما از مالیات شاه در امان هستید.'
+      }
+    };
+
+    function escapeHtml(str){
+      return String(str ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+    }
+
+    function t(key){
+      if(currentLang === 'en') return escapeHtml(key);
+      const native = TRANSLATIONS[currentLang]?.[key] || key;
+      return `<span class="i18n-dual"><span class="native">${escapeHtml(native)}</span><span class="english-under">${escapeHtml(key)}</span></span>`;
+    }
+
+    function dualDynamic(nativeText, englishText){
+      if(currentLang === 'en') return escapeHtml(englishText);
+      return `<span class="i18n-dual"><span class="native">${escapeHtml(nativeText)}</span><span class="english-under">${escapeHtml(englishText)}</span></span>`;
+    }
+
+    function bankedMessage(amount){
+      const money = formatMoney(amount);
+      const english = `You have banked ${money} this round. You are safe from the King's Tax.`;
+      if(currentLang === 'ar') return dualDynamic(`لقد حفظت ${money} في هذه الجولة. أنت آمن من ضريبة الملك.`, english);
+      if(currentLang === 'fa') return dualDynamic(`شما در این دور ${money} ذخیره کردید. از مالیات شاه در امان هستید.`, english);
+      return escapeHtml(english);
+    }
+
+    function applyStudentLanguage(){
+      document.documentElement.lang = currentLang;
+      els.languageMainLabel.innerHTML = t('Language');
+      document.querySelectorAll('[data-student-i18n]').forEach(el => {
+        const key = el.dataset.studentI18n;
+        if(el.tagName === 'INPUT') return;
+        if(key === 'Join Game') el.innerHTML = currentLang === 'en' ? 'Join <span>Game</span>' : t('Join Game');
+        else el.innerHTML = t(key);
+      });
+      if(role === 'student' && localGame) renderStudent(localGame);
+    }
+
+    function setRole(nextRole){
+      role = nextRole;
+      document.body.classList.toggle('student-mode', role === 'student');
+      els.modeModal.classList.remove('open');
+      if(nextRole === 'teacher') showScreen('teacherSetupScreen', true);
+      if(nextRole === 'student') showScreen('studentJoinScreen', true);
+      applyStudentLanguage();
+    }
+
+    function showScreen(screenId, single=false){
+      ['homeScreen','teacherSetupScreen','studentJoinScreen','gameScreen'].forEach(id => $(id).classList.add('hidden'));
+      $(screenId).classList.remove('hidden');
+      els.sidePanel.classList.add('hidden');
+      els.appLayout.classList.toggle('single', single);
+    }
+
+    function showGameWithPanel(){
+      showScreen('gameScreen', false);
+      els.sidePanel.classList.remove('hidden');
+      els.appLayout.classList.remove('single');
+    }
+
+    function showMessage(id, message, type=''){
+      const el = $(id);
+      if(!el) return;
+      el.className = 'callout' + (type ? ` ${type}` : '');
+      el.textContent = message;
+    }
+
+    function makeCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let out = '';
+      for(let i=0;i<6;i++) out += chars[Math.floor(Math.random()*chars.length)];
+      return out;
+    }
+
+    function normaliseName(name){
+      return String(name || '').trim().replace(/\s+/g,' ').slice(0,24);
+    }
+
+    function randomInt(maxExclusive){
+      if(window.crypto && typeof window.crypto.getRandomValues === 'function'){
+        const values = new Uint32Array(1);
+        const range = 0x100000000;
+        const limit = range - (range % maxExclusive);
+        do{ window.crypto.getRandomValues(values); }while(values[0] >= limit);
+        return values[0] % maxExclusive;
+      }
+      return Math.floor(Math.random() * maxExclusive);
+    }
+
+    function shuffle(array){
+      const a = array.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j = randomInt(i+1);
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    }
+
+    function createDeck(){
+      const suits = [
+        {id:'spades', symbol:'♠', color:'black'},
+        {id:'hearts', symbol:'♥', color:'red'},
+        {id:'diamonds', symbol:'♦', color:'red'},
+        {id:'clubs', symbol:'♣', color:'black'}
+      ];
+      const ranks = [
+        {rank:'A', value:1, type:'number'},
+        ...Array.from({length:9}, (_,i) => ({rank:String(i+2), value:i+2, type:'number'})),
+        {rank:'J', value:20, type:'jack'},
+        {rank:'Q', value:0, type:'queen'},
+        {rank:'K', value:0, type:'king'}
+      ];
+      const deck = [];
+      suits.forEach(suit => {
+        ranks.forEach(r => deck.push({id:`${r.rank}-${suit.id}`, rank:r.rank, suit:suit.id, symbol:suit.symbol, color:suit.color, value:r.value, type:r.type}));
+      });
+      deck.push({id:'JOKER-RED', rank:'Joker', suit:'joker', symbol:'🃏', color:'red', value:-20, type:'joker'});
+      deck.push({id:'JOKER-BLACK', rank:'Joker', suit:'joker', symbol:'🃏', color:'black', value:-20, type:'joker'});
+      return shuffle(deck);
+    }
+
+    function formatMoney(value){
+      const n = Number(value || 0);
+      if(n < 0) return `-$${Math.abs(n)}`;
+      return `$${n}`;
+    }
+
+    function cardName(card){
+      if(!card) return 'No card';
+      if(card.type === 'joker') return 'Joker';
+      const suitName = {spades:'Spades', hearts:'Hearts', diamonds:'Diamonds', clubs:'Clubs'}[card.suit] || '';
+      const rankName = {A:'Ace', J:'Jack', Q:'Queen', K:'King'}[card.rank] || card.rank;
+      return `${rankName} of ${suitName}`;
+    }
+
+    function cardHtml(card, opts={}){
+      const flipping = opts.flipping ? 'flipping' : '';
+      const pulse = opts.pulse ? 'pulse-gold' : '';
+      if(opts.back || !card){
+        return `<div class="playing-card back ${flipping}" aria-label="Card back"></div>`;
+      }
+      if(card.type === 'joker'){
+        return `<div class="playing-card joker-card ${flipping} ${pulse}" aria-label="Joker">
+          <div class="corner top"><span class="rank">Joker</span><span class="suit">🃏</span></div>
+          <div class="card-center"><div class="joker-face">🃏</div><div class="special-label">Joker</div></div>
+          <div class="corner bottom"><span class="rank">Joker</span><span class="suit">🃏</span></div>
+        </div>`;
+      }
+      const colourClass = card.color === 'red' ? 'red-card' : 'black-card';
+      const label = card.type === 'jack' ? '+$20 Bonus' : card.type === 'queen' ? 'Double' : card.type === 'king' ? 'Tax' : '';
+      return `<div class="playing-card ${colourClass} ${flipping} ${pulse}" aria-label="${escapeHtml(cardName(card))}">
+        <div class="corner top"><span class="rank">${escapeHtml(card.rank)}</span><span class="suit">${escapeHtml(card.symbol)}</span></div>
+        <div class="card-center"><div class="big-rank">${escapeHtml(card.rank)}</div><div class="big-suit">${escapeHtml(card.symbol)}</div>${label ? `<div class="special-label">${escapeHtml(label)}</div>` : ''}</div>
+        <div class="corner bottom"><span class="rank">${escapeHtml(card.rank)}</span><span class="suit">${escapeHtml(card.symbol)}</span></div>
+      </div>`;
+    }
+
+    function miniCardHtml(card){
+      if(!card) return '';
+      if(card.type === 'joker') return `<div class="mini-card joker" title="Joker"><span class="rank">🃏</span><span class="suit">-20</span></div>`;
+      const colourClass = card.color === 'red' ? 'red-card' : 'black-card';
+      const kingClass = card.type === 'king' ? 'king' : '';
+      return `<div class="mini-card ${colourClass} ${kingClass}" title="${escapeHtml(cardName(card))}"><span class="rank">${escapeHtml(card.rank)}</span><span class="suit">${escapeHtml(card.symbol)}</span></div>`;
+    }
+
+    function isRevealPending(game){
+      return Number(game?.revealAt || 0) > Date.now();
+    }
+
+    function visibleRoundTotal(game){
+      return isRevealPending(game) ? Number(game.previousRoundTotal || 0) : Number(game.roundTotal || 0);
+    }
+
+    function scheduleRevealRender(game){
+      if(revealRenderTimeout) clearTimeout(revealRenderTimeout);
+      const wait = Number(game?.revealAt || 0) - Date.now();
+      if(wait > 0 && wait < 6000){
+        revealRenderTimeout = setTimeout(() => {
+          revealRenderTimeout = null;
+          if(!localGame) return;
+          if(role === 'teacher') renderTeacher(localGame);
+          if(role === 'student') renderStudent(localGame);
+          renderLeaderboard(localGame);
+        }, wait + 70);
+      }
+    }
+
+    function computeProbability(game){
+      const deck = Array.isArray(game?.deck) ? game.deck : [];
+      const cardsLeft = deck.length;
+      const kingsLeft = deck.filter(c => c.type === 'king').length;
+      const queensLeft = deck.filter(c => c.type === 'queen').length;
+      const kingPct = cardsLeft ? (kingsLeft / cardsLeft) * 100 : 0;
+      const queenPct = cardsLeft ? (queensLeft / cardsLeft) * 100 : 0;
+      const riskClass = kingPct < 10 ? 'risk-green' : kingPct < 20 ? 'risk-yellow' : kingPct < 35 ? 'risk-orange' : 'risk-red';
+      return {cardsLeft, kingsLeft, queensLeft, kingPct, queenPct, riskClass};
+    }
+
+    function pct(value){
+      return `${Number(value || 0).toFixed(1)}%`;
+    }
+
+    function probabilityPanel(game, translated=false){
+      if(!game?.showProbabilities) return '';
+      const p = computeProbability(game);
+      const labelKing = translated ? t('P(King next)') : 'P(King next)';
+      const labelQueen = translated ? t('P(Queen next)') : 'P(Queen next)';
+      const cardsLeft = translated ? t('Cards left') : 'Cards left';
+      const kingsRevealed = translated ? t('Kings revealed') : 'Kings revealed';
+      const riskLabel = translated ? t('Probability next card is a King') : 'Probability next card is a King';
+      const width = Math.max(2, Math.min(100, p.kingPct));
+      return `<div class="prob-panel">
+        <div class="prob-title">${riskLabel}</div>
+        <div class="risk-label"><span>${riskLabel}</span><strong>${pct(p.kingPct)}</strong></div>
+        <div class="risk-shell"><div class="risk-fill ${p.riskClass}" style="--riskWidth:${width}%"></div></div>
+        <div class="prob-grid">
+          <div class="prob-chip"><div class="small">${labelKing}</div><div class="big">${pct(p.kingPct)}</div></div>
+          <div class="prob-chip"><div class="small">${labelQueen}</div><div class="big">${pct(p.queenPct)}</div></div>
+          <div class="prob-chip"><div class="small">${cardsLeft}</div><div class="big">${p.cardsLeft}</div></div>
+          <div class="prob-chip"><div class="small">${kingsRevealed}</div><div class="big">${Number(game.kingsRevealed || 0)}/4</div></div>
+        </div>
+      </div>`;
+    }
+
+    function statusLabel(status, translated=true){
+      const key = status === 'standing' ? 'Standing' : status === 'banked' ? 'Banked' : status === 'busted' ? 'Busted' : 'Waiting';
+      return translated ? t(key) : key;
+    }
+
+    function sortedPlayers(game){
+      const players = Object.entries(game.players || {}).map(([id,p]) => ({id,...p,totalScore:Number(p.totalScore||0),roundScore:Number(p.roundScore||0)}));
+      players.sort((a,b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name));
+      let lastScore = null;
+      let lastRank = 0;
+      players.forEach((p,index) => {
+        if(lastScore === null || p.totalScore !== lastScore){
+          lastRank = index + 1;
+          lastScore = p.totalScore;
+        }
+        p.rank = lastRank;
+      });
+      return players;
+    }
+
+    function renderLeaderboard(game){
+      const players = sortedPlayers(game);
+      const isStudent = role === 'student';
+      const visible = isStudent ? players.slice(0,6) : players;
+      const maxScore = Math.max(1, ...players.map(p => Math.abs(p.totalScore)));
+      els.leaderboardTitle.innerHTML = isStudent ? t('Top 6') : 'Leaderboard';
+      els.studentCountPill.textContent = `${players.length} student${players.length === 1 ? '' : 's'}`;
+      if(players.length === 0){
+        els.leaderList.innerHTML = `<div class="empty-list">No students have joined yet.</div>`;
+        return;
+      }
+      els.leaderList.innerHTML = visible.map(p => {
+        const placeCls = p.rank === 1 ? 'first' : p.rank === 2 ? 'second' : p.rank === 3 ? 'third' : '';
+        const pctBar = Math.max(8, Math.round((Math.max(0,p.totalScore) / maxScore) * 100));
+        return `<div class="leader-row ${placeCls}" style="--bar:${pctBar}%">
+          <div class="rank-badge">${p.rank}</div>
+          <div>
+            <div class="leader-name">${escapeHtml(p.name || 'Student')}</div>
+            <div class="leader-meta">${statusLabel(p.status, false)}${Number.isFinite(p.roundScore) && p.status === 'banked' ? ` · banked ${formatMoney(p.roundScore)}` : ''}</div>
+          </div>
+          <div class="leader-score">${formatMoney(p.totalScore)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function createRoom(){
+      await authReadyPromise;
+      if(!authReady || !uid) return showMessage('teacherSetupMessage','Could not sign in to Firebase yet. Try again in a moment.','red');
+      let code = makeCode();
+      let ref = doc(db, COLLECTION, code);
+      for(let i=0;i<8;i++){
+        const snap = await getDoc(ref);
+        if(!snap.exists()) break;
+        code = makeCode();
+        ref = doc(db, COLLECTION, code);
+      }
+      const base = {
+        roomCode: code,
+        teacherUid: uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        state: 'lobby',
+        locked: false,
+        maxPlayers: MAX_PLAYERS,
+        showProbabilities: Boolean(els.probabilityToggle.checked),
+        jokerAllowsNegatives: Boolean(els.jokerNegativesToggle.checked),
+        deck: createDeck(),
+        history: [],
+        currentCard: null,
+        currentRound: 0,
+        roundTotal: 0,
+        previousRoundTotal: 0,
+        kingsRevealed: 0,
+        revealAt: 0,
+        effectId: 0,
+        latestEffect: null,
+        roundEndReason: null,
+        message: 'Waiting for students to join.',
+        players: {}
+      };
+      await setDoc(ref, base);
+      roomCode = code;
+      roomRef = ref;
+      subscribeToRoom(code);
+      showGameWithPanel();
+    }
+
+    async function joinRoom(){
+      await authReadyPromise;
+      const code = els.studentRoomCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+      const name = normaliseName(els.studentNameInput.value);
+      if(code.length !== 6) return setStudentJoinMessage('Please enter the 6-character room code.', 'red');
+      if(!name) return setStudentJoinMessage('Please enter your name.', 'red');
+      if(!authReady || !uid) return setStudentJoinMessage('Could not sign in to Firebase yet. Try again in a moment.', 'red');
+      const ref = doc(db, COLLECTION, code);
+      const playerId = uid;
+      try{
+        await runTransaction(db, async tx => {
+          const snap = await tx.get(ref);
+          if(!snap.exists()) throw new Error('ROOM_NOT_FOUND');
+          const data = snap.data();
+          const players = {...(data.players || {})};
+          const existingOwn = players[playerId];
+          const duplicate = Object.entries(players).find(([id,p]) => normaliseName(p.name).toLowerCase() === name.toLowerCase() && id !== playerId);
+          if(duplicate) throw new Error('DUPLICATE_NAME');
+          if(data.state !== 'lobby' && !existingOwn) throw new Error('GAME_STARTED');
+          if(data.locked && !existingOwn) throw new Error('GAME_LOCKED');
+          if(!existingOwn && Object.keys(players).length >= MAX_PLAYERS) throw new Error('GAME_FULL');
+          players[playerId] = {
+            ...(existingOwn || {}),
+            name,
+            nameKey: name.toLowerCase(),
+            uid,
+            status: existingOwn?.status || (data.state === 'lobby' ? 'waiting' : 'standing'),
+            totalScore: Number(existingOwn?.totalScore || 0),
+            roundScore: Number(existingOwn?.roundScore || 0),
+            joinedAt: existingOwn?.joinedAt || Date.now(),
+            lastSeen: Date.now()
+          };
+          tx.update(ref, {players, updatedAt: serverTimestamp()});
+        });
+        roomCode = code;
+        roomRef = ref;
+        studentPlayerId = playerId;
+        localStorage.setItem(`taxedByKing:${code}:playerId`, playerId);
+        localStorage.setItem(`taxedByKing:${code}:name`, name);
+        subscribeToRoom(code);
+        showGameWithPanel();
+      }catch(err){
+        console.error(err);
+        const messages = {
+          ROOM_NOT_FOUND: 'Room not found. Check the code with your teacher.',
+          DUPLICATE_NAME: 'That name is already taken. Please choose a different name.',
+          GAME_STARTED: 'This game has already started. Please ask your teacher to start a new room.',
+          GAME_LOCKED: 'This game is locked. Please ask your teacher.',
+          GAME_FULL: 'This game is full. Please ask your teacher to start a new room.'
+        };
+        setStudentJoinMessage(messages[err.message] || 'Could not join the game. Please try again.', 'red');
+      }
+    }
+
+    function setStudentJoinMessage(message, type=''){
+      els.studentJoinMessage.className = 'callout' + (type ? ` ${type}` : '');
+      els.studentJoinMessage.textContent = message;
+    }
+
+    function subscribeToRoom(code){
+      if(unsubscribeRoom) unsubscribeRoom();
+      roomRef = doc(db, COLLECTION, code);
+      unsubscribeRoom = onSnapshot(roomRef, snap => {
+        if(!snap.exists()){
+          localGame = null;
+          if(role === 'student'){
+            setStudentJoinMessage('This game has ended or was reset by the teacher.', 'red');
+            showScreen('studentJoinScreen', true);
+          }else{
+            showMessage('teacherSetupMessage','The current game was reset. You can create a new one.','blue');
+            showScreen('teacherSetupScreen', true);
+          }
+          return;
+        }
+        localGame = snap.data();
+        maybeShowEffects(localGame);
+        if(role === 'teacher') renderTeacher(localGame);
+        if(role === 'student') renderStudent(localGame);
+        renderLeaderboard(localGame);
+      }, err => console.error(err));
+    }
+
+    function maybeShowEffects(game){
+      if(!game?.latestEffect || isRevealPending(game)) return;
+      const key = `${game.roomCode}:${game.effectId}:${game.latestEffect.type}`;
+      if(key === lastEffectKey) return;
+      lastEffectKey = key;
+      const type = game.latestEffect.type;
+      if(type === 'king'){
+        moneyRain();
+        if(game.state === 'finished'){
+          if(finishEffectTimeout) clearTimeout(finishEffectTimeout);
+          finishEffectTimeout = setTimeout(() => {
+            if(role === 'teacher') renderTeacher(localGame);
+            if(role === 'student') renderStudent(localGame);
+          }, EFFECT_MS);
+        }
+      }
+      if(type === 'queen' || type === 'jack'){
+        confettiBurst(40);
+        goldSparkles(24);
+      }
+      if(type === 'joker'){
+        runJoker();
+      }
+    }
+
+    function shouldDelayFinished(game){
+      return game?.state === 'finished' && game?.latestEffect?.type === 'king' && (Date.now() - Number(game?.revealAt || 0)) < EFFECT_MS;
+    }
+
+    function renderTeacher(game){
+      showGameWithPanel();
+      scheduleRevealRender(game);
+      const players = sortedPlayers(game);
+      const revealPending = isRevealPending(game);
+      if(game.state === 'finished' && !shouldDelayFinished(game)){
+        els.gameContent.innerHTML = renderFinished(game, true);
+        attachTeacherButtonHandlers();
+        return;
+      }
+      const shownCard = revealPending ? null : game.currentCard;
+      const effectType = !revealPending && game.latestEffect ? game.latestEffect.type : '';
+      const canStartRound = game.state === 'lobby' || game.state === 'roundEnd';
+      const canTurn = game.state === 'active' && !revealPending && Array.isArray(game.deck) && game.deck.length > 0;
+      const canEndRound = game.state === 'active' && !revealPending;
+      const total = visibleRoundTotal(game);
+      const teacherNotice = revealPending ? 'Turning card... student Bank buttons are locked.' : (game.message || stateMessage(game));
+      const calloutClass = effectType === 'king' ? 'red' : effectType === 'queen' || effectType === 'jack' ? 'gold' : game.state === 'active' ? 'good' : 'blue';
+      els.gameContent.innerHTML = `
+        <div class="room-code-box">
+          <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span></span>
+          <button class="btn-soft" id="copyCodeBtn" type="button">Copy code</button>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Round</div><div class="value">${Number(game.currentRound || 0)}</div></div>
+          <div class="stat-card round-total"><div class="label">Round total</div><div class="value">${formatMoney(total)}</div></div>
+          <div class="stat-card"><div class="label">Cards left</div><div class="value">${Array.isArray(game.deck) ? game.deck.length : 0}</div></div>
+          <div class="stat-card"><div class="label">Kings revealed</div><div class="value">${Number(game.kingsRevealed || 0)}/4</div></div>
+          <div class="stat-card status"><div class="label">Students</div><div class="value">${players.length}/${MAX_PLAYERS}</div></div>
+        </div>
+        <div class="hero">
+          <div class="card-stage">
+            ${cardHtml(shownCard, {back: revealPending || !shownCard, flipping: revealPending, pulse: effectType === 'queen' || effectType === 'jack'})}
+            <div class="event-stamp king ${effectType === 'king' ? 'show' : ''}">The King Collects His Tax</div>
+            <div class="event-stamp queen ${effectType === 'queen' ? 'show' : ''}">Queen Doubles It</div>
+            <div class="event-stamp jack ${effectType === 'jack' ? 'show' : ''}">Jack Bonus +$20</div>
+          </div>
+          <div class="hero-left teacher-controls">
+            <h1 class="hero-title">Taxed by <span>the King</span></h1>
+            <div class="callout ${calloutClass}">${escapeHtml(teacherNotice)}</div>
+            ${probabilityPanel(game, false)}
+            <div class="controls-row">
+              ${canStartRound ? `<button class="btn-primary" id="startRoundBtn" type="button" ${players.length ? '' : 'disabled'}>${game.state === 'lobby' ? 'Start Round 1' : 'Start Next Round'}</button>` : ''}
+              ${game.state === 'active' ? `<button class="btn-green turn-button" id="turnCardBtn" type="button" ${canTurn ? '' : 'disabled'}>${revealPending ? 'Turning...' : 'Turn Card'}</button>` : ''}
+              ${game.state === 'active' ? `<button class="btn-amber" id="endRoundBtn" type="button" ${canEndRound ? '' : 'disabled'}>End Round & Bank Standing Players</button>` : ''}
+              <button class="btn-red" id="resetGameBtn" type="button">Reset / New Game</button>
+            </div>
+            <div class="callout purple"><strong>Reminder:</strong> Students can bank ${formatMoney(total)} while they are standing. If they wait and a King appears, they get $0 for the round.</div>
+          </div>
+        </div>
+        ${historyBlock(game.history || [], false, 'Card history')}`;
+      attachTeacherButtonHandlers();
+    }
+
+    function renderStudent(game){
+      showGameWithPanel();
+      scheduleRevealRender(game);
+      const player = game.players?.[studentPlayerId];
+      if(!player){
+        els.gameContent.innerHTML = `<div class="callout red">${t('This player was not found in the room. Please rejoin.')}</div>`;
+        return;
+      }
+      if(game.state === 'finished' && !shouldDelayFinished(game)){
+        els.gameContent.innerHTML = renderFinished(game, false);
+        return;
+      }
+      const revealPending = isRevealPending(game);
+      const shownCard = revealPending ? null : game.currentCard;
+      const effectType = !revealPending && game.latestEffect ? game.latestEffect.type : '';
+      const total = visibleRoundTotal(game);
+      const status = player.status || 'waiting';
+      const bankEnabled = game.state === 'active' && !revealPending && status === 'standing';
+      let studentMsg = 'Waiting for your teacher to start the round.';
+      if(game.state === 'active') studentMsg = 'Waiting for your teacher to turn a card.';
+      if(revealPending) studentMsg = 'The card is being turned. Bank is locked.';
+      if(status === 'banked') studentMsg = null;
+      if(effectType === 'king') studentMsg = 'The King collects his tax! Standing players get $0 for this round.';
+      if(game.state === 'roundEnd' && game.roundEndReason === 'allBanked') studentMsg = 'All players have banked. Wait for your teacher to start the next round.';
+      const msgHtml = status === 'banked' ? bankedMessage(player.roundScore || 0) : t(studentMsg || 'Waiting for your teacher to turn a card.');
+      const recent = (game.history || []).slice(-5);
+      els.gameContent.innerHTML = `
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">${t('Round')}</div><div class="value">${Number(game.currentRound || 0)}</div></div>
+          <div class="stat-card round-total"><div class="label">${t('Round total')}</div><div class="value">${formatMoney(total)}</div></div>
+          <div class="stat-card total-score"><div class="label">${t('Your total')}</div><div class="value">${formatMoney(player.totalScore || 0)}</div></div>
+          <div class="stat-card"><div class="label">${t('Cards left')}</div><div class="value">${Array.isArray(game.deck) ? game.deck.length : 0}</div></div>
+          <div class="stat-card status"><div class="label">${t('Status')}</div><div class="value"><span class="status-pill ${escapeHtml(status)}">${statusLabel(status)}</span></div></div>
+        </div>
+        <div class="hero">
+          <div class="card-stage">
+            ${cardHtml(shownCard, {back: revealPending || !shownCard, flipping: revealPending, pulse: effectType === 'queen' || effectType === 'jack'})}
+            <div class="event-stamp king ${effectType === 'king' ? 'show' : ''}">The King Collects His Tax</div>
+            <div class="event-stamp queen ${effectType === 'queen' ? 'show' : ''}">Queen Doubles It</div>
+            <div class="event-stamp jack ${effectType === 'jack' ? 'show' : ''}">Jack Bonus +$20</div>
+          </div>
+          <div class="hero-left">
+            <h1 class="hero-title">${escapeHtml(player.name)} <span>♛</span></h1>
+            <div class="callout ${effectType === 'king' ? 'red' : status === 'banked' ? 'good' : 'blue'}">${msgHtml}</div>
+            ${probabilityPanel(game, true)}
+            <button class="btn-green bank-button ${bankEnabled ? 'pulse' : ''}" id="bankBtn" type="button" ${bankEnabled ? '' : 'disabled'}>${t('Bank')} ${formatMoney(total)}</button>
+            ${historyBlock(recent, true, t('Latest card'))}
+          </div>
+        </div>`;
+      $('bankBtn')?.addEventListener('click', bankStudentScore);
+    }
+
+    function historyBlock(history, student, title){
+      return `<div class="history-wrap">
+        <div class="history-title">${title}</div>
+        <div class="history-row">${history.length ? history.map(miniCardHtml).join('') : `<div class="empty-list">${student ? 'No cards yet.' : 'No cards have been revealed yet.'}</div>`}</div>
+      </div>`;
+    }
+
+    function stateMessage(game){
+      if(game.state === 'lobby') return 'Waiting for students to join.';
+      if(game.state === 'active') return 'Turn a card or end the round.';
+      if(game.state === 'roundEnd' && game.roundEndReason === 'allBanked') return 'All players have banked. Press Start Next Round.';
+      if(game.state === 'roundEnd' && game.roundEndReason === 'king') return 'The King collected his tax. Press Start Next Round.';
+      if(game.state === 'roundEnd' && game.roundEndReason === 'teacher') return 'Round ended. Standing players were banked. Press Start Next Round.';
+      if(game.state === 'finished') return 'Game finished.';
+      return '';
+    }
+
+    function renderFinished(game, teacherView){
+      const podium = buildPodium(game);
+      setTimeout(() => confettiBurst(80), 120);
+      return `<div class="podium-wrap">
+        <div class="callout good"><strong>${teacherView ? 'Game finished!' : t('Game finished')}</strong> ${teacherView ? 'The fourth King has been revealed. Here are the final results.' : ''}</div>
+        <div class="podium-stage">
+          ${podium.map(place => `
+            <div class="podium-card place-${place.place}">
+              <div class="podium-medal">${place.place === 1 ? '🥇' : place.place === 2 ? '🥈' : '🥉'}</div>
+              <div class="podium-place">${place.place}${ordinalSuffix(place.place)}</div>
+              <div class="podium-names">${place.names.map(escapeHtml).join('<br>')}</div>
+              <div class="podium-score">${formatMoney(place.score)}</div>
+            </div>`).join('')}
+        </div>
+        ${teacherView ? '<button class="btn-red" id="resetGameBtn" type="button">Reset / New Game</button>' : ''}
+      </div>`;
+    }
+
+    function buildPodium(game){
+      const players = sortedPlayers(game);
+      if(players.length === 0) return [{place:1,names:['No players'],score:0},{place:2,names:['—'],score:0},{place:3,names:['—'],score:0}];
+      const groups = [];
+      for(const p of players){
+        const existing = groups.find(g => g.rank === p.rank);
+        if(existing) existing.names.push(p.name);
+        else groups.push({rank:p.rank, names:[p.name], score:p.totalScore});
+      }
+      const podiumRanks = groups.filter(g => g.rank <= 3).map(g => ({place:g.rank,names:g.names,score:g.score}));
+      [1,2,3].forEach(place => { if(!podiumRanks.find(p => p.place === place)) podiumRanks.push({place,names:['—'],score:0}); });
+      const order = {2:0,1:1,3:2};
+      return podiumRanks.sort((a,b) => order[a.place] - order[b.place]);
+    }
+
+    function ordinalSuffix(n){ return n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'; }
+
+    function attachTeacherButtonHandlers(){
+      $('copyCodeBtn')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(roomCode || localGame?.roomCode || ''); }catch(e){} });
+      $('startRoundBtn')?.addEventListener('click', startNextRound);
+      $('turnCardBtn')?.addEventListener('click', teacherTurnCard);
+      $('endRoundBtn')?.addEventListener('click', endRoundBankStanding);
+      $('resetGameBtn')?.addEventListener('click', resetGame);
+    }
+
+    async function startNextRound(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
+      if(!['lobby','roundEnd'].includes(localGame.state)) return;
+      const players = {...(localGame.players || {})};
+      Object.keys(players).forEach(id => {
+        players[id] = {...players[id], status:'standing', roundScore:0};
+      });
+      await updateDoc(roomRef, {
+        state:'active',
+        locked:true,
+        currentRound:Number(localGame.currentRound || 0) + 1,
+        roundTotal:0,
+        previousRoundTotal:0,
+        revealAt:0,
+        currentCard:null,
+        latestEffect:null,
+        roundEndReason:null,
+        players,
+        message:`Round ${Number(localGame.currentRound || 0) + 1} has started. Turn the first card.`,
+        updatedAt:serverTimestamp()
+      });
+    }
+
+    function applyCardEffect(data, card, players){
+      const oldTotal = Number(data.roundTotal || 0);
+      let newTotal = oldTotal;
+      let state = 'active';
+      let roundEndReason = null;
+      let kingsRevealed = Number(data.kingsRevealed || 0);
+      let effect = {type: card.type, cardId: card.id, text: ''};
+      let message = '';
+      if(card.type === 'number'){
+        newTotal = oldTotal + Number(card.value || 0);
+        message = `${cardName(card)}: add ${formatMoney(card.value)}. Round total is now ${formatMoney(newTotal)}.`;
+        effect.text = message;
+      }else if(card.type === 'jack'){
+        newTotal = oldTotal + 20;
+        message = `${cardName(card)}: Jack bonus +$20! Round total is now ${formatMoney(newTotal)}.`;
+        effect.text = message;
+      }else if(card.type === 'queen'){
+        newTotal = oldTotal * 2;
+        message = `${cardName(card)}: Queen doubles the round total to ${formatMoney(newTotal)}.`;
+        effect.text = message;
+      }else if(card.type === 'joker'){
+        if(data.jokerAllowsNegatives){
+          newTotal = oldTotal - 20;
+          message = `The Joker just took $20! Round total is now ${formatMoney(newTotal)}.`;
+        }else{
+          newTotal = Math.max(0, oldTotal - 20);
+          message = oldTotal < 20 ? `The Joker tried to take $20, but the round total cannot go below $0.` : `The Joker just took $20! Round total is now ${formatMoney(newTotal)}.`;
+        }
+        effect.text = message;
+      }else if(card.type === 'king'){
+        kingsRevealed += 1;
+        Object.keys(players).forEach(id => {
+          if(players[id].status === 'standing') players[id] = {...players[id], status:'busted', roundScore:0};
+        });
+        newTotal = 0;
+        state = kingsRevealed >= 4 ? 'finished' : 'roundEnd';
+        roundEndReason = kingsRevealed >= 4 ? 'finalKing' : 'king';
+        message = kingsRevealed >= 4 ? 'The fourth King has been revealed. The game is finished!' : 'The King collects his tax! Standing players get $0 for this round. Press Start Next Round.';
+        effect.text = message;
+      }
+      return {newTotal, state, roundEndReason, kingsRevealed, effect, message};
+    }
+
+    async function teacherTurnCard(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid || localGame.state !== 'active' || isRevealPending(localGame)) return;
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists()) return;
+        const data = snap.data();
+        if(data.teacherUid !== uid || data.state !== 'active') return;
+        if(Number(data.revealAt || 0) > Date.now()) return;
+        const deck = Array.isArray(data.deck) ? data.deck.slice() : [];
+        if(deck.length === 0){
+          tx.update(roomRef, {state:'finished', message:'The deck is empty. Game finished.', updatedAt:serverTimestamp()});
+          return;
+        }
+        const card = deck.shift();
+        const history = Array.isArray(data.history) ? data.history.slice() : [];
+        history.push(card);
+        const players = {...(data.players || {})};
+        const result = applyCardEffect(data, card, players);
+        tx.update(roomRef, {
+          deck,
+          history,
+          currentCard: card,
+          previousRoundTotal: Number(data.roundTotal || 0),
+          roundTotal: result.newTotal,
+          state: result.state,
+          roundEndReason: result.roundEndReason,
+          kingsRevealed: result.kingsRevealed,
+          latestEffect: result.effect,
+          effectId: Number(data.effectId || 0) + 1,
+          revealAt: Date.now() + REVEAL_MS,
+          players,
+          message: result.message,
+          updatedAt:serverTimestamp()
+        });
+      });
+    }
+
+    async function bankStudentScore(){
+      if(!roomRef || !localGame || localGame.state !== 'active' || isRevealPending(localGame)) return;
+      const playerId = studentPlayerId || uid;
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists()) return;
+        const data = snap.data();
+        if(data.state !== 'active' || Number(data.revealAt || 0) > Date.now()) return;
+        const players = {...(data.players || {})};
+        const player = players[playerId];
+        if(!player || player.status !== 'standing') return;
+        const amount = Number(data.roundTotal || 0);
+        players[playerId] = {
+          ...player,
+          status:'banked',
+          roundScore:amount,
+          totalScore:Number(player.totalScore || 0) + amount,
+          lastSeen:Date.now()
+        };
+        const allBankedOrNotStanding = Object.values(players).length > 0 && Object.values(players).every(p => p.status !== 'standing');
+        const update = {players, updatedAt:serverTimestamp()};
+        if(allBankedOrNotStanding){
+          update.state = 'roundEnd';
+          update.roundEndReason = 'allBanked';
+          update.message = 'All players have banked. Press Start Next Round.';
+        }
+        tx.update(roomRef, update);
+      });
+    }
+
+    async function endRoundBankStanding(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid || localGame.state !== 'active' || isRevealPending(localGame)) return;
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists()) return;
+        const data = snap.data();
+        if(data.teacherUid !== uid || data.state !== 'active' || Number(data.revealAt || 0) > Date.now()) return;
+        const amount = Number(data.roundTotal || 0);
+        const players = {...(data.players || {})};
+        Object.keys(players).forEach(id => {
+          if(players[id].status === 'standing'){
+            players[id] = {...players[id], status:'banked', roundScore:amount, totalScore:Number(players[id].totalScore || 0) + amount};
+          }
+        });
+        tx.update(roomRef, {
+          players,
+          state:'roundEnd',
+          roundEndReason:'teacher',
+          message:`Round ended. Standing players banked ${formatMoney(amount)}. Press Start Next Round.`,
+          updatedAt:serverTimestamp()
+        });
+      });
+    }
+
+    async function resetGame(){
+      if(!roomRef || !localGame || localGame.teacherUid !== uid) return;
+      const ok = confirm('Reset this room and return to the setup screen?');
+      if(!ok) return;
+      await deleteDoc(roomRef);
+      localGame = null;
+      roomCode = null;
+      roomRef = null;
+      showScreen('teacherSetupScreen', true);
+    }
+
+    function runJoker(){
+      const runner = els.jokerRunner;
+      runner.classList.remove('show');
+      void runner.offsetWidth;
+      runner.classList.add('show');
+      setTimeout(() => runner.classList.remove('show'), 1800);
+    }
+
+    function moneyRain(){
+      for(let i=0;i<42;i++){
+        setTimeout(() => {
+          const m = document.createElement('div');
+          m.className = 'money';
+          m.textContent = '💵';
+          m.style.left = `${Math.random()*100}vw`;
+          m.style.fontSize = `${1.3 + Math.random()*1.4}rem`;
+          m.style.animationDuration = `${1.5 + Math.random()*0.8}s`;
+          document.body.appendChild(m);
+          setTimeout(() => m.remove(), 2400);
+        }, Math.random()*450);
+      }
+    }
+
+    function confettiBurst(count=50){
+      const colors = ['#fbbf24','#ef4444','#22c55e','#3b82f6','#a855f7','#f97316'];
+      for(let i=0;i<count;i++){
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = `${Math.random()*100}vw`;
+        c.style.background = colors[Math.floor(Math.random()*colors.length)];
+        c.style.animationDuration = `${650 + Math.random()*650}ms`;
+        c.style.transform = `rotate(${Math.random()*360}deg)`;
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 1400);
+      }
+    }
+
+    function goldSparkles(count=22){
+      for(let i=0;i<count;i++){
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        s.textContent = Math.random() > .5 ? '✨' : '⭐';
+        s.style.left = `${20 + Math.random()*60}vw`;
+        s.style.top = `${25 + Math.random()*45}vh`;
+        s.style.animationDelay = `${Math.random()*180}ms`;
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 1300);
+      }
+    }
+
+    function setupHomeCard(){
+      els.homeCardHost.innerHTML = cardHtml({id:'K-spades',rank:'K',suit:'spades',symbol:'♠',color:'black',type:'king',value:0});
+    }
+
+    els.homeTeacherBtn.addEventListener('click', () => setRole('teacher'));
+    els.homeStudentBtn.addEventListener('click', () => setRole('student'));
+    els.chooseTeacherBtn.addEventListener('click', () => setRole('teacher'));
+    els.chooseStudentBtn.addEventListener('click', () => setRole('student'));
+    els.createRoomBtn.addEventListener('click', createRoom);
+    els.joinRoomBtn.addEventListener('click', joinRoom);
+    els.studentRoomCodeInput.addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); });
+    els.studentRoomCodeInput.addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
+    els.studentNameInput.addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
+    els.rulesBtn.addEventListener('click', () => { els.rulesModal.classList.add('open'); els.rulesModal.setAttribute('aria-hidden','false'); });
+    els.closeRulesBtn.addEventListener('click', () => { els.rulesModal.classList.remove('open'); els.rulesModal.setAttribute('aria-hidden','true'); });
+    els.rulesModal.addEventListener('click', e => { if(e.target === els.rulesModal){ els.rulesModal.classList.remove('open'); els.rulesModal.setAttribute('aria-hidden','true'); } });
+    els.menuBtn.addEventListener('click', () => {
+      if(unsubscribeRoom) unsubscribeRoom();
+      unsubscribeRoom = null;
+      localGame = null;
+      roomCode = null;
+      roomRef = null;
+      studentPlayerId = null;
+      role = null;
+      document.body.classList.remove('student-mode');
+      showScreen('homeScreen', true);
+      els.modeModal.classList.add('open');
+    });
+    els.mainLanguageSelect.addEventListener('change', e => { currentLang = e.target.value; applyStudentLanguage(); });
+
+    setupHomeCard();
+  </script>
+</body>
+</html>
