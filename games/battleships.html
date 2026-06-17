@@ -1094,6 +1094,20 @@
       }
     }
 
+    function canFocusAttackInput(){
+      const my = getMyPlayer();
+      const modalOpen = Boolean(document.querySelector('.modal-backdrop.open'));
+      return !modalOpen && !battleView.hidden && state.phase === 'battle' && state.currentPlayer === my && !state.winner && !(state.gameMode === 'computer' && my === 2) && attackInput && !attackInput.disabled;
+    }
+
+    function focusAttackInputIfReady(selectText=false){
+      window.requestAnimationFrame(() => {
+        if (!canFocusAttackInput()) return;
+        attackInput.focus({ preventScroll:true });
+        if (selectText && attackInput.value) attackInput.select();
+      });
+    }
+
     function startComputerMode(){
       resetState();
       state.gameMode = 'computer';
@@ -1455,6 +1469,7 @@
       syncBattlePrompt(canAttack);
       attackBtn.disabled = !canAttack;
       attackInput.disabled = !canAttack;
+      if (canAttack) focusAttackInputIfReady();
     }
 
     function countHits(attacker){ return shotsFor(attacker).filter(s => s.result === 'hit').length; }
@@ -1992,8 +2007,17 @@
     randomFleetBtn.addEventListener('click', () => randomizeFleet(getMyPlayer()));
     clearFleetBtn.addEventListener('click', clearFleet);
     readyBtn.addEventListener('click', readyToPlay);
-    attackBtn.addEventListener('click', () => state.gameMode === 'online' ? onlineAttack() : localPlayerAttack());
-    attackInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') attackBtn.click(); });
+    attackBtn.addEventListener('click', async () => {
+      if (state.gameMode === 'online') await onlineAttack();
+      else localPlayerAttack();
+      focusAttackInputIfReady(true);
+    });
+    attackInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        attackBtn.click();
+      }
+    });
     createOnlineBtn.addEventListener('click', createOnlineGame);
     joinOnlineBtn.addEventListener('click', joinOnlineGame);
     leaveOnlineBtn.addEventListener('click', showMenu);
