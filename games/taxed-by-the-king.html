@@ -1291,24 +1291,45 @@
     }
 
 
+    function manualRuleDescription(game, card){
+      const pending = game.manualPending || {};
+      const rule = getRuleForCard(game, card);
+      if(rule) return `${card?.rank || 'This card'} has a custom rule: ${card?.rank || 'it'} ${ruleLabel(rule)}.`;
+      if(card?.type === 'jack') return 'Jack rule: add a $20 bonus to the current round total.';
+      if(card?.type === 'queen') return 'Queen rule: double the current round total.';
+      if(card?.type === 'joker') return game.jokerAllowsNegatives ? 'Joker rule: subtract $20. Negatives are allowed for this game.' : 'Joker rule: subtract $20, but the total cannot go below $0.';
+      return pending.effect?.text || 'Use the card and any current custom rules to work out the new total.';
+    }
+
     function manualTotalPanel(game, revealPending){
       if(game.state !== 'manualTotal') return '';
+      const pending = game.manualPending || {};
       const previous = Number(game.manualPreviousTotal ?? game.previousRoundTotal ?? 0);
-      const cardNameText = game.currentCard ? cardName(game.currentCard) : 'Current card';
-      const ready = !revealPending;
-      return `<div class="manual-total-panel" id="manualTotalPanel">
-        <div class="manual-total-title">Manual Addition</div>
-        <div class="manual-total-facts">
-          <div class="manual-total-fact"><span>Previous total</span><strong>${formatMoney(previous)}</strong></div>
-          <div class="manual-total-fact"><span>Card turned</span><strong>${escapeHtml(cardNameText)}</strong></div>
+      const card = game.currentCard;
+      const ready = !revealPending && card;
+      const cardNameText = card ? cardName(card) : 'the card';
+      const rule = getRuleForCard(game, card);
+      return `<div class="manual-total-backdrop" id="manualTotalBackdrop" role="dialog" aria-modal="true" aria-labelledby="manualTotalTitle">
+        <div class="manual-total-modal" id="manualTotalPanel">
+          <h2 id="manualTotalTitle">What is the new total?</h2>
+          <p class="sub">Discuss the calculation, then enter the round total that students will be able to bank.</p>
+          <div class="manual-equation">
+            <div class="manual-total-box"><span>Current total</span><strong>${formatMoney(previous)}</strong></div>
+            <div class="manual-symbol">+</div>
+            <div class="manual-card-holder">${ready ? cardHtml(card, {rule, pulse:true}) : cardHtml(null, {back:true, flipping:true})}</div>
+            <div class="manual-symbol">=</div>
+            <div class="manual-total-box"><span>New total</span><strong>?</strong></div>
+          </div>
+          <div class="manual-rule-focus"><strong>${escapeHtml(cardNameText)}</strong><br>${escapeHtml(manualRuleDescription(game, card))}</div>
+          ${customRulesPanel(game, 'Current custom rules')}
+          ${ready ? `<div class="manual-total-entry-large">
+            <label>Enter the new round total
+              <input id="manualTotalInput" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. ${Number(pending.newTotal ?? 0)}" />
+            </label>
+            <button class="btn-green" id="submitManualTotalBtn" type="button">Submit total</button>
+          </div>
+          <div class="manual-feedback" id="manualTotalFeedback">Students can see the card, but their bank total stays at ${formatMoney(previous)} until this is correct.</div>` : `<div class="callout blue">The card is being revealed. Enter the new total once the card is visible.</div>`}
         </div>
-        ${ready ? `<div class="manual-total-entry">
-          <label>New round total
-            <input id="manualTotalInput" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter total" />
-          </label>
-          <button class="btn-green" id="submitManualTotalBtn" type="button">Submit total</button>
-        </div>
-        <div class="manual-feedback" id="manualTotalFeedback">Students see the card, but their bank total stays at ${formatMoney(previous)} until you submit the correct total.</div>` : `<div class="callout blue">The card is being revealed. Enter the new total once the card is visible.</div>`}
       </div>`;
     }
 
@@ -1317,20 +1338,16 @@
       scheduleRevealRender(game);
       const players = sortedPlayers(game);
       const revealPending = isRevealPending(game);
-      if(game.state === 'finished' && !shouldDelayFinished(game)){
+      if(game.state === 'finished'){
         els.gameContent.innerHTML = renderFinished(game, true);
         attachTeacherButtonHandlers();
         return;
       }
-      if(shouldShowSpinnerAnimation(game)){
+      if(shouldShowSpinnerAnimation(game) || game.state === 'spinner'){
         renderSpinnerView(game, true);
         return;
       }
-      if(game.state === 'spinner' && !shouldDelayRuleAfterKing(game)){
-        renderSpinnerView(game, true);
-        return;
-      }
-      if(game.state === 'ruleSelection' && !shouldDelayRuleAfterKing(game)){
+      if(game.state === 'ruleSelection'){
         renderRuleSelectionTeacher(game);
         return;
       }
@@ -1368,7 +1385,6 @@
             <h1 class="hero-title">Taxed by <span>the King</span></h1>
             <div class="callout ${calloutClass}">${escapeHtml(teacherNotice)}</div>
             ${probabilityPanel(game, false)}
-            ${manualTotalPanel(game, revealPending)}
             ${Number(game.bankLockTurnsRemaining || 0) > 0 ? `<div class="callout red"><strong>Bank locked:</strong> Students cannot bank for ${Number(game.bankLockTurnsRemaining || 0)} more card turn${Number(game.bankLockTurnsRemaining || 0) === 1 ? '' : 's'}.</div>` : ''}
             ${customRulesPanel(game)}
             <div class="controls-row">
@@ -1380,7 +1396,8 @@
             </div>
           </div>
         </div>
-        ${historyBlock(game.history || [], false, 'Card history')}`;
+        ${historyBlock(game.history || [], false, 'Card history')}
+        ${manualTotalPanel(game, revealPending)}`;
       attachTeacherButtonHandlers();
     }
 
@@ -1392,19 +1409,15 @@
         els.gameContent.innerHTML = `<div class="callout red">${t('This player was not found in the room. Please rejoin.')}</div>`;
         return;
       }
-      if(game.state === 'finished' && !shouldDelayFinished(game)){
+      if(game.state === 'finished'){
         els.gameContent.innerHTML = renderFinished(game, false);
         return;
       }
-      if(shouldShowSpinnerAnimation(game)){
+      if(shouldShowSpinnerAnimation(game) || game.state === 'spinner'){
         renderSpinnerView(game, false);
         return;
       }
-      if(game.state === 'spinner' && !shouldDelayRuleAfterKing(game)){
-        renderSpinnerView(game, false);
-        return;
-      }
-      if(game.state === 'ruleSelection' && !shouldDelayRuleAfterKing(game)){
+      if(game.state === 'ruleSelection'){
         renderRuleSelectionStudent(game, player);
         return;
       }
@@ -1519,8 +1532,6 @@
       $('manualTotalInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') submitManualTotal(); });
       setTimeout(() => $('manualTotalInput')?.focus(), 0);
       $('spinTieBtn')?.addEventListener('click', spinTieWinner);
-      $('spinnerWheel')?.addEventListener('click', spinTieWinner);
-      $('spinnerWheel')?.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); spinTieWinner(); } });
     }
 
 
@@ -1979,12 +1990,6 @@
       els.modeModal.classList.add('open');
     });
     els.mainLanguageSelect.addEventListener('change', e => { currentLang = e.target.value; applyStudentLanguage(); });
-    document.addEventListener('keydown', e => {
-      if(e.key === 'Enter' && role === 'teacher' && localGame?.state === 'spinner' && !localGame.spinnerWinnerId && !shouldShowSpinnerAnimation(localGame)){
-        e.preventDefault();
-        spinTieWinner();
-      }
-    });
 
     setupHomeCard();
   </script>
