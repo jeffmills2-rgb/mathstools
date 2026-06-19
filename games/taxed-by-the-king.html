@@ -364,6 +364,140 @@
     .shake{animation:mmtShake .36s ease-in-out;}
     @keyframes mmtShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
 
+
+    /* Manual addition modal */
+    .manual-total-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:88;
+      display:grid;
+      place-items:center;
+      padding:18px;
+      background:rgba(15,23,42,.42);
+      backdrop-filter:blur(2px);
+    }
+    .manual-total-modal{
+      width:min(720px,calc(100vw - 28px));
+      max-height:calc(100dvh - 36px);
+      overflow:auto;
+      background:white;
+      border:1px solid #dbe3ef;
+      border-radius:28px;
+      box-shadow:0 34px 90px rgba(15,23,42,.34);
+      padding:22px;
+      display:grid;
+      gap:16px;
+    }
+    .manual-total-modal h2{
+      margin:0;
+      font-size:clamp(1.75rem,3vw,2.55rem);
+      font-weight:1000;
+      letter-spacing:-.055em;
+      color:#0f172a;
+      text-align:left;
+    }
+    .manual-two-card-row{
+      display:grid;
+      grid-template-columns:minmax(180px,1fr) auto minmax(180px,1fr);
+      gap:16px;
+      align-items:center;
+    }
+    .manual-total-box{
+      min-height:250px;
+      border:2px solid #dbeafe;
+      border-radius:24px;
+      background:linear-gradient(180deg,#ffffff,#eff6ff);
+      display:grid;
+      place-items:center;
+      align-content:center;
+      gap:10px;
+      padding:18px;
+      box-shadow:0 18px 32px rgba(15,23,42,.10);
+    }
+    .manual-total-box span,
+    .manual-card-panel-label{
+      color:#475569;
+      font-weight:1000;
+      font-size:.86rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .manual-total-box strong{
+      font-family:var(--mathFont);
+      font-size:clamp(4rem,10vw,6.6rem);
+      line-height:.9;
+      font-weight:1000;
+      color:#0f172a;
+    }
+    .manual-plus{
+      font-family:var(--mathFont);
+      font-size:clamp(2.4rem,5vw,4.2rem);
+      font-weight:1000;
+      color:#334155;
+      line-height:1;
+      text-align:center;
+    }
+    .manual-card-panel{
+      min-height:250px;
+      border:2px solid #e2e8f0;
+      border-radius:24px;
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      display:grid;
+      place-items:center;
+      align-content:center;
+      gap:12px;
+      padding:18px;
+      box-shadow:0 18px 32px rgba(15,23,42,.10);
+    }
+    .manual-card-panel .playing-card{
+      width:155px;
+      height:218px;
+      border-radius:16px;
+    }
+    .manual-card-panel .corner .rank{font-size:1.15rem;}
+    .manual-card-panel .corner .suit{font-size:1rem;}
+    .manual-card-panel .card-center .big-rank{font-size:4.4rem;}
+    .manual-card-panel .card-center .big-suit{font-size:3.4rem;}
+    .manual-total-entry-large{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px;
+      align-items:end;
+    }
+    .manual-total-entry-large label{
+      font-size:.95rem;
+      color:#334155;
+      font-weight:1000;
+    }
+    .manual-total-entry-large input{
+      height:54px;
+      border-radius:18px;
+      font-size:1.15rem;
+      border-width:2px;
+    }
+    .manual-total-entry-large button{
+      height:54px;
+      border-radius:18px;
+      padding-inline:20px;
+      white-space:nowrap;
+      font-size:1rem;
+    }
+    .manual-feedback{
+      min-height:20px;
+      font-weight:950;
+      font-size:.9rem;
+      color:#64748b;
+    }
+    .manual-feedback.good{color:#166534;}
+    .manual-feedback.bad{color:#991b1b;}
+    @media(max-width:720px){
+      .manual-two-card-row{grid-template-columns:1fr;}
+      .manual-plus{font-size:2.6rem;}
+      .manual-total-entry-large{grid-template-columns:1fr;}
+      .manual-total-box,.manual-card-panel{min-height:180px;}
+      .manual-card-panel .playing-card{width:130px;height:185px;}
+    }
+
     /* MMT SETUP + GAME FIT SAFETY LOCK */
     @media (min-width:1081px){
       html,body{overflow-x:hidden!important;}
@@ -909,6 +1043,12 @@
           if(role === 'teacher') renderTeacher(localGame);
           if(role === 'student') renderStudent(localGame);
           renderLeaderboard(localGame);
+          // The snapshot arrives while the card is still face-down, so effects are
+          // intentionally skipped at first. Once the reveal delay has passed,
+          // trigger the effect handler and its follow-up render. Without this, a
+          // non-final King can leave the teacher stuck on the interim screen
+          // with only New Game / Reset buttons visible.
+          maybeShowEffects(localGame);
         }, wait + 70);
       }
     }
@@ -1303,32 +1443,29 @@
 
     function manualTotalPanel(game, revealPending){
       if(game.state !== 'manualTotal') return '';
-      const pending = game.manualPending || {};
       const previous = Number(game.manualPreviousTotal ?? game.previousRoundTotal ?? 0);
       const card = game.currentCard;
       const ready = !revealPending && card;
-      const cardNameText = card ? cardName(card) : 'the card';
       const rule = getRuleForCard(game, card);
       return `<div class="manual-total-backdrop" id="manualTotalBackdrop" role="dialog" aria-modal="true" aria-labelledby="manualTotalTitle">
         <div class="manual-total-modal" id="manualTotalPanel">
           <h2 id="manualTotalTitle">What is the new total?</h2>
-          <p class="sub">Discuss the calculation, then enter the round total that students will be able to bank.</p>
-          <div class="manual-equation">
+          <div class="manual-two-card-row">
             <div class="manual-total-box"><span>Current total</span><strong>${formatMoney(previous)}</strong></div>
-            <div class="manual-symbol">+</div>
-            <div class="manual-card-holder">${ready ? cardHtml(card, {rule, pulse:true}) : cardHtml(null, {back:true, flipping:true})}</div>
-            <div class="manual-symbol">=</div>
-            <div class="manual-total-box"><span>New total</span><strong>?</strong></div>
+            <div class="manual-plus">+</div>
+            <div class="manual-card-panel">
+              <div class="manual-card-panel-label">New card</div>
+              <div class="manual-card-holder">${ready ? cardHtml(card, {rule, pulse:true}) : cardHtml(null, {back:true, flipping:true})}</div>
+            </div>
           </div>
-          <div class="manual-rule-focus"><strong>${escapeHtml(cardNameText)}</strong><br>${escapeHtml(manualRuleDescription(game, card))}</div>
           ${customRulesPanel(game, 'Current custom rules')}
           ${ready ? `<div class="manual-total-entry-large">
             <label>Enter the new round total
-              <input id="manualTotalInput" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. ${Number(pending.newTotal ?? 0)}" />
+              <input id="manualTotalInput" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. 18" />
             </label>
             <button class="btn-green" id="submitManualTotalBtn" type="button">Submit total</button>
           </div>
-          <div class="manual-feedback" id="manualTotalFeedback">Students can see the card, but their bank total stays at ${formatMoney(previous)} until this is correct.</div>` : `<div class="callout blue">The card is being revealed. Enter the new total once the card is visible.</div>`}
+          <div class="manual-feedback" id="manualTotalFeedback" aria-live="polite"></div>` : ''}
         </div>
       </div>`;
     }
@@ -1362,10 +1499,8 @@
       const canTurn = game.state === 'active' && !revealPending && Array.isArray(game.deck) && game.deck.length > 0;
       const canEndRound = game.state === 'active' && !revealPending;
       const total = visibleRoundTotal(game);
-      const teacherNotice = manualPending
-        ? (revealPending ? 'Card revealed. Waiting for the card flip before manual total entry.' : 'Manual Addition: discuss the calculation, then enter the new round total.')
-        : (revealPending ? 'Turning card... student Bank buttons are locked.' : (game.message || stateMessage(game)));
-      const calloutClass = manualPending ? 'blue' : (effectType === 'king' ? 'red' : effectType === 'queen' || effectType === 'jack' ? 'gold' : game.state === 'active' ? 'good' : 'blue');
+      const teacherNotice = revealPending ? 'Turning card... student Bank buttons are locked.' : (game.message || stateMessage(game));
+      const calloutClass = effectType === 'king' ? 'red' : effectType === 'queen' || effectType === 'jack' ? 'gold' : game.state === 'active' ? 'good' : 'blue';
       els.gameContent.innerHTML = `
         <div class="room-code-box">
           <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span></span>
@@ -1387,7 +1522,7 @@
           </div>
           <div class="hero-left teacher-controls">
             <h1 class="hero-title">Taxed by <span>the King</span></h1>
-            <div class="callout ${calloutClass}">${escapeHtml(teacherNotice)}</div>
+            ${manualPending ? '' : `<div class="callout ${calloutClass}">${escapeHtml(teacherNotice)}</div>`}
             ${probabilityPanel(game, false)}
             ${Number(game.bankLockTurnsRemaining || 0) > 0 ? `<div class="callout red"><strong>Bank locked:</strong> Students cannot bank for ${Number(game.bankLockTurnsRemaining || 0)} more card turn${Number(game.bankLockTurnsRemaining || 0) === 1 ? '' : 's'}.</div>` : ''}
             ${customRulesPanel(game)}
@@ -1716,7 +1851,7 @@
           roundEndReason = 'finalKing';
           message = 'The fourth King has been revealed. The game is finished!';
         }else{
-          const step = determineRuleStep(data, players, 'king', 'The King collects his tax! Standing players get $0 for this round.');
+          const step = determineRuleStep(data, players, 'king', `King ${kingsRevealed} of 4 has been revealed. The King collects his tax! Standing players get $0 for this round.`);
           state = step.state;
           roundEndReason = step.roundEndReason;
           message = step.message;
@@ -1808,6 +1943,12 @@
         };
         if(result.effect && result.effect.roundStep){
           Object.assign(update, result.effect.roundStep);
+        }
+        // Safety guard: a game may only move to finished after the fourth King.
+        // Earlier Kings end the round and move into the rule/spinner flow instead.
+        if(update.state === 'finished' && Number(update.kingsRevealed || 0) < 4){
+          const step = determineRuleStep(data, players, 'king', `King ${Number(update.kingsRevealed || 0)} of 4 has been revealed. The King collects his tax! Standing players get $0 for this round.`);
+          Object.assign(update, step, {bankLockTurnsRemaining:0});
         }
         tx.update(roomRef, update);
       });
