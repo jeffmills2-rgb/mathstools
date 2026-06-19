@@ -209,8 +209,49 @@
     .bank-button.pulse{animation:bankPulse 1.4s ease-in-out infinite;}
     @keyframes bankPulse{0%,100%{box-shadow:0 10px 24px rgba(22,163,74,.22);}50%{box-shadow:0 12px 28px rgba(22,163,74,.36),0 0 0 8px rgba(22,163,74,.10);}}
 
+
+    .bank-lock-progress{
+      --lockProgress:0%;
+      margin-top:10px;
+      padding:11px 12px;
+      border:1px solid #fecaca;
+      background:linear-gradient(180deg,#fff7ed,#ffffff);
+      border-radius:17px;
+      box-shadow:0 12px 24px rgba(220,38,38,.10);
+      color:#7f1d1d;
+      display:grid;
+      gap:8px;
+    }
+    .bank-lock-progress.teacher{
+      position:absolute;
+      left:18px;
+      right:18px;
+      bottom:16px;
+      z-index:6;
+      background:rgba(255,247,237,.94);
+      backdrop-filter:blur(4px);
+      box-shadow:0 16px 34px rgba(127,29,29,.16);
+    }
+    .bank-lock-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:1000;line-height:1.15;}
+    .bank-lock-top span:first-child{display:inline-flex;align-items:center;gap:6px;}
+    .bank-lock-count{white-space:nowrap;color:#991b1b;font-family:var(--mathFont);font-size:1.02rem;}
+    .bank-lock-track{height:12px;border-radius:999px;background:#fee2e2;border:1px solid #fecaca;overflow:hidden;}
+    .bank-lock-fill{height:100%;width:var(--lockProgress);border-radius:999px;background:linear-gradient(90deg,#f97316,#16a34a);transition:width .25s ease;}
+    .bank-lock-segments{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+    .bank-lock-segments span{height:7px;border-radius:999px;background:#fecaca;}
+    .bank-lock-segments span.done{background:#16a34a;}
+    .bank-lock-sub{color:#92400e;font-weight:900;font-size:.82rem;line-height:1.25;}
+
     .room-code-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:20px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;margin-bottom:12px;}
     .room-code{letter-spacing:.16em;font-size:1.45rem;font-family:var(--mathFont);font-weight:1000;}
+    .room-code-trigger{appearance:none;border:0;background:transparent;color:#1e3a8a;padding:0;margin:0;border-radius:14px;font:inherit;font-weight:950;display:inline-flex;align-items:baseline;gap:6px;cursor:pointer;}
+    .room-code-trigger:hover{transform:none;background:rgba(37,99,235,.08);box-shadow:0 0 0 7px rgba(37,99,235,.08);}
+    .room-code-trigger:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.20);}
+    .code-modal{max-width:560px;text-align:center;}
+    .code-highlight-card{display:grid;gap:14px;justify-items:center;padding:18px;border-radius:24px;background:linear-gradient(180deg,#eef6ff,#ffffff);border:2px solid #bfdbfe;margin:14px 0 18px;}
+    .code-highlight-label{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:#1e3a8a;font-weight:1000;}
+    .code-highlight-value{font-family:var(--mathFont);font-size:clamp(3rem,10vw,5.4rem);font-weight:1000;letter-spacing:.16em;line-height:1;color:#1e3a8a;background:white;border:1px solid #bfdbfe;border-radius:22px;padding:16px 22px;box-shadow:0 18px 34px rgba(37,99,235,.12);user-select:all;}
+    .code-modal-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
     .form-grid{display:grid;gap:14px;max-width:650px;}
     .join-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
     .toggle-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--border);background:#fff;border-radius:18px;}
@@ -671,6 +712,21 @@
 
   <div class="joker-runner" id="jokerRunner">🃏</div>
 
+  <div class="modal-backdrop" id="codeModal" aria-hidden="true">
+    <div class="modal code-modal" role="dialog" aria-modal="true" aria-labelledby="codeModalTitle">
+      <h2 id="codeModalTitle">Session code</h2>
+      <p>Display this code for students to join the game.</p>
+      <div class="code-highlight-card">
+        <div class="code-highlight-label">Room code</div>
+        <div class="code-highlight-value" id="codeModalValue">------</div>
+      </div>
+      <div class="code-modal-actions">
+        <button class="btn-primary" id="codeModalCopyBtn" type="button">Copy code</button>
+        <button class="btn-soft" id="closeCodeModalBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -731,7 +787,8 @@
       createRoomBtn:$('createRoomBtn'), probabilityToggle:$('probabilityToggle'), jokerNegativesToggle:$('jokerNegativesToggle'), manualAdditionToggle:$('manualAdditionToggle'), teacherSetupMessage:$('teacherSetupMessage'),
       studentRoomCodeInput:$('studentRoomCodeInput'), studentNameInput:$('studentNameInput'), joinRoomBtn:$('joinRoomBtn'), studentJoinMessage:$('studentJoinMessage'),
       rulesBtn:$('rulesBtn'), rulesModal:$('rulesModal'), closeRulesBtn:$('closeRulesBtn'), menuBtn:$('menuBtn'),
-      mainLanguageSelect:$('mainLanguageSelect'), languageMainLabel:$('languageMainLabel'), homeCardHost:$('homeCardHost'), jokerRunner:$('jokerRunner')
+      mainLanguageSelect:$('mainLanguageSelect'), languageMainLabel:$('languageMainLabel'), homeCardHost:$('homeCardHost'), jokerRunner:$('jokerRunner'),
+      codeModal:$('codeModal'), codeModalValue:$('codeModalValue'), codeModalCopyBtn:$('codeModalCopyBtn'), closeCodeModalBtn:$('closeCodeModalBtn')
     };
 
     let role = null;
@@ -742,6 +799,7 @@
     let studentPlayerId = null;
     let currentLang = 'en';
     let revealRenderTimeout = null;
+    let spinnerRenderTimeout = null;
     let finishEffectTimeout = null;
     let lastEffectKey = '';
 
@@ -803,6 +861,31 @@
         else el.innerHTML = t(key);
       });
       if(role === 'student' && localGame) renderStudent(localGame);
+    }
+
+    function currentRoomCode(){
+      return roomCode || localGame?.roomCode || '';
+    }
+
+    function openCodeModal(){
+      const code = currentRoomCode();
+      if(!code || !els.codeModal) return;
+      els.codeModalValue.textContent = code;
+      els.codeModal.classList.add('open');
+      els.codeModal.setAttribute('aria-hidden','false');
+      setTimeout(() => els.codeModalCopyBtn?.focus(), 0);
+    }
+
+    function closeCodeModal(){
+      if(!els.codeModal) return;
+      els.codeModal.classList.remove('open');
+      els.codeModal.setAttribute('aria-hidden','true');
+    }
+
+    async function copyRoomCodeToClipboard(){
+      const code = currentRoomCode();
+      if(!code) return;
+      try{ await navigator.clipboard.writeText(code); }catch(e){}
     }
 
     function setRole(nextRole){
@@ -979,8 +1062,7 @@
           tieCandidates:[],
           pendingRuleRank:null,
           spinnerWinnerId:null,
-          spinnerSpinAt:0,
-          spinnerSpinDeg:0
+          spinnerSpinAt:0
         };
       }
       if(!entries.length || !available.length){
@@ -993,8 +1075,7 @@
           tieCandidates:[],
           pendingRuleRank:null,
           spinnerWinnerId:null,
-          spinnerSpinAt:0,
-          spinnerSpinDeg:0
+          spinnerSpinAt:0
         };
       }
       const maxRoundScore = Math.max(...entries.map(([,p]) => Number(p.roundScore || 0)));
@@ -1022,7 +1103,6 @@
         pendingRuleRank:null,
         spinnerWinnerId:null,
         spinnerSpinAt:0,
-        spinnerSpinDeg:0,
         message:`There is a tie for the round win on ${formatMoney(maxRoundScore)}. Spin to choose who makes the new rule.`
       };
     }
@@ -1093,6 +1173,34 @@
           maybeShowEffects(localGame);
         }, wait + 70);
       }
+    }
+
+    function scheduleSpinnerRender(game){
+      if(spinnerRenderTimeout) clearTimeout(spinnerRenderTimeout);
+      const started = Number(game?.spinnerSpinAt || 0);
+      if(!started || game?.latestEffect?.type !== 'spinner') return;
+      const wait = (started + SPINNER_MS) - Date.now();
+      if(wait > 0 && wait < 8000){
+        spinnerRenderTimeout = setTimeout(() => {
+          spinnerRenderTimeout = null;
+          if(!localGame) return;
+          if(role === 'teacher') renderTeacher(localGame);
+          if(role === 'student') renderStudent(localGame);
+          renderLeaderboard(localGame);
+        }, wait + 90);
+      }
+    }
+
+    function spinnerFinalDegreesForIndex(index, count){
+      const n = Math.max(1, Number(count || 1));
+      const slice = 360 / n;
+      // The spinner pointer sits at 3 o'clock (90deg in CSS conic-gradient terms).
+      // The wheel starts at -90deg, so calculate the rotation needed to place
+      // the selected sector's centre directly under the pointer.
+      const sectorCentre = -90 + (Number(index || 0) + 0.5) * slice;
+      const pointerAngle = 90;
+      const offset = ((pointerAngle - sectorCentre) % 360 + 360) % 360;
+      return 1440 + offset;
     }
 
     function computeProbability(game){
@@ -1217,7 +1325,6 @@
         tieCandidates: [],
         spinnerWinnerId: null,
         spinnerSpinAt: 0,
-        spinnerSpinDeg: 0,
         bankLockTurnsRemaining: 0,
         manualPending: null,
         manualPreviousTotal: 0,
@@ -1354,7 +1461,11 @@
     }
 
     function shouldShowSpinnerAnimation(game){
-      return game?.latestEffect?.type === 'spinner' && Number(game?.spinnerSpinAt || 0) && (Date.now() - Number(game.spinnerSpinAt || 0)) < SPINNER_MS;
+      const started = Number(game?.spinnerSpinAt || 0);
+      if(game?.latestEffect?.type !== 'spinner' || !started) return false;
+      const elapsed = Date.now() - started;
+      // Avoid trapping a student on the spinner screen if device clocks differ.
+      return elapsed >= 0 && elapsed < SPINNER_MS;
     }
 
 
@@ -1396,6 +1507,24 @@
       return `<details class="admin-actions"><summary>Admin / game options</summary><div class="controls-row admin-controls"><button class="btn-soft" id="newGameBtn" type="button">New game: keep players</button><button class="btn-red" id="resetGameBtn" type="button">Reset room</button></div></details>`;
     }
 
+
+    function bankLockProgressHtml(game, view='student'){
+      const remaining = Math.max(0, Math.min(4, Number(game?.bankLockTurnsRemaining || 0)));
+      if(!remaining) return '';
+      const totalTurns = 4;
+      const completed = Math.max(0, totalTurns - remaining);
+      const progress = Math.max(0, Math.min(100, (completed / totalTurns) * 100));
+      const remainingText = `${remaining} card${remaining === 1 ? '' : 's'} left`;
+      const unlockText = remaining === 1 ? 'Banking unlocks after the next card.' : `Banking unlocks after ${remaining} more cards.`;
+      const title = view === 'teacher' ? 'Bank lock active' : 'Bank locked';
+      return `<div class="bank-lock-progress ${escapeHtml(view)}" style="--lockProgress:${progress}%" role="status" aria-live="polite">
+        <div class="bank-lock-top"><span>🔒 ${escapeHtml(title)}</span><span class="bank-lock-count">${escapeHtml(remainingText)}</span></div>
+        <div class="bank-lock-track" aria-hidden="true"><div class="bank-lock-fill"></div></div>
+        <div class="bank-lock-segments" aria-hidden="true">${[0,1,2,3].map(i => `<span class="${i < completed ? 'done' : ''}"></span>`).join('')}</div>
+        <div class="bank-lock-sub">${escapeHtml(unlockText)}</div>
+      </div>`;
+    }
+
     function teacherActionCue(game){
       if(game.state === 'lobby') return 'Start Round 1 when your students are ready.';
       if(game.state === 'roundEnd'){
@@ -1408,8 +1537,6 @@
 
     function studentDecisionMessage(game, player, total, revealPending, manualPending, effectType){
       const status = player.status || 'waiting';
-      if(revealPending) return 'The card is being turned. Bank is locked.';
-      if(manualPending) return 'Card revealed. Wait for your teacher to confirm the bankable amount.';
       if(game.state === 'roundEnd'){
         if(status === 'busted') return 'The King taxed you this round. You keep your previous score.';
         if(status === 'banked') return `Round over. You banked ${formatMoney(player.roundScore || 0)} this round. Waiting for your teacher to start the next round.`;
@@ -1417,6 +1544,8 @@
       }
       if(status === 'busted') return 'The King taxed you this round. You keep your previous score.';
       if(status === 'banked' && game.state === 'active') return null;
+      if(revealPending) return 'The card is being turned. Bank is locked.';
+      if(manualPending) return 'Card revealed. Wait for your teacher to confirm the bankable amount.';
       if(Number(game.bankLockTurnsRemaining || 0) > 0 && status === 'standing') return `Bank is disabled for ${Number(game.bankLockTurnsRemaining || 0)} more card turn${Number(game.bankLockTurnsRemaining || 0) === 1 ? '' : 's'}.`;
       if(game.state === 'active' && status === 'standing') return `You are still standing. Bank now to keep ${formatMoney(total)}, or wait for the next card.`;
       if(game.state === 'lobby') return 'Waiting for your teacher to start the round.';
@@ -1497,7 +1626,8 @@
     }
 
     function renderRuleSelectionStudent(game, player){
-      const isChooser = game.ruleChooserId === (studentPlayerId || uid);
+      const chooserId = game.ruleChooserId;
+      const isChooser = chooserId === (studentPlayerId || uid) || game.players?.[chooserId]?.uid === uid;
       const chooser = game.players?.[game.ruleChooserId];
       if(!isChooser){
         els.gameContent.innerHTML = `
@@ -1564,6 +1694,7 @@
     function renderTeacher(game){
       showGameWithPanel();
       scheduleRevealRender(game);
+      scheduleSpinnerRender(game);
       const players = sortedPlayers(game);
       const revealPending = isRevealPending(game);
       if(game.state === 'finished' && !shouldDelayFinished(game)){
@@ -1595,7 +1726,7 @@
       const startRoundLabel = game.state === 'lobby' ? 'Start Round 1' : `Start Round ${Number(game.currentRound || 0) + 1}`;
       els.gameContent.innerHTML = `
         <div class="room-code-box">
-          <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span></span>
+          <button class="room-code-trigger" id="roomCodeTrigger" type="button" title="Show session code"><span>Room</span> <span class="room-code">${escapeHtml(game.roomCode)}</span></button>
           <button class="btn-soft" id="copyCodeBtn" type="button">Copy code</button>
         </div>
         <div class="section-kicker">This round</div>
@@ -1609,6 +1740,7 @@
         <div class="hero">
           <div class="card-stage">
             ${cardHtml(shownCard, {back: revealPending || !shownCard, flipping: revealPending, pulse: effectType === 'queen' || effectType === 'jack' || effectType === 'customRule', rule:getRuleForCard(game, shownCard)})}
+            ${bankLockProgressHtml(game, 'teacher')}
             <div class="event-stamp king ${effectType === 'king' ? 'show' : ''}">The King Collects His Tax</div>
             <div class="event-stamp queen ${effectType === 'queen' ? 'show' : ''}">Queen Doubles It</div>
             <div class="event-stamp jack ${effectType === 'jack' ? 'show' : ''}">Jack Bonus +$20</div>
@@ -1617,7 +1749,6 @@
             <h1 class="hero-title">Taxed by <span>the King</span></h1>
             ${manualPending ? '' : `<div class="callout ${calloutClass}">${escapeHtml(teacherNotice)}</div>`}
             ${probabilityPanel(game, false)}
-            ${Number(game.bankLockTurnsRemaining || 0) > 0 ? `<div class="callout red"><strong>Bank locked:</strong> Students cannot bank for ${Number(game.bankLockTurnsRemaining || 0)} more card turn${Number(game.bankLockTurnsRemaining || 0) === 1 ? '' : 's'}.</div>` : ''}
             ${customRulesPanel(game)}
             <div class="controls-row main-actions">
               ${canStartRound ? `<button class="btn-primary" id="startRoundBtn" type="button" ${players.length ? '' : 'disabled'}>${startRoundLabel}</button>` : ''}
@@ -1636,6 +1767,7 @@
     function renderStudent(game){
       showGameWithPanel();
       scheduleRevealRender(game);
+      scheduleSpinnerRender(game);
       const player = game.players?.[studentPlayerId];
       if(!player){
         els.gameContent.innerHTML = `<div class="callout red">${t('This player was not found in the room. Please rejoin.')}</div>`;
@@ -1663,19 +1795,18 @@
       const effectType = !revealPending && game.latestEffect ? game.latestEffect.type : '';
       const total = visibleRoundTotal(game);
       const status = player.status || 'waiting';
-      const displayStatus = revealPending && status === 'busted' ? 'standing' : status;
       const bankEnabled = game.state === 'active' && !revealPending && status === 'standing' && Number(game.bankLockTurnsRemaining || 0) <= 0;
       const studentMsg = studentDecisionMessage(game, player, total, revealPending, manualPending, effectType);
       const msgHtml = (status === 'banked' && game.state === 'active') ? bankedMessage(player.roundScore || 0) : escapeHtml(studentMsg || 'Waiting for your teacher to turn a card.');
       const recent = (game.history || []).slice(-5);
-      const calloutClass = revealPending ? 'blue' : status === 'busted' ? 'red' : status === 'banked' ? 'good' : effectType === 'king' ? 'red' : 'blue';
+      const calloutClass = status === 'busted' ? 'red' : status === 'banked' ? 'good' : effectType === 'king' ? 'red' : 'blue';
       els.gameContent.innerHTML = `
         <div class="stat-grid">
           <div class="stat-card"><div class="label">${t('Round')}</div><div class="value">${Number(game.currentRound || 0)}</div></div>
           <div class="stat-card round-total"><div class="label">${t('Bankable now')}</div><div class="value">${formatMoney(total)}</div></div>
           <div class="stat-card total-score"><div class="label">${t('Your score')}</div><div class="value">${formatMoney(player.totalScore || 0)}</div></div>
           <div class="stat-card"><div class="label">${t('Cards left')}</div><div class="value">${Array.isArray(game.deck) ? game.deck.length : 0}</div></div>
-          <div class="stat-card status"><div class="label">${t('Status')}</div><div class="value"><span class="status-pill ${escapeHtml(displayStatus)}">${statusLabel(displayStatus)}</span></div></div>
+          <div class="stat-card status"><div class="label">${t('Status')}</div><div class="value"><span class="status-pill ${escapeHtml(status)}">${statusLabel(status)}</span></div></div>
         </div>
         <div class="hero">
           <div class="card-stage">
@@ -1690,6 +1821,7 @@
             ${probabilityPanel(game, true)}
             ${customRulesPanel(game)}
             <button class="btn-green bank-button ${bankEnabled ? 'pulse' : ''}" id="bankBtn" type="button" ${bankEnabled ? '' : 'disabled'}>${t('Bank')} ${formatMoney(total)}</button>
+            ${status === 'standing' ? bankLockProgressHtml(game, 'student') : ''}
             ${historyBlock(recent, true, t('Cards this round'))}
           </div>
         </div>`;
@@ -1752,7 +1884,8 @@
     function ordinalSuffix(n){ return n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'; }
 
     function attachTeacherButtonHandlers(){
-      $('copyCodeBtn')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(roomCode || localGame?.roomCode || ''); }catch(e){} });
+      $('copyCodeBtn')?.addEventListener('click', copyRoomCodeToClipboard);
+      $('roomCodeTrigger')?.addEventListener('click', openCodeModal);
       $('startRoundBtn')?.addEventListener('click', startNextRound);
       $('turnCardBtn')?.addEventListener('click', teacherTurnCard);
       $('endRoundBtn')?.addEventListener('click', endRoundBankStanding);
@@ -1775,15 +1908,17 @@
         if(data.teacherUid !== uid || data.state !== 'spinner') return;
         const candidates = Array.isArray(data.tieCandidates) ? data.tieCandidates.filter(id => data.players?.[id]) : [];
         if(!candidates.length) return;
-        const winnerId = candidates[randomInt(candidates.length)];
+        const winnerIndex = randomInt(candidates.length);
+        const winnerId = candidates[winnerIndex];
         const winner = data.players[winnerId] || {};
+        const spinDeg = spinnerFinalDegreesForIndex(winnerIndex, candidates.length);
         tx.update(roomRef, {
           state:'ruleSelection',
           roundWinnerId:winnerId,
           ruleChooserId:winnerId,
           spinnerWinnerId:winnerId,
           spinnerSpinAt:Date.now(),
-          spinnerSpinDeg:1440 + randomInt(360),
+          spinnerSpinDeg:spinDeg,
           pendingRuleRank:null,
           latestEffect:{type:'spinner', text:`Spinner chose ${winner.name || 'the winner'}.`},
           effectId:Number(data.effectId || 0) + 1,
@@ -1864,7 +1999,6 @@
         tieCandidates:[],
         spinnerWinnerId:null,
         spinnerSpinAt:0,
-        spinnerSpinDeg:0,
         bankLockTurnsRemaining:0,
         manualPending:null,
         manualPreviousTotal:0,
@@ -2003,6 +2137,7 @@
             state:'manualTotal',
             roundEndReason:null,
             roundTotal: previousTotal,
+            bankLockTurnsRemaining: nextLock,
             manualPreviousTotal: previousTotal,
             manualPending:{
               newTotal: result.newTotal,
@@ -2213,6 +2348,10 @@
     els.studentRoomCodeInput.addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); });
     els.studentRoomCodeInput.addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
     els.studentNameInput.addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
+    els.codeModalCopyBtn?.addEventListener('click', copyRoomCodeToClipboard);
+    els.closeCodeModalBtn?.addEventListener('click', closeCodeModal);
+    els.codeModal?.addEventListener('click', e => { if(e.target === els.codeModal) closeCodeModal(); });
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeCodeModal(); });
     els.rulesBtn.addEventListener('click', () => { updateRulesModalCustomRules(); els.rulesModal.classList.add('open'); els.rulesModal.setAttribute('aria-hidden','false'); });
     els.closeRulesBtn.addEventListener('click', () => { els.rulesModal.classList.remove('open'); els.rulesModal.setAttribute('aria-hidden','true'); });
     els.rulesModal.addEventListener('click', e => { if(e.target === els.rulesModal){ els.rulesModal.classList.remove('open'); els.rulesModal.setAttribute('aria-hidden','true'); } });
