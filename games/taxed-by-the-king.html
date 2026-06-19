@@ -1338,16 +1338,20 @@
       scheduleRevealRender(game);
       const players = sortedPlayers(game);
       const revealPending = isRevealPending(game);
-      if(game.state === 'finished'){
+      if(game.state === 'finished' && !shouldDelayFinished(game)){
         els.gameContent.innerHTML = renderFinished(game, true);
         attachTeacherButtonHandlers();
         return;
       }
-      if(shouldShowSpinnerAnimation(game) || game.state === 'spinner'){
+      if(shouldShowSpinnerAnimation(game)){
         renderSpinnerView(game, true);
         return;
       }
-      if(game.state === 'ruleSelection'){
+      if(game.state === 'spinner' && !shouldDelayRuleAfterKing(game)){
+        renderSpinnerView(game, true);
+        return;
+      }
+      if(game.state === 'ruleSelection' && !shouldDelayRuleAfterKing(game)){
         renderRuleSelectionTeacher(game);
         return;
       }
@@ -1409,15 +1413,19 @@
         els.gameContent.innerHTML = `<div class="callout red">${t('This player was not found in the room. Please rejoin.')}</div>`;
         return;
       }
-      if(game.state === 'finished'){
+      if(game.state === 'finished' && !shouldDelayFinished(game)){
         els.gameContent.innerHTML = renderFinished(game, false);
         return;
       }
-      if(shouldShowSpinnerAnimation(game) || game.state === 'spinner'){
+      if(shouldShowSpinnerAnimation(game)){
         renderSpinnerView(game, false);
         return;
       }
-      if(game.state === 'ruleSelection'){
+      if(game.state === 'spinner' && !shouldDelayRuleAfterKing(game)){
+        renderSpinnerView(game, false);
+        return;
+      }
+      if(game.state === 'ruleSelection' && !shouldDelayRuleAfterKing(game)){
         renderRuleSelectionStudent(game, player);
         return;
       }
