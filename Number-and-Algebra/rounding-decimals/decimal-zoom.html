@@ -1,0 +1,1542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Decimal Zoom Rounding | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --green:#22c55e;
+      --purple:#7c3aed;
+      --orange:#f97316;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --actual:#0f766e;
+      --actual-soft:#ccfbf1;
+      --guess:#f97316;
+      --guess-soft:#ffedd5;
+      --half:#7c3aed;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,"Roboto Mono",monospace;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    html{ height:auto; }
+    body{
+      min-height:100%;
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+      overflow-y:auto;
+    }
+    button,input{ font:inherit; }
+
+    .app{
+      min-height:100vh;
+      min-height:100dvh;
+      height:auto;
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+    }
+
+    .mmtTopbar{
+      position:relative;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    }
+    .mmtBrand:hover{
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);
+    }
+    .mmtBrandLogo{
+      width:44px;
+      height:44px;
+      border-radius:9px;
+      background:white;
+      color:#1d4ed8;
+      display:grid;
+      place-items:center;
+      font-weight:1000;
+      letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08);
+      flex:0 0 auto;
+    }
+    .mmtBrandText strong{
+      display:block;
+      font-size:1.18rem;
+      line-height:1;
+      letter-spacing:-.03em;
+      color:white;
+    }
+    .mmtBrandText span{
+      display:block;
+      font-size:.78rem;
+      opacity:.82;
+      font-weight:650;
+      color:white;
+    }
+    .mmtTopTitle{
+      font-weight:850;
+      font-size:clamp(1.18rem,2vw,1.7rem);
+      letter-spacing:-.04em;
+      text-align:center;
+      color:white;
+      white-space:nowrap;
+    }
+    .topActions{
+      justify-self:end;
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+
+    .toolsMenuWrap{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+    }
+    .toolsMenu{
+      position:absolute;
+      top:calc(100% + 10px);
+      right:0;
+      width:230px;
+      background:white;
+      color:var(--ink);
+      border:1px solid rgba(226,232,240,.95);
+      border-radius:16px;
+      box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:8px;
+      display:none;
+      gap:6px;
+      z-index:120;
+    }
+    .toolsMenu.open{ display:grid; }
+    .toolLink{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:11px 12px;
+      border-radius:12px;
+      color:var(--ink);
+      text-decoration:none;
+      font-weight:900;
+      font-size:.92rem;
+      transition:background .16s ease, color .16s ease, transform .16s ease;
+    }
+    .toolLink::after{
+      content:'›';
+      color:var(--blue);
+      font-weight:1000;
+      font-size:1.12rem;
+      line-height:1;
+    }
+    .toolLink:hover,
+    .toolLink:focus-visible{
+      background:#eef2ff;
+      color:#1d4ed8;
+      transform:translateX(1px);
+      outline:none;
+    }
+
+    .btn{
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.14);
+      color:white;
+      padding:11px 15px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:15px;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow:none;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+    .layout{
+      width:min(1320px, calc(100vw - 48px));
+      flex:0 0 auto;
+      height:auto;
+      min-height:calc(100dvh - 122px);
+      margin:24px auto 14px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns:330px minmax(0,1fr);
+      position:relative;
+      transition:grid-template-columns .24s ease,width .24s ease;
+    }
+    .layout.panelCollapsed{
+      width:calc(100vw - 48px);
+      grid-template-columns:0 minmax(0,1fr);
+    }
+    .panelToggle{
+      position:absolute;
+      z-index:50;
+      top:16px;
+      left:226px;
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      height:34px;
+      padding:0 13px;
+      border-radius:999px;
+      border:1px solid rgba(37,99,235,.28);
+      background:#ffffff;
+      color:var(--blue-dark);
+      font-size:.82rem;
+      font-weight:850;
+      letter-spacing:-.01em;
+      line-height:1;
+      white-space:nowrap;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(15,23,42,.12);
+      transition:left .24s ease,transform .16s ease,background .16s ease,box-shadow .16s ease;
+    }
+    .panelToggle .chev{ font-size:.98rem; font-weight:900; line-height:1; }
+    .panelToggle:hover{
+      transform:translateY(-1px);
+      background:#eef2ff;
+      box-shadow:0 10px 24px rgba(37,99,235,.18);
+    }
+    .panelToggle:focus-visible{ outline:3px solid rgba(37,99,235,.28); outline-offset:2px; }
+    .layout.panelCollapsed .panelToggle{
+      left:14px;
+      border-color:rgba(37,99,235,.45);
+      color:#fff;
+      background:linear-gradient(135deg,#2563eb,#1d4ed8);
+      box-shadow:0 10px 24px rgba(37,99,235,.32);
+    }
+    .layout.panelCollapsed .panelToggle:hover{ background:linear-gradient(135deg,#1d4ed8,#1e40af); }
+
+    .controlPanel{
+      border-right:1px solid var(--border);
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      min-height:0;
+      overflow:auto;
+      transition:opacity .2s ease,padding .2s ease,border-color .2s ease;
+    }
+    .layout.panelCollapsed .controlPanel{
+      opacity:0;
+      padding:0;
+      border-right:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .panelTitle{
+      margin:0;
+      font-size:1.12rem;
+      letter-spacing:-.03em;
+      font-weight:950;
+    }
+    .panelHint{
+      margin:-8px 0 0;
+      color:var(--muted);
+      line-height:1.42;
+      font-size:.93rem;
+      font-weight:650;
+    }
+    .optionCard{
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px;
+      display:grid;
+      gap:10px;
+    }
+    .cardTitle{
+      margin:0;
+      font-size:.84rem;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+      color:#475569;
+      font-weight:950;
+    }
+    .miniNote{
+      margin:0;
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.38;
+      font-weight:650;
+    }
+    .controlGrid{ display:grid; gap:8px; }
+    .controlRow{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .inputRow{ display:grid; grid-template-columns:1fr auto; gap:8px; }
+    .textInput{
+      min-width:0;
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:white;
+      color:var(--ink);
+      font-family:var(--mono);
+      font-weight:800;
+      font-variant-numeric:tabular-nums;
+      outline:none;
+      transition:border-color .18s ease, box-shadow .18s ease;
+    }
+    .textInput:focus{
+      border-color:rgba(37,99,235,.62);
+      box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    }
+    .textInput.invalid{
+      border-color:rgba(239,68,68,.72);
+      box-shadow:0 0 0 4px rgba(239,68,68,.10);
+    }
+    .tbtn{
+      appearance:none;
+      font-family:inherit;
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      background:white;
+      border:1px solid var(--border);
+      color:var(--ink);
+      border-radius:12px;
+      padding:9px 13px;
+      transition:.16s ease;
+    }
+    .tbtn:hover:not(:disabled){
+      transform:translateY(-1px);
+      border-color:#c7d2fe;
+      box-shadow:0 8px 20px rgba(37,99,235,.10);
+    }
+    .tbtn:focus-visible{ outline:3px solid rgba(37,99,235,.22); outline-offset:2px; }
+    .tbtn:disabled{ opacity:.42; cursor:not-allowed; transform:none; }
+    .tbtn[aria-pressed="true"]{
+      background:#eef2ff;
+      border-color:rgba(37,99,235,.42);
+      color:#1d4ed8;
+      box-shadow:0 8px 22px rgba(37,99,235,.10);
+    }
+    .tbtn.jump[aria-current="true"]{
+      background:var(--blue);
+      color:white;
+      border-color:var(--blue);
+    }
+    .inputMsg{
+      min-height:18px;
+      margin:0;
+      font-size:.8rem;
+      line-height:1.35;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .inputMsg.error{ color:#b91c1c; }
+    .inputMsg.ok{ color:#0f766e; }
+    .jumpRow{ display:grid; grid-template-columns:repeat(auto-fit,minmax(42px,1fr)); gap:6px; }
+
+    .toggle{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      font-weight:850;
+      color:var(--ink);
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .toggle input{
+      margin-top:2px;
+      transform:scale(1.12);
+      accent-color:var(--blue);
+    }
+    .toggle span{ display:block; font-size:.92rem; line-height:1.32; }
+
+    .stage{
+      min-width:0;
+      min-height:0;
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:minmax(0,1fr) auto;
+      background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(248,250,252,.68));
+    }
+    .stageHeader{
+      padding:18px 22px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      border-bottom:1px solid rgba(226,232,240,.8);
+    }
+    .stageText h1{
+      margin:0;
+      font-size:clamp(1.25rem,2.1vw,1.9rem);
+      letter-spacing:-.045em;
+      line-height:1.08;
+    }
+    .stageText p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:.96rem;
+      font-weight:650;
+    }
+    .stageStatus{
+      text-align:right;
+      min-width:190px;
+      color:var(--muted);
+      font-size:.84rem;
+      font-weight:750;
+    }
+    .stageStatus b{
+      display:block;
+      color:var(--ink);
+      font-size:1rem;
+      font-weight:950;
+      margin-top:3px;
+    }
+    .canvasWrap{
+      min-height:0;
+      padding:18px 22px;
+      display:flex;
+      overflow:visible;
+    }
+    .layout.panelCollapsed .canvasWrap{ padding:18px 22px; }
+    .svgCard{
+      position:relative;
+      flex:1 1 auto;
+      min-width:0;
+      min-height:0;
+      border:1px solid var(--border);
+      border-radius:22px;
+      background:#fff;
+      overflow:visible;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+      padding:18px;
+      display:grid;
+      grid-template-rows:auto auto auto auto auto auto;
+      align-content:start;
+      gap:10px;
+    }
+
+    .numberPanel{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      background:linear-gradient(135deg,#f8fafc,#eef2ff);
+      border:1px solid #dbe3f0;
+      border-radius:20px;
+      padding:16px 18px;
+    }
+    .numblock{ display:flex; flex-direction:column; gap:5px; }
+    .eyebrow{
+      font-size:.72rem;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:950;
+    }
+    .bignum{
+      font-family:var(--mono);
+      font-size:clamp(2.45rem,6vw,4.3rem);
+      font-weight:900;
+      letter-spacing:-.045em;
+      line-height:1;
+      font-variant-numeric:tabular-nums;
+    }
+    .bignum .lead{ color:var(--ink); }
+    .bignum .place{
+      color:var(--orange);
+      position:relative;
+      text-shadow:0 10px 22px rgba(249,115,22,.20);
+    }
+    .digitFocus{
+      min-width:185px;
+      background:white;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:11px 13px;
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+      color:var(--muted);
+      font-size:.84rem;
+      font-weight:800;
+    }
+    .digitFocus b{ display:block; color:var(--ink); font-size:1rem; margin-top:2px; }
+
+    .progress{ display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+    .pnode{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      background:transparent;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      padding:5px 2px;
+      border-radius:10px;
+      color:var(--muted);
+      font-size:10.5px;
+      font-weight:900;
+      letter-spacing:.02em;
+      flex:1 1 105px;
+      min-width:0;
+    }
+    .pnode .ring{
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      border:2px solid #cbd5e1;
+      background:#fff;
+      transition:.25s;
+    }
+    .pnode span:last-child{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+    .pnode:hover .ring{ border-color:var(--blue); }
+    .pnode.done .ring{ background:var(--green); border-color:var(--green); }
+    .pnode.current .ring{ border-color:var(--blue); box-shadow:0 0 0 5px rgba(37,99,235,.12); }
+    .pnode.current{ color:var(--ink); }
+    .pnode:focus-visible{ outline:3px solid rgba(37,99,235,.22); outline-offset:2px; }
+
+    .lineholder{
+      height:clamp(230px, 39dvh, 340px);
+      min-height:230px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid #eef2f7;
+      border-radius:22px;
+      background:
+        radial-gradient(circle at 15% 10%,rgba(37,99,235,.08),transparent 18rem),
+        radial-gradient(circle at 85% 0%,rgba(124,58,237,.07),transparent 18rem),
+        #ffffff;
+      padding:8px 0;
+    }
+    svg.nline{
+      width:100%;
+      height:100%;
+      min-height:0;          /* viewBox is sized in JS to match the on-screen box */
+      display:block;
+      overflow:hidden;       /* let zoom labels slide off the edge cleanly */
+      touch-action:none;
+      cursor:crosshair;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    svg.nline.locked{ cursor:default; }
+    .nl-base{ stroke:var(--line); stroke-width:4.4; stroke-linecap:round; }
+    .nl-tick{ stroke:#0f172a; stroke-width:4.2; stroke-linecap:round; }
+    .nl-tick.minor{ stroke:#475569; stroke-width:3.1; opacity:1; }
+    .nl-mid{ stroke:var(--half); stroke-width:2.3; stroke-dasharray:5 5; }
+    .nl-endlabel{
+      font-family:var(--mono);
+      font-size:20px;
+      font-weight:950;
+      fill:var(--ink);
+      font-variant-numeric:tabular-nums;
+    }
+    .nl-midlabel{
+      font-family:var(--uiFont);
+      font-size:12px;
+      font-weight:1000;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      fill:var(--half);
+    }
+    .nl-midval{
+      font-family:var(--mono);
+      font-size:15px;
+      font-weight:850;
+      fill:#5b21b6;
+      font-variant-numeric:tabular-nums;
+      paint-order:stroke;
+      stroke:white;
+      stroke-width:5px;
+      stroke-linejoin:round;
+    }
+    .nl-hl{ fill:rgba(34,197,94,.16); }
+    .nl-guess{ fill:none; stroke:var(--guess); stroke-width:2.7; }
+    .nl-guess-fill{ fill:var(--guess-soft); stroke:var(--guess); stroke-width:2.6; }
+    .nl-actual-stem{ stroke:var(--actual); stroke-width:2.9; }
+    .nl-actual-dot{ fill:var(--actual); }
+    .nl-actual-val{
+      font-family:var(--mono);
+      font-size:16px;
+      font-weight:950;
+      fill:var(--actual);
+      font-variant-numeric:tabular-nums;
+      paint-order:stroke;
+      stroke:white;
+      stroke-width:6px;
+      stroke-linejoin:round;
+    }
+    .legend{
+      display:flex;
+      gap:16px;
+      justify-content:center;
+      color:var(--muted);
+      font-size:.84rem;
+      font-weight:800;
+      flex-wrap:wrap;
+      margin-top:-3px;
+    }
+    .legend i{
+      display:inline-block;
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      margin-right:6px;
+      vertical-align:-1px;
+    }
+    .legend .g i{ background:var(--guess); }
+    .legend .a i{ background:var(--actual); }
+
+    .prompt{
+      text-align:center;
+      color:var(--muted);
+      font-size:1rem;
+      font-weight:750;
+      margin:0 auto;
+      max-width:58ch;
+      min-height:23px;
+    }
+    .feedback{
+      display:none !important;
+    }
+    .feedback.show{ display:none !important; }
+    .feedback b{ color:#0f766e; }
+    .num{ font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:900; }
+    @keyframes rise{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    .digit{
+      margin:0 auto;
+      max-width:72ch;
+      border:1px dashed #c7d2fe;
+      border-radius:16px;
+      padding:12px 16px;
+      color:#475569;
+      font-size:.95rem;
+      line-height:1.45;
+      font-weight:700;
+      display:none;
+      background:#f8fafc;
+    }
+    .digit.show{ display:block; }
+    .digit b{ color:var(--ink); }
+
+    .primaryActions{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:2px;
+    }
+    .mainBtn{
+      appearance:none;
+      font-family:inherit;
+      font-size:15px;
+      font-weight:950;
+      cursor:pointer;
+      border-radius:15px;
+      padding:12px 18px;
+      border:1px solid transparent;
+      transition:.18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mainBtn:focus-visible{ outline:3px solid rgba(37,99,235,.25); outline-offset:2px; }
+    .mainBtnPrimary{
+      background:var(--blue);
+      color:white;
+      border-color:var(--blue);
+      box-shadow:0 10px 22px rgba(37,99,235,.18);
+    }
+    .mainBtnPrimary:hover:not(:disabled){ background:var(--blue-dark); transform:translateY(-1px); }
+    .mainBtnGhost{ background:#fff; border-color:var(--border); color:var(--ink); }
+    .mainBtnGhost:hover:not(:disabled){ border-color:#c7d2fe; box-shadow:0 8px 20px rgba(37,99,235,.10); transform:translateY(-1px); }
+    .mainBtn:disabled{ opacity:.42; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    .summary{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:0 12px 28px rgba(15,23,42,.08);
+      padding:18px;
+      display:none;
+    }
+    .summary.show{ display:block; animation:rise .4s ease; }
+    .summary h2{ margin:0 0 2px; font-size:1.08rem; font-weight:950; letter-spacing:-.02em; }
+    .summary .for{ color:var(--muted); font-size:.92rem; margin:0 0 12px; font-weight:700; }
+    .summary .for b{ font-family:var(--mono); color:var(--ink); font-weight:950; }
+    table{ border-collapse:collapse; width:100%; font-size:.98rem; }
+    th,td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--border); }
+    th{ font-size:.74rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:950; }
+    td.val,th.val{ text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:950; }
+    tr:last-child td{ border-bottom:none; }
+    tr.hl td{ background:#eef2ff; }
+
+    .footer{
+      min-height:38px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-top:1px solid rgba(226,232,240,.9);
+      background:rgba(255,255,255,.90);
+      color:#111827;
+      font-size:13px;
+      font-weight:900;
+      text-align:center;
+      padding:9px 12px;
+    }
+    .footer a{ color:var(--blue); text-decoration:none; }
+
+    @media(max-width:1100px){
+      body{ overflow-x:hidden; overflow-y:auto; }
+      .layout{ width:calc(100vw - 28px); height:auto; min-height:calc(100dvh - 100px); grid-template-columns:1fr; overflow:visible; }
+      .layout.panelCollapsed{ width:calc(100vw - 28px); grid-template-columns:1fr; }
+      .controlPanel{ border-right:0; border-bottom:1px solid var(--border); }
+      .layout.panelCollapsed .controlPanel{ display:none; }
+      .panelToggle{ top:12px; left:auto; right:14px; }
+      .layout.panelCollapsed .panelToggle{ left:14px; right:auto; }
+      .canvasWrap{ padding:14px; }
+      .svgCard{ min-height:0; }
+    }
+    @media(max-width:760px){
+      .mmtTopbar{ grid-template-columns:1fr; justify-items:center; padding:12px 14px; }
+      .mmtBrand{ justify-self:center; margin-left:0; }
+      .topActions{ justify-self:center; justify-content:center; }
+      .mmtBrandText span{ display:none; }
+      .mmtTopTitle{ white-space:normal; }
+      .layout{ margin-top:12px; width:calc(100vw - 20px); border-radius:20px; }
+      .numberPanel{ align-items:flex-start; }
+      .digitFocus{ min-width:0; width:100%; }
+      .pnode span:last-child{ font-size:9px; }
+      .nl-endlabel{ font-size:16px; }
+      .lineholder{ height:250px; min-height:250px; }
+      svg.nline{ height:100%; }
+      .canvasWrap{ padding:10px; }
+      .svgCard{ padding:12px; }
+      .inputRow{ grid-template-columns:1fr; }
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{ animation-duration:.001ms !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+
+      <div class="mmtTopTitle">Decimal Zoom Rounding</div>
+
+      <div class="topActions">
+        <div class="toolsMenuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools ▾</button>
+          <nav class="toolsMenu" id="toolsMenu" aria-label="Tools menu">
+            <a class="toolLink" href="lesson-plan.html">Lesson Plan</a>
+            <a class="toolLink" href="worksheet-creator.html">Worksheet Creator</a>
+            <a class="toolLink" href="student-quiz.html">Student Quiz</a>
+          </nav>
+        </div>
+        <button class="btn" id="topNewBtn" type="button">New number</button>
+        <button class="btn btn-primary" id="topResetBtn" type="button">Restart</button>
+      </div>
+    </header>
+
+    <main class="layout" id="layout">
+      <button class="panelToggle" id="panelToggle" type="button" aria-label="Hide teacher controls" aria-expanded="true"><span class="chev">&#8249;</span><span>Hide panel</span></button>
+      <aside class="controlPanel" aria-label="Teacher controls" id="controlPanel">
+        <h2 class="panelTitle">Teacher controls</h2>
+        <p class="panelHint">Use the number line to show rounding as choosing the closest place-value benchmark.</p>
+
+        <div class="optionCard">
+          <p class="cardTitle">Number</p>
+          <div class="controlRow">
+            <button class="tbtn" id="newBtn" type="button">New number</button>
+            <button class="tbtn" id="restartBtn" type="button">Restart this number</button>
+          </div>
+          <div class="controlGrid">
+            <label class="miniNote" for="customInput">Enter a custom decimal. The tool builds the rounding steps automatically.</label>
+            <div class="inputRow">
+              <input class="textInput" id="customInput" inputmode="decimal" autocomplete="off" value="32.6397" aria-label="Custom positive decimal number" />
+              <button class="tbtn" id="useCustomBtn" type="button">Use</button>
+            </div>
+            <p class="inputMsg" id="inputMsg">Examples: 321.69 or 0.284618</p>
+          </div>
+        </div>
+
+        <div class="optionCard">
+          <p class="cardTitle">Move</p>
+          <div class="controlRow">
+            <button class="tbtn" id="backBtn" type="button">&larr; Back</button>
+            <button class="tbtn" id="fwdBtn" type="button">Forward &rarr;</button>
+          </div>
+          <p class="miniNote">Teacher forward is an override. The main zoom button appears after revealing the current step.</p>
+          <div class="controlGrid">
+            <p class="miniNote"><strong>Jump to:</strong></p>
+            <div class="jumpRow" id="jumpRow"></div>
+          </div>
+        </div>
+
+        <div class="optionCard">
+          <p class="cardTitle">Show</p>
+          <button class="tbtn" id="midToggle" type="button" aria-pressed="true">Halfway marker</button>
+          <button class="tbtn" id="digitToggle" type="button" aria-pressed="false">Digit-rule connection</button>
+          <p class="miniNote">The digit rule is optional so the number line remains the main representation.</p>
+        </div>
+      </aside>
+
+      <section class="stage">
+        <span id="levelName" hidden></span>
+        <div class="canvasWrap">
+          <div class="svgCard">
+            <div class="numberPanel">
+              <div class="numblock">
+                <div class="eyebrow">The number</div>
+                <div class="bignum" id="bignum"></div>
+              </div>
+              <div class="digitFocus">
+                Active idea
+                <b id="decidingDigitLabel"></b>
+              </div>
+            </div>
+
+            <div class="progress" id="progress"></div>
+
+            <div class="lineholder">
+              <svg class="nline" id="nline" viewBox="0 0 1000 250" role="img" aria-label="Number line"></svg>
+            </div>
+
+            <div class="legend">
+              <span class="g"><i></i>Your estimate</span>
+              <span class="a"><i></i>Actual position</span>
+            </div>
+
+            <p class="prompt" id="prompt"></p>
+            <div class="feedback" id="feedback"></div>
+            <div class="digit" id="digit"></div>
+
+            <div class="primaryActions">
+              <button class="mainBtn mainBtnPrimary" id="submitBtn" type="button" disabled>Submit</button>
+              <button class="mainBtn mainBtnPrimary" id="nextBtn" type="button" style="display:none">Zoom in &rarr;</button>
+              <button class="mainBtn mainBtnGhost" id="summaryBtn" type="button" style="display:none">See the summary</button>
+            </div>
+
+            <div class="summary" id="summary">
+              <h2>Rounding summary</h2>
+              <p class="for">For <b id="summaryNum"></b></p>
+              <table>
+                <thead><tr><th>Rounding to</th><th class="val">Rounded value</th></tr></thead>
+                <tbody id="summaryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* Geometry — the viewBox is sized to the SVG's real pixel box (see syncViewBox),
+         so 1 user unit == 1 px. The line keeps a constant on-screen height no matter
+         how wide the stage gets, which stops it drifting when the panel collapses. */
+      const MARGIN = 64;
+      let VBW = 1000, VBH = 300, BASE = 156;
+      let RIGHT = VBW - MARGIN, SPAN = RIGHT - MARGIN;
+      const xpos = f => MARGIN + f * SPAN;
+      const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+      const pow10 = n => Math.pow(10, n);
+      const addCommas = s => s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+      function syncViewBox(){
+        const r = svg.getBoundingClientRect();
+        const w = Math.round(r.width)  || VBW;
+        const h = Math.round(r.height) || VBH;
+        VBW = w; VBH = h;
+        RIGHT = VBW - MARGIN; SPAN = RIGHT - MARGIN;
+        BASE = Math.round(VBH * 0.52);
+        svg.setAttribute("viewBox", `0 0 ${VBW} ${VBH}`);
+      }
+
+      const MAX_DECIMALS = 8;
+      const MAX_INTEGER_DIGITS = 6;
+
+      const PLACE_NAMES = new Map([
+        [6,"millions"], [5,"hundred-thousands"], [4,"ten-thousands"], [3,"thousands"],
+        [2,"hundreds"], [1,"tens"], [0,"ones"], [-1,"tenths"], [-2,"hundredths"],
+        [-3,"thousandths"], [-4,"ten-thousandths"], [-5,"hundred-thousandths"],
+        [-6,"millionths"], [-7,"ten-millionths"], [-8,"hundred-millionths"], [-9,"billionths"]
+      ]);
+
+      function placeName(exp){
+        return PLACE_NAMES.get(exp) || `10^${exp}`;
+      }
+      function singularPlaceName(exp){
+        const name = placeName(exp);
+        return name.endsWith("s") ? name.slice(0,-1) : name;
+      }
+      function stepLabel(exp){
+        if(exp === 0) return "1";
+        if(exp > 0) return addCommas(String(pow10(exp)));
+        return "0." + "0".repeat((-exp)-1) + "1";
+      }
+      function decimalPlaceText(dp){
+        return `${dp} decimal place${dp===1 ? "" : "s"}`;
+      }
+      function levelName(exp){
+        if(exp === 0) return "the nearest whole number";
+        if(exp > 0) return `the nearest ${stepLabel(exp)}`;
+        const dp = -exp;
+        return `the nearest ${stepLabel(exp)}  (${decimalPlaceText(dp)})`;
+      }
+      function tableName(exp){
+        if(exp === 0) return "Nearest whole number";
+        if(exp > 0) return `Nearest ${stepLabel(exp)}`;
+        const dp = -exp;
+        return `Nearest ${stepLabel(exp)}  (${dp} dp)`;
+      }
+      function shortName(exp){
+        if(exp === 0) return "Whole number";
+        if(exp > 0) return `Nearest ${stepLabel(exp)}`;
+        const dp = -exp;
+        return `${stepLabel(exp)} / ${dp}dp`;
+      }
+      function formatOriginal(intPart, fracPart){
+        return `${intPart}.${fracPart}`;
+      }
+
+      /* DOM */
+      const $ = id => document.getElementById(id);
+      const svg = $("nline");
+      const bignum = $("bignum");
+      const decidingDigitLabel = $("decidingDigitLabel");
+      const levelNameEl = $("levelName");
+      const progress = $("progress");
+      const prompt = $("prompt");
+      const feedback = $("feedback");
+      const digit = $("digit");
+      const submitBtn = $("submitBtn");
+      const nextBtn = $("nextBtn");
+      const summaryBtn = $("summaryBtn");
+      const summary = $("summary");
+      const summaryBody = $("summaryBody");
+      const summaryNum = $("summaryNum");
+      const customInput = $("customInput");
+      const inputMsg = $("inputMsg");
+      const jumpRow = $("jumpRow");
+      const layoutEl = $("layout");
+      const panelToggle = $("panelToggle");
+      const toolsBtn = $("toolsBtn");
+      const toolsMenu = $("toolsMenu");
+
+      /* State */
+      let model;
+      let levels = [];
+      let level = 0;
+      let guessFrac = null;
+      let revealed = false;
+      let animating = false;
+      let showMid = true;
+      let showDigit = false;
+
+      function parseDecimalInput(raw){
+        let value = raw.trim();
+        if(value.startsWith(".")) value = "0" + value;
+        if(!/^\d+\.\d+$/.test(value)){
+          throw new Error("Please enter a positive decimal, e.g. 321.69 or 0.284618.");
+        }
+        let [intPart, fracPart] = value.split(".");
+        intPart = intPart.replace(/^0+(?=\d)/, "");
+        if(intPart === "") intPart = "0";
+        if(fracPart.length < 1 || fracPart.length > MAX_DECIMALS){
+          throw new Error(`Use between 1 and ${MAX_DECIMALS} decimal places.`);
+        }
+        if(intPart.length > MAX_INTEGER_DIGITS){
+          throw new Error(`Use no more than ${MAX_INTEGER_DIGITS} digits before the decimal point.`);
+        }
+        if(Number(intPart) === 0 && /^0+$/.test(fracPart)){
+          throw new Error("Please enter a positive number greater than 0.");
+        }
+        const D = fracPart.length;
+        const scale = pow10(D);
+        const N = Number(intPart) * scale + Number(fracPart);
+        return {
+          intPart,
+          fracPart,
+          D,
+          scale,
+          N,
+          originalText: formatOriginal(intPart, fracPart)
+        };
+      }
+
+      function startExponentFor(m){
+        const integerValue = Number(m.intPart);
+        if(integerValue > 0) return Math.floor(Math.log10(integerValue));
+        // For numbers less than 1, begin with tenths unless there is only one decimal place.
+        return m.D === 1 ? 0 : -1;
+      }
+      function endExponentFor(m){
+        // We stop one decimal place before the full precision, because the final digit is the deciding digit.
+        return -(m.D - 1);
+      }
+      function buildLevels(m){
+        let startExp = startExponentFor(m);
+        const endExp = endExponentFor(m);
+        if(startExp < endExp) startExp = endExp;
+        const out = [];
+        for(let exp = startExp; exp >= endExp; exp--){
+          const step = pow10(m.D + exp);
+          const lo = Math.floor(m.N / step) * step;
+          const hi = lo + step;
+          const mid = lo + step / 2;
+          const result = (m.N >= mid) ? hi : lo; // round half up
+          const decidingDigit = Math.floor((m.N % step) / (step / 10));
+          out.push({
+            i: out.length,
+            exp,
+            step,
+            lo,
+            hi,
+            mid,
+            result,
+            roundsUp: m.N >= mid,
+            decidingDigit,
+            dpEnd: Math.max(0, -exp),
+            dpMid: Math.max(0, -exp + 1),
+            name: levelName(exp),
+            tableName: tableName(exp),
+            shortName: shortName(exp),
+            targetPlace: placeName(exp),
+            decidingPlace: placeName(exp - 1)
+          });
+        }
+        return out;
+      }
+
+      function fmt(value, dp){
+        const divisorPower = model.D - dp;
+        const divisor = pow10(divisorPower);
+        const scaled = Math.round(value / divisor);
+        let s = String(scaled);
+        if(dp === 0) return addCommas(s);
+        while(s.length <= dp) s = "0" + s;
+        const whole = s.slice(0, s.length - dp) || "0";
+        const frac = s.slice(s.length - dp);
+        return addCommas(whole) + "." + frac;
+      }
+
+      function actualText(){
+        return model.originalText;
+      }
+
+      /* Draw the number-line scene. */
+      function drawScene(cfg){
+        let p = "";
+        if(cfg.hl){
+          const a = xpos(clamp(cfg.hl.from,0,1));
+          const b = xpos(clamp(cfg.hl.to,0,1));
+          p += `<rect class="nl-hl" x="${Math.min(a,b)}" y="${BASE-18}" width="${Math.abs(b-a)}" height="36" rx="6"/>`;
+        }
+
+        p += `<line class="nl-base" x1="${xpos(0)}" y1="${BASE}" x2="${xpos(1)}" y2="${BASE}"/>`;
+
+        cfg.ticks.forEach(t=>{
+          if(t.f < -0.03 || t.f > 1.03) return;
+          const x = xpos(t.f);
+          const h = t.minor ? 30 : 48;
+          p += `<line class="nl-tick ${t.minor?'minor':''}" x1="${x}" y1="${BASE-h/2}" x2="${x}" y2="${BASE+h/2}"/>`;
+        });
+
+        if(cfg.mid){
+          const x = xpos(clamp(cfg.mid.f,0,1));
+          p += `<line class="nl-mid" x1="${x}" y1="${BASE-62}" x2="${x}" y2="${BASE+40}"/>`;
+          p += `<text class="nl-midlabel" x="${x}" y="${BASE-70}" text-anchor="middle">halfway</text>`;
+          p += `<text class="nl-midval" x="${x}" y="${BASE+62}" text-anchor="middle">${cfg.mid.t}</text>`;
+        }
+
+        const lblX = f => clamp(xpos(f), MARGIN, RIGHT);
+        if(cfg.left)  p += `<text class="nl-endlabel" x="${lblX(cfg.left.f)}"  y="${BASE+50}" text-anchor="middle">${cfg.left.t}</text>`;
+        if(cfg.right) p += `<text class="nl-endlabel" x="${lblX(cfg.right.f)}" y="${BASE+50}" text-anchor="middle">${cfg.right.t}</text>`;
+
+        if(cfg.guessF != null){
+          const x = xpos(clamp(cfg.guessF,0,1));
+          p += `<g><line class="nl-guess" x1="${x}" y1="${BASE-45}" x2="${x}" y2="${BASE}" stroke-dasharray="3 4"/>`;
+          p += `<rect class="nl-guess-fill" x="${x-8}" y="${BASE-62}" width="16" height="16" transform="rotate(45 ${x} ${BASE-54})"/>`;
+          p += `<text x="${clamp(x, MARGIN+45, RIGHT-45)}" y="${BASE-76}" text-anchor="middle" font-family="var(--uiFont)" font-size="12" font-weight="900" fill="var(--guess)" paint-order="stroke" stroke="white" stroke-width="5" stroke-linejoin="round">estimate</text>`;
+          p += `</g>`;
+        }
+
+        if(cfg.actual){
+          const x = xpos(clamp(cfg.actual.f,0,1));
+          p += `<line class="nl-actual-stem" x1="${x}" y1="${BASE}" x2="${x}" y2="${BASE-48}"/>`;
+          p += `<circle class="nl-actual-dot" cx="${x}" cy="${BASE-48}" r="7"/>`;
+          p += `<circle class="nl-actual-dot" cx="${x}" cy="${BASE}" r="4.4"/>`;
+          const tx = clamp(x, MARGIN+44, RIGHT-44);
+          if(cfg.actual.t){
+            p += `<text class="nl-actual-val" x="${tx}" y="${BASE-63}" text-anchor="middle">${cfg.actual.t}</text>`;
+          }
+        }
+
+        svg.innerHTML = p;
+      }
+
+      function renderLine(){
+        syncViewBox();
+        const L = levels[level];
+        const range = L.hi - L.lo;
+        const ticks = [];
+        for(let i=0;i<=10;i++) ticks.push({f:i/10, minor:(i!==0 && i!==10 && i!==5)});
+        const cfg = {
+          ticks: ticks.filter(t=>!(showMid && Math.abs(t.f-0.5)<1e-9)),
+          left:  {f:0, t:fmt(L.lo, L.dpEnd)},
+          right: {f:1, t:fmt(L.hi, L.dpEnd)},
+          mid:   showMid ? {f:0.5, t:fmt(L.mid, L.dpMid)} : null,
+          guessF: guessFrac,
+          actual: revealed ? {f:(model.N-L.lo)/range, t:actualText()} : null,
+          hl:     revealed ? {from:0.5, to:(L.result===L.hi?1:0)} : null
+        };
+        drawScene(cfg);
+      }
+
+      /* Seamless zoom: continuously magnify the partition we are diving into.
+         - The two ticks bracketing the next interval travel out to become the new
+           endpoints, so it reads as one zoom rather than a cut to a fresh line.
+         - The current end numbers slide outward and fade; the next ones grow in.
+         - The actual value is NOT carried along (it would give the next answer away);
+           the revealed marker just dissolves in place during the first moment. */
+      function drawZoomFrame(from, to, e){
+        const lo = from.lo + (to.lo - from.lo) * e;
+        const hi = from.hi + (to.hi - from.hi) * e;
+        const w  = hi - lo;
+        const fr = v => (v - lo) / w;
+        const TOP = BASE - 30, BOT = BASE + 30;   // tick band
+        const visible = f => f > -0.12 && f < 1.12;
+        let p = "";
+
+        // expanding spotlight over the target partition (fades as it fills the line)
+        {
+          const a = xpos(fr(to.lo)), b = xpos(fr(to.hi));
+          const o = (1 - e) * 0.85;
+          p += `<rect x="${a}" y="${BASE-26}" width="${b-a}" height="52" rx="9" fill="#dbeafe" opacity="${o.toFixed(3)}"/>`;
+        }
+
+        // base line
+        p += `<line class="nl-base" x1="${xpos(0)}" y1="${BASE}" x2="${xpos(1)}" y2="${BASE}"/>`;
+
+        // current-level ticks fading out and spreading away
+        for(let i=0;i<=10;i++){
+          const f = fr(from.lo + i*(from.hi-from.lo)/10);
+          if(!visible(f)) continue;
+          const minor = (i!==0 && i!==10);
+          const h = minor ? 30 : 48;
+          p += `<line class="nl-tick ${minor?'minor':''}" x1="${xpos(f)}" y1="${BASE-h/2}" x2="${xpos(f)}" y2="${BASE+h/2}" opacity="${(1-e).toFixed(3)}"/>`;
+        }
+        // next-level ticks fading in and spreading to fill
+        for(let i=0;i<=10;i++){
+          const f = fr(to.lo + i*(to.hi-to.lo)/10);
+          if(!visible(f)) continue;
+          const minor = (i!==0 && i!==10);
+          const h = minor ? 30 : 48;
+          p += `<line class="nl-tick ${minor?'minor':''}" x1="${xpos(f)}" y1="${BASE-h/2}" x2="${xpos(f)}" y2="${BASE+h/2}" opacity="${e.toFixed(3)}"/>`;
+        }
+
+        const endLabel = (val, dp, f, o) =>
+          `<text class="nl-endlabel" x="${xpos(f)}" y="${BASE+48}" text-anchor="middle" opacity="${o.toFixed(3)}">${fmt(val,dp)}</text>`;
+        // current end numbers slide outward + fade
+        p += endLabel(from.lo, from.dpEnd, fr(from.lo), 1-e);
+        p += endLabel(from.hi, from.dpEnd, fr(from.hi), 1-e);
+        // next end numbers emerge from the slice + fade in
+        p += endLabel(to.lo, to.dpEnd, fr(to.lo), e);
+        p += endLabel(to.hi, to.dpEnd, fr(to.hi), e);
+
+        // dissolve the just-revealed marker / halfway in place (first third only)
+        if(e < 0.32){
+          const o = 1 - e/0.32;
+          const af = fr(model.N);
+          const x = xpos(af);
+          p += `<line class="nl-actual-stem" x1="${x}" y1="${BASE}" x2="${x}" y2="${BASE-48}" opacity="${o.toFixed(3)}"/>`;
+          p += `<circle class="nl-actual-dot" cx="${x}" cy="${BASE-48}" r="7" opacity="${o.toFixed(3)}"/>`;
+          p += `<circle class="nl-actual-dot" cx="${x}" cy="${BASE}" r="4.4" opacity="${o.toFixed(3)}"/>`;
+        }
+
+        svg.innerHTML = p;
+      }
+
+      function renderBigNum(){
+        const s = actualText();
+        const dot = s.indexOf(".");
+        const L = levels[level];
+        const decidingExp = L.exp - 1;
+        let charIdx = -1;
+        if(decidingExp >= 0){
+          charIdx = dot - 1 - decidingExp;
+        } else {
+          charIdx = dot + (-decidingExp);
+        }
+        let html = "";
+        for(let k=0;k<s.length;k++){
+          const cls = (k===charIdx) ? "place" : "lead";
+          html += `<span class="${cls}">${s[k]}</span>`;
+        }
+        bignum.innerHTML = html;
+        decidingDigitLabel.textContent = `Check the ${L.decidingPlace} digit`;
+      }
+
+      function renderProgress(){
+        progress.innerHTML = "";
+        levels.forEach((L,i)=>{
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "pnode" + (i<level?" done":"") + (i===level?" current":"");
+          b.innerHTML = `<span class="ring"></span><span>${L.shortName}</span>`;
+          b.title = "Jump to " + L.name;
+          b.addEventListener("click", ()=>goToLevel(i,false));
+          progress.appendChild(b);
+        });
+      }
+
+      function renderJumpButtons(){
+        jumpRow.innerHTML = "";
+        levels.forEach((L,i)=>{
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className="tbtn jump";
+          b.textContent=String(i+1);
+          b.title = L.name;
+          b.addEventListener("click", ()=>goToLevel(i,false));
+          jumpRow.appendChild(b);
+        });
+      }
+
+      function renderFeedback(){
+        // The full explanatory feedback card has been removed for this display version.
+        feedback.classList.remove("show");
+        feedback.innerHTML = "";
+      }
+
+      function renderDigit(){
+        const L = levels[level];
+        if(!showDigit || animating){ digit.classList.remove("show"); return; }
+        const d = L.decidingDigit;
+        const dir = d >= 5 ? "5 or more, so we round <b>up</b> to the higher benchmark"
+                           : "less than 5, so we round <b>down</b> to the lower benchmark";
+        digit.innerHTML =
+          `<b>Digit-rule connection:</b> to round to ${L.name}, the target place is the ` +
+          `<b>${L.targetPlace}</b> place, so the deciding digit is the <b>${L.decidingPlace}</b> digit. ` +
+          `Here the ${L.decidingPlace} digit is <span class="num">${d}</span>: ${dir}. ` +
+          `This should match the closer benchmark shown on the number line.`;
+        digit.classList.add("show");
+      }
+
+      function renderControls(){
+        const last = level===levels.length-1;
+        if(animating){
+          submitBtn.style.display = "none";
+          nextBtn.style.display = "none";
+          summaryBtn.style.display = "none";
+          prompt.textContent = "Zooming into the next interval…";
+        } else {
+          submitBtn.style.display = revealed ? "none" : "";
+          submitBtn.disabled = guessFrac==null;
+          nextBtn.style.display = (revealed && !last) ? "" : "none";
+          if(!last) nextBtn.textContent = `Zoom in to the ${levels[level+1].targetPlace} interval →`;
+          summaryBtn.style.display = (revealed && last) ? "" : "none";
+
+          if(!revealed){
+            prompt.textContent = guessFrac==null
+              ? `Click the line to estimate where ${actualText()} sits.`
+              : `Nice — press Submit to reveal the actual position.`;
+          } else {
+            prompt.textContent = `Compare your estimate with the actual position before zooming in.`;
+          }
+        }
+        svg.classList.toggle("locked", revealed || animating);
+
+        $("backBtn").disabled = animating || (level===0 && !revealed);
+        $("fwdBtn").disabled  = animating || level===levels.length-1;
+        document.querySelectorAll(".tbtn.jump").forEach((b,i)=>{
+          b.setAttribute("aria-current", i===level ? "true":"false");
+        });
+        $("midToggle").setAttribute("aria-pressed", showMid?"true":"false");
+        $("digitToggle").setAttribute("aria-pressed", showDigit?"true":"false");
+      }
+
+      function render(){
+        renderBigNum();
+        levelNameEl.textContent = levels[level].name.replace(/\s+/g," ");
+        renderProgress();
+        renderLine();
+        renderFeedback();
+        renderDigit();
+        renderControls();
+      }
+
+      function fracFromEvent(e){
+        const r = svg.getBoundingClientRect();
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+        const xView = (clientX - r.left) / r.width * VBW;
+        return clamp((xView - MARGIN) / SPAN, 0, 1);
+      }
+      function placeFromEvent(e){
+        if(revealed || animating) return;
+        guessFrac = fracFromEvent(e);
+        renderLine();
+        renderControls();
+      }
+      svg.addEventListener("click", placeFromEvent);
+      svg.addEventListener("touchstart", e=>{ e.preventDefault(); placeFromEvent(e); }, {passive:false});
+
+      submitBtn.addEventListener("click", ()=>{
+        if(guessFrac==null) return;
+        revealed = true;
+        render();
+      });
+
+      function easeInOut(t){ return t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+      function zoomTo(targetLevel, cb){
+        const from = levels[level];
+        const to = levels[targetLevel];
+        const reduce = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+        if(reduce){ cb(); return; }
+        animating = true;
+        feedback.classList.remove("show");
+        digit.classList.remove("show");
+        renderControls();
+        syncViewBox();                 // freeze geometry for the whole flight
+        const dur = 2000;
+        const t0 = performance.now();
+        function frame(now){
+          const t = Math.min(1,(now-t0)/dur);
+          drawZoomFrame(from, to, easeInOut(t));
+          if(t<1) requestAnimationFrame(frame);
+          else { animating=false; cb(); }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function goToLevel(target, animate){
+        if(animating) return;
+        target = clamp(target,0,levels.length-1);
+        if(animate && target===level+1){
+          zoomTo(target, ()=>{
+            level=target;
+            guessFrac=null;
+            revealed=false;
+            render();
+          });
+        } else {
+          level=target;
+          guessFrac=null;
+          revealed=false;
+          render();
+        }
+      }
+
+      nextBtn.addEventListener("click", ()=>goToLevel(level+1,true));
+      $("fwdBtn").addEventListener("click", ()=>goToLevel(level+1,true));
+      $("backBtn").addEventListener("click", ()=>{
+        if(revealed){ revealed=false; guessFrac=null; render(); }
+        else goToLevel(level-1,false);
+      });
+
+      function buildSummary(){
+        summaryNum.textContent = actualText();
+        summaryBody.innerHTML = "";
+        levels.forEach((L,i)=>{
+          const tr = document.createElement("tr");
+          if(i===level) tr.className="hl";
+          tr.innerHTML = `<td>${L.tableName}</td><td class="val">${fmt(L.result,L.dpEnd)}</td>`;
+          summaryBody.appendChild(tr);
+        });
+        summary.classList.add("show");
+      }
+      summaryBtn.addEventListener("click", ()=>{
+        buildSummary();
+        summary.scrollIntoView({behavior:"smooth", block:"nearest"});
+      });
+
+      function isHalfwayForAnyStep(m){
+        return buildLevels(m).some(L => m.N === L.mid);
+      }
+      function randomRaw(){
+        let raw, m;
+        do{
+          const intPart = 1 + Math.floor(Math.random()*99);
+          let frac = String(Math.floor(Math.random()*10000)).padStart(4,"0");
+          if(/^0+$/.test(frac)) frac = String(1 + Math.floor(Math.random()*9999)).padStart(4,"0");
+          raw = `${intPart}.${frac}`;
+          m = parseDecimalInput(raw);
+        } while(isHalfwayForAnyStep(m));
+        return raw;
+      }
+
+      function setModelFromRaw(raw, keepMessage=false){
+        model = parseDecimalInput(raw);
+        levels = buildLevels(model);
+        level=0;
+        guessFrac=null;
+        revealed=false;
+        animating=false;
+        summary.classList.remove("show");
+        customInput.value = actualText();
+        renderJumpButtons();
+        if(!keepMessage) setInputMessage("Examples: 321.69 or 0.284618", "");
+        render();
+      }
+      function restartCurrentNumber(){
+        level=0;
+        guessFrac=null;
+        revealed=false;
+        animating=false;
+        summary.classList.remove("show");
+        render();
+      }
+
+      function setInputMessage(text, kind){
+        inputMsg.textContent = text;
+        inputMsg.classList.remove("error","ok");
+        if(kind) inputMsg.classList.add(kind);
+        customInput.classList.toggle("invalid", kind === "error");
+      }
+      function useCustom(){
+        try{
+          const parsed = parseDecimalInput(customInput.value);
+          setModelFromRaw(parsed.originalText, true);
+          setInputMessage(`Using ${parsed.originalText}. ${levels.length} rounding step${levels.length===1?"":"s"} generated.`, "ok");
+        } catch(err){
+          setInputMessage(err.message, "error");
+        }
+      }
+
+      $("newBtn").addEventListener("click", ()=>setModelFromRaw(randomRaw()));
+      $("topNewBtn").addEventListener("click", ()=>setModelFromRaw(randomRaw()));
+      $("restartBtn").addEventListener("click", restartCurrentNumber);
+      $("topResetBtn").addEventListener("click", restartCurrentNumber);
+      $("useCustomBtn").addEventListener("click", useCustom);
+      customInput.addEventListener("keydown", evt=>{
+        if(evt.key === "Enter") useCustom();
+      });
+      customInput.addEventListener("input", ()=>{
+        customInput.classList.remove("invalid");
+        inputMsg.classList.remove("error","ok");
+        inputMsg.textContent = "Examples: 321.69 or 0.284618";
+      });
+
+      $("midToggle").addEventListener("click", ()=>{ showMid=!showMid; render(); });
+      $("digitToggle").addEventListener("click", ()=>{ showDigit=!showDigit; render(); });
+
+      function setPanelCollapsed(collapsed){
+        layoutEl.classList.toggle("panelCollapsed", collapsed);
+        panelToggle.innerHTML = collapsed
+          ? `<span>Teacher controls</span><span class="chev">&#8250;</span>`
+          : `<span class="chev">&#8249;</span><span>Hide panel</span>`;
+        panelToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        panelToggle.setAttribute("aria-label", collapsed ? "Show teacher controls" : "Hide teacher controls");
+        // ResizeObserver redraws the line as the grid animates; this is a safety net.
+        window.setTimeout(()=>{ syncViewBox(); renderLine(); }, 280);
+      }
+      panelToggle.addEventListener("click", ()=>{
+        setPanelCollapsed(!layoutEl.classList.contains("panelCollapsed"));
+      });
+
+      // Keep the number line correct whenever its width changes (panel collapse,
+      // window resize, orientation). Skipped mid-zoom so it never fights the animation.
+      let resizeRAF = 0;
+      function handleResize(){
+        if(animating) return;
+        cancelAnimationFrame(resizeRAF);
+        resizeRAF = requestAnimationFrame(()=>{ syncViewBox(); renderLine(); });
+      }
+      if(window.ResizeObserver){
+        new ResizeObserver(handleResize).observe(svg);
+      }
+      window.addEventListener("resize", handleResize);
+
+      function setToolsOpen(open){
+        toolsMenu.classList.toggle("open", open);
+        toolsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      toolsBtn.addEventListener("click", evt=>{
+        evt.stopPropagation();
+        setToolsOpen(!toolsMenu.classList.contains("open"));
+      });
+      toolsMenu.addEventListener("click", evt=>{
+        const link = evt.target.closest("a");
+        if(link) setToolsOpen(false);
+      });
+      document.addEventListener("click", evt=>{
+        if(!evt.target.closest(".toolsMenuWrap")) setToolsOpen(false);
+      });
+      document.addEventListener("keydown", evt=>{
+        if(evt.key === "Escape") setToolsOpen(false);
+      });
+
+      setModelFromRaw("32.6397");
+    })();
+  </script>
+</body>
+</html>
