@@ -1,0 +1,1357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Capture the Grid | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --purpleSoft:#f4edff;
+      --green:#6cbc4a;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow:hidden;
+    }
+    button,input,select{font:inherit;}
+    button{cursor:pointer;}
+
+    .app{height:100vh;height:100dvh;display:flex;flex-direction:column;min-height:0;}
+    .mmtTopbar{
+      position:relative;z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:10px 18px;
+      display:grid;
+      grid-template-columns:minmax(220px,1fr) auto minmax(360px,1fr);
+      align-items:center;
+      gap:16px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+      min-height:72px;
+    }
+    .mmtBrand{display:flex;align-items:center;gap:10px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:7px 10px;margin-left:-10px;font-weight:900;transition:.18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:42px;height:42px;object-fit:contain;background:white;border-radius:7px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.14rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.86;font-weight:700;color:white;}
+    .mmtTopTitle{font-weight:950;font-size:clamp(1.35rem,2vw,1.9rem);letter-spacing:-.045em;text-align:center;color:white;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.18);}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;position:relative;}
+
+    .language-control{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:6px 8px;color:white;}
+    .language-control label{font-size:12px;font-weight:950;opacity:.9;white-space:nowrap;}
+    .language-control select{height:34px;border:1px solid rgba(255,255,255,.25);border-radius:10px;background:white;color:#1d4ed8;font-weight:900;padding:0 8px;outline:none;}
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native, html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+    .status-title .english-under,.status-subtitle .english-under,.message-card .english-under{display:block;margin-top:3px;}
+    .choice-card .choice-native{display:block;color:#b893f6;letter-spacing:.12em;font-size:.72rem;margin-bottom:2px;font-weight:950;}
+    .choice-card .choice-english{display:block;color:#9ca3af;letter-spacing:.08em;font-size:.58rem;margin-bottom:6px;font-weight:900;}
+    .rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155;}
+    .rules-list .english-under{display:block;margin-top:5px;color:#64748b;font-size:.82em;}
+    .btn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;padding:10px 14px;border-radius:14px;font-weight:900;font-size:15px;transition:.18s ease;box-shadow:none;user-select:none;}
+    .btn:hover:not(:disabled){background:rgba(255,255,255,.22);transform:translateY(-1px);}
+    .btn:active{transform:translateY(0);}
+    .btn:disabled,.btn:disabled:hover{opacity:1;cursor:not-allowed;transform:none;background:#e2e8f0!important;color:#334155!important;border-color:#cbd5e1!important;box-shadow:none!important;}
+    .btn-primary{background:white;color:#1d4ed8;border-color:white;}
+    .btn-primary:hover:not(:disabled){background:#eef2ff;color:#1d4ed8;}
+    .btn-green{background:linear-gradient(135deg,#75c84d,#52a936);color:white;border:0;box-shadow:0 12px 25px rgba(82,169,54,.22);}
+    .btn-green:hover:not(:disabled){background:linear-gradient(135deg,#84d65a,#5bb63d);color:white;box-shadow:0 14px 28px rgba(82,169,54,.28);}
+    .btn-blue{background:linear-gradient(135deg,#3867f4,#2458e5);color:white;border:0;box-shadow:0 12px 25px rgba(37,99,235,.22);}
+    .btn-blue:hover:not(:disabled){background:linear-gradient(135deg,#4a76ff,#2f63ee);color:white;box-shadow:0 14px 28px rgba(37,99,235,.28);}
+    .btn-ghost{background:#f8fafc;color:#64748b;border:1px solid var(--border);}
+    .btn-ghost:hover:not(:disabled){background:#eef2f7;color:#0f172a;}
+    .btn-danger{background:rgba(255,255,255,.10);color:#fee2e2;border-color:rgba(255,255,255,.18);}
+    .btn-danger:hover:not(:disabled){background:rgba(255,255,255,.18);color:white;}
+
+    .layout{
+      width:min(1840px,calc(100vw - 26px));
+      flex:1;min-height:0;
+      margin:14px auto 10px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      display:grid;
+      grid-template-rows:auto 1fr;
+    }
+
+    .status-card{
+      margin:18px 22px 10px;
+      display:flex;align-items:center;gap:14px;
+      min-height:70px;
+      padding:12px 16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.96);
+      border:1px solid var(--border);
+      box-shadow:0 10px 24px rgba(15,23,42,.05);
+    }
+    .player-dot{width:38px;height:38px;border-radius:999px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.14),0 7px 12px rgba(15,23,42,.18);flex:0 0 auto;}
+    .p1-bg{background:var(--red);}.p2-bg{background:var(--blue);}
+    .status-title{font-size:1.1rem;font-weight:950;letter-spacing:-.025em;line-height:1.05;}
+    .status-subtitle{font-size:.95rem;color:#64748b;font-weight:800;line-height:1.25;margin-top:4px;}
+
+    .play-area{
+      min-height:0;
+      display:grid;
+      grid-template-columns:240px auto 330px;
+      gap:20px;
+      align-items:start;
+      justify-content:center;
+      padding:0 22px 16px;
+      overflow:auto;
+    }
+
+    .score-column{display:grid;gap:12px;align-content:start;padding-top:10px;min-width:0;}
+    .score-card{
+      position:relative;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+      min-height:76px;padding:14px 15px 14px 18px;border-radius:20px;background:white;border:1px solid var(--border);
+      box-shadow:0 12px 30px rgba(15,23,42,.06);overflow:hidden;
+    }
+    .score-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--red);}
+    .score-card.p2::before{background:var(--blue);}
+    .score-name{font-weight:950;font-size:1.04rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .score-meta{font-size:.78rem;color:#64748b;font-weight:850;margin-top:3px;}
+    .score-value{font-weight:950;font-size:1.75rem;line-height:1;}
+
+    .info-card{background:#f8fafc;border:1px solid var(--border);border-radius:18px;padding:13px 14px;color:#475569;font-weight:750;line-height:1.35;font-size:.92rem;}
+    .info-card strong{color:#0f172a;display:block;margin-bottom:5px;font-size:.98rem;}
+
+    .board-card{
+      width:min(740px,calc(100vh - 230px),calc(100vw - 660px));
+      min-width:500px;
+      max-width:740px;
+      aspect-ratio:1/1;
+      border:1px solid var(--border);
+      border-radius:24px;
+      background:linear-gradient(180deg,#fff,#fbfcfe);
+      box-shadow:0 10px 28px rgba(15,23,42,.05);
+      overflow:hidden;
+      margin:0 auto;
+    }
+    svg#boardSvg{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none;}
+    .grid-line{stroke:#b8c9e3;stroke-width:1.35;}
+    .axis-line{stroke:#29394f;stroke-width:2.25;}
+    .coord-label{font-family:var(--uiFont);font-weight:850;fill:#64748b;font-size:13px;}
+    .axis-label{font-family:var(--mathFont);font-weight:950;fill:#0f172a;font-size:18px;}
+    .capture-fill.p1{fill:rgba(239,68,68,.16);stroke:rgba(239,68,68,.58);}
+    .capture-fill.p2{fill:rgba(37,99,235,.15);stroke:rgba(37,99,235,.55);}
+    .capture-fill{stroke-width:2.2;rx:12;filter:drop-shadow(0 6px 12px rgba(15,23,42,.06));}
+    .capture-label{font-family:var(--uiFont);font-weight:950;font-size:14px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:rgba(255,255,255,.95);stroke-width:6px;stroke-linejoin:round;}
+    .capture-label.p1{fill:#b91c1c;}.capture-label.p2{fill:#1d4ed8;}
+    .cell-hit{fill:transparent;cursor:pointer;}
+    .counter{stroke:rgba(15,23,42,.22);stroke-width:1.6;filter:drop-shadow(0 6px 8px rgba(15,23,42,.18));}
+    .counter.p1{fill:var(--red);}.counter.p2{fill:var(--blue);}
+    .ghost{opacity:.35;}
+    .win-ring{fill:none;stroke:#f59e0b;stroke-width:5;filter:drop-shadow(0 0 9px rgba(245,158,11,.65));animation:pulse 1s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:.55;transform:scale(1);}50%{opacity:1;transform:scale(1.08);}}
+
+    .roll-card{
+      width:320px;
+      border-radius:24px;
+      border:1px solid #decfff;
+      background:linear-gradient(180deg,#f8f3ff,#fbf8ff);
+      box-shadow:0 22px 60px rgba(124,58,237,.18);
+      padding:17px;
+      display:grid;
+      gap:12px;
+      justify-items:center;
+      align-content:start;
+      margin-top:10px;
+    }
+    .dice-row{display:flex;align-items:center;justify-content:center;gap:10px;}
+    .die{width:58px;height:58px;border-radius:16px;background:white;border:1px solid var(--border);display:grid;place-items:center;font-family:var(--mathFont);font-size:1.7rem;font-weight:950;box-shadow:inset 0 -6px 0 rgba(15,23,42,.07),0 10px 18px rgba(15,23,42,.12);}
+    .die.rolling{animation:diceShake .42s ease-in-out infinite;}
+    @keyframes diceShake{0%{transform:rotate(0deg) translate(0,0);}25%{transform:rotate(-12deg) translate(-2px,2px);}50%{transform:rotate(9deg) translate(2px,-2px);}75%{transform:rotate(-6deg) translate(1px,2px);}100%{transform:rotate(0deg) translate(0,0);}}
+    .choose-title{font-weight:950;color:#5b21b6;font-size:1.05rem;letter-spacing:-.02em;margin-top:2px;}
+    .choice-row{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .choice-card{min-height:86px;border-radius:20px;border:2px solid #ede9fe;background:rgba(255,255,255,.78);box-shadow:0 10px 24px rgba(124,58,237,.08);display:grid;place-items:center;padding:9px;color:#8b95a5;font-weight:950;transition:.16s ease;}
+    .choice-card:not(:disabled):hover{transform:translateY(-2px);background:white;border-color:#c4b5fd;box-shadow:0 14px 30px rgba(124,58,237,.16);}
+    .choice-card:disabled{cursor:not-allowed;opacity:.72;background:#f8fafc;color:#64748b;}
+    .choice-card:disabled span{color:#64748b;}
+    .choice-card.blocked{border-color:#fecaca;background:#fff1f2;color:#991b1b;opacity:.75;}
+    .choice-card.invalid-click{
+      border-color:#ef4444 !important;
+      background:#fff1f2 !important;
+      color:#991b1b !important;
+      box-shadow:0 0 0 5px rgba(239,68,68,.16),0 14px 30px rgba(239,68,68,.22) !important;
+      animation:badChoiceShake .38s ease-in-out 0s 2;
+    }
+    .choice-card.invalid-click span{color:#991b1b !important;}
+    @keyframes badChoiceShake{
+      0%,100%{transform:translateX(0);}
+      20%{transform:translateX(-7px);}
+      40%{transform:translateX(7px);}
+      60%{transform:translateX(-5px);}
+      80%{transform:translateX(5px);}
+    }
+    .choice-card small{display:block;color:#b893f6;letter-spacing:.14em;font-size:.72rem;margin-bottom:6px;}
+    .choice-card span{font-family:var(--mathFont);font-size:1.55rem;color:#737b89;}
+    .choice-card:not(:disabled) span{color:#0f172a;}
+    .message-card{width:100%;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px 13px;font-size:.92rem;font-weight:850;line-height:1.35;}
+    .message-card.good{background:#ecfdf5;border-color:#86efac;color:#166534;}
+    .message-card.purple{background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6;}
+
+    .brand-footer{height:36px;margin:0 auto 8px;width:min(1840px,calc(100vw - 26px));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.92);border:1px solid rgba(229,231,235,.95);border-radius:999px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+
+    .settings-menu{position:absolute;top:calc(100% + 10px);right:0;width:min(430px,calc(100vw - 32px));background:rgba(255,255,255,.98);border:1px solid rgba(226,232,240,.95);border-radius:20px;box-shadow:0 18px 45px rgba(15,23,42,.18);padding:14px;opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:.18s ease;z-index:60;color:var(--ink);display:grid;gap:12px;}
+    .settings-menu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+    .settings-group{border:1px solid var(--border);background:#f8fafc;border-radius:16px;padding:12px;display:grid;gap:10px;}
+    .settings-title{font-weight:950;font-size:1rem;}
+    .field{display:grid;gap:7px;}
+    .field label{font-weight:850;color:#334155;font-size:.9rem;}
+    .field select,.field input{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 13px;font-weight:850;color:var(--ink);outline:none;}
+    .field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    .toggle{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:14px;background:white;}
+    .toggle input{margin-top:3px;transform:scale(1.12);accent-color:var(--blue);}
+    .toggle strong{display:block;font-size:.92rem;}.toggle span{display:block;color:var(--muted);font-size:.8rem;line-height:1.35;margin-top:2px;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:100;display:none;place-items:center;padding:20px;backdrop-filter:blur(7px);}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(760px,100%);max-height:min(92vh,900px);overflow:auto;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:30px;box-shadow:0 34px 90px rgba(15,23,42,.34);padding:24px;}
+    .modal.narrow{width:min(560px,100%);}
+    .modal h2{margin:0 0 6px;font-size:clamp(1.65rem,3vw,2.35rem);font-weight:950;letter-spacing:-.05em;}
+    .modal p{margin:0;color:#64748b;font-weight:750;line-height:1.45;}
+    .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;}
+    .mode-card{border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);border-radius:24px;padding:18px;min-height:190px;text-align:left;color:var(--ink);display:grid;align-content:start;gap:10px;box-shadow:0 14px 32px rgba(15,23,42,.08);transition:.16s ease;}
+    .mode-card:hover{transform:translateY(-3px);border-color:#bfdbfe;box-shadow:0 22px 44px rgba(37,99,235,.14);}
+    .setup-summary{margin-top:14px;padding:12px 14px;border-radius:16px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:850;line-height:1.35;}
+    .setup-summary strong{display:block;color:#0f172a;margin-bottom:3px;}
+    .mode-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:2rem;background:#eef2ff;color:#2563eb;}
+    .mode-card:nth-child(1) .mode-icon{background:#fef3c7;color:#b45309;}
+    .mode-card:nth-child(2) .mode-icon{background:#dcfce7;color:#15803d;}
+    .mode-card:nth-child(3) .mode-icon{background:#f3e8ff;color:#7c3aed;}
+    .mode-title{font-size:1.25rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-copy{font-size:.94rem;color:#64748b;font-weight:750;line-height:1.36;}
+    .form-grid{display:grid;gap:14px;margin-top:18px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .room-code-display{display:none;margin-top:14px;padding:14px 16px;border-radius:18px;background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;font-weight:950;font-size:1.2rem;text-align:center;}
+    .room-code-display.show{display:block;}
+    .error-text{display:none;background:#fff1f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:10px 12px;font-weight:850;margin-top:10px;}
+    .error-text.show{display:block;}
+
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:120;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media(max-width:1280px){
+      .play-area{grid-template-columns:210px auto 300px;gap:14px;}
+      .board-card{width:min(690px,calc(100vh - 230px),calc(100vw - 600px));min-width:460px;}
+      .roll-card{width:292px;}
+      .choice-card span{font-size:1.35rem;}
+    }
+    @media(max-width:1080px){
+      body{overflow:auto;}
+      .app{min-height:100vh;height:auto;}
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;gap:8px;min-height:unset;padding:10px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 22px);overflow:visible;display:block;}
+      .play-area{display:grid;grid-template-columns:1fr;justify-items:center;overflow:visible;padding:0 14px 18px;}
+      .score-column{width:min(640px,100%);grid-template-columns:1fr 1fr;order:2;}
+      .info-card{grid-column:1/-1;}
+      .board-card{order:1;width:min(720px,calc(100vw - 52px));min-width:0;}
+      .roll-card{order:3;width:min(420px,100%);}
+      .brand-footer{width:calc(100vw - 22px);}
+      .mode-grid{grid-template-columns:1fr;}
+    }
+    @media(max-width:640px){
+      .mmtBrandText span{display:none;}
+      .mmtTopTitle{font-size:1.25rem;}
+      .actions .btn{font-size:13px;padding:9px 10px;}
+      .status-card{margin:12px 12px 8px;padding:10px 12px;}
+      .score-column{grid-template-columns:1fr;}
+      .form-row{grid-template-columns:1fr;}
+      .modal{padding:18px;border-radius:24px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" onerror="this.style.visibility='hidden'" />
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Capture the Grid</div>
+      <div class="actions">
+        <div class="language-control">
+          <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+          <select id="mainLanguageSelect" aria-label="Language">
+            <option value="en" selected>English</option>
+            <option value="ar">Arabic العربية</option>
+            <option value="fa">Farsi فارسی</option>
+          </select>
+        </div>
+        <button class="btn" id="rulesBtn" type="button">Rules</button>
+        <button class="btn" id="backMenuBtn" type="button">Back to menu</button>
+        <button class="btn btn-primary" id="newGameBtn" type="button">New Game</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="status-card">
+        <div class="player-dot p1-bg" id="turnDot"></div>
+        <div>
+          <div class="status-title" id="statusTitle">Choose a game mode</div>
+          <div class="status-subtitle" id="statusSubtitle">Capture rectangles by owning all four corners.</div>
+        </div>
+      </div>
+
+      <div class="play-area">
+        <aside class="score-column">
+          <div class="score-card p1">
+            <div>
+              <div class="score-name" id="p1Name">Player 1</div>
+              <div class="score-meta" id="p1Meta">0 captures</div>
+            </div>
+            <div class="score-value" id="p1Score">0</div>
+          </div>
+          <div class="score-card p2">
+            <div>
+              <div class="score-name" id="p2Name">Player 2</div>
+              <div class="score-meta" id="p2Meta">0 captures</div>
+            </div>
+            <div class="score-value" id="p2Score">0</div>
+          </div>
+          <div class="info-card">
+            <strong id="howScoreTitle">How to score</strong>
+            <span id="howScoreCopy">Place counters on grid points. If your counters make all four corners of a rectangle, you capture it. Choose first quadrant or four-quadrant play before the game starts.</span>
+          </div>
+        </aside>
+
+        <section class="board-card">
+          <svg id="boardSvg" viewBox="0 0 720 720" role="img" aria-label="Capture the Grid coordinate board"></svg>
+        </section>
+
+        <aside class="roll-card">
+          <div class="dice-row">
+            <div class="die" id="dieA">?</div>
+            <div class="die" id="dieB">?</div>
+            <button class="btn btn-green" id="rollBtn" type="button">Roll</button>
+          </div>
+          <div class="choose-title" id="chooseTitle">Choose to place</div>
+          <div class="choice-row">
+            <button class="choice-card" id="choiceA" type="button" disabled><small>OPTION 1</small><span>(x, y)</span></button>
+            <button class="choice-card" id="choiceB" type="button" disabled><small>OPTION 2</small><span>(x, y)</span></button>
+          </div>
+          <div class="message-card purple" id="messageBox">Choose a mode to start.</div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+  </div>
+
+  <div class="modal-backdrop open" id="modeModal">
+    <div class="modal">
+      <h2 id="modeTitle">Choose how to play</h2>
+      <p id="modeIntro">Capture rectangles on the coordinate grid. After choosing a mode, you will select grid, scoring and support settings before play begins.</p>
+      <div class="mode-grid">
+        <button class="mode-card" id="vsComputerBtn" type="button">
+          <div class="mode-icon">🤖</div>
+          <div class="mode-title" id="modeComputerTitle">vs. Computer</div>
+          <div class="mode-copy" id="modeComputerCopy">Play against a simple computer opponent that chooses the strongest available coordinate.</div>
+        </button>
+        <button class="mode-card" id="passPlayBtn" type="button">
+          <div class="mode-icon">🎲</div>
+          <div class="mode-title" id="modePassTitle">Pass & Play</div>
+          <div class="mode-copy" id="modePassCopy">Two students share one laptop and take turns rolling and placing counters.</div>
+        </button>
+        <button class="mode-card" id="onlineBtn" type="button">
+          <div class="mode-icon">🌐</div>
+          <div class="mode-title" id="modeOnlineTitle">Online Multiplayer</div>
+          <div class="mode-copy" id="modeOnlineCopy">Create a room code or join a room to play live on two laptops using Firebase.</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="namesModal">
+    <div class="modal narrow">
+      <h2 id="namesTitle">Player names</h2>
+      <p id="namesIntro">Enter names for a pass-and-play match.</p>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="field"><label id="p1InputLabel" for="p1Input">Player 1</label><input id="p1Input" placeholder="Player 1 name" maxlength="18" /></div>
+          <div class="field"><label id="p2InputLabel" for="p2Input">Player 2</label><input id="p2Input" placeholder="Player 2 name" maxlength="18" /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-blue" id="startPassBtn" type="button">Start game</button>
+        <button class="btn btn-ghost" id="cancelNamesBtn" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="onlineModal">
+    <div class="modal narrow">
+      <h2 id="onlineTitle">Online multiplayer</h2>
+      <p id="onlineIntro">Create a room code or join an existing game. Your name will appear on both laptops.</p>
+      <div class="form-grid">
+        <div class="field"><label id="onlineNameLabel" for="onlineNameInput">Your name</label><input id="onlineNameInput" placeholder="Enter your name" maxlength="18" /></div>
+        <div class="form-row">
+          <button class="btn btn-blue" id="createRoomBtn" type="button">Generate game</button>
+          <button class="btn btn-ghost" id="leaveOnlineBtn" type="button">Back</button>
+        </div>
+        <div class="field"><label id="roomCodeLabel" for="roomCodeInput">Room code</label><input id="roomCodeInput" placeholder="Enter room code" maxlength="6" style="text-transform:uppercase" /></div>
+        <button class="btn btn-green" id="joinRoomBtn" type="button">Join existing game</button>
+      </div>
+      <div class="room-code-display" id="roomCodeDisplay"></div>
+      <div class="error-text" id="onlineError"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="setupSettingsModal">
+    <div class="modal narrow">
+      <h2 id="setupSettingsTitle">Game settings</h2>
+      <p id="setupSettingsIntro">Choose the grid, scoring and support options before the match begins.</p>
+
+      <div class="form-grid">
+        <div class="settings-group">
+          <div class="settings-title" id="gridDiceTitle">Grid and dice</div>
+          <div class="field">
+            <label id="gridModeLabel" for="gridModeSelect">Grid mode</label>
+            <select id="gridModeSelect">
+              <option value="first" selected>First quadrant: 0 to 6</option>
+              <option value="four">Four quadrants: -6 to 6</option>
+            </select>
+          </div>
+          <p class="panel-note" id="diceMatchNote">Dice match the grid: 0–6 for first quadrant, or -6–6 for four quadrants.</p>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-title" id="captureScoringTitle">Capture scoring</div>
+          <div class="field">
+            <label id="scoreByLabel" for="scoringModeSelect">Score by</label>
+            <select id="scoringModeSelect">
+              <option value="area" selected>Area captured</option>
+              <option value="captures">Number of captures</option>
+              <option value="perimeter">Perimeter captured</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="winTargetLabel" for="targetScoreSelect">Win target</label>
+            <select id="targetScoreSelect">
+              <option value="20">First to 20</option>
+              <option value="30" selected>First to 30</option>
+              <option value="40">First to 40</option>
+              <option value="0">Board fills / highest score</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-title" id="studentSupportTitle">Student support</div>
+          <label class="toggle">
+            <input id="hintDotsToggle" type="checkbox" />
+            <span><strong id="hintDotsTitle">Show possible dots</strong><span id="hintDotsCopy">Shows the two possible points after rolling. Off by default so students work out the coordinate first.</span></span>
+          </label>
+          <label class="toggle">
+            <input id="swapToggle" type="checkbox" checked />
+            <span><strong id="swapTitle">Allow choosing either die as x</strong><span id="swapCopy">Students may use the roll as either coordinate order.</span></span>
+          </label>
+        </div>
+
+        <div class="setup-summary" id="setupSummary"><strong>Ready to play</strong>These settings will be locked in when the game starts.</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-blue" id="submitSetupBtn" type="button">Submit</button>
+        <button class="btn btn-ghost" id="backSetupBtn" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal-backdrop" id="rulesModal">
+    <div class="modal narrow">
+      <h2 id="rulesTitle">Rules</h2>
+      <p id="rulesIntro">Capture rectangles by placing counters on coordinate points.</p>
+      <ul class="rules-list" id="rulesList"></ul>
+      <div class="modal-actions">
+        <button class="btn btn-blue" id="closeRulesBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZLYpzbeplXIq3V54yZOye5jH83wWrXJo",
+      authDomain: "coordinate-connect-4.firebaseapp.com",
+      projectId: "coordinate-connect-4",
+      storageBucket: "coordinate-connect-4.firebasestorage.app",
+      messagingSenderId: "798945723284",
+      appId: "1:798945723284:web:2140725b79cff78a100581",
+      measurementId: "G-RSMWF3LR5F"
+    };
+
+    const COLLECTION = 'captureGridRooms';
+    const SIZE = 720;
+    const PAD = 72;
+    const BOARD = SIZE - PAD * 2;
+    const FIRST_GRID = { min: 0, max: 6 };
+    const FOUR_QUADRANT_GRID = { min: -6, max: 6 };
+    const PLAYER_STYLE = {
+      1:{ cls:'p1', dot:'p1-bg', defaultName:'Player 1' },
+      2:{ cls:'p2', dot:'p2-bg', defaultName:'Player 2' }
+    };
+    const DEFAULT_SETTINGS = { gridMode:'first', scoringMode:'area', targetScore:30, hintDots:false, swap:true };
+
+    const $ = id => document.getElementById(id);
+    const svg = $('boardSvg');
+    const modeModal = $('modeModal');
+    const namesModal = $('namesModal');
+    const onlineModal = $('onlineModal');
+    const setupSettingsModal = $('setupSettingsModal');
+    const rulesModal = $('rulesModal');
+    const mainLanguageSelect = $('mainLanguageSelect');
+    const dieA = $('dieA');
+    const dieB = $('dieB');
+    const rollBtn = $('rollBtn');
+    const choiceA = $('choiceA');
+    const choiceB = $('choiceB');
+    const messageBox = $('messageBox');
+    const turnDot = $('turnDot');
+    const statusTitle = $('statusTitle');
+    const statusSubtitle = $('statusSubtitle');
+
+    let app, auth, db, uid, unsubRoom = null;
+    let pendingMode = null;
+    let pendingPlayers = null;
+    let pendingOnlineName = '';
+    let rolling = false;
+    let onlineRole = null;
+    let currentRoom = null;
+    let suppressOnlineRender = false;
+
+    const state = {
+      mode:'menu',
+      currentPlayer:1,
+      players:{1:{name:'Player 1', type:'human'}, 2:{name:'Player 2', type:'human'}},
+      board:{},
+      captures:[],
+      scores:{1:0,2:0},
+      captureCounts:{1:0,2:0},
+      currentRoll:null,
+      winner:null,
+      status:'local',
+      lastMessage:'Choose a mode to start.',
+      settings:{...DEFAULT_SETTINGS}
+    };
+
+    let uiLang = 'en';
+    const TRANSLATIONS = {
+      ar: {
+        'Language':'اللغة','Rules':'القواعد','Back to menu':'العودة إلى القائمة','New Game':'لعبة جديدة','Choose how to play':'اختر طريقة اللعب',
+        'Capture rectangles on the coordinate grid. After choosing a mode, you will select grid, scoring and support settings before play begins.':'التقط المستطيلات على شبكة الإحداثيات. بعد اختيار وضع اللعب، ستختار الشبكة وطريقة التسجيل وخيارات الدعم قبل أن تبدأ اللعبة.',
+        'vs. Computer':'ضد الكمبيوتر','Play against a simple computer opponent that chooses the strongest available coordinate.':'العب ضد خصم كمبيوتر بسيط يختار أقوى إحداثي متاح.',
+        'Pass & Play':'مرّر والعب','Two students share one laptop and take turns rolling and placing counters.':'يتشارك طالبان جهازاً واحداً ويتناوبان على رمي النرد ووضع العدادات.',
+        'Online Multiplayer':'لعب جماعي عبر الإنترنت','Create a room code or join a room to play live on two laptops using Firebase.':'أنشئ رمز غرفة أو انضم إلى غرفة للعب مباشرة على جهازين باستخدام Firebase.',
+        'Player names':'أسماء اللاعبين','Enter names for a pass-and-play match.':'أدخل أسماء اللاعبين للعب على جهاز واحد.','Player 1':'اللاعب 1','Player 2':'اللاعب 2','Start game':'ابدأ اللعبة','Back':'رجوع',
+        'Online multiplayer':'لعب جماعي عبر الإنترنت','Create a room code or join an existing game. Your name will appear on both laptops.':'أنشئ رمز غرفة أو انضم إلى لعبة موجودة. سيظهر اسمك على الجهازين.','Your name':'اسمك','Room code':'رمز الغرفة','Generate game':'إنشاء لعبة','Join existing game':'انضم إلى لعبة موجودة',
+        'Game settings':'إعدادات اللعبة','Online game settings':'إعدادات اللعبة عبر الإنترنت','Pass & Play settings':'إعدادات مرّر والعب','vs. Computer settings':'إعدادات ضد الكمبيوتر','Choose the settings for this room. These will be locked in when the room code is generated.':'اختر إعدادات هذه الغرفة. سيتم تثبيتها عند إنشاء رمز الغرفة.','Choose the grid and scoring before the pass-and-play match starts.':'اختر الشبكة وطريقة التسجيل قبل بدء مباراة مرّر والعب.','Choose the grid and scoring before playing against the computer.':'اختر الشبكة وطريقة التسجيل قبل اللعب ضد الكمبيوتر.','Online room':'الغرفة عبر الإنترنت','Press Submit to generate the room code. The game will then wait for the second player to join.':'اضغط إرسال لإنشاء رمز الغرفة. ستنتظر اللعبة بعدها انضمام اللاعب الثاني.','Both students will use this device and take turns.':'سيستخدم الطالبان هذا الجهاز ويتناوبان.','No name is needed. You will play as You against Computer.':'لا حاجة إلى اسم. ستلعب باسم أنت ضد الكمبيوتر.','Game settings':'إعدادات اللعبة','Choose the grid, scoring and support options before the match begins.':'اختر الشبكة وطريقة التسجيل وخيارات الدعم قبل بدء المباراة.','Grid and dice':'الشبكة والنرد','Grid mode':'نمط الشبكة','First quadrant: 0 to 6':'الربع الأول: 0 إلى 6','Four quadrants: -6 to 6':'الأرباع الأربعة: -6 إلى 6','Dice match the grid: 0–6 for first quadrant, or -6–6 for four quadrants.':'النرد يطابق الشبكة: 0–6 للربع الأول، أو -6–6 للأرباع الأربعة.',
+        'Capture scoring':'تسجيل الالتقاط','Score by':'التسجيل حسب','Area captured':'المساحة الملتقطة','Number of captures':'عدد الالتقاطات','Perimeter captured':'المحيط الملتقط','Win target':'هدف الفوز','First to 20':'أول من يصل إلى 20','First to 30':'أول من يصل إلى 30','First to 40':'أول من يصل إلى 40','Board fills / highest score':'امتلاء اللوحة / أعلى نتيجة',
+        'Student support':'دعم الطالب','Show possible dots':'إظهار النقاط الممكنة','Shows the two possible points after rolling. Off by default so students work out the coordinate first.':'يُظهر النقطتين الممكنتين بعد الرمي. يكون مغلقاً افتراضياً حتى يحدد الطلاب الإحداثي أولاً.','Allow choosing either die as x':'السماح باختيار أي نرد كـ x','Students may use the roll as either coordinate order.':'يمكن للطلاب استخدام الرمية بأي ترتيب للإحداثيين.','Submit':'إرسال','Close':'إغلاق',
+        'Choose to place':'اختر مكان الوضع','OPTION':'الخيار','TAKEN':'مأخوذ','You':'أنت','Computer':'الكمبيوتر','captures':'التقاطات','capture':'التقاط',
+        'Choose a mode to start.':'اختر وضعاً للبدء.','Capture rectangles by owning all four corners.':'التقط المستطيلات بامتلاك الزوايا الأربع.','Roll once, then choose the correct coordinate.':'ارمِ مرة واحدة، ثم اختر الإحداثي الصحيح.','The computer is thinking.':'الكمبيوتر يفكر.','Waiting for the other player to move.':'بانتظار اللاعب الآخر.','Waiting for Player 2':'بانتظار اللاعب 2','Create or join a room.':'أنشئ غرفة أو انضم إليها.','Captured enough regions to win.':'تم التقاط مناطق كافية للفوز.','The board is full.':'امتلأت اللوحة.','Draw game':'تعادل','Your turn':'دورك',
+        'Capture rectangles by placing counters on coordinate points.':'التقط المستطيلات بوضع العدادات على نقاط الإحداثيات.','How to score':'طريقة التسجيل','Place counters on grid points. If your counters make all four corners of a rectangle, you capture it. Choose first quadrant or four-quadrant play before the game starts.':'ضع العدادات على نقاط الشبكة. إذا كوّنت عداداتك الزوايا الأربع لمستطيل، فإنك تلتقطه. اختر اللعب في الربع الأول أو الأرباع الأربعة قبل بدء اللعبة.',
+        'Roll two dice.':'ارمِ نردين.','Choose which value is x and which value is y.':'اختر أي قيمة تمثل x وأي قيمة تمثل y.','Place your counter on that coordinate.':'ضع عدادك على ذلك الإحداثي.','If your four counters make the corners of a rectangle, you capture it.':'إذا كوّنت عداداتك الأربع زوايا مستطيل، فإنك تلتقطه.','The player with the highest score, or the first to the target, wins.':'يفوز اللاعب صاحب أعلى نتيجة أو أول من يصل إلى الهدف.'
+      },
+      fa: {
+        'Language':'زبان','Rules':'قوانین','Back to menu':'بازگشت به منو','New Game':'بازی جدید','Choose how to play':'روش بازی را انتخاب کنید',
+        'Capture rectangles on the coordinate grid. After choosing a mode, you will select grid, scoring and support settings before play begins.':'روی صفحه مختصات مستطیل‌ها را تصاحب کنید. پس از انتخاب حالت، پیش از شروع بازی شبکه، امتیازدهی و گزینه‌های کمک را انتخاب می‌کنید.',
+        'vs. Computer':'در برابر کامپیوتر','Play against a simple computer opponent that chooses the strongest available coordinate.':'در برابر یک حریف کامپیوتری ساده بازی کنید که بهترین مختصات موجود را انتخاب می‌کند.',
+        'Pass & Play':'نوبتی روی یک دستگاه','Two students share one laptop and take turns rolling and placing counters.':'دو دانش‌آموز از یک لپ‌تاپ استفاده می‌کنند و به نوبت تاس می‌اندازند و مهره می‌گذارند.',
+        'Online Multiplayer':'چندنفره آنلاین','Create a room code or join a room to play live on two laptops using Firebase.':'یک کد اتاق بسازید یا به اتاقی بپیوندید تا با دو لپ‌تاپ به صورت زنده بازی کنید.',
+        'Player names':'نام بازیکنان','Enter names for a pass-and-play match.':'نام‌ها را برای بازی نوبتی وارد کنید.','Player 1':'بازیکن ۱','Player 2':'بازیکن ۲','Start game':'شروع بازی','Back':'برگشت',
+        'Online multiplayer':'چندنفره آنلاین','Create a room code or join an existing game. Your name will appear on both laptops.':'یک کد اتاق بسازید یا به یک بازی موجود بپیوندید. نام شما روی هر دو لپ‌تاپ دیده می‌شود.','Your name':'نام شما','Room code':'کد اتاق','Generate game':'ساخت بازی','Join existing game':'پیوستن به بازی موجود',
+        'Game settings':'تنظیمات بازی','Online game settings':'تنظیمات بازی آنلاین','Pass & Play settings':'تنظیمات بازی نوبتی','vs. Computer settings':'تنظیمات برابر کامپیوتر','Choose the settings for this room. These will be locked in when the room code is generated.':'تنظیمات این اتاق را انتخاب کنید. وقتی کد اتاق ساخته شود، این تنظیمات ثابت می‌مانند.','Choose the grid and scoring before the pass-and-play match starts.':'پیش از شروع بازی نوبتی، شبکه و امتیازدهی را انتخاب کنید.','Choose the grid and scoring before playing against the computer.':'پیش از بازی با کامپیوتر، شبکه و امتیازدهی را انتخاب کنید.','Online room':'اتاق آنلاین','Press Submit to generate the room code. The game will then wait for the second player to join.':'برای ساخت کد اتاق، ثبت را بزنید. سپس بازی منتظر پیوستن بازیکن دوم می‌ماند.','Both students will use this device and take turns.':'هر دو دانش‌آموز از این دستگاه استفاده می‌کنند و نوبتی بازی می‌کنند.','No name is needed. You will play as You against Computer.':'نیازی به نام نیست. شما با عنوان شما در برابر کامپیوتر بازی می‌کنید.','Game settings':'تنظیمات بازی','Choose the grid, scoring and support options before the match begins.':'پیش از شروع مسابقه، شبکه، امتیازدهی و گزینه‌های کمک را انتخاب کنید.','Grid and dice':'شبکه و تاس','Grid mode':'حالت شبکه','First quadrant: 0 to 6':'ربع اول: ۰ تا ۶','Four quadrants: -6 to 6':'چهار ربع: -۶ تا ۶','Dice match the grid: 0–6 for first quadrant, or -6–6 for four quadrants.':'تاس با شبکه هماهنگ است: ۰ تا ۶ برای ربع اول، یا -۶ تا ۶ برای چهار ربع.',
+        'Capture scoring':'امتیاز تصاحب','Score by':'امتیاز بر اساس','Area captured':'مساحت تصاحب‌شده','Number of captures':'تعداد تصاحب‌ها','Perimeter captured':'محیط تصاحب‌شده','Win target':'هدف پیروزی','First to 20':'اولین نفر تا ۲۰','First to 30':'اولین نفر تا ۳۰','First to 40':'اولین نفر تا ۴۰','Board fills / highest score':'پر شدن صفحه / بیشترین امتیاز',
+        'Student support':'کمک به دانش‌آموز','Show possible dots':'نمایش نقاط ممکن','Shows the two possible points after rolling. Off by default so students work out the coordinate first.':'پس از تاس انداختن دو نقطه ممکن را نشان می‌دهد. به طور پیش‌فرض خاموش است تا دانش‌آموزان ابتدا مختصات را پیدا کنند.','Allow choosing either die as x':'اجازه انتخاب هر تاس به عنوان x','Students may use the roll as either coordinate order.':'دانش‌آموزان می‌توانند نتیجه تاس‌ها را با هر ترتیب مختصات استفاده کنند.','Submit':'ثبت','Close':'بستن',
+        'Choose to place':'محل قرار دادن را انتخاب کنید','OPTION':'گزینه','TAKEN':'گرفته شده','You':'شما','Computer':'کامپیوتر','captures':'تصاحب‌ها','capture':'تصاحب',
+        'Choose a mode to start.':'برای شروع یک حالت انتخاب کنید.','Capture rectangles by owning all four corners.':'با داشتن چهار گوشه، مستطیل‌ها را تصاحب کنید.','Roll once, then choose the correct coordinate.':'یک بار تاس بیندازید، سپس مختصات درست را انتخاب کنید.','The computer is thinking.':'کامپیوتر در حال فکر کردن است.','Waiting for the other player to move.':'در انتظار حرکت بازیکن دیگر.','Waiting for Player 2':'در انتظار بازیکن ۲','Create or join a room.':'یک اتاق بسازید یا وارد شوید.','Captured enough regions to win.':'برای برد، ناحیه‌های کافی تصاحب شده است.','The board is full.':'صفحه پر شده است.','Draw game':'مساوی','Your turn':'نوبت شما',
+        'Capture rectangles by placing counters on coordinate points.':'با گذاشتن مهره‌ها روی نقاط مختصات، مستطیل‌ها را تصاحب کنید.','How to score':'روش امتیازگیری','Place counters on grid points. If your counters make all four corners of a rectangle, you capture it. Choose first quadrant or four-quadrant play before the game starts.':'مهره‌ها را روی نقاط شبکه قرار دهید. اگر مهره‌های شما چهار گوشه یک مستطیل را بسازند، آن را تصاحب می‌کنید. پیش از شروع بازی، حالت ربع اول یا چهار ربع را انتخاب کنید.',
+        'Roll two dice.':'دو تاس بیندازید.','Choose which value is x and which value is y.':'انتخاب کنید کدام مقدار x و کدام مقدار y است.','Place your counter on that coordinate.':'مهره خود را روی آن مختصات بگذارید.','If your four counters make the corners of a rectangle, you capture it.':'اگر چهار مهره شما گوشه‌های یک مستطیل را بسازند، آن را تصاحب می‌کنید.','The player with the highest score, or the first to the target, wins.':'بازیکنی که بیشترین امتیاز را داشته باشد، یا زودتر به هدف برسد، برنده است.'
+      }
+    };
+    function tr(en){ return uiLang === 'en' ? en : (TRANSLATIONS[uiLang]?.[en] || translateDynamic(en)); }
+    function translateDynamic(en){
+      if(uiLang === 'en') return en;
+      const dict = TRANSLATIONS[uiLang] || {};
+      const coord = en.match(/^Choose to place: (.*)\.$/);
+      if(coord) return uiLang === 'ar' ? `اختر مكان الوضع: ${coord[1]}.` : `محل قرار دادن را انتخاب کنید: ${coord[1]}.`;
+      let m = en.match(/^(.+), roll the dice\.$/);
+      if(m) return uiLang === 'ar' ? `${m[1]}، ارمِ النرد.` : `${m[1]}، تاس بیندازید.`;
+      m = en.match(/^(.+) placed at (\(.+\))\. No rectangle captured yet\.$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} وضع عند ${m[2]}. لم يتم التقاط مستطيل بعد.` : `${m[1]} در ${m[2]} مهره گذاشت. هنوز مستطیلی تصاحب نشده است.`;
+      m = en.match(/^(.+) captured a (.+) rectangle for (\d+) points?!$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} التقط مستطيلاً ${m[2]} مقابل ${m[3]} نقطة!` : `${m[1]} یک مستطیل ${m[2]} را برای ${m[3]} امتیاز تصاحب کرد!`;
+      m = en.match(/^(.+) captured (\d+) rectangles for (\d+) points!$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} التقط ${m[2]} مستطيلات مقابل ${m[3]} نقطة!` : `${m[1]} ${m[2]} مستطیل را برای ${m[3]} امتیاز تصاحب کرد!`;
+      m = en.match(/^(.+) wins!$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} فاز!` : `${m[1]} برنده شد!`;
+      m = en.match(/^(.+) rolled (\(.+\)) but has no available coordinate\. Turn missed\.$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} رمى ${m[2]} لكن لا يوجد إحداثي متاح. فاته الدور.` : `${m[1]} ${m[2]} آورد، اما مختصات آزادی ندارد. نوبت از دست رفت.`;
+      m = en.match(/^(.+) chose (\(.+\)), but it was already taken\. Turn missed\.$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} اختار ${m[2]}، لكنه كان مأخوذاً بالفعل. فاته الدور.` : `${m[1]} ${m[2]} را انتخاب کرد، اما قبلاً گرفته شده بود. نوبت از دست رفت.`;
+      m = en.match(/^Game open\. Room code (.+)\. Waiting for second player to join\.$/);
+      if(m) return uiLang === 'ar' ? `اللعبة مفتوحة. رمز الغرفة ${m[1]}. بانتظار انضمام اللاعب الثاني.` : `بازی باز است. کد اتاق ${m[1]}. در انتظار پیوستن بازیکن دوم.`;
+      m = en.match(/^(.+) joined\. (.+) starts\.$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} انضم. ${m[2]} يبدأ.` : `${m[1]} پیوست. ${m[2]} شروع می‌کند.`;
+      m = en.match(/^Room code: (.+)$/);
+      if(m) return uiLang === 'ar' ? `رمز الغرفة: ${m[1]}` : `کد اتاق: ${m[1]}`;
+      m = en.match(/^(.+)'s turn$/);
+      if(m) return uiLang === 'ar' ? `دور ${m[1]}` : `نوبت ${m[1]}`;
+      m = en.match(/^(\d+) captures?$/);
+      if(m) return uiLang === 'ar' ? `${m[1]} ${Number(m[1])===1?'التقاط':'التقاطات'}` : `${m[1]} تصاحب`;
+      return dict[en] || en;
+    }
+    function i18nHTML(en){
+      if(uiLang === 'en') return esc(en);
+      return `<span class="i18n-dual"><span class="native">${esc(tr(en))}</span><span class="english-under">${esc(en)}</span></span>`;
+    }
+    function setI18n(el, en){ if(el) el.innerHTML = i18nHTML(en); }
+    function setPlainI18n(el, en){ if(el) el.textContent = uiLang === 'en' ? en : tr(en); }
+    function optionText(n, taken=false){
+      const en = taken ? 'TAKEN' : `OPTION ${n}`;
+      if(uiLang === 'en') return `<small>${en}</small>`;
+      const native = taken ? tr('TAKEN') : `${tr('OPTION')} ${n}`;
+      return `<span class="choice-native">${esc(native)}</span><span class="choice-english">${esc(en)}</span>`;
+    }
+    const RULES = ['Roll two dice.','Choose which value is x and which value is y.','Place your counter on that coordinate.','If your four counters make the corners of a rectangle, you capture it.','The player with the highest score, or the first to the target, wins.'];
+    function renderRules(){
+      setI18n($('rulesTitle'), 'Rules');
+      setI18n($('rulesIntro'), 'Capture rectangles by placing counters on coordinate points.');
+      const list = $('rulesList');
+      if(list) list.innerHTML = RULES.map(r => `<li>${i18nHTML(r)}</li>`).join('');
+      setI18n($('closeRulesBtn'), 'Close');
+    }
+    function applyLanguage(){
+      uiLang = mainLanguageSelect?.value || 'en';
+      document.documentElement.lang = uiLang;
+      document.documentElement.dir = 'ltr';
+      setI18n($('languageMainLabel'),'Language');
+      setI18n($('rulesBtn'),'Rules');
+      setI18n($('backMenuBtn'),'Back to menu');
+      setI18n($('newGameBtn'),'New Game');
+      setI18n($('modeTitle'),'Choose how to play');
+      setI18n($('modeIntro'),'Capture rectangles on the coordinate grid. After choosing a mode, you will select grid, scoring and support settings before play begins.');
+      setI18n($('modeComputerTitle'),'vs. Computer');
+      setI18n($('modeComputerCopy'),'Play against a simple computer opponent that chooses the strongest available coordinate.');
+      setI18n($('modePassTitle'),'Pass & Play');
+      setI18n($('modePassCopy'),'Two students share one laptop and take turns rolling and placing counters.');
+      setI18n($('modeOnlineTitle'),'Online Multiplayer');
+      setI18n($('modeOnlineCopy'),'Create a room code or join a room to play live on two laptops using Firebase.');
+      setI18n($('namesTitle'),'Player names');
+      setI18n($('namesIntro'),'Enter names for a pass-and-play match.');
+      setI18n($('p1InputLabel'),'Player 1');
+      setI18n($('p2InputLabel'),'Player 2');
+      setI18n($('startPassBtn'),'Start game');
+      setI18n($('cancelNamesBtn'),'Back');
+      setI18n($('onlineTitle'),'Online multiplayer');
+      setI18n($('onlineIntro'),'Create a room code or join an existing game. Your name will appear on both laptops.');
+      setI18n($('onlineNameLabel'),'Your name');
+      setI18n($('roomCodeLabel'),'Room code');
+      setI18n($('createRoomBtn'),'Generate game');
+      setI18n($('leaveOnlineBtn'),'Back');
+      setI18n($('joinRoomBtn'),'Join existing game');
+      setI18n($('gridDiceTitle'),'Grid and dice');
+      setI18n($('gridModeLabel'),'Grid mode');
+      setI18n($('diceMatchNote'),'Dice match the grid: 0–6 for first quadrant, or -6–6 for four quadrants.');
+      setI18n($('captureScoringTitle'),'Capture scoring');
+      setI18n($('scoreByLabel'),'Score by');
+      setI18n($('winTargetLabel'),'Win target');
+      setI18n($('studentSupportTitle'),'Student support');
+      setI18n($('hintDotsTitle'),'Show possible dots');
+      setI18n($('hintDotsCopy'),'Shows the two possible points after rolling. Off by default so students work out the coordinate first.');
+      setI18n($('swapTitle'),'Allow choosing either die as x');
+      setI18n($('swapCopy'),'Students may use the roll as either coordinate order.');
+      setI18n($('chooseTitle'),'Choose to place');
+      setI18n($('howScoreTitle'),'How to score');
+      setI18n($('howScoreCopy'),'Place counters on grid points. If your counters make all four corners of a rectangle, you capture it. Choose first quadrant or four-quadrant play before the game starts.');
+      setI18n($('submitSetupBtn'),'Submit');
+      renderRules();
+      refreshSelectLabels();
+      updateUI();
+    }
+    function refreshSelectLabels(){
+      const gm = $('gridModeSelect');
+      if(gm){ gm.options[0].textContent = uiLang === 'en' ? 'First quadrant: 0 to 6' : tr('First quadrant: 0 to 6'); gm.options[1].textContent = uiLang === 'en' ? 'Four quadrants: -6 to 6' : tr('Four quadrants: -6 to 6'); }
+      const sm = $('scoringModeSelect');
+      if(sm){ sm.options[0].textContent = uiLang === 'en' ? 'Area captured' : tr('Area captured'); sm.options[1].textContent = uiLang === 'en' ? 'Number of captures' : tr('Number of captures'); sm.options[2].textContent = uiLang === 'en' ? 'Perimeter captured' : tr('Perimeter captured'); }
+      const ts = $('targetScoreSelect');
+      if(ts){ ts.options[0].textContent = uiLang === 'en' ? 'First to 20' : tr('First to 20'); ts.options[1].textContent = uiLang === 'en' ? 'First to 30' : tr('First to 30'); ts.options[2].textContent = uiLang === 'en' ? 'First to 40' : tr('First to 40'); ts.options[3].textContent = uiLang === 'en' ? 'Board fills / highest score' : tr('Board fills / highest score'); }
+    }
+
+    function esc(text){ return String(text ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function cleanName(value, fallback){ const v = String(value || '').trim(); return v ? v.slice(0,18) : fallback; }
+    function coordKey(x,y){ return `${x},${y}`; }
+    function gridBounds(){ return state.settings.gridMode === 'four' ? FOUR_QUADRANT_GRID : FIRST_GRID; }
+    function gridMin(){ return gridBounds().min; }
+    function gridMax(){ return gridBounds().max; }
+    function range(){ const min = gridMin(), max = gridMax(); return Array.from({length:max-min+1},(_,i)=>min+i); }
+    function coordToPixel(x,y){ const min = gridMin(), max = gridMax(); const count = max - min; return { px: PAD + ((x - min) / count) * BOARD, py: SIZE - PAD - ((y - min) / count) * BOARD }; }
+    function pixelRadius(){ return state.settings.gridMode === 'four' ? 14 : 22; }
+    function diceValue(){
+      if(state.settings.gridMode === 'four') return Math.floor(Math.random() * 13) - 6;
+      return Math.floor(Math.random() * 7);
+    }
+    function rectId(x1,y1,x2,y2){ const ax=Math.min(x1,x2), bx=Math.max(x1,x2), ay=Math.min(y1,y2), by=Math.max(y1,y2); return `${ax},${ay},${bx},${by}`; }
+    function captureScore(c){ if(state.settings.scoringMode === 'captures') return 1; if(state.settings.scoringMode === 'perimeter') return c.perimeter; return c.area; }
+    function totalBoardPoints(){ const min = gridMin(), max = gridMax(); return (max - min + 1) ** 2; }
+    function activeName(){ return state.players[state.currentPlayer]?.name || PLAYER_STYLE[state.currentPlayer].defaultName; }
+    function isOnline(){ return state.mode === 'online'; }
+    function isOnlineHost(){ return isOnline() && onlineRole === 1; }
+    function canChangeSettings(){ return !isOnline() || isOnlineHost(); }
+    function isMyOnlineTurn(){ return !isOnline() || Number(onlineRole) === Number(state.currentPlayer); }
+    function isComputerTurn(){ return state.mode === 'computer' && state.currentPlayer === 2 && !state.winner; }
+
+    function possibleCoords(){
+      if(!state.currentRoll) return [];
+      const {a,b} = state.currentRoll;
+      const opts = [{x:a,y:b,label:`(${a}, ${b})`}];
+      if(state.settings.swap && a !== b) opts.push({x:b,y:a,label:`(${b}, ${a})`});
+      return opts;
+    }
+    function availableCoords(){ return possibleCoords().filter(c => !state.board[coordKey(c.x,c.y)]); }
+
+    function setMessage(text, kind='normal'){
+      state.lastMessage = text;
+      setI18n(messageBox, text);
+      messageBox.classList.toggle('good', kind === 'good');
+      messageBox.classList.toggle('purple', kind === 'purple');
+    }
+
+    function syncSettingsFromControls(){
+      state.settings.gridMode = $('gridModeSelect').value;
+      state.settings.scoringMode = $('scoringModeSelect').value;
+      state.settings.targetScore = Number($('targetScoreSelect').value);
+      state.settings.hintDots = $('hintDotsToggle').checked;
+      state.settings.swap = $('swapToggle').checked;
+    }
+    function syncControlsFromSettings(){
+      $('gridModeSelect').value = state.settings.gridMode || DEFAULT_SETTINGS.gridMode;
+      $('scoringModeSelect').value = state.settings.scoringMode || DEFAULT_SETTINGS.scoringMode;
+      $('targetScoreSelect').value = String(state.settings.targetScore ?? DEFAULT_SETTINGS.targetScore);
+      $('hintDotsToggle').checked = !!state.settings.hintDots;
+      $('swapToggle').checked = state.settings.swap !== false;
+      updateSettingsAccess();
+    }
+
+    function updateSettingsAccess(){
+      ['gridModeSelect','scoringModeSelect','targetScoreSelect','hintDotsToggle','swapToggle'].forEach(id => {
+        const el = $(id);
+        if(el) el.disabled = false;
+      });
+    }
+
+    function baseGame(players, mode){
+      syncSettingsFromControls();
+      state.mode = mode;
+      state.currentPlayer = 1;
+      state.players = players;
+      state.board = {};
+      state.captures = [];
+      state.scores = {1:0,2:0};
+      state.captureCounts = {1:0,2:0};
+      state.currentRoll = null;
+      state.winner = null;
+      state.status = mode === 'online' ? 'waiting' : 'playing';
+      state.lastMessage = `${state.players[1].name}, roll the dice.`;
+      dieA.textContent = '?'; dieB.textContent = '?';
+      updateUI();
+    }
+
+    function resetRoundAfterSettingsChange(){
+      state.currentPlayer = 1;
+      state.board = {};
+      state.captures = [];
+      state.scores = {1:0,2:0};
+      state.captureCounts = {1:0,2:0};
+      state.currentRoll = null;
+      state.winner = null;
+      if(state.mode === 'online'){
+        state.status = state.players?.[2]?.uid ? 'playing' : 'waiting';
+      } else if(state.mode !== 'menu'){
+        state.status = 'playing';
+      }
+      dieA.textContent = '?';
+      dieB.textContent = '?';
+      const firstName = state.players?.[1]?.name || 'Player 1';
+      state.lastMessage = state.mode === 'online'
+        ? `Settings changed by the room creator. Game reset. ${firstName} rolls first.`
+        : `Settings changed. Game reset. ${firstName} rolls first.`;
+    }
+
+    function show(el){ el.classList.add('open'); }
+    function hide(el){ el.classList.remove('open'); }
+    function closeAllModals(){ hide(modeModal); hide(namesModal); hide(onlineModal); hide(setupSettingsModal); hide(rulesModal); }
+    function showMainMenu(){
+      if(unsubRoom){ unsubRoom(); unsubRoom = null; }
+      onlineRole = null; currentRoom = null;
+      state.mode = 'menu';
+      state.currentRoll = null; state.winner = null;
+      state.lastMessage = 'Choose a mode to start.';
+      updateSettingsAccess();
+      updateUI();
+      closeAllModals(); show(modeModal);
+    }
+
+    function updateUI(){
+      syncControlsFromSettings();
+      $('p1Name').textContent = state.players[1]?.name || 'Player 1';
+      $('p2Name').textContent = state.players[2]?.name || 'Player 2';
+      $('p1Score').textContent = state.scores[1] ?? 0;
+      $('p2Score').textContent = state.scores[2] ?? 0;
+      const p1Count = state.captureCounts[1] ?? 0;
+      const p2Count = state.captureCounts[2] ?? 0;
+      setI18n($('p1Meta'), `${p1Count} capture${p1Count === 1 ? '' : 's'}`);
+      setI18n($('p2Meta'), `${p2Count} capture${p2Count === 1 ? '' : 's'}`);
+
+      turnDot.className = `player-dot ${state.currentPlayer === 2 ? 'p2-bg' : 'p1-bg'}`;
+      if(state.winner){
+        const winnerText = state.winner === 'draw' ? 'Draw game' : `${state.players[state.winner]?.name || 'Player'} wins!`;
+        setI18n(statusTitle, winnerText);
+        setI18n(statusSubtitle, state.winner === 'draw' ? 'The board is full.' : 'Captured enough regions to win.');
+      } else if(state.mode === 'online' && state.status === 'waiting'){
+        setI18n(statusTitle, 'Waiting for Player 2');
+        setI18n(statusSubtitle, currentRoom ? `Room code: ${currentRoom}` : 'Create or join a room.');
+      } else if(state.mode === 'online'){
+        setI18n(statusTitle, onlineRole === state.currentPlayer ? 'Your turn' : `${activeName()}'s turn`);
+        setI18n(statusSubtitle, onlineRole === state.currentPlayer ? 'Roll once, then choose the correct coordinate.' : 'Waiting for the other player to move.');
+      } else if(state.mode === 'computer' && state.currentPlayer === 2){
+        setI18n(statusTitle, `Computer's turn`);
+        setI18n(statusSubtitle, 'The computer is thinking.');
+      } else if(state.mode === 'menu'){
+        setI18n(statusTitle, 'Choose a game mode');
+        setI18n(statusSubtitle, 'Capture rectangles by owning all four corners.');
+      } else {
+        setI18n(statusTitle, `${activeName()}'s turn`);
+        setI18n(statusSubtitle, 'Roll once, then choose the correct coordinate.');
+      }
+
+      setMessage(state.lastMessage || 'Roll the dice.', state.lastMessage?.includes('captured') || state.lastMessage?.includes('wins') ? 'good' : 'purple');
+      updateChoices();
+      drawBoard();
+      maybeTriggerComputer();
+    }
+
+    function updateChoices(){
+      const opts = possibleCoords();
+      const canAct = state.mode !== 'menu' && !state.winner && !rolling && state.status !== 'waiting' && isMyOnlineTurn() && !isComputerTurn();
+      rollBtn.disabled = !canAct || !!state.currentRoll;
+      [choiceA, choiceB].forEach((btn, i) => {
+        const opt = opts[i];
+        // Keep both rolled coordinate choices clickable. Students must check the board;
+        // choosing an already-taken coordinate is treated as an invalid move and misses the turn.
+        btn.disabled = !canAct || !opt;
+        btn.classList.remove('blocked', 'invalid-click');
+        btn.innerHTML = `${optionText(i+1,false)}<span>${opt ? esc(opt.label) : '(x, y)'}</span>`;
+      });
+    }
+
+    function drawBoard(){
+      svg.innerHTML = '';
+      const NS = 'http://www.w3.org/2000/svg';
+      const mk = (tag, attrs, parent=svg) => { const n=document.createElementNS(NS,tag); Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,String(v))); parent.appendChild(n); return n; };
+      mk('rect',{x:PAD,y:PAD,width:BOARD,height:BOARD,rx:10,fill:'#fff'});
+
+      const orderedCaptures = [...state.captures].sort((a,b)=>a.area-b.area);
+      orderedCaptures.forEach(c => {
+        const p1 = coordToPixel(c.x1,c.y2);
+        const p2 = coordToPixel(c.x2,c.y1);
+        const rect = mk('rect',{x:p1.px,y:p1.py,width:p2.px-p1.px,height:p2.py-p1.py,class:`capture-fill p${c.player}`});
+        rect.setAttribute('opacity', .78);
+        const centre = coordToPixel((c.x1+c.x2)/2,(c.y1+c.y2)/2);
+        const label = state.settings.scoringMode === 'perimeter' ? `P=${c.perimeter}` : state.settings.scoringMode === 'captures' ? '+1' : `A=${c.area}`;
+        const t = mk('text',{x:centre.px,y:centre.py,class:`capture-label p${c.player}`});
+        t.textContent = label;
+      });
+
+      range().forEach(n => {
+        const vx=coordToPixel(n,gridMin()).px;
+        const hy=coordToPixel(gridMin(),n).py;
+        mk('line',{x1:vx,y1:PAD,x2:vx,y2:SIZE-PAD,class:n===0?'axis-line':'grid-line'});
+        mk('line',{x1:PAD,y1:hy,x2:SIZE-PAD,y2:hy,class:n===0?'axis-line':'grid-line'});
+      });
+      range().forEach(n => {
+        const px=coordToPixel(n,gridMin()).px;
+        const py=coordToPixel(gridMin(),n).py;
+        const tx = mk('text',{x:px,y:SIZE-PAD+31,class:'coord-label','text-anchor':'middle'}); tx.textContent = n;
+        const ty = mk('text',{x:PAD-30,y:py+5,class:'coord-label','text-anchor':'middle'}); ty.textContent = n;
+      });
+      const xlab = mk('text',{x:SIZE-PAD+29,y:SIZE-PAD+5,class:'axis-label','text-anchor':'middle'}); xlab.textContent='x';
+      const ylab = mk('text',{x:PAD-5,y:PAD-29,class:'axis-label','text-anchor':'middle'}); ylab.textContent='y';
+
+      const possible = possibleCoords();
+      range().forEach(y => range().forEach(x => {
+        const p=coordToPixel(x,y);
+        const hit = mk('circle',{cx:p.px,cy:p.py,r:26,class:'cell-hit'});
+        hit.addEventListener('click', () => {
+          if(!state.settings.hintDots) return;
+          const idx = possible.findIndex(c => c.x === x && c.y === y);
+          if(idx >= 0) chooseOption(idx);
+        });
+        if(state.settings.hintDots && state.currentRoll && possible.some(c=>c.x===x&&c.y===y) && !state.board[coordKey(x,y)]){
+          mk('circle',{cx:p.px,cy:p.py,r:pixelRadius(),class:`counter ghost p${state.currentPlayer}`});
+        }
+      }));
+
+      Object.entries(state.board).forEach(([key, player]) => {
+        const [x,y] = key.split(',').map(Number);
+        const p = coordToPixel(x,y);
+        mk('circle',{cx:p.px,cy:p.py,r:pixelRadius(),class:`counter p${player}`});
+      });
+    }
+
+    function findNewCaptures(x,y,player){
+      const capturedIds = new Set(state.captures.map(c => c.id));
+      const owned = new Set(Object.entries(state.board).filter(([,p]) => Number(p) === player).map(([k]) => k));
+      const found = [];
+      for(const key of owned){
+        const [ox,oy] = key.split(',').map(Number);
+        if(ox === x || oy === y) continue;
+        const c1 = coordKey(x,oy);
+        const c2 = coordKey(ox,y);
+        if(owned.has(c1) && owned.has(c2)){
+          const id = rectId(x,y,ox,oy);
+          if(capturedIds.has(id) || found.some(c => c.id === id)) continue;
+          const x1 = Math.min(x,ox), x2 = Math.max(x,ox), y1 = Math.min(y,oy), y2 = Math.max(y,oy);
+          const width = x2 - x1;
+          const height = y2 - y1;
+          found.push({ id, player, x1, y1, x2, y2, width, height, area: width * height, perimeter: 2 * (width + height) });
+        }
+      }
+      return found;
+    }
+
+    function placeCounter(x,y){
+      if(state.winner || rolling || state.status === 'waiting') return;
+      if(isOnline() && !isMyOnlineTurn()) return;
+      if(isComputerTurn()) return;
+      const valid = possibleCoords().some(c => c.x === x && c.y === y);
+      if(!valid){ setMessage('That coordinate is not one of the options from this roll.'); return; }
+      if(state.board[coordKey(x,y)]){ setMessage(`${activeName()} chose (${x}, ${y}), but it was already taken. Turn missed.`); return; }
+      applyMove(x,y,state.currentPlayer);
+    }
+
+    async function applyMove(x,y,player){
+      state.board[coordKey(x,y)] = player;
+      const newCaps = findNewCaptures(x,y,player);
+      if(newCaps.length){
+        state.captures.push(...newCaps);
+        state.captureCounts[player] = (state.captureCounts[player] || 0) + newCaps.length;
+        const points = newCaps.reduce((sum,c)=>sum+captureScore(c),0);
+        state.scores[player] = (state.scores[player] || 0) + points;
+        const detail = newCaps.length === 1
+          ? `${state.players[player].name} captured a ${newCaps[0].width} × ${newCaps[0].height} rectangle for ${points} point${points===1?'':'s'}!`
+          : `${state.players[player].name} captured ${newCaps.length} rectangles for ${points} points!`;
+        state.lastMessage = detail;
+      } else {
+        state.lastMessage = `${state.players[player].name} placed at (${x}, ${y}). No rectangle captured yet.`;
+      }
+
+      const target = Number(state.settings.targetScore || 0);
+      if(target > 0 && state.scores[player] >= target){
+        state.winner = player;
+        state.lastMessage = `${state.players[player].name} wins!`;
+        launchConfetti();
+      } else if(Object.keys(state.board).length >= totalBoardPoints()){
+        const p1 = state.scores[1] || 0, p2 = state.scores[2] || 0;
+        state.winner = p1 === p2 ? 'draw' : (p1 > p2 ? 1 : 2);
+        state.lastMessage = state.winner === 'draw' ? 'The board is full. Draw game!' : `${state.players[state.winner].name} wins when the board fills!`;
+        if(state.winner !== 'draw') launchConfetti();
+      } else {
+        state.currentPlayer = player === 1 ? 2 : 1;
+      }
+      state.currentRoll = null;
+      dieA.textContent='?'; dieB.textContent='?';
+      await persistIfOnline();
+      updateUI();
+    }
+
+    function canChooseOptionNow(){
+      return state.mode !== 'menu' && !state.winner && !rolling && state.status !== 'waiting' && isMyOnlineTurn() && !isComputerTurn();
+    }
+
+    async function missTurnForTakenChoice(index, opt){
+      const btn = index === 0 ? choiceA : choiceB;
+      if(btn){
+        btn.classList.remove('invalid-click');
+        void btn.offsetWidth;
+        btn.classList.add('invalid-click');
+      }
+      setMessage(`${activeName()} chose (${opt.x}, ${opt.y}), but it was already taken. Turn missed.`, 'normal');
+      [choiceA, choiceB, rollBtn].forEach(b => b.disabled = true);
+      await new Promise(resolve => setTimeout(resolve, 760));
+      if(!state.currentRoll || state.winner) return;
+      state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+      state.currentRoll = null;
+      dieA.textContent='?';
+      dieB.textContent='?';
+      await persistIfOnline();
+      updateUI();
+    }
+
+    function chooseOption(index){
+      if(!state.currentRoll || !canChooseOptionNow()) return;
+      const opt = possibleCoords()[index];
+      if(!opt) return;
+      if(state.board[coordKey(opt.x,opt.y)]){
+        missTurnForTakenChoice(index, opt);
+        return;
+      }
+      placeCounter(opt.x,opt.y);
+    }
+
+    function animateDice(callback){
+      rolling = true;
+      rollBtn.disabled = true;
+      dieA.classList.add('rolling'); dieB.classList.add('rolling');
+      let ticks = 0;
+      const ticker = setInterval(() => { dieA.textContent = diceValue(); dieB.textContent = diceValue(); ticks++; }, 75);
+      setTimeout(() => {
+        clearInterval(ticker);
+        dieA.classList.remove('rolling'); dieB.classList.remove('rolling');
+        rolling = false;
+        callback();
+      }, 650);
+    }
+
+    function rollDice(){
+      if(state.mode === 'menu' || state.winner || rolling || state.currentRoll || state.status === 'waiting') return;
+      if(isOnline() && !isMyOnlineTurn()) return;
+      if(isComputerTurn()) return;
+      animateDice(async () => {
+        const a = diceValue(), b = diceValue();
+        dieA.textContent = a; dieB.textContent = b;
+        state.currentRoll = {a,b};
+        const opts = availableCoords();
+        if(opts.length === 0){
+          state.lastMessage = `${activeName()} rolled (${a}, ${b}) but has no available coordinate. Turn missed.`;
+          state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+          state.currentRoll = null;
+          dieA.textContent='?'; dieB.textContent='?';
+          await persistIfOnline();
+          updateUI();
+          return;
+        }
+        state.lastMessage = `Choose to place: (${a}, ${b})${state.settings.swap && a !== b ? ` or (${b}, ${a})` : ''}.`;
+        await persistIfOnline();
+        updateUI();
+      });
+    }
+
+    function maybeTriggerComputer(){
+      if(!isComputerTurn() || rolling || state.currentRoll) return;
+      setTimeout(() => {
+        if(!isComputerTurn() || state.currentRoll || state.winner) return;
+        animateDice(() => {
+          const a = diceValue(), b = diceValue();
+          dieA.textContent = a; dieB.textContent = b;
+          state.currentRoll = {a,b};
+          updateUI();
+          setTimeout(() => computerChooseMove(), 700);
+        });
+      }, 600);
+    }
+
+    function computerChooseMove(){
+      if(!isComputerTurn() || !state.currentRoll || state.winner) return;
+      const opts = availableCoords();
+      if(opts.length === 0){
+        state.lastMessage = `Computer rolled (${state.currentRoll.a}, ${state.currentRoll.b}) but had no available coordinate. Turn missed.`;
+        state.currentPlayer = 1; state.currentRoll = null; dieA.textContent='?'; dieB.textContent='?'; updateUI(); return;
+      }
+      let best = opts[0], bestScore = -1;
+      for(const opt of opts){
+        const tempKey = coordKey(opt.x,opt.y);
+        state.board[tempKey] = 2;
+        const caps = findNewCaptures(opt.x,opt.y,2);
+        delete state.board[tempKey];
+        const value = caps.reduce((sum,c)=>sum+captureScore(c),0);
+        if(value > bestScore){ bestScore = value; best = opt; }
+      }
+      applyMove(best.x,best.y,2);
+    }
+
+    function newLocalGame(){
+      if(state.mode === 'computer') baseGame({1:{name:state.players[1]?.name || 'You', type:'human'},2:{name:'Computer', type:'computer'}}, 'computer');
+      else if(state.mode === 'pass') baseGame(state.players, 'pass');
+      else if(state.mode === 'online') resetOnlineRoom();
+      else showMainMenu();
+    }
+
+    async function initFirebase(){
+      if(db && auth && uid) return;
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      const cred = await signInAnonymously(auth);
+      uid = cred.user.uid;
+    }
+    function makeRoomCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for(let i=0;i<5;i++) code += chars[Math.floor(Math.random()*chars.length)];
+      return code;
+    }
+    function onlineSnapshotPayload(){
+      return {
+        status: state.status,
+        currentPlayer: state.currentPlayer,
+        players: state.players,
+        board: state.board,
+        captures: state.captures,
+        scores: state.scores,
+        captureCounts: state.captureCounts,
+        currentRoll: state.currentRoll,
+        winner: state.winner,
+        lastMessage: state.lastMessage,
+        settings: state.settings,
+        updatedAt: serverTimestamp()
+      };
+    }
+    async function persistIfOnline(){
+      if(!isOnline() || !currentRoom || suppressOnlineRender) return true;
+      try{
+        await updateDoc(doc(db, COLLECTION, currentRoom), onlineSnapshotPayload());
+        return true;
+      } catch(err){
+        console.error('Online sync failed:', err);
+        state.lastMessage = 'Connection issue: this move did not sync. Check Firestore rules or internet connection, then try again.';
+        return false;
+      }
+    }
+    function applyRoomData(data){
+      if(!data) return;
+      suppressOnlineRender = true;
+
+      // Recover this browser's player role from the room document on every update.
+      // This prevents a greyed-out roll button if a laptop refreshes or receives an old local state.
+      const incomingPlayers = data.players || state.players;
+      const p1uid = incomingPlayers?.[1]?.uid || incomingPlayers?.['1']?.uid;
+      const p2uid = incomingPlayers?.[2]?.uid || incomingPlayers?.['2']?.uid;
+      if(uid && p1uid === uid) onlineRole = 1;
+      else if(uid && p2uid === uid) onlineRole = 2;
+
+      // Any fresh room snapshot is the source of truth. Clear any local animation lock.
+      rolling = false;
+      dieA.classList.remove('rolling');
+      dieB.classList.remove('rolling');
+
+      state.mode = 'online';
+      state.status = data.status || 'playing';
+      state.currentPlayer = Number(data.currentPlayer || 1);
+      state.players = incomingPlayers;
+      state.board = data.board || {};
+      state.captures = Array.isArray(data.captures) ? data.captures : [];
+      state.scores = data.scores || {1:0,2:0};
+      state.captureCounts = data.captureCounts || {1:0,2:0};
+      state.currentRoll = data.currentRoll ? { a:Number(data.currentRoll.a), b:Number(data.currentRoll.b) } : null;
+      state.winner = data.winner || null;
+      state.lastMessage = data.lastMessage || 'Online game ready.';
+      state.settings = {...DEFAULT_SETTINGS, ...(data.settings || {})};
+      if(state.currentRoll){ dieA.textContent = state.currentRoll.a; dieB.textContent = state.currentRoll.b; } else { dieA.textContent='?'; dieB.textContent='?'; }
+      syncControlsFromSettings();
+      suppressOnlineRender = false;
+      updateUI();
+    }
+    function subscribeToRoom(code){
+      if(unsubRoom) unsubRoom();
+      unsubRoom = onSnapshot(doc(db, COLLECTION, code), snap => {
+        if(!snap.exists()) return;
+        applyRoomData(snap.data());
+      });
+    }
+    async function createRoom(){
+      clearOnlineError();
+      const name = cleanName(pendingOnlineName || $('onlineNameInput').value, 'Player 1');
+      await initFirebase();
+      let code = makeRoomCode();
+      let ref = doc(db, COLLECTION, code);
+      let exists = await getDoc(ref);
+      while(exists.exists()) { code = makeRoomCode(); ref = doc(db, COLLECTION, code); exists = await getDoc(ref); }
+      syncSettingsFromControls();
+      currentRoom = code; onlineRole = 1;
+      baseGame({1:{name, type:'human', uid},2:{name:'Waiting...', type:'human', uid:null}}, 'online');
+      state.status = 'waiting';
+      state.lastMessage = `Game open. Room code ${code}. Waiting for second player to join.`;
+      await setDoc(ref, {...onlineSnapshotPayload(), roomCode:code, createdAt:serverTimestamp()});
+      setI18n($('roomCodeDisplay'), `Room code: ${code}`);
+      $('roomCodeDisplay').classList.add('show');
+      subscribeToRoom(code);
+      closeAllModals();
+    }
+    async function joinRoom(){
+      clearOnlineError();
+      const name = cleanName($('onlineNameInput').value, 'Player 2');
+      const code = String($('roomCodeInput').value || '').trim().toUpperCase();
+      if(!code){ showOnlineError('Enter a room code.'); return; }
+      await initFirebase();
+      const ref = doc(db, COLLECTION, code);
+      const snap = await getDoc(ref);
+      if(!snap.exists()){ showOnlineError('No room found with that code.'); return; }
+      const data = snap.data();
+      const p1uid = data.players?.[1]?.uid;
+      const p2uid = data.players?.[2]?.uid;
+      if(p1uid === uid) onlineRole = 1;
+      else if(p2uid === uid) onlineRole = 2;
+      else if(!p2uid){ onlineRole = 2; }
+      else { showOnlineError('That room already has two players.'); return; }
+      currentRoom = code;
+      if(onlineRole === 2 && !p2uid){
+        const players = {...data.players, 2:{name, type:'human', uid}};
+        await updateDoc(ref, {players, status:'playing', lastMessage:`${name} joined. ${players[1].name} starts.`, updatedAt:serverTimestamp()});
+      }
+      subscribeToRoom(code);
+      closeAllModals();
+    }
+    async function resetOnlineRoom(){
+      if(!currentRoom || !isOnline()) return;
+      if(onlineRole !== 1){ setMessage('Only Player 1 can start a new online round.'); return; }
+      state.currentPlayer = 1;
+      state.board = {}; state.captures = []; state.scores = {1:0,2:0}; state.captureCounts = {1:0,2:0}; state.currentRoll=null; state.winner=null; state.status='playing'; state.lastMessage=`New round started. ${state.players[1].name} rolls first.`;
+      await persistIfOnline(); updateUI();
+    }
+    function showOnlineError(msg){ setI18n($('onlineError'), msg); $('onlineError').classList.add('show'); }
+    function clearOnlineError(){ $('onlineError').classList.remove('show'); $('onlineError').textContent = ''; }
+
+    function launchConfetti(){
+      const colours = ['#ef4444','#2563eb','#22c55e','#f59e0b','#a855f7','#06b6d4'];
+      for(let i=0;i<90;i++){
+        const piece=document.createElement('div');
+        piece.className='confetti';
+        piece.style.left=Math.random()*100+'vw';
+        piece.style.background=colours[Math.floor(Math.random()*colours.length)];
+        piece.style.animationDelay=Math.random()*260+'ms';
+        piece.style.animationDuration=700+Math.random()*750+'ms';
+        document.body.appendChild(piece);
+        setTimeout(()=>piece.remove(),1700);
+      }
+    }
+
+    function openSetup(mode){
+      pendingMode = mode;
+      state.settings = {...DEFAULT_SETTINGS};
+      syncControlsFromSettings();
+      const title = $('setupSettingsTitle');
+      const intro = $('setupSettingsIntro');
+      const summary = $('setupSummary');
+      if(mode === 'onlineCreate'){
+        setI18n(title, 'Online game settings');
+        setI18n(intro, 'Choose the settings for this room. These will be locked in when the room code is generated.');
+        summary.innerHTML = i18nHTML('Online room') + i18nHTML('Press Submit to generate the room code. The game will then wait for the second player to join.');
+      } else if(mode === 'pass'){
+        setI18n(title, 'Pass & Play settings');
+        setI18n(intro, 'Choose the grid and scoring before the pass-and-play match starts.');
+        summary.innerHTML = i18nHTML('Pass & Play') + i18nHTML('Both students will use this device and take turns.');
+      } else {
+        setI18n(title, 'vs. Computer settings');
+        setI18n(intro, 'Choose the grid and scoring before playing against the computer.');
+        summary.innerHTML = i18nHTML('vs. Computer') + i18nHTML('No name is needed. You will play as You against Computer.');
+      }
+      closeAllModals();
+      show(setupSettingsModal);
+    }
+
+    async function submitSetup(){
+      syncSettingsFromControls();
+      if(pendingMode === 'computer'){
+        closeAllModals();
+        baseGame({1:{name:'You', type:'human'}, 2:{name:'Computer', type:'computer'}}, 'computer');
+        return;
+      }
+      if(pendingMode === 'pass'){
+        closeAllModals();
+        baseGame(pendingPlayers || {1:{name:'Player 1',type:'human'},2:{name:'Player 2',type:'human'}}, 'pass');
+        return;
+      }
+      if(pendingMode === 'onlineCreate'){
+        await createRoom();
+        return;
+      }
+      hide(setupSettingsModal);
+      show(modeModal);
+    }
+
+    $('vsComputerBtn').addEventListener('click', () => openSetup('computer'));
+    $('passPlayBtn').addEventListener('click', () => { hide(modeModal); show(namesModal); setTimeout(()=>$('p1Input').focus(),50); });
+    $('onlineBtn').addEventListener('click', () => { hide(modeModal); show(onlineModal); setTimeout(()=>$('onlineNameInput').focus(),50); });
+    $('startPassBtn').addEventListener('click', () => {
+      const p1 = cleanName($('p1Input').value, 'Player 1');
+      const p2 = cleanName($('p2Input').value, 'Player 2');
+      pendingPlayers = {1:{name:p1,type:'human'},2:{name:p2,type:'human'}};
+      openSetup('pass');
+    });
+    $('cancelNamesBtn').addEventListener('click', () => { hide(namesModal); show(modeModal); });
+    $('leaveOnlineBtn').addEventListener('click', () => { hide(onlineModal); show(modeModal); });
+    $('createRoomBtn').addEventListener('click', () => {
+      clearOnlineError();
+      const name = cleanName($('onlineNameInput').value, '');
+      if(!name){ showOnlineError('Enter your name before generating a game.'); return; }
+      pendingOnlineName = name;
+      openSetup('onlineCreate');
+    });
+    $('submitSetupBtn').addEventListener('click', submitSetup);
+    $('backSetupBtn').addEventListener('click', () => {
+      hide(setupSettingsModal);
+      if(pendingMode === 'onlineCreate') show(onlineModal);
+      else if(pendingMode === 'pass') show(namesModal);
+      else show(modeModal);
+    });
+    $('joinRoomBtn').addEventListener('click', joinRoom);
+    mainLanguageSelect.addEventListener('change', applyLanguage);
+    $('rulesBtn').addEventListener('click', () => { renderRules(); show(rulesModal); });
+    $('closeRulesBtn').addEventListener('click', () => hide(rulesModal));
+    $('backMenuBtn').addEventListener('click', showMainMenu);
+    $('newGameBtn').addEventListener('click', newLocalGame);
+    rollBtn.addEventListener('click', rollDice);
+    choiceA.addEventListener('click', () => chooseOption(0));
+    choiceB.addEventListener('click', () => chooseOption(1));
+    window.addEventListener('keydown', e => {
+      if(e.key === 'Escape') { hide(namesModal); hide(onlineModal); hide(setupSettingsModal); hide(rulesModal); }
+      if(e.key.toLowerCase() === 'r' && !e.target.matches('input,select,textarea')) rollDice();
+      if(e.key === '1' && !e.target.matches('input,select,textarea')) chooseOption(0);
+      if(e.key === '2' && !e.target.matches('input,select,textarea')) chooseOption(1);
+      if(e.key === 'Enter' && namesModal.classList.contains('open')) $('startPassBtn').click();
+      if(e.key === 'Enter' && setupSettingsModal.classList.contains('open')) $('submitSetupBtn').click();
+    });
+
+    syncControlsFromSettings();
+    applyLanguage();
+  </script>
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

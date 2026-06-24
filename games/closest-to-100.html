@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Closest to 100</title>
+  <!-- Closest to 100: fixed d6 dice, product required before every move/pass, Youcubed credit under roll panel -->
+  <style>
+    :root{
+      --bg:#f8fafc;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);--blue:#2563eb;--blue2:#1d4ed8;
+      --purple:#7c3aed;--green:#6cbc4a;--green2:#49a529;--red:#ef4444;--amber:#f59e0b;
+      --btn:#eef2f7;--btnHover:#e5ebf3;--grid:#b7c7dc;--p1:#22c55e;--p2:#2563eb;--single:#6cbc4a;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box} html,body{min-height:100%}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg)}
+    button,select,input{font:inherit} button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;-webkit-user-select:none} button:hover{transform:translateY(-1px)} button:active{transform:translateY(0)} button:disabled{opacity:.45;cursor:not-allowed;transform:none} button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:#fff;padding:10px 18px;display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(500px,1fr);align-items:center;gap:14px;box-shadow:0 10px 28px rgba(15,23,42,.22)}
+    .mmtBrand{display:flex;align-items:center;gap:9px;justify-self:start;text-decoration:none;color:#fff;border-radius:14px;padding:5px 9px;margin-left:-9px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease}.mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4)}
+    .mmtBrandLogo{width:36px;height:36px;object-fit:contain;background:#fff;border-radius:6px;padding:3px;flex:0 0 auto}.mmtBrandText strong{display:block;font-size:1.05rem;line-height:1;letter-spacing:-.03em;color:#fff}.mmtBrandText span{display:block;font-size:.72rem;opacity:.82;font-weight:650;color:#fff}.mmtTopTitle{font-weight:900;font-size:clamp(1.1rem,1.7vw,1.45rem);letter-spacing:-.04em;text-align:center;color:#fff;white-space:nowrap}.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+    .language-control{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:6px 8px;color:#fff}.language-control label{font-size:12px;font-weight:950;opacity:.9;white-space:nowrap;color:#fff}.language-control select{width:auto;min-width:110px;height:34px;border:1px solid rgba(255,255,255,.25);border-radius:10px;background:#fff;color:#1d4ed8;font-weight:900;padding:0 8px;outline:none}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink)}.mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:#fff}.btn:hover,.btn-soft:hover{background:var(--btnHover)}.mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22)}.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20)}.btn-primary:hover{background:var(--blue2)}.mmtTopbar .btn-primary{background:#fff;color:var(--blue2);border-color:#fff}.btn-green{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22)}.btn-green:hover{background:var(--green2)}.btn-red{background:var(--red);color:#fff;border-color:var(--red)}.small-btn{padding:8px 12px;font-size:.88rem}
+    label{color:#334155;font-weight:850;font-size:.92rem} select,input[type=text],input[type=number]{width:100%;border:1px solid var(--border);background:#fff;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;transition:border-color .16s ease,box-shadow .16s ease} select:focus,input[type=text]:focus,input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12}.i18n-dual .native{font-weight:inherit}html[lang=ar] .i18n-dual .native,html[lang=fa] .i18n-dual .native{direction:rtl;unicode-bidi:isolate}.i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12}.status-title .english-under,.status-subtitle .english-under,.message .english-under{display:block;margin-top:3px}
+    .layout{width:min(1720px,calc(100vw - 28px));margin:10px auto 8px;display:grid;grid-template-columns:1fr;gap:16px;align-items:start}.card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}.board-wrap{padding:14px}.status-strip{display:block;margin-bottom:10px}.turn-card{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:56px}.player-dot{width:28px;height:28px;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.16),0 5px 12px rgba(0,0,0,.16);flex:0 0 auto;background:var(--single)}.player-dot.p1{background:var(--p1)}.player-dot.p2{background:var(--p2)}.status-title{font-weight:950;font-size:1rem;line-height:1.1;letter-spacing:-.02em}.status-subtitle{color:var(--muted);font-size:.84rem;margin-top:4px;font-weight:750}
+    .play-area{display:grid;grid-template-columns:minmax(190px,240px) minmax(480px,720px) minmax(280px,340px);gap:18px;align-items:start;justify-content:center}.score-stack{display:grid;gap:10px}.score-card{border-radius:18px;padding:13px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-width:0}.score-card.player-one{border-left:8px solid var(--p1)}.score-card.player-two{border-left:8px solid var(--p2)}.score-card.single{border-left:8px solid var(--single)}.score-card span{display:block;color:#334155;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.score-card strong{display:block;font-size:1.8rem;margin-top:3px;line-height:1;font-weight:950}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{border-radius:16px;padding:11px;background:#f8fafc;border:1px solid var(--border)}.metric span{display:block;color:var(--muted);font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.03em}.metric strong{display:block;font-size:1.35rem;font-weight:950;margin-top:2px}
+    .grid-holder{position:relative;width:100%;max-width:min(720px,calc(100dvh - 170px));aspect-ratio:1/1;background:linear-gradient(180deg,#fff,#f9fafb);border-radius:22px;border:1px solid var(--border);overflow:hidden;touch-action:none}.grid-holder.dragging{cursor:crosshair}.grid-holder.shake{animation:missShake .34s ease-in-out 0s 2}svg{width:100%;height:100%;display:block;user-select:none}.grid-line{stroke:var(--grid);stroke-width:1.25}.grid-border{fill:#fff;stroke:#334155;stroke-width:2.4}.placed-rect{stroke:rgba(15,23,42,.38);stroke-width:2;filter:drop-shadow(0 5px 7px rgba(15,23,42,.11))}.placed-rect.p1{fill:rgba(34,197,94,.38)}.placed-rect.p2{fill:rgba(37,99,235,.36)}.placed-rect.single{fill:rgba(108,188,74,.38)}.placed-label{font-family:var(--mathFont);font-size:18px;font-weight:950;fill:#0f172a;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}.cell-hit{fill:transparent;cursor:crosshair}.preview{stroke-width:3;stroke-dasharray:8 6;pointer-events:none}.preview.legal{fill:rgba(108,188,74,.26);stroke:#22c55e}.preview.p1{fill:rgba(34,197,94,.24);stroke:#22c55e}.preview.p2{fill:rgba(37,99,235,.22);stroke:#2563eb}.preview.illegal{fill:rgba(239,68,68,.22);stroke:#ef4444}@keyframes missShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+    .control-area{display:grid;gap:12px}.dice-area{display:grid;gap:12px;background:linear-gradient(180deg,#f5f3ff,#faf5ff);border:1px solid #ddd6fe;border-radius:24px;padding:16px;width:100%;box-shadow:0 18px 42px rgba(109,40,217,.16)}.dice-row{display:flex;align-items:center;justify-content:center;gap:10px}.die{width:56px;height:56px;border-radius:15px;background:#fff;display:grid;place-items:center;font-weight:950;font-size:1.55rem;box-shadow:inset 0 -5px 0 rgba(15,23,42,.08),0 7px 14px rgba(15,23,42,.12);border:1px solid var(--border);position:relative;overflow:hidden;font-family:var(--mathFont)}.die.rolling{animation:diceShake .42s ease-in-out infinite}@keyframes diceShake{0%{transform:rotate(0deg) translate(0,0)}25%{transform:rotate(-12deg) translate(-2px,2px)}50%{transform:rotate(9deg) translate(2px,-2px)}75%{transform:rotate(-6deg) translate(1px,2px)}100%{transform:rotate(0deg) translate(0,0)}}.choice-title{text-align:center;font-weight:950;color:#5b21b6;letter-spacing:-.02em;font-size:.98rem;margin-top:-2px}.product-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.product-row input{text-align:center;font-size:1.35rem;font-weight:950;font-family:var(--mathFont)}.product-row input.correct{border-color:#22c55e;background:#f0fdf4;color:#166534;box-shadow:0 0 0 4px rgba(34,197,94,.12)}.product-row input.wrong{border-color:#ef4444;background:#fff1f2;color:#991b1b;animation:missShake .34s ease-in-out 0s 2;box-shadow:0 0 0 4px rgba(239,68,68,.12)}.drag-hint{padding:12px 13px;border-radius:16px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-weight:850;line-height:1.35;text-align:center}.message{padding:14px 16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:800;min-height:50px;display:flex;align-items:center;line-height:1.35}.message.success{background:#dcfce7;border-color:#86efac;color:#166534}.message.info{background:#eef2ff;border-color:#c7d2fe;color:#1e3a8a}.pass-turn-btn{width:100%;background:#fff;color:#1e3a8a;border-color:#bfdbfe;box-shadow:0 8px 18px rgba(37,99,235,.10)}.pass-turn-btn:hover{background:#eff6ff}.message.is-hidden{display:none}.youcubed-credit{font-size:12px;font-weight:850;line-height:1.35;text-align:center;color:#64748b;padding:8px 10px 0}.youcubed-credit a{color:var(--blue);text-decoration:none;font-weight:950}
+    .record-panel{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);display:grid;gap:12px}.record-panel h2{font-size:1.08rem;margin:0;font-weight:950;letter-spacing:-.02em}.record-list{display:grid;gap:7px;max-height:calc(100dvh - 470px);overflow:auto;padding-right:3px}.record-row{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:14px;background:#fff;border:1px solid var(--border);font-weight:850}.record-row .turn-no{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;background:#e2e8f0;color:#334155;font-size:.82rem;font-weight:950}.record-row.miss{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.record-row.p1{border-left:6px solid var(--p1)}.record-row.p2{border-left:6px solid var(--p2)}.record-row.single{border-left:6px solid var(--single)}.record-empty{padding:12px;border-radius:14px;background:#fff;border:1px dashed #cbd5e1;color:var(--muted);font-weight:850;text-align:center}
+    .online-panel{display:grid;gap:12px}.online-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.join-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.room-badge{display:none;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950}.room-badge.show{display:flex}.room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont)}.online-status{padding:10px 12px;border-radius:16px;background:#f1f5f9;border:1px solid var(--border);color:#475569;font-weight:750;font-size:.92rem;line-height:1.35}.online-status.good{background:#dcfce7;border-color:#86efac;color:#166534}.online-status.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.name-field{display:grid;gap:7px}.name-helper{font-size:.82rem;color:var(--muted);font-weight:750;line-height:1.35;margin-top:-2px}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px}.modal-backdrop.open{display:grid}.modal{width:min(600px,100%);background:#fff;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px}.modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}.modal h2{margin:0;font-size:1.45rem;font-weight:950;letter-spacing:-.03em}.mode-modal{width:min(760px,100%);padding:26px}.mode-modal-header h2{font-size:1.9rem;margin:0 0 6px;font-weight:950;letter-spacing:-.04em}.mode-modal-header p{margin:0 0 18px;color:var(--muted);font-weight:750}.mode-card-grid{display:grid;grid-template-columns:1fr;gap:14px}.mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink)}.mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14)}.mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem}.mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em}.mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750}.setup-fields{display:grid;gap:12px;margin:12px 0 16px}.setup-fields label{display:grid;gap:8px}.setup-start{width:100%;padding:14px 18px;font-size:1.02rem}.rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none}.rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155}.rules-list .english-under{display:block;margin-top:5px;color:#64748b;font-size:.82em}.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+    .final-podium{margin:16px 0 12px;display:grid;place-items:center}.final-podium[hidden]{display:none!important}.podium-result{width:100%;display:flex;align-items:end;justify-content:center;gap:16px;min-height:194px;padding:18px;border-radius:24px;background:linear-gradient(180deg,#f8fafc,#eef2ff);border:1px solid #dbeafe;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}.podium-player{display:grid;justify-items:center;gap:6px;min-width:128px;text-align:center}.podium-player .crown{font-size:1.8rem;line-height:1;margin-bottom:-4px}.podium-player .face{font-size:2.7rem;line-height:1;filter:drop-shadow(0 8px 10px rgba(15,23,42,.16))}.podium-player strong{max-width:150px;font-size:1.08rem;font-weight:950;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.score-pill{padding:5px 9px;border-radius:999px;background:#fff;border:1px solid var(--border);color:#334155;font-weight:900;font-size:.86rem}.podium-step{width:100%;border-radius:18px 18px 12px 12px;display:grid;place-items:center;color:#fff;font-size:1.85rem;font-weight:950;box-shadow:0 14px 26px rgba(15,23,42,.14)}.podium-player.winner .podium-step{height:84px}.podium-player.runner-up .podium-step{height:56px;opacity:.88}.podium-player.runner-up .face{font-size:2.15rem}.podium-player.p1 .podium-step{background:linear-gradient(180deg,#22c55e,#15803d)}.podium-player.p2 .podium-step{background:linear-gradient(180deg,#2563eb,#1d4ed8)}.podium-player.draw .podium-step{height:68px;background:linear-gradient(180deg,#64748b,#334155)}#finalSummary{text-align:center;font-weight:850;color:#334155;line-height:1.4;margin:10px 0 0}@media(max-width:520px){.podium-result{gap:10px;padding:14px}.podium-player{min-width:106px}.podium-player strong{max-width:116px}.podium-player .face{font-size:2.3rem}}
+    .brand-footer{width:min(1720px,calc(100vw - 28px));margin:0 auto 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:56px;padding:8px 12px;font-size:12px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:14px;text-align:center}.brand-footer a{color:var(--blue);text-decoration:none;font-weight:950}.confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px}@keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0}}
+    @media(max-width:1180px){.play-area{grid-template-columns:1fr;justify-items:center}.score-stack,.control-area{width:100%;max-width:720px}.score-stack{grid-template-columns:repeat(2,minmax(0,1fr))}.metric-grid{grid-column:1/-1}.record-panel{grid-column:1/-1}.grid-holder{max-width:720px}.record-list{max-height:280px}}
+    @media(max-width:1080px){.mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px}.mmtBrand{justify-self:center;margin-left:0}.actions{justify-content:center}.layout{width:calc(100vw - 28px);margin-top:14px}.grid-holder{width:100%}.dice-area{width:100%;max-width:720px;justify-self:center}}
+    @media(max-width:700px){.mmtBrandText span{display:none}.actions button{font-size:14px;padding:10px 12px}.layout{width:calc(100vw - 20px)}.board-wrap{padding:12px}.join-row,.online-actions,.score-stack,.metric-grid{grid-template-columns:1fr}.brand-footer{width:calc(100vw - 20px);padding:8px 10px}.mode-card{grid-template-columns:1fr;grid-template-areas:"icon" "title" "desc"}}
+    @media print{.mmtTopbar,.status-strip,.control-area,.modal-backdrop,.brand-footer{display:none!important}body{background:#fff}.layout{display:block;width:auto;margin:0}.card{box-shadow:none;border:0}.play-area{display:block}.grid-holder{width:19cm;border:1px solid #000}}
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle" data-i18n="Closest to 100">Closest to 100</div>
+    <div class="actions">
+      <div class="language-control">
+        <label id="languageMainLabel" for="mainLanguageSelect" data-i18n="Language">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button" data-i18n="Rules">Rules</button>
+      <button class="btn" id="undoBtn" type="button" data-i18n="Undo">Undo</button>
+      <button class="btn btn-primary" id="newGameBtn" type="button" data-i18n="New Game">New Game</button>
+      <button class="btn" id="backToMenuBtn" type="button" data-i18n="Back to menu">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout" id="gameLayout">
+    <section class="card board-wrap">
+      <div class="status-strip">
+        <div class="turn-card" id="turnCard">
+          <div class="player-dot" id="turnDot"></div>
+          <div>
+            <div class="status-title" id="statusTitle">Choose a game mode</div>
+            <div class="status-subtitle" id="statusSubtitle">Roll two dice, enter the product, place the array, and get as close to 100 as possible.</div>
+          </div>
+        </div>
+      </div>
+      <div class="play-area">
+        <div class="score-stack" id="scoreStack">
+          <div class="score-card single" id="p1ScoreCard"><span id="p1Label">You</span><strong id="p1Score">0</strong></div>
+          <div class="score-card player-two" id="p2ScoreCard"><span id="p2Label">Player 2</span><strong id="p2Score">0</strong></div>
+          <div class="metric-grid">
+            <div class="metric"><span data-i18n="Turn">Turn</span><strong id="turnReadout">0 / 10</strong></div>
+            <div class="metric"><span data-i18n="Left">Left</span><strong id="leftReadout">100</strong></div>
+          </div>
+          <div class="record-panel"><h2 data-i18n="Number sentences">Number sentences</h2><div class="record-list" id="recordList"></div></div>
+        </div>
+        <div class="grid-holder" id="gridHolder"><svg id="boardSvg" viewBox="0 0 640 640" role="img" aria-label="Closest to 100 hundred grid"></svg></div>
+        <div class="control-area">
+          <div class="dice-area">
+            <div class="dice-row"><div class="die" id="dieA">?</div><div class="die" id="dieB">?</div><button class="btn-green" id="rollBtn" type="button" data-i18n="Roll">Roll</button></div>
+            <div class="choice-title" id="productPrompt" data-i18n="Enter the product">Enter the product</div>
+            <div class="product-row" id="productRow"><input id="productInput" type="number" inputmode="numeric" min="0" placeholder="Product" autocomplete="off" disabled /><button class="btn-primary" id="submitProductBtn" type="button" data-i18n="Check" disabled>Check</button></div>
+            <div class="drag-hint" id="dragHint" data-i18n="Roll, then enter the product.">Roll, then enter the product.</div>
+            <button class="btn-soft pass-turn-btn" id="passTurnBtn" type="button" data-i18n="Pass" hidden>Pass</button>
+            <div class="message info" id="messageBox" aria-live="polite">Choose a mode to begin.</div>
+            <div class="youcubed-credit">Credit to <a href="https://www.youcubed.org/tasks/how-close-to-100/" target="_blank" rel="noopener">https://www.youcubed.org/tasks/how-close-to-100/</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="brand-footer"><span>This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></span></div>
+
+  <div class="modal-backdrop open" id="modeMenuModal" aria-hidden="false">
+    <div class="modal mode-modal" role="dialog" aria-modal="true" aria-labelledby="modeMenuTitle">
+      <div class="mode-modal-header"><h2 id="modeMenuTitle" data-i18n="Choose a game mode">Choose a game mode</h2><p data-i18n="Select how you would like to play Closest to 100.">Select how you would like to play Closest to 100.</p></div>
+      <div class="mode-card-grid">
+        <button class="mode-card" id="chooseSingleBtn" type="button"><span class="mode-icon">🎯</span><strong data-i18n="Single Player">Single Player</strong><span data-i18n="Get as close to 100 as you can in 10 rolls.">Get as close to 100 as you can in 10 rolls.</span></button>
+        <button class="mode-card" id="choosePassPlayBtn" type="button"><span class="mode-icon">🔄</span><strong data-i18n="Pass and Play">Pass and Play</strong><span data-i18n="Two players share one device and take 10 turns altogether.">Two players share one device and take 10 turns altogether.</span></button>
+        <button class="mode-card" id="chooseOnlineBtn" type="button"><span class="mode-icon">🌐</span><strong data-i18n="Online Multiplayer">Online Multiplayer</strong><span data-i18n="Create or join a room on two laptops.">Create or join a room on two laptops.</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="passPlayModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="passPlayTitle">
+      <div class="modal-header"><h2 id="passPlayTitle" data-i18n="Pass and Play">Pass and Play</h2><button class="btn-soft" id="passBackBtn" type="button" data-i18n="Back">Back</button></div>
+      <p data-i18n="Enter two names, then share the same laptop or board.">Enter two names, then share the same laptop or board.</p>
+      <div class="setup-fields">
+        <label><span data-i18n="Player 1 name">Player 1 name</span><input id="passP1Name" type="text" value="Player 1" /></label>
+        <label><span data-i18n="Player 2 name">Player 2 name</span><input id="passP2Name" type="text" value="Player 2" /></label>
+      </div>
+      <button class="btn-primary setup-start" id="startPassPlayBtn" type="button" data-i18n="Start Pass and Play">Start Pass and Play</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="onlineSetupModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="onlineSetupTitle">
+      <div class="modal-header"><h2 id="onlineSetupTitle" data-i18n="Online Multiplayer">Online Multiplayer</h2><button class="btn-soft" id="onlineBackBtn" type="button" data-i18n="Back">Back</button></div>
+      <div class="online-panel">
+        <div class="name-field"><label for="playerNameInput" data-i18n="Your name">Your name</label><input id="playerNameInput" type="text" value="Player" autocomplete="name" /><div class="name-helper" data-i18n="Create a room or enter a room code to join.">Create a room or enter a room code to join.</div></div>
+        <div class="room-badge" id="roomBadge"><span data-i18n="Room">Room</span><span class="room-code" id="onlineRoomCode">------</span><button class="btn-soft small-btn" id="copyRoomBtn" type="button" data-i18n="Copy">Copy</button></div>
+        <button class="btn-primary" id="createOnlineBtn" type="button" data-i18n="Create room">Create room</button>
+        <div class="join-row"><input id="roomCodeInput" type="text" maxlength="6" placeholder="Room code" autocomplete="off" /><button class="btn-green" id="joinOnlineBtn" type="button" data-i18n="Join">Join</button></div>
+        <button class="btn-red" id="leaveOnlineBtn" type="button" data-i18n="Leave room">Leave room</button>
+        <div class="online-status" id="onlineStatus">Online mode uses Firebase rooms.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header"><h2 id="rulesTitle" data-i18n="Rules">Rules</h2><button class="btn-soft" id="closeRulesBtn" type="button" data-i18n="Close">Close</button></div>
+      <ul class="rules-list" id="rulesList"></ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="finalModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="finalTitle">
+      <div class="modal-header"><h2 id="finalTitle">How close to 100?</h2><button class="btn-soft" id="closeFinalBtn" type="button" data-i18n="Close">Close</button></div>
+      <div id="finalPodium" class="final-podium" hidden></div>
+      <p id="finalSummary">You filled 0 out of 100 squares.</p>
+      <div class="modal-actions"><button class="btn-primary" id="finalNewGameBtn" type="button" data-i18n="New Game">New Game</button></div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY',
+    authDomain: 'mmt-firebase-games.firebaseapp.com',
+    projectId: 'mmt-firebase-games',
+    storageBucket: 'mmt-firebase-games.firebasestorage.app',
+    messagingSenderId: '980506958719',
+    appId: '1:980506958719:web:729e491108918e92ba584a'
+  };
+
+  const $ = id => document.getElementById(id);
+  const SIZE = 640, PAD = 40, BOARD = 560, GRID = 10, CELL = BOARD / GRID, MAX_TURNS = 10;
+  const ROOM_COLLECTION = 'closestTo100Games';
+
+  const svg = $('boardSvg'), gridHolder = $('gridHolder'), dieA = $('dieA'), dieB = $('dieB'), rollBtn = $('rollBtn');
+  const productInput = $('productInput'), submitProductBtn = $('submitProductBtn'), dragHint = $('dragHint'), passTurnBtn = $('passTurnBtn'), messageBox = $('messageBox');
+  const turnDot = $('turnDot'), statusTitle = $('statusTitle'), statusSubtitle = $('statusSubtitle');
+  const p1ScoreCard = $('p1ScoreCard'), p2ScoreCard = $('p2ScoreCard'), p1Label = $('p1Label'), p2Label = $('p2Label'), p1Score = $('p1Score'), p2Score = $('p2Score');
+  const turnReadout = $('turnReadout'), leftReadout = $('leftReadout'), recordList = $('recordList');
+  const modeMenuModal = $('modeMenuModal'), passPlayModal = $('passPlayModal'), onlineSetupModal = $('onlineSetupModal'), rulesModal = $('rulesModal'), finalModal = $('finalModal');
+  const mainLanguageSelect = $('mainLanguageSelect'), undoBtn = $('undoBtn'), newGameBtn = $('newGameBtn'), backToMenuBtn = $('backToMenuBtn');
+  const passP1Name = $('passP1Name'), passP2Name = $('passP2Name'), playerNameInput = $('playerNameInput'), roomCodeInput = $('roomCodeInput');
+  const onlineStatus = $('onlineStatus'), roomBadge = $('roomBadge'), onlineRoomCode = $('onlineRoomCode');
+
+  let app = null, auth = null, db = null, authReadyPromise = null;
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    authReadyPromise = new Promise(resolve => onAuthStateChanged(auth, user => resolve(user)));
+    signInAnonymously(auth).catch(err => console.error('Firebase sign-in failed', err));
+  } catch (err) { console.error('Firebase setup failed', err); }
+
+  let uiLang = 'en', rolling = false, dragStart = null, dragCurrent = null, finalShownForKey = '', lastRenderedRollKey = '';
+
+  const state = {
+    gameMode:'menu', board:blankBoard(), placements:[], scores:{1:0,2:0}, players:{1:'Player 1',2:'Player 2'},
+    currentPlayer:1, turnNumber:0, maxTurns:MAX_TURNS, currentRoll:null, gameOver:false, winner:null,
+    message:'Choose a mode to begin.', messageTone:'info'
+  };
+  const online = {active:false,roomCode:null,ref:null,unsub:null,uid:null,myPlayer:null,data:null};
+
+  const TRANSLATIONS = {
+    ar:{
+      'Closest to 100':'الأقرب إلى 100','Language':'اللغة','Rules':'القواعد','Undo':'تراجع','New Game':'لعبة جديدة','New Round':'جولة جديدة','Back to menu':'العودة إلى القائمة','Close':'إغلاق','Turn':'الدور','Left':'المتبقي','Number sentences':'الجمل العددية','Roll':'ارمِ','Enter the product':'أدخل حاصل الضرب','Check':'تحقق','Pass':'مرّر','Roll, then enter the product.':'ارمِ النرد، ثم أدخل حاصل الضرب.','Choose a game mode':'اختر وضع اللعب','Select how you would like to play Closest to 100.':'اختر كيف تريد لعب الأقرب إلى 100.','Single Player':'لاعب واحد','Get as close to 100 as you can in 10 rolls.':'اقترب من 100 قدر الإمكان خلال 10 رميات.','Pass and Play':'مرّر والعب','Two players share one device and take 10 turns altogether.':'يتشارك لاعبان جهازًا واحدًا ويلعبان 10 أدوار بالمجمل.','Online Multiplayer':'لعب جماعي عبر الإنترنت','Create or join a room on two laptops.':'أنشئ غرفة أو انضم إلى غرفة على جهازين.','Back':'رجوع','Enter two names, then share the same laptop or board.':'أدخل اسمين، ثم شاركا الجهاز نفسه أو اللوح.','Player 1 name':'اسم اللاعب 1','Player 2 name':'اسم اللاعب 2','Start Pass and Play':'ابدأ مرّر والعب','Your name':'اسمك','Create a room or enter a room code to join.':'أنشئ غرفة أو أدخل رمز غرفة للانضمام.','Room':'الغرفة','Copy':'نسخ','Create room':'إنشاء غرفة','Join':'انضمام','Leave room':'مغادرة الغرفة','Choose a mode to begin.':'اختر وضعًا للبدء.','Choose a game mode':'اختر وضع اللعب'
+    },
+    fa:{
+      'Closest to 100':'نزدیک‌ترین به ۱۰۰','Language':'زبان','Rules':'قوانین','Undo':'بازگشت','New Game':'بازی جدید','New Round':'دور جدید','Back to menu':'بازگشت به فهرست','Close':'بستن','Turn':'نوبت','Left':'باقی‌مانده','Number sentences':'جمله‌های عددی','Roll':'پرتاب','Enter the product':'حاصل‌ضرب را وارد کنید','Check':'بررسی','Pass':'رد کردن','Roll, then enter the product.':'تاس‌ها را بیندازید، سپس حاصل‌ضرب را وارد کنید.','Choose a game mode':'یک حالت بازی انتخاب کنید','Select how you would like to play Closest to 100.':'انتخاب کنید چگونه می‌خواهید نزدیک‌ترین به ۱۰۰ را بازی کنید.','Single Player':'تک‌نفره','Get as close to 100 as you can in 10 rolls.':'در ۱۰ پرتاب تا جایی که می‌توانید به ۱۰۰ نزدیک شوید.','Pass and Play':'نوبتی روی یک دستگاه','Two players share one device and take 10 turns altogether.':'دو بازیکن یک دستگاه را به اشتراک می‌گذارند و در مجموع ۱۰ نوبت بازی می‌کنند.','Online Multiplayer':'چندنفره آنلاین','Create or join a room on two laptops.':'روی دو لپ‌تاپ یک اتاق بسازید یا وارد شوید.','Back':'برگشت','Enter two names, then share the same laptop or board.':'دو نام وارد کنید، سپس از همان لپ‌تاپ یا تخته استفاده کنید.','Player 1 name':'نام بازیکن ۱','Player 2 name':'نام بازیکن ۲','Start Pass and Play':'شروع بازی نوبتی','Your name':'نام شما','Create a room or enter a room code to join.':'یک اتاق بسازید یا برای پیوستن کد اتاق را وارد کنید.','Room':'اتاق','Copy':'کپی','Create room':'ساخت اتاق','Join':'پیوستن','Leave room':'ترک اتاق','Choose a mode to begin.':'برای شروع یک حالت انتخاب کنید.','Choose a game mode':'یک حالت بازی انتخاب کنید'
+    }
+  };
+
+  const RULES = [
+    'Roll two dice. You must enter the correct product before you can place anything.',
+    'Use the two dice numbers as the side lengths of a rectangle array.',
+    'Drag on the hundred grid to draw the matching array. For example, a 3 and 5 can be placed as 3 × 5 or 5 × 3.',
+    'If the product is incorrect, your turn is missed.',
+    'If the product is correct but the array cannot fit, press Pass to finish the turn.',
+    'The aim is to fill as much of the 10 by 10 grid as possible and get closest to 100.'
+  ];
+  const RULES_AR = ['ارمِ تاسين. يجب إدخال حاصل الضرب الصحيح قبل وضع أي شيء.','استخدم رقمي التاسين كطولي ضلع لمستطيل.','اسحب على شبكة المئة لرسم المصفوفة المطابقة. مثلًا 3 و5 يمكن وضعهما 3 × 5 أو 5 × 3.','إذا كان حاصل الضرب غير صحيح، تفقد دورك.','إذا كان حاصل الضرب صحيحًا لكن لا توجد مساحة للمصفوفة، تفقد دورك بعد الإجابة.','الهدف هو ملء أكبر قدر ممكن من شبكة 10 × 10 والاقتراب من 100.'];
+  const RULES_FA = ['دو تاس بیندازید. قبل از قرار دادن هر چیزی باید حاصل‌ضرب درست را وارد کنید.','از دو عدد تاس به عنوان طول ضلع‌های یک آرایه مستطیلی استفاده کنید.','روی جدول صدتایی بکشید تا آرایهٔ درست را رسم کنید. مثلاً ۳ و ۵ می‌تواند ۳ × ۵ یا ۵ × ۳ باشد.','اگر حاصل‌ضرب نادرست باشد، نوبت خود را از دست می‌دهید.','اگر حاصل‌ضرب درست باشد اما برای آن آرایه جا نباشد، پس از پاسخ دادن نوبت را از دست می‌دهید.','هدف این است که تا حد ممکن جدول ۱۰ × ۱۰ را پر کنید و به ۱۰۰ نزدیک شوید.'];
+
+  function blankBoard(){ return Array(GRID * GRID).fill(0); }
+  function idx(row,col){ return row * GRID + col; }
+  function randomInt(n){ return Math.floor(Math.random() * n) + 1; }
+  function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+  function tr(key){ return TRANSLATIONS[uiLang]?.[key] || key; }
+  function bilingual(key){ if (uiLang === 'en') return key; return `<span class="i18n-dual"><span class="native">${tr(key)}</span><span class="english-under">${key}</span></span>`; }
+  function setI18n(el,key){ if (el) el.innerHTML = bilingual(key); }
+  function openModal(modal){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+  function closeModal(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+  function otherPlayer(p){ return p === 1 ? 2 : 1; }
+  function playerName(p){ return state.players[p] || `Player ${p}`; }
+  function areaFilled(board = state.board){ return board.reduce((n,v) => n + (v ? 1 : 0), 0); }
+  function productExpected(){ return state.currentRoll ? Number(state.currentRoll.a) * Number(state.currentRoll.b) : 0; }
+  function setMessage(text,tone='info'){ state.message = text; state.messageTone = tone; if (messageBox){ messageBox.className = `message ${tone}`; messageBox.innerHTML = uiLang === 'en' ? text : bilingual(text); } }
+  function orientationText(){ if (!state.currentRoll) return ''; const {a,b} = state.currentRoll; return a === b ? `${a} × ${b}` : `${a} × ${b} or ${b} × ${a}`; }
+  function isMyOnlineTurn(){ return !online.active || (online.myPlayer && Number(state.currentPlayer) === Number(online.myPlayer)); }
+  function canRoll(){ return !rolling && !state.gameOver && !state.currentRoll && state.gameMode !== 'menu' && isMyOnlineTurn() && (!online.active || online.data?.status === 'playing'); }
+  function canAnswerProduct(){ return Boolean(state.currentRoll && !state.currentRoll.productConfirmed && !state.gameOver && isMyOnlineTurn()); }
+  function canPlace(){ return Boolean(state.currentRoll && state.currentRoll.productConfirmed && !state.gameOver && isMyOnlineTurn()); }
+  function canPassTurn(){ return Boolean(state.currentRoll && state.currentRoll.productConfirmed && !state.gameOver && isMyOnlineTurn()); }
+
+  function resetState(mode='single'){
+    state.gameMode = mode; state.board = blankBoard(); state.placements = []; state.scores = {1:0,2:0}; state.currentPlayer = 1; state.turnNumber = 0; state.maxTurns = MAX_TURNS; state.currentRoll = null; state.gameOver = false; state.winner = null; state.message = 'Roll, then enter the product.'; state.messageTone = 'info';
+    dragStart = dragCurrent = null; finalShownForKey = ''; lastRenderedRollKey = ''; dieA.textContent = '?'; dieB.textContent = '?'; productInput.value = ''; productInput.classList.remove('correct','wrong');
+  }
+
+  function startSingle(){ closeModal(modeMenuModal); resetState('single'); state.players = {1:'You',2:'Player 2'}; setMessage('Roll, then enter the product.','info'); refreshUI(); drawBoard(); }
+  function showPassPlay(){ closeModal(modeMenuModal); openModal(passPlayModal); }
+  function startPassPlay(){ closeModal(passPlayModal); resetState('pass'); state.players = {1:passP1Name.value.trim() || 'Player 1',2:passP2Name.value.trim() || 'Player 2'}; setMessage(`${playerName(1)} to roll.`,'info'); refreshUI(); drawBoard(); }
+  function showOnlineSetup(){ closeModal(modeMenuModal); openModal(onlineSetupModal); setOnlineStatus('Create a room or enter a room code to join.',''); }
+
+  function applyLanguage(){ uiLang = mainLanguageSelect.value || 'en'; document.documentElement.lang = uiLang; document.querySelectorAll('[data-i18n]').forEach(el => setI18n(el, el.getAttribute('data-i18n'))); renderRules(); refreshUI(); }
+  function renderRules(){ const list = $('rulesList'); list.innerHTML = ''; const native = uiLang === 'ar' ? RULES_AR : uiLang === 'fa' ? RULES_FA : RULES; RULES.forEach((r,i) => { const li = document.createElement('li'); li.innerHTML = uiLang === 'en' ? r : `<span class="native">${native[i]}</span><span class="english-under">${r}</span>`; list.appendChild(li); }); }
+
+  function anyLegal(board, orient){
+    for (let row=0; row<=GRID-orient.h; row++) for (let col=0; col<=GRID-orient.w; col++) if (rectIsEmpty(board,{row,col,w:orient.w,h:orient.h})) return true;
+    return false;
+  }
+  function orientationsForRoll(roll = state.currentRoll){ if (!roll) return []; const a = Number(roll.a), b = Number(roll.b); return a === b ? [{w:a,h:b}] : [{w:a,h:b},{w:b,h:a}]; }
+  function anyLegalForRoll(board, roll){ return orientationsForRoll(roll).some(o => anyLegal(board,o)); }
+  function rectIsInside(rect){ return rect && rect.row >= 0 && rect.col >= 0 && rect.row + rect.h <= GRID && rect.col + rect.w <= GRID; }
+  function rectIsEmpty(board, rect){ if (!rectIsInside(rect)) return false; for (let r=rect.row; r<rect.row+rect.h; r++) for (let c=rect.col; c<rect.col+rect.w; c++) if (board[idx(r,c)]) return false; return true; }
+  function rectMatchesRoll(rect, roll = state.currentRoll){ if (!rect || !roll) return false; const a = Number(roll.a), b = Number(roll.b); return (rect.w === a && rect.h === b) || (rect.w === b && rect.h === a); }
+  function isLegalPlacement(board, rect, roll = state.currentRoll){ return rectMatchesRoll(rect,roll) && rectIsEmpty(board,rect); }
+  function normalisedRect(a,b){ if (!a || !b) return null; const row = Math.min(a.row,b.row), col = Math.min(a.col,b.col); return {row,col,w:Math.abs(a.col-b.col)+1,h:Math.abs(a.row-b.row)+1}; }
+  function markBoard(board, rect, player){ const next = board.slice(); for (let r=rect.row; r<rect.row+rect.h; r++) for (let c=rect.col; c<rect.col+rect.w; c++) next[idx(r,c)] = player; return next; }
+
+  async function rollDice(){
+    if (!canRoll()) return;
+    rolling = true; refreshUI(); dieA.classList.add('rolling'); dieB.classList.add('rolling'); setMessage('Rolling.','info');
+    const ticker = setInterval(() => { dieA.textContent = randomInt(6); dieB.textContent = randomInt(6); }, 70);
+    await wait(650); clearInterval(ticker);
+    const a = randomInt(6), b = randomInt(6); dieA.textContent = a; dieB.textContent = b; dieA.classList.remove('rolling'); dieB.classList.remove('rolling');
+    try {
+      if (online.active) await commitOnlineRoll(a,b);
+      else {
+        state.currentRoll = {a,b,productConfirmed:false}; lastRenderedRollKey = `${a}-${b}-false`; productInput.value = ''; productInput.classList.remove('correct','wrong'); setMessage('Enter the product of the two dice.','info'); setTimeout(() => productInput.focus(), 60);
+      }
+    } catch (err) { console.error(err); setMessage(err.message || 'Could not roll.','info'); }
+    finally { rolling = false; refreshUI(); drawBoard(); }
+  }
+
+  function submitProduct(){
+    if (!canAnswerProduct()) return;
+    const expected = productExpected(); const value = Number(productInput.value);
+    if (!Number.isFinite(value) || value !== expected) {
+      shakeProductInput();
+      if (online.active) commitOnlineProductMiss().catch(err => { console.error(err); setMessage(err.message || 'Incorrect product. Turn missed.','info'); });
+      else addMissForCurrentRoll('Incorrect product. Turn missed.');
+      return;
+    }
+    productInput.classList.remove('wrong'); productInput.classList.add('correct');
+    if (online.active) { commitOnlineProductCorrect().catch(err => { console.error(err); setMessage(err.message || 'Could not check product.','info'); }); return; }
+    state.currentRoll.productConfirmed = true;
+    setMessage('Product correct. Place the array or press Pass if it cannot fit.','success'); refreshUI(); drawBoard();
+  }
+
+  function shakeProductInput(){ productInput.classList.remove('wrong'); void productInput.offsetWidth; productInput.classList.add('wrong'); }
+  function shakeGrid(){ gridHolder.classList.remove('shake'); void gridHolder.offsetWidth; gridHolder.classList.add('shake'); setTimeout(() => gridHolder.classList.remove('shake'), 800); }
+
+  function addMissForCurrentRoll(reason='Turn missed.'){
+    if (!state.currentRoll || state.gameOver) return;
+    const player = state.gameMode === 'single' ? 1 : state.currentPlayer; const a = Number(state.currentRoll.a), b = Number(state.currentRoll.b);
+    state.turnNumber += 1; state.placements.push({turn:state.turnNumber,player,a,b,w:a,h:b,area:0,miss:true,reason}); state.currentRoll = null; productInput.value = ''; productInput.classList.remove('correct','wrong');
+    if (state.turnNumber >= state.maxTurns || areaFilled() >= 100) endGame(); else { if (state.gameMode !== 'single') state.currentPlayer = otherPlayer(state.currentPlayer); setMessage(`${reason} ${state.gameMode === 'single' ? 'Roll again.' : `${playerName(state.currentPlayer)} to roll.`}`,'info'); }
+    refreshUI(); drawBoard();
+  }
+
+  function passTurn(){
+    if (!canPassTurn()) return;
+    const reason = 'Passed. Turn missed.';
+    if (online.active) commitOnlinePassTurn(reason).catch(err => { console.error(err); setMessage(err.message || 'Could not pass the turn.','info'); });
+    else addMissForCurrentRoll(reason);
+  }
+
+  function placeRect(rect){
+    if (!canPlace()) return;
+    if (!isLegalPlacement(state.board,rect,state.currentRoll)) { shakeGrid(); return; }
+    const player = state.gameMode === 'single' ? 1 : state.currentPlayer; const area = rect.w * rect.h;
+    state.board = markBoard(state.board,rect,player); state.scores[player] = Number(state.scores[player] || 0) + area; state.turnNumber += 1;
+    state.placements.push({turn:state.turnNumber,player,a:state.currentRoll.a,b:state.currentRoll.b,row:rect.row,col:rect.col,w:rect.w,h:rect.h,area,miss:false});
+    state.currentRoll = null; dragStart = dragCurrent = null; productInput.value = ''; productInput.classList.remove('correct','wrong'); confettiBurst();
+    if (state.turnNumber >= state.maxTurns || areaFilled() >= 100) endGame(); else { if (state.gameMode !== 'single') state.currentPlayer = otherPlayer(state.currentPlayer); setMessage(state.gameMode === 'single' ? 'Array placed. Roll again.' : `Array placed. ${playerName(state.currentPlayer)} to roll.`, 'success'); }
+    refreshUI(); drawBoard();
+  }
+
+  function undo(){
+    if (online.active || state.currentRoll || rolling || state.placements.length === 0 || state.gameOver) return;
+    const last = state.placements.pop(); state.turnNumber = Math.max(0,state.turnNumber - 1); state.currentPlayer = state.gameMode === 'single' ? 1 : last.player; rebuildFromPlacements(); setMessage('Undo complete.','info'); refreshUI(); drawBoard();
+  }
+  function rebuildFromPlacements(){ state.board = blankBoard(); state.scores = {1:0,2:0}; for (const p of state.placements){ if (p.miss) continue; state.board = markBoard(state.board,p,p.player); state.scores[p.player] += p.area; } state.gameOver = false; state.winner = null; }
+  function determineWinner(scores){ const s1 = Number(scores?.[1] || 0), s2 = Number(scores?.[2] || 0); if (s1 === s2) return 0; return s1 > s2 ? 1 : 2; }
+  function endGame(){ state.gameOver = true; state.currentRoll = null; if (state.gameMode !== 'single') state.winner = determineWinner(state.scores); setMessage('Game finished.','success'); refreshUI(); drawBoard(); showFinalModal(); }
+
+  function cellFromEvent(e){
+    const rect = svg.getBoundingClientRect(); const x = (e.clientX - rect.left) / rect.width * SIZE; const y = (e.clientY - rect.top) / rect.height * SIZE;
+    const col = Math.floor((x - PAD) / CELL), row = Math.floor((y - PAD) / CELL); if (row < 0 || col < 0 || row >= GRID || col >= GRID) return null; return {row,col};
+  }
+  function onPointerDown(e){ if (!canPlace()) return; const cell = cellFromEvent(e); if (!cell) return; e.preventDefault(); dragStart = cell; dragCurrent = cell; svg.setPointerCapture?.(e.pointerId); drawBoard(); }
+  function onPointerMove(e){ if (!dragStart || !canPlace()) return; const cell = cellFromEvent(e); if (!cell) return; dragCurrent = cell; drawBoard(); }
+  function onPointerUp(e){ if (!dragStart || !canPlace()) return; const cell = cellFromEvent(e) || dragCurrent; const rect = normalisedRect(dragStart,cell); dragStart = dragCurrent = null; if (online.active) commitOnlinePlacement(rect).catch(err => { console.error(err); setMessage(err.message || 'Could not place that array.','info'); shakeGrid(); refreshUI(); drawBoard(); }); else placeRect(rect); }
+
+  function drawBoard(){
+    svg.innerHTML = ''; const ns = 'http://www.w3.org/2000/svg'; const add = (tag,attrs={},parent=svg) => { const el = document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v)); parent.appendChild(el); return el; };
+    add('rect',{x:PAD,y:PAD,width:BOARD,height:BOARD,class:'grid-border',rx:4});
+    for (let i=1;i<GRID;i++){ const p = PAD + i * CELL; add('line',{x1:PAD,y1:p,x2:PAD+BOARD,y2:p,class:'grid-line'}); add('line',{x1:p,y1:PAD,x2:p,y2:PAD+BOARD,class:'grid-line'}); }
+    for (const p of state.placements){ if (p.miss) continue; const x = PAD + p.col * CELL, y = PAD + p.row * CELL, w = p.w * CELL, h = p.h * CELL; const cls = state.gameMode === 'single' ? 'single' : `p${p.player}`; add('rect',{x,y,width:w,height:h,rx:7,class:`placed-rect ${cls}`}); const label = add('text',{x:x+w/2,y:y+h/2+6,'text-anchor':'middle',class:'placed-label'}); label.textContent = `${p.w}×${p.h}`; }
+    if (dragStart && dragCurrent && canPlace()){
+      const rect = normalisedRect(dragStart,dragCurrent); const legal = isLegalPlacement(state.board,rect,state.currentRoll); const player = state.gameMode === 'single' ? 1 : state.currentPlayer; const cls = legal ? (state.gameMode === 'single' ? 'legal' : `p${player}`) : 'illegal'; add('rect',{x:PAD+rect.col*CELL,y:PAD+rect.row*CELL,width:rect.w*CELL,height:rect.h*CELL,rx:7,class:`preview ${cls}`});
+    }
+    add('rect',{x:PAD,y:PAD,width:BOARD,height:BOARD,class:'cell-hit'});
+  }
+
+  function refreshUI(){
+    const filled = areaFilled(); p1Label.textContent = playerName(1); p2Label.textContent = playerName(2); p1Score.textContent = state.scores[1] || 0; p2Score.textContent = state.scores[2] || 0; turnReadout.textContent = `${state.turnNumber} / ${state.maxTurns}`; leftReadout.textContent = Math.max(0,100-filled);
+    p2ScoreCard.style.display = state.gameMode === 'single' ? 'none' : ''; p1ScoreCard.className = `score-card ${state.gameMode === 'single' ? 'single' : 'player-one'}`;
+    const dotClass = state.gameMode === 'single' ? '' : (state.currentPlayer === 1 ? 'p1' : 'p2'); turnDot.className = `player-dot ${dotClass}`;
+    if (state.gameMode === 'menu') { statusTitle.innerHTML = bilingual('Choose a game mode'); statusSubtitle.textContent = 'Roll two dice, enter the product, place the array, and get as close to 100 as possible.'; }
+    else if (state.gameOver) { statusTitle.textContent = 'Game finished'; statusSubtitle.textContent = finalSummaryText(); }
+    else if (online.active && online.data?.status === 'waiting') { statusTitle.textContent = 'Waiting for Player 2'; statusSubtitle.textContent = `Share room code ${online.roomCode || ''}.`; }
+    else { statusTitle.textContent = state.gameMode === 'single' ? 'Single Player' : `${playerName(state.currentPlayer)}'s turn`; statusSubtitle.textContent = state.currentRoll ? `Dice: ${state.currentRoll.a} and ${state.currentRoll.b}` : 'Roll two dice, then enter the product.'; }
+    messageBox.className = `message ${state.messageTone || 'info'}`; messageBox.innerHTML = uiLang === 'en' ? state.message : bilingual(state.message); messageBox.classList.toggle('is-hidden', Boolean(state.currentRoll?.productConfirmed));
+    rollBtn.disabled = !canRoll(); undoBtn.disabled = online.active || rolling || Boolean(state.currentRoll) || state.placements.length === 0 || state.gameOver; setI18n(newGameBtn, online.active ? 'New Round' : 'New Game');
+    const rollKey = state.currentRoll ? `${state.currentRoll.a}-${state.currentRoll.b}-${Boolean(state.currentRoll.productConfirmed)}` : 'none';
+    if (rollKey !== lastRenderedRollKey){ if (state.currentRoll?.productConfirmed){ productInput.value = productExpected(); productInput.classList.add('correct'); productInput.classList.remove('wrong'); } else { productInput.value = ''; productInput.classList.remove('correct','wrong'); } lastRenderedRollKey = rollKey; }
+    productInput.disabled = !canAnswerProduct(); submitProductBtn.disabled = !canAnswerProduct();
+    passTurnBtn.hidden = !canPassTurn(); passTurnBtn.disabled = !canPassTurn();
+    if (!state.currentRoll) setI18n(dragHint,'Roll, then enter the product.'); else if (!state.currentRoll.productConfirmed) dragHint.textContent = `Dice: ${state.currentRoll.a} and ${state.currentRoll.b}. Enter the product to unlock the grid.`; else dragHint.textContent = `Drag a ${orientationText()} array on the grid. If it can’t fit, press Pass.`;
+    gridHolder.classList.toggle('dragging', Boolean(canPlace())); renderRecords();
+  }
+  function renderRecords(){
+    recordList.innerHTML = ''; if (!state.placements.length){ const empty = document.createElement('div'); empty.className = 'record-empty'; empty.textContent = 'No arrays placed yet.'; recordList.appendChild(empty); return; }
+    for (const p of state.placements){ const row = document.createElement('div'); const cls = p.miss ? 'miss' : (state.gameMode === 'single' ? 'single' : `p${p.player}`); row.className = `record-row ${cls}`; const no = document.createElement('span'); no.className = 'turn-no'; no.textContent = p.turn; const sent = document.createElement('span'); sent.textContent = p.miss ? `${playerName(p.player)}: ${p.a} × ${p.b} — ${p.reason || 'missed turn'}` : `${playerName(p.player)}: ${p.w} × ${p.h} = ${p.area}`; const area = document.createElement('strong'); area.textContent = p.miss ? '0' : `+${p.area}`; row.append(no,sent,area); recordList.appendChild(row); }
+    recordList.scrollTop = recordList.scrollHeight;
+  }
+
+  function finalSummaryText(){
+    if (state.gameMode === 'single'){
+      const filled = state.scores[1] || 0;
+      return `You filled ${filled} out of 100 squares. You were ${100-filled} away from 100.`;
+    }
+    if (state.winner === 0) return `Draw: both players filled ${state.scores[1]} squares.`;
+    const winner = Number(state.winner);
+    const loser = otherPlayer(winner);
+    if (online.active && online.myPlayer){
+      const myPlayer = Number(online.myPlayer);
+      if (myPlayer === winner) return `You won with ${state.scores[winner]} squares. ${playerName(loser)} filled ${state.scores[loser] || 0} squares.`;
+      return `${playerName(winner)} wins with ${state.scores[winner]} squares. You filled ${state.scores[myPlayer] || 0} squares.`;
+    }
+    return `${playerName(winner)} wins with ${state.scores[winner]} squares. ${playerName(loser)} filled ${state.scores[loser] || 0} squares.`;
+  }
+  function finalTitleText(){
+    if (state.gameMode === 'single') return 'How close to 100?';
+    if (state.winner === 0) return 'It\'s a draw';
+    const winner = Number(state.winner);
+    if (online.active && online.myPlayer) return Number(online.myPlayer) === winner ? 'You won! 😊' : 'You lost 😢';
+    return `${playerName(winner)} wins! 😊`;
+  }
+  function escapeHTML(value){ return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function finalPodiumHTML(){
+    if (state.gameMode === 'single') return '';
+    if (state.winner === 0){
+      const p1 = escapeHTML(playerName(1));
+      const p2 = escapeHTML(playerName(2));
+      return `<div class="podium-result" aria-label="Final result podium"><div class="podium-player draw p1"><div class="face">😊</div><strong>${p1}</strong><span class="score-pill">${state.scores[1] || 0} squares</span><div class="podium-step">=</div></div><div class="podium-player draw p2"><div class="face">😊</div><strong>${p2}</strong><span class="score-pill">${state.scores[2] || 0} squares</span><div class="podium-step">=</div></div></div>`;
+    }
+    const winner = Number(state.winner);
+    const loser = otherPlayer(winner);
+    const winnerName = escapeHTML(playerName(winner));
+    const loserName = escapeHTML(playerName(loser));
+    return `<div class="podium-result" aria-label="Final result podium"><div class="podium-player runner-up p${loser}"><div class="face">😢</div><strong>${loserName}</strong><span class="score-pill">${state.scores[loser] || 0} squares</span><div class="podium-step">2</div></div><div class="podium-player winner p${winner}"><div class="crown">🏆</div><div class="face">😊</div><strong>${winnerName}</strong><span class="score-pill">${state.scores[winner] || 0} squares</span><div class="podium-step">1</div></div></div>`;
+  }
+  function showFinalModal(){
+    const key = `${state.gameMode}-${state.turnNumber}-${state.scores[1]}-${state.scores[2]}-${state.gameOver}`;
+    if (finalShownForKey === key) return;
+    finalShownForKey = key;
+    $('finalTitle').textContent = finalTitleText();
+    $('finalSummary').textContent = finalSummaryText();
+    const podium = $('finalPodium');
+    if (podium){
+      const html = finalPodiumHTML();
+      podium.innerHTML = html;
+      podium.hidden = !html;
+    }
+    openModal(finalModal);
+    if (state.gameMode !== 'single' && state.winner !== 0) confettiBurst(70);
+  }
+  function confettiBurst(count=24){ for (let i=0;i<count;i++){ const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random()*100 + 'vw'; c.style.background = ['#22c55e','#2563eb','#7c3aed','#f59e0b','#ef4444'][i%5]; c.style.animationDelay = Math.random()*160 + 'ms'; document.body.appendChild(c); setTimeout(() => c.remove(), 1200); } }
+
+  function setOnlineStatus(msg,tone=''){ onlineStatus.textContent = msg; onlineStatus.className = `online-status ${tone || ''}`; }
+  async function ensureAuth(){ if (!db || !auth) throw new Error('Firebase is not connected.'); let user = auth.currentUser || await authReadyPromise; if (!user){ await signInAnonymously(auth); user = auth.currentUser || await authReadyPromise; } if (!user) throw new Error('Could not sign in anonymously.'); online.uid = user.uid; return user; }
+  function makeRoomCode(){ const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let code = ''; for (let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)]; return code; }
+  function serialiseStateForRoom(status='waiting'){ return {status,board:state.board,placements:state.placements,scores:state.scores,players:{1:{name:state.players[1],uid:online.uid},2:null},currentPlayer:1,turnNumber:0,maxTurns:MAX_TURNS,currentRoll:null,winner:null,updatedAt:serverTimestamp(),createdAt:serverTimestamp()}; }
+  async function createOnlineGame(){
+    try { await ensureAuth(); resetState('online'); state.players = {1:playerNameInput.value.trim() || 'Player 1',2:'Player 2'}; const code = makeRoomCode(); online.roomCode = code; online.ref = doc(db,ROOM_COLLECTION,code); online.myPlayer = 1; await setDoc(online.ref, serialiseStateForRoom('waiting')); subscribeRoom(code); roomBadge.classList.add('show'); onlineRoomCode.textContent = code; setOnlineStatus(`Room ${code} created. Share this code with Player 2.`,'good'); closeModal(modeMenuModal); } catch (err) { console.error(err); setOnlineStatus(err.message || 'Could not create room.','warn'); }
+  }
+  async function joinOnlineGame(){
+    const code = roomCodeInput.value.trim().toUpperCase(); if (!code) { setOnlineStatus('Enter a room code.','warn'); return; }
+    try { await ensureAuth(); const ref = doc(db,ROOM_COLLECTION,code); await runTransaction(db, async tx => { const snap = await tx.get(ref); if (!snap.exists()) throw new Error('Room not found.'); const d = snap.data(); if (d.players?.[2]?.uid && d.players[2].uid !== online.uid) throw new Error('That room already has two players.'); tx.update(ref,{status:'playing','players.2':{name:playerNameInput.value.trim() || 'Player 2',uid:online.uid},updatedAt:serverTimestamp()}); }); online.roomCode = code; online.ref = ref; online.myPlayer = 2; subscribeRoom(code); roomBadge.classList.add('show'); onlineRoomCode.textContent = code; setOnlineStatus(`Joined room ${code}.`,'good'); closeModal(modeMenuModal); } catch (err) { console.error(err); setOnlineStatus(err.message || 'Could not join room.','warn'); }
+  }
+  function subscribeRoom(code){
+    if (online.unsub) online.unsub(); online.active = true; online.ref = doc(db,ROOM_COLLECTION,code);
+    online.unsub = onSnapshot(online.ref, snap => { if (!snap.exists()){ setOnlineStatus('Room closed.','warn'); leaveOnline(false); return; } syncRoom(snap.data()); }, err => { console.error(err); setOnlineStatus('Connection error.','warn'); });
+  }
+  function syncRoom(d){
+    online.data = d; state.gameMode = 'online'; state.board = Array.isArray(d.board) ? d.board.slice() : blankBoard(); state.placements = Array.isArray(d.placements) ? d.placements.slice() : []; state.scores = {1:Number(d.scores?.[1] || 0),2:Number(d.scores?.[2] || 0)}; state.players = {1:d.players?.[1]?.name || 'Player 1',2:d.players?.[2]?.name || 'Player 2'}; state.currentPlayer = Number(d.currentPlayer || 1); state.turnNumber = Number(d.turnNumber || 0); state.maxTurns = Number(d.maxTurns || MAX_TURNS); state.currentRoll = d.currentRoll || null; state.winner = d.winner ?? null; state.gameOver = d.status === 'finished'; if (d.status === 'waiting') setMessage('Waiting for Player 2.','info'); else if (state.gameOver) setMessage('Game finished.','success'); else if (isMyOnlineTurn()) setMessage(state.currentRoll ? (state.currentRoll.productConfirmed ? `Drag a ${orientationText()} array on the grid.` : 'Enter the product of the two dice.') : 'Your turn. Roll the dice.','info'); else setMessage(`Waiting for ${playerName(state.currentPlayer)}.`, 'info'); refreshUI(); drawBoard(); if (state.gameOver) showFinalModal(); }
+  async function resetOnlineRoom(){
+    if (!online.active || !online.ref) return; if (online.myPlayer !== 1) { setMessage('Only Player 1 can start a new online round.','info'); return; }
+    await runTransaction(db, async tx => { const snap = await tx.get(online.ref); if (!snap.exists()) throw new Error('Room not found.'); const d = snap.data(); tx.update(online.ref,{status:d.players?.[2]?.uid ? 'playing' : 'waiting',board:blankBoard(),placements:[],scores:{1:0,2:0},currentPlayer:1,turnNumber:0,maxTurns:MAX_TURNS,currentRoll:null,winner:null,updatedAt:serverTimestamp()}); });
+  }
+  function leaveOnline(reset=true){ if (online.unsub) online.unsub(); online.unsub = null; online.active = false; online.roomCode = null; online.ref = null; online.myPlayer = null; online.data = null; roomBadge.classList.remove('show'); if (reset){ resetState('menu'); openModal(modeMenuModal); refreshUI(); drawBoard(); } }
+
+  async function commitOnlineRoll(a,b){
+    if (!online.active || !online.ref) return;
+    await runTransaction(db, async tx => { const snap = await tx.get(online.ref); if (!snap.exists()) throw new Error('You are not connected to a room.'); const d = snap.data(); if (d.status !== 'playing') throw new Error('Waiting for the room to start.'); const player = Number(d.currentPlayer || 1); if (!d.players?.[player] || d.players[player].uid !== online.uid) throw new Error('It is not your turn.'); if (d.currentRoll) return; tx.update(online.ref,{currentRoll:{a,b,productConfirmed:false},updatedAt:serverTimestamp()}); });
+  }
+  async function commitOnlineProductCorrect(){
+    if (!online.active || !online.ref || !state.currentRoll) return;
+    await runTransaction(db, async tx => { const snap = await tx.get(online.ref); if (!snap.exists()) throw new Error('You are not connected to a room.'); const d = snap.data(); if (d.status !== 'playing') throw new Error('Game is not active.'); const player = Number(d.currentPlayer || 1); if (!d.players?.[player] || d.players[player].uid !== online.uid) throw new Error('It is not your turn.'); if (!d.currentRoll) throw new Error('Roll first.'); const roll = {...d.currentRoll,productConfirmed:true}; tx.update(online.ref,{currentRoll:roll,updatedAt:serverTimestamp()}); });
+  }
+  async function commitOnlineProductMiss(){
+    if (!online.active || !online.ref || !state.currentRoll) return;
+    await runTransaction(db, async tx => { const snap = await tx.get(online.ref); if (!snap.exists()) throw new Error('You are not connected to a room.'); const d = snap.data(); if (d.status !== 'playing') throw new Error('Game is not active.'); const player = Number(d.currentPlayer || 1); if (!d.players?.[player] || d.players[player].uid !== online.uid) throw new Error('It is not your turn.'); if (!d.currentRoll) throw new Error('Roll first.'); const a = Number(d.currentRoll.a), b = Number(d.currentRoll.b); const nextTurn = Number(d.turnNumber || 0) + 1; const placements = Array.isArray(d.placements) ? d.placements.slice() : []; placements.push({turn:nextTurn,player,a,b,w:a,h:b,area:0,miss:true,reason:'Incorrect product. Turn missed.'}); const board = Array.isArray(d.board) ? d.board : blankBoard(); const scores = {1:Number(d.scores?.[1] || 0),2:Number(d.scores?.[2] || 0)}; const finished = nextTurn >= Number(d.maxTurns || MAX_TURNS) || areaFilled(board) >= 100; const winner = finished ? determineWinner(scores) : null; tx.update(online.ref,{placements,turnNumber:nextTurn,currentRoll:null,currentPlayer:finished ? player : otherPlayer(player),status:finished ? 'finished' : 'playing',winner,updatedAt:serverTimestamp()}); });
+  }
+
+  async function commitOnlinePassTurn(reason='Passed. Turn missed.'){
+    if (!online.active || !online.ref || !state.currentRoll) return;
+    await runTransaction(db, async tx => { const snap = await tx.get(online.ref); if (!snap.exists()) throw new Error('You are not connected to a room.'); const d = snap.data(); if (d.status !== 'playing') throw new Error('Game is not active.'); const player = Number(d.currentPlayer || 1); if (!d.players?.[player] || d.players[player].uid !== online.uid) throw new Error('It is not your turn.'); if (!d.currentRoll?.productConfirmed) throw new Error('Enter the product first.'); const a = Number(d.currentRoll.a), b = Number(d.currentRoll.b); const nextTurn = Number(d.turnNumber || 0) + 1; const placements = Array.isArray(d.placements) ? d.placements.slice() : []; placements.push({turn:nextTurn,player,a,b,w:a,h:b,area:0,miss:true,reason}); const board = Array.isArray(d.board) ? d.board : blankBoard(); const scores = {1:Number(d.scores?.[1] || 0),2:Number(d.scores?.[2] || 0)}; const finished = nextTurn >= Number(d.maxTurns || MAX_TURNS) || areaFilled(board) >= 100; const winner = finished ? determineWinner(scores) : null; tx.update(online.ref,{placements,turnNumber:nextTurn,currentRoll:null,currentPlayer:finished ? player : otherPlayer(player),status:finished ? 'finished' : 'playing',winner,updatedAt:serverTimestamp()}); });
+  }
+  async function commitOnlinePlacement(rect){
+    if (!online.active || !online.ref || !rect) return;
+    await runTransaction(db, async tx => { const snap = await tx.get(online.ref); if (!snap.exists()) throw new Error('You are not connected to a room.'); const d = snap.data(); if (d.status !== 'playing') throw new Error('Game is not active.'); const player = Number(d.currentPlayer || 1); if (!d.players?.[player] || d.players[player].uid !== online.uid) throw new Error('It is not your turn.'); if (!d.currentRoll?.productConfirmed) throw new Error('Enter the product first.'); const board = Array.isArray(d.board) ? d.board.slice() : blankBoard(); if (!isLegalPlacement(board,rect,d.currentRoll)) throw new Error('That array does not fit there.'); const nextBoard = markBoard(board,rect,player); const area = rect.w * rect.h; const scores = {1:Number(d.scores?.[1] || 0),2:Number(d.scores?.[2] || 0)}; scores[player] += area; const nextTurn = Number(d.turnNumber || 0) + 1; const placements = Array.isArray(d.placements) ? d.placements.slice() : []; placements.push({turn:nextTurn,player,a:d.currentRoll.a,b:d.currentRoll.b,row:rect.row,col:rect.col,w:rect.w,h:rect.h,area,miss:false}); const finished = nextTurn >= Number(d.maxTurns || MAX_TURNS) || areaFilled(nextBoard) >= 100; const winner = finished ? determineWinner(scores) : null; tx.update(online.ref,{board:nextBoard,placements,scores,turnNumber:nextTurn,currentRoll:null,currentPlayer:finished ? player : otherPlayer(player),status:finished ? 'finished' : 'playing',winner,updatedAt:serverTimestamp()}); });
+  }
+
+  function newGame(){ if (online.active) resetOnlineRoom().catch(err => setMessage(err.message || 'Could not start a new round.','info')); else if (state.gameMode === 'single') startSingle(); else if (state.gameMode === 'pass') startPassPlay(); else { resetState('menu'); openModal(modeMenuModal); refreshUI(); drawBoard(); } }
+  function backToMenu(){ leaveOnline(false); resetState('menu'); closeModal(passPlayModal); closeModal(onlineSetupModal); closeModal(finalModal); openModal(modeMenuModal); setMessage('Choose a mode to begin.','info'); refreshUI(); drawBoard(); }
+
+  $('chooseSingleBtn').addEventListener('click', startSingle); $('choosePassPlayBtn').addEventListener('click', showPassPlay); $('chooseOnlineBtn').addEventListener('click', showOnlineSetup); $('passBackBtn').addEventListener('click', () => { closeModal(passPlayModal); openModal(modeMenuModal); }); $('onlineBackBtn').addEventListener('click', () => { closeModal(onlineSetupModal); if (!online.active) openModal(modeMenuModal); }); $('startPassPlayBtn').addEventListener('click', startPassPlay); $('createOnlineBtn').addEventListener('click', createOnlineGame); $('joinOnlineBtn').addEventListener('click', joinOnlineGame); $('leaveOnlineBtn').addEventListener('click', () => leaveOnline(true)); $('copyRoomBtn').addEventListener('click', async () => { if (!online.roomCode) return; try { await navigator.clipboard.writeText(online.roomCode); setOnlineStatus(`Copied room ${online.roomCode}.`,'good'); } catch { setOnlineStatus(`Room code: ${online.roomCode}`,'good'); } });
+  roomCodeInput.addEventListener('input', () => { roomCodeInput.value = roomCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g,''); }); roomCodeInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinOnlineGame(); }); playerNameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && roomCodeInput.value) joinOnlineGame(); });
+  rollBtn.addEventListener('click', rollDice); submitProductBtn.addEventListener('click', submitProduct); passTurnBtn.addEventListener('click', passTurn); productInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitProduct(); }); undoBtn.addEventListener('click', undo); newGameBtn.addEventListener('click', newGame); backToMenuBtn.addEventListener('click', backToMenu); mainLanguageSelect.addEventListener('change', applyLanguage);
+  $('rulesBtn').addEventListener('click', () => { renderRules(); openModal(rulesModal); }); $('closeRulesBtn').addEventListener('click', () => closeModal(rulesModal)); rulesModal.addEventListener('click', e => { if (e.target === rulesModal) closeModal(rulesModal); }); $('closeFinalBtn').addEventListener('click', () => closeModal(finalModal)); $('finalNewGameBtn').addEventListener('click', newGame);
+  svg.addEventListener('pointerdown', onPointerDown); svg.addEventListener('pointermove', onPointerMove); svg.addEventListener('pointerup', onPointerUp); svg.addEventListener('pointercancel', () => { dragStart = dragCurrent = null; drawBoard(); });
+  window.addEventListener('keydown', e => { const typing = e.target && e.target.matches && e.target.matches('input,select,textarea'); if (!typing && (e.key === 'r' || e.key === 'R')) rollDice(); if (!typing && (e.key === 'u' || e.key === 'U')) undo(); if (e.key === 'Escape'){ closeModal(rulesModal); closeModal(finalModal); } });
+
+  applyLanguage(); refreshUI(); drawBoard();
+</script>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

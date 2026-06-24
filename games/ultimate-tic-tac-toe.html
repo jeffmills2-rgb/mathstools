@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultimate Tic-Tac-Toe</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --green2:#49a529;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --orange:#fb923c;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --grid:#94a3b8;
+      --axis:#111827;
+      --p1:#ef4444;
+      --p2:#2563eb;
+      --p1Soft:rgba(239,68,68,.13);
+      --p2Soft:rgba(37,99,235,.13);
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:10px 18px;
+      display:grid;
+      grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);
+      align-items:center;
+      gap:16px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:6px 10px;
+      margin-left:-10px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .mmtBrand:hover{
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);
+    }
+    .mmtBrandLogo{
+      width:38px;
+      height:38px;
+      object-fit:contain;
+      background:white;
+      border-radius:6px;
+      padding:3px;
+      flex:0 0 auto;
+    }
+    .mmtBrandText strong{
+      display:block;
+      font-size:1.08rem;
+      line-height:1;
+      letter-spacing:-.03em;
+      color:white;
+    }
+    .mmtBrandText span{
+      display:block;
+      font-size:.72rem;
+      opacity:.82;
+      font-weight:650;
+      color:white;
+    }
+    .mmtTopTitle{
+      font-weight:850;
+      font-size:clamp(1.15rem,2vw,1.55rem);
+      letter-spacing:-.04em;
+      text-align:center;
+      color:white;
+      white-space:nowrap;
+    }
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+    .language-control{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      padding:6px 8px;
+      color:white;
+    }
+    .language-control label{
+      font-size:12px;
+      font-weight:950;
+      opacity:.9;
+      white-space:nowrap;
+      color:white;
+    }
+    .language-control select{
+      width:auto;
+      min-width:110px;
+      height:34px;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:10px;
+      background:white;
+      color:#1d4ed8;
+      font-weight:900;
+      padding:0 8px;
+      outline:none;
+    }
+
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+    .status-title .english-under,.status-subtitle .english-under,.message .english-under{display:block;margin-top:3px;}
+
+    button,select,input{font:inherit;}
+    button{
+      border:1px solid transparent;
+      cursor:pointer;
+      border-radius:14px;
+      padding:10px 14px;
+      font-weight:900;
+      font-size:14px;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease,border-color .18s ease;
+      user-select:none;
+      -webkit-user-select:none;
+      font-family:var(--uiFont);
+    }
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#eef2ff;color:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+
+    .settings-wrap{position:relative;}
+    .settings-menu{
+      position:absolute;
+      top:calc(100% + 10px);
+      right:0;
+      width:min(430px,calc(100vw - 26px));
+      max-height:calc(100vh - 110px);
+      overflow:auto;
+      background:rgba(255,255,255,.98);
+      border:1px solid rgba(226,232,240,.95);
+      border-radius:18px;
+      box-shadow:0 18px 45px rgba(15,23,42,.18);
+      padding:14px;
+      z-index:60;
+      opacity:0;
+      transform:translateY(-8px) scale(.98);
+      pointer-events:none;
+      transition:.18s ease;
+      display:grid;
+      gap:12px;
+    }
+    .settings-menu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+    .settings-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border);color:var(--ink);}
+    .settings-header strong{font-size:1.15rem;font-weight:950;}
+    .settings-group{display:grid;gap:10px;border-radius:16px;padding:13px;background:#f8fafc;border:1px solid var(--border);color:var(--ink);}
+    .settings-group-title{font-weight:950;color:var(--ink);}
+
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+    select,input[type="text"]{
+      width:100%;
+      border:1px solid var(--border);
+      background:white;
+      border-radius:14px;
+      padding:12px 14px;
+      color:var(--ink);
+      outline:none;
+      font-weight:800;
+      transition:border-color .16s ease,box-shadow .16s ease;
+    }
+    select:focus,input[type="text"]:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+
+    .layout{
+      width:min(1500px,calc(100vw - 32px));
+      margin:14px auto 8px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 320px;
+      gap:16px;
+      align-items:start;
+    }
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .board-wrap{padding:14px;}
+    .status-strip{display:block;margin-bottom:12px;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:64px;}
+    .player-dot{width:30px;height:30px;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.16),0 5px 12px rgba(0,0,0,.16);flex:0 0 auto;}
+    .player-dot.p1{background:var(--p1);}
+    .player-dot.p2{background:var(--p2);}
+    .player-dot.draw{background:var(--amber);}
+    .status-title{font-weight:950;font-size:1.06rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.9rem;margin-top:4px;font-weight:750;}
+
+    .play-area{display:grid;grid-template-columns:180px minmax(560px,1fr);gap:16px;align-items:start;justify-content:center;}
+    .score-stack{display:grid;gap:10px;}
+    .score-card{border-radius:18px;padding:12px 14px;background:linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid var(--border);display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;min-height:64px;}
+    .score-card.player-one{border-left:8px solid var(--p1);}
+    .score-card.player-two{border-left:8px solid var(--p2);}
+    .score-card span{display:block;color:#334155;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .score-card strong{font-size:1.3rem;font-weight:950;line-height:1;}
+    .mode-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:999px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-weight:950;font-size:.88rem;text-align:center;}
+
+    .ultimate-board-wrap{width:100%;display:grid;place-items:center;}
+    .ultimate-board{
+      width:min(100%,calc(100dvh - 165px),920px);
+      min-width:520px;
+      aspect-ratio:1/1;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      gap:8px;
+      background:#111827;
+      border:8px solid #111827;
+      border-radius:18px;
+      box-shadow:0 22px 55px rgba(15,23,42,.18);
+      overflow:hidden;
+    }
+    .small-board{
+      position:relative;
+      background:#f8fafc;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      gap:2px;
+      padding:4px;
+      border-radius:8px;
+      overflow:hidden;
+      container-type:size;
+      transition:background .18s ease,box-shadow .18s ease,filter .18s ease,outline .18s ease;
+    }
+    .small-board::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:transparent;
+      z-index:0;
+    }
+    .small-board.active{
+      background:#cfdcff;
+      box-shadow:inset 0 0 0 6px rgba(37,99,235,.48),0 0 0 3px rgba(37,99,235,.28),0 0 22px rgba(37,99,235,.22);
+    }
+    .small-board.free-choice{
+      background:#e6e0ff;
+      box-shadow:inset 0 0 0 5px rgba(124,58,237,.28),0 0 18px rgba(124,58,237,.16);
+    }
+    .small-board.locked{background:#e5e7eb;filter:saturate(.92);}
+    .small-board.completed .cell{background:rgba(255,255,255,.42);}
+    .small-board.completed .cell.disabled{background:rgba(255,255,255,.42);}
+    .small-board.completed .cell .mark-x,
+    .small-board.completed .cell .mark-o{opacity:.2;}
+    .small-board.win-p1{background:#fee2e2;}
+    .small-board.win-p2{background:#dbeafe;}
+    .small-board.draw-board{background:#f1f5f9;}
+    .small-board.large-win{box-shadow:inset 0 0 0 6px rgba(251,191,36,.62),0 0 22px rgba(251,191,36,.55);}
+    .small-board.shake{animation:boardShake .36s ease-in-out 0s 2;box-shadow:inset 0 0 0 6px rgba(239,68,68,.28),0 0 18px rgba(239,68,68,.2)!important;}
+    .small-board.just-completed .cell .mark-x,
+    .small-board.just-completed .cell .mark-o{animation:capturedMarkFade .28s ease-out forwards;}
+    .small-board.just-completed .board-overlay{animation:capturedOverlayIn .28s ease-out forwards;}
+    @keyframes boardShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}40%{transform:translateX(5px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+    @keyframes capturedMarkFade{from{opacity:1;}to{opacity:.2;}}
+    @keyframes capturedOverlayIn{from{opacity:0;transform:translateY(1cqh) scale(.82);}to{opacity:.88;transform:translateY(1cqh) scale(.94);}}
+
+    .cell{
+      position:relative;
+      z-index:1;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.82);
+      border:1px solid rgba(15,23,42,.55);
+      border-radius:4px;
+      min-width:0;
+      min-height:0;
+      font-family:var(--mathFont);
+      font-weight:950;
+      font-size:clamp(1.25rem,3vw,3.15rem);
+      line-height:1;
+      color:var(--ink);
+      cursor:pointer;
+      padding:0;
+      box-shadow:none;
+    }
+    .cell:hover{transform:none;background:#fff;box-shadow:inset 0 0 0 4px rgba(37,99,235,.10);}
+    .cell.disabled{cursor:not-allowed;background:rgba(255,255,255,.45);}
+    .cell.disabled:hover{box-shadow:none;background:rgba(255,255,255,.45);}
+    .mark-x{color:var(--p2);font-family:var(--uiFont);font-size:1.35em;font-weight:950;transform:translateY(-.02em);}
+    .mark-o{color:var(--p1);font-family:var(--uiFont);font-size:1.38em;font-weight:950;transform:translateY(-.02em);}
+    .board-overlay{
+      position:absolute;
+      inset:6px;
+      z-index:3;
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+      font-family:var(--uiFont);
+      font-weight:950;
+      line-height:.82;
+      opacity:.72;
+      text-shadow:0 4px 14px rgba(255,255,255,.42);
+      overflow:hidden;
+    }
+    .board-overlay.x{
+      color:#1d4ed8;
+      font-size:88cqw;
+      transform:translateY(1cqh) scale(.94);
+    }
+    .board-overlay.o{
+      color:#dc2626;
+      font-size:82cqw;
+      transform:translateY(1cqh) scale(.92);
+    }
+    .small-board.completed .board-overlay{opacity:.88;text-shadow:0 3px 10px rgba(255,255,255,.24);}
+    .small-board.completed .board-overlay.draw{opacity:.82;}
+    .board-overlay.draw{color:#64748b;font-size:min(18cqw,3rem);opacity:.8;}
+
+    .side-panel{padding:16px;display:grid;gap:16px;position:sticky;top:86px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    h2,h3,p{margin-top:0;}
+    h2{font-size:1.15rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    h3{font-size:1rem;margin-bottom:8px;}
+    p,li{color:#475569;line-height:1.45;}
+    ul{padding-left:20px;margin-bottom:0;}
+    .rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155;}
+    .rules-list .english-under{display:block;margin-top:5px;color:#64748b;font-size:.82em;}
+
+    .online-panel{display:grid;gap:12px;}
+    .name-field{display:grid;gap:7px;}
+    .name-helper{font-size:.82rem;color:var(--muted);font-weight:750;line-height:1.35;margin-top:-2px;}
+    .online-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .join-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+    .room-badge{display:none;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;}
+    .room-badge.show{display:flex;}
+    .room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont);}
+    .online-status{padding:10px 12px;border-radius:16px;background:#f1f5f9;border:1px solid var(--border);color:#475569;font-weight:750;font-size:.92rem;line-height:1.35;}
+    .online-status.good{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .online-status.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .small-btn{padding:8px 12px;font-size:.88rem;}
+
+    .message{padding:14px 16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:800;min-height:50px;display:flex;align-items:center;line-height:1.35;}
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.info{background:#eef2ff;border-color:#c7d2fe;color:#1e3a8a;}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(600px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .mode-modal{width:min(800px,100%);padding:26px;}
+    .mode-modal-header h2{font-size:1.9rem;margin:0 0 6px;font-weight:950;letter-spacing:-.04em;}
+    .mode-modal-header p{margin:0 0 18px;color:var(--muted);font-weight:750;}
+    .mode-card-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .difficulty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+    .difficulty-card{display:grid;gap:6px;text-align:center;padding:18px 14px;border-radius:22px;border:2px solid var(--border);background:#fff;}
+    .difficulty-card:hover{border-color:#a78bfa;background:#f5f3ff;}
+    .difficulty-card .emoji{font-size:2rem;}
+    .difficulty-card strong{font-size:1.1rem;}
+    .difficulty-card span:last-child{color:var(--muted);font-weight:750;font-size:.9rem;}
+    .setup-note{margin:0 0 16px;color:var(--muted);font-weight:750;}
+    .setup-fields{display:grid;gap:12px;margin:12px 0 16px;}
+    .setup-fields label{display:grid;gap:8px;}
+    .setup-start{width:100%;padding:14px 18px;font-size:1.02rem;}
+    .brand-footer{width:min(1500px,calc(100vw - 32px));margin:0 auto 12px;display:flex;align-items:center;justify-content:center;min-height:34px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media(max-width:1180px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 24px);grid-template-columns:1fr;}
+      .side-panel{position:static;}
+      .play-area{grid-template-columns:1fr;}
+      .score-stack{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .score-stack .mode-pill{grid-column:1 / -1;}
+      .ultimate-board{min-width:0;width:min(100%,calc(100dvh - 250px),820px);}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .layout{width:calc(100vw - 18px);}
+      .board-wrap{padding:10px;}
+      .ultimate-board{border-width:5px;gap:5px;width:100%;}
+      .small-board{padding:2px;gap:1px;}
+      .cell{font-size:clamp(1.1rem,7.5vw,2rem);border-radius:3px;}
+      .score-stack,.online-actions,.join-row,.difficulty-grid{grid-template-columns:1fr;}
+      .mode-card{grid-template-columns:1fr;grid-template-areas:"icon" "title" "desc";}
+      .brand-footer{width:calc(100vw - 18px);padding:8px 10px;}
+    }
+    @media print{
+      .mmtTopbar,.side-panel,.status-strip,.modal-backdrop,.brand-footer{display:none!important;}
+      body{background:white;}
+      .layout{display:block;width:auto;margin:0;}
+      .card{box-shadow:none;border:0;}
+      .ultimate-board{width:19cm;border:1px solid #000;}
+    }
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Ultimate Tic-Tac-Toe</div>
+    <div class="actions">
+      <div class="language-control">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button" data-i18n="Rules">Rules</button>
+      <button class="btn" id="undoBtn" type="button" data-i18n="Undo">Undo</button>
+      <button class="btn btn-primary" id="newGameBtn" type="button" data-i18n="New Round">New Round</button>
+      <button class="btn" id="backToMenuBtn" type="button" data-i18n="Back to menu">Back to menu</button>
+      <div class="settings-wrap">
+        <button class="btn" id="settingsBtn" aria-haspopup="true" aria-expanded="false" data-i18n="Game settings">Game settings</button>
+        <div class="settings-menu" id="settingsMenu" role="menu" aria-label="Game settings">
+          <div class="settings-header">
+            <strong data-i18n="Settings">Settings</strong>
+            <button class="btn-soft" id="closeSettingsBtn" data-i18n="Close">Close</button>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-title" data-i18n="Computer difficulty">Computer difficulty</div>
+            <div>
+              <label for="difficultySelect" data-i18n="Difficulty">Difficulty</label>
+              <select id="difficultySelect">
+                <option value="sweet">Sweet — random moves</option>
+                <option value="mild">Mild — tactical</option>
+                <option value="spicy">Spicy — strategic</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-title" data-i18n="Classroom">Classroom</div>
+            <button class="btn-primary" id="showRulesBtn" data-i18n="Show classroom rules">Show classroom rules</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout" id="gameLayout">
+    <section class="card board-wrap">
+      <div class="status-strip">
+        <div class="turn-card" id="turnCard">
+          <div class="player-dot p1" id="turnDot"></div>
+          <div>
+            <div class="status-title" id="statusTitle">Choose a game mode</div>
+            <div class="status-subtitle" id="statusSubtitle">Select how you would like to play.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="play-area">
+        <div class="score-stack">
+          <div class="score-card player-one">
+            <span id="p1Label">Player 1</span>
+            <strong id="p1Score">0</strong>
+          </div>
+          <div class="score-card player-two">
+            <span id="p2Label">Player 2</span>
+            <strong id="p2Score">0</strong>
+          </div>
+          <div class="mode-pill" id="modePill">Mode: Menu</div>
+        </div>
+
+        <div class="ultimate-board-wrap">
+          <div class="ultimate-board" id="ultimateBoard" aria-label="Ultimate Tic-Tac-Toe board"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card side-panel" id="sidePanel">
+      <section class="panel-section">
+        <h2 data-i18n="How to play">How to play</h2>
+        <p id="sideHelpText">Win three small boards in a row. The square you choose sends your opponent to that matching small board.</p>
+      </section>
+      <section class="panel-section">
+        <h2 data-i18n="Current rule">Current rule</h2>
+        <div class="message info" id="messageBox" aria-live="polite">Choose a game mode to begin.</div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop open" id="modeMenuModal" aria-hidden="false">
+    <div class="modal mode-modal" role="dialog" aria-modal="true" aria-labelledby="modeMenuTitle">
+      <div class="mode-modal-header">
+        <div>
+          <h2 id="modeMenuTitle" data-i18n="Choose a game mode">Choose a game mode</h2>
+          <p id="modeMenuSubtitle">Select how you would like to play Ultimate Tic-Tac-Toe.</p>
+        </div>
+      </div>
+      <div class="mode-card-grid">
+        <button class="mode-card" id="chooseComputerBtn" type="button">
+          <span class="mode-icon">🤖</span>
+          <strong data-i18n="vs. Computer">vs. Computer</strong>
+          <span data-i18n="Play against an automatic opponent.">Play against an automatic opponent.</span>
+        </button>
+        <button class="mode-card" id="choosePassPlayBtn" type="button">
+          <span class="mode-icon">🔄</span>
+          <strong data-i18n="Pass and Play">Pass and Play</strong>
+          <span data-i18n="Two players share one device.">Two players share one device.</span>
+        </button>
+        <button class="mode-card" id="chooseOnlineBtn" type="button">
+          <span class="mode-icon">🌐</span>
+          <strong data-i18n="Online Multiplayer">Online Multiplayer</strong>
+          <span data-i18n="Create or join a room on two laptops.">Create or join a room on two laptops.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="difficultyModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="difficultyTitle">
+      <div class="modal-header">
+        <h2 id="difficultyTitle" data-i18n="Choose difficulty">Choose difficulty</h2>
+        <button class="btn-soft" id="difficultyBackBtn" type="button" data-i18n="Back">Back</button>
+      </div>
+      <p class="setup-note" id="difficultyIntro">Choose how the computer should play.</p>
+      <div class="difficulty-grid">
+        <button class="difficulty-card" data-difficulty="sweet" type="button">
+          <span class="emoji">🍬</span>
+          <strong>Sweet</strong>
+          <span data-i18n="Random valid moves">Random valid moves</span>
+        </button>
+        <button class="difficulty-card" data-difficulty="mild" type="button">
+          <span class="emoji">🌶️</span>
+          <strong>Mild</strong>
+          <span data-i18n="Win, block and avoid bad sends">Win, block and avoid bad sends</span>
+        </button>
+        <button class="difficulty-card" data-difficulty="spicy" type="button">
+          <span class="emoji">🔥</span>
+          <strong>Spicy</strong>
+          <span data-i18n="Stronger strategic opponent">Stronger strategic opponent</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="passPlayModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="passPlayTitle">
+      <div class="modal-header">
+        <h2 id="passPlayTitle" data-i18n="Pass and Play">Pass and Play</h2>
+        <button class="btn-soft" id="passBackBtn" type="button" data-i18n="Back">Back</button>
+      </div>
+      <p class="setup-note" id="passSetupNote">Enter two names, then share the same laptop or board.</p>
+      <div class="setup-fields">
+        <label><span data-i18n="Player 1 name">Player 1 name</span>
+          <input id="passP1Name" type="text" placeholder="Player 1" maxlength="24" autocomplete="off" />
+        </label>
+        <label><span data-i18n="Player 2 name">Player 2 name</span>
+          <input id="passP2Name" type="text" placeholder="Player 2" maxlength="24" autocomplete="off" />
+        </label>
+      </div>
+      <button class="btn-primary setup-start" id="startPassPlayBtn" type="button" data-i18n="Start game">Start game</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="onlineSetupModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="onlineSetupTitle">
+      <div class="modal-header">
+        <h2 id="onlineSetupTitle" data-i18n="Online Multiplayer">Online Multiplayer</h2>
+        <button class="btn-soft" id="onlineBackBtn" type="button" data-i18n="Back">Back</button>
+      </div>
+      <div class="online-panel">
+        <div class="room-badge" id="roomBadge">
+          <span>Room <span class="room-code" id="onlineRoomCode">----</span></span>
+          <button class="btn-soft small-btn" id="copyRoomBtn" type="button" data-i18n="Copy">Copy</button>
+        </div>
+        <div class="online-status" id="onlineStatus">Enter your name, then create or join a room.</div>
+        <div class="name-field">
+          <label for="playerNameInput" data-i18n="Your name">Your name</label>
+          <input id="playerNameInput" type="text" placeholder="Enter your name before playing" maxlength="24" autocomplete="name" />
+          <div class="name-helper" id="onlineNameHelper">This name will appear on both laptops in the room.</div>
+        </div>
+        <div class="online-actions">
+          <button class="btn-primary" id="createOnlineBtn" type="button" data-i18n="Generate Game">Generate Game</button>
+          <button class="btn-soft" id="leaveOnlineBtn" type="button" disabled data-i18n="Leave">Leave</button>
+        </div>
+        <div class="join-row">
+          <input id="roomCodeInput" type="text" placeholder="Room code" maxlength="6" autocomplete="off" />
+          <button class="btn-green" id="joinOnlineBtn" type="button" data-i18n="Join existing game">Join existing game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header">
+        <h2 id="rulesTitle" data-i18n="Classroom rules">Classroom rules</h2>
+        <button class="btn-soft" id="closeRulesBtn" data-i18n="Close">Close</button>
+      </div>
+      <p id="rulesIntro">Win small boards to claim squares on the large board.</p>
+      <ul class="rules-list" id="rulesList"></ul>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+      authDomain: "mmt-firebase-games.firebaseapp.com",
+      projectId: "mmt-firebase-games",
+      storageBucket: "mmt-firebase-games.firebasestorage.app",
+      messagingSenderId: "980506958719",
+      appId: "1:980506958719:web:a194a49dcd72ea2dba584a"
+    };
+
+    const FIREBASE_CONFIGURED = Boolean(
+      firebaseConfig.apiKey &&
+      firebaseConfig.projectId &&
+      !firebaseConfig.apiKey.includes('PASTE_') &&
+      !firebaseConfig.projectId.includes('PASTE_')
+    );
+
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let authReadyPromise = Promise.resolve(null);
+
+    if (FIREBASE_CONFIGURED) {
+      try {
+        firebaseApp = initializeApp(firebaseConfig);
+        auth = getAuth(firebaseApp);
+        db = getFirestore(firebaseApp);
+        authReadyPromise = new Promise((resolve) => {
+          onAuthStateChanged(auth, (user) => resolve(user));
+        });
+        signInAnonymously(auth).catch((err) => {
+          console.error(err);
+          setOnlineStatus('Firebase sign-in failed. Check Anonymous Authentication is enabled.', 'warn');
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    const ROOM_COLLECTION = 'ultimateTicTacToeGames';
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    const BOARD_NAMES = [
+      'top-left','top-middle','top-right',
+      'middle-left','middle','middle-right',
+      'bottom-left','bottom-middle','bottom-right'
+    ];
+
+    const els = {
+      board:document.getElementById('ultimateBoard'),
+      statusTitle:document.getElementById('statusTitle'),
+      statusSubtitle:document.getElementById('statusSubtitle'),
+      turnDot:document.getElementById('turnDot'),
+      messageBox:document.getElementById('messageBox'),
+      p1Label:document.getElementById('p1Label'),
+      p2Label:document.getElementById('p2Label'),
+      p1Score:document.getElementById('p1Score'),
+      p2Score:document.getElementById('p2Score'),
+      modePill:document.getElementById('modePill'),
+      languageMainLabel:document.getElementById('languageMainLabel'),
+      mainLanguageSelect:document.getElementById('mainLanguageSelect'),
+      rulesBtn:document.getElementById('rulesBtn'),
+      undoBtn:document.getElementById('undoBtn'),
+      newGameBtn:document.getElementById('newGameBtn'),
+      backToMenuBtn:document.getElementById('backToMenuBtn'),
+      settingsBtn:document.getElementById('settingsBtn'),
+      settingsMenu:document.getElementById('settingsMenu'),
+      closeSettingsBtn:document.getElementById('closeSettingsBtn'),
+      difficultySelect:document.getElementById('difficultySelect'),
+      showRulesBtn:document.getElementById('showRulesBtn'),
+      modeMenuModal:document.getElementById('modeMenuModal'),
+      difficultyModal:document.getElementById('difficultyModal'),
+      passPlayModal:document.getElementById('passPlayModal'),
+      onlineSetupModal:document.getElementById('onlineSetupModal'),
+      rulesModal:document.getElementById('rulesModal'),
+      chooseComputerBtn:document.getElementById('chooseComputerBtn'),
+      choosePassPlayBtn:document.getElementById('choosePassPlayBtn'),
+      chooseOnlineBtn:document.getElementById('chooseOnlineBtn'),
+      difficultyBackBtn:document.getElementById('difficultyBackBtn'),
+      passBackBtn:document.getElementById('passBackBtn'),
+      onlineBackBtn:document.getElementById('onlineBackBtn'),
+      passP1Name:document.getElementById('passP1Name'),
+      passP2Name:document.getElementById('passP2Name'),
+      startPassPlayBtn:document.getElementById('startPassPlayBtn'),
+      onlineStatus:document.getElementById('onlineStatus'),
+      roomBadge:document.getElementById('roomBadge'),
+      onlineRoomCode:document.getElementById('onlineRoomCode'),
+      copyRoomBtn:document.getElementById('copyRoomBtn'),
+      createOnlineBtn:document.getElementById('createOnlineBtn'),
+      joinOnlineBtn:document.getElementById('joinOnlineBtn'),
+      leaveOnlineBtn:document.getElementById('leaveOnlineBtn'),
+      roomCodeInput:document.getElementById('roomCodeInput'),
+      playerNameInput:document.getElementById('playerNameInput'),
+      closeRulesBtn:document.getElementById('closeRulesBtn'),
+      rulesList:document.getElementById('rulesList'),
+      rulesIntro:document.getElementById('rulesIntro'),
+      sideHelpText:document.getElementById('sideHelpText'),
+      modeMenuSubtitle:document.getElementById('modeMenuSubtitle'),
+      difficultyIntro:document.getElementById('difficultyIntro'),
+      passSetupNote:document.getElementById('passSetupNote'),
+      onlineNameHelper:document.getElementById('onlineNameHelper')
+    };
+
+    const TRANSLATIONS = {
+      ar:{
+        'Language':'اللغة','Rules':'القواعد','Undo':'تراجع','New Round':'جولة جديدة','Back to menu':'العودة إلى القائمة','Game settings':'إعدادات اللعبة','Settings':'الإعدادات','Close':'إغلاق','Computer difficulty':'مستوى الكمبيوتر','Difficulty':'المستوى','Classroom':'الفصل','Show classroom rules':'إظهار قواعد الفصل','How to play':'طريقة اللعب','Current rule':'القاعدة الحالية','Choose a game mode':'اختر وضع اللعب','Select how you would like to play Ultimate Tic-Tac-Toe.':'اختر كيف تريد لعب إكس-أو الكبرى.','vs. Computer':'ضد الكمبيوتر','Play against an automatic opponent.':'العب ضد خصم تلقائي.','Pass and Play':'مرّر والعب','Two players share one device.':'يتشارك لاعبان جهازاً واحداً.','Online Multiplayer':'لعب جماعي عبر الإنترنت','Create or join a room on two laptops.':'أنشئ غرفة أو انضم إليها على جهازين.','Choose difficulty':'اختر المستوى','Back':'رجوع','Random valid moves':'حركات عشوائية صحيحة','Win, block and avoid bad sends':'يفوز ويمنع ويتجنب الإرسال السيئ','Stronger strategic opponent':'خصم أقوى واستراتيجي','Player 1 name':'اسم اللاعب 1','Player 2 name':'اسم اللاعب 2','Start game':'ابدأ اللعبة','Your name':'اسمك','Generate Game':'إنشاء لعبة','Leave':'مغادرة','Join existing game':'انضم إلى لعبة موجودة','Copy':'نسخ','Classroom rules':'قواعد الفصل','Player 1':'اللاعب 1','Player 2':'اللاعب 2','Computer':'الكمبيوتر','wins the game!':'يفوز باللعبة!','Round draw':'تعادل في الجولة','turn':'الدور','Play in any available small board.':'العب في أي لوحة صغيرة متاحة.','Play in the':'العب في لوحة','small board.':'الصغيرة.','Waiting for another player to join.':'في انتظار انضمام لاعب آخر.','Waiting for opponent.':'في انتظار الخصم.','It is your turn.':'حان دورك.','That board is locked. Choose any available board.':'هذه اللوحة مقفلة. اختر أي لوحة متاحة.','You must play in the active board.':'يجب أن تلعب في اللوحة النشطة.','That square is already taken.':'هذا المربع مأخوذ بالفعل.','You won a small board.':'لقد فزت بلوحة صغيرة.','You were sent to a completed board, so you may choose any available board.':'تم إرسالك إلى لوحة مكتملة، لذلك يمكنك اختيار أي لوحة متاحة.','Mode:':'الوضع:','Menu':'القائمة','Sweet':'سهل جداً','Mild':'متوسط','Spicy':'صعب','top-left':'أعلى اليسار','top-middle':'أعلى الوسط','top-right':'أعلى اليمين','middle-left':'وسط اليسار','middle':'الوسط','middle-right':'وسط اليمين','bottom-left':'أسفل اليسار','bottom-middle':'أسفل الوسط','bottom-right':'أسفل اليمين','Draw':'تعادل',"Win small boards to claim squares on the large board.":"اربح اللوحات الصغيرة لتملك مربعات اللوحة الكبيرة.","There are 9 small tic-tac-toe boards inside one large 3×3 board.":"توجد 9 لوحات إكس-أو صغيرة داخل لوحة كبيرة 3×3.","Win a small board by getting three in a row on that board.":"اربح لوحة صغيرة بتكوين ثلاثة رموز متتالية على تلك اللوحة.","A small board you win becomes your mark on the large board.":"اللوحة الصغيرة التي تفوز بها تصبح علامتك على اللوحة الكبيرة.","Win the game by winning three small boards in a row on the large board.":"تفوز باللعبة عندما تفوز بثلاث لوحات صغيرة متتالية على اللوحة الكبيرة.","The square you choose sends your opponent to the matching small board.":"المربع الذي تختاره يرسل خصمك إلى اللوحة الصغيرة المطابقة.","If your opponent is sent to a completed board, they may play in any available board.":"إذا أُرسل خصمك إلى لوحة مكتملة، فيمكنه اللعب في أي لوحة متاحة.","Completed boards are locked. No extra moves can be made inside them.":"اللوحات المكتملة تُقفل. لا يمكن إجراء حركات إضافية داخلها.","Win three small boards in a row. The square you choose sends your opponent to that matching small board.":"اربح ثلاث لوحات صغيرة متتالية. المربع الذي تختاره يرسل خصمك إلى اللوحة الصغيرة المطابقة.","Choose how the computer should play.":"اختر كيف يجب أن يلعب الكمبيوتر.","Enter two names, then share the same laptop or board.":"أدخل اسمين، ثم تشاركا نفس الحاسوب أو اللوحة.","This name will appear on both laptops in the room.":"سيظهر هذا الاسم على كلا الجهازين في الغرفة.","Choose New Round to play again.":"اختر «جولة جديدة» للعب مرة أخرى.","Choose a game mode to begin.":"اختر وضع لعب للبدء.","Select how you would like to play.":"اختر كيف تريد أن تلعب.","Player 1 starts. Play in any available small board.":"يبدأ اللاعب 1. العب في أي لوحة صغيرة متاحة.","New round started. Player 1 starts.":"بدأت جولة جديدة. يبدأ اللاعب 1.","Move undone.":"تم التراجع عن الحركة.","That move is not available.":"هذه الحركة غير متاحة.","Computer is thinking...":"الكمبيوتر يفكر...","Computer's turn":"دور الكمبيوتر","Online game":"لعبة عبر الإنترنت","Mode: Pass and Play":"الوضع: مرّر والعب","Mode: Online Multiplayer":"الوضع: لعب جماعي عبر الإنترنت","Mode: Menu":"الوضع: القائمة","Mode: Online":"الوضع: عبر الإنترنت","Computer difficulty changed to":"تم تغيير مستوى الكمبيوتر إلى","board":"لوحة","New round started.":"بدأت جولة جديدة.","Choose a game mode":"اختر وضع اللعب","Room code":"رمز الغرفة","Room code copied.":"تم نسخ رمز الغرفة.","Creating room...":"جارٍ إنشاء الغرفة...","Room created. Share the code with Player 2.":"تم إنشاء الغرفة. شارك الرمز مع اللاعب 2.","Could not create room.":"تعذر إنشاء الغرفة.","Enter a room code first.":"أدخل رمز الغرفة أولاً.","Joining room...":"جارٍ الانضمام إلى الغرفة...","Joined room.":"تم الانضمام إلى الغرفة.","Could not join room.":"تعذر الانضمام إلى الغرفة.","Room no longer exists.":"لم تعد الغرفة موجودة.","Lost connection to room.":"فُقد الاتصال بالغرفة.","Could not start new round.":"تعذر بدء جولة جديدة.","Left online room.":"غادرت الغرفة عبر الإنترنت.","Firebase is not configured yet.":"لم يتم إعداد Firebase بعد.","Firebase sign-in failed. Check Anonymous Authentication is enabled.":"فشل تسجيل الدخول إلى Firebase. تحقق من تفعيل المصادقة المجهولة.","Enter your name, then create or join a room.":"أدخل اسمك، ثم أنشئ غرفة أو انضم إليها."
+      },
+      fa:{
+        'Language':'زبان','Rules':'قوانین','Undo':'بازگشت','New Round':'دور جدید','Back to menu':'بازگشت به فهرست','Game settings':'تنظیمات بازی','Settings':'تنظیمات','Close':'بستن','Computer difficulty':'درجه سختی رایانه','Difficulty':'درجه سختی','Classroom':'کلاس','Show classroom rules':'نمایش قوانین کلاس','How to play':'روش بازی','Current rule':'قانون فعلی','Choose a game mode':'یک حالت بازی انتخاب کنید','Select how you would like to play Ultimate Tic-Tac-Toe.':'انتخاب کنید چگونه می‌خواهید ایکس-او بزرگ را بازی کنید.','vs. Computer':'در برابر رایانه','Play against an automatic opponent.':'در برابر حریف خودکار بازی کنید.','Pass and Play':'نوبتی بازی کنید','Two players share one device.':'دو بازیکن از یک دستگاه استفاده می‌کنند.','Online Multiplayer':'چندنفره آنلاین','Create or join a room on two laptops.':'در دو لپ‌تاپ یک اتاق بسازید یا به آن بپیوندید.','Choose difficulty':'درجه سختی را انتخاب کنید','Back':'بازگشت','Random valid moves':'حرکت‌های تصادفی مجاز','Win, block and avoid bad sends':'برد، دفاع و پرهیز از ارسال بد','Stronger strategic opponent':'حریف راهبردی قوی‌تر','Player 1 name':'نام بازیکن ۱','Player 2 name':'نام بازیکن ۲','Start game':'شروع بازی','Your name':'نام شما','Generate Game':'ساخت بازی','Leave':'خروج','Join existing game':'پیوستن به بازی موجود','Copy':'کپی','Classroom rules':'قوانین کلاس','Player 1':'بازیکن ۱','Player 2':'بازیکن ۲','Computer':'رایانه','wins the game!':'بازی را برد!','Round draw':'دور مساوی شد','turn':'نوبت','Play in any available small board.':'در هر صفحه کوچک آزاد بازی کنید.','Play in the':'در صفحه','small board.':'کوچک بازی کنید.','Waiting for another player to join.':'در انتظار پیوستن بازیکن دیگر.','Waiting for opponent.':'در انتظار حریف.','It is your turn.':'نوبت شماست.','That board is locked. Choose any available board.':'این صفحه قفل است. هر صفحه آزاد را انتخاب کنید.','You must play in the active board.':'باید در صفحه فعال بازی کنید.','That square is already taken.':'این خانه قبلاً گرفته شده است.','You won a small board.':'شما یک صفحه کوچک را بردید.','You were sent to a completed board, so you may choose any available board.':'به صفحه کامل‌شده فرستاده شدید، پس می‌توانید هر صفحه آزاد را انتخاب کنید.','Mode:':'حالت:','Menu':'فهرست','Sweet':'خیلی آسان','Mild':'متوسط','Spicy':'سخت','top-left':'بالا چپ','top-middle':'بالا وسط','top-right':'بالا راست','middle-left':'وسط چپ','middle':'وسط','middle-right':'وسط راست','bottom-left':'پایین چپ','bottom-middle':'پایین وسط','bottom-right':'پایین راست','Draw':'مساوی',"Win small boards to claim squares on the large board.":"با بردن صفحه‌های کوچک، خانه‌های صفحه بزرگ را تصاحب کنید.","There are 9 small tic-tac-toe boards inside one large 3×3 board.":"۹ صفحه کوچک دوز داخل یک صفحه بزرگ ۳×۳ قرار دارند.","Win a small board by getting three in a row on that board.":"با ساختن سه مهره پشت سر هم در یک صفحه کوچک، آن صفحه را ببرید.","A small board you win becomes your mark on the large board.":"هر صفحه کوچکی که می‌برید، به علامت شما در صفحه بزرگ تبدیل می‌شود.","Win the game by winning three small boards in a row on the large board.":"با بردن سه صفحه کوچک پشت سر هم در صفحه بزرگ، بازی را ببرید.","The square you choose sends your opponent to the matching small board.":"خانه‌ای که انتخاب می‌کنید، حریف را به صفحه کوچک متناظر می‌فرستد.","If your opponent is sent to a completed board, they may play in any available board.":"اگر حریف به صفحه‌ای کامل‌شده فرستاده شود، می‌تواند در هر صفحه آزاد بازی کند.","Completed boards are locked. No extra moves can be made inside them.":"صفحه‌های کامل‌شده قفل می‌شوند. هیچ حرکت اضافه‌ای داخل آن‌ها انجام نمی‌شود.","Win three small boards in a row. The square you choose sends your opponent to that matching small board.":"سه صفحه کوچک را پشت سر هم ببرید. خانه‌ای که انتخاب می‌کنید حریف را به صفحه کوچک متناظر می‌فرستد.","Choose how the computer should play.":"انتخاب کنید رایانه چگونه بازی کند.","Enter two names, then share the same laptop or board.":"دو نام وارد کنید، سپس از همان لپ‌تاپ یا صفحه استفاده کنید.","This name will appear on both laptops in the room.":"این نام در هر دو لپ‌تاپ اتاق ظاهر می‌شود.","Choose New Round to play again.":"برای بازی دوباره «دور جدید» را انتخاب کنید.","Choose a game mode to begin.":"برای شروع، یک حالت بازی انتخاب کنید.","Select how you would like to play.":"انتخاب کنید چگونه می‌خواهید بازی کنید.","Player 1 starts. Play in any available small board.":"بازیکن ۱ شروع می‌کند. در هر صفحه کوچک آزاد بازی کنید.","New round started. Player 1 starts.":"دور جدید شروع شد. بازیکن ۱ شروع می‌کند.","Move undone.":"حرکت برگردانده شد.","That move is not available.":"آن حرکت در دسترس نیست.","Computer is thinking...":"رایانه در حال فکر کردن است...","Computer's turn":"نوبت رایانه","Online game":"بازی آنلاین","Mode: Pass and Play":"حالت: نوبتی بازی کنید","Mode: Online Multiplayer":"حالت: چندنفره آنلاین","Mode: Menu":"حالت: فهرست","Mode: Online":"حالت: آنلاین","Computer difficulty changed to":"درجه سختی رایانه تغییر کرد به","board":"صفحه","New round started.":"دور جدید شروع شد.","Choose a game mode":"یک حالت بازی انتخاب کنید","Room code":"کد اتاق","Room code copied.":"کد اتاق کپی شد.","Creating room...":"در حال ساخت اتاق...","Room created. Share the code with Player 2.":"اتاق ساخته شد. کد را با بازیکن ۲ به اشتراک بگذارید.","Could not create room.":"امکان ساخت اتاق وجود نداشت.","Enter a room code first.":"ابتدا کد اتاق را وارد کنید.","Joining room...":"در حال پیوستن به اتاق...","Joined room.":"به اتاق پیوستید.","Could not join room.":"امکان پیوستن به اتاق وجود نداشت.","Room no longer exists.":"اتاق دیگر وجود ندارد.","Lost connection to room.":"ارتباط با اتاق قطع شد.","Could not start new round.":"امکان شروع دور جدید وجود نداشت.","Left online room.":"از اتاق آنلاین خارج شدید.","Firebase is not configured yet.":"Firebase هنوز تنظیم نشده است.","Firebase sign-in failed. Check Anonymous Authentication is enabled.":"ورود به Firebase ناموفق بود. بررسی کنید ورود ناشناس فعال باشد.","Enter your name, then create or join a room.":"نام خود را وارد کنید، سپس یک اتاق بسازید یا به اتاقی بپیوندید."
+      }
+    };
+
+    let uiLang = 'en';
+    let gameMode = 'menu';
+    let computerDifficulty = 'sweet';
+    let computerThinking = false;
+    let lastMessage = 'Choose a game mode to begin.';
+    let lastMessageClass = 'info';
+    let playerNames = {1:'Player 1',2:'Player 2'};
+    let history = [];
+
+    let state = createFreshState({1:0,2:0});
+    let lastRenderedSmallWinners = Array(9).fill(null);
+
+    const online = {
+      active:false,
+      roomCode:null,
+      ref:null,
+      unsub:null,
+      uid:null,
+      myPlayer:null,
+      data:null
+    };
+
+    function directTranslation(text){
+      return (uiLang !== 'en' && TRANSLATIONS[uiLang] && TRANSLATIONS[uiLang][text]) ? TRANSLATIONS[uiLang][text] : null;
+    }
+    function t(text){
+      if (uiLang === 'en') return text;
+      const direct = directTranslation(text);
+      if (direct) return direct;
+
+      let match = String(text).match(/^(.+?) wins the game!$/);
+      if (match) return uiLang === 'fa' ? `${match[1]} بازی را برد!` : `${match[1]} يفوز باللعبة!`;
+
+      match = String(text).match(/^(.+?)'s turn$/);
+      if (match) return uiLang === 'fa' ? `نوبت ${match[1]}` : `دور ${match[1]}`;
+
+      match = String(text).match(/^Play in the (.+?) small board\.$/);
+      if (match){
+        const board = directTranslation(match[1]) || match[1];
+        return uiLang === 'fa' ? `در صفحه کوچک ${board} بازی کنید.` : `العب في اللوحة الصغيرة ${board}.`;
+      }
+
+      match = String(text).match(/^Mode: vs\. Computer — (.+)$/);
+      if (match) return `${directTranslation('Mode:') || 'Mode:'} ${directTranslation('vs. Computer') || 'vs. Computer'} — ${directTranslation(match[1]) || match[1]}`;
+
+      match = String(text).match(/^Mode: Online — (.+)$/);
+      if (match) return `${directTranslation('Mode: Online') || 'Mode: Online'} — ${match[1]}`;
+
+      match = String(text).match(/^Computer difficulty changed to (.+?)\.$/);
+      if (match) return `${directTranslation('Computer difficulty changed to') || 'Computer difficulty changed to'} ${directTranslation(match[1]) || match[1]}.`;
+
+      match = String(text).match(/^Room code: (.+)$/);
+      if (match) return `${directTranslation('Room code') || 'Room code'}: ${match[1]}`;
+
+      return text;
+    }
+    function escapeHtml(value){
+      return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+    }
+    function dual(text){
+      const native = t(text);
+      if (uiLang === 'en' || native === text) return escapeHtml(text);
+      return `<span class="i18n-dual"><span class="native">${escapeHtml(native)}</span><span class="english-under">${escapeHtml(text)}</span></span>`;
+    }
+    function setDual(el,text){
+      if (!el) return;
+      el.innerHTML = dual(text);
+    }
+    function setPlain(el,text){
+      if (!el) return;
+      el.textContent = uiLang === 'en' ? text : t(text);
+    }
+    function applyTranslations(){
+      document.documentElement.lang = uiLang;
+      document.documentElement.dir = (uiLang === 'ar' || uiLang === 'fa') ? 'rtl' : 'ltr';
+      setPlain(els.languageMainLabel,'Language');
+      document.querySelectorAll('[data-i18n]').forEach(el => setDual(el, el.getAttribute('data-i18n')));
+      setDual(els.modeMenuSubtitle,'Select how you would like to play Ultimate Tic-Tac-Toe.');
+      setDual(els.difficultyIntro,'Choose how the computer should play.');
+      setDual(els.passSetupNote,'Enter two names, then share the same laptop or board.');
+      setDual(els.onlineNameHelper,'This name will appear on both laptops in the room.');
+      setDual(els.sideHelpText,'Win three small boards in a row. The square you choose sends your opponent to that matching small board.');
+      els.passP1Name.placeholder = t('Player 1');
+      els.passP2Name.placeholder = t('Player 2');
+      els.playerNameInput.placeholder = t('Your name');
+      els.roomCodeInput.placeholder = t('Room code');
+      buildRules();
+      render();
+    }
+
+    function createFreshState(scores = {1:0,2:0}){
+      return {
+        board:Array.from({length:9}, () => Array(9).fill(null)),
+        smallWinners:Array(9).fill(null),
+        activeBoard:null,
+        currentPlayer:1,
+        winner:null,
+        winningLine:null,
+        scores:{1:Number(scores[1] || 0),2:Number(scores[2] || 0)}
+      };
+    }
+    function cloneState(s){
+      return {
+        board:s.board.map(row => row.slice()),
+        smallWinners:s.smallWinners.slice(),
+        activeBoard:s.activeBoard,
+        currentPlayer:s.currentPlayer,
+        winner:s.winner,
+        winningLine:s.winningLine ? s.winningLine.slice() : null,
+        scores:{1:Number(s.scores[1] || 0),2:Number(s.scores[2] || 0)}
+      };
+    }
+    function other(player){return player === 1 ? 2 : 1;}
+    function markFor(player){return player === 1 ? 'O' : 'X';}
+    function markClass(player){return player === 1 ? 'mark-o' : 'mark-x';}
+    function playerName(player){
+      const fallback = player === 1 ? 'Player 1' : 'Player 2';
+      const name = playerNames[player] || fallback;
+      return (name === 'Player 1' || name === 'Player 2' || name === 'Computer') ? t(name) : name;
+    }
+    function boardName(index){return BOARD_NAMES[index] || 'board';}
+
+    function lineWinner(cells){
+      for (const line of WIN_LINES){
+        const [a,b,c] = line;
+        if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) return {winner:cells[a], line};
+      }
+      return {winner:null,line:null};
+    }
+    function isFull(cells){return cells.every(Boolean);}
+    function isBoardAvailable(s, boardIndex){return !s.smallWinners[boardIndex];}
+    function isMoveValid(s, boardIndex, cellIndex){
+      if (s.winner) return false;
+      if (boardIndex < 0 || boardIndex > 8 || cellIndex < 0 || cellIndex > 8) return false;
+      if (!isBoardAvailable(s, boardIndex)) return false;
+      if (s.activeBoard !== null && isBoardAvailable(s, s.activeBoard) && boardIndex !== s.activeBoard) return false;
+      return !s.board[boardIndex][cellIndex];
+    }
+    function availableMoves(s){
+      const moves = [];
+      if (s.winner) return moves;
+      const active = s.activeBoard;
+      const boardIndexes = (active !== null && isBoardAvailable(s, active)) ? [active] : [0,1,2,3,4,5,6,7,8].filter(b => isBoardAvailable(s,b));
+      for (const b of boardIndexes){
+        for (let c=0;c<9;c++){
+          if (!s.board[b][c]) moves.push({boardIndex:b, cellIndex:c});
+        }
+      }
+      return moves;
+    }
+    function applyMoveToState(s, boardIndex, cellIndex, updateScores = true){
+      const next = cloneState(s);
+      const player = next.currentPlayer;
+      next.board[boardIndex][cellIndex] = player;
+
+      const smallResult = lineWinner(next.board[boardIndex]);
+      if (smallResult.winner){
+        next.smallWinners[boardIndex] = player;
+      } else if (isFull(next.board[boardIndex])){
+        next.smallWinners[boardIndex] = 'draw';
+      }
+
+      const largeResult = lineWinner(next.smallWinners);
+      if (largeResult.winner === 1 || largeResult.winner === 2){
+        next.winner = largeResult.winner;
+        next.winningLine = largeResult.line;
+        if (updateScores) next.scores[next.winner] = Number(next.scores[next.winner] || 0) + 1;
+      } else if (next.smallWinners.every(Boolean)){
+        next.winner = 'draw';
+        next.winningLine = null;
+      }
+
+      if (!next.winner){
+        const targetBoard = cellIndex;
+        next.activeBoard = isBoardAvailable(next, targetBoard) ? targetBoard : null;
+        next.currentPlayer = other(player);
+      }
+      return next;
+    }
+
+    function startLocalRound({mode,names,difficulty,resetScores}){
+      leaveOnline(false);
+      gameMode = mode;
+      playerNames = names;
+      computerDifficulty = difficulty || computerDifficulty;
+      els.difficultySelect.value = computerDifficulty;
+      const scores = resetScores ? {1:0,2:0} : state.scores;
+      state = createFreshState(scores);
+      history = [];
+      lastRenderedSmallWinners = Array(9).fill(null);
+      computerThinking = false;
+      closeAllModals();
+      setMessage('Player 1 starts. Play in any available small board.','info');
+      render();
+    }
+    function startNewRound(){
+      if (gameMode === 'online'){
+        resetOnlineRound();
+        return;
+      }
+      if (gameMode === 'menu'){
+        openModal(els.modeMenuModal);
+        return;
+      }
+      const scores = state.scores;
+      state = createFreshState(scores);
+      history = [];
+      lastRenderedSmallWinners = Array(9).fill(null);
+      computerThinking = false;
+      setMessage('New round started. Player 1 starts.','info');
+      render();
+    }
+
+    function makeMove(boardIndex, cellIndex){
+      if (gameMode === 'menu'){
+        openModal(els.modeMenuModal);
+        return;
+      }
+      if (computerThinking) return;
+      if (gameMode === 'online'){
+        makeOnlineMove(boardIndex, cellIndex);
+        return;
+      }
+      if (gameMode === 'computer' && state.currentPlayer === 2) return;
+      if (!handleInvalidMoveFeedback(boardIndex, cellIndex)) return;
+      history.push(cloneState(state));
+      const beforeSmall = state.smallWinners[boardIndex];
+      const beforeActive = state.activeBoard;
+      state = applyMoveToState(state, boardIndex, cellIndex, true);
+      afterLocalMoveMessage(beforeSmall, beforeActive, boardIndex);
+      render();
+      if (gameMode === 'computer' && !state.winner && state.currentPlayer === 2){
+        computerThinking = true;
+        setTimeout(() => {
+          const move = chooseComputerMove(state, computerDifficulty);
+          if (move && !state.winner){
+            history.push(cloneState(state));
+            const bSmall = state.smallWinners[move.boardIndex];
+            const bActive = state.activeBoard;
+            state = applyMoveToState(state, move.boardIndex, move.cellIndex, true);
+            afterLocalMoveMessage(bSmall, bActive, move.boardIndex);
+          }
+          computerThinking = false;
+          render();
+        }, 450);
+      }
+    }
+    function handleInvalidMoveFeedback(boardIndex, cellIndex){
+      if (state.winner) return false;
+      if (!isBoardAvailable(state, boardIndex)){
+        shakeBoard(boardIndex);
+        setMessage('That board is locked. Choose any available board.','warn');
+        return false;
+      }
+      if (state.activeBoard !== null && isBoardAvailable(state, state.activeBoard) && boardIndex !== state.activeBoard){
+        shakeBoard(boardIndex);
+        setMessage('You must play in the active board.','warn');
+        return false;
+      }
+      if (state.board[boardIndex][cellIndex]){
+        setMessage('That square is already taken.','warn');
+        return false;
+      }
+      return true;
+    }
+    function afterLocalMoveMessage(beforeSmall, beforeActive, boardIndex){
+      if (state.winner === 1 || state.winner === 2){
+        setMessage(`${playerName(state.winner)} wins the game!`,'success');
+        fireConfetti();
+      } else if (state.winner === 'draw'){
+        setMessage('Round draw','info');
+      } else if (!beforeSmall && state.smallWinners[boardIndex]){
+        setMessage('You won a small board.','success');
+      } else if (beforeActive !== null && state.activeBoard === null){
+        setMessage('You were sent to a completed board, so you may choose any available board.','info');
+      } else {
+        setMessage(state.activeBoard === null ? 'Play in any available small board.' : `Play in the ${boardName(state.activeBoard)} small board.`,'info');
+      }
+    }
+
+    function chooseComputerMove(s, difficulty){
+      const moves = availableMoves(s);
+      if (!moves.length) return null;
+      if (difficulty === 'sweet') return randomChoice(moves);
+      if (difficulty === 'mild') return chooseMildMove(s, 2, moves);
+      return chooseSpicyMove(s, 2, moves);
+    }
+    function randomChoice(items){return items[Math.floor(Math.random() * items.length)];}
+    function chooseMildMove(s, player, moves){
+      const scored = moves.map(move => ({move, score:scoreTacticalMove(s, move, player) + Math.random() * 0.15}));
+      scored.sort((a,b) => b.score - a.score);
+      const bestScore = scored[0].score;
+      const close = scored.filter(item => item.score >= bestScore - 0.5);
+      return randomChoice(close).move;
+    }
+    function scoreTacticalMove(s, move, player){
+      const opp = other(player);
+      const next = applyMoveToState(s, move.boardIndex, move.cellIndex, false);
+      let score = 0;
+      if (next.winner === player) score += 10000;
+      if (next.winner === opp) score -= 10000;
+      if (!s.smallWinners[move.boardIndex] && next.smallWinners[move.boardIndex] === player) score += 850;
+      if (blocksImmediateSmallWin(s, move, opp)) score += 320;
+      if (createsLargeThreat(next.smallWinners, player)) score += 220;
+      if (createsLargeThreat(next.smallWinners, opp)) score -= 260;
+      if (next.activeBoard === null) score -= 180;
+      else {
+        const target = next.activeBoard;
+        if (hasImmediateSmallWin(next.board[target], opp)) score -= 240;
+        if (hasImmediateSmallWin(next.board[target], player)) score += 90;
+      }
+      score += evaluateSmallBoard(next.board[move.boardIndex], player) * 5;
+      return score;
+    }
+    function chooseSpicyMove(s, player, moves){
+      let best = null;
+      let bestScore = -Infinity;
+      for (const move of moves){
+        const next = applyMoveToState(s, move.boardIndex, move.cellIndex, false);
+        let score;
+        if (next.winner === player){
+          score = 999999;
+        } else {
+          const opponentMoves = availableMoves(next);
+          if (!opponentMoves.length){
+            score = evaluateState(next, player);
+          } else {
+            let worst = Infinity;
+            for (const oppMove of opponentMoves){
+              const reply = applyMoveToState(next, oppMove.boardIndex, oppMove.cellIndex, false);
+              const val = evaluateState(reply, player);
+              if (val < worst) worst = val;
+            }
+            score = worst;
+          }
+          score += scoreTacticalMove(s, move, player) * 0.8;
+        }
+        score += Math.random() * 0.1;
+        if (score > bestScore){
+          bestScore = score;
+          best = move;
+        }
+      }
+      return best || randomChoice(moves);
+    }
+    function evaluateState(s, player){
+      const opp = other(player);
+      if (s.winner === player) return 100000;
+      if (s.winner === opp) return -100000;
+      if (s.winner === 'draw') return 0;
+      let score = 0;
+      score += evaluateLargeBoard(s.smallWinners, player) * 35;
+      score -= evaluateLargeBoard(s.smallWinners, opp) * 42;
+      for (let b=0;b<9;b++){
+        if (s.smallWinners[b] === player) score += 500;
+        else if (s.smallWinners[b] === opp) score -= 560;
+        else if (s.smallWinners[b] === 'draw') score += 0;
+        else {
+          score += evaluateSmallBoard(s.board[b], player) * 4;
+          score -= evaluateSmallBoard(s.board[b], opp) * 4.5;
+        }
+      }
+      if (s.activeBoard === null) score -= 16;
+      else {
+        if (hasImmediateSmallWin(s.board[s.activeBoard], opp)) score -= 55;
+        if (hasImmediateSmallWin(s.board[s.activeBoard], player)) score += 35;
+      }
+      return score;
+    }
+    function evaluateLargeBoard(smallWinners, player){
+      let score = 0;
+      for (const line of WIN_LINES){
+        const values = line.map(i => smallWinners[i]);
+        const mine = values.filter(v => v === player).length;
+        const blocked = values.some(v => v && v !== player);
+        if (!blocked) score += [0,4,22,160][mine];
+      }
+      return score;
+    }
+    function evaluateSmallBoard(cells, player){
+      let score = 0;
+      for (const line of WIN_LINES){
+        const values = line.map(i => cells[i]);
+        const mine = values.filter(v => v === player).length;
+        const blocked = values.some(v => v && v !== player);
+        if (!blocked) score += [0,1,8,80][mine];
+      }
+      if (cells[4] === player) score += 4;
+      for (const corner of [0,2,6,8]) if (cells[corner] === player) score += 1.5;
+      return score;
+    }
+    function immediateWinningCellsForBoard(cells, player){
+      const wins = [];
+      for (let c=0;c<9;c++){
+        if (cells[c]) continue;
+        const copy = cells.slice();
+        copy[c] = player;
+        if (lineWinner(copy).winner === player) wins.push(c);
+      }
+      return wins;
+    }
+    function hasImmediateSmallWin(cells, player){return immediateWinningCellsForBoard(cells, player).length > 0;}
+    function blocksImmediateSmallWin(s, move, opponent){
+      if (s.smallWinners[move.boardIndex]) return false;
+      return immediateWinningCellsForBoard(s.board[move.boardIndex], opponent).includes(move.cellIndex);
+    }
+    function createsLargeThreat(smallWinners, player){
+      return WIN_LINES.some(line => {
+        const values = line.map(i => smallWinners[i]);
+        return values.filter(v => v === player).length === 2 && values.some(v => !v);
+      });
+    }
+
+    function render(){
+      els.board.innerHTML = '';
+      const playable = new Set(availableMoves(state).map(m => `${m.boardIndex}-${m.cellIndex}`));
+      for (let b=0;b<9;b++){
+        const small = document.createElement('div');
+        small.className = 'small-board';
+        small.dataset.board = String(b);
+        const completed = state.smallWinners[b];
+        const justCompleted = Boolean(completed && !lastRenderedSmallWinners[b]);
+        const boardCanPlay = !state.winner && !completed && (state.activeBoard === null || state.activeBoard === b || !isBoardAvailable(state, state.activeBoard));
+        if (boardCanPlay) small.classList.add(state.activeBoard === null ? 'free-choice' : 'active');
+        if (completed) small.classList.add('locked','completed');
+        if (justCompleted) small.classList.add('just-completed');
+        if (completed === 1) small.classList.add('win-p1');
+        if (completed === 2) small.classList.add('win-p2');
+        if (completed === 'draw') small.classList.add('draw-board');
+        if (state.winningLine && state.winningLine.includes(b)) small.classList.add('large-win');
+
+        for (let c=0;c<9;c++){
+          const cell = document.createElement('button');
+          cell.className = 'cell';
+          cell.type = 'button';
+          cell.dataset.board = String(b);
+          cell.dataset.cell = String(c);
+          cell.setAttribute('aria-label', `${boardName(b)} board, ${boardName(c)} square`);
+          const value = state.board[b][c];
+          if (value){
+            const span = document.createElement('span');
+            span.className = markClass(value);
+            span.textContent = markFor(value);
+            cell.appendChild(span);
+          }
+          if (!playable.has(`${b}-${c}`) || gameMode === 'menu' || computerThinking || (gameMode === 'computer' && state.currentPlayer === 2)){
+            cell.classList.add('disabled');
+          }
+          cell.addEventListener('click', () => makeMove(b,c));
+          small.appendChild(cell);
+        }
+        if (completed){
+          const overlay = document.createElement('div');
+          overlay.className = 'board-overlay ' + (completed === 1 ? 'o' : completed === 2 ? 'x' : 'draw');
+          overlay.textContent = completed === 1 ? 'O' : completed === 2 ? 'X' : t('Draw');
+          small.appendChild(overlay);
+        }
+        els.board.appendChild(small);
+      }
+      lastRenderedSmallWinners = state.smallWinners.slice();
+
+      els.p1Label.textContent = playerName(1);
+      els.p2Label.textContent = playerName(2);
+      els.p1Score.textContent = String(state.scores[1] || 0);
+      els.p2Score.textContent = String(state.scores[2] || 0);
+      setDual(els.modePill, modeText());
+      updateStatusText();
+      updateButtons();
+      updateMessageElement();
+    }
+    function updateStatusText(){
+      els.turnDot.className = 'player-dot';
+      if (state.winner === 1 || state.winner === 2){
+        els.turnDot.classList.add(state.winner === 1 ? 'p1' : 'p2');
+        setDual(els.statusTitle, `${playerName(state.winner)} wins the game!`);
+        setDual(els.statusSubtitle, 'Choose New Round to play again.');
+        return;
+      }
+      if (state.winner === 'draw'){
+        els.turnDot.classList.add('draw');
+        setDual(els.statusTitle, 'Round draw');
+        setDual(els.statusSubtitle, 'Choose New Round to play again.');
+        return;
+      }
+      if (gameMode === 'menu'){
+        els.turnDot.classList.add('p1');
+        setDual(els.statusTitle, 'Choose a game mode');
+        setDual(els.statusSubtitle, 'Select how you would like to play.');
+        return;
+      }
+      els.turnDot.classList.add(state.currentPlayer === 1 ? 'p1' : 'p2');
+      const name = playerName(state.currentPlayer);
+      let title = `${name}'s turn`;
+      if (gameMode === 'computer' && state.currentPlayer === 2) title = computerThinking ? 'Computer is thinking...' : "Computer's turn";
+      if (gameMode === 'online'){
+        if (!online.myPlayer) title = 'Online game';
+        else if (online.myPlayer === state.currentPlayer) title = 'It is your turn.';
+        else title = 'Waiting for opponent.';
+      }
+      setDual(els.statusTitle, title);
+      setDual(els.statusSubtitle, activeBoardText());
+    }
+    function activeBoardText(){
+      if (state.activeBoard === null || !isBoardAvailable(state,state.activeBoard)) return 'Play in any available small board.';
+      return `Play in the ${boardName(state.activeBoard)} small board.`;
+    }
+    function modeText(){
+      if (gameMode === 'computer') return `Mode: vs. Computer — ${difficultyLabel(computerDifficulty)}`;
+      if (gameMode === 'pass') return 'Mode: Pass and Play';
+      if (gameMode === 'online') return online.roomCode ? `Mode: Online — ${online.roomCode}` : 'Mode: Online Multiplayer';
+      return 'Mode: Menu';
+    }
+    function difficultyLabel(value){
+      if (value === 'sweet') return 'Sweet';
+      if (value === 'mild') return 'Mild';
+      return 'Spicy';
+    }
+    function updateButtons(){
+      els.undoBtn.disabled = gameMode === 'menu' || gameMode === 'online' || computerThinking || history.length === 0;
+      els.newGameBtn.disabled = gameMode === 'menu';
+      els.difficultySelect.disabled = gameMode !== 'computer';
+      els.leaveOnlineBtn.disabled = !online.active;
+    }
+    function setMessage(text, type='info'){
+      lastMessage = text;
+      lastMessageClass = type;
+      updateMessageElement();
+    }
+    function updateMessageElement(){
+      els.messageBox.className = `message ${lastMessageClass === 'success' ? 'success' : lastMessageClass === 'warn' ? '' : 'info'}`;
+      setDual(els.messageBox, lastMessage);
+    }
+    function shakeBoard(boardIndex){
+      const board = els.board.querySelector(`.small-board[data-board="${boardIndex}"]`);
+      if (!board) return;
+      board.classList.remove('shake');
+      void board.offsetWidth;
+      board.classList.add('shake');
+      setTimeout(() => board.classList.remove('shake'), 800);
+    }
+    function fireConfetti(){
+      const colors = ['#ef4444','#2563eb','#f59e0b','#6cbc4a','#7c3aed','#fb7185'];
+      for (let i=0;i<70;i++){
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+        piece.style.animationDelay = Math.random() * 220 + 'ms';
+        piece.style.transform = `rotate(${Math.random()*180}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1300);
+      }
+    }
+
+    function buildRules(){
+      const rules = [
+        'There are 9 small tic-tac-toe boards inside one large 3×3 board.',
+        'Win a small board by getting three in a row on that board.',
+        'A small board you win becomes your mark on the large board.',
+        'Win the game by winning three small boards in a row on the large board.',
+        'The square you choose sends your opponent to the matching small board.',
+        'If your opponent is sent to a completed board, they may play in any available board.',
+        'Completed boards are locked. No extra moves can be made inside them.'
+      ];
+      els.rulesIntro.innerHTML = dual('Win small boards to claim squares on the large board.');
+      els.rulesList.innerHTML = '';
+      for (const rule of rules){
+        const li = document.createElement('li');
+        li.innerHTML = dual(rule);
+        els.rulesList.appendChild(li);
+      }
+    }
+
+    function openModal(modal){
+      closeAllModals();
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(modal){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+    }
+    function closeAllModals(){
+      [els.modeMenuModal,els.difficultyModal,els.passPlayModal,els.onlineSetupModal,els.rulesModal].forEach(closeModal);
+    }
+
+    function undoMove(){
+      if (gameMode === 'online' || computerThinking || history.length === 0) return;
+      if (gameMode === 'computer'){
+        let previous = history.pop();
+        while (previous && previous.currentPlayer !== 1 && history.length){
+          previous = history.pop();
+        }
+        if (previous) state = previous;
+      } else {
+        state = history.pop();
+      }
+      setMessage('Move undone.','info');
+      render();
+    }
+
+    function showMenu(){
+      if (gameMode === 'online') leaveOnline(true);
+      gameMode = 'menu';
+      computerThinking = false;
+      history = [];
+      playerNames = {1:'Player 1',2:'Player 2'};
+      state = createFreshState({1:0,2:0});
+      lastRenderedSmallWinners = Array(9).fill(null);
+      setMessage('Choose a game mode to begin.','info');
+      openModal(els.modeMenuModal);
+      render();
+    }
+
+    function flatBoard(board){return board.flat();}
+    function unflatBoard(flat){
+      const source = Array.isArray(flat) && flat.length === 81 ? flat : Array(81).fill(null);
+      return Array.from({length:9}, (_,b) => source.slice(b*9,b*9+9));
+    }
+    function dataToState(data){
+      return {
+        board:unflatBoard(data.boardFlat),
+        smallWinners:Array.isArray(data.smallWinners) ? data.smallWinners.slice(0,9) : Array(9).fill(null),
+        activeBoard:typeof data.activeBoard === 'number' ? data.activeBoard : null,
+        currentPlayer:data.currentPlayer === 2 ? 2 : 1,
+        winner:data.winner || null,
+        winningLine:Array.isArray(data.winningLine) ? data.winningLine : null,
+        scores:{1:Number(data.scores?.p1 || 0),2:Number(data.scores?.p2 || 0)}
+      };
+    }
+    function stateToUpdate(s){
+      return {
+        boardFlat:flatBoard(s.board),
+        smallWinners:s.smallWinners,
+        activeBoard:s.activeBoard,
+        currentPlayer:s.currentPlayer,
+        winner:s.winner,
+        winningLine:s.winningLine,
+        scores:{p1:Number(s.scores[1] || 0),p2:Number(s.scores[2] || 0)}
+      };
+    }
+    function createOnlineRoomData(name, uid){
+      const fresh = createFreshState({1:0,2:0});
+      return {
+        ...stateToUpdate(fresh),
+        players:{p1:{uid,name:name || 'Player 1'},p2:null},
+        round:1,
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp(),
+        lastMove:null
+      };
+    }
+    function generateRoomCode(){
+      const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i=0;i<6;i++) code += letters[Math.floor(Math.random()*letters.length)];
+      return code;
+    }
+    async function ensureAuth(){
+      if (!FIREBASE_CONFIGURED || !auth || !db) throw new Error('Firebase is not configured.');
+      const existing = await authReadyPromise;
+      if (existing) return existing;
+      await signInAnonymously(auth);
+      const user = await authReadyPromise;
+      if (!user) throw new Error('Anonymous sign-in failed.');
+      return user;
+    }
+    async function createOnlineRoom(){
+      const name = els.playerNameInput.value.trim() || 'Player 1';
+      try{
+        setOnlineStatus('Creating room...', '');
+        const user = await ensureAuth();
+        online.uid = user.uid;
+        let code = generateRoomCode();
+        let roomRef = doc(db, ROOM_COLLECTION, code);
+        for (let attempts=0; attempts<5; attempts++){
+          const snap = await getDoc(roomRef);
+          if (!snap.exists()) break;
+          code = generateRoomCode();
+          roomRef = doc(db, ROOM_COLLECTION, code);
+        }
+        await setDoc(roomRef, createOnlineRoomData(name, user.uid));
+        subscribeToRoom(code);
+        setOnlineStatus('Room created. Share the code with Player 2.', 'good');
+      }catch(err){
+        console.error(err);
+        setOnlineStatus(err.message || 'Could not create room.', 'warn');
+      }
+    }
+    async function joinOnlineRoom(){
+      const name = els.playerNameInput.value.trim() || 'Player 2';
+      const code = els.roomCodeInput.value.trim().toUpperCase();
+      if (!code){ setOnlineStatus('Enter a room code first.', 'warn'); return; }
+      try{
+        setOnlineStatus('Joining room...', '');
+        const user = await ensureAuth();
+        online.uid = user.uid;
+        const roomRef = doc(db, ROOM_COLLECTION, code);
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(roomRef);
+          if (!snap.exists()) throw new Error('Room not found.');
+          const data = snap.data();
+          const p1 = data.players?.p1;
+          const p2 = data.players?.p2;
+          if (p1?.uid === user.uid){
+            transaction.update(roomRef, {'players.p1.name':name, updatedAt:serverTimestamp()});
+            return;
+          }
+          if (!p2 || p2.uid === user.uid){
+            transaction.update(roomRef, {'players.p2':{uid:user.uid,name}, updatedAt:serverTimestamp()});
+            return;
+          }
+          throw new Error('This room already has two players.');
+        });
+        subscribeToRoom(code);
+        setOnlineStatus('Joined room.', 'good');
+      }catch(err){
+        console.error(err);
+        setOnlineStatus(err.message || 'Could not join room.', 'warn');
+      }
+    }
+    function subscribeToRoom(code){
+      if (online.unsub) online.unsub();
+      online.active = true;
+      online.roomCode = code;
+      online.ref = doc(db, ROOM_COLLECTION, code);
+      onlineRoomCode.textContent = code;
+      els.roomBadge.classList.add('show');
+      els.leaveOnlineBtn.disabled = false;
+      gameMode = 'online';
+      closeAllModals();
+      online.unsub = onSnapshot(online.ref, (snap) => {
+        if (!snap.exists()){
+          setOnlineStatus('Room no longer exists.', 'warn');
+          return;
+        }
+        const data = snap.data();
+        online.data = data;
+        const p1 = data.players?.p1;
+        const p2 = data.players?.p2;
+        online.myPlayer = p1?.uid === online.uid ? 1 : p2?.uid === online.uid ? 2 : null;
+        playerNames = {1:p1?.name || 'Player 1',2:p2?.name || 'Player 2'};
+        state = dataToState(data);
+        if (!p2) setMessage('Waiting for another player to join.','info');
+        else if (online.myPlayer === state.currentPlayer && !state.winner) setMessage('It is your turn.','success');
+        else if (!state.winner) setMessage('Waiting for opponent.','info');
+        render();
+      }, (err) => {
+        console.error(err);
+        setOnlineStatus('Lost connection to room.', 'warn');
+      });
+    }
+    async function makeOnlineMove(boardIndex, cellIndex){
+      if (!online.ref || !online.uid) return;
+      try{
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(online.ref);
+          if (!snap.exists()) throw new Error('Room not found.');
+          const data = snap.data();
+          const p1 = data.players?.p1;
+          const p2 = data.players?.p2;
+          const myPlayer = p1?.uid === online.uid ? 1 : p2?.uid === online.uid ? 2 : null;
+          if (!myPlayer) throw new Error('You are not a player in this room.');
+          if (!p2) throw new Error('Waiting for another player to join.');
+          const current = dataToState(data);
+          if (current.currentPlayer !== myPlayer) throw new Error('Waiting for opponent.');
+          if (!isMoveValid(current, boardIndex, cellIndex)) throw new Error('That move is not available.');
+          const next = applyMoveToState(current, boardIndex, cellIndex, true);
+          transaction.update(online.ref, {
+            ...stateToUpdate(next),
+            lastMove:{boardIndex,cellIndex,player:myPlayer,at:Date.now()},
+            updatedAt:serverTimestamp()
+          });
+        });
+      }catch(err){
+        console.warn(err);
+        setMessage(err.message || 'That move is not available.','warn');
+        if (!isMoveValid(state, boardIndex, cellIndex)) shakeBoard(boardIndex);
+      }
+    }
+    async function resetOnlineRound(){
+      if (!online.ref) return;
+      try{
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(online.ref);
+          if (!snap.exists()) throw new Error('Room not found.');
+          const data = snap.data();
+          const current = dataToState(data);
+          const fresh = createFreshState(current.scores);
+          transaction.update(online.ref, {
+            ...stateToUpdate(fresh),
+            round:Number(data.round || 1) + 1,
+            lastMove:null,
+            updatedAt:serverTimestamp()
+          });
+        });
+      }catch(err){
+        console.error(err);
+        setOnlineStatus(err.message || 'Could not start new round.', 'warn');
+      }
+    }
+    function leaveOnline(showStatus = true){
+      if (online.unsub) online.unsub();
+      online.active = false;
+      online.roomCode = null;
+      online.ref = null;
+      online.unsub = null;
+      online.myPlayer = null;
+      online.data = null;
+      els.roomBadge.classList.remove('show');
+      els.onlineRoomCode.textContent = '----';
+      els.leaveOnlineBtn.disabled = true;
+      if (showStatus) setOnlineStatus('Left online room.', '');
+    }
+    function setOnlineStatus(text, type){
+      if (!els.onlineStatus) return;
+      setDual(els.onlineStatus, text);
+      els.onlineStatus.className = 'online-status';
+      if (type === 'good') els.onlineStatus.classList.add('good');
+      if (type === 'warn') els.onlineStatus.classList.add('warn');
+    }
+
+    els.board.addEventListener('click', (event) => {
+      const cell = event.target.closest('.cell');
+      if (!cell) return;
+      makeMove(Number(cell.dataset.board), Number(cell.dataset.cell));
+    });
+    els.rulesBtn.addEventListener('click', () => openModal(els.rulesModal));
+    els.showRulesBtn.addEventListener('click', () => openModal(els.rulesModal));
+    els.closeRulesBtn.addEventListener('click', () => closeModal(els.rulesModal));
+    els.undoBtn.addEventListener('click', undoMove);
+    els.newGameBtn.addEventListener('click', startNewRound);
+    els.backToMenuBtn.addEventListener('click', showMenu);
+    els.settingsBtn.addEventListener('click', () => {
+      const open = !els.settingsMenu.classList.contains('open');
+      els.settingsMenu.classList.toggle('open', open);
+      els.settingsBtn.setAttribute('aria-expanded', String(open));
+    });
+    els.closeSettingsBtn.addEventListener('click', () => {
+      els.settingsMenu.classList.remove('open');
+      els.settingsBtn.setAttribute('aria-expanded','false');
+    });
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.settings-wrap')){
+        els.settingsMenu.classList.remove('open');
+        els.settingsBtn.setAttribute('aria-expanded','false');
+      }
+    });
+    els.mainLanguageSelect.addEventListener('change', () => {
+      uiLang = els.mainLanguageSelect.value;
+      applyTranslations();
+    });
+    els.chooseComputerBtn.addEventListener('click', () => openModal(els.difficultyModal));
+    els.choosePassPlayBtn.addEventListener('click', () => openModal(els.passPlayModal));
+    els.chooseOnlineBtn.addEventListener('click', () => {
+      if (!FIREBASE_CONFIGURED) setOnlineStatus('Firebase is not configured yet.', 'warn');
+      else setOnlineStatus('Enter your name, then create or join a room.', '');
+      openModal(els.onlineSetupModal);
+    });
+    els.difficultyBackBtn.addEventListener('click', () => openModal(els.modeMenuModal));
+    els.passBackBtn.addEventListener('click', () => openModal(els.modeMenuModal));
+    els.onlineBackBtn.addEventListener('click', () => openModal(els.modeMenuModal));
+    document.querySelectorAll('[data-difficulty]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const diff = btn.dataset.difficulty;
+        startLocalRound({mode:'computer',names:{1:'Player 1',2:'Computer'},difficulty:diff,resetScores:true});
+      });
+    });
+    els.startPassPlayBtn.addEventListener('click', () => {
+      const p1 = els.passP1Name.value.trim() || 'Player 1';
+      const p2 = els.passP2Name.value.trim() || 'Player 2';
+      startLocalRound({mode:'pass',names:{1:p1,2:p2},difficulty:computerDifficulty,resetScores:true});
+    });
+    els.difficultySelect.addEventListener('change', () => {
+      computerDifficulty = els.difficultySelect.value;
+      setMessage(`Computer difficulty changed to ${difficultyLabel(computerDifficulty)}.`,'info');
+      render();
+    });
+    els.createOnlineBtn.addEventListener('click', createOnlineRoom);
+    els.joinOnlineBtn.addEventListener('click', joinOnlineRoom);
+    els.leaveOnlineBtn.addEventListener('click', () => {
+      leaveOnline(true);
+      showMenu();
+    });
+    els.copyRoomBtn.addEventListener('click', async () => {
+      if (!online.roomCode) return;
+      try{
+        await navigator.clipboard.writeText(online.roomCode);
+        setOnlineStatus('Room code copied.', 'good');
+      }catch{
+        setOnlineStatus('Room code: ' + online.roomCode, 'good');
+      }
+    });
+    els.roomCodeInput.addEventListener('input', () => {
+      els.roomCodeInput.value = els.roomCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+    });
+
+    buildRules();
+    applyTranslations();
+    render();
+  </script>
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
