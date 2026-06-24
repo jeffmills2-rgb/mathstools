@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Textbook layout preview</title>
+
+  <link rel="stylesheet" href="styles/screen.css" />
+  <link rel="stylesheet" href="styles/print.css" />
+  <link rel="stylesheet" href="templates/hsc-style/hsc-template.css" />
+  <link rel="stylesheet" href="templates/textbook-template/textbook-template.css" />
+
+  <style>
+    body { background:#eef2f7; margin:0; }
+    .preview-bar {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      max-width: 210mm; margin: 10px auto; padding: 10px 14px;
+      background:#fff; border:1px solid #d1d5db; border-radius:12px;
+    }
+    .preview-bar button { font:inherit; font-weight:800; padding:8px 12px; border-radius:999px; border:1px solid #cbd5e1; background:#fff; cursor:pointer; }
+    .preview-bar button.primary { background:#2563eb; color:#fff; border-color:transparent; }
+    #app .exam-document.template-textbook { max-width:210mm; margin:0 auto 16px; box-shadow:0 10px 30px rgba(0,0,0,.12); }
+  </style>
+</head>
+<body>
+  <div class="preview-bar">
+    <strong>Textbook layout preview</strong> — a real generated exercise using the new dense two-column style.
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="primary" onclick="location.reload()">Regenerate</button>
+      <button onclick="document.body.classList.add('print-student-exam');window.print();document.body.classList.remove('print-student-exam');">Print / Save PDF</button>
+    </div>
+  </div>
+
+  <div id="app"></div>
+
+  <script src="engines/angles/angle-engine.js"></script>
+  <script src="engines/integers/integer-engine.js"></script>
+  <script src="engines/pythagoras/pythagoras-engine.js"></script>
+  <script src="engines/fdp/fdp-engine.js"></script>
+  <script src="engines/rates/rates-engine.js"></script>
+  <script src="engines/indices/indices-engine.js"></script>
+  <script src="engines/linear/linear-engine.js"></script>
+  <script src="engines/length/length-engine.js"></script>
+  <script src="engines/area/area-engine.js"></script>
+  <script src="engines/algebra/algebra-engine.js"></script>
+  <script src="engines/financial/financial-engine.js"></script>
+  <script src="engines/area-surface/area-surface-engine.js"></script>
+  <script src="engines/volume/volume-engine.js"></script>
+  <script src="engines/trigonometry/trigonometry-engine.js"></script>
+  <script src="engines/nonlinear/nonlinear-engine.js"></script>
+  <script src="engines/networks/network-engine.js"></script>
+
+  <script type="module">
+    import { createExam, renderExam } from "./renderers/exam-renderer.js";
+    import { ensureQuestionIds } from "./utils/exam-editor.js";
+    import { applyAnswerSpaceRules } from "./utils/answer-space-rules.js";
+
+    import { generateAreaQuestions } from "./question-banks/area/index.js";
+    import { generatePythagorasQuestions } from "./question-banks/pythagoras/index.js";
+    import { generateLengthQuestions } from "./question-banks/length/index.js";
+    import { generateAngleQuestions } from "./question-banks/angles/index.js";
+    import { generateFdpQuestions } from "./question-banks/fdp/index.js";
+    import { generateAlgebraicTechniquesQuestions } from "./question-banks/algebraic-techniques/index.js";
+    import { generateTrigonometryAQuestions } from "./question-banks/stage-5/trigonometry-a/index.js";
+
+    const pick = (fn, n) => { try { return (fn({ count: n }) || []); } catch (e) { console.warn(e); return []; } };
+
+    const questions = [
+      ...pick(generateAreaQuestions, 6),
+      ...pick(generatePythagorasQuestions, 5),
+      ...pick(generateLengthQuestions, 5),
+      ...pick(generateAngleQuestions, 4),
+      ...pick(generateTrigonometryAQuestions, 5),
+      ...pick(generateFdpQuestions, 6),
+      ...pick(generateAlgebraicTechniquesQuestions, 6)
+    ];
+
+    const exam = createExam({
+      school: "[School name]",
+      title: "Mathematics — Textbook Exercises",
+      subtitle: "Measurement, Trigonometry, Fractions and Algebra",
+      template: "textbook-template",
+      questions: ensureQuestionIds(applyAnswerSpaceRules(questions))
+    });
+
+    renderExam(document.getElementById("app"), exam, { template: "textbook-template" });
+  </script>
+</body>
+</html>
