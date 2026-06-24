@@ -538,12 +538,26 @@
       background:#fff;
       transition:.25s;
     }
-    .pnode span:last-child{
+    .pnode .plabel{
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
       max-width:100%;
     }
+    .pnode .pval{
+      font-family:var(--mono);
+      font-variant-numeric:tabular-nums;
+      font-size:12.5px;
+      font-weight:950;
+      letter-spacing:-.01em;
+      line-height:1;
+      color:var(--actual);
+      min-height:13px;            /* reserve space so the row never jumps */
+      opacity:0;
+      transform:translateY(-2px);
+      transition:opacity .28s ease, transform .28s ease;
+    }
+    .pnode .pval.show{ opacity:1; transform:none; }
     .pnode:hover .ring{ border-color:var(--blue); }
     .pnode.done .ring{ background:var(--green); border-color:var(--green); }
     .pnode.current .ring{ border-color:var(--blue); box-shadow:0 0 0 5px rgba(37,99,235,.12); }
@@ -551,6 +565,7 @@
     .pnode:focus-visible{ outline:3px solid rgba(37,99,235,.22); outline-offset:2px; }
 
     .lineholder{
+      position:relative;
       height:clamp(230px, 39dvh, 340px);
       min-height:230px;
       display:flex;
@@ -564,6 +579,35 @@
         #ffffff;
       padding:8px 0;
     }
+    /* Magnifier zoom controls — only visible when Estimate mode is off */
+    .zoomTools{
+      position:absolute;
+      top:12px;
+      right:14px;
+      display:none;
+      gap:8px;
+      z-index:5;
+    }
+    .layout.demoMode .zoomTools{ display:flex; }
+    .zbtn{
+      width:40px;
+      height:40px;
+      display:grid;
+      place-items:center;
+      border-radius:12px;
+      border:1px solid rgba(37,99,235,.28);
+      background:#ffffff;
+      color:var(--blue-dark);
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(15,23,42,.12);
+      transition:transform .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+    .zbtn:hover:not(:disabled){ transform:translateY(-1px); background:#eef2ff; box-shadow:0 10px 24px rgba(37,99,235,.18); }
+    .zbtn:active:not(:disabled){ transform:translateY(0); }
+    .zbtn:focus-visible{ outline:3px solid rgba(37,99,235,.28); outline-offset:2px; }
+    .zbtn:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none; }
+    .zbtn svg{ width:21px; height:21px; display:block; }
+    .layout.demoMode .legend .g{ display:none; }
     svg.nline{
       width:100%;
       height:100%;
@@ -576,9 +620,12 @@
       -webkit-user-select:none;
     }
     svg.nline.locked{ cursor:default; }
-    .nl-base{ stroke:var(--line); stroke-width:4.4; stroke-linecap:round; }
+    .nl-base{ stroke:var(--line); stroke-width:4.4; stroke-linecap:butt; }
+    .nl-arrow{ fill:var(--line); stroke:var(--line); stroke-width:1.4; stroke-linejoin:round; }
     .nl-tick{ stroke:#0f172a; stroke-width:4.2; stroke-linecap:round; }
     .nl-tick.minor{ stroke:#475569; stroke-width:3.1; opacity:1; }
+    .nl-tick.zoomMajor{ stroke:#0f172a; stroke-width:4.2; }
+    .nl-tick.zoomMinor{ stroke:#94a3b8; stroke-width:2.6; }
     .nl-mid{ stroke:var(--half); stroke-width:2.3; stroke-dasharray:5 5; }
     .nl-endlabel{
       font-family:var(--mono);
@@ -806,6 +853,12 @@
         <p class="panelHint">Use the number line to show rounding as choosing the closest place-value benchmark.</p>
 
         <div class="optionCard">
+          <p class="cardTitle">Mode</p>
+          <button class="tbtn" id="estimateToggle" type="button" aria-pressed="true">Estimate mode</button>
+          <p class="miniNote">On: students click to estimate, then reveal and zoom in. Off: the position is shown and you zoom in and out using the magnifier buttons on the number line.</p>
+        </div>
+
+        <div class="optionCard">
           <p class="cardTitle">Number</p>
           <div class="controlRow">
             <button class="tbtn" id="newBtn" type="button">New number</button>
@@ -861,6 +914,23 @@
 
             <div class="lineholder">
               <svg class="nline" id="nline" viewBox="0 0 1000 250" role="img" aria-label="Number line"></svg>
+              <div class="zoomTools" id="zoomTools" aria-label="Zoom controls">
+                <button class="zbtn" id="zoomOutBtn" type="button" title="Zoom out" aria-label="Zoom out">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                    <line x1="15.2" y1="15.2" x2="21" y2="21"></line>
+                    <line x1="7.5" y1="10.5" x2="13.5" y2="10.5"></line>
+                  </svg>
+                </button>
+                <button class="zbtn" id="zoomInBtn" type="button" title="Zoom in" aria-label="Zoom in">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                    <line x1="15.2" y1="15.2" x2="21" y2="21"></line>
+                    <line x1="7.5" y1="10.5" x2="13.5" y2="10.5"></line>
+                    <line x1="10.5" y1="7.5" x2="10.5" y2="13.5"></line>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div class="legend">
@@ -908,6 +978,20 @@
       let RIGHT = VBW - MARGIN, SPAN = RIGHT - MARGIN;
       const xpos = f => MARGIN + f * SPAN;
       const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+      /* The axis runs a little past the end ticks and is capped with arrowheads,
+         so it always reads as a continuous line rather than a closed interval.
+         The overhang is constant in screen space, so the arrows stay put while
+         the ticks/labels zoom between them. */
+      const AXIS_OVER = 26;   // px the axis extends past each end tick
+      const AXIS_AH   = 14;   // arrowhead length
+      const AXIS_AW   = 7.5;  // arrowhead half-width
+      function axisSVG(){
+        const lx = xpos(0) - AXIS_OVER, rx = xpos(1) + AXIS_OVER;
+        return `<line class="nl-base" x1="${lx}" y1="${BASE}" x2="${rx}" y2="${BASE}"/>`
+             + `<path class="nl-arrow" d="M ${lx-AXIS_AH} ${BASE} L ${lx} ${BASE-AXIS_AW} L ${lx} ${BASE+AXIS_AW} Z"/>`
+             + `<path class="nl-arrow" d="M ${rx+AXIS_AH} ${BASE} L ${rx} ${BASE-AXIS_AW} L ${rx} ${BASE+AXIS_AW} Z"/>`;
+      }
       const pow10 = n => Math.pow(10, n);
       const addCommas = s => s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
@@ -1001,6 +1085,7 @@
       let animating = false;
       let showMid = true;
       let showDigit = false;
+      let estimateMode = true;
 
       function parseDecimalInput(raw){
         let value = raw.trim();
@@ -1102,7 +1187,7 @@
           p += `<rect class="nl-hl" x="${Math.min(a,b)}" y="${BASE-18}" width="${Math.abs(b-a)}" height="36" rx="6"/>`;
         }
 
-        p += `<line class="nl-base" x1="${xpos(0)}" y1="${BASE}" x2="${xpos(1)}" y2="${BASE}"/>`;
+        p += axisSVG();
 
         cfg.ticks.forEach(t=>{
           if(t.f < -0.03 || t.f > 1.03) return;
@@ -1141,13 +1226,14 @@
           }
         }
 
-        svg.innerHTML = p;
+        svg.innerHTML = `<g class="scene">${p}</g>`;
       }
 
       function renderLine(){
         syncViewBox();
         const L = levels[level];
         const range = L.hi - L.lo;
+        const showActual = revealed || !estimateMode;
         const ticks = [];
         for(let i=0;i<=10;i++) ticks.push({f:i/10, minor:(i!==0 && i!==10 && i!==5)});
         const cfg = {
@@ -1155,75 +1241,161 @@
           left:  {f:0, t:fmt(L.lo, L.dpEnd)},
           right: {f:1, t:fmt(L.hi, L.dpEnd)},
           mid:   showMid ? {f:0.5, t:fmt(L.mid, L.dpMid)} : null,
-          guessF: guessFrac,
-          actual: revealed ? {f:(model.N-L.lo)/range, t:actualText()} : null,
-          hl:     revealed ? {from:0.5, to:(L.result===L.hi?1:0)} : null
+          guessF: estimateMode ? guessFrac : null,
+          actual: showActual ? {f:(model.N-L.lo)/range, t:actualText()} : null,
+          hl:     showActual ? {from:0.5, to:(L.result===L.hi?1:0)} : null
         };
         drawScene(cfg);
       }
 
       /* Seamless zoom: continuously magnify the partition we are diving into.
-         - The two ticks bracketing the next interval travel out to become the new
-           endpoints, so it reads as one zoom rather than a cut to a fresh line.
-         - The current end numbers slide outward and fade; the next ones grow in.
-         - The actual value is NOT carried along (it would give the next answer away);
-           the revealed marker just dissolves in place during the first moment. */
-      function drawZoomFrame(from, to, e){
-        const lo = from.lo + (to.lo - from.lo) * e;
-        const hi = from.hi + (to.hi - from.hi) * e;
-        const w  = hi - lo;
-        const fr = v => (v - lo) / w;
-        const TOP = BASE - 30, BOT = BASE + 30;   // tick band
-        const visible = f => f > -0.12 && f < 1.12;
+
+         The magnification is a true uniform (exponential) zoom about a fixed
+         point, so the target interval grows at a constant *perceived* rate
+         instead of accelerating near the end. The mapping value -> fraction is
+            M_e(v) = phi + (v - fstar) * (q0 * R^e)
+         where fstar is the one value that never moves on screen, R is the total
+         zoom factor (10x per step) and q0 = 1 / (width of the current interval).
+         At e=0 this reproduces the current line exactly; at e=1 the target
+         interval fills the line.
+
+         For smoothness, the scene is built ONCE when the zoom starts and only
+         element attributes are updated each frame — no per-frame re-parsing of
+         the SVG, which keeps it fluid even on low-powered devices.
+
+         The two ticks bracketing the neighbouring interval travel out (zoom in)
+         or in (zoom out) to become the new endpoints; end numbers cross-fade.
+         The actual-position marker is handled by markerMode: "track" keeps it
+         pinned to the value throughout (demonstration mode), "dissolve" fades a
+         just-revealed marker away early (estimate-mode zoom-in), and "hidden"
+         keeps it off so a zoom never gives the next answer away. */
+      function buildZoomDOM(from, to, markerMode){
+        const W0 = from.hi - from.lo;
+        const wt = to.hi - to.lo;
+        const zoomingIn = W0 > wt;
+        const larger = zoomingIn ? from : to;
+        const finer = zoomingIn ? to : from;
+        const largerWidth = larger.hi - larger.lo;
+        const finerWidth = finer.hi - finer.lo;
+
+        // Two grids are animated at the same time:
+        //  - coarseVals: the wider view split into ten chunks
+        //  - fineVals: the smaller-step partition marks repeated across the whole wider view
+        // This stops the "only one interval is partitioned" look during zooms.
+        const coarseVals = [];
+        for(let i=0;i<=10;i++) coarseVals.push(larger.lo + i*largerWidth/10);
+
+        const fineStep = finerWidth / 10;
+        const fineCount = Math.max(1, Math.round(largerWidth / fineStep));
+        const fineVals = [];
+        for(let i=0;i<=fineCount;i++) fineVals.push(larger.lo + i*fineStep);
+
+        const tick = kind => {
+          const isMinor = kind === "minor";
+          const h = isMinor ? 28 : 52;
+          const cls = isMinor ? "nl-tick zoomMinor" : "nl-tick zoomMajor";
+          return `<line class="${cls}" x1="0" y1="${BASE-h/2}" x2="0" y2="${BASE+h/2}" opacity="0"/>`;
+        };
+        const lbl = (id,val,dp) =>
+          `<text id="${id}" class="nl-endlabel" x="0" y="${BASE+48}" text-anchor="middle" opacity="0">${fmt(val,dp)}</text>`;
+
         let p = "";
+        p += `<rect id="zSpot" x="0" y="${BASE-26}" width="0" height="52" rx="9" fill="#dbeafe" opacity="0"/>`;
+        p += axisSVG();                                   // arrowed axis stays put
+        // Coarse interval boundaries are the main partition marks, so they stay
+        // slightly longer/darker while they fade. The finer repeated grid uses
+        // longer marks every ten steps and shorter grey marks for the smaller
+        // subdivisions.
+        p += `<g id="zCoarse">` + coarseVals.map(()=>tick("major")).join("") + `</g>`;
+        p += `<g id="zFine">` + fineVals.map((_,i)=>tick(i % 10 === 0 ? "major" : "minor")).join("") + `</g>`;
+        p += lbl("zLblFromLo", from.lo, from.dpEnd);
+        p += lbl("zLblFromHi", from.hi, from.dpEnd);
+        p += lbl("zLblToLo",   to.lo,   to.dpEnd);
+        p += lbl("zLblToHi",   to.hi,   to.dpEnd);
+        p += `<g id="zMarker" opacity="0">`
+           + `<line id="zMkStem" class="nl-actual-stem" x1="0" y1="${BASE}" x2="0" y2="${BASE-48}"/>`
+           + `<circle id="zMkTop" class="nl-actual-dot" cx="0" cy="${BASE-48}" r="7"/>`
+           + `<circle id="zMkBase" class="nl-actual-dot" cx="0" cy="${BASE}" r="4.4"/>`
+           + `<text id="zMkLabel" class="nl-actual-val" x="0" y="${BASE-63}" text-anchor="middle">${actualText()}</text>`
+           + `</g>`;
+        svg.innerHTML = `<g class="scene">${p}</g>`;
 
-        // expanding spotlight over the target partition (fades as it fills the line)
-        {
-          const a = xpos(fr(to.lo)), b = xpos(fr(to.hi));
-          const o = (1 - e) * 0.85;
-          p += `<rect x="${a}" y="${BASE-26}" width="${b-a}" height="52" rx="9" fill="#dbeafe" opacity="${o.toFixed(3)}"/>`;
+        const denom = wt - W0;
+        const fstar = Math.abs(denom) < 1e-9 ? from.lo : (wt*from.lo - W0*to.lo)/denom;
+        return {
+          from, to, larger, finer, zoomingIn,
+          R: W0/wt, q0: 1/W0,
+          fstar, phi: (fstar - from.lo)/W0,
+          markerMode: markerMode || "hidden",
+          spotLo: finer.lo, spotHi: finer.hi,
+          coarseVals, fineVals,
+          spot: $("zSpot"),
+          coarseTicks: $("zCoarse").children,
+          fineTicks: $("zFine").children,
+          lblFromLo:$("zLblFromLo"), lblFromHi:$("zLblFromHi"),
+          lblToLo:$("zLblToLo"),     lblToHi:$("zLblToHi"),
+          marker:$("zMarker"), markerStem:$("zMkStem"),
+          markerTop:$("zMkTop"), markerBase:$("zMkBase"), markerLabel:$("zMkLabel")
+        };
+      }
+
+      function updateZoomDOM(z, e){
+        const q = z.q0 * Math.pow(z.R, e);
+        const M = v => z.phi + (v - z.fstar) * q;        // value -> fraction
+        const vis = f => (f > -0.14 && f < 1.14) ? 1 : 0;
+
+        // spotlight over the finer interval; strongest when it is a tenth of the
+        // line, fading to nothing when it fills the line (works both directions)
+        const sa = xpos(M(z.spotLo)), sb = xpos(M(z.spotHi));
+        const wfFrac = M(z.spotHi) - M(z.spotLo);
+        const sop = 0.85 * Math.max(0, Math.min(1, (1 - wfFrac)/0.9));
+        z.spot.setAttribute("x", sa.toFixed(2));
+        z.spot.setAttribute("width", Math.max(0, sb - sa).toFixed(2));
+        z.spot.setAttribute("opacity", sop.toFixed(3));
+
+        // Coarse grid belongs to the wider view. Fine grid uses the smaller-step
+        // partitions repeated across the whole wider view. This means new partition
+        // marks fade in across the whole line while zooming in, and fade out across
+        // the whole line while zooming out.
+        const coarseOpacity = z.zoomingIn ? (1 - e) : e;
+        const fineOpacity = z.zoomingIn ? e : (1 - e);
+
+        for(let i=0;i<z.coarseTicks.length;i++){
+          const f = M(z.coarseVals[i]), x = xpos(f).toFixed(2), el = z.coarseTicks[i];
+          el.setAttribute("x1", x); el.setAttribute("x2", x);
+          el.setAttribute("opacity", (coarseOpacity*vis(f)).toFixed(3));
+        }
+        for(let i=0;i<z.fineTicks.length;i++){
+          const f = M(z.fineVals[i]), x = xpos(f).toFixed(2), el = z.fineTicks[i];
+          el.setAttribute("x1", x); el.setAttribute("x2", x);
+          el.setAttribute("opacity", (fineOpacity*vis(f)).toFixed(3));
         }
 
-        // base line
-        p += `<line class="nl-base" x1="${xpos(0)}" y1="${BASE}" x2="${xpos(1)}" y2="${BASE}"/>`;
+        const setLbl = (el, v, o) => {
+          el.setAttribute("x", xpos(M(v)).toFixed(2));
+          el.setAttribute("opacity", o.toFixed(3));
+        };
+        setLbl(z.lblFromLo, z.from.lo, 1-e);
+        setLbl(z.lblFromHi, z.from.hi, 1-e);
+        setLbl(z.lblToLo,   z.to.lo,   e);
+        setLbl(z.lblToHi,   z.to.hi,   e);
 
-        // current-level ticks fading out and spreading away
-        for(let i=0;i<=10;i++){
-          const f = fr(from.lo + i*(from.hi-from.lo)/10);
-          if(!visible(f)) continue;
-          const minor = (i!==0 && i!==10);
-          const h = minor ? 30 : 48;
-          p += `<line class="nl-tick ${minor?'minor':''}" x1="${xpos(f)}" y1="${BASE-h/2}" x2="${xpos(f)}" y2="${BASE+h/2}" opacity="${(1-e).toFixed(3)}"/>`;
-        }
-        // next-level ticks fading in and spreading to fill
-        for(let i=0;i<=10;i++){
-          const f = fr(to.lo + i*(to.hi-to.lo)/10);
-          if(!visible(f)) continue;
-          const minor = (i!==0 && i!==10);
-          const h = minor ? 30 : 48;
-          p += `<line class="nl-tick ${minor?'minor':''}" x1="${xpos(f)}" y1="${BASE-h/2}" x2="${xpos(f)}" y2="${BASE+h/2}" opacity="${e.toFixed(3)}"/>`;
-        }
-
-        const endLabel = (val, dp, f, o) =>
-          `<text class="nl-endlabel" x="${xpos(f)}" y="${BASE+48}" text-anchor="middle" opacity="${o.toFixed(3)}">${fmt(val,dp)}</text>`;
-        // current end numbers slide outward + fade
-        p += endLabel(from.lo, from.dpEnd, fr(from.lo), 1-e);
-        p += endLabel(from.hi, from.dpEnd, fr(from.hi), 1-e);
-        // next end numbers emerge from the slice + fade in
-        p += endLabel(to.lo, to.dpEnd, fr(to.lo), e);
-        p += endLabel(to.hi, to.dpEnd, fr(to.hi), e);
-
-        // dissolve the just-revealed marker / halfway in place (first third only)
-        if(e < 0.32){
-          const o = 1 - e/0.32;
-          const af = fr(model.N);
-          const x = xpos(af);
-          p += `<line class="nl-actual-stem" x1="${x}" y1="${BASE}" x2="${x}" y2="${BASE-48}" opacity="${o.toFixed(3)}"/>`;
-          p += `<circle class="nl-actual-dot" cx="${x}" cy="${BASE-48}" r="7" opacity="${o.toFixed(3)}"/>`;
-          p += `<circle class="nl-actual-dot" cx="${x}" cy="${BASE}" r="4.4" opacity="${o.toFixed(3)}"/>`;
-        }
-
-        svg.innerHTML = p;
+        // marker handling depends on the zoom's purpose:
+        //  - track   : keep it pinned to the value the whole time (demo mode)
+        //  - dissolve: fade the just-revealed marker away early (estimate zoom-in)
+        //  - hidden  : never show it (estimate zoom-out / teacher override)
+        let mo;
+        if(z.markerMode === "track")        mo = 1;
+        else if(z.markerMode === "dissolve") mo = e < 0.32 ? 1 - e/0.32 : 0;
+        else                                 mo = 0;
+        const mxRaw = xpos(M(model.N));
+        const mx = mxRaw.toFixed(2);
+        const labelX = clamp(mxRaw, MARGIN+44, RIGHT-44).toFixed(2);
+        z.markerStem.setAttribute("x1", mx); z.markerStem.setAttribute("x2", mx);
+        z.markerTop.setAttribute("cx", mx);
+        z.markerBase.setAttribute("cx", mx);
+        z.markerLabel.setAttribute("x", labelX);
+        z.marker.setAttribute("opacity", mo.toFixed(3));
       }
 
       function renderBigNum(){
@@ -1252,7 +1424,11 @@
           const b = document.createElement("button");
           b.type = "button";
           b.className = "pnode" + (i<level?" done":"") + (i===level?" current":"");
-          b.innerHTML = `<span class="ring"></span><span>${L.shortName}</span>`;
+          const showVal = (i < level) || (i===level && (revealed || !estimateMode));
+          const valTxt = showVal ? fmt(L.result, L.dpEnd) : "";
+          b.innerHTML = `<span class="ring"></span>`
+                      + `<span class="plabel">${L.shortName}</span>`
+                      + `<span class="pval${showVal?" show":""}">${valTxt}</span>`;
           b.title = "Jump to " + L.name;
           b.addEventListener("click", ()=>goToLevel(i,false));
           progress.appendChild(b);
@@ -1293,12 +1469,23 @@
       }
 
       function renderControls(){
-        const last = level===levels.length-1;
+        const last  = level===levels.length-1;
+        const first = level===0;
+        layoutEl.classList.toggle("demoMode", !estimateMode);
+
         if(animating){
           submitBtn.style.display = "none";
           nextBtn.style.display = "none";
           summaryBtn.style.display = "none";
-          prompt.textContent = "Zooming into the next interval…";
+          prompt.textContent = "Zooming…";
+        } else if(!estimateMode){
+          // Demonstration mode: the position is shown; navigate with magnifiers.
+          submitBtn.style.display = "none";
+          nextBtn.style.display = "none";
+          summaryBtn.style.display = last ? "" : "none";
+          prompt.textContent = last
+            ? `Showing where ${actualText()} sits — fully zoomed in. Use the − magnifier to zoom back out.`
+            : `Showing where ${actualText()} sits. Use the magnifiers to zoom in and out.`;
         } else {
           submitBtn.style.display = revealed ? "none" : "";
           submitBtn.disabled = guessFrac==null;
@@ -1314,15 +1501,19 @@
             prompt.textContent = `Compare your estimate with the actual position before zooming in.`;
           }
         }
-        svg.classList.toggle("locked", revealed || animating);
+        svg.classList.toggle("locked", revealed || animating || !estimateMode);
 
-        $("backBtn").disabled = animating || (level===0 && !revealed);
-        $("fwdBtn").disabled  = animating || level===levels.length-1;
+        $("zoomInBtn").disabled  = animating || last;
+        $("zoomOutBtn").disabled = animating || first;
+
+        $("backBtn").disabled = animating || (estimateMode ? (first && !revealed) : first);
+        $("fwdBtn").disabled  = animating || last;
         document.querySelectorAll(".tbtn.jump").forEach((b,i)=>{
           b.setAttribute("aria-current", i===level ? "true":"false");
         });
         $("midToggle").setAttribute("aria-pressed", showMid?"true":"false");
         $("digitToggle").setAttribute("aria-pressed", showDigit?"true":"false");
+        $("estimateToggle").setAttribute("aria-pressed", estimateMode?"true":"false");
       }
 
       function render(){
@@ -1342,7 +1533,7 @@
         return clamp((xView - MARGIN) / SPAN, 0, 1);
       }
       function placeFromEvent(e){
-        if(revealed || animating) return;
+        if(revealed || animating || !estimateMode) return;
         guessFrac = fracFromEvent(e);
         renderLine();
         renderControls();
@@ -1357,7 +1548,7 @@
       });
 
       function easeInOut(t){ return t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
-      function zoomTo(targetLevel, cb){
+      function zoomTo(targetLevel, markerMode, cb){
         const from = levels[level];
         const to = levels[targetLevel];
         const reduce = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -1367,11 +1558,12 @@
         digit.classList.remove("show");
         renderControls();
         syncViewBox();                 // freeze geometry for the whole flight
+        const z = buildZoomDOM(from, to, markerMode);
         const dur = 2000;
         const t0 = performance.now();
         function frame(now){
           const t = Math.min(1,(now-t0)/dur);
-          drawZoomFrame(from, to, easeInOut(t));
+          updateZoomDOM(z, easeInOut(t));
           if(t<1) requestAnimationFrame(frame);
           else { animating=false; cb(); }
         }
@@ -1381,8 +1573,12 @@
       function goToLevel(target, animate){
         if(animating) return;
         target = clamp(target,0,levels.length-1);
-        if(animate && target===level+1){
-          zoomTo(target, ()=>{
+        const dir = target - level;
+        if(animate && (dir===1 || dir===-1)){
+          const markerMode = !estimateMode ? "track"
+                           : (dir===1 && revealed) ? "dissolve"
+                           : "hidden";
+          zoomTo(target, markerMode, ()=>{
             level=target;
             guessFrac=null;
             revealed=false;
@@ -1399,8 +1595,19 @@
       nextBtn.addEventListener("click", ()=>goToLevel(level+1,true));
       $("fwdBtn").addEventListener("click", ()=>goToLevel(level+1,true));
       $("backBtn").addEventListener("click", ()=>{
-        if(revealed){ revealed=false; guessFrac=null; render(); }
-        else goToLevel(level-1,false);
+        if(animating) return;
+        if(estimateMode && revealed){ revealed=false; guessFrac=null; render(); }
+        else goToLevel(level-1, true);
+      });
+      $("zoomInBtn").addEventListener("click", ()=>goToLevel(level+1,true));
+      $("zoomOutBtn").addEventListener("click", ()=>goToLevel(level-1,true));
+      $("estimateToggle").addEventListener("click", ()=>{
+        if(animating) return;
+        estimateMode = !estimateMode;
+        guessFrac = null;
+        revealed = false;
+        summary.classList.remove("show");
+        render();
       });
 
       function buildSummary(){
