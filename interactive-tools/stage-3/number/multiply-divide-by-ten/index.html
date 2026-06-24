@@ -1,0 +1,1189 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Place Value: Multiply &amp; Divide by 10</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Schoolbell&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap');
+
+    :root {
+      --cell-width: 90px;
+      --cell-height: 90px;
+      --border-color: #444;
+      --label-color: #333;
+      --digit-color: #0066cc;
+      --decimal-color: #888;
+      --highlight-color: #fff8c2;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      padding-bottom: 64px; /* room for footer banner */
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.9rem;
+      line-height: 1.2;
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 16px 24px 30px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .back-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid #111;
+      background: #fff;
+      color: #111;
+      text-decoration: none;
+      font-weight: 700;
+      width: fit-content;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: transform 0.08s ease, box-shadow 0.12s ease;
+    }
+    .back-pill:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+    .back-pill img {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .dropdown {
+      position: relative;
+    }
+
+    .pill-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      min-width: 92px;
+      font-size: 0.98rem;
+      cursor: pointer;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #eef1f8;
+      color: #111;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
+    }
+
+    .pill-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    .pill-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .reset-pill {
+      background: #ffe7ea;
+      color: #8a1f2a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-width: 86px;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 220px;
+      background: #fff;
+      border: 1px solid #d6dbee;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+      padding: 8px;
+      z-index: 50;
+      display: none;
+    }
+
+    .dropdown-menu.open {
+      display: block;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #111;
+    }
+
+    .dropdown-item:hover {
+      background: #f3f6ff;
+    }
+
+    .top-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .top-row label {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    #numberInput {
+      min-width: 260px;
+      padding: 11px 14px;
+      font-size: 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #888;
+    }
+
+    .button-groups {
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      min-width: 78px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    #timesTenBtn, #timesHundredBtn, #timesThousandBtn {
+      background: #32b46c;
+      color: white;
+      box-shadow: 0 2px 6px rgba(50,180,108,0.5);
+    }
+
+    #divideTenBtn, #divideHundredBtn, #divideThousandBtn {
+      background: #f15757;
+      color: white;
+      box-shadow: 0 2px 6px rgba(241,87,87,0.5);
+    }
+
+    #resetBtnRow {
+      display: none !important;
+    }
+
+    #errorMessage {
+      margin-top: 4px;
+      color: #d62828;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .view-container {
+      margin-top: 18px;
+      border-radius: 10px;
+      border: 1px solid #d3d8ea;
+      background: #f9faff;
+      padding: 14px 12px 16px;
+      overflow-x: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .pv-grid-wrapper {
+      min-height: 220px;
+      position: relative;
+      display: block;
+      text-align: center;
+    }
+
+    .pv-placeholder {
+      text-align: center;
+      color: #777;
+      padding: 30px 10px;
+      font-style: italic;
+    }
+
+    .pv-grid {
+      display: inline-block;
+      border-collapse: collapse;
+      white-space: nowrap;
+    }
+
+    .pv-row { display: flex; }
+
+    .pv-cell {
+      width: var(--cell-width);
+      height: var(--cell-height);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .pv-cell.decimal {
+      width: 28px;
+      min-width: 28px;
+      background: #f0f0f0;
+      border-left: none;
+      border-right: none;
+    }
+
+    .pv-labels .pv-cell {
+      height: 130px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      border-bottom: 0;
+      font-size: 0.75rem;
+      color: var(--label-color);
+      padding: 0 2px;
+      text-align: center;
+      overflow: visible;
+    }
+
+    .pv-label-text {
+      display: inline-block;
+      transform: rotate(-90deg);
+      transform-origin: center center;
+      white-space: nowrap;
+    }
+
+    .pv-digits-row { display: flex; align-items: stretch; }
+    .pv-digits-left, .pv-digits-right { display: flex; }
+
+    .pv-digits-row .pv-cell {
+      border-top: 0;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--digit-color);
+      overflow: visible;
+      position: relative;
+      background: #ffffff;
+    }
+
+    .pv-digits-row .pv-cell.decimal {
+      font-size: 2.2rem;
+      color: var(--decimal-color);
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .digit-span { display: inline-block; position: relative; z-index: 2; }
+
+    .digit-slide-left-1 { animation: digitSlideLeft1 1s ease-out forwards; }
+    .digit-slide-right-1 { animation: digitSlideRight1 1s ease-out forwards; }
+    .digit-slide-left-2 { animation: digitSlideLeft2 1s ease-out forwards; }
+    .digit-slide-right-2 { animation: digitSlideRight2 1s ease-out forwards; }
+    .digit-slide-left-3 { animation: digitSlideLeft3 1s ease-out forwards; }
+    .digit-slide-right-3 { animation: digitSlideRight3 1s ease-out forwards; }
+
+    @keyframes digitSlideLeft1 { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--cell-width))); } }
+    @keyframes digitSlideRight1 { from { transform: translateX(0); } to { transform: translateX(var(--cell-width)); } }
+    @keyframes digitSlideLeft2 { from { transform: translateX(0); } to { transform: translateX(calc(-2 * var(--cell-width))); } }
+    @keyframes digitSlideRight2 { from { transform: translateX(0); } to { transform: translateX(calc(2 * var(--cell-width))); } }
+    @keyframes digitSlideLeft3 { from { transform: translateX(0); } to { transform: translateX(calc(-3 * var(--cell-width))); } }
+    @keyframes digitSlideRight3 { from { transform: translateX(0); } to { transform: translateX(calc(3 * var(--cell-width))); } }
+
+    .pv-cell.highlight { animation: cellHighlight 0.6s ease-out; }
+    @keyframes cellHighlight {
+      0%   { background-color: var(--highlight-color); }
+      100% { background-color: #ffffff; }
+    }
+
+    #sciView { text-align: center; padding: 20px 10px 12px; }
+    #sciView h2 { margin: 0 0 10px; font-size: 1.2rem; color: #333; }
+    #sciNumber { font-size: 1.9rem; font-weight: 700; color: #0066cc; }
+    #sciStandard { margin-top: 8px; font-size: 1rem; color: #555; }
+
+    .words-row { margin-top: 16px; display: flex; align-items: flex-start; gap: 10px; }
+
+    #wordsBtn {
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      background: #ffd66b;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    #wordsBtn:disabled { opacity: 0.5; cursor: default; }
+
+    #wordsBox {
+      flex: 1;
+      min-height: 40px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px dashed #c5c8dd;
+      background: #fffdf4;
+      font-size: 1rem;
+      color: #444;
+    }
+
+    .expression-row { margin-top: 14px; }
+
+    #expressionBox {
+      width: 100%;
+      min-height: 40px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d3d8ea;
+      background: #ffffff;
+      font-size: 4.6rem;
+      font-weight: 400;
+      text-align: center;
+      color: #174d45;
+      font-family: "Kalam","Gloria Hallelujah","Patrick Hand","Schoolbell","Shadows Into Light",sans-serif;
+    }
+
+    .equivalence-row { margin-top: 10px; }
+
+    #equivalenceBox {
+      width: 100%;
+      min-height: 32px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px dashed #e1c8ff;
+      background: #faf5ff;
+      font-size: 1rem;
+      color: #4b2c7a;
+      font-style: italic;
+    }
+
+    .mmt-footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ffffff;
+      border-top: 1px solid rgba(0,0,0,0.18);
+      text-align: center;
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      color: #333;
+      box-shadow: 0 -6px 16px rgba(0,0,0,0.06);
+      z-index: 999;
+    }
+    .mmt-footer a {
+      font-weight: 800;
+      color: #111;
+      text-decoration: underline;
+    }
+    .mmt-footer a:hover {
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      :root { --cell-width: 70px; --cell-height: 70px; }
+      .pv-digits-row .pv-cell { font-size: 1.6rem; }
+      h1 { font-size: 1.6rem; }
+      #expressionBox { font-size: 3.2rem; }
+      body { padding-bottom: 72px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="app-container">
+      <div class="header-bar">
+        <div class="header-left">
+          <a class="back-pill" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
+            <img src="../../../../assets/mmt.png" alt="MMT logo" />
+            <span>Back to Mills Maths Tools</span>
+          </a>
+          <h1>Place Value: Multiply &amp; Divide by 10</h1>
+        </div>
+
+        <div class="header-right">
+          <div class="dropdown">
+            <button id="toolsBtn" class="pill-btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Tools <span aria-hidden="true">▼</span>
+            </button>
+
+            <div id="toolsMenu" class="dropdown-menu" role="menu" aria-label="Tools menu">
+              <button class="dropdown-item" type="button" role="menuitem" id="toolClassFlash">
+                Class flash card
+              </button>
+              <button class="dropdown-item" type="button" role="menuitem" id="toolStudentQuiz">
+                Student Quiz
+              </button>
+
+              <!-- NEW: worksheet generator -->
+              <button class="dropdown-item" type="button" role="menuitem" id="toolWorksheet">
+                Worksheet generator
+              </button>
+            </div>
+          </div>
+
+          <button id="resetTopBtn" class="pill-btn reset-pill" type="button">Reset</button>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <label for="numberInput" id="numberInputLabel">Enter a positive number:</label>
+        <input
+          id="numberInput"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="e.g. 523.146 or 4.3 × 10^-5"
+        />
+
+        <div class="button-groups">
+          <div class="button-row">
+            <button id="timesTenBtn" type="button">&times; 10</button>
+            <button id="timesHundredBtn" type="button">&times; 100</button>
+            <button id="timesThousandBtn" type="button">&times; 1000</button>
+          </div>
+          <div class="button-row">
+            <button id="divideTenBtn" type="button">&divide; 10</button>
+            <button id="divideHundredBtn" type="button">&divide; 100</button>
+            <button id="divideThousandBtn" type="button">&divide; 1000</button>
+          </div>
+        </div>
+
+        <button id="resetBtnRow" type="button">Reset</button>
+      </div>
+
+      <div id="errorMessage" role="alert" aria-live="assertive">Invalid input</div>
+
+      <div class="view-container" aria-live="polite">
+        <div id="placeValueView" class="pv-grid-wrapper">
+          <div class="pv-placeholder">Enter a number above to see its digits in the place-value grid.</div>
+        </div>
+
+        <div id="sciView" class="hidden">
+          <h2>Scientific notation view</h2>
+          <div id="sciNumber"></div>
+          <div id="sciStandard"></div>
+        </div>
+      </div>
+
+      <div class="words-row">
+        <button id="wordsBtn" type="button">In words</button>
+        <div id="wordsBox" class="hidden" aria-live="polite"></div>
+      </div>
+
+      <div class="expression-row">
+        <div id="expressionBox" class="hidden" aria-live="polite"></div>
+      </div>
+
+      <div class="equivalence-row">
+        <div id="equivalenceBox" class="hidden" aria-live="polite"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="mmt-footer">
+    This tool and more can be found at
+    <a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
+  </div>
+
+  <script>
+    const DEFAULT_VALUE = 1;
+
+    const positivePlaces = [
+      "trillions","hundred-billions","ten-billions","billions","hundred-millions",
+      "ten-millions","millions","hundred-thousands","ten-thousands","thousands",
+      "hundreds","tens","ones"
+    ];
+
+    const negativePlaces = [
+      "tenths","hundredths","thousandths","ten-thousandths","hundred-thousandths","millionths"
+    ];
+
+    const MAX_LEFT_DIGITS  = positivePlaces.length;
+    const MAX_RIGHT_DIGITS = negativePlaces.length;
+    const MAX_INT_VALUE    = Math.pow(10, MAX_LEFT_DIGITS);
+    const MIN_POS_VALUE    = Math.pow(10, -MAX_RIGHT_DIGITS);
+
+    const inputEl        = document.getElementById("numberInput");
+    const errorEl        = document.getElementById("errorMessage");
+    const placeValueView = document.getElementById("placeValueView");
+    const sciView        = document.getElementById("sciView");
+    const sciNumberEl    = document.getElementById("sciNumber");
+    const sciStandardEl  = document.getElementById("sciStandard");
+    const viewContainer  = document.querySelector(".view-container");
+
+    const timesTenBtn       = document.getElementById("timesTenBtn");
+    const divideTenBtn      = document.getElementById("divideTenBtn");
+    const timesHundredBtn   = document.getElementById("timesHundredBtn");
+    const divideHundredBtn  = document.getElementById("divideHundredBtn");
+    const timesThousandBtn  = document.getElementById("timesThousandBtn");
+    const divideThousandBtn = document.getElementById("divideThousandBtn");
+
+    const resetTopBtn       = document.getElementById("resetTopBtn");
+    const wordsBtn          = document.getElementById("wordsBtn");
+    const wordsBox          = document.getElementById("wordsBox");
+    const expressionBox     = document.getElementById("expressionBox");
+    const equivalenceBox    = document.getElementById("equivalenceBox");
+
+    const toolsBtn         = document.getElementById("toolsBtn");
+    const toolsMenu        = document.getElementById("toolsMenu");
+    const toolClassFlash   = document.getElementById("toolClassFlash");
+    const toolStudentQuiz  = document.getElementById("toolStudentQuiz");
+
+    // NEW
+    const toolWorksheet    = document.getElementById("toolWorksheet");
+
+    let currentValue  = null;
+    let originalValue = null;
+    let currentMode   = null;
+
+    function clearViews() {
+      placeValueView.innerHTML =
+        '<div class="pv-placeholder">Enter a number above to see its digits in the place-value grid.</div>';
+      sciView.classList.add("hidden");
+      placeValueView.classList.remove("hidden");
+      currentMode = null;
+    }
+
+    function setError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = "block";
+    }
+
+    function clearError() {
+      errorEl.textContent = "";
+      errorEl.style.display = "none";
+    }
+
+    function normalizeValue(v) {
+      if (!isFinite(v)) return v;
+      const INT_EPS = 1e-12;
+      const nearestInt = Math.round(v);
+      if (nearestInt !== 0 && Math.abs(v - nearestInt) < INT_EPS) return nearestInt;
+      return v;
+    }
+
+    function parseInput(raw) {
+      let s = (raw || "").replace(/,/g, "").trim();
+      s = s.replace(/\u2212/g, "-");
+      s = s.replace(/\s+/g, "");
+
+      if (s === "") return { status: "empty" };
+      if (s.startsWith(".")) s = "0" + s;
+      if (s === "." || /^\d+\.$/.test(s)) return { status: "partial" };
+      if (/^-/.test(s)) return { status: "invalid" };
+
+      const sciPattern =
+        /^(\d*\.?\d+)\s*(?:[eE]\s*([+\-]?\d+)|(?:[xX*×]\s*10\^?\s*([+\-]?\d+)))$/;
+      const sciMatch = s.match(sciPattern);
+
+      if (sciMatch) {
+        const a = parseFloat(sciMatch[1]);
+        const n = parseInt(sciMatch[2] || sciMatch[3], 10);
+        if (!isFinite(a) || !isFinite(n) || a <= 0) return { status: "invalid" };
+        const mantissa = parseFloat(a.toFixed(1));
+        let value = mantissa * Math.pow(10, n);
+        value = normalizeValue(value);
+        return { status: "ok", value, fromSci: true, mantissa, exponent: n };
+      }
+
+      let num = Number(s);
+      if (!isFinite(num) || num <= 0) return { status: "invalid" };
+      num = normalizeValue(num);
+      return { status: "ok", value: num, fromSci: false };
+    }
+
+    function formatStandard(value, options = {}) {
+      const { forGrid = false, withSpaces = false } = options;
+
+      let s;
+      if (forGrid) {
+        s = value.toFixed(MAX_RIGHT_DIGITS);
+        s = s.replace(/\.?0+$/, "");
+      } else {
+        s = value.toPrecision(15);
+        if (s.includes("e") || s.includes("E")) s = Number(s).toString();
+        if (s.includes(".")) s = s.replace(/\.?0+$/, "");
+      }
+
+      if (s === "") s = "0";
+      let [intPart, fracPart = ""] = s.split(".");
+      intPart = intPart.replace(/^0+/, "") || "0";
+
+      if (withSpaces) {
+        intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+      }
+
+      return fracPart ? `${intPart}.${fracPart}` : intPart;
+    }
+
+    function getDigitInfoForGrid(value) {
+      let s = value.toFixed(MAX_RIGHT_DIGITS);
+      if (!s.includes(".")) s += ".";
+      let [intPart, fracPart] = s.split(".");
+      intPart = intPart.replace(/^0+/, "") || "0";
+      if (!fracPart) fracPart = "";
+      if (fracPart.length < MAX_RIGHT_DIGITS) fracPart = fracPart.padEnd(MAX_RIGHT_DIGITS, "0");
+      else if (fracPart.length > MAX_RIGHT_DIGITS) fracPart = fracPart.slice(0, MAX_RIGHT_DIGITS);
+      return { leftDigits: intPart.split(""), rightDigits: fracPart.split("") };
+    }
+
+    function isInPlaceValueRange(value) {
+      if (value >= MAX_INT_VALUE) return false;
+      if (value < MIN_POS_VALUE) return false;
+      return true;
+    }
+
+    function toScientific(value) {
+      const expStr = value.toExponential(1);
+      const m = expStr.match(/^(\d+(?:\.\d)?)e([+\-]?\d+)$/i);
+      if (!m) return { mantissa: value, exponent: 0 };
+      const mantissa = parseFloat(m[1]);
+      const exponent = parseInt(m[2], 10);
+      return { mantissa: parseFloat(mantissa.toFixed(1)), exponent };
+    }
+
+    function sciToHtml(sci) {
+      const mantStr = sci.mantissa.toFixed(1).replace(/\.0$/, "");
+      return `${mantStr} &times; 10<sup>${sci.exponent}</sup>`;
+    }
+
+    function sciToText(sci) {
+      const mantStr = sci.mantissa.toFixed(1).replace(/\.0$/, "");
+      return `${mantStr} × 10^${sci.exponent}`;
+    }
+
+    function toggleButtons(enabled) {
+      timesTenBtn.disabled       = !enabled;
+      divideTenBtn.disabled      = !enabled;
+      timesHundredBtn.disabled   = !enabled;
+      divideHundredBtn.disabled  = !enabled;
+      timesThousandBtn.disabled  = !enabled;
+      divideThousandBtn.disabled = !enabled;
+      resetTopBtn.disabled       = !enabled;
+      wordsBtn.disabled          = !enabled;
+    }
+
+    function centerDecimal() {
+      const decimalCell = placeValueView.querySelector(".pv-digits-row .pv-cell.decimal");
+      if (!decimalCell) return;
+      const left = decimalCell.offsetLeft;
+      const center = left + decimalCell.offsetWidth / 2;
+      const target = center - viewContainer.clientWidth / 2;
+      viewContainer.scrollLeft = Math.max(0, target);
+    }
+
+    function renderPlaceValueGrid(value) {
+      const { leftDigits, rightDigits } = getDigitInfoForGrid(value);
+      const leftCells  = new Array(positivePlaces.length).fill("");
+      const rightCells = new Array(negativePlaces.length).fill("");
+
+      for (let i = 0; i < leftDigits.length; i++) {
+        const targetIndex = leftCells.length - 1 - i;
+        if (targetIndex < 0) break;
+        leftCells[targetIndex] = leftDigits[leftDigits.length - 1 - i];
+      }
+
+      for (let i = 0; i < Math.min(rightDigits.length, rightCells.length); i++) {
+        rightCells[i] = rightDigits[i];
+      }
+
+      let html = '<div class="pv-grid">';
+      html += '<div class="pv-row pv-labels">';
+      for (const name of positivePlaces) html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
+      html += '<div class="pv-cell decimal"></div>';
+      for (const name of negativePlaces) html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
+      html += '</div>';
+
+      html += '<div class="pv-digits-row">';
+      html += '<div class="pv-digits-left">';
+      for (const d of leftCells) html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
+      html += '</div>';
+
+      html += '<div class="pv-cell decimal">.</div>';
+
+      html += '<div class="pv-digits-right">';
+      for (const d of rightCells) html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
+      html += '</div></div></div>';
+
+      placeValueView.innerHTML = html;
+      placeValueView.classList.remove("hidden");
+      sciView.classList.add("hidden");
+      currentMode = "grid";
+      centerDecimal();
+    }
+
+    function renderScientificView(value) {
+      const sci = toScientific(value);
+      sciNumberEl.innerHTML     = sciToHtml(sci);
+      sciStandardEl.textContent = "Standard form: " + value.toPrecision(6);
+      sciView.classList.remove("hidden");
+      placeValueView.classList.add("hidden");
+      currentMode = "sci";
+      viewContainer.scrollLeft = 0;
+    }
+
+    function animateSlide(direction, steps, callback) {
+      const spans = placeValueView.querySelectorAll(".pv-digits-row .digit-span");
+      if (!spans.length || steps <= 0) {
+        if (typeof callback === "function") callback();
+        return;
+      }
+      const cls = `digit-slide-${direction}-${steps}`;
+      spans.forEach(s => s.classList.add(cls));
+      setTimeout(() => {
+        spans.forEach(s => s.classList.remove(
+          "digit-slide-left-1","digit-slide-right-1",
+          "digit-slide-left-2","digit-slide-right-2",
+          "digit-slide-left-3","digit-slide-right-3"
+        ));
+        if (typeof callback === "function") callback();
+      }, 1000);
+    }
+
+    function groupWithSpaces(digits) {
+      return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    function powerOfTenString(n) {
+      if (n === 0) return "1";
+      return groupWithSpaces("1" + "0".repeat(n));
+    }
+
+    function decimalFromExponent(n) {
+      const k = Math.abs(n);
+      if (k === 0) return "1";
+      return "0." + "0".repeat(k - 1) + "1";
+    }
+
+    function hideEquivalenceBox() {
+      equivalenceBox.textContent = "";
+      equivalenceBox.classList.add("hidden");
+    }
+
+    function inferExponentFromValues() {
+      if (originalValue == null || currentValue == null) return 0;
+      const ratio = currentValue / originalValue;
+      if (!isFinite(ratio) || ratio <= 0) return 0;
+      const nApprox = Math.round(Math.log10(ratio));
+      const expected = Math.pow(10, nApprox);
+      if (!isFinite(expected) || expected === 0) return 0;
+      const relErr = Math.abs(ratio - expected) / expected;
+      return relErr < 1e-10 ? nApprox : 0;
+    }
+
+    function updateEquivalenceBox() {
+      if (originalValue == null || currentValue == null) { hideEquivalenceBox(); return; }
+      const n = inferExponentFromValues();
+      if (n === 0) { hideEquivalenceBox(); return; }
+
+      const inRangeOrig = isInPlaceValueRange(originalValue);
+      const inRangeCurr = isInPlaceValueRange(currentValue);
+      if (!inRangeOrig || !inRangeCurr) { hideEquivalenceBox(); return; }
+
+      const decStr  = decimalFromExponent(n);
+      const origStr = formatStandard(originalValue, { forGrid: true, withSpaces: false });
+      const currStr = formatStandard(currentValue, { forGrid: true, withSpaces: false });
+
+      let equation = (n > 0)
+        ? `${origStr} ÷ ${decStr} = ${currStr}`
+        : `${origStr} × ${decStr} = ${currStr}`;
+
+      equivalenceBox.textContent = `Did you know ${equation}`;
+      equivalenceBox.classList.remove("hidden");
+    }
+
+    function updateExpressionBox() {
+      if (originalValue == null || currentValue == null) {
+        expressionBox.innerHTML = "";
+        expressionBox.classList.add("hidden");
+        hideEquivalenceBox();
+        return;
+      }
+
+      const inRangeOrig = isInPlaceValueRange(originalValue);
+      const inRangeCurr = isInPlaceValueRange(currentValue);
+
+      const origStr = inRangeOrig
+        ? formatStandard(originalValue, { forGrid: true, withSpaces: true })
+        : sciToHtml(toScientific(originalValue));
+
+      const currStr = inRangeCurr
+        ? formatStandard(currentValue, { forGrid: true, withSpaces: true })
+        : sciToHtml(toScientific(currentValue));
+
+      const n = inferExponentFromValues();
+
+      let opText;
+      if (n === 0) {
+        opText = "&times; 1";
+      } else if (n > 0) {
+        opText = inRangeOrig && inRangeCurr
+          ? "&times; " + powerOfTenString(n)
+          : `&times; 10<sup>${n}</sup>`;
+      } else {
+        const k = Math.abs(n);
+        opText = inRangeOrig && inRangeCurr
+          ? "&divide; " + powerOfTenString(k)
+          : `&divide; 10<sup>${k}</sup>`;
+      }
+
+      expressionBox.innerHTML = `${origStr} ${opText} = ${currStr}`;
+      expressionBox.classList.remove("hidden");
+      updateEquivalenceBox();
+    }
+
+    function updateFromInput(isUserTyping = false) {
+      const raw = inputEl.value;
+      const parsed = parseInput(raw);
+
+      wordsBox.classList.add("hidden");
+      wordsBox.textContent = "";
+
+      if (parsed.status === "empty" || parsed.status === "partial") {
+        currentValue = null;
+        originalValue = null;
+        toggleButtons(false);
+        clearError();
+        clearViews();
+        updateExpressionBox();
+        return;
+      }
+
+      if (parsed.status === "invalid") {
+        currentValue = null;
+        originalValue = null;
+        toggleButtons(false);
+        setError("Invalid input");
+        clearViews();
+        updateExpressionBox();
+        return;
+      }
+
+      clearError();
+      const value = normalizeValue(parsed.value);
+      currentValue = value;
+      if (isUserTyping) originalValue = value;
+
+      if (isInPlaceValueRange(value)) {
+        renderPlaceValueGrid(value);
+      } else {
+        const sci = toScientific(value);
+        if (!isUserTyping) inputEl.value = sciToText(sci);
+        renderScientificView(value);
+      }
+
+      if (!isUserTyping && isInPlaceValueRange(value)) {
+        inputEl.value = formatStandard(value, { forGrid: true, withSpaces: true });
+      }
+
+      toggleButtons(true);
+      updateExpressionBox();
+    }
+
+    const ones = [
+      "", "one","two","three","four","five","six","seven","eight","nine",
+      "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen",
+      "seventeen","eighteen","nineteen"
+    ];
+    const tensWords = [
+      "", "", "twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"
+    ];
+    const scalesForWords = [
+      "", "thousand","million","billion","trillion","quadrillion","quintillion",
+      "sextillion","septillion","octillion","nonillion","decillion","undecillion",
+      "duodecillion","tredecillion","quattuordecillion","quindecillion",
+      "sexdecillion","septendecillion","octodecillion","novemdecillion",
+      "vigintillion"
+    ];
+
+    function chunkToWords(n) {
+      let words = "";
+      const hundreds = Math.floor(n / 100);
+      const rest = n % 100;
+      if (hundreds > 0) {
+        words += ones[hundreds] + " hundred";
+        if (rest > 0) words += " ";
+      }
+      if (rest > 0) {
+        if (rest < 20) words += ones[rest];
+        else {
+          const t = Math.floor(rest / 10);
+          const u = rest % 10;
+          words += tensWords[t];
+          if (u > 0) words += "-" + ones[u];
+        }
+      }
+      return words;
+    }
+
+    function intToWords(num) {
+      if (num === 0) return "zero";
+      let s = String(num).replace(/^0+/, "") || "0";
+      if (s === "0") return "zero";
+
+      const chunks = [];
+      for (let i = s.length; i > 0; i -= 3) {
+        const start = Math.max(0, i - 3);
+        chunks.push(parseInt(s.slice(start, i), 10));
+      }
+      const parts = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        if (chunk === 0) continue;
+        let w = chunkToWords(chunk);
+        if (i > 0 && scalesForWords[i]) w += " " + scalesForWords[i];
+        parts.unshift(w);
+      }
+      return parts.join(" ");
+    }
+
+    function negativePlaceNameForWords(index) {
+      if (index <= negativePlaces.length) return negativePlaces[index - 1];
+      return `ten to the power of negative ${intToWords(index)}`;
+    }
+
+    function decimalToWords(value) {
+      let s = formatStandard(value, { forGrid: true, withSpaces: false });
+      if (!s.includes(".")) return intToWords(parseInt(s, 10));
+
+      let [intStr, fracStr] = s.split(".");
+      const intVal = parseInt(intStr, 10);
+
+      let lastNonZero = -1;
+      for (let i = fracStr.length - 1; i >= 0; i--) {
+        if (fracStr[i] !== "0") { lastNonZero = i; break; }
+      }
+      if (lastNonZero === -1) return intToWords(intVal);
+
+      const sigFrac = fracStr.slice(0, lastNonZero + 1);
+      const fracIntVal = parseInt(sigFrac, 10);
+      const placeName = negativePlaceNameForWords(lastNonZero + 1);
+
+      const intPartText = intToWords(intVal);
+      const fracText = intToWords(fracIntVal);
+
+      if (intVal === 0) return `${fracText} ${placeName}`;
+      return `${intPartText} and ${fracText} ${placeName}`;
+    }
+
+    function exponentToWords(n) {
+      const abs = Math.abs(n);
+      const base = intToWords(abs);
+      return n < 0 ? "negative " + base : base;
+    }
+
+    function mantissaToWords(m) {
+      const s = m.toFixed(1).replace(/\.0$/, "");
+      if (!s.includes(".")) return intToWords(parseInt(s, 10));
+      const [i, f] = s.split(".");
+      let result = intToWords(parseInt(i, 10)) + " point";
+      for (const ch of f) result += " " + ones[parseInt(ch, 10)];
+      return result;
+    }
+
+    function sciValueToWords(value) {
+      const sci = toScientific(value);
+      const m = sci.mantissa;
+      const e = sci.exponent;
+      if (Math.abs(e) > 100) return "";
+      if (m === 1 && e === 100)  return "one googol";
+      if (m === 1 && e === -100) return "one googolth";
+      return `${mantissaToWords(m)} times ten to the power of ${exponentToWords(e)}`;
+    }
+
+    function updateWordsBox() {
+      wordsBox.classList.add("hidden");
+      wordsBox.textContent = "";
+      if (currentValue == null) return;
+
+      const text = isInPlaceValueRange(currentValue)
+        ? decimalToWords(currentValue)
+        : sciValueToWords(currentValue);
+
+      if (!text) return;
+      wordsBox.textContent = text;
+      wordsBox.classList.remove("hidden");
+    }
+
+    function applyPowerOfTen(steps, isMultiply, doneCallback) {
+      if (currentValue == null) {
+        if (typeof doneCallback === "function") doneCallback();
+        return;
+      }
+
+      const direction = isMultiply ? "left" : "right";
+      const factor = Math.pow(10, steps);
+
+      let newValue = isMultiply ? currentValue * factor : currentValue / factor;
+      newValue = normalizeValue(newValue);
+
+      if (!isFinite(newValue) || newValue <= 0) {
+        if (typeof doneCallback === "function") doneCallback();
+        return;
+      }
+
+      const renderNewValue = () => {
+        currentValue = newValue;
+
+        if (isInPlaceValueRange(newValue)) {
+          inputEl.value = formatStandard(newValue, { forGrid: true, withSpaces: true });
+          renderPlaceValueGrid(newValue);
+        } else {
+          const sci = toScientific(newValue);
+          inputEl.value = sciToText(sci);
+          renderScientificView(newValue);
+        }
+
+        wordsBox.classList.add("hidden");
+        wordsBox.textContent = "";
+        updateExpressionBox();
+        if (typeof doneCallback === "function") doneCallback();
+      };
+
+      if (currentMode === "grid") {
+        animateSlide(direction, steps, renderNewValue);
+      } else {
+        renderNewValue();
+      }
+    }
+
+    function closeToolsMenu() {
+      toolsMenu.classList.remove("open");
+      toolsBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleToolsMenu() {
+      const isOpen = toolsMenu.classList.toggle("open");
+      toolsBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    }
+
+    toolsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleToolsMenu();
+    });
+
+    document.addEventListener("click", () => closeToolsMenu());
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeToolsMenu(); });
+
+    toolClassFlash.addEventListener("click", () => { window.location.href = "flash-cards.html"; });
+    toolStudentQuiz.addEventListener("click", () => { window.location.href = "student-flash.html"; });
+
+    // NEW: worksheet generator navigation
+    toolWorksheet.addEventListener("click", () => { window.location.href = "../../../../worksheet-creators/stage-3/number/multiply-divide-by-ten.html"; });
+
+    inputEl.addEventListener("input", () => updateFromInput(true));
+
+    timesTenBtn.addEventListener("click",      () => applyPowerOfTen(1, true));
+    divideTenBtn.addEventListener("click",     () => applyPowerOfTen(1, false));
+    timesHundredBtn.addEventListener("click",  () => applyPowerOfTen(2, true));
+    divideHundredBtn.addEventListener("click", () => applyPowerOfTen(2, false));
+    timesThousandBtn.addEventListener("click", () => applyPowerOfTen(3, true));
+    divideThousandBtn.addEventListener("click",() => applyPowerOfTen(3, false));
+
+    function setToDefaultState() {
+      clearError();
+      wordsBox.classList.add("hidden");
+      wordsBox.textContent = "";
+
+      currentValue  = DEFAULT_VALUE;
+      originalValue = DEFAULT_VALUE;
+
+      inputEl.value = formatStandard(DEFAULT_VALUE, { forGrid: true, withSpaces: true });
+
+      if (isInPlaceValueRange(DEFAULT_VALUE)) {
+        renderPlaceValueGrid(DEFAULT_VALUE);
+      } else {
+        renderScientificView(DEFAULT_VALUE);
+      }
+
+      toggleButtons(true);
+      updateExpressionBox();
+    }
+
+    resetTopBtn.addEventListener("click", () => {
+      setToDefaultState();
+      closeToolsMenu();
+    });
+
+    wordsBtn.addEventListener("click", updateWordsBox);
+
+    /* ---------- init: default load is 1 ---------- */
+    setToDefaultState();
+  </script>
+</body>
+</html>

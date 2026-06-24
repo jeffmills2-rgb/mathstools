@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Partition Splitter – Student Flash Cards</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --panel-bg: #ffffff;
+    --accent: #2563eb;
+    --accent-soft: #e0ebff;
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    --correct-bg: #dcfce7;
+    --correct-border: #16a34a;
+    --incorrect-bg: #fee2e2;
+    --incorrect-border: #b91c1c;
+    --content-max-width: 1100px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+    color: var(--text-main);
+  }
+
+  .app {
+    max-width: 1280px;
+    margin: 0 auto;
+    background: var(--panel-bg);
+    border-radius: 20px;
+    padding: 24px 28px 32px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  }
+
+  /* HEADER -------------------------------------------------------- */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  #backBtn {
+    border: none;
+    background: #e5e7eb;
+    color: #111827;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+
+  .mode-label {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  /* LEVEL TABS ---------------------------------------------------- */
+  .level-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .level-btn {
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    background: #f9fafb;
+    color: #374151;
+    cursor: pointer;
+  }
+
+  .level-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+
+  /* QUESTION META ------------------------------------------------- */
+  .meta-row {
+    max-width: var(--content-max-width);
+    margin: 0 auto 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .meta-row span.highlight {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* PROMPT PANEL -------------------------------------------------- */
+  .prompt-panel {
+    max-width: var(--content-max-width);
+    margin: 0 auto 18px;
+    border-radius: 18px;
+    background: #f3f4ff;
+    border: 1px solid #dbe4ff;
+    padding: 22px 24px 24px;
+  }
+
+  .prompt-inner {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  .prompt-left {
+    flex: 1.4;
+    min-width: 0;
+  }
+
+  .prompt-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .prompt-text {
+    font-size: 1.6rem;
+    margin: 0 0 16px;
+  }
+
+  .prompt-subtle {
+    font-size: 0.9rem;
+    margin: 0 0 8px;
+    color: var(--text-muted);
+  }
+
+  /* MINI PARTITION GRID ------------------------------------------ */
+  .mini-grid {
+    display: inline-flex;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+  }
+
+  .mini-col {
+    min-width: 180px;
+    border-right: 1px solid #d1d5db;
+  }
+  .mini-col:last-child {
+    border-right: none;
+  }
+
+  .mini-label,
+  .mini-value,
+  .mini-image-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .mini-label {
+    height: 60px;
+    font-size: 2rem;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .mini-value {
+    height: 110px;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .mini-image-row {
+    height: 180px;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+
+  .mini-image-row img {
+    max-height: 80%;
+    max-width: 80%;
+    object-fit: contain;
+  }
+
+  .multi-red {
+    color: #e11d48;
+  }
+  .multi-blue {
+    color: #2563eb;
+  }
+
+  /* CHOICES (now inside prompt-left) ----------------------------- */
+  .choices {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    position: relative;
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2.25rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease,
+      transform 0.05s ease;
+  }
+
+  .choice-btn:hover:not(.disabled) {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+  }
+
+  .choice-label-pill {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 2px solid #c4b5fd;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .choice-text {
+    flex-grow: 1;
+  }
+
+  .choice-mark {
+    width: 28px;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .choice-btn.correct {
+    background: var(--correct-bg);
+    border-color: var(--correct-border);
+  }
+
+  .choice-btn.incorrect {
+    background: var(--incorrect-bg);
+    border-color: var(--incorrect-border);
+  }
+
+  .choice-btn.disabled {
+    cursor: default;
+    opacity: 0.92;
+  }
+
+  /* BOTTOM ROW ---------------------------------------------------- */
+  .bottom-row {
+    margin-top: 10px;
+    max-width: var(--content-max-width);
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .score-text {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  #nextBtn {
+    border-radius: 999px;
+    border: none;
+    padding: 9px 20px;
+    background: #c7d2fe;
+    color: #111827;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  #nextBtn.enabled {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  #nextBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* RESULT OVERLAY ----------------------------------------------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+  }
+
+  .overlay.hidden {
+    display: none;
+  }
+
+  .result-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px 28px 22px;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .result-title {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+
+  .result-score {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .result-message {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .result-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .result-buttons button {
+    border-radius: 999px;
+    border: none;
+    padding: 8px 18px;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  #playAgainBtn {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  #closeResultBtn {
+    background: #e5e7eb;
+    color: #111827;
+  }
+
+  /* RESPONSIVE ---------------------------------------------------- */
+  @media (max-width: 900px) {
+    .prompt-inner {
+      flex-direction: column;
+      gap: 16px;
+    }
+    .prompt-right {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .app {
+      padding: 20px 16px 26px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <button id="backBtn">&larr; Back</button>
+    <h1>Student Flash Card Practice</h1>
+    <div class="mode-label" id="modeLabel"></div>
+  </div>
+
+  <div class="level-row">
+    <button class="level-btn active" data-level="1">Level 1: tens (easy)</button>
+    <button class="level-btn" data-level="2">Level 2: tens (hard)</button>
+    <button class="level-btn" data-level="3">Level 3: hundreds (easy)</button>
+    <button class="level-btn" data-level="4">Level 4: hundreds (hard)</button>
+    <button class="level-btn" data-level="5">Level 5: mixed</button>
+  </div>
+
+  <div class="meta-row">
+    <div>Question <span class="highlight" id="questionNumber">1</span> of 15</div>
+    <div>Score: <span class="highlight" id="scoreText">0</span>/15</div>
+  </div>
+
+  <div class="prompt-panel">
+    <div class="prompt-inner">
+      <div class="prompt-left">
+        <p class="prompt-text" id="promptText"></p>
+        
+        <div class="choices" id="choicesContainer"></div>
+      </div>
+      <div class="prompt-right">
+        <div>
+          <p class="prompt-subtle" style="text-align:right;margin-top:0;"></p>
+          <div class="mini-grid" id="miniGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="score-text" id="progressHint"></div>
+    <button id="nextBtn" disabled>Next</button>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="overlay hidden" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-title" id="resultTitle">Nice work!</div>
+    <div class="result-score" id="resultScore">0 / 15</div>
+    <div class="result-message" id="resultMessage">
+      You answered 0 questions correctly.
+    </div>
+    <div class="result-buttons">
+      <button id="playAgainBtn">Play again</button>
+      <button id="closeResultBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TOTAL_QUESTIONS = 15;
+
+  const placeInfo = {
+    thousands: { label: "thousands", value: 1000 },
+    hundreds: { label: "hundreds", value: 100 },
+    tens: { label: "tens", value: 10 },
+    ones: { label: "ones", value: 1 }
+  };
+
+  const miniImages = {
+    thousands: "img-thousands.png",
+    hundreds: "img-hundreds.png",
+    tens: "img-tens.png",
+    ones: "img-ones.png"
+  };
+
+  const levelConfigs = {
+    1: { id: 1, name: "Level 1: tens (easy)", places: ["tens", "ones"], easy: true },
+    2: { id: 2, name: "Level 2: tens (hard)", places: ["tens", "ones"], easy: false },
+    3: { id: 3, name: "Level 3: hundreds (easy)", places: ["hundreds", "tens", "ones"], easy: true },
+    4: { id: 4, name: "Level 4: hundreds (hard)", places: ["hundreds", "tens", "ones"], easy: false },
+    5: { id: 5, name: "Level 5: mixed", places: ["thousands", "hundreds", "tens", "ones"], easy: false }
+  };
+
+  const backBtn = document.getElementById("backBtn");
+  const levelButtons = Array.from(document.querySelectorAll(".level-btn"));
+  const modeLabelEl = document.getElementById("modeLabel");
+  const miniGridEl = document.getElementById("miniGrid");
+  const promptTextEl = document.getElementById("promptText");
+  const choicesContainer = document.getElementById("choicesContainer");
+  const questionNumberEl = document.getElementById("questionNumber");
+  const scoreTextEl = document.getElementById("scoreText");
+  const nextBtn = document.getElementById("nextBtn");
+  const progressHintEl = document.getElementById("progressHint");
+
+  const resultOverlay = document.getElementById("resultOverlay");
+  const resultTitleEl = document.getElementById("resultTitle");
+  const resultScoreEl = document.getElementById("resultScore");
+  const resultMessageEl = document.getElementById("resultMessage");
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  const closeResultBtn = document.getElementById("closeResultBtn");
+
+  let currentLevelId = 1;
+  let questions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let answered = false;
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function computeValue(counts) {
+    let total = 0;
+    for (const key of Object.keys(counts)) {
+      total += counts[key] * placeInfo[key].value;
+    }
+    return total;
+  }
+
+  function buildPromptText(counts, places) {
+    const parts = [];
+    for (const p of places) {
+      const c = counts[p] || 0;
+      if (c === 0) continue;
+      parts.push(`${c} ${placeInfo[p].label}`);
+    }
+    if (parts.length === 0) return "What number is this?";
+    if (parts.length === 1) return `${parts[0]} is the same as`;
+    const last = parts[parts.length - 1];
+    const initial = parts.slice(0, -1).join(", ");
+    return `${initial} and ${last} is the same as`;
+  }
+
+  function buildMiniGrid(counts, places) {
+    miniGridEl.innerHTML = "";
+    for (const p of places) {
+      const c = counts[p] ?? 0;
+      const col = document.createElement("div");
+      col.className = "mini-col";
+
+      const lab = document.createElement("div");
+      lab.className = "mini-label";
+      lab.textContent = placeInfo[p].label;
+
+      const val = document.createElement("div");
+      val.className = "mini-value";
+
+      const str = String(c);
+      if (str.length === 1) {
+        const span = document.createElement("span");
+        span.textContent = str;
+        span.className = "multi-blue";
+        val.appendChild(span);
+      } else {
+        for (let i = 0; i < str.length; i++) {
+          const span = document.createElement("span");
+          span.textContent = str[i];
+          span.className = i === str.length - 1 ? "multi-blue" : "multi-red";
+          span.style.marginRight = "2px";
+          val.appendChild(span);
+        }
+      }
+
+      const imgRow = document.createElement("div");
+      imgRow.className = "mini-image-row";
+      const imgSrc = miniImages[p];
+      if (imgSrc) {
+        const img = document.createElement("img");
+        img.src = imgSrc;
+        img.alt = p + " base ten block";
+        imgRow.appendChild(img);
+      }
+
+      col.appendChild(lab);
+      col.appendChild(val);
+      col.appendChild(imgRow);
+      miniGridEl.appendChild(col);
+    }
+  }
+
+  function generateCountsForLevel(levelId) {
+    const cfg = levelConfigs[levelId];
+    const counts = {};
+    const places = cfg.places;
+
+    const two = () => randInt(10, 99);
+    const three = () => randInt(10, 999);
+
+    if (levelId === 1 || levelId === 2) {
+      const rng = cfg.easy ? two : three;
+      counts.tens = rng();
+      counts.ones = randInt(0, cfg.easy ? 99 : 999);
+      if (counts.tens <= 9 && counts.ones <= 9) counts.tens += 10;
+    } else if (levelId === 3 || levelId === 4) {
+      const rng = cfg.easy ? two : three;
+      counts.hundreds = rng();
+      counts.tens = rng();
+      counts.ones = randInt(0, cfg.easy ? 99 : 999);
+    } else {
+      counts.thousands = randInt(0, 999);
+      counts.hundreds = randInt(0, 999);
+      counts.tens = randInt(0, 999);
+      counts.ones = randInt(0, 999);
+      if (
+        counts.thousands <= 9 &&
+        counts.hundreds <= 9 &&
+        counts.tens <= 9 &&
+        counts.ones <= 9
+      ) {
+        counts.tens += 20;
+      }
+    }
+
+    let nonZero = false;
+    for (const p of places) {
+      if ((counts[p] || 0) !== 0) {
+        nonZero = true;
+        break;
+      }
+    }
+    if (!nonZero) counts[places[places.length - 1]] = 10;
+
+    return counts;
+  }
+
+  // UPDATED: now takes levelId so we can treat mixed (5) differently
+  function generateOptions(levelId, correct, counts, places) {
+    const opts = new Set([correct]);
+
+    // Only use the "concatenated digits" distractor for levels 1–4
+    if (levelId !== 5) {
+      const concatStr = places.map(p => String(counts[p] ?? 0)).join("");
+      const concatVal = parseInt(concatStr, 10);
+      if (!Number.isNaN(concatVal) && concatVal > 0) opts.add(concatVal);
+    }
+
+    const units = [1, 10, 100, 1000];
+    while (opts.size < 4) {
+      const u = units[randInt(0, units.length - 1)];
+      const sign = Math.random() < 0.5 ? -1 : 1;
+      const cand = correct + sign * u;
+      if (cand > 0) opts.add(cand);
+    }
+
+    const arr = Array.from(opts);
+    while (arr.length > 4) arr.pop();
+
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = randInt(0, i);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+
+    const correctIndex = arr.findIndex(v => v === correct);
+    return { options: arr, correctIndex };
+  }
+
+  function generateQuestions(levelId) {
+    const cfg = levelConfigs[levelId];
+    const qs = [];
+    for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+      const counts = generateCountsForLevel(levelId);
+      const val = computeValue(counts);
+      const { options, correctIndex } = generateOptions(levelId, val, counts, cfg.places);
+      qs.push({ levelId, counts, places: cfg.places.slice(), value: val, options, correctIndex });
+    }
+    return qs;
+  }
+
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    answered = false;
+    questionNumberEl.textContent = currentIndex + 1;
+    scoreTextEl.textContent = score;
+    progressHintEl.textContent = "Choose an answer.";
+    nextBtn.disabled = true;
+    nextBtn.classList.remove("enabled");
+    nextBtn.textContent = currentIndex === TOTAL_QUESTIONS - 1 ? "Finish" : "Next";
+
+    promptTextEl.textContent = buildPromptText(q.counts, q.places);
+    buildMiniGrid(q.counts, q.places);
+
+    choicesContainer.innerHTML = "";
+    const labels = ["A", "B", "C", "D"];
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.dataset.index = idx;
+
+      const labelPill = document.createElement("div");
+      labelPill.className = "choice-label-pill";
+      labelPill.textContent = labels[idx];
+
+      const textSpan = document.createElement("div");
+      textSpan.className = "choice-text";
+      textSpan.textContent = opt.toLocaleString("en-AU");
+
+      const markSpan = document.createElement("div");
+      markSpan.className = "choice-mark";
+
+      btn.appendChild(labelPill);
+      btn.appendChild(textSpan);
+      btn.appendChild(markSpan);
+
+      btn.addEventListener("click", () => handleChoiceClick(idx));
+      choicesContainer.appendChild(btn);
+    });
+  }
+
+  function handleChoiceClick(index) {
+    if (answered) return;
+
+    const q = questions[currentIndex];
+    const correctIdx = q.correctIndex;
+    const buttons = Array.from(choicesContainer.querySelectorAll(".choice-btn"));
+
+    answered = true;
+
+    buttons.forEach((btn, i) => {
+      btn.classList.add("disabled");
+      if (i === correctIdx) {
+        btn.classList.add("correct");
+        btn.querySelector(".choice-mark").textContent = "✓";
+      }
+    });
+
+    const selectedBtn = buttons[index];
+    if (index === correctIdx) {
+      score++;
+      scoreTextEl.textContent = score;
+      progressHintEl.textContent = "Nice! That's correct.";
+    } else {
+      selectedBtn.classList.add("incorrect");
+      selectedBtn.querySelector(".choice-mark").textContent = "✗";
+      progressHintEl.textContent = "Good try. Have another look at the partition view.";
+    }
+
+    nextBtn.disabled = false;
+    nextBtn.classList.add("enabled");
+  }
+
+  function showResultOverlay() {
+    resultOverlay.classList.remove("hidden");
+    resultScoreEl.textContent = `${score} / ${TOTAL_QUESTIONS}`;
+
+    let title = "Nice work!";
+    let message = "";
+
+    if (score === TOTAL_QUESTIONS) {
+      title = "Perfect score! Well done!";
+      message = "You answered all questions correctly.";
+    } else if (score >= 10) {
+      title = "Well done!";
+      message = `You got ${score} questions correct.`;
+    } else if (score >= 6) {
+      title = "Good effort!";
+      message = `You got ${score} questions correct. Have another go and watch the regrouping.`;
+    } else {
+      title = "That was tricky!";
+      message = `You got ${score} questions correct. Try again and use the partition grid to help.`;
+    }
+
+    resultTitleEl.textContent = title;
+    resultMessageEl.textContent = message;
+  }
+
+  function startNewGame(levelId) {
+    currentLevelId = levelId;
+    questions = generateQuestions(levelId);
+    currentIndex = 0;
+    score = 0;
+    scoreTextEl.textContent = score;
+    questionNumberEl.textContent = 1;
+    resultOverlay.classList.add("hidden");
+    modeLabelEl.textContent = levelConfigs[levelId].name;
+    renderQuestion();
+  }
+
+  backBtn.addEventListener("click", () => {
+    window.location.href = "index.html";
+  });
+
+  levelButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const levelId = Number(btn.dataset.level);
+      levelButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      startNewGame(levelId);
+    });
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (nextBtn.disabled) return;
+    if (currentIndex < TOTAL_QUESTIONS - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      showResultOverlay();
+    }
+  });
+
+  playAgainBtn.addEventListener("click", () => {
+    startNewGame(currentLevelId);
+  });
+
+  closeResultBtn.addEventListener("click", () => {
+    resultOverlay.classList.add("hidden");
+  });
+
+  // initial
+  startNewGame(currentLevelId);
+</script>
+  <div style="
+  text-align: center;
+  margin-top: 30px;
+  font-size: 0.9rem;
+  color: #555;
+">
+  Images generated using 
+  <a href="https://polypad.amplify.com/p" target="_blank" style="color:#2563eb; text-decoration:none;">
+    Amplify Polypad
+  </a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Partition Splitter – Group Input Version</title>
+<style>
+:root {
+  --cell-width: 150px;
+  --cell-height: 180px;
+  --border-color: #444;
+  --label-color: #333;
+  --digit-color: #0066cc; /* final / standard-form digits (blue) */
+}
+
+/* GLOBAL ---------------------------------------------------------- */
+body {
+  margin: 0;
+  padding: 20px;
+  background: #f6f7fb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+/* Small instruction line */
+.page-instruction {
+  margin: 4px 0 12px 4px;
+  font-size: 1.5rem;
+  color: #1d4ed8;
+  font-family: "Patrick Hand", "Gloria Hallelujah", sans-serif;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+}
+
+/* HEADER: title + mode toggle ------------------------------------ */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  background: #e5e7eb;
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.mode-toggle button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #4b5563;
+  transition: all 0.15s ease-out;
+}
+
+.mode-toggle button.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* ACTION BUTTON ROW ---------------------------------------------- */
+.action-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.action-row button,
+.animate-row button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+#resetBtn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+#returnBtn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+#enterBtn {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* NEW ANIMATION ROW ---------------------------------------------- */
+.animate-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+#animateLeftBtn,
+#animateRightBtn {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.animate-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.hidden { display: none; }
+
+/* ERROR MESSAGE --------------------------------------------------- */
+#errorMessage {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  display: none;
+}
+
+/* PLACE VALUE GRID ------------------------------------------------ */
+.pv-wrapper {
+  margin-top: 10px;
+  margin-bottom: 12px;   /* extra space above buttons */
+  padding: 16px;
+  background: #f9faff;
+  border-radius: 12px;
+  border: 1px solid #dbe1f0;
+}
+
+.pv-grid {
+  display: flex;
+}
+
+.pv-column {
+  flex: 1;
+  min-width: var(--cell-width);
+  display: flex;
+  flex-direction: column;
+}
+
+.pv-cell {
+  border: 1px solid var(--border-color);
+  border-right: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  position: relative; /* for bubbles & annotations */
+}
+
+.pv-column:last-child .pv-cell {
+  border-right: 1px solid var(--border-color);
+}
+
+.pv-label {
+  height: 150px;
+}
+
+.pv-label span {
+  transform: rotate(-90deg);
+  display: inline-block;
+  font-size: 0.9rem;
+  color: var(--label-color);
+}
+
+/* digit / standard cells ----------------------------------------- */
+.pv-digit {
+  height: var(--cell-height);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--digit-color); /* blue */
+}
+
+.pv-digit.empty {
+  color: transparent;
+}
+
+/* image row cells ------------------------------------------------- */
+.pv-image {
+  height: 110px;
+}
+
+.pv-image-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* THIS controls the picture size */
+.pv-image-inner img {
+  max-height: 70%;
+  max-width: 70%;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+}
+
+/* INPUT MODE: invisible input + coloured overlay ----------------- */
+.pv-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-size: 2.6rem;
+  font-weight: 700;
+  background: transparent;
+  color: transparent;         /* text itself hidden */
+  caret-color: #2563eb;       /* caret still visible */
+}
+
+.pv-input::placeholder {
+  color: #d1d5db;
+}
+
+.pv-input-display {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.pv-multi-red {
+  color: #e11d48;  /* red for tens/hundreds groups */
+}
+
+.pv-multi-blue {
+  color: var(--digit-color); /* blue for ones digit */
+}
+
+/* highlight on split --------------------------------------------- */
+.pv-column.split-left .pv-digit {
+  border-right: 4px solid #2563eb;
+}
+
+/* CARRY ANIMATION ------------------------------------------------- */
+.carry-bubble {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4rem;
+  font-weight: 700;
+  color: #e11d48;
+  pointer-events: none;
+  animation: move-left 3.2s ease-out forwards;
+}
+
+.carry-annotation {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e11d48;
+  background: rgba(255,255,255,0.98);
+  padding: 6px 14px;
+  border-radius: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: fade-out 3.2s ease-out forwards;
+}
+
+@keyframes move-left {
+  from {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  to {
+    transform: translate(calc(-50% + var(--dx, -150%)), -50%);
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  0%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* SLIDER ---------------------------------------------------------- */
+.split-slider-row {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.split-slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.split-slider-label {
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.hide-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  background: #e5e7eb;
+  color: #111827;
+  cursor: pointer;
+}
+
+.split-slider-container {
+  width: calc(100% - 32px);
+  margin-left: 16px;
+  margin-right: 16px;
+  position: relative;
+}
+
+#splitSlider {
+  width: 83%;
+  margin-left: 16%;
+  height: 6px;
+  background: #d1d5db;
+  border-radius: 999px;
+  appearance: none;
+  outline: none;
+}
+
+#splitSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.4);
+  cursor: pointer;
+}
+#splitSlider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.4);
+  cursor: pointer;
+}
+
+/* RESULT TEXT ----------------------------------------------------- */
+.result-row {
+  margin-top: 18px;
+  background: #fff7dd;
+  border: 1px dashed #facc8a;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1.2rem;
+}
+
+.result-row .number {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+/* VISUAL BLOCKS --------------------------------------------------- */
+.visuals-row {
+  margin-top: 40px;
+  display: flex;
+  gap: 24px;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.visual-block {
+  flex: 1 1 300px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.visual-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+.visual-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 72px;
+}
+
+.unit-image-wrapper {
+  max-width: 100%;
+  height: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unit-image-wrapper.wide {
+  height: 300px;
+}
+
+.unit-image-wrapper img {
+  max-width: 100%;
+  height: auto;
+}
+
+.unit-image-wrapper.ones img {
+  max-width: 80px;
+}
+
+.visual-multiplier {
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-family: "Comic Neue", "Comic Sans MS", "Marker Felt", cursive,
+    system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* RESPONSIVE ------------------------------------------------------ */
+@media (max-width: 800px) {
+  :root {
+    --cell-width: 110px;
+    --cell-height: 150px;
+  }
+  .pv-label { height: 140px; }
+  .pv-digit { font-size: 2.3rem; }
+  .pv-input-display { font-size: 2.1rem; }
+  .unit-image-wrapper {
+    height: 190px;
+  }
+  .unit-image-wrapper.wide {
+    height: 240px;
+  }
+  .visual-multiplier {
+    font-size: 2rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <div class="app-header">
+    <h1>Partition Splitter</h1>
+    <div class="mode-toggle">
+      <button id="exploreBtn" class="active">Explore</button>
+      <button id="flashBtn">Flash cards</button>
+      <button id="quizBtn">Student Quiz</button>
+    </div>
+  </div>
+
+  <!-- Instruction now under the title -->
+  <p class="page-instruction">
+    Enter values for each place value to build your number.
+  </p>
+
+  <!-- PLACE VALUE GRID -->
+  <div class="pv-wrapper">
+    <div id="pvGrid" class="pv-grid"></div>
+  </div>
+
+  <!-- NEW ANIMATION ROW -->
+  <div class="animate-row">
+    <button id="animateLeftBtn">Animate &larr;</button>
+    <button id="animateRightBtn" disabled>Animate &rarr;</button>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="action-row">
+    <button id="resetBtn">Reset</button>
+    <button id="returnBtn" class="hidden">Return to input</button>
+    <button id="enterBtn">Enter</button>
+  </div>
+
+  <div id="errorMessage"></div>
+
+  <!-- SLIDER (hidden until fully regrouped) -->
+  <div id="sliderRow" class="split-slider-row hidden">
+    <div class="split-slider-header">
+      <button id="hideBtn" class="hide-btn">Hide values</button>
+      <div class="split-slider-label">Drag to choose a split:</div>
+    </div>
+    <div class="split-slider-container">
+      <input type="range" id="splitSlider" min="0" max="5" value="3" />
+    </div>
+  </div>
+
+  <!-- RESULT + VISUALS -->
+  <div id="resultRow" class="result-row hidden" aria-live="polite"></div>
+
+  <div id="visualsRow" class="visuals-row hidden">
+    <div class="visual-block" id="leftVisualBlock">
+      <div class="visual-title" id="leftVisualTitle"></div>
+      <div class="visual-inner">
+        <div class="unit-image-wrapper" id="leftImageWrapper"></div>
+        <div class="visual-multiplier" id="leftMultiplier"></div>
+      </div>
+    </div>
+    <div class="visual-block" id="rightVisualBlock">
+      <div class="visual-title" id="rightVisualTitle"></div>
+      <div class="visual-inner">
+        <div class="unit-image-wrapper ones" id="rightImageWrapper"></div>
+        <div class="visual-multiplier" id="rightMultiplier"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer credit at the bottom of the page -->
+<div style="
+  text-align: center;
+  margin-top: 30px;
+  font-size: 0.9rem;
+  color: #555;
+">
+  Images generated using 
+  <a href="https://polypad.amplify.com/p" target="_blank" style="color:#2563eb; text-decoration:none;">
+    Amplify Polypad
+  </a>
+</div>
+
+<script>
+const placeNames = [
+  "hundred-thousands",
+  "ten-thousands",
+  "thousands",
+  "hundreds",
+  "tens",
+  "ones"
+];
+
+const placeValues = [100000, 10000, 1000, 100, 10, 1];
+
+// small base-10 images for the extra row
+const base10Images = {
+  0: "img-hundred-thousands.png",
+  1: "img-ten-thousands.png",
+  2: "img-thousands.png",
+  3: "img-hundreds.png",
+  4: "img-tens.png",
+  5: "img-ones.png"
+};
+
+const gridEl = document.getElementById("pvGrid");
+const errorEl = document.getElementById("errorMessage");
+const sliderRow = document.getElementById("sliderRow");
+const splitSlider = document.getElementById("splitSlider");
+const hideBtn = document.getElementById("hideBtn");
+const resultRow = document.getElementById("resultRow");
+const visualsRow = document.getElementById("visualsRow");
+const leftVisualBlock = document.getElementById("leftVisualBlock");
+const rightVisualBlock = document.getElementById("rightVisualBlock");
+const leftVisualTitle = document.getElementById("leftVisualTitle");
+const rightVisualTitle = document.getElementById("rightVisualTitle");
+const leftImageWrapper = document.getElementById("leftImageWrapper");
+const rightImageWrapper = document.getElementById("rightImageWrapper");
+const leftMultiplier = document.getElementById("leftMultiplier");
+const rightMultiplier = document.getElementById("rightMultiplier");
+const exploreBtn = document.getElementById("exploreBtn");
+const flashBtn = document.getElementById("flashBtn");
+const quizBtn = document.getElementById("quizBtn");
+const enterBtn = document.getElementById("enterBtn");
+const returnBtn = document.getElementById("returnBtn");
+const resetBtn = document.getElementById("resetBtn");
+const animateLeftBtn = document.getElementById("animateLeftBtn");
+const animateRightBtn = document.getElementById("animateRightBtn");
+
+let isInputMode = true;
+let currentValue = null;
+let hideValues = false;
+
+// values as typed in the input grid
+let originalInputs = new Array(placeNames.length).fill("");
+
+// live counts while typing (for image row in input mode)
+let inputCounts = new Array(placeNames.length).fill(0);
+
+// animation / regrouping state
+let originalCounts = new Array(placeNames.length).fill(0); // grouped values
+let currentCounts  = new Array(placeNames.length).fill(0); // where we are now
+let targetCounts   = new Array(placeNames.length).fill(0); // fully regrouped
+let steps = [];             // full sequence of regroup steps
+let stepIndex = 0;          // how many steps have been applied
+let isFullyRegrouped = false;
+let isAnimating = false;
+
+/* UTILITIES ------------------------------------------------------- */
+function formatWithSpaces(n) {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function setError(msg) {
+  if (msg) {
+    errorEl.style.display = "block";
+    errorEl.textContent = msg;
+  } else {
+    errorEl.style.display = "none";
+    errorEl.textContent = "";
+  }
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function setSliderEnabled(enabled) {
+  splitSlider.disabled = !enabled;
+  splitSlider.style.opacity = enabled ? "1" : "0.4";
+}
+
+/* IMAGE ROW HELPERS ---------------------------------------------- */
+function refreshImageRowForCounts(counts) {
+  const cols = gridEl.querySelectorAll(".pv-column");
+  if (!cols.length) return;
+
+  const len = counts.length;
+  const allZero = counts.every(v => v === 0);
+
+  if (allZero) {
+    for (let i = 0; i < len; i++) {
+      const imgCell = cols[i].querySelector(".pv-image");
+      if (imgCell) imgCell.innerHTML = "";
+    }
+    return;
+  }
+
+  let firstNonZero = -1;
+  let lastNonZero = -1;
+  for (let i = 0; i < len; i++) {
+    if (counts[i] !== 0 && firstNonZero === -1) firstNonZero = i;
+    if (counts[i] !== 0) lastNonZero = i;
+  }
+  if (firstNonZero === -1) {
+    firstNonZero = len - 1;
+    lastNonZero = len - 1;
+  }
+
+  for (let i = 0; i < len; i++) {
+    const imgCell = cols[i].querySelector(".pv-image");
+    if (!imgCell) continue;
+    imgCell.innerHTML = "";
+
+    if (i < firstNonZero || i > lastNonZero) continue;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "pv-image-inner";
+    const img = document.createElement("img");
+    img.src = base10Images[i];
+    wrapper.appendChild(img);
+    imgCell.appendChild(wrapper);
+  }
+}
+
+/* RENDER DIGIT CELL WITH MULTI-COLOUR ---------------------------- */
+function renderDigitCellValue(index, value, treatLeadingZero) {
+  const cols = gridEl.querySelectorAll(".pv-column");
+  if (index < 0 || index >= cols.length) return;
+  const cell = cols[index].querySelector(".pv-digit");
+  if (!cell) return;
+
+  cell.classList.remove("empty");
+  cell.innerHTML = "";
+
+  if (treatLeadingZero && value === 0) {
+    cell.textContent = "0";
+    cell.classList.add("empty");
+    return;
+  }
+
+  const str = String(value);
+  if (str.length === 1) {
+    cell.textContent = str;
+    return;
+  }
+
+  for (let i = 0; i < str.length; i++) {
+    const span = document.createElement("span");
+    span.textContent = str[i];
+    span.className = (i === str.length - 1) ? "pv-multi-blue" : "pv-multi-red";
+    span.style.marginRight = "2px";
+    cell.appendChild(span);
+  }
+}
+
+/* INPUT DISPLAY (red groups + blue ones) ------------------------- */
+function updateInputDisplay(index, value) {
+  const display = gridEl.querySelector(
+    `.pv-input-display[data-index="${index}"]`
+  );
+  if (!display) return;
+
+  display.innerHTML = "";
+
+  let str;
+  if (value === 0 || value === "0") {
+    str = "0";
+  } else if (value === "" || value == null) {
+    str = "";
+  } else {
+    str = String(value).trim();
+  }
+
+  if (!str) return;
+
+  const len = str.length;
+  for (let i = 0; i < len; i++) {
+    const span = document.createElement("span");
+    span.textContent = str[i];
+    if (i === len - 1) {
+      span.className = "pv-multi-blue";
+    } else {
+      span.className = "pv-multi-red";
+    }
+    display.appendChild(span);
+  }
+}
+
+/* GRID RENDERING -------------------------------------------------- */
+function renderInputGrid() {
+  gridEl.innerHTML = "";
+  const places = placeNames.length;
+
+  inputCounts = new Array(places).fill(0);
+
+  for (let i = 0; i < places; i++) {
+    const col = document.createElement("div");
+    col.className = "pv-column";
+
+    const label = document.createElement("div");
+    label.className = "pv-cell pv-label";
+    label.innerHTML = `<span>${placeNames[i]}</span>`;
+
+    const inputCell = document.createElement("div");
+    inputCell.className = "pv-cell pv-digit";
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.max = "999";
+    input.step = "1";
+    input.className = "pv-input";
+    input.dataset.index = i;
+
+    if (originalInputs[i] !== "" && originalInputs[i] != null) {
+      input.value = originalInputs[i];
+      inputCounts[i] = Number(originalInputs[i]);
+    } else {
+      input.value = "";
+    }
+
+    const display = document.createElement("div");
+    display.className = "pv-input-display";
+    display.dataset.index = i;
+
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "");
+      if (input.value.length > 3) {
+        input.value = input.value.slice(0, 3);
+      }
+
+      if (input.value === "") {
+        originalInputs[i] = "";
+        inputCounts[i] = 0;
+      } else {
+        const n = Number(input.value);
+        originalInputs[i] = n;
+        inputCounts[i] = n;
+      }
+
+      updateInputDisplay(i, input.value);
+      refreshImageRowForCounts(inputCounts);
+    });
+
+    inputCell.appendChild(input);
+    inputCell.appendChild(display);
+
+    const imageCell = document.createElement("div");
+    imageCell.className = "pv-cell pv-image";
+
+    col.append(label, inputCell, imageCell);
+    gridEl.append(col);
+
+    updateInputDisplay(i, input.value);
+  }
+
+  refreshImageRowForCounts(inputCounts);
+}
+
+function renderDigitGrid() {
+  gridEl.innerHTML = "";
+
+  const places = placeNames.length;
+  const counts = currentCounts && currentCounts.length
+    ? currentCounts
+    : new Array(places).fill(0);
+
+  let firstNonZero = counts.findIndex(v => v !== 0);
+  if (firstNonZero === -1) {
+    firstNonZero = places - 1;
+  }
+
+  for (let i = 0; i < places; i++) {
+    const col = document.createElement("div");
+    col.className = "pv-column";
+
+    const label = document.createElement("div");
+    label.className = "pv-cell pv-label";
+    label.innerHTML = `<span>${placeNames[i]}</span>`;
+
+    const digitCell = document.createElement("div");
+    digitCell.className = "pv-cell pv-digit";
+
+    col.append(label, digitCell);
+
+    const imageCell = document.createElement("div");
+    imageCell.className = "pv-cell pv-image";
+    col.appendChild(imageCell);
+
+    gridEl.append(col);
+
+    const treatLeading = i < firstNonZero;
+    renderDigitCellValue(i, counts[i], treatLeading);
+  }
+
+  refreshImageRowForCounts(counts);
+}
+
+function renderGrid() {
+  if (isInputMode) {
+    renderInputGrid();
+  } else {
+    renderDigitGrid();
+  }
+  updateGridSplitHighlight();
+}
+
+/* SPLIT + PARTITION LOGIC ---------------------------------------- */
+function updateGridSplitHighlight() {
+  const cols = gridEl.querySelectorAll(".pv-column");
+  cols.forEach(col => col.classList.remove("split-left"));
+
+  if (isInputMode) return;
+  if (!isFullyRegrouped) return;
+
+  const idx = Number(splitSlider.value);
+  if (idx >= 0 && idx < cols.length) {
+    cols[idx].classList.add("split-left");
+  }
+}
+
+function getSplitData() {
+  if (currentValue === null) return null;
+  const idx = Number(splitSlider.value);
+  const places = placeNames.length;
+  const maxPower = places - 1;
+  const power = maxPower - idx;
+  const base = 10 ** power;
+  const leftCount = Math.floor(currentValue / base);
+  const rightCount = currentValue % base;
+  const leftLabel = placeNames[idx].replace("-", " ");
+  return { idx, leftCount, rightCount, leftLabel, places };
+}
+
+/* EXPLORE VIEW (with hide toggle) -------------------------------- */
+function updateExploreView() {
+  if (currentValue === null || !isFullyRegrouped) {
+    resultRow.classList.add("hidden");
+    visualsRow.classList.add("hidden");
+    return;
+  }
+
+  const data = getSplitData();
+  if (!data) return;
+  const { idx, leftCount, rightCount, leftLabel, places } = data;
+  const formatted = formatWithSpaces(currentValue);
+  const lastIndex = places - 1;
+
+  const show = !hideValues;
+  const L = show ? leftCount : "?";
+  const R = show ? rightCount : "?";
+
+  if (idx === lastIndex) {
+    resultRow.innerHTML = `
+      <span class="number">${formatted}</span>
+      is the same as
+      <span class="number">${L}</span> ones.
+    `;
+  } else if (rightCount === 0) {
+    resultRow.innerHTML = `
+      <span class="number">${formatted}</span>
+      is the same as
+      <span class="number">${L}</span> ${leftLabel}.
+    `;
+  } else {
+    resultRow.innerHTML = `
+      <span class="number">${formatted}</span>
+      is the same as
+      <span class="number">${L}</span> ${leftLabel}
+      and
+      <span class="number">${R}</span> ones.
+    `;
+  }
+
+  resultRow.classList.remove("hidden");
+
+  leftVisualTitle.innerHTML = `<span class="number">${L}</span> ${leftLabel}`;
+  rightVisualTitle.innerHTML = `<span class="number">${R}</span> ones`;
+
+  leftImageWrapper.innerHTML = "";
+  rightImageWrapper.innerHTML = "";
+
+  leftImageWrapper.classList.toggle("wide", false);
+  const leftImg = document.createElement("img");
+  leftImg.src = base10Images[idx];
+  leftImageWrapper.appendChild(leftImg);
+
+  if (idx === lastIndex || rightCount === 0) {
+    rightVisualBlock.classList.add("hidden");
+    rightMultiplier.textContent = "";
+  } else {
+    rightVisualBlock.classList.remove("hidden");
+    const r = document.createElement("img");
+    r.src = base10Images[5]; // ones
+    rightImageWrapper.appendChild(r);
+  }
+
+  leftMultiplier.textContent = show ? `× ${leftCount}` : "× ?";
+  if (idx === lastIndex || rightCount === 0) {
+    rightMultiplier.textContent = "";
+  } else {
+    rightMultiplier.textContent = show ? `× ${rightCount}` : "× ?";
+  }
+
+  visualsRow.classList.remove("hidden");
+}
+
+/* UPDATE ALL ------------------------------------------------------ */
+function updateSliderVisibility() {
+  if (!isInputMode && isFullyRegrouped) {
+    sliderRow.classList.remove("hidden");
+    setSliderEnabled(true);
+    hideBtn.textContent = hideValues ? "Show values" : "Hide values";
+  } else {
+    sliderRow.classList.add("hidden");
+    setSliderEnabled(false);
+    hideValues = false;
+  }
+}
+
+function updateAnimateButtonsState() {
+  if (isInputMode) {
+    animateLeftBtn.disabled = false;
+    animateRightBtn.disabled = true;
+    return;
+  }
+  const canLeft = !isFullyRegrouped && stepIndex < steps.length && steps.length > 0;
+  const canRight = stepIndex > 0 && steps.length > 0;
+  animateLeftBtn.disabled = !canLeft;
+  animateRightBtn.disabled = !canRight;
+}
+
+function updateAll() {
+  renderGrid();
+
+  if (isInputMode) {
+    resultRow.classList.add("hidden");
+    visualsRow.classList.add("hidden");
+    updateSliderVisibility();
+    updateAnimateButtonsState();
+    return;
+  }
+
+  if (!isFullyRegrouped) {
+    resultRow.classList.add("hidden");
+    visualsRow.classList.add("hidden");
+    updateSliderVisibility();
+    updateAnimateButtonsState();
+    return;
+  }
+
+  updateExploreView();
+  updateSliderVisibility();
+  updateAnimateButtonsState();
+}
+
+/* INPUT + REGROUPING ---------------------------------------------- */
+function readInputCounts() {
+  const inputs = gridEl.querySelectorAll(".pv-input");
+  if (inputs.length !== placeNames.length) {
+    return { ok: false, error: "Grid not ready." };
+  }
+
+  const raw = [];
+  const counts = [];
+  let nonZeroSeen = false;
+
+  for (let i = 0; i < inputs.length; i++) {
+    const txt = inputs[i].value.trim();
+    if (txt === "") {
+      raw.push("");
+      counts.push(0);
+      continue;
+    }
+    const n = Number(txt);
+    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      return { ok: false, error: "Please use whole numbers (0–999) in each column." };
+    }
+    if (n > 999) {
+      return { ok: false, error: "No more than three digits (0–999) allowed in each cell." };
+    }
+    raw.push(n);
+    counts.push(n);
+    if (n !== 0) nonZeroSeen = true;
+  }
+
+  if (!nonZeroSeen) {
+    return { ok: false, error: "Enter at least one non-zero value to make a number." };
+  }
+
+  return { ok: true, raw, counts };
+}
+
+function computeTotalFromCounts(counts) {
+  let total = 0;
+  for (let i = 0; i < counts.length; i++) {
+    total += counts[i] * placeValues[i];
+  }
+  return total;
+}
+
+function computeFullStepSequence(counts) {
+  const temp = counts.slice();
+  const steps = [];
+  const len = temp.length;
+
+  while (true) {
+    let idx = -1;
+    for (let i = len - 1; i > 0; i--) {
+      if (temp[i] > 9) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx === -1) break;
+
+    const val = temp[idx];
+    const carry = Math.floor(val / 10);
+    const remain = val % 10;
+    const leftIndex = idx - 1;
+    const prevLeft = temp[leftIndex];
+    const newLeft = prevLeft + carry;
+
+    steps.push({
+      fromIndex: idx,
+      toIndex: leftIndex,
+      carry,
+      remain,
+      prevLeft,
+      newLeft,
+      originalRight: val
+    });
+
+    temp[idx] = remain;
+    temp[leftIndex] = newLeft;
+  }
+
+  return { finalCounts: temp.slice(), steps };
+}
+
+/* CARRY VISUAL HELPERS ------------------------------------------- */
+function getDigitCell(index) {
+  const cols = gridEl.querySelectorAll(".pv-column");
+  if (index < 0 || index >= cols.length) return null;
+  return cols[index].querySelector(".pv-digit");
+}
+
+function showCarryBubble(fromIndex, text, toIndex) {
+  const fromCell = getDigitCell(fromIndex);
+  if (!fromCell) return;
+
+  const bubble = document.createElement("div");
+  bubble.className = "carry-bubble";
+  bubble.textContent = text;
+  fromCell.appendChild(bubble);
+
+  if (typeof toIndex === "number") {
+    const toCell = getDigitCell(toIndex);
+    if (toCell) {
+      const fromRect = fromCell.getBoundingClientRect();
+      const toRect = toCell.getBoundingClientRect();
+
+      const fromCenterX = fromRect.left + fromRect.width / 2;
+      const toCenterX   = toRect.left   + toRect.width   / 2;
+
+      const dx = toCenterX - fromCenterX;
+      bubble.style.setProperty("--dx", `${dx}px`);
+    }
+  }
+
+  setTimeout(() => bubble.remove(), 3500);
+}
+
+/* Prepare animation state from current input grid ---------------- */
+function buildAnimationFromCurrentInputs() {
+  const { ok, raw, counts, error } = readInputCounts();
+  if (!ok) {
+    setError(error);
+    return false;
+  }
+
+  const { finalCounts, steps: computedSteps } = computeFullStepSequence(counts);
+
+  originalInputs = raw.slice();
+  originalCounts = counts.slice();
+  targetCounts = finalCounts.slice();
+  currentCounts = counts.slice();
+  steps = computedSteps;
+  stepIndex = 0;
+  currentValue = computeTotalFromCounts(counts);
+
+  isInputMode = false;
+  isFullyRegrouped = steps.length === 0;
+  hideValues = false;
+
+  sliderRow.classList.add("hidden");
+  setSliderEnabled(false);
+  returnBtn.classList.remove("hidden");
+  setError("");
+
+  return true;
+}
+
+/* One forward step (Animate Left) -------------------------------- */
+async function playForwardStep(k) {
+  if (k < 0 || k >= steps.length) return;
+  const step = steps[k];
+  const { fromIndex, toIndex, carry, remain, prevLeft, newLeft } = step;
+
+  currentCounts[fromIndex] = remain;
+  renderDigitCellValue(fromIndex, remain, false);
+
+  showCarryBubble(fromIndex, carry, toIndex);
+  await delay(900);
+
+  const leftCell = getDigitCell(toIndex);
+  let ann = null;
+  if (leftCell) {
+    ann = document.createElement("div");
+    ann.className = "carry-annotation";
+    ann.textContent = `${prevLeft} + ${carry}`;
+    leftCell.appendChild(ann);
+  }
+
+  await delay(1200);
+
+  if (ann) ann.remove();
+
+  currentCounts[toIndex] = newLeft;
+  renderDigitCellValue(toIndex, newLeft, false);
+
+  await delay(400);
+}
+
+/* One backward step (Animate Right) ------------------------------ */
+async function playBackwardStep(k) {
+  if (k < 0 || k >= steps.length) return;
+  const step = steps[k];
+  const { fromIndex, toIndex, carry, remain, prevLeft, newLeft, originalRight } = step;
+
+  const leftCell = getDigitCell(toIndex);
+  let ann = null;
+  if (leftCell) {
+    ann = document.createElement("div");
+    ann.className = "carry-annotation";
+    ann.textContent = `${prevLeft} + ${carry}`;
+    leftCell.appendChild(ann);
+  }
+
+  await delay(800);
+
+  currentCounts[toIndex] = prevLeft;
+  renderDigitCellValue(toIndex, prevLeft, false);
+
+  showCarryBubble(toIndex, carry, fromIndex);
+  await delay(900);
+
+  currentCounts[fromIndex] = originalRight;
+  renderDigitCellValue(fromIndex, originalRight, false);
+
+  if (ann) ann.remove();
+  await delay(400);
+}
+
+/* EVENTS ---------------------------------------------------------- */
+
+// Enter: go straight to fully regrouped view
+enterBtn.addEventListener("click", () => {
+  if (isAnimating) return;
+
+  if (isInputMode) {
+    if (!buildAnimationFromCurrentInputs()) return;
+  }
+
+  currentCounts = targetCounts.slice();
+  stepIndex = steps.length;
+  isFullyRegrouped = true;
+  hideValues = false;
+
+  updateAll();
+});
+
+// Animate Left: one regroup step to the left
+animateLeftBtn.addEventListener("click", async () => {
+  if (isAnimating) return;
+
+  if (isInputMode) {
+    if (!buildAnimationFromCurrentInputs()) return;
+    renderDigitGrid();
+  }
+
+  if (stepIndex >= steps.length) {
+    isFullyRegrouped = true;
+    hideValues = false;
+    updateAll();
+    return;
+  }
+
+  isAnimating = true;
+  await playForwardStep(stepIndex);
+  stepIndex++;
+  if (stepIndex >= steps.length) {
+    isFullyRegrouped = true;
+    hideValues = false;
+  }
+  isAnimating = false;
+  updateAll();
+});
+
+// Animate Right: undo one regroup step
+animateRightBtn.addEventListener("click", async () => {
+  if (isAnimating || isInputMode) return;
+  if (stepIndex <= 0) return;
+
+  isAnimating = true;
+
+  if (isFullyRegrouped) {
+    isFullyRegrouped = false;
+  }
+
+  const k = stepIndex - 1;
+  await playBackwardStep(k);
+  stepIndex--;
+
+  isAnimating = false;
+  updateAll();
+});
+
+// Return to input: restore typed groups
+returnBtn.addEventListener("click", () => {
+  if (isAnimating) return;
+
+  isInputMode = true;
+  currentValue = null;
+  hideValues = false;
+
+  originalCounts = new Array(placeNames.length).fill(0);
+  currentCounts = new Array(placeNames.length).fill(0);
+  targetCounts = new Array(placeNames.length).fill(0);
+  steps = [];
+  stepIndex = 0;
+  isFullyRegrouped = false;
+
+  sliderRow.classList.add("hidden");
+  setSliderEnabled(false);
+  resultRow.classList.add("hidden");
+  visualsRow.classList.add("hidden");
+
+  updateAnimateButtonsState();
+  setError("");
+  updateAll();
+});
+
+// Reset: clear everything
+resetBtn.addEventListener("click", () => {
+  if (isAnimating) return;
+
+  isInputMode = true;
+  currentValue = null;
+  hideValues = false;
+  originalInputs = new Array(placeNames.length).fill("");
+  inputCounts = new Array(placeNames.length).fill(0);
+
+  originalCounts = new Array(placeNames.length).fill(0);
+  currentCounts = new Array(placeNames.length).fill(0);
+  targetCounts = new Array(placeNames.length).fill(0);
+  steps = [];
+  stepIndex = 0;
+  isFullyRegrouped = false;
+
+  splitSlider.value = 3;
+  sliderRow.classList.add("hidden");
+  setSliderEnabled(false);
+  resultRow.classList.add("hidden");
+  visualsRow.classList.add("hidden");
+
+  leftVisualTitle.textContent = "";
+  rightVisualTitle.textContent = "";
+  leftImageWrapper.innerHTML = "";
+  rightImageWrapper.innerHTML = "";
+  leftMultiplier.textContent = "";
+  rightMultiplier.textContent = "";
+
+  setError("");
+  updateAnimateButtonsState();
+  updateAll();
+});
+
+splitSlider.addEventListener("input", () => {
+  if (isInputMode || !isFullyRegrouped) return;
+  updateAll();
+});
+
+window.addEventListener("keydown", (e) => {
+  if (isInputMode || !isFullyRegrouped) return;
+  let v = Number(splitSlider.value);
+  const maxIndex = placeNames.length - 1;
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    splitSlider.value = Math.max(0, v - 1);
+  }
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    splitSlider.value = Math.min(maxIndex, v + 1);
+  }
+  updateAll();
+});
+
+/* Hide / Show values toggle -------------------------------------- */
+hideBtn.addEventListener("click", () => {
+  if (isInputMode || !isFullyRegrouped) return;
+  hideValues = !hideValues;
+  hideBtn.textContent = hideValues ? "Show values" : "Hide values";
+  updateExploreView();
+});
+
+/* Header buttons ------------------------------------------------- */
+exploreBtn.addEventListener("click", () => {
+  if (isAnimating) return;
+  // always in explore mode now; this just ensures values are shown
+  hideValues = false;
+  updateAll();
+});
+
+flashBtn.addEventListener("click", () => {
+  if (isAnimating) return;
+  window.location.href = "partition-flash.html";
+});
+
+quizBtn.addEventListener("click", () => {
+  if (isAnimating) return;
+  window.location.href = "student-flash.html";
+});
+
+/* INITIAL --------------------------------------------------------- */
+setSliderEnabled(false);
+updateAnimateButtonsState();
+renderGrid();
+</script>
+</body>
+</html>
