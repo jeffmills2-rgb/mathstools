@@ -12,6 +12,9 @@
   .addrow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
   .addrow .field{margin:0;min-width:150px;flex:1}
   .addrow .field input{width:100%;padding:9px 11px;border:1px solid var(--line,#e2e8f0);border-radius:9px;font-size:.92rem}
+  .task-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;white-space:nowrap}
+  .task-x{width:30px;height:30px;border-radius:50%;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:1rem;font-weight:800;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+  .task-x:hover{background:#dc2626;color:#fff;border-color:#dc2626}
 </style>
 </head>
 <body>
@@ -82,6 +85,29 @@
   </section>
 
   <section class="card section">
+    <h2>Set an Adventure task</h2>
+    <p class="hint">Choose a class and a character, then a topic. Every student in that class will see the task delivered by that character in Mills Maths Adventure.</p>
+    <div class="addrow">
+      <div class="field"><label for="taskClass">Class</label><select id="taskClass"></select></div>
+      <div class="field"><label for="taskNpc">Character</label><select id="taskNpc"></select></div>
+      <div class="field"><label for="taskTopic">Topic</label><select id="taskTopic"></select></div>
+      <div class="field" style="min-width:110px"><label for="taskQs">Questions</label><input id="taskQs" type="number" min="1" max="50" value="10"/></div>
+      <div class="field" style="min-width:120px"><label for="taskDiffMin">Difficulty</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="taskDiffMin"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+          <span class="muted">to</span>
+          <select id="taskDiffMax"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        </div>
+      </div>
+      <div class="field" style="min-width:150px"><label for="taskDue">Due (optional)</label><input id="taskDue" type="date"/></div>
+      <button class="btn primary" id="setTaskBtn" type="button">Set task</button>
+      <button class="btn ghost hidden" id="cancelEditBtn" type="button">Cancel</button>
+    </div>
+    <div class="msg" id="taskMsg"></div>
+    <div id="taskList" style="margin-top:10px"></div>
+  </section>
+
+  <section class="card section">
     <h2>Students</h2>
     <p class="hint">Click a student for their detailed results.</p>
     <div id="studentsBody"></div>
@@ -97,14 +123,16 @@
 <div class="modal-back" id="modalBack"><div class="modal" id="modal"></div></div>
 
 <script type="module">
-import { initPortal, loginTeacher, logout, normaliseCode, getDb, createStudent } from "../shared/codeExchangeClient.js";
+import { initPortal, loginTeacher, logout, normaliseCode, getDb, createStudent, createAdventureTask, setAdventureTaskActive, updateAdventureTask } from "../shared/codeExchangeClient.js";
 import { COLLECTIONS } from "../shared/firebaseConfig.js";
+import { ADVENTURE_NPCS, ADVENTURE_STAGES, getStageTopics, npcDefaultTopic } from "../shared/adventureManifest.js";
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getEnabledTools } from "../shared/mmtToolRegistry.js";
 import { normaliseAchievement, summarise, rollupByStudent, toCSV, summaryText } from "../shared/resultUtils.js";
 
 const $ = (id)=>document.getElementById(id);
 let teacher=null, students=[], all=[], attemptsByCode=new Map();
+let editingId=null; // assignmentId currently being edited, or null
 
 initPortal();
 
@@ -192,7 +220,192 @@ function showDashboard(){
   classes.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; $("classFilter").appendChild(o); });
   getEnabledTools().forEach(t=>{ const o=document.createElement("option"); o.value=t.toolId; o.textContent=t.title; $("toolFilter").appendChild(o); });
   [...new Set(all.map(r=>r.topic).filter(Boolean))].forEach(t=>{ const o=document.createElement("option"); o.value=t; o.textContent=t; $("topicFilter").appendChild(o); });
+  setupTaskForm(classes);
   render();
+}
+
+// ---- Set Adventure task ---------------------------------------------------
+function setupTaskForm(classes){
+  // Class options (mirror the roster's classes).
+  $("taskClass").innerHTML = classes.length
+    ? classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("")
+    : `<option value="">(add a student to create a class)</option>`;
+  // Character options.
+  $("taskNpc").innerHTML = ADVENTURE_NPCS.map(n=>`<option value="${n.id}">${esc(n.name)}</option>`).join("");
+  // Topic options (Stage 4 for now).
+  const topics = getStageTopics("stage4");
+  $("taskTopic").innerHTML = topics.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
+  // Default the topic to the chosen character's theme, and note off-theme picks.
+  const syncTheme=()=>{ const def=npcDefaultTopic($("taskNpc").value); if(def) $("taskTopic").value=def; offThemeNote(); };
+  $("taskNpc").addEventListener("change", syncTheme);
+  $("taskTopic").addEventListener("change", offThemeNote);
+  $("taskClass").addEventListener("change", ()=>{ cancelEdit(); loadTasks(); });
+  $("setTaskBtn").addEventListener("click", setTask);
+  $("cancelEditBtn").addEventListener("click", cancelEdit);
+  syncTheme();
+  loadTasks();
+}
+
+function offThemeNote(){
+  const npc = ADVENTURE_NPCS.find(n=>n.id===$("taskNpc").value);
+  const m=$("taskMsg");
+  if(npc && $("taskTopic").value!==npc.defaultTopic){
+    const topicName = getStageTopics("stage4").find(t=>t.id===npc.defaultTopic)?.name || npc.defaultTopic;
+    m.className="msg info show";
+    m.textContent=`${npc.name} usually teaches ${topicName} — students will see a short generic intro for this off-theme task.`;
+  } else { m.className="msg"; m.textContent=""; }
+}
+
+async function setTask(){
+  const className=$("taskClass").value;
+  const npcId=$("taskNpc").value;
+  const topicId=$("taskTopic").value;
+  const m=$("taskMsg");
+  if(!className){ m.className="msg bad show"; m.textContent="Choose a class (add a student first to create one)."; return; }
+  const min=Number($("taskDiffMin").value)||1, max=Math.max(min, Number($("taskDiffMax").value)||5);
+  const requiredQuestions=Math.min(50, Math.max(1, Number($("taskQs").value)||10));
+  const dueVal=$("taskDue").value;
+  const dueAt = dueVal ? new Date(dueVal+"T23:59:59").getTime() : null;
+  const npcName = ADVENTURE_NPCS.find(n=>n.id===npcId)?.name || "Character";
+  const topicName = getStageTopics("stage4").find(t=>t.id===topicId)?.name || topicId;
+  const payload={
+    npcId, className,
+    stages:["stage4"], selectedTopics:[topicId], selectedSkills:[],
+    difficultyRange:{min,max}, requiredQuestions, adaptiveOn:true, dueAt,
+    title:`${npcName}: ${topicName}`,
+    description:`A ${topicName} task set by your teacher.`,
+  };
+  const btn=$("setTaskBtn"); btn.disabled=true; btn.textContent= editingId?"Updating…":"Setting…";
+  try{
+    if(editingId){
+      await updateAdventureTask({ assignmentId:editingId, ...payload });
+      m.className="msg ok show";
+      m.innerHTML=`Updated <strong>${esc(topicName)}</strong> for <strong>${esc(className)}</strong>, delivered by <strong>${esc(npcName)}</strong>.`;
+      cancelEdit();
+    } else {
+      await createAdventureTask(payload);
+      m.className="msg ok show";
+      m.innerHTML=`Set <strong>${esc(topicName)}</strong> for <strong>${esc(className)}</strong>, delivered by <strong>${esc(npcName)}</strong>.`;
+    }
+    loadTasks();
+  }catch(err){
+    m.className="msg bad show"; m.textContent=(err && err.message) || "Could not set the task.";
+  }finally{
+    btn.disabled=false; btn.textContent= editingId?"Update task":"Set task";
+  }
+}
+
+// Load a task into the form for editing.
+function startEditTask(t){
+  if(!t) return;
+  editingId=t.id;
+  if([...$("taskClass").options].some(o=>o.value===(t.className||""))) $("taskClass").value=t.className||"";
+  $("taskNpc").value=t.npcId||"pip";
+  $("taskTopic").value=(t.selectedTopics||[])[0]||npcDefaultTopic(t.npcId)||"integers";
+  $("taskQs").value=t.requiredQuestions||10;
+  $("taskDiffMin").value=String(t.difficultyRange?.min||1);
+  $("taskDiffMax").value=String(t.difficultyRange?.max||5);
+  $("taskDue").value= t.dueAt ? new Date(t.dueAt).toISOString().slice(0,10) : "";
+  $("setTaskBtn").textContent="Update task";
+  $("cancelEditBtn").classList.remove("hidden");
+  offThemeNote();
+  $("taskNpc").scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function cancelEdit(){
+  editingId=null;
+  $("setTaskBtn").textContent="Set task";
+  $("cancelEditBtn").classList.add("hidden");
+}
+
+async function loadTasks(){
+  const className=$("taskClass").value;
+  const box=$("taskList");
+  if(!className){ box.innerHTML=""; return; }
+  try{
+    const db=getDb();
+    const snap=await getDocs(query(collection(db,"adventureAssignments"),
+      where("teacherCode","==",teacher.teacherCode), where("className","==",className)));
+    const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.active!==false)
+      .sort((a,b)=>(b.assignedAt||0)-(a.assignedAt||0));
+    if(!rows.length){ box.innerHTML=`<p class="muted">No Adventure tasks set for ${esc(className)} yet.</p>`; return; }
+    const npcName=(id)=>ADVENTURE_NPCS.find(n=>n.id===id)?.name||id;
+    const topicName=(id)=>getStageTopics("stage4").find(t=>t.id===id)?.name||id;
+    const classSize=students.filter(s=>(s.className||"")===className).length;
+    box.innerHTML=`<table><thead><tr><th>Character</th><th>Topic</th><th>Questions</th><th>Difficulty</th><th>Due</th><th>Done</th><th></th></tr></thead><tbody>`+
+      rows.map(t=>{ const done=taskCompleters(t.id).size;
+        return `<tr><td>${esc(npcName(t.npcId))}</td><td>${esc((t.selectedTopics||[]).map(topicName).join(", "))}</td>
+        <td>${t.requiredQuestions||"—"}</td><td>${t.difficultyRange?`${t.difficultyRange.min}–${t.difficultyRange.max}`:"—"}</td>
+        <td>${t.dueAt?new Date(t.dueAt).toLocaleDateString():"—"}</td>
+        <td><span class="pct ${done>=classSize&&classSize?'hi':done?'mid':'lo'}">${done}/${classSize||"—"}</span></td>
+        <td><div class="task-actions">
+          <button class="btn" data-view="${esc(t.id)}" type="button">View</button>
+          <button class="btn" data-edit="${esc(t.id)}" type="button">Edit</button>
+          <button class="task-x" data-remove="${esc(t.id)}" type="button" title="Remove this task" aria-label="Remove this task">✕</button>
+        </div></td></tr>`;}).join("")+`</tbody></table>`;
+    box.querySelectorAll("[data-remove]").forEach(b=> b.addEventListener("click", ()=> removeTask(b.dataset.remove, b)));
+    box.querySelectorAll("[data-view]").forEach(b=> b.addEventListener("click", ()=> openTaskDetail(rows.find(t=>t.id===b.dataset.view))));
+    box.querySelectorAll("[data-edit]").forEach(b=> b.addEventListener("click", ()=> startEditTask(rows.find(t=>t.id===b.dataset.edit))));
+  }catch(err){
+    box.innerHTML=`<p class="muted">Could not load current tasks${err&&err.message?": "+esc(err.message):""}.</p>`;
+  }
+}
+
+// Best achievement per student for a given task (matched by adventureTaskId or
+// levelKey, both == assignmentId for teacher tasks). Returns Map(code → info).
+function taskCompleters(assignmentId){
+  const byStu=new Map();
+  for(const a of all){
+    const r=a.raw||{};
+    if(r.adventureTaskId!==assignmentId && r.levelKey!==assignmentId) continue;
+    const k=a.studentCode||a.studentName||"?";
+    const cur=byStu.get(k);
+    if(!cur){ byStu.set(k,{studentCode:a.studentCode,studentName:a.studentName,percent:a.percent,attempts:1}); }
+    else { cur.attempts++; if(a.percent>cur.percent) cur.percent=a.percent; }
+  }
+  return byStu;
+}
+
+function openTaskDetail(t){
+  if(!t) return;
+  const className=t.className||$("taskClass").value;
+  const npcName=ADVENTURE_NPCS.find(n=>n.id===t.npcId)?.name||t.npcId;
+  const topicName=getStageTopics("stage4").find(x=>x.id===(t.selectedTopics||[])[0])?.name||(t.selectedTopics||[]).join(", ");
+  const completers=taskCompleters(t.id);
+  const roster=students.filter(s=>(s.className||"")===className);
+  const PASS=60;
+  const doneRows=roster.map(s=>{ const info=completers.get(s.studentCode); return { name:s.name||s.studentName||s.studentCode, code:s.studentCode, done:Boolean(info), percent:info?info.percent:null, attempts:info?info.attempts:0 }; })
+    .sort((a,b)=> (a.done===b.done? (a.name||"").localeCompare(b.name||"") : (a.done?-1:1)));
+  // Include any completer not in the roster (e.g. moved class) at the end.
+  for(const [code,info] of completers){ if(!roster.some(s=>s.studentCode===code)) doneRows.push({name:info.studentName||code,code,done:true,percent:info.percent,attempts:info.attempts}); }
+  const doneCount=doneRows.filter(r=>r.done).length;
+  const body=doneRows.map(r=>`<tr>
+    <td>${esc(r.name)}</td><td>${esc(r.code||"—")}</td>
+    <td>${r.done?'<span class="badge ok">done</span>':'<span class="badge support">not yet</span>'}</td>
+    <td>${r.percent!=null?`<span class="pct ${r.percent>=70?'hi':r.percent>=PASS?'mid':'lo'}">${r.percent}%</span>`:"—"}</td>
+    <td>${r.attempts||"—"}</td></tr>`).join("");
+  $("modal").innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0">${esc(npcName)}: ${esc(topicName)}</h3><button class="btn" id="closeModal" type="button">Close</button>
+    </div>
+    <div class="muted" style="margin:4px 0 12px">Class ${esc(className)} · ${doneCount}/${roster.length||doneRows.length} completed</div>
+    <table><thead><tr><th>Student</th><th>Code</th><th>Status</th><th>Best</th><th>Attempts</th></tr></thead><tbody>${body||""}</tbody></table>
+    ${doneRows.length?"":'<p class="muted">No students in this class yet.</p>'}`;
+  $("modalBack").classList.add("show");
+  $("closeModal").addEventListener("click", ()=> $("modalBack").classList.remove("show"));
+}
+
+async function removeTask(assignmentId, btn){
+  if(!assignmentId) return;
+  if(!confirm("Remove this Adventure task? Students in this class will no longer see it.")) return;
+  if(btn){ btn.disabled=true; btn.textContent="Removing…"; }
+  try{
+    await setAdventureTaskActive(assignmentId, false);
+    loadTasks();
+  }catch(err){
+    const m=$("taskMsg"); m.className="msg bad show"; m.textContent=(err && err.message) || "Could not remove the task.";
+    if(btn){ btn.disabled=false; btn.textContent="Remove"; }
+  }
 }
 
 function filteredResults(){
@@ -274,7 +487,7 @@ function openStudent(code){
       const correct = skills.filter(q=>q.correct).length;
       return `<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
         <strong>${esc(a.missionTitle||a.missionId||"Mission")}</strong>
-        ${a.missionKind?`<span class="badge kind">${esc(a.missionKind)}</span>`:""}
+        ${(a.missionKind==="teacher"||a.taskId)?'<span class="badge ok">Teacher task</span>':(a.missionKind?`<span class="badge kind">${esc(a.missionKind)}</span>`:"")}
         ${pass===true?'<span class="badge ok">pass</span>':pass===false?'<span class="badge support">retry</span>':''}
         <div class="muted" style="font-size:.85rem;margin-top:4px">Score ${a.correctCount??correct}/${a.questionCount??skills.length} · ${a.percent??"—"}% · ${esc((a.topicIds||a.topics||[]).join(", ")||"—")}</div>
         ${skills.length?`<div class="muted" style="font-size:.8rem;margin-top:4px">Question correctness: ${skills.map(q=>q.correct?"✓":"✗").join(" ")}</div>`:""}

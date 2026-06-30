@@ -46,13 +46,21 @@ NSW maths teacher. It now also has a **secure Student/Teacher Platform** and
   `signInWithCustomToken`.
 - **`createStudentForTeacher`** (callable, teacher-authed) creates students
   server-side, stamped with the caller's own `teacherCode`.
+- **Teacher-set Adventure tasks** (callables `createAdventureTask`,
+  `updateAdventureTask`, `setAdventureTaskActive`, all teacher-authed and stamped
+  with the caller's own `teacherCode`) write the `adventureAssignments` collection;
+  rules let a teacher manage their class's tasks and a student read active tasks
+  matching their `teacherCode`+`className` claims. See §6 + the game repo's
+  `docs/teacher-adventure-tasks-plan.md`.
 - **Live Firestore rules are strict + claim-based:** a student reads only their
   own data; a teacher reads only their own class; results are create-only and
   scoped to the signed-in student; no client identity writes; no result
   edits/deletes; default deny. Identity is managed server-side only.
 - **Never store typed student answers in Firebase.** The web API key is public by
-  design. Games use a **different** Firebase project (`mmt-firebase-games`) and
-  are out of scope for these rules.
+  design. The **arcade/flip-card games** use a **different** Firebase project
+  (`mmt-firebase-games`) and are out of scope for these rules — BUT **Mills Maths
+  Adventure is on `mills-maths-tools`** (it joined the secure ecosystem), so the
+  claim-based rules above DO apply to it.
 - Functions region: **us-central1**. Test codes: student `8F6AYH`, teacher `MILLS0423`.
 
 ## 5. Website structure (`mathstools-main 2`)
@@ -60,10 +68,12 @@ NSW maths teacher. It now also has a **secure Student/Teacher Platform** and
 index.html                         hub / homepage (nav links to portal + Adventure)
 portal/                            THE PLATFORM
   student/index.html               Student Platform (own results/progress)
-  teacher/index.html               Teacher Platform (class results, roster, Add-student)
+  teacher/index.html               Teacher Platform (class results, roster, Add-student,
+                                   Set Adventure task: create/edit/remove + completion view)
   admin/index.html                 disabled page (admin via Firebase Console)
   shared/ firebaseConfig.js · codeExchangeClient.js · quizClient.js ·
-          mmtToolRegistry.js · resultUtils.js · portalStyles.css
+          mmtToolRegistry.js · resultUtils.js · portalStyles.css ·
+          adventureManifest.js (Stage-4 topics/NPCs for the Set-task form)
 online-quizzes/ , interactive-tools/ , worksheet-creators/ , flip-cards/ , games/
 assessment/exam-builder/
 game-platforms/mills-maths-adventure/   the BUILT Adventure (index.html + assets/)
@@ -91,6 +101,15 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
 - Cloud save: completed attempts write a compact `achievements` record + a rich
   `adventureAttempts` record (no typed answers). Demo/skip stays local-only.
   Curriculum/adapters/diagram systems are isolated — only adapters touch legacy banks.
+- **Teacher-set tasks (Phases 1–2, built 2026-07-01):** teachers assign tasks from
+  the Teacher Platform; students get them roster-pushed by class, delivered by the
+  chosen NPC (Pip/Fern/Alby, off-theme allowed). New `adventureAssignments`
+  collection + functions (§4). Game side: `cloudSession.loadAssignments()` →
+  runtime missions + NPC chain overlay (teacher steps prepended so they show even
+  for a finished student). Completion is tagged with `taskId` and surfaced in the
+  teacher portal (per-task Done count + View breakdown, and a "Teacher task" badge
+  per student). Full design/where-everything-lives:
+  `Mills Maths Adventure/docs/teacher-adventure-tasks-plan.md`.
 
 ## 7. Working agreement with Claude
 - **Test before deploying** where practical: website pages via a local server
@@ -105,7 +124,10 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
 
 ## 8. Open / future items
 - Teacher portal: revisit **graphs** (engagement/leaderboard — removed for now),
-  add student **enable/disable/edit** + a class-management view.
+  add student **enable/disable/edit** + a class-management view. (Adventure-TASK
+  create/edit/remove + completion view are now DONE — see §6.)
+- Adventure tasks — future polish: per-skill selection in the Set-task form (only
+  topic-level today), in-game due-date display/overdue handling, more stages/NPCs.
 - Functions runtime: bump **Node 20 → 22** before Oct 2026 (Google deprecation).
 - Consider **App Check**; consider consolidating the 3 Firebase projects later.
 - Old pre-reorg URLs (e.g. `/factor-circles/`) now 404 — add redirects if any were

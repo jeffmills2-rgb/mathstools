@@ -106,6 +106,45 @@ export async function createStudent(payload) {
   return res.data;
 }
 
+/**
+ * Set an Adventure task (teacher-only). Calls the secure createAdventureTask
+ * Cloud Function, which authorises via the signed-in teacher's claim and writes
+ * the assignment server-side (stamped with the teacher's own teacherCode).
+ * `payload` carries { npcId, className, stages, selectedTopics, selectedSkills,
+ * difficultyRange, requiredQuestions, adaptiveOn, dueAt, title, description }.
+ * Returns the new safe assignment or throws.
+ */
+export async function createAdventureTask(payload) {
+  initPortal();
+  const call = httpsCallable(_functions, "createAdventureTask");
+  const res = await call(payload || {});
+  return res.data;
+}
+
+/**
+ * Edit an Adventure task the teacher owns. Calls the secure updateAdventureTask
+ * Cloud Function with the same payload shape as createAdventureTask plus an
+ * assignmentId. Returns the updated assignment or throws.
+ */
+export async function updateAdventureTask(payload) {
+  initPortal();
+  const call = httpsCallable(_functions, "updateAdventureTask");
+  const res = await call(payload || {});
+  return res.data;
+}
+
+/**
+ * Enable/disable (soft-remove) an Adventure task the teacher owns. Calls the
+ * secure setAdventureTaskActive Cloud Function. `active:false` removes it for
+ * students immediately. Returns { assignmentId, active } or throws.
+ */
+export async function setAdventureTaskActive(assignmentId, active) {
+  initPortal();
+  const call = httpsCallable(_functions, "setAdventureTaskActive");
+  const res = await call({ assignmentId, active: active === true });
+  return res.data;
+}
+
 /** Subscribe to auth restoration (custom-token sessions persist by default). */
 export function onAuth(cb) { initPortal(); return onAuthStateChanged(_auth, cb); }
 
