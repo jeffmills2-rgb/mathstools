@@ -139,6 +139,8 @@
   <div id="achievementsOverlay" class="overlay"><div class="modal" role="dialog" aria-modal="true"><h2>🏆 My Achievements</h2><div class="muted">Saved on this browser, and also sent to Firebase when a valid student code is used.</div><div id="achievementsList" class="achievementGrid"></div><div class="modalBtns"><button id="closeAchievementsBtn" class="btn primary" type="button">Close</button><button id="copyAchievementsBtn" class="btn ghost" type="button">Copy achievements</button><button id="clearAchievementsBtn" class="dangerSmall" type="button">Clear saved achievements</button></div></div></div>
 
 <script type="module">
+// Phase 4A.1: secure code exchange (no anonymous auth, no direct students/{code} read).
+import { exchangeOnApp } from "/portal/shared/quizClient.js";
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
   authDomain: "mills-maths-tools.firebaseapp.com",
@@ -149,17 +151,18 @@ const FIREBASE_CONFIG = {
   measurementId: "G-35YCH5NJEG"
 };
 const FIREBASE_READY = FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId;
-let app=null, auth=null, db=null, initPromise=null;
+let app=null, auth=null, db=null, functions=null, initPromise=null;
 async function initFirebase(){
   if(!FIREBASE_READY) return null;
   if(initPromise) return initPromise;
   initPromise=(async()=>{
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js");
-    const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
+    const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
     const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
-    app=initializeApp(FIREBASE_CONFIG); auth=getAuth(app); db=getFirestore(app); await signInAnonymously(auth);
+    const { getFunctions } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js");
+    app=initializeApp(FIREBASE_CONFIG); auth=getAuth(app); db=getFirestore(app); functions=getFunctions(app,'us-central1');
     try{ const { getAnalytics, isSupported } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js"); if(await isSupported()) getAnalytics(app); }catch(e){}
-    return {app,auth,db};
+    return {app,auth,db,functions};
   })();
   return initPromise;
 }
@@ -178,12 +181,9 @@ window.MMT_FIREBASE={
   async validateStudent(code){
     const cleanCode=String(code||"").trim().toUpperCase().replace(/\s+/g,"");
     if(!cleanCode) throw new Error("Enter your student code first.");
-    const {db}=await initFirebase();
-    const {doc,getDoc}=await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
-    const snap=await getDoc(doc(db,"students",cleanCode));
-    if(!snap.exists()) throw new Error("Student code not found.");
-    const data=snap.data()||{}; if(data.active===false) throw new Error("This student code is not active.");
-    return {studentCode:cleanCode,...data};
+    const {auth,functions}=await initFirebase();
+    // Secure exchange: server validates + signs THIS app in with a custom token.
+    return await exchangeOnApp({ functions, auth }, cleanCode);
   },
   async saveAchievement(achievement){
     const {db}=await initFirebase();

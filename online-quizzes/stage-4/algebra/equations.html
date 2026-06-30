@@ -362,8 +362,11 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+  // Phase 4A.1: secure code exchange (no anonymous auth, no direct students/{code} read).
+  import { exchangeOnApp } from "/portal/shared/quizClient.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
@@ -386,6 +389,8 @@
   };
 
   let db = null;
+  let auth = null;
+  let functions = null;
   let mode = 'builder';
   let currentStudent = null;
   let achievementSavedForRun = false;
@@ -419,9 +424,10 @@
 
   try{
     const app = initializeApp(firebaseConfig);
-    await signInAnonymously(getAuth(app));
+    auth = getAuth(app);
     db = getFirestore(app);
-    if(assignmentLinkMode) showStudentMsg('Firebase connected. Enter your code or skip.', 'info');
+    functions = getFunctions(app, 'us-central1');
+    if(assignmentLinkMode) showStudentMsg('Connected. Enter your code or skip.', 'info');
   }catch(err){
     console.error(err);
     if(assignmentLinkMode) showStudentMsg('Firebase connection failed. You can still skip and complete the quiz.', 'bad');
@@ -514,12 +520,10 @@
     const code = normaliseCode(studentInput.value);
     if(!code){ showStudentMsg('Enter your student code first.', 'bad'); return; }
     if(!db){ showStudentMsg('Firebase is not connected. Use Skip for now.', 'bad'); return; }
+    if(!functions || !auth){ showStudentMsg('Not connected. Use Skip for now.', 'bad'); return; }
     studentBtn.disabled=true; studentBtn.textContent='Checking...';
     try{
-      const snap = await getDoc(doc(db,'students',code));
-      if(!snap.exists()) throw new Error('Student code not found.');
-      const student = {studentCode:code, ...snap.data()};
-      if(student.active === false) throw new Error('This student code is not active.');
+      const student = await exchangeOnApp({ functions, auth }, code);
       currentStudent = student;
       achievementSavedForRun = false;
       mode = 'registered';

@@ -789,6 +789,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<!-- Phase 4A.1: functions SDK for the secure code exchange (no anonymous auth). -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
 
 <script>
 (() => {
@@ -953,16 +955,10 @@
       }
       if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
-      firebase.auth().signInAnonymously()
-        .then(() => {
-          firebaseReady = true;
-          showLoginMessage('Firebase connected. Enter your student code or skip.', 'info');
-        })
-        .catch(err => {
-          console.error(err);
-          firebaseReady = false;
-          showLoginMessage('Firebase connection failed. You can still use Skip student code.', 'bad');
-        });
+      // Phase 4A.1: no anonymous sign-in. Ready immediately; the student is
+      // signed in only when they exchange their code (secure code exchange).
+      firebaseReady = true;
+      showLoginMessage('Connected. Enter your student code or skip.', 'info');
     }catch(err){
       console.error(err);
       firebaseReady = false;
@@ -983,33 +979,33 @@
     studentLoginBtn.disabled = true;
     studentLoginBtn.textContent = 'Checking...';
     try{
-      const docSnap = await db.collection('students').doc(code).get();
-      if(!docSnap.exists){
-        showLoginMessage('That student code was not found. Check the code and try again.', 'bad');
-        return;
-      }
-      const data = docSnap.data() || {};
-      if(data.active === false){
-        showLoginMessage('This student code is currently inactive. Please check with your teacher.', 'bad');
-        return;
-      }
+      // Secure exchange: server validates the code (+ active) and mints a custom
+      // token; we sign THIS app in with it, so the save below runs as the student.
+      const res = await firebase.functions().httpsCallable('exchangeStudentCode')({ studentCode: code });
+      const out = res.data || {};
+      if(!out.token){ showLoginMessage('Sign-in failed. Please try again.', 'bad'); return; }
+      await firebase.auth().signInWithCustomToken(out.token);
+      const p = out.profile || {};
       currentStudent = {
-        studentCode: code,
-        studentName: data.name || [data.firstName, data.surname].filter(Boolean).join(' ') || 'Student',
-        firstName: data.firstName || '',
-        surname: data.surname || '',
-        className: data.className || '',
-        teacherCode: data.teacherCode || '',
-        teacherName: data.teacherName || data.teacher || '',
-        teacher: data.teacher || data.teacherName || '',
-        school: data.school || ''
+        studentCode: p.studentCode || code,
+        studentName: p.name || [p.firstName, p.surname].filter(Boolean).join(' ') || 'Student',
+        firstName: p.firstName || '',
+        surname: p.surname || '',
+        className: p.className || '',
+        teacherCode: p.teacherCode || '',
+        teacherName: p.teacherName || '',
+        teacher: p.teacherName || '',
+        school: p.school || ''
       };
       accessMode = 'registered';
       hideLoginMessage();
       studentLoginBack.classList.add('hidden');
     }catch(err){
       console.error(err);
-      showLoginMessage('Could not check that code. Check Firestore rules and internet connection.', 'bad');
+      const m = String(err && err.message || '');
+      if(/not found/i.test(m)) showLoginMessage('That student code was not found. Check the code and try again.', 'bad');
+      else if(/not active|inactive/i.test(m)) showLoginMessage('This student code is currently inactive. Please check with your teacher.', 'bad');
+      else showLoginMessage(m || 'Could not check that code. Please try again.', 'bad');
     }finally{
       studentLoginBtn.disabled = false;
       studentLoginBtn.textContent = 'Start';

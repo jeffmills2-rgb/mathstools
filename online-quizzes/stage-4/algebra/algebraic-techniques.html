@@ -198,19 +198,12 @@
 
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
-    authDomain: "mills-maths-tools.firebaseapp.com",
-    projectId: "mills-maths-tools",
-    storageBucket: "mills-maths-tools.firebasestorage.app",
-    messagingSenderId: "835000359454",
-    appId: "1:835000359454:web:d7876be83ee367b5006c0f",
-    measurementId: "G-35YCH5NJEG"
-  };
+  // Phase 4A.1: secure code exchange via the SHARED quiz client (single source
+  // of truth in /portal/shared). No anonymous auth, no direct students/{code}
+  // read. The quiz's maths/UI are unchanged; only sign-in + save go through the
+  // shared client. window.MMTFirebase keeps the SAME interface the quiz expects
+  // (mode + saveAchievement), so the rest of the page needs no changes.
+  import { MMTQuiz } from "/portal/shared/quizClient.js";
 
   function isAssignmentLink(){
     const params = new URLSearchParams(window.location.search);
@@ -225,11 +218,6 @@
   const chip = document.getElementById('studentChip');
   const chipText = document.getElementById('studentChipText');
 
-  let db = null;
-  let mode = 'pending';
-  let currentStudent = null;
-
-  function normaliseCode(code){ return String(code || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''); }
   function showMsg(text, type='info'){ msg.textContent = text; msg.className = `firebaseMsg show ${type}`; }
   function closeLogin(){ overlay.classList.add('hidden'); }
   function setChip(text){ chipText.textContent = text; chip.classList.add('show'); }
@@ -243,94 +231,52 @@
   }
 
   try{
-    const app = initializeApp(firebaseConfig);
-    await signInAnonymously(getAuth(app));
-    db = getFirestore(app);
-    showMsg('Firebase connected. Enter your code or skip.', 'info');
+    MMTQuiz.init();
+    showMsg('Connected. Enter your code or skip.', 'info');
   }catch(err){
     console.error(err);
-    showMsg('Firebase connection failed. You can still skip and complete the quiz.', 'bad');
+    showMsg('Connection failed. You can still skip and complete the quiz.', 'bad');
   }
 
   continueBtn.addEventListener('click', async () => {
-    const code = normaliseCode(input.value);
+    const code = MMTQuiz.normaliseCode(input.value);
     if(!code){ showMsg('Enter your student code first.', 'bad'); return; }
-    if(!db){ showMsg('Firebase is not connected. Use Skip for now.', 'bad'); return; }
     continueBtn.disabled = true;
     continueBtn.textContent = 'Checking...';
-    try{
-      const snap = await getDoc(doc(db, 'students', code));
-      if(!snap.exists()) throw new Error('Student code not found.');
-      const student = { studentCode: code, ...snap.data() };
-      if(student.active === false) throw new Error('This student code is not active.');
-      currentStudent = student;
-      mode = 'registered';
-      setChip(`${student.name || 'Student'} · ${student.className || ''}`);
+    const res = await MMTQuiz.signIn(code);
+    continueBtn.disabled = false;
+    continueBtn.textContent = 'Continue';
+    if(res.ok){
+      setChip(`${res.profile.name || 'Student'} · ${res.profile.className || ''}`);
       closeLogin();
-    }catch(err){
-      console.error(err);
-      showMsg(err.message || 'Could not validate that code.', 'bad');
-    }finally{
-      continueBtn.disabled = false;
-      continueBtn.textContent = 'Continue';
+    }else{
+      showMsg(res.error || 'Could not validate that code.', 'bad');
     }
   });
 
   skipBtn.addEventListener('click', () => {
-    mode = 'skip';
-    currentStudent = null;
+    MMTQuiz.skipDemo();
     setChip('Guest mode · results not saved');
     closeLogin();
   });
 
-  input.addEventListener('input', () => { input.value = normaliseCode(input.value); });
+  input.addEventListener('input', () => { input.value = MMTQuiz.normaliseCode(input.value); });
   input.addEventListener('keydown', e => { if(e.key === 'Enter') continueBtn.click(); });
 
+  // Preserve the interface the quiz logic uses (mode + saveAchievement), routed
+  // through the shared client. Adds this quiz's tool name + certificate text.
   window.MMTFirebase = {
-    get db(){ return db; },
-    get mode(){ return mode; },
-    get currentStudent(){ return currentStudent; },
-    async saveAchievement(payload){
-      if(!db || mode !== 'registered' || !currentStudent) return { skipped:true, reason:'not_registered' };
-      const total = Number(payload.total || 0);
-      const score = Number(payload.score || 0);
-      const percent = total ? Math.round((score / total) * 100) : 0;
-      const achievement = {
-        studentCode: currentStudent.studentCode,
-        studentName: currentStudent.name || '',
-        firstName: currentStudent.firstName || '',
-        surname: currentStudent.surname || '',
-        className: currentStudent.className || '',
-        teacherCode: currentStudent.teacherCode || '',
-        teacherName: currentStudent.teacherName || currentStudent.teacher || '',
-        school: currentStudent.school || '',
-        topic: payload.topic || 'Algebraic Techniques',
+    get mode(){ return MMTQuiz.getMode(); },
+    get currentStudent(){ return MMTQuiz.getStudent(); },
+    async saveAchievement(payload = {}){
+      const score = Number(payload.score || 0), total = Number(payload.total || 0);
+      return MMTQuiz.saveAchievement({
+        ...payload,
         tool: 'Algebraic Techniques — Student Quiz',
-        level: payload.level || '',
-        levelKey: payload.levelKey || '',
-        score,
-        total,
-        percent,
-        xpEarned: Number(payload.xpEarned || 0),
-        baseXP: Number(payload.baseXP || 0),
-        xpMultiplier: Number(payload.xpMultiplier || 1),
-        xpRuleVersion: payload.xpRuleVersion || 'v1_percentage_difficulty',
+        topic: payload.topic || 'Algebraic Techniques',
         masteryTopic: payload.masteryTopic || payload.topic || 'Algebraic Techniques',
-        masteryScore: percent,
-        streakEligible: mode === 'registered',
-        badgeEligible: mode === 'registered',
-        platformVersion: payload.platformVersion || 'mmt-platform-template-v1',
-        types: payload.types || [],
-        assignmentMode: !!payload.assignmentMode,
-        assignedTypes: payload.assignedTypes || [],
-        assignedCount: payload.assignedCount || null,
-        assignmentSource: payload.assignmentSource || null,
         certificateText: `You completed ${payload.level || 'Algebraic Techniques'} in Algebraic Techniques and got a score of ${score} out of ${total}.`,
-        createdAt: serverTimestamp(),
-        createdAtClient: new Date().toISOString()
-      };
-      await addDoc(collection(db, 'achievements'), achievement);
-      return { saved:true };
+      });
     }
   };
 </script>

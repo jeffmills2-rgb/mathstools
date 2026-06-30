@@ -906,8 +906,11 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+  // Phase 4A.1: secure code exchange (no anonymous auth, no direct students/{code} read).
+  import { exchangeOnApp } from "/portal/shared/quizClient.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
@@ -938,7 +941,7 @@
     id: assignmentParams.get('id') || ''
   };
   window.MMTStudent = { mode: assignmentMode ? 'pending' : 'teacher', currentStudent:null };
-  let db = null;
+  let db = null, auth = null, functions = null;
 
   function normaliseCode(code){ return String(code || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g,''); }
   function showMsg(text,type='info'){ if(!msg) return; msg.textContent = text; msg.className = `firebaseMsg show ${type}`; }
@@ -947,12 +950,13 @@
 
   try{
     const app = initializeApp(firebaseConfig);
-    await signInAnonymously(getAuth(app));
+    auth = getAuth(app);
     db = getFirestore(app);
-    showMsg('Firebase connected. Enter your code or skip.', 'info');
+    functions = getFunctions(app, 'us-central1');
+    showMsg('Connected. Enter your code or skip.', 'info');
   }catch(err){
     console.error(err);
-    showMsg('Firebase connection failed. You can still skip and complete the quiz.', 'bad');
+    showMsg('Connection failed. You can still skip and complete the quiz.', 'bad');
   }
 
   if(!assignmentMode){
@@ -967,15 +971,11 @@
     const code = normaliseCode(codeInput?.value || '');
     if(codeInput) codeInput.value = code;
     if(!code){ showMsg('Enter your student code first, or choose Skip student code.', 'bad'); return; }
-    if(!db){ showMsg('Firebase is not connected. Use Skip for now.', 'bad'); return; }
+    if(!functions || !auth){ showMsg('Not connected. Use Skip for now.', 'bad'); return; }
     loginBtn.disabled = true;
     loginBtn.textContent = 'Checking...';
     try{
-      const snap = await getDoc(doc(db, 'students', code));
-      if(!snap.exists()) throw new Error('Student code not found.');
-      const data = snap.data() || {};
-      if(data.active === false) throw new Error('This student code is not active.');
-      const student = { studentCode: code, ...data };
+      const student = await exchangeOnApp({ functions, auth }, code);
       window.MMTStudent.mode = 'registered';
       window.MMTStudent.currentStudent = student;
       setChip(`${student.name || 'Student'} · ${student.className || ''}`);
