@@ -1,0 +1,63 @@
+rules_version = '2';
+
+// Mills Maths Tools — PRODUCTION claim-based rules (Phase 4A go-live).
+//
+// Every client signs in via the secure code-exchange Cloud Functions
+// (exchangeStudentCode / exchangeTeacherCode), which mint a Firebase Auth custom
+// token carrying { role, studentCode | teacherCode }. These rules scope all
+// reads/writes to the signed-in owner. Identity is managed server-side only.
+// Default-deny. Deploy by pasting into Firebase Console → Firestore → Rules.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function authed()    { return request.auth != null; }
+    function role()      { return authed() ? request.auth.token.role : ''; }
+    function isStudent() { return role() == 'student'; }
+    function isTeacher() { return role() == 'teacher'; }
+    function myStudent() { return request.auth.token.studentCode; }
+    function myTeacher() { return request.auth.token.teacherCode; }
+
+    // Students: a student reads only their own doc; a teacher reads only their
+    // own class (query must filter by teacherCode == claim). No client writes.
+    match /students/{studentCode} {
+      allow read: if (isStudent() && myStudent() == studentCode)
+                  || (isTeacher() && resource.data.teacherCode == myTeacher());
+      allow create, update, delete: if false;
+    }
+
+    // Teachers: a teacher reads only their own doc. No listing. No client writes.
+    match /teachers/{teacherCode} {
+      allow get: if isTeacher() && myTeacher() == teacherCode;
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    // Achievements: a student reads only their own; a teacher reads only their
+    // class. Create-only, and ONLY for the signed-in student's own studentCode.
+    // Never edited or deleted from the client.
+    match /achievements/{id} {
+      allow read: if (isStudent() && resource.data.studentCode == myStudent())
+                  || (isTeacher() && resource.data.teacherCode == myTeacher());
+      allow create: if isStudent() && request.resource.data.studentCode == myStudent();
+      allow update, delete: if false;
+    }
+
+    // Adventure attempts: same owner-scoped reads. Create-only for the signed-in
+    // student, tagged from the Adventure. Never edited or deleted.
+    match /adventureAttempts/{id} {
+      allow read: if (isStudent() && resource.data.studentCode == myStudent())
+                  || (isTeacher() && resource.data.teacherCode == myTeacher());
+      allow create: if isStudent()
+        && request.resource.data.studentCode == myStudent()
+        && request.resource.data.source == 'mills-maths-adventure';
+      allow update, delete: if false;
+    }
+
+    // Everything else — including identity writes and any other collection
+    // (e.g. best-effort platform-progress writes) — is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
