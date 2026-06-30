@@ -93,6 +93,19 @@ export async function logout() {
   try { if (_auth) await signOut(_auth); } catch { /* noop */ }
 }
 
+/**
+ * Create a student (teacher-only). Calls the secure createStudentForTeacher
+ * Cloud Function, which authorises via the signed-in teacher's claim and writes
+ * the student server-side (stamped with the teacher's own teacherCode). Returns
+ * the new safe student { studentCode, name, className, ... } or throws.
+ */
+export async function createStudent(payload) {
+  initPortal();
+  const call = httpsCallable(_functions, "createStudentForTeacher");
+  const res = await call(payload || {});
+  return res.data;
+}
+
 /** Subscribe to auth restoration (custom-token sessions persist by default). */
 export function onAuth(cb) { initPortal(); return onAuthStateChanged(_auth, cb); }
 

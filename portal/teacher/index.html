@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>MMT Teacher Platform</title>
 <link rel="stylesheet" href="../shared/portalStyles.css"/>
+<style>
+  .code-input-wrap{position:relative;display:flex;align-items:center}
+  .code-input-wrap input{flex:1;padding-right:70px}
+  .code-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;border-radius:8px;padding:6px 11px;font-size:.8rem;font-weight:700;cursor:pointer}
+  .addrow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+  .addrow .field{margin:0;min-width:150px;flex:1}
+  .addrow .field input{width:100%;padding:9px 11px;border:1px solid var(--line,#e2e8f0);border-radius:9px;font-size:.92rem}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -21,7 +29,12 @@
     <h1>Teacher sign in</h1>
     <p class="lead">Enter your teacher code to view your students' results.</p>
     <div class="secure"><span>🔒</span><span><strong>Secure sign-in.</strong> Your code is verified by our server and you are signed in with a secure token. You only ever see your own students and results.</span></div>
-    <div class="field"><label for="codeInput">Teacher code</label><input id="codeInput" placeholder="e.g. MILLS0423" autocomplete="off"/></div>
+    <div class="field"><label for="codeInput">Teacher code</label>
+      <div class="code-input-wrap">
+        <input id="codeInput" type="password" placeholder="" autocomplete="off" autocapitalize="characters" spellcheck="false"/>
+        <button type="button" id="codeToggle" class="code-toggle" aria-label="Show or hide code">Show</button>
+      </div>
+    </div>
     <button class="btn primary" id="loginBtn" type="button" style="width:100%">Sign in</button>
     <div class="msg" id="loginMsg"></div>
   </section>
@@ -57,6 +70,18 @@
   </section>
 
   <section class="card section">
+    <h2>Add a student</h2>
+    <p class="hint">Creates a unique student code linked to you. To start a new class, just type a new class name.</p>
+    <div class="addrow">
+      <div class="field"><label for="newFirst">First name</label><input id="newFirst" autocomplete="off"/></div>
+      <div class="field"><label for="newSurname">Surname</label><input id="newSurname" autocomplete="off"/></div>
+      <div class="field"><label for="newClass">Class</label><input id="newClass" placeholder="e.g. 7MAB" autocomplete="off"/></div>
+      <button class="btn primary" id="addStudentBtn" type="button">Add student</button>
+    </div>
+    <div class="msg" id="addMsg"></div>
+  </section>
+
+  <section class="card section">
     <h2>Students</h2>
     <p class="hint">Click a student for their detailed results.</p>
     <div id="studentsBody"></div>
@@ -72,7 +97,7 @@
 <div class="modal-back" id="modalBack"><div class="modal" id="modal"></div></div>
 
 <script type="module">
-import { initPortal, loginTeacher, logout, normaliseCode, getDb } from "../shared/codeExchangeClient.js";
+import { initPortal, loginTeacher, logout, normaliseCode, getDb, createStudent } from "../shared/codeExchangeClient.js";
 import { COLLECTIONS } from "../shared/firebaseConfig.js";
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getEnabledTools } from "../shared/mmtToolRegistry.js";
@@ -90,12 +115,38 @@ function hashColour(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(
 
 $("codeInput").addEventListener("input", e=>{ e.target.value=normaliseCode(e.target.value); });
 $("codeInput").addEventListener("keydown", e=>{ if(e.key==="Enter") $("loginBtn").click(); });
+$("codeToggle").addEventListener("click", ()=>{ const i=$("codeInput"); const hidden=i.type==="password"; i.type=hidden?"text":"password"; $("codeToggle").textContent=hidden?"Hide":"Show"; i.focus(); });
 $("loginBtn").addEventListener("click", doLogin);
 $("signoutBtn").addEventListener("click", async ()=>{ await logout(); location.reload(); });
 ["classFilter","toolFilter","topicFilter","dateFilter"].forEach(id=> $(id).addEventListener("change", render));
 $("searchInput").addEventListener("input", render);
 $("csvBtn").addEventListener("click", exportCsv);
 $("copyBtn").addEventListener("click", copySummary);
+$("addStudentBtn").addEventListener("click", addStudent);
+
+async function addStudent(){
+  const firstName=$("newFirst").value.trim(), surname=$("newSurname").value.trim();
+  const className=$("newClass").value.trim().toUpperCase();
+  const m=$("addMsg");
+  if(!firstName && !surname){ m.className="msg bad show"; m.textContent="Enter the student's name."; return; }
+  if(!className){ m.className="msg bad show"; m.textContent="Enter a class name."; return; }
+  const btn=$("addStudentBtn"); btn.disabled=true; btn.textContent="Adding…";
+  try{
+    const stu = await createStudent({ firstName, surname, className });
+    m.className="msg ok show";
+    m.innerHTML = `Added <strong>${esc(stu.name)}</strong> — student code <strong>${esc(stu.studentCode)}</strong>. Give this code to the student.`;
+    students.push({ id: stu.studentCode, ...stu });
+    if(![...$("classFilter").options].some(o=>o.value===className)){
+      const o=document.createElement("option"); o.value=className; o.textContent=className; $("classFilter").appendChild(o);
+    }
+    $("newFirst").value=""; $("newSurname").value=""; $("newFirst").focus(); // keep class for batch adds
+    render();
+  }catch(err){
+    m.className="msg bad show"; m.textContent=(err && err.message) || "Could not add the student.";
+  }finally{
+    btn.disabled=false; btn.textContent="Add student";
+  }
+}
 $("modalBack").addEventListener("click", e=>{ if(e.target===$("modalBack")) $("modalBack").classList.remove("show"); });
 
 async function doLogin(){
@@ -154,17 +205,35 @@ function filteredResults(){
     (!search || (r.studentCode||"").includes(search) || (r.studentName||"").toUpperCase().includes(search)));
 }
 
+// Full class roster: every student you own (filtered by class/search) PLUS anyone
+// who has results, with stats merged from the filtered results. New students with
+// no activity yet still appear (attempts 0).
+function buildRoster(){
+  const cls=$("classFilter").value, search=normaliseCode($("searchInput").value);
+  const rows = filteredResults();
+  const map = new Map();
+  students.forEach(s=>{ const code=s.studentCode||s.id; map.set(code, { studentCode:code, studentName:s.name||s.studentName||"", className:s.className||"", items:[] }); });
+  rows.forEach(r=>{ const k=r.studentCode||"?"; if(!map.has(k)) map.set(k,{ studentCode:k, studentName:r.studentName||"", className:r.className||"", items:[] }); map.get(k).items.push(r); });
+  return [...map.values()]
+    .filter(s=> (!cls || s.className===cls) && (!search || (s.studentCode||"").includes(search) || (s.studentName||"").toUpperCase().includes(search)))
+    .map(s=>{ const items=s.items.sort((a,b)=>b.time-a.time); const sum=summarise(items);
+      return { studentCode:s.studentCode, studentName:s.studentName, className:s.className,
+        attempts:sum.attempts, bestPercent:sum.bestPercent, averagePercent:sum.averagePercent,
+        lastActive: items[0]?items[0].dateLabel:"—", needsSupport: sum.attempts>0 && sum.averagePercent<50 }; })
+    .sort((a,b)=> (a.className||"").localeCompare(b.className||"") || (a.studentName||"").localeCompare(b.studentName||""));
+}
+
 function render(){
   const rows = filteredResults();
-  const roll = rollupByStudent(rows);
+  const roster = buildRoster();
   const s = summarise(rows);
-  $("statStudents").textContent = new Set(rows.map(r=>r.studentCode)).size || students.length;
+  $("statStudents").textContent = roster.length || students.length;
   $("statAttempts").textContent = s.attempts;
   $("statAvg").textContent = s.averagePercent + "%";
-  $("statSupport").textContent = roll.filter(r=>r.needsSupport).length;
+  $("statSupport").textContent = roster.filter(r=>r.needsSupport).length;
 
-  $("studentsBody").innerHTML = roll.length ? studentTable(roll) :
-    `<div class="empty"><div class="big">No student results yet</div>Once your students complete tools, they'll appear here.</div>`;
+  $("studentsBody").innerHTML = roster.length ? studentTable(roster) :
+    `<div class="empty"><div class="big">No students yet</div>Use “Add a student” above to create your first student code.</div>`;
   $("resultsBody").innerHTML = rows.length ? resultsTable(rows) :
     `<div class="empty"><div class="big">No results match these filters</div>Try widening the class, tool or date filters.</div>`;
 
