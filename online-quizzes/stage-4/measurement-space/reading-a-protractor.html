@@ -353,10 +353,11 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import {
-  getAuth,
-  signInAnonymously,
-  onAuthStateChanged
+  getAuth
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+// Phase 4A.1: secure code exchange (no anonymous auth, no direct students/{code} read).
+import { exchangeOnApp } from "/portal/shared/quizClient.js";
 
 (() => {
   const QUIZ_LEN = 15;
@@ -376,6 +377,7 @@ import {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
+  const functions = getFunctions(app, 'us-central1');
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const svg = document.getElementById('board');
@@ -879,17 +881,17 @@ import {
     if(!firebaseAuthReady){ showLoginMessage('Database is still connecting. Please wait a moment and try again.'); return; }
     setLoginLoading(true);
     try{
-      const snap = await getDoc(doc(db,'students',code));
-      if(!snap.exists()){ showLoginMessage('That student code was not found. Please check it with your teacher.'); return; }
-      const data = snap.data();
-      if(data.active === false){ showLoginMessage('This student code is currently inactive. Please check it with your teacher.'); return; }
+      // Secure exchange: server validates code (+ active) and signs THIS app in.
+      const data = await exchangeOnApp({ functions, auth }, code);
       guestMode = false;
       achievementSavedForRun = false;
       currentStudent = {
         studentCode:data.studentCode || code,
         name:data.name || `${data.firstName || ''} ${data.surname || ''}`.trim() || 'Student',
         className:data.className || '',
-        teacher:data.teacher || ''
+        teacher:data.teacherName || data.teacher || '',
+        teacherName:data.teacherName || '',
+        teacherCode:data.teacherCode || ''
       };
       updateStudentChip();
       showLoginMessage(`Welcome, ${currentStudent.name}.`,'ok');
@@ -948,6 +950,8 @@ import {
         studentName:currentStudent.name,
         className:currentStudent.className,
         teacher:currentStudent.teacher,
+        teacherName:currentStudent.teacherName || currentStudent.teacher || '',
+        teacherCode:currentStudent.teacherCode || '',
         dateClient:completedAtClient,
         createdAt:serverTimestamp()
       });
@@ -1123,17 +1127,10 @@ import {
   submitCompleteBtn.addEventListener('click',() => submitCompletion(false));
   submitMenuBtn.addEventListener('click',() => submitCompletion(true));
 
-  setLoginLoading(true);
-  signInAnonymously(auth).catch(error => {
-    console.error(error);
-    showLoginMessage('Database connection failed. You can still skip student code and use the quiz.');
-    firebaseAuthReady = false;
-    setLoginLoading(false);
-  });
-  onAuthStateChanged(auth,user => {
-    firebaseAuthReady = !!user;
-    setLoginLoading(false);
-  });
+  // Phase 4A.1: no anonymous sign-in. Ready immediately; the student is signed in
+  // only when they exchange their code.
+  firebaseAuthReady = true;
+  setLoginLoading(false);
 
   // Draw a useful preview behind the login modal.
   levelKey = 'sweet';

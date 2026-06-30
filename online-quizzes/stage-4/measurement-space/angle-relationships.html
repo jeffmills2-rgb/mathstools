@@ -100,6 +100,9 @@
   5. Create Firestore Database.
   6. Add the Firestore rules from the setup guide.
 */
+// Phase 4A.1: secure code exchange (no anonymous auth, no direct students/{code} read).
+import { exchangeOnApp } from "/portal/shared/quizClient.js";
+
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
   authDomain: "mills-maths-tools.firebaseapp.com",
@@ -119,6 +122,7 @@ const FIREBASE_READY =
 let app = null;
 let auth = null;
 let db = null;
+let functions = null;
 let initPromise = null;
 
 async function initFirebase(){
@@ -127,14 +131,16 @@ async function initFirebase(){
 
   initPromise = (async () => {
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js");
-    const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
+    const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
     const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+    const { getFunctions } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js");
 
     app = initializeApp(FIREBASE_CONFIG);
     auth = getAuth(app);
     db = getFirestore(app);
-    await signInAnonymously(auth);
-    return { app, auth, db };
+    functions = getFunctions(app, 'us-central1');
+    // No anonymous sign-in — identity comes from the secure code exchange.
+    return { app, auth, db, functions };
   })();
 
   return initPromise;
@@ -189,13 +195,10 @@ window.MMT_FIREBASE = {
     if(!FIREBASE_READY){ throw new Error("Firebase config has not been pasted into this file yet."); }
     const cleanCode = String(code || "").trim().toUpperCase().replace(/\s+/g, "");
     if(!cleanCode) throw new Error("Enter your student code first.");
-    const { db } = await initFirebase();
-    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
-    const snap = await getDoc(doc(db, "students", cleanCode));
-    if(!snap.exists()) throw new Error("Student code not found.");
-    const data = snap.data() || {};
-    if(data.active === false) throw new Error("This student code is not active.");
-    return { studentCode: cleanCode, ...data };
+    const { auth, functions } = await initFirebase();
+    // Secure exchange: server validates code (+ active) and signs THIS app in
+    // with a custom token, so the saveAchievement addDoc below runs as the student.
+    return await exchangeOnApp({ functions, auth }, cleanCode);
   },
   async saveAchievement(achievement){
     if(!FIREBASE_READY){

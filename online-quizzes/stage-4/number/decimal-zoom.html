@@ -493,8 +493,12 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
   import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-analytics.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-  import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-functions.js";
+  // Phase 4A.1: converted to a secure platform quiz — real student code via the
+  // exchange, compact `achievements` save (feeds the Student/Teacher platforms),
+  // and the old public leaderboard is retired (privacy). Demo stays local-only.
 
   const firebaseConfig = {
     apiKey: "AIzaSyDYoJuHGslYY-cvV2rtuLkL6bE_hRDOESw",
@@ -509,16 +513,18 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const RESULTS_COLLECTION = "decimalZoomRoundingQuizResults";
-  let firebaseReady = false;
+  const functions = getFunctions(app, "us-central1");
+  const ACHIEVEMENTS_COLLECTION = "achievements";
+  const QUIZ_TOOL = "Decimal Zoom Rounding Quiz";
+  let firebaseReady = false;     // app/SDK ready (sign-in happens on code entry)
+  let currentStudent = null;     // safe profile from the secure exchange
 
   try{
     if(await analyticsIsSupported()) getAnalytics(app);
   }catch(err){ console.warn("Analytics unavailable", err); }
-  try{
-    await signInAnonymously(auth);
-    firebaseReady = true;
-  }catch(err){ console.warn("Anonymous sign-in failed", err); }
+  // No anonymous sign-in. The app is ready immediately; the student is signed in
+  // with a custom token only when they enter a valid code (secure code exchange).
+  firebaseReady = true;
 
   const TOTAL_QUESTIONS = 15;
   const MAX_DECIMALS = 8;
@@ -1117,15 +1123,42 @@
     zoomToLevel(state.lineLevel-1, "track");
   });
 
-  function showLevelScreen(demo=false){
-    const code = studentCodeInput.value.trim().toUpperCase().replace(/\s+/g,"");
-    if(!demo && !code){ startMsg.classList.remove("hidden"); studentCodeInput.focus(); return; }
-    startMsg.classList.add("hidden");
-    state.demoMode = !!demo;
-    state.studentCode = demo ? "DEMO" : code;
+  function enterLevelScreen(){
     loginScreen.classList.add("hidden");
     levelScreen.classList.remove("hidden");
     renderControls();
+  }
+  async function showLevelScreen(demo=false){
+    if(demo){
+      state.demoMode = true; state.studentCode = "DEMO"; currentStudent = null;
+      startMsg.classList.add("hidden");
+      enterLevelScreen();
+      return;
+    }
+    const code = studentCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,"");
+    studentCodeInput.value = code;
+    if(!code){ startMsg.textContent = "Enter your student code, or choose Skip student code."; startMsg.classList.remove("hidden"); studentCodeInput.focus(); return; }
+    // Secure exchange: server validates the code (+ active) and signs this app in.
+    loginStartBtn.disabled = true; const label = loginStartBtn.textContent; loginStartBtn.textContent = "Checking…";
+    try{
+      const res = await httpsCallable(functions, "exchangeStudentCode")({ studentCode: code });
+      const out = res.data || {};
+      if(!out.token) throw new Error("Sign-in failed. Please try again.");
+      await signInWithCustomToken(auth, out.token);
+      currentStudent = out.profile || { studentCode: code };
+      state.demoMode = false; state.studentCode = currentStudent.studentCode || code;
+      startMsg.classList.add("hidden");
+      enterLevelScreen();
+    }catch(err){
+      console.error(err);
+      const m = String(err && err.message || "");
+      startMsg.textContent = /not found/i.test(m) ? "That student code was not found. Check it with your teacher."
+        : /not active|inactive/i.test(m) ? "This student code is not active. Check with your teacher."
+        : (m || "Could not check that code. Please try again.");
+      startMsg.classList.remove("hidden"); studentCodeInput.focus();
+    }finally{
+      loginStartBtn.disabled = false; loginStartBtn.textContent = label;
+    }
   }
 
   function startLevel(level){
@@ -1163,39 +1196,50 @@
       summaryBody.appendChild(tr);
     });
   }
-  function resultPayload(){
+  // Compact achievement record (NO typed answers stored), claim-rule compatible.
+  function achievementPayload(){
     const score = scoreSoFar(), max = maxScore();
-    const pct = Math.round((score/max)*1000)/10;
+    const pct = max ? Math.round((score/max)*100) : 0;
+    let xp = 5; if(pct >= 80) xp += 5; if(pct === 100) xp += 10;
+    const s = currentStudent || {};
     return {
-      tool:"Decimal Zoom Rounding Quiz",
-      studentCode:state.studentCode,
-      level:state.level,
-      score, maxScore:max, percentage:pct,
-      completedAt:serverTimestamp(),
-      completedAtLocal:new Date().toISOString(),
-      questions:state.questions.map((q,i)=>({
-        n:i+1, number:q.raw, target:q.targetLevel?.task || "Estimate position", targetExp:q.targetExp,
-        response:q.response || null, correct:q.attempted ? !!q.correct : null, score:q.score || 0,
-        correctAnswer:q.targetLevel ? answerFor(q) : null,
-        stepScores:q.stepScores || [], stepDetails:q.stepDetails || []
-      }))
+      tool: QUIZ_TOOL,
+      topic: "Rounding & Decimals",
+      source: "Mills Maths Tools",
+      studentCode: s.studentCode || state.studentCode,
+      studentName: s.name || "",
+      firstName: s.firstName || "",
+      surname: s.surname || "",
+      className: s.className || "",
+      teacherCode: s.teacherCode || "",
+      teacherName: s.teacherName || "",
+      school: s.school || "",
+      level: state.level,
+      score, total: max, percent: pct,
+      xpEarned: xp,
+      masteryTopic: "rounding-decimals",
+      createdAt: serverTimestamp(),
+      createdAtClient: new Date().toISOString()
     };
   }
   async function saveResult(){
     saveStatus.className = "saveStatus";
     if(state.demoMode){
-      saveStatus.textContent = "Demo mode: result not saved to Firebase.";
+      saveStatus.textContent = "Demo mode: result not saved.";
       return;
     }
-    saveStatus.textContent = firebaseReady ? "Saving result…" : "Firebase sign-in was not ready. Result could not be saved.";
-    if(!firebaseReady){ saveStatus.classList.add("bad"); return; }
+    if(!currentStudent){
+      saveStatus.textContent = "You are not signed in, so this result was not saved.";
+      saveStatus.classList.add("bad"); return;
+    }
+    saveStatus.textContent = "Saving result…";
     try{
-      await addDoc(collection(db, RESULTS_COLLECTION), resultPayload());
-      saveStatus.textContent = "✅ Result saved to Firebase.";
+      await addDoc(collection(db, ACHIEVEMENTS_COLLECTION), achievementPayload());
+      saveStatus.textContent = "✅ Result saved.";
       saveStatus.classList.add("ok");
     }catch(err){
       console.error(err);
-      saveStatus.textContent = "Could not save to Firebase. Check Firestore rules for anonymous authenticated create access.";
+      saveStatus.textContent = "Could not save your result. Please try again.";
       saveStatus.classList.add("bad");
     }
   }
@@ -1210,20 +1254,12 @@
   }
 
   async function loadResults(){
+    // Phase 4A.1: the old public leaderboard is retired (it exposed every
+    // student's results). Reporting now lives in the secure MMT platforms.
     resultsStatus.className = "saveStatus";
-    resultsStatus.textContent = firebaseReady ? "Loading results…" : "Firebase sign-in was not ready. Results cannot be loaded.";
     resultsBody.innerHTML = "";
-    if(!firebaseReady){ resultsStatus.classList.add("bad"); return; }
-    try{
-      const qy = query(collection(db, RESULTS_COLLECTION), orderBy("completedAt", "desc"), limit(100));
-      const snap = await getDocs(qy);
-      state.latestResults = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      renderResultsTable();
-    }catch(err){
-      console.error(err);
-      resultsStatus.textContent = "Could not load results. Check Firestore read rules and indexes.";
-      resultsStatus.classList.add("bad");
-    }
+    state.latestResults = [];
+    resultsStatus.innerHTML = 'Results now live in the <strong>MMT Student &amp; Teacher Platforms</strong> (open <a href="/portal/student/">your platform</a>). This page no longer shows a public leaderboard.';
   }
   function renderResultsTable(){
     const filter = resultsFilter.value.trim().toUpperCase();
