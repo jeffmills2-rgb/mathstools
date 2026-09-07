@@ -142,6 +142,22 @@ window.MMT_RESOURCES = {
           statement: "selects and applies appropriate strategies to solve multiplication and division problems",
           resources: [
             {
+              title: "Division Strategies \u2014 Sharing, Known Products and Halving",
+              type: "pptx",
+              file: "division-strategies-stage-3.pptx",
+              note: "49-slide lesson deck, built to click through one step at a time \u2014 an estimation warm-up, \"find four different ways\", then sharing into bubbles and a ratio table run on the same question so the two can be compared. Speaker notes throughout.",
+              year: "Year 5\u20136",
+              tags: ["lesson deck", "presentation", "division", "division strategies", "sharing and regrouping", "partial quotients", "known products", "ratio table", "estimation", "speaker notes"]
+            },
+            {
+              title: "Division Strategies \u2014 Choose Your Strategy",
+              type: "pdf",
+              file: "division-strategies-choose-your-strategy.pdf",
+              note: "3 pages \u2014 paired practice on the same question two ways (bubbles vs ratio table), then choose-your-own-strategy questions, then an extension plotting the table rows as a straight line through the origin. Answer key on page 3.",
+              year: "Year 5\u20136",
+              tags: ["worksheet", "division", "division strategies", "choose a strategy", "sharing and regrouping", "ratio table", "known products", "linear relationships", "graphing", "answer key"]
+            },
+            {
               title: "Dot Circle Factors",
               type: "pdf",
               file: "dot-circle-factors.pdf",
