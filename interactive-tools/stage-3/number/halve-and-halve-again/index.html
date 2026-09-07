@@ -1,0 +1,1327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Halve and Halve Again | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --green:#22c55e;
+      --green-dark:#15803d;
+      --purple:#7c3aed;
+      --purple-dark:#5b21b6;
+      --orange:#f97316;
+      --orange-dark:#c2410c;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --red:#dc2626;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+
+    .app{ min-height:100dvh; display:flex; flex-direction:column; min-width:0; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px;
+      margin-left:-12px; font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4); }
+    .mmtBrandLogo{
+      width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08); flex:0 0 auto;
+    }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{
+      font-weight:850; font-size:clamp(1.05rem,1.9vw,1.5rem); letter-spacing:-.04em;
+      text-align:center; color:white; white-space:nowrap;
+    }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px;
+      cursor:pointer; transition:.18s ease; user-select:none;
+    }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover,.toolLink:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+    .toolLink.is-disabled{ color:var(--line-soft); cursor:not-allowed; }
+    .toolLink.is-disabled::after{ content:'\2022'; color:var(--line-soft); font-size:.9rem; }
+    .toolLink.is-disabled:hover{ background:transparent; color:var(--line-soft); }
+    .toolLink.is-disabled small{ color:var(--line-soft); }
+
+    .settingsMenu.open{ gap:11px; padding:15px 18px; min-width:326px; max-height:min(74vh,640px); overflow:auto; }
+    .settingsHead{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .settingsNote{ margin:0; font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.4; }
+    .settingsRule{ height:1px; background:var(--border); margin:1px 0; }
+
+    .selRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .selRow > span{ font-weight:900; font-size:.92rem; color:var(--ink); white-space:nowrap; }
+    .selRow select,.selRow input{
+      appearance:none; border:1.5px solid var(--border); background:#fff;
+      padding:8px 11px; border-radius:11px; font-weight:850; font-size:.88rem;
+      color:var(--line); min-width:118px;
+    }
+    .selRow select{
+      background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
+      background-size:11px; padding-right:30px; cursor:pointer; min-width:172px;
+    }
+    .selRow select:hover{ border-color:var(--line-soft); }
+    .selRow select:focus-visible,.selRow input:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+
+    .sw{ display:inline-flex; align-items:center; gap:11px; cursor:pointer; user-select:none; font-weight:850; color:var(--line); font-size:.93rem; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:50px; height:29px; border-radius:999px; background:#cbd5e1; transition:.18s ease; flex:0 0 auto; box-shadow:inset 0 1px 3px rgba(15,23,42,.18); }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(15,23,42,.3); transition:.18s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(21px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.28); }
+
+    /* ---------- layout ---------- */
+    .layout{
+      flex:1; width:min(1420px,100%); margin:0 auto; padding:20px 22px 30px;
+      display:grid; grid-template-columns:minmax(0,1fr) clamp(262px,23vw,330px); gap:clamp(12px,1.6vw,20px);
+      align-items:start; min-width:0;
+    }
+    .stage{ display:flex; flex-direction:column; gap:14px; min-width:0; }
+    .side{ display:flex; flex-direction:column; gap:14px; position:sticky; top:16px; }
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      box-shadow:var(--shadow); padding:14px 17px;
+    }
+
+    /* ---------- sentence card ---------- */
+    /* The sentence is the only thing centred in this card; the outcome tag and
+       the dice button are floated out of the flow so they cannot pull it off
+       centre as the numbers change width. */
+    .eqCard{
+      position:relative; background:var(--card); border:1px solid var(--border); border-radius:20px;
+      box-shadow:var(--shadow); padding:14px var(--eqPad,18px); min-height:88px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .eqCard.stacked{ flex-direction:column; gap:10px; padding:14px; }
+    .eqCard.stacked .eqActions{ position:static; transform:none; }
+    .eqActions{
+      position:absolute; right:18px; top:50%; transform:translateY(-50%);
+      display:flex; align-items:center; gap:10px;
+    }
+    .sentence{
+      font-family:var(--mathFont); font-size:clamp(1.9rem,4.2vw,3rem); font-weight:700;
+      letter-spacing:-.01em; line-height:1; display:flex; align-items:baseline; gap:.22em; white-space:nowrap;
+    }
+    .sentence .dv{ color:var(--blue-dark); }
+    .sentence .ds{ color:var(--purple-dark); }
+    .sentence .ans{ color:var(--line-soft); min-width:.7em; display:inline-block; text-align:center; }
+    .sentence .ans.is-known{ color:var(--green-dark); animation:popIn .45s cubic-bezier(.34,1.5,.5,1); }
+    .outcomeTag{
+      font-size:.66rem; letter-spacing:.1em; font-weight:950; text-transform:uppercase;
+      color:var(--purple-dark); background:rgba(124,58,237,.11); border:1px solid rgba(124,58,237,.24);
+      padding:5px 9px; border-radius:999px; white-space:nowrap;
+    }
+    .genBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:9px 14px; border-radius:13px; font-weight:900; font-size:.88rem; cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px; transition:.18s ease; white-space:nowrap;
+    }
+    .genBtn:hover:not(:disabled){ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; transform:translateY(-1px); }
+    .genBtn:disabled{ opacity:.45; cursor:not-allowed; }
+    .dice{ font-size:1.15rem; line-height:1; }
+
+    /* ---------- prompt ---------- */
+    .promptBar{
+      display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line); font-size:1rem; line-height:1.35;
+      min-height:54px;
+    }
+    .promptBar .pIco{ font-size:1.3rem; line-height:1; flex:0 0 auto; }
+    .promptBar.is-done{ background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(37,99,235,.08)); border-color:rgba(21,128,61,.28); color:var(--green-dark); }
+
+    /* ---------- the bar ---------- */
+    .barCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow); padding:18px 18px 16px; }
+    .barHead{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
+    .partsChip{
+      font-weight:950; font-size:.86rem; color:var(--purple-dark); background:rgba(124,58,237,.10);
+      border:1px solid rgba(124,58,237,.22); padding:6px 14px; border-radius:999px; white-space:nowrap;
+    }
+    .partsChip.is-whole{ color:var(--blue-dark); background:rgba(37,99,235,.10); border-color:rgba(37,99,235,.22); }
+
+    .barStack{ display:flex; flex-direction:column; gap:9px; }
+    /* With one bar on screen the row label only repeats what the chip above it
+       already says, and it costs the bar 62px of width. It earns its place only
+       in the wall, where it names which stage each row is. */
+    .barStack.solo .rowLab{ display:none; }
+    .barRow{ display:flex; align-items:center; gap:11px; }
+    /* The label gutter is a FIXED width on every row, so every bar in the stack
+       starts and ends at the same x — a halving wall only reads as halving if
+       the wholes line up. */
+    .rowLab{
+      flex:0 0 62px; text-align:right; font-weight:900; font-size:.74rem; color:var(--line-soft);
+      letter-spacing:.02em; line-height:1.15;
+    }
+    .barRow.live .rowLab{ color:var(--purple-dark); }
+    .bar{ position:relative; flex:1 1 auto; min-width:0; height:var(--barH,132px); }
+    .barRow.hist .bar{ height:var(--histH,42px); }
+
+    .seg{
+      position:absolute; top:0; bottom:0;
+      background:#fff; border:3px solid var(--line); border-radius:7px;
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
+      box-shadow:0 3px 10px rgba(15,23,42,.07);
+    }
+    .seg.moving{ transition:left var(--fall,560ms) cubic-bezier(.3,.9,.35,1), width var(--fall,560ms) cubic-bezier(.3,.9,.35,1); }
+    .seg.is-live{ border-color:var(--line); }
+    .seg.is-hot{ border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16), 0 6px 16px rgba(37,99,235,.15); }
+    .seg.is-answer{ border-color:var(--green-dark); background:linear-gradient(150deg,#f0fdf4,#ffffff 70%);
+      box-shadow:0 0 0 5px rgba(34,197,94,.20), 0 8px 22px rgba(21,128,61,.18); }
+    .segNum{
+      font-family:var(--mathFont); font-weight:700; line-height:1; color:var(--blue-dark);
+      transition:transform .3s cubic-bezier(.34,1.3,.5,1), color .3s ease;
+    }
+    .seg.is-answer .segNum{ color:var(--green-dark); }
+    .segNum.is-swell{ transform:scale(1.2); color:var(--blue); }
+    .segNum.is-burst{ animation:numBurst var(--pop,140ms) ease-in forwards; }
+    .segNum.is-drop{ animation:numDrop var(--fall,560ms) cubic-bezier(.34,1.4,.5,1); }
+    @keyframes numBurst{ 0%{ transform:scale(1.2); opacity:1;} 100%{ transform:scale(1.55); opacity:0;} }
+    @keyframes numDrop{ 0%{ transform:translateY(-14px) scale(.55); opacity:0;} 55%{ opacity:1;} 72%{ transform:translateY(0) scale(1.14);} 100%{ transform:none; opacity:1;} }
+    @keyframes popIn{ 0%{ transform:scale(.4); opacity:0;} 60%{ transform:scale(1.16);} 100%{ transform:scale(1); opacity:1;} }
+    .seg.is-flash{ animation:segFlash var(--pop,140ms) ease-out; }
+    @keyframes segFlash{ 0%{ box-shadow:0 0 0 0 rgba(37,99,235,.55);} 100%{ box-shadow:0 0 0 22px rgba(37,99,235,0);} }
+
+    .barRow.hist .seg{ border-width:2px; border-color:var(--line-soft); box-shadow:none; background:#f8fafc; }
+    .barRow.hist .segNum{ color:var(--muted); font-size:.95rem; }
+
+    /* ---------- controls ---------- */
+    .ctrlCard{
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:11px;
+    }
+    .stepBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:12px 20px; border-radius:15px; font-weight:950; font-size:1rem; cursor:pointer; transition:.16s ease;
+    }
+    .stepBtn:hover:not(:disabled){ border-color:var(--blue); background:#eef2ff; color:var(--blue-dark); transform:translateY(-1px); }
+    .stepBtn:disabled{ opacity:.38; cursor:not-allowed; transform:none; }
+    .nextBtn{
+      appearance:none; border:none; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      padding:13px 30px; border-radius:16px; font-weight:950; font-size:1.08rem; cursor:pointer;
+      box-shadow:0 10px 24px rgba(37,99,235,.30); transition:.18s ease; white-space:nowrap;
+    }
+    .nextBtn:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 14px 30px rgba(37,99,235,.38); }
+    .nextBtn:disabled{ opacity:.42; cursor:not-allowed; transform:none; box-shadow:none; }
+    .ghostBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--muted);
+      padding:9px 13px; border-radius:12px; font-weight:900; font-size:.85rem; cursor:pointer; transition:.15s ease;
+    }
+    .ghostBtn:hover:not(:disabled){ border-color:var(--line-soft); color:var(--line); }
+    .ghostBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .spacer{ flex:1 1 auto; }
+    .stepDots{ display:flex; align-items:center; gap:6px; }
+    .stepDot{ width:11px; height:11px; border-radius:50%; background:#e2e8f0; border:1.5px solid #cbd5e1; }
+    .stepDot.on{ background:var(--blue); border-color:var(--blue-dark); }
+    .stepDot.fin{ background:var(--green); border-color:var(--green-dark); }
+
+    /* ---------- side: the halving ladder ---------- */
+    .ladTitle{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .ladRows{ margin-top:10px; display:grid; gap:7px; }
+    .ladRow{
+      display:flex; align-items:center; justify-content:center; gap:.34em;
+      font-family:var(--mathFont); font-size:1.28rem; font-weight:700; color:var(--line);
+      padding:6px 8px; border-radius:11px; background:#f8fafc; border:1px solid var(--border);
+      animation:popIn .4s cubic-bezier(.34,1.5,.5,1);
+    }
+    .ladRow .from{ color:var(--line); }
+    .ladRow .op{ color:var(--purple-dark); font-size:.92em; }
+    .ladRow .to{ color:var(--blue-dark); }
+    .ladRow.is-last .to{ color:var(--green-dark); }
+    .ladEmpty{ margin-top:9px; font-size:.84rem; font-weight:750; color:var(--line-soft); line-height:1.45; }
+    .ladSum{
+      margin-top:10px; padding-top:9px; border-top:2px solid var(--border);
+      text-align:center; line-height:1.4;
+    }
+    .ladSum .cnt{ font-size:.74rem; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+    .ladSum .eq{ display:block; font-family:var(--mathFont); font-size:1.55rem; font-weight:700; color:var(--green-dark); margin-top:4px; }
+
+    .whyBlock{
+      margin-top:10px; padding:9px 12px; border-radius:14px;
+      border:1px solid rgba(124,58,237,.26); background:linear-gradient(140deg,#faf5ff,#ffffff 68%);
+    }
+    .whyHead{ font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--purple-dark); margin-bottom:5px; }
+    .whyLine{ font-family:var(--mathFont); font-size:1.14rem; font-weight:700; color:var(--ink); text-align:center; line-height:1.45; }
+    .whyNote{ margin:6px 0 0; font-size:.73rem; font-weight:800; color:var(--muted); text-align:center; line-height:1.4; }
+
+    .checkBlock{
+      margin-top:10px; padding:9px 12px 8px; border-radius:14px;
+      border:1px solid rgba(21,128,61,.28); background:linear-gradient(140deg,#f0fdf4,#ffffff 66%);
+    }
+    .checkHead{ font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--green-dark); margin-bottom:5px; }
+    .checkLine{ font-family:var(--mathFont); font-size:1.22rem; font-weight:700; color:var(--ink); text-align:center; line-height:1.45; }
+    .checkLine .b{ color:var(--green-dark); }
+    .checkNote{ margin:6px 0 0; font-size:.73rem; font-weight:800; color:var(--muted); text-align:center; line-height:1.4; }
+
+    /* ---------- the question, before anything else is on screen ---------- */
+    .introVeil{ position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:24px; }
+    .introBg{
+      position:absolute; inset:0; transition:opacity .42s ease;
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+    }
+    .introInner{ position:relative; display:flex; flex-direction:column; align-items:center; gap:clamp(22px,5vh,46px); }
+    .introSentence{
+      font-family:var(--mathFont); font-size:clamp(3.2rem,12vw,8rem); font-weight:700;
+      letter-spacing:-.01em; line-height:1; display:flex; align-items:baseline; gap:.22em; white-space:nowrap;
+      animation:introRise .5s cubic-bezier(.34,1.3,.5,1);
+    }
+    .introSentence .dv{ color:var(--blue-dark); }
+    .introSentence .ds{ color:var(--purple-dark); }
+    .introSentence .ans{ color:var(--line-soft); min-width:.7em; display:inline-block; text-align:center; }
+    .introSentence.flying{ position:fixed; margin:0; z-index:220; animation:none; transform-origin:50% 50%; }
+    @keyframes introRise{ 0%{ opacity:0; transform:translateY(22px) scale(.94);} 100%{ opacity:1; transform:none;} }
+    .introNext{
+      appearance:none; border:none; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      padding:16px 40px; border-radius:18px; font-weight:950; font-size:1.25rem; cursor:pointer;
+      box-shadow:0 14px 34px rgba(37,99,235,.34); transition:transform .18s ease,box-shadow .18s ease,opacity .3s ease;
+      animation:introRise .5s .12s backwards cubic-bezier(.34,1.3,.5,1);
+    }
+    .introNext:hover{ transform:translateY(-2px); box-shadow:0 18px 40px rgba(37,99,235,.42); }
+    .introNext:focus-visible{ outline:none; box-shadow:0 0 0 5px rgba(37,99,235,.28); }
+    .introSentence input.iNum{
+      font:inherit; width:4.4ch; text-align:center; color:var(--blue-dark);
+      background:transparent; border:none; border-bottom:.09em solid var(--blue);
+      border-radius:0; padding:0 .04em; margin:0; -moz-appearance:textfield;
+    }
+    .introSentence input.iNum::-webkit-outer-spin-button,
+    .introSentence input.iNum::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .introSentence input.iNum:focus{ outline:none; background:rgba(37,99,235,.09); }
+    .introSentence input.iNum.is-bad{ border-bottom-color:var(--red); color:var(--red); animation:shake .34s; }
+    @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-7px);} 40%{transform:translateX(7px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);} }
+    .introPick{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
+    .introPickLab{ font-weight:900; color:var(--muted); font-size:1rem; }
+    .introChips{ display:flex; gap:9px; flex-wrap:wrap; justify-content:center; }
+    .introChip{
+      appearance:none; border:2px solid var(--border); background:#fff; color:var(--line);
+      font-family:var(--mathFont); font-size:1.6rem; font-weight:700; line-height:1;
+      min-width:2.4em; padding:9px 6px; border-radius:14px; cursor:pointer; transition:.15s ease;
+    }
+    .introChip:hover{ border-color:var(--purple); color:var(--purple-dark); transform:translateY(-1px); }
+    .introChip[aria-pressed="true"]{
+      background:var(--purple); border-color:var(--purple); color:#fff;
+      box-shadow:0 8px 20px rgba(124,58,237,.32);
+    }
+    .introMsg{
+      font-weight:900; color:#991b1b; background:rgba(220,38,38,.10);
+      border:1px solid rgba(220,38,38,.28); border-radius:12px; padding:8px 14px; font-size:.95rem;
+    }
+    .introVeil.is-leaving .introPick,
+    .introVeil.is-leaving .introMsg{ opacity:0; transition:opacity .3s ease; }
+    .introVeil.is-leaving{ pointer-events:none; }
+    .introVeil.is-leaving .introBg,
+    .introVeil.is-leaving .introNext{ opacity:0; }
+
+    /* ---------- fly layer ---------- */
+    #flyLayer{ position:fixed; inset:0; pointer-events:none; z-index:200; }
+    .flyTok{
+      position:absolute; left:0; top:0; will-change:transform,opacity;
+      font-family:var(--mathFont); font-size:2rem; font-weight:700; line-height:1;
+      padding:9px 17px; border-radius:14px; color:#fff; background:var(--green-dark);
+      box-shadow:0 12px 30px rgba(21,128,61,.34); white-space:nowrap;
+    }
+
+    /* ---------- responsive ---------- */
+    /* The ladder is the written record of the strategy, so it is kept beside the
+       bar down to 960px — a 1024×768 projector must not have to scroll to see it. */
+    @media (max-width:1180px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr) auto; padding:12px 16px; gap:12px; }
+      .mmtBrandText{ display:none; }
+      .btn{ padding:10px 13px; font-size:14px; }
+      .layout{ padding:16px 14px 24px; }
+      .genBtn .genLabel{ display:none; }
+      .genBtn{ padding:9px 11px; }
+      .rowLab{ flex-basis:52px; font-size:.7rem; }
+    }
+    @media (max-width:960px){
+      .layout{ grid-template-columns:minmax(0,1fr); }
+      .side{ position:static; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+    }
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:1fr; justify-items:center; padding:12px 14px; }
+      .mmtBrand{ margin-left:0; } .topActions{ justify-self:center; justify-content:center; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .layout{ padding:14px 12px 24px; }
+    }
+    @media (max-height:840px){
+      .barCard{ padding:13px 14px 11px; }
+      .promptBar{ min-height:44px; padding:8px 14px; font-size:.94rem; }
+      .eqCard{ min-height:76px; padding:10px 16px; }
+      .stage{ gap:11px; }
+      .layout{ padding:14px 20px 20px; }
+      .ctrlCard{ padding:10px 14px; }
+      .barHead{ margin-bottom:10px; }
+    }
+    @media print{ .mmtTopbar,.ctrlCard,.promptBar{ display:none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Halve and Halve Again</div>
+      <div class="topActions">
+        <div class="menuWrap">
+          <button class="btn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false">Settings &#9662;</button>
+          <nav class="dropMenu settingsMenu" id="settingsMenu" aria-label="Settings">
+            <div class="settingsHead">The question</div>
+            <label class="selRow"><span>Divide by</span>
+              <select id="divisorSel" aria-label="Divide by">
+                <option value="mixed" selected>Mixed &mdash; 2, 4 and 8</option>
+                <option value="2">Only &divide; 2</option>
+                <option value="4">Only &divide; 4</option>
+                <option value="8">Only &divide; 8</option>
+              </select>
+            </label>
+            <label class="selRow"><span>Numbers</span>
+              <select id="rangeSel" aria-label="Number size">
+                <option value="two" selected>Two-digit</option>
+                <option value="three">Three-digit</option>
+                <option value="both">Two- and three-digit</option>
+                <option value="custom">Type your own</option>
+              </select>
+            </label>
+            <p class="settingsNote" id="rangeNote">Two-digit numbers that halve exactly all the way down &mdash; every part is a whole number.</p>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">On screen</div>
+            <label class="sw"><input type="checkbox" id="ladderToggle" checked><span class="track"></span><span>Halving ladder</span></label>
+            <label class="sw"><input type="checkbox" id="whyToggle"><span class="track"></span><span>Why halving twice is &divide; 4</span></label>
+            <label class="sw"><input type="checkbox" id="checkToggle" checked><span class="track"></span><span>Check by doubling back</span></label>
+            <label class="sw"><input type="checkbox" id="stagesToggle"><span class="track"></span><span>Keep each stage on screen</span></label>
+            <label class="sw"><input type="checkbox" id="fracToggle"><span class="track"></span><span>Name the parts (halves, quarters)</span></label>
+            <label class="sw"><input type="checkbox" id="introToggle" checked><span class="track"></span><span>Read the question first</span></label>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">Animation</div>
+            <label class="selRow"><span>Speed</span>
+              <select id="speedSel" aria-label="Animation speed">
+                <option value="1.5">Calm</option>
+                <option value="1" selected>Normal</option>
+                <option value="0.6">Quick</option>
+                <option value="0">Straight there</option>
+              </select>
+            </label>
+            <p class="settingsNote">The number swells, pops into two, and the two halves fall into place &mdash; so a class sees one amount becoming two equal ones, not two new numbers appearing.</p>
+          </nav>
+        </div>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-3/number/division-grouping-bubbles/">Division by Grouping<small>The same division shared into bubbles a chunk at a time</small></a>
+            <a class="toolLink" href="/interactive-tools/stage-3/number/ratio-table-division/">Ratio Table Division<small>Doubling and halving rows to reach the number</small></a>
+            <span class="toolLink is-disabled" aria-disabled="true">Worksheet Creator<small>Not built yet</small></span>
+            <span class="toolLink is-disabled" aria-disabled="true">Student Quiz<small>Not built yet</small></span>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="newBtn" type="button">New question</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage">
+
+        <div class="eqCard">
+          <div class="sentence" id="sentence" aria-live="polite">
+            <span class="dv" id="sDividend">96</span><span>&divide;</span><span class="ds" id="sDivisor">4</span><span>=</span><span class="ans" id="sAnswer">?</span>
+          </div>
+          <div class="eqActions">
+            <span class="outcomeTag">MA3-MR-01</span>
+            <button class="genBtn" id="genBtn" type="button" title="Keep dividing by the same number, change the number being divided">
+              <span class="dice" aria-hidden="true">&#9860;</span><span class="genLabel">New numbers</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="promptBar" id="promptBar">
+          <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+          <span id="promptText">The whole bar is 96. Press Next to halve it.</span>
+        </div>
+
+        <div class="barCard">
+          <div class="barHead">
+            <span class="partsChip is-whole" id="partsChip">1 whole</span>
+          </div>
+          <div class="barStack" id="barStack"></div>
+        </div>
+
+        <div class="ctrlCard">
+          <button class="stepBtn" id="backBtn" type="button">&#9664; Back</button>
+          <button class="nextBtn" id="nextBtn" type="button">Next &#9654;</button>
+          <div class="stepDots" id="stepDots" aria-hidden="true"></div>
+          <span class="spacer"></span>
+          <button class="ghostBtn" id="resetBtn" type="button" disabled>Start again</button>
+        </div>
+      </section>
+
+      <aside class="side">
+        <div class="card" id="ladderCard">
+          <div class="ladTitle">How we halved it</div>
+          <div class="ladRows" id="ladderRows"></div>
+          <div class="ladEmpty" id="ladderEmpty">Each halving is written here. Halving twice is dividing by 4; halving three times is dividing by 8.</div>
+          <div class="ladSum" id="ladderSum" hidden></div>
+          <div class="whyBlock" id="whyBlock" hidden>
+            <div class="whyHead">Why it works</div>
+            <div class="whyLine" id="whyLine"></div>
+            <p class="whyNote" id="whyNote"></p>
+          </div>
+          <div class="checkBlock" id="checkBlock" hidden>
+            <div class="checkHead">Check it</div>
+            <div class="checkLine" id="checkLine"></div>
+            <p class="checkNote" id="checkNote"></p>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="introVeil" id="introVeil" hidden>
+    <div class="introBg" id="introBg"></div>
+    <div class="introInner">
+      <div class="introSentence" id="introSentence">
+        <span class="dv" id="iDividend">96</span><span>&divide;</span><span class="ds" id="iDivisor">4</span><span>=</span><span class="ans">?</span>
+      </div>
+      <div class="introPick" id="introPick" hidden>
+        <span class="introPickLab">Divide by</span>
+        <div class="introChips" id="introChips"></div>
+      </div>
+      <div class="introMsg" id="introMsg" hidden></div>
+      <button class="introNext" id="introNext" type="button">Next &rarr;</button>
+    </div>
+  </div>
+
+  <div id="flyLayer" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* Only these three divisors exist, because they are the only ones repeated
+     halving reaches. Three halvings is where a class stops: sixteenths on a
+     screen this wide are too thin to hold a number. */
+  const DIVISORS = [2,4,8];
+  const HALVINGS = { 2:1, 4:2, 8:3 };
+  const PART_NAME = { 2:"halves", 4:"quarters", 8:"eighths" };
+
+  /* The gap between two parts, in px. Small — the two boxes must read as a
+     whole that has been cut, not as two separate bars. */
+  const GAP = 7;
+
+  const S = {
+    dividend: 96,
+    divisor: 4,
+    /* step 0 = the whole bar. step k = after k halvings. step = halvings + 1 is
+       the one extra beat where a single part is copied out to the answer.
+       EVERYTHING on screen is derived from this one number, so Back is simply
+       step-- and a repaint, and no two displays can ever disagree. */
+    step: 0,
+    divisorMode: "mixed",
+    range: "two",              /* two | three | both | custom */
+    speed: 1,
+    busy: false,
+    token: 0,
+    ladder: true, why: false, check: true, stages: false, fracNames: false,
+    intro: true, introOpen: false,
+    lastKey: ""
+  };
+
+  const halvings = () => HALVINGS[S.divisor];
+  const partsAt  = k => Math.pow(2, Math.min(k, halvings()));
+  const valueAt  = k => S.dividend / partsAt(k);
+  const answer   = () => S.dividend / S.divisor;
+  const finished = () => S.step > halvings();
+
+  /* ------------------------------------------------------------- generation */
+  function randInt(lo,hi){ return lo + Math.floor(Math.random()*(hi-lo+1)); }
+
+  function pickDivisor(){
+    return S.divisorMode === "mixed" ? DIVISORS[randInt(0,2)] : parseInt(S.divisorMode,10);
+  }
+
+  /* A dividend is only ever a multiple of the divisor, so every halving on the
+     way down lands on a whole number and no part is ever left as a fraction.
+     That is what makes the finish rule a single line and the bar honest. */
+  function generate(keepDivisor){
+    for(let attempt=0; attempt<80; attempt++){
+      const d = keepDivisor || pickDivisor();
+      const range = S.range === "both" ? (Math.random() < .5 ? "two" : "three")
+                  : (S.range === "custom" ? "two" : S.range);
+      let lo, hi;
+      if(range === "three"){ lo = 100; hi = 999; }
+      /* Three is the smallest quotient worth cutting a bar into: 8 ÷ 4 is a
+         picture of nothing. */
+      else { lo = Math.max(10, 3*d); hi = 99; }
+      const qLo = Math.ceil(lo/d), qHi = Math.floor(hi/d);
+      if(qHi < qLo) continue;
+      const dividend = d * randInt(qLo, qHi);
+      const key = dividend + "/" + d;
+      if(key === S.lastKey) continue;
+      S.lastKey = key;
+      setQuestion(dividend, d);
+      return;
+    }
+    setQuestion(96, keepDivisor || 4);
+  }
+
+  function setQuestion(dv, ds){
+    S.dividend = dv;
+    S.divisor = ds;
+    S.step = 0;
+  }
+
+  /* ------------------------------------------------------------- geometry */
+  /* Slots are computed in real pixels from the measured bar, not in percent,
+     because the same numbers size the type inside each part. */
+  function slot(i, n, W){
+    const w = W / n;
+    return { left: i*w + GAP/2, width: Math.max(6, w - GAP) };
+  }
+
+  function numSize(width, height, digits){
+    return Math.max(11, Math.min(height * 0.46, (width - 14) / (digits * 0.60)));
+  }
+
+  function barWidth(bar){
+    const w = bar.getBoundingClientRect().width;
+    /* Under a headless layout the measure can come back as zero; a sensible
+       fallback keeps every derived number finite rather than NaN. */
+    return w > 20 ? w : 900;
+  }
+
+  /* ------------------------------------------------------------- the board */
+  /* How tall the live bar can be is a question about HEIGHT, and it is measured.
+     A guessed clamp leaves a third of a 1366×768 screen empty on a one-bar
+     question and pushes the Next button off the bottom on a four-row wall.
+     Grow the bar until the controls would drop below the fold, then step back. */
+  let fitSig = "";
+  function fitBar(force){
+    const stack = $("barStack"), ctrl = document.querySelector(".ctrlCard");
+    if(!stack || !ctrl) return;
+    const rows = stack.querySelectorAll(".barRow").length;
+    const sig = [rows, S.divisor, window.innerWidth, window.innerHeight].join("|");
+    if(!force && sig === fitSig) return;
+    fitSig = sig;
+    const fits = px => {
+      stack.style.setProperty("--barH", px + "px");
+      return ctrl.getBoundingClientRect().bottom <= window.innerHeight - 14;
+    };
+    const MIN = 82;
+    if(!fits(MIN)) return;                 /* nothing fits; keep the minimum */
+    /* Height alone is not the only limit. Eight parts of a 1024-wide board are
+       83px across, and a bar filling the screen turns them into tall columns —
+       which stops reading as a bar and starts reading as a set of counters. The
+       cap is set by the FINAL number of parts, not the current one, so the bar
+       does not change height between steps. */
+    const bar = $("liveBar") || stack.querySelector(".bar");
+    const cap = Math.max(MIN, Math.min(260, (barWidth(bar) / S.divisor) * 1.7));
+    let lo = MIN, hi = cap, best = MIN;
+    while(hi - lo > 4){
+      const mid = Math.round((lo + hi) / 2);
+      if(fits(mid)){ best = mid; lo = mid; } else { hi = mid; }
+    }
+    stack.style.setProperty("--barH", best + "px");
+  }
+
+  function buildBar(){
+    const stack = $("barStack");
+    stack.innerHTML = "";
+
+    const rows = [];
+    /* With the stages kept, every completed halving stays on screen above the
+       live bar — a halving wall. Without it there is one bar, cut in place,
+       which is the picture on the whiteboard. */
+    if(S.stages){
+      const upTo = Math.min(S.step, halvings());
+      for(let k = 0; k < upTo; k++) rows.push({ k: k, live:false });
+    }
+    rows.push({ k: Math.min(S.step, halvings()), live:true });
+    stack.classList.toggle("solo", rows.length === 1);
+
+    rows.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "barRow " + (r.live ? "live" : "hist");
+      const lab = document.createElement("div");
+      lab.className = "rowLab";
+      const n = partsAt(r.k);
+      lab.innerHTML = r.k === 0 ? "1 whole" : (n + " parts");
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      if(r.live) bar.id = "liveBar";
+      row.appendChild(lab); row.appendChild(bar);
+      stack.appendChild(row);
+    });
+
+    /* The bar is sized before anything is drawn in it, because the height is
+       what sets the size of the numerals inside each part. */
+    fitBar(true);
+    rows.forEach(r => {
+      const bar = r.live ? $("liveBar") : stack.querySelectorAll(".bar")[rows.indexOf(r)];
+      paintSegs(bar, partsAt(r.k), valueAt(r.k), r.live);
+    });
+    markAnswerSeg();
+  }
+
+  function paintSegs(bar, n, value, live){
+    const W = barWidth(bar);
+    const H = bar.getBoundingClientRect().height || (live ? 132 : 42);
+    bar.innerHTML = "";
+    for(let i=0; i<n; i++){
+      const s = slot(i, n, W);
+      const el = document.createElement("div");
+      el.className = "seg" + (live ? " is-live" : "");
+      el.style.left = s.left + "px";
+      el.style.width = s.width + "px";
+      el.dataset.idx = String(i);
+      const num = document.createElement("div");
+      num.className = "segNum";
+      num.textContent = String(value);
+      num.style.fontSize = numSize(s.width, H, String(value).length) + "px";
+      el.appendChild(num);
+      bar.appendChild(el);
+    }
+  }
+
+  /* The part that is copied out is the leftmost one — the same part every
+     time, so a class knows where to look before it moves. */
+  function markAnswerSeg(){
+    const bar = $("liveBar"); if(!bar) return;
+    bar.querySelectorAll(".seg").forEach(s => s.classList.remove("is-answer"));
+    if(finished()){
+      const first = bar.querySelector('.seg[data-idx="0"]');
+      if(first) first.classList.add("is-answer");
+    }
+  }
+
+  /* --------------------------------------------------------- the halving */
+  const T = {
+    swell: () => Math.round(300 * S.speed),
+    pop:   () => Math.round(150 * S.speed),
+    fall:  () => Math.round(560 * S.speed)
+  };
+
+  async function doSplit(){
+    const tok = ++S.token;
+    const alive = () => tok === S.token;
+    setBusy(true);
+
+    const from = Math.min(S.step, halvings());
+    const to = from + 1;
+    const n = partsAt(from), n2 = partsAt(to);
+    const vFrom = valueAt(from), vTo = valueAt(to);
+
+    /* If the stages are kept, the row being cut becomes history the moment the
+       cut is made, and a fresh live row is built underneath it. Building it
+       first also means the geometry below is measured on the row it lands in. */
+    S.step = to;
+    if(S.stages){ buildBar(); paintSegs($("liveBar"), n, vFrom, true); }
+
+    const bar = $("liveBar");
+    const W = barWidth(bar);
+    const H = bar.getBoundingClientRect().height || 132;
+    bar.style.setProperty("--fall", T.fall() + "ms");
+    bar.style.setProperty("--pop", T.pop() + "ms");
+
+    if(S.speed === 0){
+      paintSegs(bar, n2, vTo, true);
+      afterSplit(); setBusy(false); return;
+    }
+
+    /* 1. The amount swells — the class is looking at the number that is about
+          to be shared, not at the box. */
+    bar.querySelectorAll(".segNum").forEach(x => x.classList.add("is-swell"));
+    bar.querySelectorAll(".seg").forEach(x => x.classList.add("is-hot"));
+    await sleep(T.swell()); if(!alive()) return;
+
+    /* 2. It pops. */
+    bar.querySelectorAll(".segNum").forEach(x => { x.classList.remove("is-swell"); x.classList.add("is-burst"); });
+    bar.querySelectorAll(".seg").forEach(x => x.classList.add("is-flash"));
+    await sleep(T.pop()); if(!alive()) return;
+
+    /* 3. Two halves start life covering exactly the box their parent filled,
+          then slide apart into their own halves. Starting them anywhere else
+          would show two numbers arriving rather than one being cut. */
+    bar.innerHTML = "";
+    const kids = [];
+    for(let i=0; i<n; i++){
+      const parent = slot(i, n, W);
+      for(let j=0; j<2; j++){
+        const el = document.createElement("div");
+        el.className = "seg is-live is-hot moving";
+        el.style.left = parent.left + "px";
+        el.style.width = parent.width + "px";
+        el.dataset.idx = String(i*2 + j);
+        const num = document.createElement("div");
+        num.className = "segNum is-drop";
+        num.textContent = String(vTo);
+        num.style.fontSize = numSize(slot(0, n2, W).width, H, String(vTo).length) + "px";
+        el.appendChild(num);
+        bar.appendChild(el);
+        kids.push(el);
+      }
+    }
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    if(!alive()) return;
+    kids.forEach((el, idx) => {
+      const s = slot(idx, n2, W);
+      el.style.left = s.left + "px";
+      el.style.width = s.width + "px";
+    });
+    await sleep(T.fall() + 40); if(!alive()) return;
+    kids.forEach(el => { el.classList.remove("moving","is-hot"); el.querySelector(".segNum").classList.remove("is-drop"); });
+
+    afterSplit();
+    setBusy(false);
+  }
+
+  /* Without the stages kept there is one bar and it is cut in place, so its own
+     row label is the only thing that has to catch up after an animation. */
+  function paintRowLabels(){
+    const rows = document.querySelectorAll("#barStack .barRow");
+    if(!rows.length) return;
+    const live = rows[rows.length-1].querySelector(".rowLab");
+    const n = partsAt(S.step);
+    if(live) live.textContent = S.step === 0 ? "1 whole" : (n + " parts");
+  }
+
+  function afterSplit(){
+    paintRowLabels();
+    paintLadder(); paintChip(); paintPrompt(); paintDots(); paintSideBlocks(); paintButtons();
+  }
+
+  /* ------------------------------------------------- the last beat: copy out */
+  /* One part is lifted out and laid opposite the equals sign. It is a COPY —
+     the bar keeps all its parts — because the answer is what ONE part is worth,
+     not what is left after taking one away. */
+  async function doCopyOut(){
+    const tok = ++S.token;
+    setBusy(true);
+    S.step = halvings() + 1;
+    markAnswerSeg();
+
+    const bar = $("liveBar");
+    const seg = bar && bar.querySelector('.seg[data-idx="0"]');
+    const target = $("sAnswer");
+
+    if(S.speed === 0 || !seg){
+      revealAnswer(); afterSplit(); setBusy(false); return;
+    }
+
+    const a = seg.getBoundingClientRect(), b = target.getBoundingClientRect();
+    const tok2 = document.createElement("div");
+    tok2.className = "flyTok";
+    tok2.textContent = String(answer());
+    $("flyLayer").appendChild(tok2);
+    const r = tok2.getBoundingClientRect();
+    const sx = a.left + a.width/2 - r.width/2, sy = a.top + a.height/2 - r.height/2;
+    const ex = b.left + b.width/2 - r.width/2, ey = b.top + b.height/2 - r.height/2;
+    tok2.style.transform = "translate(" + sx + "px," + sy + "px) scale(.9)";
+    await new Promise(rq => requestAnimationFrame(() => requestAnimationFrame(rq)));
+    if(tok !== S.token){ tok2.remove(); return; }
+    const dur = Math.round(620 * S.speed);
+    tok2.style.transition = "transform " + dur + "ms cubic-bezier(.35,.85,.35,1), opacity 180ms ease " + (dur-140) + "ms";
+    tok2.style.transform = "translate(" + ex + "px," + ey + "px) scale(1)";
+    tok2.style.opacity = "0";
+    await sleep(dur + 30);
+    tok2.remove();
+    if(tok !== S.token) return;
+
+    revealAnswer();
+    afterSplit();
+    setBusy(false);
+  }
+
+  function revealAnswer(){
+    const el = $("sAnswer");
+    el.textContent = String(answer());
+    el.classList.remove("is-known"); void el.offsetWidth; el.classList.add("is-known");
+  }
+
+  /* ------------------------------------------------------------ the sentence */
+  /* The answer is not on the card until the copy-out. The BAR may already show
+     what one part is worth — that is the method, and taking it away would leave
+     nothing to read — but the number sentence stays open until it is claimed. */
+  function paintSentence(){
+    $("sDividend").textContent = String(S.dividend);
+    $("sDivisor").textContent = String(S.divisor);
+    const el = $("sAnswer");
+    if(finished()){ el.textContent = String(answer()); el.classList.add("is-known"); }
+    else { el.textContent = "?"; el.classList.remove("is-known"); }
+    $("iDividend") && ($("iDividend").textContent = String(S.dividend));
+    $("iDivisor")  && ($("iDivisor").textContent  = String(S.divisor));
+    fitEqCard(true);
+  }
+
+  let eqSig = "";
+  function fitEqCard(force){
+    const card = document.querySelector(".eqCard"), acts = document.querySelector(".eqActions");
+    const sig = [S.dividend, S.divisor, finished(), window.innerWidth].join("|");
+    if(!force && sig === eqSig) return;
+    eqSig = sig;
+    card.classList.remove("stacked");
+    card.style.removeProperty("--eqPad");
+    const pad = Math.ceil(acts.getBoundingClientRect().width) + 22;
+    card.style.setProperty("--eqPad", pad + "px");
+    const sent = $("sentence").getBoundingClientRect().width;
+    if(sent + 2*pad > card.getBoundingClientRect().width) card.classList.add("stacked");
+  }
+
+  /* ---------------------------------------------------------------- displays */
+  function paintChip(){
+    const chip = $("partsChip");
+    const n = partsAt(S.step);
+    if(S.step === 0){
+      chip.className = "partsChip is-whole";
+      chip.textContent = "1 whole — " + S.dividend;
+      return;
+    }
+    chip.className = "partsChip";
+    const name = S.fracNames && PART_NAME[n] ? " — " + PART_NAME[n] : "";
+    chip.textContent = n + " equal parts" + name;
+  }
+
+  function paintLadder(){
+    const rows = $("ladderRows"), empty = $("ladderEmpty"), sum = $("ladderSum");
+    const card = $("ladderCard");
+    card.hidden = !S.ladder && !S.why && !S.check;
+    rows.hidden = !S.ladder; empty.hidden = !S.ladder;
+    document.querySelector(".ladTitle").hidden = !S.ladder;
+    rows.innerHTML = "";
+    const done = Math.min(S.step, halvings());
+    empty.hidden = !S.ladder || done > 0;
+    for(let k=0; k<done; k++){
+      const el = document.createElement("div");
+      el.className = "ladRow" + (k === halvings()-1 ? " is-last" : "");
+      el.innerHTML = '<span class="from">' + valueAt(k) + '</span>' +
+                     '<span class="op">÷ 2 =</span>' +
+                     '<span class="to">' + valueAt(k+1) + '</span>';
+      rows.appendChild(el);
+    }
+    const showSum = S.ladder && done >= halvings();
+    sum.hidden = !showSum;
+    if(showSum){
+      const h = halvings();
+      const word = h === 1 ? "Halved once" : h === 2 ? "Halved twice" : "Halved three times";
+      sum.innerHTML = '<span class="cnt">' + word + '</span>' +
+        (finished()
+          ? '<span class="eq">' + S.dividend + ' ÷ ' + S.divisor + ' = ' + answer() + '</span>'
+          : '<span class="eq">' + S.dividend + ' ÷ ' + S.divisor + ' = ?</span>');
+    }
+  }
+
+  function paintSideBlocks(){
+    const why = $("whyBlock");
+    why.hidden = !S.why;
+    if(S.why){
+      const h = halvings();
+      if(h === 1){
+        $("whyLine").innerHTML = "÷ 2 is one halving";
+        $("whyNote").textContent = "Halving once cuts the whole into two equal parts.";
+      } else if(h === 2){
+        $("whyLine").innerHTML = "÷ 4 &nbsp;is&nbsp; ÷ 2 &nbsp;then&nbsp; ÷ 2";
+        $("whyNote").textContent = "Because 2 × 2 = 4, halving twice makes four equal parts.";
+      } else {
+        $("whyLine").innerHTML = "÷ 8 &nbsp;is&nbsp; ÷ 2, ÷ 2, ÷ 2";
+        $("whyNote").textContent = "Because 2 × 2 × 2 = 8, halving three times makes eight equal parts.";
+      }
+    }
+
+    const chk = $("checkBlock");
+    const show = S.check && finished();
+    chk.hidden = !show;
+    if(show){
+      const q = answer();
+      $("checkLine").innerHTML = S.divisor + ' × <span class="b">' + q + '</span> = ' + S.dividend;
+      /* Doubling back up the same ladder is the inverse of what was just done,
+         so the check is read off the picture rather than worked out again. */
+      const chain = [];
+      for(let k=halvings(); k>=0; k--) chain.push(valueAt(k));
+      $("checkNote").textContent = "Double it back: " + chain.join(" → ") + ".";
+    }
+  }
+
+  function paintPrompt(){
+    const bar = $("promptBar"), ico = $("promptIco"), txt = $("promptText");
+    bar.classList.remove("is-done");
+    const h = halvings(), k = S.step;
+    if(finished()){
+      bar.classList.add("is-done");
+      ico.textContent = "✅";
+      txt.innerHTML = "One part is the answer — <b>" + S.dividend + " ÷ " + S.divisor + " = " + answer() + "</b>.";
+      return;
+    }
+    if(k === 0){
+      ico.textContent = "💡";
+      txt.innerHTML = h === 1
+        ? "The whole bar is <b>" + S.dividend + "</b>. Halve it once to divide by 2."
+        : "The whole bar is <b>" + S.dividend + "</b>. We need " + S.divisor + " equal parts, so halve it.";
+      return;
+    }
+    if(k < h){
+      ico.textContent = "✂️";
+      const left = h - k;
+      txt.innerHTML = "Two parts of <b>" + valueAt(k) + "</b>. That is only " + partsAt(k) + " parts — halve again" +
+        (left > 1 ? ", and again." : ".");
+      return;
+    }
+    ico.textContent = "👀";
+    txt.innerHTML = "<b>" + S.divisor + "</b> equal parts of <b>" + valueAt(h) + "</b>. So what is " +
+      S.dividend + " ÷ " + S.divisor + "?";
+  }
+
+  function paintDots(){
+    const wrap = $("stepDots");
+    wrap.innerHTML = "";
+    const total = halvings() + 1;
+    for(let i=0; i<=total; i++){
+      const d = document.createElement("span");
+      d.className = "stepDot" + (i <= S.step ? (i === total ? " fin" : " on") : "");
+      wrap.appendChild(d);
+    }
+  }
+
+  function paintButtons(){
+    const next = $("nextBtn");
+    next.disabled = S.busy || finished() || S.introOpen;
+    next.innerHTML = (S.step === halvings() ? "Show the answer" : "Next ▶");
+    $("backBtn").disabled = S.busy || S.step === 0 || S.introOpen;
+    $("resetBtn").disabled = S.busy || S.step === 0 || S.introOpen;
+    $("genBtn").disabled = S.busy || S.introOpen;
+    $("newBtn").disabled = S.busy;
+  }
+
+  function setBusy(on){
+    S.busy = on;
+    paintButtons();
+  }
+
+  function paintAll(){
+    buildBar();
+    paintSentence(); paintChip(); paintLadder(); paintSideBlocks();
+    paintPrompt(); paintDots(); paintButtons();
+  }
+
+  /* ------------------------------------------------------------------ steps */
+  function next(){
+    if(S.busy || S.introOpen || finished()) return;
+    if(S.step < halvings()) doSplit();
+    else doCopyOut();
+  }
+
+  function back(){
+    if(S.busy || S.introOpen || S.step === 0) return;
+    S.token++;                       /* retire any running animation */
+    $("flyLayer").innerHTML = "";
+    S.step--;
+    paintAll();
+  }
+
+  function restart(){
+    if(S.busy || S.introOpen) return;
+    S.token++;
+    $("flyLayer").innerHTML = "";
+    S.step = 0;
+    paintAll();
+  }
+
+  function newQuestion(keepDivisor){
+    S.token++;
+    $("flyLayer").innerHTML = "";
+    if(S.range === "custom"){
+      S.step = 0; paintAll(); showIntro(); return;
+    }
+    generate(keepDivisor ? S.divisor : 0);
+    paintAll();
+    showIntro();
+  }
+
+  /* ---------------------------------------------------- the opening question */
+  function introStatic(){
+    $("introSentence").innerHTML =
+      '<span class="dv" id="iDividend">' + S.dividend + '</span><span>&divide;</span>' +
+      '<span class="ds" id="iDivisor">' + S.divisor + '</span><span>=</span><span class="ans">?</span>';
+  }
+
+  function introEditable(){
+    $("introSentence").innerHTML =
+      '<input class="iNum" id="introDividend" type="text" inputmode="numeric" ' +
+        'autocomplete="off" aria-label="Number to divide" value="' + S.dividend + '" />' +
+      '<span>&divide;</span><span class="ds" id="iDivisor">' + S.divisor + '</span>' +
+      '<span>=</span><span class="ans">?</span>';
+    const chips = $("introChips");
+    chips.innerHTML = "";
+    DIVISORS.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "introChip"; b.textContent = String(d);
+      b.setAttribute("aria-pressed", String(d === S.divisor));
+      b.addEventListener("click", () => {
+        S.divisor = d;
+        chips.querySelectorAll(".introChip").forEach(x =>
+          x.setAttribute("aria-pressed", String(+x.textContent === d)));
+        $("iDivisor").textContent = d;
+        $("introMsg").hidden = true;
+      });
+      chips.appendChild(b);
+    });
+    $("introDividend").addEventListener("keydown", e => {
+      if(e.key === "Enter"){ e.preventDefault(); dismissIntro(); }
+    });
+  }
+
+  function showIntro(){
+    const veil = $("introVeil"), custom = (S.range === "custom");
+    if(!S.intro && !custom){
+      veil.hidden = true; S.introOpen = false;
+      $("sentence").style.visibility = "";
+      paintButtons();
+      return;
+    }
+    closeMenus();                    /* the Settings menu would sit above the veil */
+    if(custom) introEditable(); else introStatic();
+    $("introPick").hidden = !custom;
+    $("introMsg").hidden = true;
+    veil.classList.remove("is-leaving");
+    veil.hidden = false;
+    S.introOpen = true;
+    $("sentence").style.visibility = "hidden";
+    paintButtons();
+    if(custom){ const el = $("introDividend"); el.focus(); el.select(); }
+    else $("introNext").focus();
+  }
+
+  /* In "Type your own" the question is typed ON the opening screen and those
+     numbers are what fly onto the card — there is no second copy of the
+     question anywhere that could disagree with it. */
+  function takeCustom(){
+    const el = $("introDividend");
+    const raw = (el.value || "").trim();
+    const bad = msg => {
+      $("introMsg").hidden = false; $("introMsg").textContent = msg;
+      el.classList.remove("is-bad"); void el.offsetWidth; el.classList.add("is-bad");
+      setTimeout(() => el.classList.remove("is-bad"), 700);
+      el.focus(); el.select();
+      return false;
+    };
+    if(!/^\d+$/.test(raw)) return bad("Type a whole number to divide.");
+    const dv = parseInt(raw, 10);
+    if(dv < S.divisor || dv > 9999) return bad("The number has to be between " + S.divisor + " and 9999.");
+    if(dv % S.divisor !== 0)
+      return bad(dv + " does not halve all the way down to " + S.divisor + " whole parts. Try a multiple of " + S.divisor + ".");
+    $("introMsg").hidden = true;
+    setQuestion(dv, S.divisor);
+    paintAll();
+    introStatic();
+    $("introPick").hidden = true;
+    return true;
+  }
+
+  async function dismissIntro(){
+    if(!S.introOpen) return;
+    if(S.range === "custom" && $("introDividend") && !takeCustom()) return;
+    S.introOpen = false;
+    const veil = $("introVeil"), fly = $("introSentence"), target = $("sentence");
+    const from = fly.getBoundingClientRect();
+    const to = target.getBoundingClientRect();     /* laid out, just invisible */
+    const scale = from.width ? (to.width / from.width) : 1;
+    const dx = (to.left + to.width/2) - (from.left + from.width/2);
+    const dy = (to.top + to.height/2) - (from.top + from.height/2);
+
+    fly.style.left = from.left + "px";
+    fly.style.top = from.top + "px";
+    fly.style.width = from.width + "px";
+    fly.style.height = from.height + "px";
+    fly.classList.add("flying");
+    veil.classList.add("is-leaving");
+
+    const dur = S.speed === 0 ? 1 : 620;
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    fly.style.transition = "transform " + dur + "ms cubic-bezier(.42,.9,.3,1)";
+    fly.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + scale + ")";
+    await sleep(dur + 40);
+
+    veil.hidden = true;
+    veil.classList.remove("is-leaving");
+    fly.classList.remove("flying");
+    fly.removeAttribute("style");
+    target.style.visibility = "";
+    /* The bar was sized while the veil was over it, which is not the layout it
+       lands in. Measure again now the page is the page. */
+    buildBar();
+    paintButtons();
+    $("nextBtn").focus();
+  }
+
+  /* ----------------------------------------------------------------- menus */
+  function closeMenus(){
+    ["settingsMenu","toolsMenu"].forEach(id => {
+      $(id).classList.remove("open");
+      $(id === "settingsMenu" ? "settingsBtn" : "toolsBtn").setAttribute("aria-expanded","false");
+    });
+  }
+  function toggleMenu(btnId, menuId){
+    $(btnId).addEventListener("click", e => {
+      e.stopPropagation();
+      const m = $(menuId), wasOpen = m.classList.contains("open");
+      closeMenus();
+      if(!wasOpen){ m.classList.add("open"); $(btnId).setAttribute("aria-expanded","true"); }
+    });
+  }
+  toggleMenu("settingsBtn","settingsMenu");
+  toggleMenu("toolsBtn","toolsMenu");
+  document.addEventListener("click", closeMenus);
+  $("settingsMenu").addEventListener("click", e => e.stopPropagation());
+  $("toolsMenu").addEventListener("click", e => e.stopPropagation());
+
+  /* ------------------------------------------------------------------ wires */
+  $("nextBtn").addEventListener("click", next);
+  $("backBtn").addEventListener("click", back);
+  $("resetBtn").addEventListener("click", restart);
+  $("genBtn").addEventListener("click", () => newQuestion(true));
+  $("newBtn").addEventListener("click", () => newQuestion(false));
+  $("introNext").addEventListener("click", dismissIntro);
+
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ closeMenus(); return; }
+    if(S.introOpen){
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); dismissIntro(); }
+      return;
+    }
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "INPUT" || tag === "SELECT") return;
+    if(e.key === "ArrowRight" || e.key === "Enter"){ e.preventDefault(); next(); }
+    else if(e.key === "ArrowLeft"){ e.preventDefault(); back(); }
+    else if(e.key === "n" || e.key === "N"){ e.preventDefault(); newQuestion(false); }
+  });
+
+  const RANGE_NOTES = {
+    two:    "Two-digit numbers that halve exactly all the way down — every part is a whole number.",
+    three:  "Three-digit numbers. This is where halving beats counting out groups, because the halving is done place by place.",
+    both:   "A mix of two- and three-digit numbers, so a class cannot settle into one size.",
+    custom: "Type the question on the opening screen. It has to divide exactly, or the bar cannot be cut into whole parts."
+  };
+
+  $("rangeSel").addEventListener("change", e => {
+    S.range = e.target.value;
+    $("rangeNote").textContent = RANGE_NOTES[S.range];
+    $("introToggle").disabled = (S.range === "custom");
+    newQuestion(false);
+  });
+  $("divisorSel").addEventListener("change", e => {
+    S.divisorMode = e.target.value;
+    if(S.divisorMode !== "mixed") S.divisor = parseInt(S.divisorMode,10);
+    newQuestion(false);
+  });
+
+  function bindToggle(id, key){
+    $(id).addEventListener("change", e => { S[key] = e.target.checked; paintAll(); });
+  }
+  bindToggle("ladderToggle","ladder");
+  bindToggle("whyToggle","why");
+  bindToggle("checkToggle","check");
+  bindToggle("stagesToggle","stages");
+  bindToggle("fracToggle","fracNames");
+  $("introToggle").addEventListener("change", e => { S.intro = e.target.checked; });
+  $("speedSel").addEventListener("change", e => { S.speed = parseFloat(e.target.value); });
+
+  let resizeT;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => { if(!S.busy){ buildBar(); fitEqCard(true); } }, 90);
+  });
+
+  /* ------------------------------------------------------------------ start */
+  generate(0);
+  paintAll();
+  showIntro();
+
+  /* A small surface for the automated checks. Nothing in the page reads it. */
+  window.__HHA__ = {
+    S: S,
+    halvings: halvings,
+    partsAt: partsAt,
+    valueAt: valueAt,
+    answer: answer,
+    finished: finished,
+    generate: generate,
+    next: next,
+    back: back,
+    restart: restart,
+    newQuestion: newQuestion,
+    setQuestion: function(dv, ds){
+      S.token++;
+      S.introOpen = false;
+      $("introVeil").hidden = true;
+      $("sentence").style.visibility = "";
+      setQuestion(dv, ds);
+      paintAll();
+    }
+  };
+})();
+</script>
+</body>
+</html>

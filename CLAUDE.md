@@ -48,6 +48,87 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-07, session — being pushed): HALVE AND HALVE AGAIN.** A Stage 3
+> teaching tool at
+> `interactive-tools/stage-3/number/halve-and-halve-again/index.html`,
+> cross-listed under **MA3-MR-01** and **MA3-MR-02**. Self-contained inline
+> CSS/JS, same shell and tokens as the other Stage 3 number tools. A bar holding
+> the whole number is cut in half, and in half again, until the number of equal
+> parts IS the divisor. Built from Jeff's own sketch. Only ÷ 2, ÷ 4 and ÷ 8
+> exist, because those are the only divisors repeated halving reaches. No
+> Firebase, no registry entry, no worksheet creator and no student quiz yet —
+> its "Tools ▾" menu points at the two other Stage 3 division tools (both of
+> which now link back to it) with both siblings greyed out.
+>
+> * **EVERYTHING ON SCREEN IS DERIVED FROM `S.step`.** `partsAt(k)`,
+>   `valueAt(k)`, the ladder rows, the dots and the prompt are all folds over
+>   that one number, so Back is literally `S.step--` and a repaint, and no two
+>   displays can disagree. Never cache a part value or a row.
+> * **THE ANSWER IS WHAT ONE PART IS WORTH.** The last press does not consume a
+>   part — a COPY of the leftmost one flies out and lands opposite the equals
+>   sign while the bar keeps all its parts, and the part it came from turns
+>   green. Taking one away would be a different question. A check asserts the
+>   bar still holds every part afterwards.
+> * **THE NUMBER SENTENCE STAYS OPEN UNTIL THAT LAST BEAT.** The BAR may already
+>   show what one part is worth — that is the METHOD, and hiding it would leave
+>   nothing to read — but `#sAnswer` is `?` until the copy-out, and a check
+>   plays every question right through and FAILS if the answer appears early.
+> * **THE SPLIT IS SWELL → POP → FALL, AND ALL THREE BEATS MATTER.** The amount
+>   swells first, so the class is looking at the number about to be shared, not
+>   at the box. Then it pops. Then the two children start life covering exactly
+>   the box their parent filled and slide apart into their own halves —
+>   starting them anywhere else shows two numbers ARRIVING rather than one being
+>   CUT. That is the whole animation and it is what makes halving visible.
+> * **THE HALVING LADDER IS THE WRITTEN RECORD**, revealed a row per split:
+>   `96 ÷ 2 = 48`, `48 ÷ 2 = 24`, then "Halved twice" and the total. It is the
+>   same job the partial-quotient column does in Division by Grouping — the
+>   picture and the written method side by side.
+> * **THE CHECK IS DOUBLING BACK UP THE SAME LADDER** — `4 × 24 = 96`, with
+>   "Double it back: 24 → 48 → 96". Doubling is the inverse of the thing just
+>   done, so the check is READ OFF the picture rather than worked out again.
+>   That is also why the tool is cross-listed under MA3-MR-02.
+> * **"WHY IT WORKS" IS OFF BY DEFAULT** (teacher decision 2026-09-07):
+>   "÷ 4 is ÷ 2 then ÷ 2, because 2 × 2 = 4". The plainest board is the one a
+>   teacher gets without asking; the equivalence is a reveal they choose.
+> * **"KEEP EACH STAGE ON SCREEN" TURNS IT INTO A HALVING WALL** (off by
+>   default): every completed stage stays above the live bar, muted and half
+>   height, with a row label naming it. All the bars share one fixed 62px label
+>   gutter so they start and end at the same x — a wall only reads as halving if
+>   the wholes line up. With one bar the gutter is REMOVED (`.barStack.solo`),
+>   because the label just repeats the chip and costs the bar 62px.
+> * **HOW TALL THE BAR CAN BE IS A QUESTION ABOUT HEIGHT, AND IT IS MEASURED.**
+>   `fitBar()` binary-searches `--barH` against the real page: grow until the
+>   control card would drop below the fold, then step back. A guessed clamp left
+>   a third of a 1366×768 screen empty on a one-bar question. It is ALSO capped
+>   by width — `(barWidth / divisor) × 1.7` — because eight parts of a 1024-wide
+>   board are 83px across and a full-height bar turns them into tall columns,
+>   which stops reading as a bar. The cap uses the FINAL divisor, not the
+>   current part count, so the bar does not change height between steps.
+> * **THE BAR IS SIZED BEFORE ANYTHING IS DRAWN IN IT**, because the height is
+>   what sets the size of the numerals inside each part (`numSize`).
+> * **SLOTS ARE COMPUTED IN REAL PIXELS**, not percent, for the same reason.
+> * **THE QUESTION IS READ BEFORE THE BOARD EXISTS**, same as the bubbles tool:
+>   an intro veil carrying the sentence alone, and `dismissIntro()` FLIPs that
+>   SAME element down onto the card. `buildBar()` runs again after it lands,
+>   because the board was sized while the veil was over it.
+> * **EVERY DIVIDEND IS A MULTIPLE OF ITS DIVISOR**, so every halving on the way
+>   down is a whole number and no part is ever a fraction. Quotients are at
+>   least 3 — 8 ÷ 4 is a picture of nothing. "Type your own" refuses a number
+>   that will not halve all the way down and says which multiple to try.
+> * **Verified** through Playwright: 482 checks — 4800 generated questions over
+>   every divisor mode and number range (exactness, digit range, quotient floor,
+>   no repeat, mixed really dealing all three), ten questions played right
+>   through with the part count doubling, every part carrying the halved value,
+>   the parts equal and filling the bar, the ladder and the dots re-derived, the
+>   answer never on the card early, the check block only at the end and saying
+>   the inverse, Back returning exactly to the whole bar, the chip and the part
+>   names, all three "why it works" texts, the wall's rows lining up, the
+>   typed-question refusals, the swell/pop/fall sampled mid-animation, the
+>   copy-out duplicating rather than consuming, and the fit at 1366×768,
+>   1280×800, 1024×768, 1920×1080 and 820×1180 with no number spilling its part
+>   and no part becoming a tall column. Harnesses live in the session scratch,
+>   not the repo: `check.mjs`, `shots.mjs`.
+>
 > **NEW (2026-09-05, session — being pushed): DIVISION BY GROUPING — STUDENT
 > QUIZ.** `online-quizzes/stage-3/number/division-grouping.html`, the third page
 > of the family. Registered in `portal/shared/mmtToolRegistry.js` as
@@ -1627,6 +1708,15 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
   **student quiz** is `online-quizzes/stage-3/number/division-grouping.html`
   (registered as `division-grouping-quiz`; the level is how much of the teaching
   tool the student keeps), also cross-listed under both outcomes.
+- **Halve and Halve Again (2026-09-07):** teacher tool
+  `interactive-tools/stage-3/number/halve-and-halve-again/`, a Stage 3 number
+  tool cross-listed under **MA3-MR-01** and **MA3-MR-02**. A bar cut in half,
+  and in half again, until the number of equal parts is the divisor — ÷ 2,
+  ÷ 4 and ÷ 8 only, because those are the divisors repeated halving reaches.
+  No Firebase, no registry entry, no worksheet creator and no student quiz yet.
+  Read the 2026-09-07 header block before touching the split animation, the
+  copy-out, `fitBar()`'s two caps or the halving wall's label gutter. The other
+  two Stage 3 division tools link to it and it links back to them.
 - **Complete the Square (2026-08-31):** teacher tool
   `interactive-tools/stage-5/algebra/complete-the-square/`, the first Stage 5
   algebra tool. Two modes (tiles, and the formula proof), cross-listed under
@@ -1797,6 +1887,17 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
   ten** (the packing table would need more rows). For the quiz: a **sub-topic
   builder** in the teacher portal so a task can ask for one KIND of question,
   which the `types[]` flags already make meaningful.
+- **Halve and Halve Again siblings:** the teaching tool shipped 2026-09-07;
+  both rows of its Tools menu are still greyed. A **worksheet creator**
+  (`worksheet-creators/stage-3/number/halve-and-halve-again.html`) would print
+  the bar already cut into 2, 4 or 8 for the student to fill, then blank bars to
+  cut themselves, then the ladder alone. A **student quiz**
+  (`online-quizzes/stage-3/number/halve-and-halve-again.html`, registry id
+  `halve-and-halve-again-quiz`) would ladder by how much of the bar is left:
+  the parts drawn and numbered, then drawn and blank, then no bar at all.
+  Possible extensions to the tool itself: **halving an odd number** (the bar
+  splits and one part carries the half, which is where a class meets a half of
+  a whole), and a **doubling mode** running the same bar the other way.
 - **Revision Generator — Stage 3**: 6 of 8 topics built (Represents Numbers,
   Additive Relations, Multiplicative Relations, Fractions, 2D Space and Area,
   Geometric Measure). Each remaining topic needs a new diagram engine first:

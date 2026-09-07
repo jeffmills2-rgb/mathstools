@@ -212,6 +212,13 @@ window.MMT_TOOL_LINKS = {
 
   "MA3-MR-01": [
     {
+      title: "Halve and Halve Again",
+      kind: "Teacher tool",
+      url: "/interactive-tools/stage-3/number/halve-and-halve-again/",
+      note: "A bar model cut in half, and in half again. The amount swells and pops into two equal halves that fall into place; halving twice is \u00f7 4 and three times is \u00f7 8, and the last press lifts one part out to become the answer. A halving ladder records each step and the check doubles back up it.",
+      tags: ["division", "halving", "halve", "doubling", "bar model", "tape diagram", "part whole", "equal parts", "halves quarters eighths", "mental strategies", "partitioning", "fraction of an amount", "inverse", "multiplication", "visual", "whole-class teaching"]
+    },
+    {
       title: "Division by Grouping \u2014 Bubbles",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-3/number/division-grouping-bubbles/",
@@ -346,6 +353,15 @@ window.MMT_TOOL_LINKS = {
       note: "Every question can end with the check sentence \u005f\u005f\u005f \u00d7 15 = 270, so the division on the page and its multiplication are written side by side.",
       tags: ["worksheet generator", "printable", "number sentences", "division", "multiplication", "inverse", "missing factor", "ratio table", "answer key", "trilingual"]
     }
+    ,
+    {
+      title: "Halve and Halve Again",
+      kind: "Teacher tool",
+      url: "/interactive-tools/stage-3/number/halve-and-halve-again/",
+      note: "Finishes every question with the inverse written out \u2014 4 \u00d7 24 = 96 \u2014 and checks it by doubling back up the same ladder the halving came down.",
+      tags: ["number sentences", "division", "multiplication", "inverse", "halving", "doubling", "equal parts", "bar model", "visual", "whole-class teaching"]
+    }
+
   ],
 
   "MA3-NSM-01": [
