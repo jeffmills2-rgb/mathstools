@@ -213,6 +213,15 @@
     }
     .arena.multi{ --bubMax:min(168px,15.2vh); }   /* fallback; fitArena() measures the real one */
     .arenaRow{ display:flex; justify-content:center; gap:clamp(8px,1.4vw,18px); }
+    /* Four and five rows only happen in "Type your own". Shrink the numerals and
+       labels WITH the bubbles, so the strain reads as crowding rather than as
+       text spilling out of the circles. */
+    .arena.dense .blob{ padding:6% 7%; border-width:2px; }
+    .arena.dense .blob.plain .bubTotal{ font-size:clamp(.95rem,2.1vw,1.6rem); }
+    .arena.dense .blob.dots  .bubTotal{ font-size:clamp(.7rem,1.3vw,1rem); }
+    .arena.dense .bubbleWrap{ gap:3px; }
+    .arena.dense .bubLabel{ font-size:.56rem; letter-spacing:0; }
+    .arena.dense .bubChips .ch{ font-size:clamp(.5rem,.85vw,.64rem); padding:0 4px; }
     .bubbleWrap{ width:var(--bubMax); min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
     .blob{
       width:100%; aspect-ratio:1/1.04; border-radius:47%;
@@ -418,7 +427,7 @@
     .introSentence input.iNum.is-bad{ border-bottom-color:var(--red); color:var(--red); animation:shake .34s; }
     .introPick{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
     .introPickLab{ font-weight:900; color:var(--muted); font-size:1rem; }
-    .introChips{ display:flex; gap:7px; flex-wrap:wrap; justify-content:center; }
+    .introChips{ display:flex; gap:7px; flex-wrap:wrap; justify-content:center; max-width:min(830px,92vw); }
     .introChip{
       appearance:none; border:2px solid var(--border); background:#fff; color:var(--line);
       font-family:var(--mathFont); font-size:1.5rem; font-weight:700; line-height:1;
@@ -428,6 +437,12 @@
     .introChip[aria-pressed="true"]{
       background:var(--purple); border-color:var(--purple); color:#fff;
       box-shadow:0 8px 20px rgba(124,58,237,.32);
+    }
+    /* 11–25 are dashed, so the row reads as "ten, and then the far country". */
+    .introChip.is-far{ border-style:dashed; border-color:var(--line-soft); color:var(--muted); }
+    .introChip.is-far:hover{ border-color:var(--purple); color:var(--purple-dark); }
+    .introChip.is-far[aria-pressed="true"]{
+      background:var(--purple); border-style:solid; border-color:var(--purple); color:#fff;
     }
     .introMsg{
       font-weight:900; color:#991b1b; background:rgba(220,38,38,.10);
@@ -691,9 +706,22 @@
      should look like. */
   const PACK = {
     2:[2], 3:[3], 4:[2,2], 5:[3,2], 6:[3,3],
-    7:[4,3], 8:[4,4], 9:[3,3,3], 10:[5,5]
+    7:[4,3], 8:[4,4], 9:[3,3,3], 10:[5,5],
+    /* Past ten the rows stay five wide, so 25 is the 5 × 5 square this whole
+       extension exists for. Nothing above ten is ever generated at random —
+       these packs are only ever reached from "Type your own". */
+    11:[4,4,3],    12:[4,4,4],    13:[5,4,4],    14:[5,5,4],    15:[5,5,5],
+    16:[4,4,4,4],  17:[5,4,4,4],  18:[5,5,4,4],  19:[5,5,5,4],  20:[5,5,5,5],
+    21:[5,4,4,4,4],22:[5,5,4,4,4],23:[5,5,5,4,4],24:[5,5,5,5,4],25:[5,5,5,5,5]
   };
+  /* Random questions and the Settings picker stop at ten: a class meeting the
+     tool for the first time should never be handed nineteen bubbles. */
   const MAXDIV = 10;
+  /* "Type your own" goes to twenty-five, deliberately. Fifteen groups is where
+     a teacher can SHOW that sharing into bubbles has stopped being the sensible
+     method rather than assert it — and the ratio table next door then earns
+     its place instead of being announced. */
+  const MAXOWNDIV = 25;
 
   /* ---------------------------------------------------------------- derived */
   /* Everything about the board is derived from S.rounds, so undo and a bounced
@@ -747,6 +775,7 @@
     arena.innerHTML = "";
     const rows = PACK[S.divisor] || [S.divisor];
     arena.classList.toggle("multi", rows.length > 1);
+    arena.classList.toggle("dense", rows.length >= 4);
     let i = 0;
     rows.forEach(n => {
       const row = document.createElement("div");
@@ -793,7 +822,10 @@
     fitSig = sig;
 
     if(rows === 1 || window.innerWidth <= 960){
-      arena.style.setProperty("--bubMax", rows === 1 ? "186px" : Math.round(300 / rows) + "px");
+      /* Narrow screens scroll rather than shrink, but five rows at 300/rows is a
+         board no tablet can show at once. Hold the dense grids down. */
+      arena.style.setProperty("--bubMax", rows === 1 ? "186px"
+        : Math.min(Math.round(300 / rows), rows >= 4 ? 46 : 999) + "px");
       return;
     }
     const fits = px => {
@@ -801,7 +833,10 @@
       const r = $("entryCard").getBoundingClientRect();
       return (r.bottom + window.scrollY) <= window.innerHeight - 10;
     };
-    let lo = 62, hi = 186, best = lo;
+    /* Five rows will not fit at the two-row floor, and a bubble that pushes the
+       entry bar off the fold is worse than a small bubble. The floor drops as
+       rows are added so the search always has a size that fits. */
+    let lo = rows >= 4 ? 30 : (rows === 3 ? 44 : 62), hi = 186, best = lo;
     while(lo <= hi){
       const mid = (lo + hi) >> 1;
       if(fits(mid)){ best = mid; lo = mid + 1; } else { hi = mid - 1; }
@@ -1261,9 +1296,13 @@
       '<span>=</span><span class="ans">?</span>';
     const chips = $("introChips");
     chips.innerHTML = "";
-    for(let d=2; d<=MAXDIV; d++){
+    for(let d=2; d<=MAXOWNDIV; d++){
       const b = document.createElement("button");
-      b.type = "button"; b.className = "introChip"; b.textContent = d;
+      b.type = "button";
+      /* Past ten is marked, not hidden. The teacher can see where the sensible
+         range ends without the tool refusing to go there. */
+      b.className = d > MAXDIV ? "introChip is-far" : "introChip";
+      b.textContent = d;
       b.setAttribute("aria-pressed", String(d === S.divisor));
       b.addEventListener("click", () => {
         S.divisor = d;
@@ -1358,6 +1397,10 @@
     fly.classList.remove("flying");
     fly.removeAttribute("style");
     target.style.visibility = "";
+    /* The board was sized while the veil was still over it, which is not the
+       layout it lands in — at 1280×800 that left a 25-group board hanging past
+       the fold. Measure again now the page is the page. */
+    fitArena(true);
     setBusy(false);
     if(!$("estCard").hidden) $("estInput").focus(); else $("chunkInput").focus();
   }
@@ -1403,13 +1446,16 @@
     two:    "Two-digit numbers that divide exactly, so a group can never be left stranded part-way.",
     three:  "Three-digit numbers that divide exactly — this is where sharing out ten or forty at a time pays off.",
     rem:    "The last few cannot be shared. Once there are fewer left than there are groups, they drop into the leftover tray as the remainder.",
-    custom: "Type the question on the opening screen: any number up to 999, shared into 2–10 groups. It does not have to divide exactly."
+    custom: "Type the question on the opening screen: any number up to 999, shared into 2–25 groups — past ten the bubbles are still drawn, which is the point. It does not have to divide exactly."
   };
 
   $("levelSel").addEventListener("change", e => {
     S.level = e.target.value;
     $("levelNote").textContent = LEVEL_NOTES[S.level];
     $("introToggle").disabled = (S.level === "custom");
+    /* In "Type your own" the number of groups is chosen on the opening screen,
+       so the Settings picker would be a second control disagreeing with it. */
+    $("divisorSel").disabled = (S.level === "custom");
     newQuestion(false);
   });
   $("divisorSel").addEventListener("change", e => {
