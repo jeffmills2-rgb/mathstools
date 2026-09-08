@@ -1,0 +1,1406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Circumference of a Circle | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --blue-soft:#60a5fa;
+      --green:#22c55e;
+      --green-dark:#15803d;
+      --purple:#7c3aed;
+      --orange:#f97316;
+      --orange-dark:#c2410c;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --pink:#db2777;
+      --pink-soft:#fce7f3;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+      --boardH:440px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+
+    .app{ min-height:100dvh; display:flex; flex-direction:column; min-width:0; }
+
+    /* ---------- topbar ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:12px 22px;
+      display:grid; grid-template-columns:minmax(190px,1fr) auto minmax(300px,1fr);
+      align-items:center; gap:16px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px;
+      margin-left:-12px; font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4); }
+    .mmtBrandLogo{
+      width:42px; height:42px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08); flex:0 0 auto;
+    }
+    .mmtBrandText strong{ display:block; font-size:1.14rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.76rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{
+      font-weight:850; font-size:clamp(1rem,1.8vw,1.45rem); letter-spacing:-.04em;
+      text-align:center; color:white; white-space:nowrap;
+    }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:10px 14px; border-radius:14px; font-weight:900; font-size:15px;
+      cursor:pointer; transition:.18s ease; user-select:none;
+    }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:252px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover,.toolLink:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+    .toolLink.is-disabled{ color:var(--line-soft); cursor:not-allowed; }
+    .toolLink.is-disabled::after{ content:'\2022'; color:var(--line-soft); font-size:.9rem; }
+    .toolLink.is-disabled:hover{ background:transparent; color:var(--line-soft); }
+    .toolLink.is-disabled small{ color:var(--line-soft); }
+
+    /* NO overflow scroller here: the Circle submenu is absolutely positioned
+       outside this box, and any overflow value but visible clips it away. */
+    .settingsMenu.open{ gap:11px; padding:15px 18px; min-width:300px; }
+    .settingsHead{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .settingsNote{ margin:0; font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.4; }
+    .settingsRule{ height:1px; background:var(--border); margin:1px 0; }
+
+    .subWrap{ position:relative; }
+    .subRow{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
+      appearance:none; border:1px solid transparent; background:transparent; cursor:pointer;
+      padding:9px 11px; border-radius:11px; font:inherit; font-weight:900; font-size:.92rem;
+      color:var(--ink); text-align:left; transition:background .16s ease; white-space:nowrap;
+    }
+    .subRow:hover,.subRow:focus-visible,.subWrap.open .subRow{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .subRow .val{ display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:.84rem; color:var(--muted); }
+    .subRow .val::after{ content:'\2039'; font-size:1.05rem; font-weight:1000; color:var(--blue); }
+    .subWrap.open .subRow .val{ color:var(--blue-dark); }
+    .subMenu{
+      position:absolute; top:-8px; right:calc(100% + 10px); min-width:236px;
+      background:#fff; border:1px solid rgba(226,232,240,.95); border-radius:14px;
+      box-shadow:0 18px 45px rgba(15,23,42,.22); padding:7px; display:none; z-index:130;
+    }
+    .subWrap:hover .subMenu, .subWrap.open .subMenu{ display:grid; gap:3px; }
+    .subOpt{
+      appearance:none; border:0; background:transparent; cursor:pointer; width:100%;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      padding:9px 11px; border-radius:10px; font:inherit; text-align:left;
+      font-weight:900; font-size:.9rem; color:var(--ink);
+    }
+    .subOpt small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); margin-top:2px; }
+    .subOpt:hover:not(:disabled),.subOpt:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .subOpt .tick{ color:var(--green); font-weight:1000; opacity:0; flex:0 0 auto; font-size:1.05rem; }
+    .subOpt.on .tick{ opacity:1; }
+
+    .sw{ display:inline-flex; align-items:center; gap:11px; cursor:pointer; user-select:none; font-weight:850; color:var(--line); font-size:.95rem; white-space:nowrap; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:50px; height:29px; border-radius:999px; background:#cbd5e1; transition:.18s ease; flex:0 0 auto; box-shadow:inset 0 1px 3px rgba(15,23,42,.18); }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(15,23,42,.3); transition:.18s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(21px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.28); }
+
+    /* ---------- layout ---------- */
+    .layout{
+      width:min(1240px, calc(100vw - 40px));
+      margin:16px auto 12px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:24px; box-shadow:var(--shadow); overflow:hidden;
+      display:block; position:relative;
+    }
+    .stage{ padding:14px clamp(12px,2.6vw,28px) 18px; display:flex; flex-direction:column; gap:11px; min-width:0; }
+
+    /* the slim header strip */
+    .eqCard{
+      position:relative;
+      background:white; border:1px solid var(--border); border-radius:18px;
+      padding:10px 16px; display:flex; align-items:center; justify-content:center;
+      gap:10px 16px; flex-wrap:wrap; min-height:56px;
+    }
+    .questChip{
+      display:inline-flex; align-items:baseline; gap:.4em; text-align:center;
+      font-weight:900; color:var(--blue-dark);
+      font-size:clamp(1.02rem,2.1vw,1.34rem); letter-spacing:-.01em;
+    }
+    .questChip .mth{ font-family:var(--mathFont); font-weight:800; }
+    .questChip .pi{ font-family:var(--mathFont); font-style:italic; color:var(--purple); }
+    .measNote{ font-size:.82rem; font-weight:800; color:var(--muted); font-family:var(--mathFont); }
+    .eqSide{ position:absolute; right:12px; top:50%; transform:translateY(-50%); display:flex; gap:8px; align-items:center; }
+    .eqLeft{ position:absolute; left:12px; top:50%; transform:translateY(-50%); display:flex; gap:8px; align-items:center; }
+    .genBtn{
+      appearance:none; border:1px solid #ddd6fe; background:#f5f3ff; color:#5b21b6;
+      font-weight:850; font-size:.8rem; padding:7px 13px; border-radius:999px; cursor:pointer;
+      transition:.16s ease; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
+    }
+    .genBtn:hover{ background:#ede9fe; border-color:#c4b5fd; }
+    .genBtn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(124,58,237,.22); }
+    .testBtn{
+      appearance:none; border:1px solid #fed7aa; background:#fff7ed; color:var(--orange-dark);
+      font-weight:900; font-size:.8rem; padding:7px 13px; border-radius:999px; cursor:pointer;
+      transition:.16s ease; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
+    }
+    .testBtn:hover{ background:#ffedd5; border-color:#fdba74; }
+    .testBtn.on{ background:var(--orange); border-color:var(--orange); color:#fff; }
+
+    /* the board */
+    .boardCard{ background:white; border:1px solid var(--border); border-radius:20px; padding:6px clamp(6px,1.6vw,14px) 4px; display:flex; justify-content:center; }
+    .board{ display:block; height:var(--boardH); width:auto; max-width:100%; user-select:none; -webkit-user-select:none; }
+    .board text{ font-family:var(--uiFont); }
+    .board .mth{ font-family:var(--mathFont); }
+
+    /* narration */
+    .narrate{
+      background:white; border:1px solid var(--border); border-radius:18px;
+      padding:11px 16px; display:flex; flex-direction:column; gap:5px; align-items:center; text-align:center;
+    }
+    .stepCount{ font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .stepPrompt{ font-size:clamp(.98rem,1.9vw,1.14rem); font-weight:800; color:var(--line); line-height:1.35; min-height:1.3em; }
+    .stepMaths{
+      font-family:var(--mathFont); font-size:clamp(1.1rem,2.3vw,1.56rem); font-weight:700; color:var(--purple);
+      line-height:1.25; min-height:1.3em; display:flex; align-items:center; justify-content:center; gap:.3em; flex-wrap:wrap;
+    }
+    .stepMaths .u{ font-family:var(--uiFont); font-weight:900; font-size:.6em; color:var(--purple); opacity:.85; }
+    .stepMaths em{ font-style:italic; }
+    .navRow{ display:flex; gap:9px; justify-content:center; align-items:center; flex-wrap:wrap; }
+    .navBtn{
+      appearance:none; border:1px solid var(--border); background:#fff; color:var(--line);
+      font-weight:900; font-size:.92rem; padding:9px 15px; border-radius:13px; cursor:pointer;
+      transition:.16s ease; box-shadow:0 6px 16px rgba(15,23,42,.08);
+    }
+    .navBtn:hover:not(:disabled){ transform:translateY(-1px); background:#f8fafc; }
+    .navBtn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+    .navBtn.next{ background:var(--purple); border-color:var(--purple); color:#fff; box-shadow:0 8px 20px rgba(124,58,237,.24); min-width:148px; }
+    .navBtn.next:hover:not(:disabled){ background:#6d28d9; }
+    .navBtn.zoomout{ background:var(--purple); border-color:var(--purple); color:#fff; box-shadow:0 8px 20px rgba(124,58,237,.24); min-width:170px; }
+    .navBtn.zoomout:hover:not(:disabled){ background:#6d28d9; }
+    .navBtn.lens{ background:#fff7ed; border-color:#fdba74; color:var(--orange-dark); }
+    .navBtn.lens:hover:not(:disabled){ background:#ffedd5; }
+    .navBtn.lock{ background:var(--orange); border-color:var(--orange); color:#fff; box-shadow:0 8px 20px rgba(249,115,22,.24); }
+    .navBtn.lock:hover:not(:disabled){ background:#ea580c; }
+    .hint{ margin:1px 0 0; font-size:.74rem; font-weight:700; color:var(--line-soft); }
+
+    /* predict + test rows */
+    .predRow{ display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap; }
+    .predRow label{ font-weight:850; font-size:.88rem; color:var(--muted); }
+    .numBox{
+      width:118px; text-align:center; border:2px solid var(--orange); border-radius:12px;
+      padding:6px 10px; background:#fff7ed; color:var(--orange-dark); font-family:var(--mathFont);
+      font-size:1.16rem; font-weight:800;
+    }
+    .numBox:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(249,115,22,.24); }
+    .numBox.bad{ border-color:var(--pink); background:var(--pink-soft); color:var(--pink); }
+    .predBack{ font-size:.82rem; font-weight:800; color:var(--orange-dark); min-height:1.1em; }
+
+    .verdict{
+      font-size:clamp(.98rem,2vw,1.16rem); font-weight:900; line-height:1.35;
+      display:flex; align-items:center; justify-content:center; gap:.45em; flex-wrap:wrap; min-height:1.3em;
+    }
+    .verdict.short{ color:var(--pink); }
+    .verdict.over{ color:var(--orange-dark); }
+    .verdict .amt{ font-family:var(--mathFont); }
+
+    .tries{ display:flex; gap:7px; justify-content:center; align-items:center; flex-wrap:wrap; min-height:1.2em; }
+    .tryChip{
+      display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px;
+      font-weight:900; font-size:.8rem; font-family:var(--mathFont); border:1px solid transparent;
+    }
+    .tryChip.short{ background:var(--pink-soft); color:var(--pink); border-color:#f9a8d4; }
+    .tryChip.over{ background:#fff7ed; color:var(--orange-dark); border-color:#fdba74; }
+    .tryChip .ar{ font-family:var(--uiFont); font-size:.9em; }
+    .bracket{ font-size:.86rem; font-weight:900; color:var(--line); font-family:var(--mathFont); }
+    .bracket .lab{ font-family:var(--uiFont); font-weight:800; color:var(--muted); font-size:.9em; }
+
+    @media (max-height:820px){
+      .layout{ margin-top:10px; }
+      .hint{ display:none; }
+      .stage{ gap:9px; padding-bottom:12px; }
+      .eqCard{ min-height:50px; padding:8px 14px; }
+    }
+    /* the test row carries five controls; under this width it wraps to two
+       lines and the card grows past the fold on a 768-high screen */
+    @media (max-width:1200px){
+      #testRow label{ display:none; }
+    }
+    @media (max-width:1120px){
+      .mmtBrandText{ display:none; }
+      .eqLeft,.eqSide{ position:static; transform:none; }
+      .eqCard{ justify-content:center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Circumference of a Circle</div>
+      <div class="topActions">
+        <div class="menuWrap">
+          <button class="btn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false">Settings &#9662;</button>
+          <nav class="dropMenu settingsMenu" id="settingsMenu" aria-label="Settings">
+            <div class="settingsHead">The circle</div>
+            <div class="subWrap" id="sizeWrap">
+              <button class="subRow" id="sizeRow" type="button" aria-haspopup="true" aria-expanded="false">
+                <span>Diameter</span>
+                <span class="val" id="sizeVal">8 cm</span>
+              </button>
+              <div class="subMenu" id="sizeMenu" role="menu" aria-label="Circle size">
+                <button class="subOpt" type="button" role="menuitemradio" data-d="5">
+                  <span>5 cm<small>A jar lid</small></span><span class="tick" aria-hidden="true">&#10003;</span>
+                </button>
+                <button class="subOpt on" type="button" role="menuitemradio" data-d="8">
+                  <span>8 cm<small>A mug</small></span><span class="tick" aria-hidden="true">&#10003;</span>
+                </button>
+                <button class="subOpt" type="button" role="menuitemradio" data-d="12">
+                  <span>12 cm<small>A dinner plate is bigger still</small></span><span class="tick" aria-hidden="true">&#10003;</span>
+                </button>
+                <button class="subOpt" type="button" role="menuitemradio" data-d="20">
+                  <span>20 cm<small>A bike wheel is about three times this</small></span><span class="tick" aria-hidden="true">&#10003;</span>
+                </button>
+              </div>
+            </div>
+            <p class="settingsNote">The drawn circle never changes size &mdash; only the measurement written on it. That is the point: the answer comes out the same either way.</p>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">Display</div>
+            <label class="sw"><input type="checkbox" id="predToggle"><span class="track"></span><span>Predict first</span></label>
+            <label class="sw"><input type="checkbox" id="measToggle"><span class="track"></span><span>Show the measurements</span></label>
+            <label class="sw"><input type="checkbox" id="countToggle" checked><span class="track"></span><span>Running count</span></label>
+            <label class="sw"><input type="checkbox" id="lineToggle" checked><span class="track"></span><span>Unrolled number line</span></label>
+          </nav>
+        </div>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-4/measurement-space/perimeter-plane-shapes/">Perimeter of Plane Shapes<small>The same outcome, straight sides &mdash; trace the perimeter and find the missing ones</small></a>
+            <span class="toolLink is-disabled" aria-disabled="true">Worksheet Creator<small>Coming soon</small></span>
+            <span class="toolLink is-disabled" aria-disabled="true">Student Quiz<small>Coming soon</small></span>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage" id="stage">
+
+        <div class="eqCard">
+          <div class="eqLeft">
+            <button class="genBtn" id="genBtn" type="button" title="Draw a different circle">
+              <span class="dice" aria-hidden="true">&#9860;</span><span>New circle</span>
+            </button>
+          </div>
+          <div class="questChip" id="questChip" aria-live="polite">How many diameters fit around the circumference?</div>
+          <span class="measNote" id="measNote" hidden></span>
+          <div class="eqSide">
+            <button class="testBtn" id="testBtn" type="button">&#9678; Test a number</button>
+          </div>
+        </div>
+
+        <div class="boardCard">
+          <svg class="board" id="board" viewBox="0 0 1400 600" role="img"
+               aria-label="A circle with its diameter, and the circumference unrolled onto a number line measured in diameters"></svg>
+        </div>
+
+        <div class="narrate">
+          <div class="navRow" id="navRow">
+            <button class="navBtn" id="backBtn" type="button">&#9664; Back</button>
+            <button class="navBtn next" id="nextBtn" type="button">Next &#9654;</button>
+            <button class="navBtn zoomout" id="zoomOutBtn" type="button" hidden>Zoom all the way out &#9654;</button>
+            <button class="navBtn" id="restartBtn" type="button">Start again</button>
+          </div>
+
+          <div class="navRow" id="testRow" hidden>
+            <label for="testBox" style="font-weight:850;font-size:.9rem;color:var(--muted)">Diameters around the circumference</label>
+            <input class="numBox" id="testBox" inputmode="decimal" autocomplete="off" aria-label="How many diameters fit around the circumference" />
+            <button class="navBtn lock" id="wrapBtn" type="button">Wrap it</button>
+            <button class="navBtn lens" id="lensBtn" type="button" hidden>Zoom to the join</button>
+            <button class="navBtn" id="lensMoreBtn" type="button" hidden>Closer still &#10005;10</button>
+            <button class="navBtn" id="exitTestBtn" type="button">Back to the demonstration</button>
+          </div>
+
+          <div class="stepCount" id="stepCount">Step 1</div>
+          <div class="stepPrompt" id="stepPrompt"></div>
+          <div class="stepMaths" id="stepMaths"></div>
+          <div class="verdict" id="verdict" hidden></div>
+          <div class="tries" id="tries" hidden></div>
+
+          <div class="predRow" id="predRow" hidden>
+            <label for="predBox">Your prediction</label>
+            <input class="numBox" id="predBox" inputmode="decimal" autocomplete="off" aria-label="Your prediction" />
+            <span style="font-weight:800;color:var(--muted);font-size:.86rem">diameters</span>
+            <button class="navBtn lock" id="predLockBtn" type="button">Lock it in</button>
+          </div>
+          <div class="predBack" id="predBack"></div>
+
+          <p class="hint" id="hint">Space or &rarr; for the next step, &larr; to go back, T to test a number, R for a new circle.</p>
+        </div>
+
+      </section>
+    </main>
+  </div>
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let instant = reduceMotion;
+
+  /* ============================================================
+     GEOMETRY — and the one decision the whole tool rests on.
+
+     THE NUMBER LINE IS DRAWN AT THE CIRCLE'S OWN SCALE: one unit
+     on the line is exactly the drawn diameter (LU = 2R). So the
+     line is not a record of the count, it IS the circumference
+     unrolled — which is why the circle can be ROLLED along it and
+     land exactly on the answer. Everything else is forced by that:
+     the line has to reach past 3.14 diameters inside LW, so R can
+     never be more than LW/7.
+     ============================================================ */
+  const VBW = 1400, VBH = 600;
+  const CX = 700, CY = 232, R = 188;          // the circle
+  const LX = 40, LW = 1320, LY = 512;         // the number line
+  const LU = 2 * R;                            // one diameter, in board units
+  const DOM0 = LW / LU;                        // 3.5 diameters visible unzoomed
+  const PI = Math.PI;
+  const ZOOMS = 10;                            // zoom presses after the gap lands
+  const S_GAP = 4, S_ZOOM0 = 5, S_NAME = S_ZOOM0 + ZOOMS;   // 4, 5, 15
+
+  /* ============================================================
+     STATE.  Everything on screen is derived from this — the arcs,
+     the band, the ticks, the prompt. Never cache a position.
+     ============================================================ */
+  const S = {
+    step:0,
+    dcm:8,
+    predict:false, meas:false, count:true, showLine:true,
+    pred:null,
+    mode:"demo",
+    n:null, lens:1, tries:[]                   // lens is a magnification: 1 = not zoomed
+  };
+
+  /* ---------- small helpers ---------- */
+  const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
+  const ease  = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+  function trim(s){ return s.indexOf(".") < 0 ? s : s.replace(/0+$/,"").replace(/\.$/,""); }
+  function fmtAmt(x){                     // a size in diameters, 3 significant figures
+    const v = Math.abs(x);
+    if(v === 0) return "0";
+    if(v >= 1) return trim(v.toFixed(3));
+    return trim(v.toFixed(Math.min(9, 2 - Math.floor(Math.log10(v)))));
+  }
+  function bigNum(k){                     // the chip: "x10 000 000 000" does not fit and does not read
+    if(k <= 5) return Math.pow(10,k).toLocaleString("en-AU");
+    return `10<tspan dy="-7" font-size="12">${k}</tspan>`;
+  }
+
+  /* ---------- points on the circle ----------
+     t is radians CLOCKWISE from the top, which is where the
+     wrapping starts. One diameter of string covers exactly 2
+     radians of arc, because arc = r*t and the diameter is 2r —
+     that single fact is what makes three diameters fall short. */
+  const PX = t => CX + R * Math.sin(t);
+  const PY = t => CY - R * Math.cos(t);
+  const RAD_PER_D = 2;
+
+  function arcPath(t0, t1, r){
+    r = r || R;
+    const x0 = CX + r*Math.sin(t0), y0 = CY - r*Math.cos(t0);
+    const x1 = CX + r*Math.sin(t1), y1 = CY - r*Math.cos(t1);
+    const laf = (t1 - t0) > PI ? 1 : 0;
+    return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 ${laf} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+
+  /* ---------- the wrapping map ----------
+     A string of length L being wound onto the circle from t0. The
+     first p*L of it is tight against the rim; the rest is still
+     LOOSE, riding just outside on radius R+LOOSE. Length is
+     preserved at every frame, so p = 1 is exactly the arc a
+     diameter of string covers.
+
+     An earlier version ran the loose end off along the TANGENT,
+     which is the truer picture of winding but throws a 376px
+     straight tail off the bottom of the board on the second
+     diameter, straight across the number line. A loose loop keeps
+     the whole action inside the circle's own patch of screen. */
+  const LOOSE = 18;
+  function rollPts(t0, L, p, n, tangent){
+    n = n || 60;
+    const out = [];
+    const wrapped = p * L;
+    const tEnd = t0 + wrapped / R;
+    const bx = PX(tEnd), by = PY(tEnd), dx = Math.cos(tEnd), dy = Math.sin(tEnd);
+    for(let i = 0; i <= n; i++){
+      const s = L * i / n;
+      if(s <= wrapped){ out.push([PX(t0 + s/R), PY(t0 + s/R)]); }
+      else if(tangent){ const k = s - wrapped; out.push([bx + k*dx, by + k*dy]); }
+      else {
+        const k = s - wrapped;
+        const r = R + LOOSE * Math.min(1, k/46);
+        const a = tEnd + k / (R + LOOSE);
+        out.push([CX + r*Math.sin(a), CY - r*Math.cos(a)]);
+      }
+    }
+    return out;
+  }
+  function segPts(ax, ay, bx, by, n){
+    n = n || 60;
+    const out = [];
+    for(let i = 0; i <= n; i++){ const u = i/n; out.push([ax + (bx-ax)*u, ay + (by-ay)*u]); }
+    return out;
+  }
+  function lerpPts(a, b, u){
+    const out = [];
+    for(let i = 0; i < a.length; i++) out.push([a[i][0] + (b[i][0]-a[i][0])*u, a[i][1] + (b[i][1]-a[i][1])*u]);
+    return out;
+  }
+  function poly(pts){ return pts.map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(" "); }
+
+  /* ---------- the zoom windows ----------
+     EVERY ZOOMED WINDOW IS CENTRED ON THE ANSWER. The end of the
+     circumference therefore never moves: each press is a pure ×10
+     scale about a fixed point, and the marks simply spread apart
+     and multiply. Windows aligned to round edges (3.1-3.2, then
+     3.14-3.15, ...) put the answer at 42%, then 16%, then 59% of
+     the width, so the thing being looked at jumped across the
+     board on every press.
+
+     The window is ten subdivisions wide, so the two marks the
+     answer falls between straddle the middle and there are four
+     more either side. */
+  function win(k){
+    if(k <= 0) return { k:0, lo:0, hi:DOM0, w:DOM0, sub:0.1 };
+    const w = Math.pow(10, -k);
+    // the width is carried, not recovered from hi - lo: at the tenth zoom
+    // those two differ in their eleventh decimal place and subtracting them
+    // throws away most of the precision the position needs.
+    return { k:k, lo:PI - w/2, hi:PI + w/2, w:w, sub:w/10 };
+  }
+  function bracket(k){                     // the two marks the answer falls between
+    const p = Math.pow(10, k+1);
+    const b = Math.floor(PI * p);
+    return { lo:b/p, hi:(b+1)/p, dp:k+1 };
+  }
+  /* The naming step zooms back OUT to the whole picture: the last
+     thing the class sees is three diameters and a bit, with the
+     bit finally named. */
+  function zoomLevel(step){
+    if(S.mode !== "demo") return 0;
+    if(step < S_ZOOM0 || step >= S_NAME) return 0;
+    return step - S_ZOOM0 + 1;
+  }
+  const xOf = (v, w) => LX + (v - w.lo) / (w.w !== undefined ? w.w : (w.hi - w.lo)) * LW;
+
+  /* ---------- what is covered, in diameters ---------- */
+  function coveredAt(step){
+    if(step <= 0) return 0;
+    if(step <= 3) return step;
+    return PI;
+  }
+
+  /* ============================================================
+     ANIMATION
+     One transient descriptor at a time. `anim` is read by render()
+     and by nothing else, so a half-finished flight and a finished
+     one are the same code path.
+     ============================================================ */
+  let anim = null, raf = 0, busy = false, chain = null;
+
+  function runBeats(beats, after){
+    busy = true;
+    let i = 0;
+    (function nextBeat(){
+      if(i >= beats.length){ busy = false; anim = null; chain = null; after && after(); render(); return; }
+      const b = beats[i++];
+      if(instant){ anim = null; nextBeat(); return; }
+      const t0 = performance.now();
+      anim = { kind:b.kind, j:b.j, p:0 };
+      chain = { beats:beats, after:after };
+      cancelAnimationFrame(raf);
+      (function frame(now){
+        const raw = Math.min(1, (now - t0) / b.ms);
+        anim.p = ease(raw);
+        render();
+        if(raw < 1) raf = requestAnimationFrame(frame);
+        else nextBeat();
+      })(t0);
+    })();
+  }
+  function finishNow(){
+    cancelAnimationFrame(raf);
+    const c = chain;
+    anim = null; chain = null; busy = false; zoomTween = null; lensTween = null;
+    if(c && c.after) c.after();
+    render();
+  }
+
+  /* the window itself moves, so the zoom gets its own descriptor */
+  let zoomTween = null;
+  function runZoom(fromK, toK, ms, after){
+    if(instant){ after && after(); render(); return; }
+    busy = true;
+    const a = win(fromK), b = win(toK);
+    const c0 = (a.lo+a.hi)/2, c1 = (b.lo+b.hi)/2;
+    const w0 = a.hi-a.lo, w1 = b.hi-b.lo;
+    const t0 = performance.now();
+    chain = { after:after };
+    cancelAnimationFrame(raf);
+    (function frame(now){
+      const raw = Math.min(1, (now - t0) / ms);
+      const e = ease(raw);
+      const wd = w0 * Math.pow(w1/w0, e);
+      const c  = c0 + (c1 - c0) * e;
+      zoomTween = { lo:c - wd/2, hi:c + wd/2, w:wd, from:a, to:b, e:e };
+      render();
+      if(raw < 1) raf = requestAnimationFrame(frame);
+      else { zoomTween = null; busy = false; chain = null; after && after(); render(); }
+    })(t0);
+  }
+
+  /* the magnifier in Test mode is a camera on the circle itself */
+  let lensTween = null;
+  function runLens(from, to, ms, after){
+    S.lens = to;
+    if(instant){ lensTween = null; after && after(); render(); return; }
+    busy = true;
+    const t0 = performance.now();
+    chain = { after:after };
+    cancelAnimationFrame(raf);
+    (function frame(now){
+      const raw = Math.min(1, (now - t0) / ms);
+      lensTween = from * Math.pow(to/from, ease(raw));
+      render();
+      if(raw < 1) raf = requestAnimationFrame(frame);
+      else { lensTween = null; busy = false; chain = null; after && after(); render(); }
+    })(t0);
+  }
+  const mNow = () => lensTween != null ? lensTween : S.lens;
+
+  /* ============================================================
+     RENDER — the circle
+     ============================================================ */
+  const COL = ["#93c5fd", "#60a5fa", "#2563eb"];   // three tones of one colour: same stick, countable
+
+  /* A label on a short arc has to be led away from it: the gap and the
+     overshoot both sit within a few degrees of the start mark, so a
+     label placed against the arc lands on top of "start". */
+  function callout(t, text, col, lx, ly){
+    const px = CX + (R+13)*Math.sin(t), py = CY - (R+13)*Math.cos(t);
+    const anchor = lx < px ? "end" : "start";
+    const tx = lx + (anchor === "end" ? -9 : 9);
+    return `<line x1="${px.toFixed(1)}" y1="${py.toFixed(1)}" x2="${lx}" y2="${ly}" stroke="${col}" stroke-width="2" stroke-dasharray="4 4" opacity=".65"/>`
+         + `<circle cx="${lx}" cy="${ly}" r="3" fill="${col}"/>`
+         + `<text x="${tx}" y="${ly+6}" text-anchor="${anchor}" font-size="19" font-weight="900" fill="${col}">${text}</text>`;
+  }
+
+  /* the rim, its three diameters and its gap, drawn in the circle's own
+     frame so the whole lot can be rotated as one while it rolls */
+  function rimContent(){
+    let g = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>`;
+    for(let j = 0; j < 3; j++)
+      g += `<path d="${arcPath(j*RAD_PER_D, (j+1)*RAD_PER_D)}" fill="none" stroke="${COL[j]}" stroke-width="13" stroke-linecap="butt"/>`;
+    g += `<path d="${arcPath(3*RAD_PER_D, 2*PI)}" fill="none" stroke="#db2777" stroke-width="13" stroke-linecap="butt"/>`;
+    g += `<line x1="${CX}" y1="${CY-R-15}" x2="${CX}" y2="${CY-R+15}" stroke="#0f172a" stroke-width="3"/>`;
+    return g;
+  }
+
+  function circleSvg(){
+    const step = S.step;
+    let g = "";
+    const wraps = Math.min(3, step);
+    const animWrap = anim && (anim.kind === "lift" || anim.kind === "roll") ? anim : null;
+    const rolling = anim && anim.kind === "rollout" ? anim.p : null;
+    const settled = animWrap ? animWrap.j : wraps;
+
+    const dim = rolling != null ? .10 : 1;
+    g += `<g opacity="${dim}">`;
+
+    g += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/>`;
+    g += `<circle cx="${CX}" cy="${CY}" r="2.5" fill="#94a3b8"/>`;
+
+    // the diameter, always drawn: it is the measuring stick
+    const dimOut = (step > 0 || animWrap) ? .38 : 1;
+    g += `<g opacity="${dimOut}">`;
+    g += `<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="${COL[2]}" stroke-width="7" stroke-linecap="round"/>`;
+    g += `<circle cx="${CX-R}" cy="${CY}" r="5" fill="${COL[2]}"/><circle cx="${CX+R}" cy="${CY}" r="5" fill="${COL[2]}"/>`;
+    g += `<text class="mth" x="${CX}" y="${CY+30}" text-anchor="middle" font-size="25" font-style="italic" font-weight="700" fill="${COL[2]}">d</text>`;
+    if(S.meas) g += `<text x="${CX}" y="${CY-16}" text-anchor="middle" font-size="19" font-weight="800" fill="${COL[2]}">${S.dcm} cm</text>`;
+    g += `</g>`;
+
+    // the diameters already wound on
+    for(let j = 0; j < settled; j++){
+      g += `<path d="${arcPath(j*RAD_PER_D, (j+1)*RAD_PER_D)}" fill="none" stroke="${COL[j]}" stroke-width="13" stroke-linecap="butt"/>`;
+      if(rolling == null){
+        const tm = (j + .5) * RAD_PER_D;
+        const lx = CX + (R+30)*Math.sin(tm), ly = CY - (R+30)*Math.cos(tm);
+        g += `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="14" fill="#fff" stroke="${COL[j]}" stroke-width="2.5"/>`;
+        g += `<text x="${lx.toFixed(1)}" y="${(ly+6).toFixed(1)}" text-anchor="middle" font-size="17" font-weight="900" fill="${COL[j]}">${j+1}</text>`;
+      }
+    }
+
+    // the one in flight
+    if(animWrap){
+      const j = animWrap.j, t0 = j*RAD_PER_D, L = 2*R;
+      let pts;
+      if(animWrap.kind === "lift"){
+        pts = lerpPts(segPts(CX-R, CY, CX+R, CY), rollPts(t0, L, 0), animWrap.p);
+      } else {
+        pts = rollPts(t0, L, animWrap.p);
+      }
+      g += `<polyline points="${poly(pts)}" fill="none" stroke="${COL[j]}" stroke-width="13" stroke-linecap="butt" stroke-linejoin="round"/>`;
+    }
+
+    // the gap
+    const gapShown = step >= 3 && !(anim && anim.kind === "roll" && anim.j === 2);
+    if(gapShown && step < S_GAP && rolling == null){
+      g += `<path d="${arcPath(3*RAD_PER_D, 2*PI)}" fill="none" stroke="#db2777" stroke-width="15" stroke-linecap="butt">`;
+      g += `<animate attributeName="stroke-width" values="15;22;15" dur="1.6s" repeatCount="indefinite"/></path>`;
+      g += callout((3*RAD_PER_D + 2*PI)/2, "the gap", "#db2777", CX - 262, CY - R - 22);
+    } else if(step >= S_GAP || rolling != null){
+      g += `<path d="${arcPath(3*RAD_PER_D, 2*PI)}" fill="none" stroke="#db2777" stroke-width="13" stroke-linecap="butt"/>`;
+    }
+
+    // the start mark — every wrap begins here
+    g += `<line x1="${CX}" y1="${CY-R-16}" x2="${CX}" y2="${CY-R+16}" stroke="#0f172a" stroke-width="3"/>`;
+    if(rolling == null)
+      g += `<text x="${CX}" y="${CY-R-24}" text-anchor="middle" font-size="15" font-weight="800" fill="#475569">start</text>`;
+    g += `</g>`;
+
+    /* THE WHOLE CIRCLE ROLLED OUT ALONG THE LINE.
+       One turn of a wheel of radius R covers 2*pi*R, and the line's
+       unit is 2R, so the wheel comes to rest at exactly pi — which is
+       where the end of the circumference came from. The wheel is the
+       same rim, rotated: at progress q the material at angle 2*pi*q is
+       the part touching the line. */
+    if(rolling != null){
+      const q = rolling;
+      const w = winNow();
+      const cxq = xOf(0, w) + q * PI * LU;
+      const dx = (cxq - CX).toFixed(2), dy = (LY - R - CY).toFixed(2);
+      const a = (180 - 360*q).toFixed(2);
+      g += `<g opacity="${Math.min(1, q*14).toFixed(2)}" transform="translate(${dx},${dy}) rotate(${a},${CX},${CY})">${rimContent()}</g>`;
+      g += `<circle cx="${cxq.toFixed(1)}" cy="${LY}" r="5" fill="#0f172a"/>`;
+    }
+
+    // the running count
+    if(S.count && (settled > 0 || animWrap) && rolling == null){
+      const shown = animWrap && animWrap.kind === "roll" ? animWrap.j + 1 : settled;
+      const word = shown === 1 ? "diameter" : "diameters";
+      g += `<g transform="translate(40,26)">`;
+      g += `<rect x="0" y="0" width="196" height="44" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>`;
+      g += `<text x="98" y="29" text-anchor="middle" font-size="19" font-weight="900" fill="#1d4ed8">${shown} ${word} so far</text>`;
+      g += `</g>`;
+    }
+    if(S.meas && S.step >= S_GAP && rolling == null){
+      g += `<g transform="translate(${VBW-236},26)">`;
+      g += `<rect x="0" y="0" width="196" height="44" rx="14" fill="#faf5ff" stroke="#e9d5ff"/>`;
+      g += `<text x="98" y="29" text-anchor="middle" font-size="19" font-weight="900" fill="#6d28d9">C = ${(PI*S.dcm).toFixed(2)} cm</text>`;
+      g += `</g>`;
+    }
+    return g;
+  }
+
+  /* ============================================================
+     RENDER — the unrolled number line
+     ============================================================ */
+  function winNow(){
+    if(zoomTween) return { k:zoomTween.to.k, lo:zoomTween.lo, hi:zoomTween.hi, w:zoomTween.w, sub:zoomTween.to.sub };
+    return win(zoomLevel(S.step));
+  }
+
+  function ticksFor(w, k, opacity){
+    let g = "";
+    const o = opacity === undefined ? 1 : opacity;
+    if(o <= .01) return "";
+    const off = x => x < -300 || x > VBW + 300;
+    /* A sub-mark FLANKS the band rather than crossing it: crossing puts a
+       grey rule straight through the numeral written inside the band. */
+    const flank = x => `<line x1="${x.toFixed(1)}" y1="${LY-27}" x2="${x.toFixed(1)}" y2="${LY-16}" stroke="#475569" stroke-width="2" opacity=".5"/>`
+                     + `<line x1="${x.toFixed(1)}" y1="${LY+16}" x2="${x.toFixed(1)}" y2="${LY+27}" stroke="#475569" stroke-width="2" opacity=".5"/>`;
+    if(k === 0){
+      if(S.step >= S_GAP || (anim && anim.kind === "rollout")){
+        for(let i = 0; i <= Math.floor(DOM0*10); i++){
+          const v = i/10;
+          if(Math.abs(v - Math.round(v)) < 1e-9) continue;
+          const x = xOf(v, w);
+          if(off(x)) continue;
+          g += flank(x);
+        }
+      }
+      for(let i = 0; i <= 3; i++){
+        const x = xOf(i, w);
+        if(off(x)) continue;
+        g += `<line x1="${x.toFixed(1)}" y1="${LY-24}" x2="${x.toFixed(1)}" y2="${LY+24}" stroke="#475569" stroke-width="3"/>`;
+        g += `<text x="${x.toFixed(1)}" y="${LY+50}" text-anchor="middle" font-size="21" font-weight="900" fill="#334155">${i}</text>`;
+      }
+      return `<g opacity="${o}">${g}</g>`;
+    }
+    /* A centred window holds ten subdivisions: the two marks the answer
+       falls between straddle the middle, four more either side. */
+    const br = bracket(k);
+    const p = Math.pow(10, k+1);
+    const B = Math.floor(PI * p);
+    /* Label every mark if the numbers fit at a size a class can read from
+       the back; otherwise only the two the answer falls between. */
+    let fs = 14, labelAll = false;
+    [20, 18, 16, 14].some(f => { if((k + 3) * f * 0.56 + 16 < LW/10){ fs = f; labelAll = true; return true; } return false; });
+    for(let i = B - 4; i <= B + 5; i++){
+      const v = i/p;
+      const x = xOf(v, w);
+      if(off(x)) continue;
+      const isBr = (i === B || i === B + 1);
+      if(isBr) g += `<line x1="${x.toFixed(1)}" y1="${LY-24}" x2="${x.toFixed(1)}" y2="${LY+24}" stroke="#7c3aed" stroke-width="3.5"/>`;
+      else g += flank(x);
+      if(isBr || labelAll){
+        g += `<text class="mth" x="${x.toFixed(1)}" y="${LY+48}" text-anchor="middle" font-size="${fs}" font-weight="${isBr?900:750}" fill="${isBr?"#7c3aed":"#64748b"}">${v.toFixed(k+1)}</text>`;
+      }
+    }
+    return `<g opacity="${o}">${g}</g>`;
+  }
+
+  function lineSvg(){
+    if(!S.showLine) return "";
+    const w = winNow();
+    let g = `<line x1="${LX}" y1="${LY}" x2="${LX+LW}" y2="${LY}" stroke="#94a3b8" stroke-width="2.5"/>`;
+
+    // how much of the circumference is on the line
+    let cov = coveredAt(S.step);
+    if(anim && (anim.kind === "lift" || anim.kind === "roll")) cov = anim.j + (anim.kind === "roll" ? anim.p : 0);
+    if(anim && anim.kind === "rollout") cov = Math.max(3, anim.p * PI);
+
+    /* ONE band routine at every zoom level, clamped to the board rather
+       than switched for a narrow window: switching drawing styles part
+       way through a zoom makes the bar visibly jump colour mid-flight. */
+    const bandY = LY - 15, bandH = 30;
+    let numerals = "";
+    const pieces = [];
+    for(let j = 0; j < 3; j++) pieces.push([j, Math.min(cov, j+1), COL[j], String(j+1)]);
+    if(cov > 3) pieces.push([3, cov, "#db2777", ""]);
+    pieces.forEach(pc => {
+      if(pc[1] <= pc[0]) return;
+      const rx0 = xOf(pc[0], w), rx1 = xOf(pc[1], w);
+      if(rx1 < -60 || rx0 > VBW + 60) return;
+      const x0 = Math.max(rx0, -60), x1 = Math.min(rx1, VBW + 60);
+      g += `<rect x="${x0.toFixed(1)}" y="${bandY}" width="${(x1-x0).toFixed(1)}" height="${bandH}" fill="${pc[2]}" opacity=".95" rx="3"/>`;
+      if(pc[3] && rx1 - rx0 > 78 && rx0 > 0 && rx1 < VBW){
+        numerals += `<text x="${((rx0+rx1)/2).toFixed(1)}" y="${(LY+7).toFixed(1)}" text-anchor="middle" font-size="19" font-weight="900" fill="#fff">${pc[3]}</text>`;
+      }
+    });
+
+    /* THE TICKS GO ON TOP OF THE BAND. Under it, the tenth mark the gap
+       is being read against is the one thing on the line you cannot see. */
+    if(zoomTween){
+      g += ticksFor(w, zoomTween.from.k, 1 - zoomTween.e);
+      g += ticksFor(w, zoomTween.to.k, zoomTween.e);
+    } else {
+      g += ticksFor(w, w.k, 1);
+    }
+    g += numerals;
+
+    // the end of the circumference — the thing every zoom is about
+    if(cov > 0){
+      const xe = xOf(cov, w);
+      if(xe >= LX-2 && xe <= LX+LW+2){
+        g += `<line x1="${xe.toFixed(1)}" y1="${LY-46}" x2="${xe.toFixed(1)}" y2="${LY+20}" stroke="#0f172a" stroke-width="3"/>`;
+        if(S.step >= S_GAP && !(anim && anim.kind === "rollout")){
+          const anchor = xe > LX + LW - 200 ? "end" : xe < 200 ? "start" : "middle";
+          const dx = anchor === "end" ? -10 : anchor === "start" ? 10 : 0;
+          g += `<text x="${(xe+dx).toFixed(1)}" y="${LY-52}" text-anchor="${anchor}" font-size="17" font-weight="900" fill="#0f172a">end of the circumference</text>`;
+        }
+      }
+    }
+
+    // how far in we are
+    if(w.k > 0 && !zoomTween){
+      g += `<g transform="translate(40,80)">`;
+      g += `<rect x="0" y="0" width="214" height="38" rx="12" fill="#faf5ff" stroke="#e9d5ff"/>`;
+      g += `<text x="107" y="26" text-anchor="middle" font-size="17" font-weight="900" fill="#6d28d9">zoomed in &#215;${bigNum(w.k)}</text>`;
+      g += `</g>`;
+    }
+    return g;
+  }
+
+  /* ============================================================
+     RENDER — Test mode: wrap the number the class typed, then
+     ZOOM THE CAMERA ONTO THE CIRCLE ITSELF.
+
+     There is no separate magnifier panel any more. The circle is
+     drawn from its own equation at magnification m about the start
+     mark, so m = 1 is the ordinary circle and every larger m is
+     the same circle seen closer: the rim straightens out as you go
+     in, which is the thing worth seeing. Nothing is faked and
+     nothing jumps — one continuous camera.
+     ============================================================ */
+  const LAPCOL = ["#2563eb", "#7c3aed", "#16a34a", "#0891b2"];
+  const LENS_TARGET_PX = 520;
+
+  function lensTarget(){
+    if(S.n == null) return 1;
+    const D = Math.abs(S.n - PI);
+    if(D < 1e-12) return 1e6;
+    return clamp(LENS_TARGET_PX / (D * LU), 0.02, 1e6);
+  }
+  const canZoom = () => S.n != null && lensTarget() > 1.05;
+
+  /* material [0,A] cut into pieces that each sit in one half-turn of the
+     drawing frame, so every piece has a continuous angle either side of
+     the start mark and carries the lap it belongs to */
+  function strPieces(A){
+    const out = [];
+    let t = 0, guard = 0;
+    while(t < A - 1e-12 && guard++ < 200){
+      const e = Math.min(A, (Math.floor(t/PI + 1e-9) + 1) * PI);
+      const lap = Math.floor((t + 1e-9)/(2*PI));
+      let d0 = t - 2*PI*lap, d1 = e - 2*PI*lap;
+      if(d0 >= PI - 1e-9){ d0 -= 2*PI; d1 -= 2*PI; }
+      out.push({ d0:d0, d1:d1, lap:lap, off:12*Math.min(lap,3), t0:t, t1:e });
+      t = e;
+    }
+    return out;
+  }
+
+  function testViewSvg(){
+    const m = mNow();
+    const zoomed = m > 1.02;
+    const n = S.n;
+    const grow = anim && anim.kind === "test" ? anim.p : 1;
+    const bias = clamp(Math.log10(Math.max(1,m))/1.4, 0, 1);
+    const PY0 = CY - R + 74;                       // the start mark, unzoomed
+    const px = CX, py = PY0 + bias*(300 - PY0);
+    const Rm = R * m;
+    const dMax = Math.min(PI, 1250/Rm);
+    const P = (d, off) => { const r = Rm + (off||0); return [px + r*Math.sin(d), py + Rm - r*Math.cos(d)]; };
+    const arcPts = (d0, d1, off) => {
+      const a = Math.max(Math.min(d0,d1), -dMax), b = Math.min(Math.max(d0,d1), dMax);
+      if(b <= a) return null;
+      const steps = clamp(Math.ceil((b-a)/0.012), 2, 420);
+      const out = [];
+      for(let i = 0; i <= steps; i++) out.push(P(a + (b-a)*i/steps, off));
+      return out;
+    };
+    const arcPoly = (d0, d1, off) => { const p = arcPts(d0, d1, off); return p ? poly(p) : ""; };
+
+    let g = "";
+
+    // the disc — a filled shape when whole, the ground under the rim when zoomed
+    const rim = arcPts(-dMax, dMax, 0);
+    if(!zoomed){
+      g += `<polygon points="${poly(rim)}" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/>`;
+      g += `<circle cx="${px}" cy="${(py+Rm).toFixed(1)}" r="2.5" fill="#94a3b8"/>`;
+      g += `<line x1="${(px-Rm).toFixed(1)}" y1="${(py+Rm).toFixed(1)}" x2="${(px+Rm).toFixed(1)}" y2="${(py+Rm).toFixed(1)}" stroke="${COL[2]}" stroke-width="6" stroke-linecap="round" opacity=".35"/>`;
+      g += `<text class="mth" x="${px}" y="${(py+Rm+30).toFixed(1)}" text-anchor="middle" font-size="24" font-style="italic" font-weight="700" fill="${COL[2]}" opacity=".55">d</text>`;
+    } else {
+      const under = rim.map(p => [p[0], p[1]+96]).reverse();
+      g += `<polygon points="${poly(rim)} ${poly(under)}" fill="#f1f5f9"/>`;
+      g += `<polyline points="${poly(rim)}" fill="none" stroke="#94a3b8" stroke-width="3"/>`;
+      // only once the rim is flat enough for the band to read as a wall
+      if(m >= 20) g += `<text x="${(px-320).toFixed(0)}" y="${(py+74).toFixed(0)}" font-size="15" font-weight="800" fill="#94a3b8">inside the circle</text>`;
+    }
+
+    if(n != null){
+      const A = n * RAD_PER_D * grow;
+      const ps = strPieces(A);
+      ps.forEach(pc => {
+        const pl = arcPoly(pc.d0, pc.d1, pc.off);
+        if(pl) g += `<polyline points="${pl}" fill="none" stroke="${LAPCOL[Math.min(pc.lap,3)]}" stroke-width="11" stroke-linecap="butt" opacity="${pc.lap===0?.95:.88}"/>`;
+      });
+      // the join between one diameter and the next
+      for(let t = RAD_PER_D; t < A - 1e-9; t += RAD_PER_D){
+        const lap = Math.floor((t + 1e-9)/(2*PI));
+        let d = t - 2*PI*lap;
+        if(d >= PI) d -= 2*PI;
+        if(Math.abs(d) > dMax) continue;
+        const a = P(d, 12*Math.min(lap,3) - 9), b2 = P(d, 12*Math.min(lap,3) + 9);
+        g += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b2[0].toFixed(1)}" y2="${b2[1].toFixed(1)}" stroke="#fff" stroke-width="2.5"/>`;
+      }
+
+      if(grow >= 1){
+        const D = n - PI;
+        const lapEnd = Math.max(0, Math.floor((A - 1e-9)/(2*PI)));
+        let dEnd = A - 2*PI*lapEnd;
+        if(dEnd >= PI) dEnd -= 2*PI;
+        const offEnd = 12*Math.min(lapEnd,3);
+
+        // the gap or the overlap, marked along the rim between the two ends
+        const lo = Math.min(0, dEnd), hi = Math.max(0, dEnd);
+        const col = D > 0 ? "#f97316" : "#db2777";
+        const band = arcPoly(lo, hi, offEnd/2);
+        if(band) g += `<polyline points="${band}" fill="none" stroke="${col}" stroke-width="${zoomed?34:20}" opacity=".22" stroke-linecap="butt"/>`;
+
+        if(!zoomed){
+          if(D < 0) g += callout((A + 2*PI)/2, "still short", "#db2777", CX - 262, CY - R - 22);
+          // past a whole extra lap the callout has nothing to point at; the
+          // "times around" chip is what says it then
+          else if(D > 0 && D < PI) g += callout((A - 2*PI)/2, "past the start", "#c2410c", CX + 262, CY - R - 22);
+        }
+
+        // the two ends
+        const s0 = P(0, 0), s1 = P(dEnd, offEnd);
+        const tick = (pt, c, lab) => {
+          let o = `<line x1="${pt[0].toFixed(1)}" y1="${(pt[1]-34).toFixed(1)}" x2="${pt[0].toFixed(1)}" y2="${(pt[1]+18).toFixed(1)}" stroke="${c}" stroke-width="3"/>`;
+          if(lab) o += `<text x="${pt[0].toFixed(1)}" y="${(pt[1]-42).toFixed(1)}" text-anchor="middle" font-size="${zoomed?18:15}" font-weight="900" fill="${c}">${lab}</text>`;
+          return o;
+        };
+        g += tick(s0, "#0f172a", "start");
+        if(zoomed){
+          g += tick(s1, col === "#f97316" ? "#c2410c" : col, "end of your string");
+          // follow the rim: at low magnification it is still a real curve
+          const mp = P(dEnd/2, offEnd);
+          const mid = mp[0], ybase = mp[1] + 50;
+          g += `<text class="mth" x="${mid.toFixed(1)}" y="${ybase.toFixed(1)}" text-anchor="middle" font-size="21" font-weight="900" fill="${col === "#f97316" ? "#c2410c" : col}">${D>0?"overlap":"gap"} = ${fmtAmt(D)} of a diameter</text>`;
+        } else {
+          g += `<line x1="${(px + (Rm+offEnd-15)*Math.sin(dEnd)).toFixed(1)}" y1="${(py + Rm - (Rm+offEnd-15)*Math.cos(dEnd)).toFixed(1)}" x2="${(px + (Rm+offEnd+15)*Math.sin(dEnd)).toFixed(1)}" y2="${(py + Rm - (Rm+offEnd+15)*Math.cos(dEnd)).toFixed(1)}" stroke="#0f172a" stroke-width="3"/>`;
+        }
+      }
+
+      if(n > PI*1.2 && !zoomed){
+        g += `<g transform="translate(40,26)"><rect x="0" y="0" width="220" height="44" rx="14" fill="#f1f5f9" stroke="#cbd5e1"/>`
+           + `<text x="110" y="29" text-anchor="middle" font-size="19" font-weight="900" fill="#475569">${trim((n/PI).toFixed(2))} times around</text></g>`;
+      }
+    }
+
+    if(zoomed && n != null){
+      // where on the circle we are looking — a zoom this deep loses the circle
+      const ix = 128, iy = 132, ir = 56;
+      g += `<circle cx="${ix}" cy="${iy}" r="${ir}" fill="#fff" stroke="#cbd5e1" stroke-width="2.5"/>`;
+      // an arc whose two ends coincide draws NOTHING, and every interesting
+      // number here wraps almost exactly once round
+      const A2 = Math.min(n * RAD_PER_D, 2*PI);
+      if(A2 > 2*PI - 0.05){
+        g += `<circle cx="${ix}" cy="${iy}" r="${ir}" fill="none" stroke="${LAPCOL[0]}" stroke-width="6"/>`;
+      } else {
+        const x0 = ix, y0 = iy - ir;
+        const x1 = ix + ir*Math.sin(A2), y1 = iy - ir*Math.cos(A2);
+        g += `<path d="M ${x0} ${y0} A ${ir} ${ir} 0 ${A2>PI?1:0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${LAPCOL[0]}" stroke-width="6"/>`;
+      }
+      g += `<circle cx="${ix}" cy="${iy-ir}" r="6" fill="#0f172a"/>`;
+      g += `<line x1="${ix+10}" y1="${iy-ir-4}" x2="${ix+96}" y2="${iy-ir-26}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 4"/>`;
+      g += `<text x="${ix+102}" y="${iy-ir-22}" font-size="15" font-weight="800" fill="#64748b">this is the bit we are looking at</text>`;
+    }
+    if(zoomed){
+      const screens = LU * m / VBW;
+      g += `<text x="40" y="${VBH-18}" font-size="17" font-weight="900" fill="#92400e">magnified &#215;${Math.round(m).toLocaleString("en-AU")}</text>`;
+      // "0.43 screens wide" is not a fact worth saying; it only lands once the
+      // number is absurd
+      if(screens >= 3) g += `<text x="${VBW-40}" y="${VBH-18}" text-anchor="end" font-size="17" font-weight="800" fill="#92400e">the whole diameter would now be ${Math.round(screens).toLocaleString("en-AU")} screens wide</text>`;
+    }
+    return g;
+  }
+
+  /* ============================================================
+     RENDER
+     ============================================================ */
+  function render(){
+    const b = $("board");
+    b.innerHTML = S.mode === "test" ? testViewSvg() : circleSvg() + lineSvg();
+  }
+
+  /* ============================================================
+     WORDS
+     ============================================================ */
+  function demoText(){
+    const st = S.step, k = zoomLevel(st);
+    const of = " of " + (S_NAME+1);
+    if(st === 0) return {
+      c:"Step 1" + of,
+      p:"This is the diameter. How many of them do you think will fit around the outside?",
+      m: S.meas ? `<em>d</em> = ${S.dcm} cm` : ""
+    };
+    if(st <= 3){
+      const w = ["One diameter, bent around the edge. Not even a third of the way.",
+                 "Two. Still a long way from closed.",
+                 "Three fit &mdash; and they do not close it. There is a gap left."][st-1];
+      return { c:`Step ${st+1}${of}`, p:w,
+               m: st < 3 ? `${st} ${st===1?"diameter":"diameters"} so far`
+                         : `circumference = 3 diameters + a gap` };
+    }
+    if(st === S_GAP) return {
+      c:`Step ${st+1}${of}`,
+      p:"The whole circle is rolled out along the line. One turn lands past 3 &mdash; and that last pink stretch is the gap.",
+      m:"the circumference is between 3.1 and 3.2 diameters"
+    };
+    if(k > 0){
+      const br = bracket(k);
+      const last = k === ZOOMS;
+      return {
+        c:`Step ${st+1}${of}`,
+        p: last ? "Ten zooms in, and the end still lands on no mark at all. There is always another zoom."
+                : (k === 1 ? "Zoom in ten times, holding the end of the circumference still. Now we can see which hundredth it lands in."
+                           : "Ten times closer again. One more digit is pinned down, and the end still misses every mark."),
+        m:`between ${br.lo.toFixed(br.dp)} and ${br.hi.toFixed(br.dp)} diameters`
+      };
+    }
+    return {
+      c:`Step ${st+1}${of}`,
+      p:"Every circle gives this same number, whatever its size. It never stops and never repeats, so it is given a name: <span style='font-family:var(--mathFont);font-style:italic;color:var(--purple)'>&#960;</span>, said &ldquo;pie&rdquo;.",
+      m:`C = <span style="font-family:var(--mathFont);font-style:italic">&#960;</span> &#215; <em>d</em> &nbsp; where <span style="font-family:var(--mathFont);font-style:italic">&#960;</span> &#8776; 3.14159&hellip;`
+    };
+  }
+
+  function testText(){
+    if(S.n == null) return { c:"Test a number", p:"Type how many diameters you think fit around the circumference, then press Wrap it.", m:"" };
+    const zoomed = S.lens > 1.02;
+    let p = "The string is laid around the circle, one diameter at a time, from the start mark.";
+    if(zoomed) p = "Zoomed right in on the join. The rim looks straight at this magnification &mdash; and the two ends still do not meet.";
+    else if(!canZoom()) p = "That misses by more than a diameter, so there is nothing to zoom in on &mdash; you can see the difference from here.";
+    return { c:"Test a number", p:p, m:`${trim(String(S.n))} &#215; <em>d</em> &nbsp;against&nbsp; C` };
+  }
+
+  function verdictHtml(){
+    if(S.n == null) return "";
+    const n = S.n, D = n - PI;
+    if(D < 0) return `<span class="short">${trim(String(n))} diameters is <u>not enough</u> &mdash; it falls short of the start by <span class="amt">${fmtAmt(D)}</span> of a diameter.</span>`;
+    if(D > 0){
+      const laps = n > PI*1.2 ? ` That is ${trim((n/PI).toFixed(2))} times around.` : "";
+      return `<span class="over">${trim(String(n))} diameters is <u>too many</u> &mdash; it runs past the start by <span class="amt">${fmtAmt(D)}</span> of a diameter.${laps}</span>`;
+    }
+    return "";
+  }
+
+  function triesHtml(){
+    if(!S.tries.length) return "";
+    let g = S.tries.slice(-7).map(t => {
+      const over = t > PI;
+      return `<span class="tryChip ${over?"over":"short"}"><span class="ar">${over?"&#9650;":"&#9660;"}</span>${trim(String(t))}</span>`;
+    }).join("");
+    const below = S.tries.filter(t => t < PI), above = S.tries.filter(t => t > PI);
+    if(below.length && above.length){
+      const lo = Math.max.apply(null, below), hi = Math.min.apply(null, above);
+      g += `<span class="bracket"><span class="lab">so the answer is between</span> ${trim(String(lo))} <span class="lab">and</span> ${trim(String(hi))}</span>`;
+    }
+    return g;
+  }
+
+  /* ============================================================
+     SYNC
+     ============================================================ */
+  function syncText(){
+    const t = S.mode === "test" ? testText() : demoText();
+    $("stepCount").innerHTML = t.c;
+    $("stepPrompt").innerHTML = t.p;
+    $("stepMaths").innerHTML = t.m;
+
+    const test = S.mode === "test";
+    const zoomed = S.lens > 1.02;
+    $("navRow").hidden = test;
+    $("testRow").hidden = !test;
+    $("verdict").hidden = !test || S.n == null;
+    $("verdict").innerHTML = test ? verdictHtml() : "";
+    $("tries").hidden = !test || !S.tries.length;
+    $("tries").innerHTML = test ? triesHtml() : "";
+    $("lensBtn").hidden = !test || S.n == null;
+    $("lensBtn").disabled = !zoomed && !canZoom();
+    $("lensBtn").innerHTML = zoomed ? "Zoom back out" : "Zoom to the join";
+    $("lensMoreBtn").hidden = !test || !zoomed;
+    $("lensMoreBtn").disabled = S.lens >= 1e6;
+    $("testBtn").classList.toggle("on", test);
+    $("testBtn").innerHTML = test ? "&#9678; Demonstration" : "&#9678; Test a number";
+
+    $("questChip").innerHTML = (!test && S.step >= S_NAME)
+      ? `C = <span class="pi">&#960;</span> &#215; <span class="mth"><em>d</em></span>`
+      : "How many diameters fit around the circumference?";
+    const mn = $("measNote");
+    mn.hidden = !S.meas || test;
+    if(S.meas && !test){
+      mn.innerHTML = S.step >= S_NAME
+        ? `d = ${S.dcm} cm, C = ${(PI*S.dcm).toFixed(2)} cm, so C &#247; d = ${(PI).toFixed(2)}`
+        : `d = ${S.dcm} cm`;
+    }
+
+    const wantPred = !test && S.predict && S.step === 0 && S.pred == null;
+    $("predRow").hidden = !wantPred;
+    $("predBack").textContent = (!test && S.pred != null)
+      ? (S.step >= S_NAME
+          ? `You predicted ${trim(String(S.pred))}. The answer is 3.14159…`
+          : `Your prediction: ${trim(String(S.pred))} diameters`)
+      : "";
+    syncNav();
+    fitBoard();
+  }
+  function syncNav(){
+    const lastZoom = zoomLevel(S.step) === ZOOMS;
+    $("backBtn").disabled = S.step <= 0;
+    const blocked = S.predict && S.step === 0 && S.pred == null;
+    $("nextBtn").disabled = S.step >= S_NAME || blocked || lastZoom;
+    $("nextBtn").innerHTML = S.step === 0 ? "Wrap one diameter &#9654;"
+                          : S.step < 3 ? "Wrap the next one &#9654;"
+                          : S.step === 3 ? "Roll it out &#9654;"
+                          : S.step >= S_NAME ? "Finished"
+                          : "Zoom in &#10005;10 &#9654;";
+    $("zoomOutBtn").hidden = !lastZoom;
+    $("restartBtn").disabled = S.step === 0;
+  }
+  function sync(){ syncText(); render(); }
+
+  /* ---------- the board is sized against the real page ----------
+     Guessing a vh cap leaves a third of a 1366x768 screen empty on
+     one layout and pushes the buttons under the fold on another. */
+  function fitBoard(){
+    const stage = $("stage");
+    if(!stage) return;
+    const cs = getComputedStyle(stage);
+    const gap = parseFloat(cs.rowGap || cs.gap || 11) || 11;
+    const used = document.querySelector(".mmtTopbar").getBoundingClientRect().height
+               + document.querySelector(".eqCard").getBoundingClientRect().height
+               + document.querySelector(".narrate").getBoundingClientRect().height
+               + gap*2 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + 46;
+    let h = clamp(window.innerHeight - used, 215, 640);
+    const cw = document.querySelector(".boardCard").clientWidth - 26;
+    if(cw > 0) h = Math.min(h, cw * VBH / VBW);
+    document.documentElement.style.setProperty("--boardH", Math.round(h) + "px");
+  }
+
+  /* ============================================================
+     MOVES
+     ============================================================ */
+  function advance(){
+    if(busy){ finishNow(); return; }
+    if(S.mode !== "demo") return;
+    if(S.predict && S.step === 0 && S.pred == null) return;
+    if(zoomLevel(S.step) === ZOOMS){ zoomOut(); return; }
+    const to = S.step + 1;
+    if(to > S_NAME) return;
+    if(to <= 3){
+      const j = to - 1;
+      runBeats([{kind:"lift", j:j, ms:420},{kind:"roll", j:j, ms:900}], () => { S.step = to; syncText(); });
+    } else if(to === S_GAP){
+      runBeats([{kind:"rollout", ms:2600}], () => { S.step = to; syncText(); });
+    } else {
+      const from = zoomLevel(S.step);
+      S.step = to; syncText();
+      runZoom(from, zoomLevel(to), 720, null);
+    }
+  }
+  function zoomOut(){
+    if(S.step >= S_NAME) return;
+    const from = zoomLevel(S.step);
+    S.step = S_NAME; syncText();
+    runZoom(from, 0, 2000, null);
+  }
+  function goTo(i){
+    cancelAnimationFrame(raf); anim = null; zoomTween = null; lensTween = null; busy = false; chain = null;
+    S.step = clamp(i, 0, S_NAME);
+    sync();
+  }
+  function restart(){ goTo(0); }
+
+  function newCircle(){
+    const sizes = [5, 8, 12, 20];
+    S.dcm = sizes[(sizes.indexOf(S.dcm) + 1) % sizes.length];
+    document.querySelectorAll("#sizeMenu .subOpt").forEach(b => b.classList.toggle("on", +b.dataset.d === S.dcm));
+    $("sizeVal").textContent = S.dcm + " cm";
+    sync();
+  }
+
+  /* ---------- test mode ---------- */
+  function enterTest(){
+    cancelAnimationFrame(raf); anim = null; zoomTween = null; lensTween = null; busy = false;
+    S.mode = "test"; S.lens = 1;
+    sync();
+    setTimeout(() => { const b = $("testBox"); if(b) b.focus(); }, 30);
+  }
+  function exitTest(){
+    cancelAnimationFrame(raf); anim = null; lensTween = null; busy = false;
+    S.mode = "demo"; S.lens = 1;
+    sync();
+  }
+  function wrapNumber(){
+    const raw = $("testBox").value.trim().replace(/[\s,]/g, "");
+    const bad = msg => { $("testBox").classList.add("bad"); $("verdict").hidden = false;
+      $("verdict").innerHTML = `<span class="short">${msg}</span>`; };
+    if(!/^\d*\.?\d+$/.test(raw)){ bad("Type a number, like 3 or 3.14."); return; }
+    const n = Number(raw);
+    if(!(n > 0)){ bad("Try a number bigger than zero."); return; }
+    if(n > 20){ bad("That is more than three times around &mdash; try something under 20."); return; }
+    $("testBox").classList.remove("bad");
+    S.n = n; S.lens = 1; lensTween = null;
+    if(S.tries.indexOf(n) < 0) S.tries.push(n);
+    syncText();
+    if(instant){ render(); return; }
+    busy = true;
+    const t0 = performance.now(), ms = Math.min(2200, 420 + n*280);
+    cancelAnimationFrame(raf);
+    chain = { after:null };
+    (function frame(now){
+      const raw2 = Math.min(1, (now - t0)/ms);
+      anim = { kind:"test", p:raw2 };
+      render();
+      if(raw2 < 1) raf = requestAnimationFrame(frame);
+      else { anim = null; busy = false; chain = null; render(); }
+    })(t0);
+  }
+  function lensToggle(){
+    if(S.n == null) return;
+    if(S.lens > 1.02){ runLens(S.lens, 1, 1200, syncText); return; }
+    if(!canZoom()) return;
+    runLens(1, lensTarget(), 2000, syncText);
+  }
+  function lensMore(){
+    if(S.lens <= 1.02) return;
+    runLens(S.lens, Math.min(1e6, S.lens * 10), 900, syncText);
+  }
+
+  /* ============================================================
+     WIRING
+     ============================================================ */
+  function closeMenus(except){
+    ["settingsMenu","toolsMenu"].forEach(id => { if(id !== except) $(id).classList.remove("open"); });
+    ["settingsBtn","toolsBtn"].forEach(id => $(id).setAttribute("aria-expanded","false"));
+    $("sizeWrap").classList.remove("open");
+    if(except){
+      const b = except === "settingsMenu" ? "settingsBtn" : "toolsBtn";
+      $(b).setAttribute("aria-expanded", $(except).classList.contains("open") ? "true" : "false");
+    }
+  }
+  function toggleMenu(btnId, menuId){
+    $(btnId).addEventListener("click", e => {
+      e.stopPropagation();
+      const open = $(menuId).classList.toggle("open");
+      closeMenus(menuId);
+      $(menuId).classList.toggle("open", open);
+      $(btnId).setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+  toggleMenu("settingsBtn","settingsMenu");
+  toggleMenu("toolsBtn","toolsMenu");
+  document.addEventListener("click", e => { if(!e.target.closest(".menuWrap")) closeMenus(null); });
+  $("settingsMenu").addEventListener("click", e => e.stopPropagation());
+
+  $("sizeRow").addEventListener("click", e => {
+    e.stopPropagation();
+    const open = $("sizeWrap").classList.toggle("open");
+    $("sizeRow").setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  document.querySelectorAll("#sizeMenu .subOpt").forEach(b => {
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      S.dcm = +b.dataset.d;
+      document.querySelectorAll("#sizeMenu .subOpt").forEach(o => o.classList.toggle("on", o === b));
+      $("sizeVal").textContent = S.dcm + " cm";
+      $("sizeWrap").classList.remove("open");
+      sync();
+    });
+  });
+
+  $("predToggle").addEventListener("change", e => { S.predict = e.target.checked; S.pred = null; sync(); });
+  $("measToggle").addEventListener("change", e => { S.meas  = e.target.checked; sync(); });
+  $("countToggle").addEventListener("change", e => { S.count = e.target.checked; sync(); });
+  $("lineToggle").addEventListener("change", e => { S.showLine = e.target.checked; sync(); });
+
+  $("nextBtn").addEventListener("click", advance);
+  $("zoomOutBtn").addEventListener("click", zoomOut);
+  $("backBtn").addEventListener("click", () => goTo(S.step - 1));
+  $("restartBtn").addEventListener("click", restart);
+  $("genBtn").addEventListener("click", newCircle);
+  $("testBtn").addEventListener("click", () => S.mode === "test" ? exitTest() : enterTest());
+  $("exitTestBtn").addEventListener("click", exitTest);
+  $("wrapBtn").addEventListener("click", wrapNumber);
+  $("lensBtn").addEventListener("click", lensToggle);
+  $("lensMoreBtn").addEventListener("click", lensMore);
+  $("testBox").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); wrapNumber(); } });
+
+  function lockPred(){
+    const raw = $("predBox").value.trim().replace(/[\s,]/g,"");
+    if(!/^\d*\.?\d+$/.test(raw)){ $("predBox").classList.add("bad"); $("predBox").focus(); return; }
+    $("predBox").classList.remove("bad");
+    S.pred = Number(raw);
+    sync();
+  }
+  $("predLockBtn").addEventListener("click", lockPred);
+  $("predBox").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); lockPred(); } });
+
+  document.addEventListener("keydown", e => {
+    if(e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if(e.key === " " || e.key === "ArrowRight"){ e.preventDefault(); if(S.mode === "demo") advance(); }
+    else if(e.key === "ArrowLeft"){ e.preventDefault(); if(S.mode === "demo") goTo(S.step - 1); }
+    else if(e.key === "r" || e.key === "R"){ e.preventDefault(); newCircle(); }
+    else if(e.key === "t" || e.key === "T"){ e.preventDefault(); S.mode === "test" ? exitTest() : enterTest(); }
+  });
+
+  let rz = 0;
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { fitBoard(); render(); }, 120); });
+
+  function fullReset(){
+    cancelAnimationFrame(raf); anim = null; zoomTween = null; lensTween = null; busy = false; chain = null;
+    S.step = 0; S.dcm = 8; S.predict = false; S.meas = false; S.count = true; S.showLine = true;
+    S.pred = null; S.mode = "demo"; S.n = null; S.lens = 1; S.tries = [];
+    $("predToggle").checked = false; $("measToggle").checked = false;
+    $("countToggle").checked = true; $("lineToggle").checked = true;
+    $("predBox").value = ""; $("testBox").value = "";
+    $("predBox").classList.remove("bad"); $("testBox").classList.remove("bad");
+    document.querySelectorAll("#sizeMenu .subOpt").forEach(o => o.classList.toggle("on", +o.dataset.d === 8));
+    $("sizeVal").textContent = "8 cm";
+    sync();
+  }
+  $("resetBtn").addEventListener("click", fullReset);
+
+  /* ---- boot ---- */
+  sync();
+  window.addEventListener("load", () => { fitBoard(); render(); });
+
+  /* exposed for the headless harness only */
+  window.__CIRC = {
+    S:S, PI:PI, R:R, CX:CX, CY:CY, LU:LU, LX:LX, LW:LW, LY:LY, DOM0:DOM0,
+    S_GAP:S_GAP, S_ZOOM0:S_ZOOM0, S_NAME:S_NAME, ZOOMS:ZOOMS,
+    win:win, bracket:bracket, xOf:xOf, zoomLevel:zoomLevel, coveredAt:coveredAt,
+    rollPts:rollPts, fmtAmt:fmtAmt,
+    goTo:goTo, advance:advance, enterTest:enterTest, exitTest:exitTest,
+    setInstant:function(v){ instant = !!v || reduceMotion; },
+    setNumber:function(n){ $("testBox").value = String(n); wrapNumber(); },
+    lensToggle:lensToggle, lensMore:lensMore, lensTarget:lensTarget, canZoom:canZoom,
+    mNow:mNow, zoomOut:zoomOut, strPieces:strPieces, render:render, sync:sync
+  };
+})();
+</script>
+</body>
+</html>

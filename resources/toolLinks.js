@@ -1045,6 +1045,13 @@ window.MMT_TOOL_LINKS = {
 
   "MA4-LEN-C-01": [
     {
+      title: "Circumference of a Circle",
+      kind: "Teacher tool",
+      url: "/interactive-tools/stage-4/measurement-space/circumference-of-a-circle/",
+      note: "Diameters are wound around the circle one at a time. Three fit, and they do not close it \u2014 the gap left over is then laid on a number line drawn at the circle's own scale, and each press zooms in ten times further, pinning down one more digit and never landing on a mark. A Test a number mode wraps whatever the class calls out (5, 3.1, 3.14, 3.142) and magnifies the join so they can see it fall short or run past.",
+      tags: ["circumference", "circle", "diameter", "pi", "constant ratio", "3.14", "number line", "zoom", "recurring decimal", "irrational", "measurement", "whole-class teaching"]
+    },
+    {
       title: "Perimeter of Plane Shapes",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-4/measurement-space/perimeter-plane-shapes/",
