@@ -52,12 +52,12 @@
 > Stage 4 teaching tool at
 > `interactive-tools/stage-4/measurement-space/circumference-of-a-circle/index.html`,
 > filed under **MA4-LEN-C-01**. Self-contained inline CSS/JS, same shell and
-> tokens as the other Stage 4 measurement tools. Diameters are wound around the
-> rim one at a time; three fit and do not close it; the gap left over is laid on
-> a number line and then zoomed into, ten times closer per press. No Firebase,
-> no registry entry, no worksheet creator and no student quiz yet — its
-> "Tools ▾" menu is one live row (Perimeter of Plane Shapes, which now links
-> back) plus two greyed ones.
+> tokens as the other Stage 4 measurement tools. Sixteen steps: three diameters
+> wound onto the rim one at a time, then the whole circle **rolled out** along
+> the number line, then **ten ×10 zooms** onto the end of the circumference,
+> then the name. No Firebase, no registry entry, no worksheet creator and no
+> student quiz yet — its "Tools ▾" menu is one live row (Perimeter of Plane
+> Shapes, which now links back) plus two greyed ones.
 >
 > * **ONE DIAMETER OF STRING COVERS EXACTLY 2 RADIANS**, because arc = rθ and
 >   the diameter is 2r. That single fact is the whole tool: three diameters
@@ -66,35 +66,47 @@
 >   nothing is a magic constant.
 > * **THE NUMBER LINE IS DRAWN AT THE CIRCLE'S OWN SCALE.** One unit on the line
 >   is exactly the drawn diameter (`LU = 2R`), so the line is not a record of the
->   count — it IS the circumference unrolled, and "three diameters and a bit" is
->   something a class can see rather than something they are told. Everything
->   else is forced by that: the line has to reach past 3.14 diameters inside
->   `LW`, so **R can never exceed LW/7**. That is why the viewBox is 1400 wide
->   (a 1000-wide one capped R at 135 and wasted a third of the board).
-> * **THE ZOOM IS ON THE END OF THE CIRCUMFERENCE, AND THE WINDOWS NEST.**
->   Window k is the one subdivision of window k−1 that holds the answer:
->   [3.1, 3.2] → [3.14, 3.15] → [3.141, 3.142] → [3.1415, 3.1416] →
->   [3.14159, 3.14160]. Every digit already written stays written, one new digit
->   is pinned per press, and the end lands on no mark at any depth. That is the
->   honest picture of a non-terminating decimal — nested intervals — and it is
->   why the last zoom step says "there is always another zoom" rather than
->   printing more digits. All window arithmetic is done in whole numbers of
->   10^-k so an edge can never drift.
-> * **THE NAMING STEP ZOOMS BACK OUT.** `zoomLevel()` returns 0 at `S_NAME`, so
->   the last thing the class sees is the whole picture again — three diameters
->   and a bit — with the bit finally named. Anything that indexes zoom levels
->   must go through `zoomLevel(step)`, not `step - S_ZOOM0`.
+>   count — it IS the circumference unrolled, which is also what makes the
+>   roll-out possible: one turn of a wheel of radius R covers 2πR and the line's
+>   unit is 2R, so the wheel comes to rest at exactly π. Everything else is
+>   forced by that: the line has to reach past 3.14 diameters inside `LW`, so
+>   **R can never exceed LW/7**. That is why the viewBox is 1400 wide (a
+>   1000-wide one capped R at 135 and wasted a third of the board).
+> * **THE WHOLE CIRCLE ROLLS OUT ALONG THE LINE** at step 4 — it does not lift
+>   the gap off on its own, which was the first build and never showed where the
+>   end point came from. The wheel is the same rim rotated: at progress q the
+>   material at angle 2πq is the part touching the line, so `rotate(180 − 360q)`
+>   and a travel of `q·π·LU` are two descriptions of ONE motion. A check asserts
+>   they agree — that is the no-slipping condition, and it is the whole reason
+>   one turn lands on the answer. The band never un-lays what the three
+>   diameters already laid (`max(3, q·π)`), and the static circle dims to 0.10
+>   behind the rolling one.
+> * **EVERY ZOOMED WINDOW IS CENTRED ON THE ANSWER.** Window k is
+>   [π − 10⁻ᵏ/2, π + 10⁻ᵏ/2], ten subdivisions wide, so the end of the
+>   circumference NEVER MOVES: each press is a pure ×10 scale about a fixed
+>   point and the marks simply spread apart and multiply. Round-edged windows
+>   (3.1–3.2, then 3.14–3.15, …) were the first build and put the answer at 42%,
+>   then 16%, then 59% of the width — the thing being looked at hopped across
+>   the board on every press, which is exactly what a class cannot follow. The
+>   two marks the answer falls between straddle the middle, in purple, with four
+>   more either side.
+> * **THE WINDOW CARRIES ITS WIDTH.** At the tenth zoom the window is 10⁻¹⁰
+>   wide, and `hi - lo` on two numbers near 3.14 throws away most of the
+>   precision the tick positions need. `win(k)` returns `w` and `xOf` uses it.
+> * **TEN ZOOMS, THEN A WAY BACK OUT.** The ladder reaches eleven decimal places
+>   (3.14159265358 … 359). On the last one, zooming in is greyed out and a
+>   **Zoom all the way out** button appears: two seconds back to the whole
+>   picture, landing on the naming step, so the last thing the class sees is
+>   three diameters and a bit with the bit finally named. `zoomLevel()` returns
+>   0 at `S_NAME`; anything indexing zoom levels must call it rather than
+>   computing `step - S_ZOOM0`.
 > * **THE WRAP IS A REAL WINDING MAP, IN TWO BEATS.** *Lift* moves the straight
 >   diameter to where the wrap begins; *roll* winds it on, with the wound part
 >   tight against the rim and the rest still LOOSE on radius R+18. Length is
 >   preserved at every frame. The first build ran the loose end off along the
 >   **tangent**, which is the truer picture but throws a 376px straight tail off
 >   the bottom of the board on the second diameter, straight across the number
->   line. The gap's own unroll still uses the tangent (`rollPts(..., true)`),
->   because at 53px it can genuinely straighten out without hitting anything.
-> * **WHAT FLIES DOWN IS A COPY.** The circle keeps its gap — shown dashed while
->   the copy is away — or the landing reads as the gap being *removed* from the
->   circle rather than measured against a diameter.
+>   line.
 > * **THE SUB-TICKS FLANK THE BAND, THEY DO NOT CROSS IT.** Crossing puts a grey
 >   rule straight through the numeral written inside the band; drawing them
 >   *under* the band hides the very tenth mark the gap is being read against.
@@ -111,32 +123,40 @@
 >   calls out a number, it is wound on, and the verdict says which side it falls
 >   and by how much: 5 goes 1.59 times around, 3.1 falls short by 0.0416 of a
 >   diameter, 3.14 by 0.00159, 3.142 runs past by 0.000407. Tries accumulate as
->   chips and the tool states the bracket they have squeezed — that is the same
+>   chips and the tool states the bracket they have squeezed — the same
 >   nested-interval hunt as the zoom ladder, done by the class instead of by the
->   tool. One time around is **π diameters, not 2π**; the lap wording got that
->   wrong first time.
-> * **THE MAGNIFIER IS DRAWN FROM THE REAL CIRCLE, NOT FAKED.** The lens samples
->   the circle of radius R×m about the start mark, so at ×20 it is visibly
->   curved and at ×2000 it is flat — which is itself the lesson. Magnification
->   is chosen so the miss is ~220px wide (capped at ×1,000,000), and the caption
->   says how many screen-widths the diameter would now be. Whatever the zoom,
->   the two ends never meet.
+>   tool. One time around is **π diameters, not 2π**.
+> * **THE MAGNIFIER IS A CAMERA ON THE CIRCLE ITSELF, NOT A PANEL.** There is no
+>   inset lens (that was the first build). The circle is drawn from its own
+>   equation at magnification m about the start mark, so m = 1 is the ordinary
+>   circle and every larger m is the same circle seen closer — the rim visibly
+>   STRAIGHTENS as you go in, which is the thing worth seeing. Two-second zoom,
+>   magnification chosen so the miss is ~520px wide, **Closer still ×10** beyond
+>   that (capped ×1,000,000), and a corner thumbnail showing which sliver of rim
+>   is on screen. A number that misses by more than a diameter cannot be zoomed
+>   into — the button greys and the tool says why — because at 5 or 10 diameters
+>   the overshoot is already bigger than the circle; 4 zooms only ×1.6, which is
+>   right, since there you are meant to see a curve with an overlapped stretch.
 > * **THE ANSWER IS NEVER ON THE BOARD EARLY.** 3.14 appears nowhere before the
->   first zoom step, 3.1 nowhere before the gap lands, and π is named only at
->   the last step. Checks assert all three at every step.
-> * **Verified** through Playwright: 201 checks — the wrapping map keeping its
->   length and landing at exactly 2 radians, the gap being π − 3 diameters, the
->   zoom windows nesting and each holding the answer with the digits building
->   3.1 → 3.14159, no early answer at any step, the three unit bands each
->   exactly one drawn diameter wide and the gap piece exactly π − 3 of one, the
->   end marker sitting at the answer at every zoom level, Back returning to an
+>   first zoom step, 3.1 nowhere before the roll-out lands, and π is named only
+>   at the last step. Checks assert all three at every one of the sixteen steps.
+> * **Verified** through Playwright: 361 checks — the wrapping map keeping its
+>   length and landing at exactly 2 radians, the gap being π − 3 diameters, one
+>   turn of the wheel being π units of the line, the ten windows nesting and
+>   each centred on the answer with the end marker at the same pixel every time
+>   and the digits building to 3.14159265358, no early answer at any step, the
+>   three unit bands each exactly one drawn diameter wide and the gap piece
+>   exactly π − 3 of one, the roll-out sampled mid-flight with turn and travel
+>   agreeing to 1.5px and the band never shrinking, the zoom-out button
+>   appearing only at the last zoom and taking two seconds, Back returning to an
 >   identical picture, all four circles drawing the same board, every display
->   toggle, predict-first holding Next shut and reporting back, all six test
->   numbers with the miss stated to 3 significant figures, the tries bracket,
->   the lens at three numbers with its magnification and its stated size, the
->   five input refusals, a real click-through with the animation on, and the fit
->   at 1366×768, 1280×800, 1024×768 and 1920×1080. Harnesses live in the session
->   scratch, not the repo: `check.mjs`, `shots.mjs`.
+>   toggle, predict-first, all six test numbers with the miss to three
+>   significant figures, the tries bracket, the camera zoom at four numbers
+>   (magnification, stated size, the rim measurably flattening, ×10 closer,
+>   zooming back out) and the two it refuses, the five input refusals, a real
+>   click-through with the animation on, and the fit at 1366×768, 1280×800,
+>   1024×768 and 1920×1080 including the zoomed test view. Harnesses live in the
+>   session scratch, not the repo: `check.mjs`, `shots.mjs`.
 
 > **NEW (2026-09-07, session — being pushed): HALVE AND HALVE AGAIN.** A Stage 3
 > teaching tool at
@@ -1809,13 +1829,14 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
   two Stage 3 division tools link to it and it links back to them.
 - **Circumference of a Circle (2026-09-08):** teacher tool
   `interactive-tools/stage-4/measurement-space/circumference-of-a-circle/`,
-  filed under **MA4-LEN-C-01**. Diameters wound around the rim, the leftover gap
-  laid on a number line drawn at the circle's own scale, then a nested zoom that
-  pins down one digit per press; plus a **Test a number** mode with a magnifier
-  on the join. No Firebase, no registry entry, no siblings yet. Read the
-  2026-09-08 header block before touching the winding map, the zoom windows, the
-  tick order or the lens magnification. Perimeter of Plane Shapes links to it
-  and it links back.
+  filed under **MA4-LEN-C-01**. Diameters wound around the rim, then the whole
+  circle rolled out along a number line drawn at the circle's own scale, then
+  ten ×10 zooms that hold the end of the circumference still and pin down one
+  digit each; plus a **Test a number** mode whose magnifier is a camera on the
+  circle itself. No Firebase, no registry entry, no siblings yet. Read the
+  2026-09-08 header block before touching the winding map, the roll-out, the
+  zoom windows, the tick order or the camera magnification. Perimeter of Plane
+  Shapes links to it and it links back.
 - **Complete the Square (2026-08-31):** teacher tool
   `interactive-tools/stage-5/algebra/complete-the-square/`, the first Stage 5
   algebra tool. Two modes (tiles, and the formula proof), cross-listed under
@@ -2007,8 +2028,9 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
   `circumference-quiz`) would ladder by what is given and what is asked, ending
   on working backwards from C. Possible extensions to the tool itself: a
   **radius mode** (the same wrap in radii, which lands on 2π and is where
-  C = 2πr comes from), an **area** follow-on, and **rolling the circle along a
-  line** for the same fact told as distance travelled per turn.
+  C = 2πr comes from), an **area** follow-on, and letting the roll-out keep
+  going for a **second turn** — the same fact told as distance travelled per
+  turn.
 - **Revision Generator — Stage 3**: 6 of 8 topics built (Represents Numbers,
   Additive Relations, Multiplicative Relations, Fractions, 2D Space and Area,
   Geometric Measure). Each remaining topic needs a new diagram engine first:
