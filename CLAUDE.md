@@ -1689,6 +1689,162 @@
 >   `dashboardAssignments` AND `classes` blocks (an earlier go-live copy was
 >   missing `adventureAssignments` — restored). `firestore.golive.claims.rules`
 >   in the website repo matches the live rules.
+>
+> **NEW (2026-09-13): MMT SCREEN — a classroom display board at `/mmt-screen/`.**
+> Jeff's own replacement for the Classroomscreen subscription, in MMT styling.
+> Reached from the homepage by the violet **MMT Screen** nav pill and a hero
+> button. Plain static files, no Firebase, no sign-in, no build step — it
+> deploys with the rest of the site.
+>
+> * **IT IS A HOST PLUS A REGISTRY, NOT ONE BIG PAGE.** `mmt-screen/app.js` owns
+>   the board (placement, drag, resize, z-order, saving, screens, backgrounds)
+>   and knows NOTHING about any widget. Each widget is one ES module in
+>   `mmt-screen/widgets/` exporting a definition object; `widgets/index.js` is
+>   the registry. **Adding a widget = write the module, import it, add it to the
+>   `ALL` array. Nothing else changes** — not the host, not the HTML, not the
+>   dock. The contract is documented at the top of `widgets/index.js`. This is
+>   the one convention in this folder worth defending: the moment a widget needs
+>   a special case in `app.js`, the thing stops being extensible.
+> * **THE STATE OBJECT IS THE SAVE FILE.** Everything on screen derives from
+>   `state`, and `state` is what goes to `localStorage` under `mmtScreen.v1`
+>   (debounced 250ms — a test that reads storage sooner than that races it).
+>   A widget that keeps a setting in a closure instead of calling
+>   `ctx.setState()` loses it on reload and there is no second mechanism.
+> * **WIDGETS SAVE SETTINGS, NEVER LIVE TICKS.** The timer saves its mode and
+>   its SET duration; how far through a run it is, it does not. A countdown that
+>   restores itself mid-count after a reload is worse than useless — the teacher
+>   has moved on and the board is lying about the time left.
+> * **NEW WIDGETS SCAN FOR A FREE SLOT**, they do not cascade. Cascading was the
+>   first build: adding four widgets in a row made a pile the teacher had to
+>   drag apart before the board was usable, and the fourth landed over the
+>   third's buttons so it looked broken. `freeSpot()` only cascades when the
+>   board genuinely has no gap left.
+> * **THE DRAWING LAYER IS A SINGLETON WITH AN OFF MODE, AND ESCAPE PUTS THE PEN
+>   DOWN.** It is fullscreen and above every widget (which is the point — you
+>   have to be able to ring a number on the timer), so while the pen is live the
+>   canvas swallows every click and nothing on screen explains why. Escape was
+>   added after a Playwright run got stuck exactly there.
+> * **STROKES ARE STORED AS FRACTIONS OF THE VIEWPORT, NOT PIXELS OR A BITMAP.**
+>   A bitmap has to be stretched or thrown away every time the window changes
+>   size, and the window changes size every time this is plugged into a
+>   projector. Points redraw crisply at any size and a stroke drawn on the
+>   laptop lands in the same place on the board. Capped at 400 strokes so a
+>   day's annotation cannot fill the storage quota.
+> * **SCALING IS DONE IN JS (`fitUnit` sets `--u`), NOT WITH CONTAINER-QUERY
+>   UNITS**, so it still works on the older Chrome/Edge builds on school
+>   desktops.
+> * **THE NAME PICKER DEFAULTS TO NO-REPEATS** and saves the used pile. A picker
+>   that can call the same student three times while another is never called
+>   produces a visibly unfair lesson and the class notices within a week.
+> * **THE MMT TOOL LAUNCHER HAS NO LIST OF TOOLS IN IT, AND MUST NEVER GET ONE**
+>   (`widgets/launcher.js`, shipped 2026-09-13). It `fetch`es the site's own
+>   `/index.html` and reads the `a.resource-card` elements out of it with
+>   `DOMParser` — all 111 cards already carry href, title, `data-type`,
+>   `data-stage`, `data-topic`, the outcome code and Jeff's own `data-search`
+>   keyword string. A hand-kept copy would be a second catalogue that rots:
+>   every new tool would be missing from the board until someone remembered to
+>   add it twice, and nobody remembers the second time. Notes on it:
+>   - **The nav is parsed too.** Mills Maths Adventure, Resources by Stage and
+>     the dashboards are top-level destinations with NO card — searching
+>     "adventure" found nothing until `.nav-links a[href]` was added, which is
+>     the most obvious test anyone would give it. Where a nav link and a card
+>     share a URL the **card wins** (it has the stage, topic and keywords; the
+>     nav link has a label and nothing else).
+>   - **Homepage hrefs are SITE-ROOT relative.** Resolved against
+>     `location.origin`, not the current page, or every link 404s under
+>     `/mmt-screen/…`.
+>   - **`DOMParser`, not a regex** — the homepage mixes `Years 7&#8211;10` and
+>     `Years 7–10` in the same attribute, and the parser decodes both to one
+>     string so the stage filter does not end up with two of everything.
+>   - **RESULTS ARE RANKED, not left in page order.** The `data-search` strings
+>     are deliberately generous (the Length flip cards list "circumference"),
+>     so unranked results answered "circumference" with *Length*. Title hits
+>     outrank keyword hits ~10:1; page order only breaks ties.
+>   - Cache-first from `localStorage` (`mmtScreen.catalogue.v1`), then a
+>     background refresh, so it paints instantly and still picks up a tool
+>     added last night. Favourites are starred and saved per widget; the search
+>     box is deliberately NOT saved (a stale query at the start of a lesson
+>     hides everything and looks broken).
+> * **THE STARTER SAVES WHAT IS ON THE BOARD; THE TIMER DELIBERATELY DOES NOT.**
+>   `widgets/starter.js` puts `current` AND `revealed` in the saved state,
+>   because a starter is what thirty people are reading and writing about: a
+>   projector blink or a lid-open must bring back the SAME problem, not a new
+>   one that wipes out half the room's work. The timer is the mirror image and
+>   the reasoning is in its own file. 43 built-in starters (problems, "which
+>   one doesn't belong", true/false), no-repeats like the name picker, and it
+>   WRAPS rather than announcing at 8:55am that it has run out. Jeff's own
+>   starters go in through "Add yours" (blank line between, answer on an `A:`
+>   line), are keyed `c<n>` against the bank's `b<n>` so adding one never
+>   renumbers the bank, and get a "Mine" chip that stays hidden until he has
+>   some. **A question is never labelled with its own opening words** — "Which
+>   one doesn't belong?" and "True or false:" are both the kind AND the start
+>   of the prompt, so `labelFor()` drops the label when the question already
+>   says it.
+> * **THE RANDOM GENERATOR SAVES SETTINGS, NEVER THE NUMBERS**
+>   (`widgets/maths-random.js`) — a reload gives back the generator you set up,
+>   ready to roll, not a stale answer the class has already done. Five modes
+>   (integers, dice, fractions, decimals, coordinates) and the settings are the
+>   ones that change the MATHEMATICS: negatives in range, "fraction that needs
+>   simplifying" vs "already simplest", proper/improper/mixed, first-quadrant-
+>   only coordinates (which also excludes points ON an axis, since those are in
+>   no quadrant at all). **Constrained draws use bounded rejection** — `draw()`
+>   retries ~80 times then returns its best effort, so an impossible setting
+>   (denominators up to 3, "needs simplifying") gives a slightly-wrong number
+>   instead of a frozen board.
+> * **PENDING SAVES FLUSH ON `pagehide` / `beforeunload` / hidden
+>   `visibilitychange`** (app.js). The 250ms debounce stops a drag hammering
+>   localStorage, but it also means the last quarter-second is still in memory
+>   when the page goes away — and the way this page goes away is a teacher
+>   shutting the lid right after changing something.
+> * **The dock icons must stay visually distinct.** Name picker (people) and
+>   Random maths (two dice) shipped with the SAME icon and it was a coin toss
+>   which one you hit; caught in a screenshot, not by a test.
+> * **SAVING A SCREEN TO A TEACHER ACCOUNT (2026-09-13).** Teachers who already
+>   have a code can press **Save** and open that screen on any computer. It
+>   reuses the existing code exchange exactly as the portals do — no new auth,
+>   no new functions. **NEEDS A RULES DEPLOY:** a `screens` block, in
+>   `firestore.golive.claims.rules`, pasted into the Firebase console. Until
+>   that lands, Save fails with a message naming the rules and nothing else
+>   breaks.
+>   - **`cloudSync.js` IS IMPORTED DYNAMICALLY, AND THAT IS NOT AN
+>     OPTIMISATION.** It statically imports the Firebase SDK from gstatic. As a
+>     static import anywhere in the board's module graph, a gstatic outage, a
+>     school proxy blocking it, or no network at all would stop the WHOLE PAGE
+>     loading — a timer and a traffic light taken out by a sign-in feature
+>     nobody was using. `app.js` does `await import()` in a try/catch; if it
+>     fails the two cloud buttons stay hidden and the board is untouched. There
+>     is a Playwright case for exactly this (the container cannot reach gstatic,
+>     so it tests itself).
+>   - **SCREENS ARE WRITTEN DIRECTLY BY THE CLIENT**, unlike classes and the
+>     assignment collections, which go through callables. A screen is the
+>     teacher's own furniture — not identity, not student results, which is what
+>     the server-side-only convention protects. The rules do the scoping: create
+>     requires the new doc to carry the caller's own `teacherCode` AND the doc
+>     id to start with it; update requires BOTH the existing and the incoming
+>     doc to be theirs (without the second check a teacher could hand a screen
+>     to somebody else's code); delete has no `request.resource` so it checks
+>     the existing doc only.
+>   - **THERE IS NO BACKGROUND SYNC — Save is a button.** The local save fires
+>     on every drag frame; pointing that at Firestore would be hundreds of
+>     writes to move one widget.
+>   - **localStorage IS STILL THE AUTHORITY.** A saved screen is a COPY; opening
+>     one writes it into local state and the board reads local from then on.
+>     Nothing on the page ever waits on the network to paint. Opening a cloud
+>     screen REPLACES the local screen of the same id rather than adding a
+>     second one with the same name.
+>   - **DRAWING STROKES ARE STRIPPED BEFORE SAVING** (`screenPayload.js`, kept
+>     apart from cloudSync so the payload rules can be tested without Firebase).
+>     A saved screen is the set-up; pen marks are this lesson's annotations and
+>     nobody wants them over next period's board. They are also the only part
+>     that grows without limit — a measured 6.3 MB for a well-drawn board
+>     against Firestore's 1 MiB ceiling. Right behaviour and the size fix at
+>     once. The name picker's class list IS saved: the same first-name data the
+>     platform already holds, and a per-screen choice the teacher makes.
+>   - `auth` gotcha already fixed once: `paintCloudChrome()` must NOT re-derive
+>     the teacher from the cached profile. It did, so the auth callback could
+>     never clear it — a cached session with a dead token showed a Save button
+>     forever and every press failed with a permission error.
+> * Still to build: group maker, scoreboard, work symbols, clock, QR, embed.
 
 ---
 

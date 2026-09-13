@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // Mills Maths Tools — PRODUCTION claim-based rules (Phase 4A go-live + classes +
-// dashboard tasks + ADMIN CONSOLE 2026-07).
+// dashboard tasks + ADMIN CONSOLE 2026-07 + MMT SCREEN saved boards 2026-09-13).
 //
 // Every STUDENT/TEACHER client signs in via the secure code-exchange Cloud
 // Functions (exchangeStudentCode / exchangeTeacherCode), which mint a Firebase
@@ -110,6 +110,31 @@ service cloud.firestore {
     match /classes/{classId} {
       allow read: if isAdmin() || (isTeacher() && resource.data.teacherCode == myTeacher());
       allow create, update, delete: if isAdmin();
+    }
+
+    // MMT Screen saved boards (2026-09-13): a teacher saves a classroom screen
+    // layout and opens it on any computer. Unlike classes / assignments these
+    // are written DIRECTLY BY THE CLIENT, because a screen is the teacher's own
+    // furniture — not identity and not student results, which is what the
+    // server-side-only rule protects. The teacherCode claim is minted by
+    // exchangeTeacherCode and cannot be forged, so these checks do the scoping:
+    // create demands the new doc carry the caller's own teacherCode AND the doc
+    // id start with it (nobody can write into another teacher's id space);
+    // update demands BOTH the existing and the incoming doc be theirs (or a
+    // teacher could hand a screen to someone else's code); delete has no
+    // request.resource so it checks the existing doc only. A query MUST filter
+    // by teacherCode == claim, exactly as for classes. Screens can contain a
+    // class list in the name-picker widget — the same first-name data the
+    // platform already holds, and a choice the teacher makes per screen.
+    match /screens/{screenId} {
+      allow read:   if isAdmin() || (isTeacher() && resource.data.teacherCode == myTeacher());
+      allow create: if isAdmin() || (isTeacher()
+                       && request.resource.data.teacherCode == myTeacher()
+                       && screenId.matches('^' + myTeacher() + '__.*'));
+      allow update: if isAdmin() || (isTeacher()
+                       && resource.data.teacherCode == myTeacher()
+                       && request.resource.data.teacherCode == myTeacher());
+      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherCode == myTeacher());
     }
 
     // Admin settings (capacity caps etc.): admin-only, read + write. Nobody else

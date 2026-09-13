@@ -31,6 +31,7 @@ export const COLLECTIONS = Object.freeze({
   adventureAssignments: "adventureAssignments",
   dashboardAssignments: "dashboardAssignments",
   classes: "classes",
+  screens: "screens",          // MMT Screen — teacher-saved board layouts
 });
 
 // The deployed secure code-exchange callables.

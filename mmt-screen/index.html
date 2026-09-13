@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MMT Screen | Mills Maths Tools</title>
+<meta name="description" content="A classroom display board — timers, traffic lights, instructions, a name picker and a drawing layer — built for Mills Maths Tools." />
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --surface:#ffffff;
+    --surface-soft:#f8fafc;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --muted-light:#94a3b8;
+    --line:#e2e8f0;
+    --line-strong:#cbd5e1;
+    --brand:#1d4ed8;
+    --brand-2:#2563eb;
+    --brand-soft:#dbeafe;
+    --green:#15803d;
+    --green-soft:#dcfce7;
+    --orange:#c2410c;
+    --orange-soft:#ffedd5;
+    --purple:#6d28d9;
+    --purple-soft:#ede9fe;
+    --teal:#0f766e;
+    --teal-soft:#ccfbf1;
+    --amber:#92400e;
+    --amber-soft:#fef3c7;
+    --red:#b91c1c;
+    --shadow-sm:0 8px 20px rgba(15,23,42,.06);
+    --shadow-md:0 18px 40px rgba(15,23,42,.11);
+    --shadow-lg:0 26px 60px rgba(15,23,42,.20);
+    --radius:22px;
+    --radius-sm:16px;
+    --chrome:linear-gradient(105deg,#0a1b45 0%,#15369c 46%,#2563eb 100%);
+    --uiFont:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family:var(--uiFont);
+    color:var(--ink);
+    background:var(--bg);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,select,textarea{ font:inherit; color:inherit; }
+  button{ cursor:pointer; }
+
+  /* ---------------------------------------------------------------- board */
+  #bgLayer{
+    position:fixed; inset:0; z-index:0;
+    background:
+      radial-gradient(circle at 12% -5%, rgba(37,99,235,.14), transparent 34rem),
+      radial-gradient(circle at 92% 8%, rgba(20,184,166,.13), transparent 30rem),
+      linear-gradient(180deg,#fbfdff 0%,#f6f8fb 46%,#eef2f7 100%);
+    transition:background .4s ease;
+  }
+  #board{
+    position:fixed; inset:0; z-index:10;
+    overflow:hidden;
+  }
+
+  /* --------------------------------------------------------------- topbar */
+  #topbar{
+    position:fixed; top:0; left:0; right:0; z-index:9000;
+    display:flex; align-items:center; gap:1rem;
+    padding:.6rem .9rem;
+    background:var(--chrome);
+    box-shadow:0 14px 30px rgba(10,27,69,.28);
+    transition:transform .28s ease, opacity .28s ease;
+  }
+  #topbar::after{
+    content:""; position:absolute; left:0; right:0; bottom:-3px; height:3px;
+    background:linear-gradient(90deg,#fcd34d,#f59e0b 16%,var(--brand-2) 48%,#14b8a6 80%,#5eead4);
+  }
+  body.chrome-hidden #topbar{ transform:translateY(-110%); opacity:0; pointer-events:none; }
+  body.chrome-hidden #dock{ transform:translate(-50%,140%); opacity:0; pointer-events:none; }
+
+  .brand{ display:flex; align-items:center; gap:.65rem; text-decoration:none; min-width:max-content; }
+  .brand-logo{
+    width:40px; height:40px; border-radius:12px; background:#fff;
+    border:1px solid rgba(255,255,255,.65); display:grid; place-items:center;
+    box-shadow:0 8px 20px rgba(0,0,0,.28); overflow:hidden; flex:none;
+  }
+  .brand-logo img{ width:30px; height:30px; object-fit:contain; display:block; }
+  .brand-text strong{ display:block; line-height:1.1; letter-spacing:-.03em; font-size:1rem; color:#fff; }
+  .brand-text span{ display:block; font-size:.72rem; color:rgba(226,232,240,.82); }
+
+  #screenName{
+    flex:1; min-width:0;
+    text-align:center; color:#fff; font-weight:650; letter-spacing:-.02em;
+    font-size:1.02rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    background:none; border:1px solid transparent; border-radius:999px; padding:.3rem .8rem;
+  }
+  #screenName:hover,#screenName:focus{ border-color:rgba(255,255,255,.35); outline:none; background:rgba(255,255,255,.08); }
+
+  .top-actions{ display:flex; align-items:center; gap:.4rem; }
+  .top-btn{
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.46rem .8rem; border-radius:999px;
+    border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.10);
+    color:#fff; font-size:.84rem; font-weight:600; white-space:nowrap;
+    transition:background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  .top-btn:hover{ background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.5); }
+  .top-btn:active{ transform:translateY(1px); }
+  .top-btn svg{ width:17px; height:17px; fill:currentColor; }
+  .top-btn.icon-only{ padding:.46rem .56rem; }
+
+  /* ----------------------------------------------------------------- dock */
+  #dock{
+    position:fixed; left:50%; bottom:1.1rem; transform:translateX(-50%); z-index:9000;
+    display:flex; align-items:flex-end; gap:.2rem;
+    padding:.55rem .7rem;
+    border-radius:var(--radius);
+    background:rgba(15,23,42,.86);
+    backdrop-filter:blur(14px);
+    box-shadow:var(--shadow-lg);
+    border:1px solid rgba(255,255,255,.1);
+    max-width:calc(100vw - 2rem);
+    overflow-x:auto; scrollbar-width:none;
+    transition:transform .28s ease, opacity .28s ease;
+  }
+  #dock::-webkit-scrollbar{ display:none; }
+  .dock-btn{
+    display:flex; flex-direction:column; align-items:center; gap:.28rem;
+    width:74px; padding:.45rem .2rem .35rem;
+    border:0; background:none; border-radius:14px;
+    color:rgba(226,232,240,.9); font-size:.68rem; font-weight:600; line-height:1.15;
+    text-align:center;
+    transition:background .16s ease, color .16s ease, transform .16s ease;
+  }
+  .dock-btn:hover{ background:rgba(255,255,255,.12); color:#fff; transform:translateY(-2px); }
+  .dock-btn .ico{
+    width:34px; height:34px; display:grid; place-items:center;
+    border-radius:11px; background:rgba(255,255,255,.14);
+  }
+  .dock-btn .ico svg{ width:21px; height:21px; fill:#fff; }
+  .dock-btn.on .ico{ background:linear-gradient(135deg,#2563eb,#14b8a6); }
+  .dock-sep{ width:1px; align-self:stretch; margin:.35rem .3rem; background:rgba(255,255,255,.16); flex:none; }
+
+  /* --------------------------------------------------------------- popover */
+  .pop{
+    position:fixed; z-index:9500;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius-sm); box-shadow:var(--shadow-lg);
+    padding:.85rem; min-width:230px;
+    display:none;
+  }
+  .pop.open{ display:block; }
+  .pop h4{
+    margin:.05rem 0 .6rem; font-size:.74rem; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .pop-row{
+    display:flex; align-items:center; gap:.6rem; width:100%;
+    padding:.5rem .55rem; border-radius:10px; border:0; background:none;
+    font-size:.9rem; font-weight:550; text-align:left;
+  }
+  .pop-row:hover{ background:var(--surface-soft); }
+  .pop-row.danger{ color:var(--red); }
+  .pop-row .spacer{ flex:1; }
+  .pop-row small{ color:var(--muted); font-weight:500; }
+  .pop-div{ height:1px; background:var(--line); margin:.5rem 0; }
+
+  .pop-form{ display:flex; flex-direction:column; gap:.5rem; }
+  .pop-form input{
+    width:100%; padding:.55rem .7rem; border-radius:10px;
+    border:1px solid var(--line-strong); background:var(--surface);
+    font-size:.95rem; font-weight:650; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .pop-form input:focus{ outline:2px solid var(--brand-soft); border-color:var(--brand-2); }
+  .pop-note{ font-size:.74rem; color:var(--muted); line-height:1.5; margin:0; }
+  .pop-msg{ font-size:.78rem; font-weight:600; line-height:1.45; margin:0; }
+  .pop-msg.err{ color:var(--red); }
+  .pop-msg.ok{ color:var(--green); }
+  .pop-who{
+    display:flex; align-items:center; gap:.4rem; padding:.15rem .1rem .45rem;
+    font-size:.78rem; color:var(--muted);
+  }
+  .pop-who strong{ color:var(--ink); letter-spacing:.06em; }
+  .pop-del{
+    flex:none; width:24px; height:24px; display:grid; place-items:center;
+    border:0; background:none; border-radius:7px; color:var(--muted-light);
+  }
+  .pop-del:hover{ background:#fee2e2; color:var(--red); }
+  .pop-del svg{ width:13px; height:13px; fill:currentColor; }
+  .cloud-item{ display:flex; align-items:center; }
+  #saveBtn[hidden], #cloudBtn[hidden]{ display:none; }
+  .top-btn.save{ background:rgba(255,255,255,.92); color:#15369c; border-color:#fff; }
+  .top-btn.save:hover{ background:#fff; }
+
+  .bg-grid{ display:grid; grid-template-columns:repeat(4,54px); gap:.5rem; }
+  .bg-swatch{
+    height:40px; border-radius:10px; border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.08);
+  }
+  .bg-swatch.on{ border-color:var(--brand-2); }
+
+  /* ------------------------------------------------------------ widget frame */
+  .w{
+    position:absolute;
+    display:flex; flex-direction:column;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--shadow-md);
+    overflow:hidden;
+    touch-action:none;
+  }
+  .w.dragging{ box-shadow:var(--shadow-lg); }
+  .w.bare{ background:none; border:0; box-shadow:none; }
+  .w-head{
+    display:flex; align-items:center; gap:.35rem;
+    padding:.3rem .4rem .3rem .6rem;
+    background:var(--surface-soft);
+    border-bottom:1px solid var(--line);
+    cursor:grab; flex:none;
+    opacity:0; transition:opacity .18s ease;
+  }
+  .w:hover .w-head, .w.pinned-head .w-head{ opacity:1; }
+  .w.dragging .w-head{ cursor:grabbing; opacity:1; }
+  .w-title{
+    flex:1; min-width:0; font-size:.72rem; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .w-btn{
+    width:24px; height:24px; display:grid; place-items:center;
+    border:0; background:none; border-radius:7px; color:var(--muted-light);
+  }
+  .w-btn:hover{ background:var(--line); color:var(--ink); }
+  .w-btn.close:hover{ background:#fee2e2; color:var(--red); }
+  .w-btn svg{ width:14px; height:14px; fill:currentColor; }
+  .w-body{ flex:1; min-height:0; position:relative; overflow:hidden; }
+  .w-resize{
+    position:absolute; right:0; bottom:0; width:18px; height:18px;
+    cursor:nwse-resize; z-index:5;
+    background:linear-gradient(135deg,transparent 50%,var(--line-strong) 50%,var(--line-strong) 62%,transparent 62%,transparent 74%,var(--line-strong) 74%,var(--line-strong) 86%,transparent 86%);
+    opacity:0; transition:opacity .18s ease;
+  }
+  .w:hover .w-resize{ opacity:1; }
+
+  /* --------------------------------------------------------- shared widget UI */
+  .pad{ padding:.9rem; height:100%; display:flex; flex-direction:column; gap:.7rem; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+    padding:.5rem .85rem; border-radius:999px;
+    border:1px solid var(--line-strong); background:var(--surface);
+    font-size:.86rem; font-weight:600; color:var(--ink);
+    transition:background .16s ease, border-color .16s ease, transform .16s ease;
+  }
+  .btn:hover{ background:var(--surface-soft); border-color:var(--muted-light); }
+  .btn:active{ transform:translateY(1px); }
+  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff; }
+  .btn.primary:hover{ background:var(--brand-2); }
+  .btn.ghost{ border-color:transparent; background:transparent; color:var(--muted); }
+  .btn.ghost:hover{ background:var(--surface-soft); color:var(--ink); }
+  .btn:disabled{ opacity:.45; pointer-events:none; }
+  .btn.round{ width:46px; height:46px; padding:0; border-radius:50%; }
+  .btn svg{ width:18px; height:18px; fill:currentColor; }
+  .chip{
+    padding:.32rem .7rem; border-radius:999px; border:1px solid var(--line);
+    background:var(--surface-soft); font-size:.78rem; font-weight:650; color:var(--muted);
+  }
+  .chip.on{ background:var(--brand-soft); border-color:#bfdbfe; color:var(--brand); }
+  .field{
+    width:100%; padding:.5rem .7rem; border-radius:10px;
+    border:1px solid var(--line-strong); background:var(--surface);
+    font-size:.88rem;
+  }
+  .field:focus{ outline:2px solid var(--brand-soft); border-color:var(--brand-2); }
+  textarea.field{ resize:none; }
+
+  /* ---------------------------------------------------------------- toast */
+  #toast{
+    position:fixed; left:50%; bottom:6.2rem; transform:translate(-50%,1rem); z-index:9800;
+    padding:.6rem 1.1rem; border-radius:999px;
+    background:rgba(15,23,42,.92); color:#fff; font-size:.86rem; font-weight:600;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+  }
+  #toast.show{ opacity:1; transform:translate(-50%,0); }
+
+  /* -------------------------------------------------------- fullscreen layers */
+  #layerHost{ position:fixed; inset:0; z-index:8000; pointer-events:none; }
+  #layerHost > *{ pointer-events:auto; }
+
+  /* ------------------------------------------------------------ empty state */
+  #empty{
+    position:absolute; inset:0; display:grid; place-items:center;
+    text-align:center; color:var(--muted); pointer-events:none; padding:2rem;
+  }
+  #empty .box{ max-width:30rem; }
+  #empty h2{ margin:.4rem 0 .5rem; font-size:1.5rem; letter-spacing:-.02em; color:var(--ink); }
+  #empty p{ margin:0; font-size:.95rem; line-height:1.6; }
+  #empty .kbd{
+    display:inline-block; padding:.1rem .45rem; border-radius:6px;
+    border:1px solid var(--line-strong); background:#fff; font-size:.8rem; font-weight:650; color:var(--ink);
+  }
+  body.has-widgets #empty{ display:none; }
+
+  @media (max-width:640px){
+    .brand-text{ display:none; }
+    .dock-btn{ width:62px; font-size:.62rem; }
+    .top-btn span{ display:none; }
+    .top-btn{ padding:.46rem .56rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bgLayer"></div>
+
+<main id="board" aria-label="Classroom screen board">
+  <div id="empty">
+    <div class="box">
+      <h2>Your screen is empty.</h2>
+      <p>Pick a widget from the bar at the bottom to put it on the board. Drag widgets by their header, resize from the bottom-right corner, and everything you set up is saved on this computer automatically.</p>
+    </div>
+  </div>
+</main>
+
+<div id="layerHost"></div>
+
+<header id="topbar">
+  <a class="brand" href="/" aria-label="Back to Mills Maths Tools">
+    <span class="brand-logo"><img src="../assets/mmt.png" alt="" onerror="this.style.display='none'"></span>
+    <span class="brand-text"><strong>MMT Screen</strong><span>Mills Maths Tools</span></span>
+  </a>
+
+  <input id="screenName" value="Screen 1" aria-label="Screen name" spellcheck="false" />
+
+  <div class="top-actions">
+    <button class="top-btn save" id="saveBtn" type="button" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l5 5v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm3 2v5h7V5H8Zm-1 9v5h10v-5H7Z"/></svg>
+      <span>Save</span>
+    </button>
+    <button class="top-btn" id="cloudBtn" type="button" aria-haspopup="true" aria-expanded="false" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 19A4.5 4.5 0 0 1 5.6 10 6 6 0 0 1 17 8.6a4.7 4.7 0 0 1-.7 10.4H6.5Z"/></svg>
+      <span id="cloudLabel">Sign in</span>
+    </button>
+    <button class="top-btn" id="screensBtn" type="button" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/></svg>
+      <span>Screens</span>
+    </button>
+    <button class="top-btn" id="bgBtn" type="button" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1a1.49 1.49 0 0 1 1.06-2.55H16a5 5 0 0 0 5-5c0-4.42-4.03-8-9-8Zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg>
+      <span>Background</span>
+    </button>
+    <button class="top-btn icon-only" id="hideBtn" type="button" title="Hide the bars (press H)" aria-label="Hide the bars">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6c-4.4 0-8.1 2.7-9.6 6 1.5 3.3 5.2 6 9.6 6s8.1-2.7 9.6-6c-1.5-3.3-5.2-6-9.6-6Zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-6.2a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z"/></svg>
+    </button>
+    <button class="top-btn icon-only" id="fsBtn" type="button" title="Full screen (press F)" aria-label="Full screen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4Zm11-5h5v5h-2V6h-3V4ZM4 15h2v3h3v2H4v-5Zm14 0h2v5h-5v-2h3v-3Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="dock" role="toolbar" aria-label="Widgets"></div>
+
+<div class="pop" id="screensPop" role="menu" aria-label="Screens"></div>
+<div class="pop" id="bgPop" role="menu" aria-label="Background"></div>
+<div class="pop" id="cloudPop" role="menu" aria-label="Saved screens"></div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
