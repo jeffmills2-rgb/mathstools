@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A real build, start to finish</title>
+<style>
+  :root{
+    --brand:#047857; --brand-soft:#d1fae5; --ink:#10221c; --muted:#5b6b64;
+    --line:#dde7e2; --bg:#fbfaf7; --card:#fff;
+    --me:#1e3a5f; --me-soft:#e8eef6;
+    --note:#b45309; --note-soft:#fef3c7;
+    --sans:ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+       line-height:1.62; font-size:17px}
+  .shell{max-width:760px; margin:0 auto; padding:38px 20px 80px}
+  a{color:var(--brand)}
+
+  h1{font-size:2.15rem; line-height:1.1; margin:0 0 10px; letter-spacing:-.02em}
+  .kicker{font-family:var(--mono); font-size:.72rem; letter-spacing:.15em;
+          text-transform:uppercase; color:var(--brand); font-weight:600}
+  .lede{color:var(--muted); margin:0 0 10px}
+  .provenance{margin:24px 0 40px; padding:14px 18px; background:var(--card);
+              border:1px solid var(--line); border-radius:10px; font-size:.94rem; color:var(--muted)}
+  .provenance b{color:var(--ink)}
+
+  .round{margin:0 0 14px; font-family:var(--mono); font-size:.74rem; letter-spacing:.14em;
+         text-transform:uppercase; color:var(--brand); font-weight:600;
+         padding-top:34px; border-top:1px solid var(--line)}
+  h2{font-size:1.5rem; margin:0 0 16px; letter-spacing:-.012em}
+
+  /* what he typed */
+  .said{background:var(--me-soft); border-left:3px solid var(--me);
+        border-radius:0 10px 10px 0; padding:18px 22px; margin:0 0 18px}
+  .said p{margin:0 0 12px}
+  .said p:last-child{margin-bottom:0}
+  .said ol{margin:0; padding-left:1.3em}
+  .said li{margin:.55em 0}
+  .said li::marker{color:var(--me); font-weight:700}
+
+  /* my commentary on it */
+  .note{background:var(--note-soft); border-left:3px solid var(--note);
+        border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 26px; font-size:.96rem}
+  .note b{display:block; margin-bottom:4px}
+  .note ul{margin:8px 0 0; padding-left:1.15em}
+  .note li{margin:.3em 0}
+
+  figure{margin:0 0 26px}
+  figure img{display:block; width:100%; height:auto; border:1px solid var(--line);
+             border-radius:10px; background:var(--card)}
+  figcaption{margin-top:9px; color:var(--muted); font-size:.9rem}
+
+  .sic{font-family:var(--mono); font-size:.78em; color:var(--muted);
+       background:var(--card); border:1px solid var(--line); border-radius:4px;
+       padding:.05em .3em; vertical-align:.1em}
+
+  .close{margin-top:40px; padding-top:26px; border-top:1px solid var(--line)}
+  ol.moves{counter-reset:m; list-style:none; padding:0; margin:18px 0 0}
+  ol.moves li{counter-increment:m; display:grid; grid-template-columns:28px 1fr; gap:14px;
+              padding:11px 0; border-top:1px solid var(--line); align-items:baseline}
+  ol.moves li:first-child{border-top:none}
+  ol.moves li::before{content:counter(m); font-family:var(--mono); font-weight:700; color:var(--brand)}
+
+  @media print{ body{background:#fff} figure img{border:1px solid #ccc} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <p class="kicker">Worked example</p>
+  <h1>A real build, start to finish</h1>
+  <p class="lede">One tool. Two rounds. The prompts are exactly as they were typed —
+     including the typos, which did not matter.</p>
+
+  <div class="provenance">
+    <b>Where this came from.</b> These are the actual prompts and screens from building
+    the <i>Fraction to Percentage</i> tool on millsmathstools.au, transcribed from the
+    screenshots in the MANSW session deck. What you are reading is the teacher's half of
+    the conversation and the result of each round. Claude's written replies are not
+    reproduced — they were long, and they are not the part you need to copy.
+  </div>
+
+  <p class="round">Round one · the opening prompt</p>
+  <h2>Ask for thinking before you ask for a thing</h2>
+
+  <div class="said">
+    <p>I would like to make another tool for the millsmathstools platform. I am wanting to
+    create an interactive I can use as a classroom teacher, it will be a tool that I can use
+    to represent a fraction as a percentage. It can be called "Fraction to percentage". I am
+    thinking that it can operate in a double number line way, one where the fraction is on
+    top and then the percentage is on the bottom.</p>
+
+    <p>For example, if the fraction is 3/5, then it will show a number line that has the
+    fraction displayed, a partitioned number line of the fraction and then 0/100% only
+    labelled. This allows the teacher to then ask students on mini-whiteboards, etc to
+    estimate what the percentage would be. My plan to teach this is to find 1/5 of 100 (that
+    is, 100 divided by 5) and then find three fifths.</p>
+
+    <p>What pedagogical thoughts do you have to build this idea before building the
+    interactive?</p>
+  </div>
+
+  <div class="note">
+    <b>What is doing the work here</b>
+    <ul>
+      <li><b>The last line.</b> It asks for thinking, not for code. Nothing gets built until
+        the reasoning has been checked — which is the only point at which it is cheap to
+        change your mind.</li>
+      <li><b>A hand-drawn sketch was attached</b> — a biro number line, 0 to 5/5, with 3/5
+        marked. Faster than describing it, and unambiguous in a way words are not.</li>
+      <li><b>The teaching sequence is stated.</b> "Find 1/5 of 100, then find three fifths."
+        That single sentence is what makes the finished tool a maths tool rather than a
+        calculator with a picture on it. It is also the part no AI can supply.</li>
+      <li><b>The name is given.</b> Small thing, but it means every later message can say
+        "the tool" and be understood.</li>
+    </ul>
+  </div>
+
+  <figure>
+    <img src="assets/real-build-before.jpg" alt="The first version: a fraction input, three
+      long rows of preset fraction chips, and three toggle switches to the right. The double
+      number line has been pushed below all of it." />
+    <figcaption><b>What came back.</b> Everything asked for, and it works — but look where
+      the number line has ended up. Three rows of preset chips and a panel of toggles have
+      pushed the actual teaching object off the bottom of the screen.</figcaption>
+  </figure>
+
+  <p class="round">Round two · the feedback</p>
+  <h2>Say what you can see</h2>
+
+  <div class="said">
+    <p>feedback</p>
+    <ol>
+      <li>I want the double number line to be a single line with tick marks on either side
+        like my original drawing. The extra line is not necessary.</li>
+      <li>can we remove the 'friendly/terminating/recurring' section, and just have a button
+        that has "Generate random fraction" and above it have a selector that has 'Friendly'
+        'Terminating' and 'Recurring' so that when that is selected, a random fraction is
+        generated. This will save much space. See image 1 for current layout feedback,
+        notive<span class="sic">sic</span> that the double number line is buried
+        fromt he<span class="sic">sic</span> fraction.</li>
+      <li>The current toggles that are on the UI, these can go into a "Settings" dropdown at
+        the top. That is, click settings and then these toggles appear</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <b>What is doing the work here</b>
+    <ul>
+      <li><b>Two typos and a missing space.</b> They changed nothing. Stop editing your
+        prompts — the cost of a typo is zero and the cost of not sending the message is an
+        evening.</li>
+      <li><b>"See image 1"</b> — a screenshot went with it, with the problem visible.
+        Describing a layout in words is slow and lossy; pointing at it is neither.</li>
+      <li><b>It leads with what he can see</b>, not with a diagnosis. "The double number line
+        is buried" is an observation. "Refactor the layout" would have been a guess at a
+        solution, and a worse instruction.</li>
+      <li><b>Three numbered items, each one checkable.</b> You can look at the next version
+        and say yes or no to each. Compare "make it cleaner", which nobody can act on and
+        nobody can verify.</li>
+      <li><b>It gives a reason:</b> "this will save much space". A reason lets the AI solve
+        the actual problem rather than only doing as it is told.</li>
+    </ul>
+  </div>
+
+  <figure>
+    <img src="assets/real-build-after.jpg" alt="The second version: the fraction input with a
+      single Generate random fraction button beneath it, and the double number line now large
+      and central, partitioned into twenty-fifths with 4/25 marked in red." />
+    <figcaption><b>What came back.</b> One line with the fraction above and the percentage
+      below, exactly as the biro sketch had it. Three rows of chips have become one button.
+      The toggles have gone into Settings. The teaching object is now the biggest thing on
+      the screen.</figcaption>
+  </figure>
+
+  <div class="close">
+    <h2>The whole loop, in order</h2>
+    <p style="color:var(--muted)">This is all of it. It does not get more sophisticated
+      further in — there are just more turns.</p>
+    <ol class="moves">
+      <li><div><b>Say what the lesson is</b>, and how you would teach it.</div></li>
+      <li><div><b>Ask for thinking first.</b> Pedagogical thoughts, or clarifying questions.
+        Read the answer before anything is built.</div></li>
+      <li><div><b>Look at what came back</b> — actually open it, at the size a class will
+        see it.</div></li>
+      <li><div><b>Screenshot the problem</b> and say what you can see, in the order it
+        bothers you.</div></li>
+      <li><div><b>Repeat</b> until it is the thing you pictured.</div></li>
+    </ol>
+    <p style="margin-top:26px; color:var(--muted)">The tool from this conversation is live at
+      <a href="https://millsmathstools.au/interactive-tools/stage-4/number/fraction-to-percentage/">millsmathstools.au</a>.
+      Two rounds got it most of the way; a handful more got it the rest.</p>
+  </div>
+
+</div>
+</body>
+</html>

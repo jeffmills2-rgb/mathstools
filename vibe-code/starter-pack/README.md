@@ -1,7 +1,7 @@
 # Mathematics Vibe Coding Starter Pack
 
 A blank-slate repository for a teacher-built mathematics website. Three sections,
-two working examples in each, and nothing you have to configure.
+eight working examples, and nothing you have to configure.
 
 The second example in each section — **Fraction to Percentage** — is deliberately
 the same topic three ways: a tool you drive on the board, a quiz the student does
@@ -9,6 +9,12 @@ on a device, and a worksheet you print. Read them side by side before you build
 your own. They share one page of arithmetic, one palette and one set of
 conventions, and the differences between them are all differences of *purpose*,
 not of style.
+
+Two of the examples sit outside Number on purpose — **Angles on a Line and at a
+Point** (Measurement and Space) and **Reading a Dot Plot** (Statistics). The advice
+in `WORKSHOP.md` is to copy the example nearest to what you want, and that advice is
+worthless if every example is arithmetic. Nothing about the method changes between
+strands, and those two are there to prove it.
 
 > **PLACEHOLDER:** replace this file's title and the paragraph above with your own
 > project's name and purpose. That single act — describing your project in your own
@@ -49,6 +55,8 @@ maths-tool-starter.html           ONE FILE. A working tool that carries its own 
                                   Drag it into any AI chat, on any device. Start here.
 START-HERE.html                   all of the guides below, readable in a browser.
                                   Double-click this if the .md files won't open.
+A-REAL-BUILD.html                 one tool, two rounds, the actual prompts that built it
+SNIPPETS.html                     the patterns worth pasting, with the bug each one prevents
 TEN-MINUTES.md                    the compressed path, if that's all the time you have
 CLAUDE.md                         the brief you hand to Claude at the start of a chat
 CLAUDE-example.md                 the same brief, filled in, so you can see the shape
@@ -60,10 +68,12 @@ PROMPTS.md                        copy-paste starting prompts
 student-quizzes/                  SECTION 1 — self-marking practice on a device
   stage-4/number/example-integers-quiz/index.html
   stage-4/number/example-fraction-to-percentage/index.html
+  stage-4/statistics/example-dot-plot/index.html
 
 interactive-tools/                SECTION 2 — things you drive on the board
   stage-4/number/example-fraction-bar/index.html
   stage-4/number/example-fraction-to-percentage/index.html
+  stage-4/measurement/example-angle-sum/index.html
 
 worksheet-creators/               SECTION 3 — generators that produce a printable page
   stage-3/number/example-times-tables/index.html

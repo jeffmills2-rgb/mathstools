@@ -11,7 +11,8 @@ Things you drive on the board in front of a class.
 Redrawing everything is slower in theory and much easier to reason about in
 practice: you can never end up with a half-updated diagram.
 
-See `stage-4/number/example-fraction-bar/index.html`.
+See `stage-4/number/example-fraction-bar/index.html`, and
+`stage-4/measurement/example-angle-sum/index.html` for the same pattern outside Number.
 
 ## Rules for this section
 

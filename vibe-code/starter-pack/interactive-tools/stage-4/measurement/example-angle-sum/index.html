@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Angles on a Line and at a Point — teaching tool</title>
+
+<!--
+  EXAMPLE — Interactive Tool · Stage 4 · Measurement and Space
+  Angle relationships: angles on a straight line, angles at a point.
+  PLACEHOLDER: outcome code — look it up, don't let an AI guess it for you.
+
+  WHY THIS ONE IS HERE
+  The other examples in this pack are all Number. This is the same three
+  patterns applied to a different strand, so you can see that nothing about
+  the method is arithmetic-specific:
+
+    state → render → controls        the whole architecture
+    integers only                    angles are whole degrees, so the sum is
+                                     exactly 180 or 360, always. No drift.
+    inline SVG                       sharp on a projector, uses the CSS tokens
+
+  THE TEACHING IDEA
+  Drag a ray and every angle changes, but the total does not. That is the
+  whole point of the topic, and it is very hard to make that land on a static
+  diagram. Then hide one angle, call it x, and the tool becomes the question.
+-->
+
+<style>
+  :root{
+    --brand:#047857;        /* CHANGE ME FIRST — your main colour */
+    --brand-soft:#d1fae5;
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+    --bg:#fbfaf7;
+    --accent:#b45309;       /* the unknown angle, and only that */
+    --accent-soft:#fef3c7;
+
+    --sans:ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}   /* .field{display:flex} would otherwise win */
+  body{margin:0; padding:22px 20px 44px; background:var(--bg); color:var(--ink);
+       font-family:var(--sans); line-height:1.5}
+  .shell{max-width:1000px; margin:0 auto}
+
+  header{border-bottom:2px solid var(--brand); padding-bottom:12px; margin-bottom:20px}
+  h1{margin:0; font-size:1.6rem; letter-spacing:-.01em}
+  header p{margin:5px 0 0; color:var(--muted); font-size:.97rem}
+
+  #controls{display:flex; flex-wrap:wrap; gap:16px 24px; align-items:flex-end;
+            background:#fff; border:1px solid var(--line); border-radius:10px;
+            padding:15px 18px; margin-bottom:18px}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field > span{font-size:.75rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
+  .seg{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden}
+  .seg button{border:none; background:#fff; color:var(--ink); font:inherit; font-size:.95rem;
+              padding:8px 14px; cursor:pointer}
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button[aria-pressed="true"]{background:var(--brand); color:#fff; font-weight:600}
+  input[type=range]{width:130px; accent-color:var(--brand)}
+  .toggles{display:flex; flex-direction:column; gap:6px}
+  .toggles label{display:flex; align-items:center; gap:8px; font-size:.95rem}
+  input[type=checkbox]{accent-color:var(--brand); width:17px; height:17px}
+  .btn{font:inherit; font-size:.95rem; font-weight:600; padding:9px 15px; cursor:pointer;
+       border-radius:8px; border:1px solid var(--brand); background:#fff; color:var(--brand)}
+  .btn:hover{background:var(--brand-soft)}
+  button:focus-visible, input:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  figure{margin:0; background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px}
+  svg{display:block; width:100%; height:auto; touch-action:none;
+      -webkit-user-select:none; user-select:none}   /* or dragging selects the labels */
+
+  .base{stroke:var(--ink); stroke-width:3}
+  .ray{stroke:var(--ink); stroke-width:3; cursor:grab}
+  .ray.sel{stroke:var(--brand)}
+  .hit{stroke:transparent; stroke-width:26; cursor:grab}
+  .arc{fill:none; stroke:var(--brand); stroke-width:2.5}
+  .arc.unknown{stroke:var(--accent)}
+  .lbl{font-family:var(--sans); font-size:19px; font-weight:600; fill:var(--brand);
+       text-anchor:middle; dominant-baseline:middle}
+  .lbl.unknown{fill:var(--accent); font-size:23px; font-style:italic}
+  .grip{fill:#fff; stroke:var(--ink); stroke-width:2.5}
+  .grip.sel{stroke:var(--brand)}
+  .vertex{fill:var(--ink)}
+
+  .eq{margin-top:16px; padding:14px 18px; background:var(--brand-soft);
+      border-left:3px solid var(--brand); border-radius:0 8px 8px 0;
+      font-family:var(--mono); font-size:1.15rem}
+  .eq .u{color:var(--accent); font-weight:700}
+  .hint{margin-top:14px; color:var(--muted); font-size:.9rem}
+
+  @media print{
+    body{background:#fff; padding:0}
+    #controls, .hint{display:none}
+    figure{border:none}
+  }
+  @media (max-width:560px){
+    #controls{gap:12px 16px}
+    .lbl{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <h1>Angles on a Line and at a Point</h1>
+    <p>Drag any ray. Every angle changes — the total never does.</p>
+  </header>
+
+  <div id="controls">
+    <div class="field">
+      <span>The angles sit</span>
+      <div class="seg" id="mode">
+        <button type="button" data-mode="line"  aria-pressed="true">on a straight line</button>
+        <button type="button" data-mode="point" aria-pressed="false">at a point</button>
+      </div>
+    </div>
+    <div class="field">
+      <span>How many — <b id="countOut">3</b></span>
+      <input type="range" id="count" min="2" max="5" value="3" />
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="showEq" checked /> Show the number sentence</label>
+      <label><input type="checkbox" id="hideOne" /> Hide one angle, call it <i>x</i></label>
+    </div>
+    <div class="field">
+      <span>&nbsp;</span>
+      <button class="btn" type="button" id="shuffle">New arrangement</button>
+    </div>
+    <div class="field" id="revealWrap" hidden>
+      <span>&nbsp;</span>
+      <button class="btn" type="button" id="reveal">Reveal <i>x</i></button>
+    </div>
+  </div>
+
+  <figure>
+    <svg id="board" viewBox="0 0 900 470" role="img"
+         aria-label="Angles meeting at a point, drawn to scale."></svg>
+  </figure>
+
+  <p class="eq" id="equation"></p>
+  <p class="hint">Drag a ray to change the angles. Click one first and the arrow keys
+     nudge it a degree at a time, so you can adjust it without turning your back on the class.</p>
+
+</div>
+
+<script>
+/* =============================================================================
+   STATE — everything the picture depends on. Angles are WHOLE DEGREES, always.
+   Because they are integers that we force to sum to the total, the sum is
+   exactly 180 or 360 every time. There is no rounding anywhere in this file.
+   ========================================================================== */
+const state = {
+  mode: "line",        /* "line" = 180°, "point" = 360° */
+  angles: [55, 70, 55],
+  hidden: null,        /* index of the angle shown as x, or null */
+  revealed: false,
+  selected: null,      /* index of the ray being nudged with the keyboard */
+  showEq: true,
+};
+
+const MIN_ANGLE = 15;                       /* small enough to be interesting, big enough to grab */
+const total = () => (state.mode === "line" ? 180 : 360);
+
+/* =============================================================================
+   MAKING A SET OF ANGLES
+   n whole degrees that sum EXACTLY to the total. Give every angle the minimum
+   first, then split what is left by choosing n−1 cut points and measuring the
+   gaps between them. The pieces add back to the remainder by construction, so
+   the sum is right by arithmetic rather than by luck, and there is no division
+   anywhere — nothing to round.
+
+   The first version of this function handed out the remainder a degree at a
+   time, skipping any angle already at a 150° cap. It hung forever on two
+   angles at a point, because two angles capped at 150 cannot reach 360. Worth
+   remembering: a loop that "keeps going until it has dealt them all out" needs
+   you to prove it can always finish. This version cannot fail to.
+   ========================================================================== */
+function randomAngles(n){
+  const T = total(), R = T - MIN_ANGLE * n;   /* degrees left to share out */
+  const nice = state && state.mode === "point" ? 200 : 160;
+
+  for(let attempt = 0; attempt < 25; attempt++){
+    const cuts = [];
+    for(let i = 0; i < n - 1; i++) cuts.push(Math.floor(Math.random() * (R + 1)));
+    cuts.sort((a, b) => a - b);
+
+    const out = []; let prev = 0;
+    for(let i = 0; i < n - 1; i++){ out.push(MIN_ANGLE + cuts[i] - prev); prev = cuts[i]; }
+    out.push(MIN_ANGLE + R - prev);
+
+    /* prefer arrangements you can actually read on a projector, but never
+       loop for ever chasing one — after 25 tries, take what we have */
+    if(out.every(a => a <= nice) || attempt === 24) return out;
+  }
+}
+
+/* =============================================================================
+   RENDER — reads state, redraws the whole picture from scratch. Always.
+   ========================================================================== */
+function render(){
+  drawBoard();
+  drawEquation();
+  document.getElementById("countOut").textContent = state.angles.length;
+  document.getElementById("revealWrap").hidden = (state.hidden === null);
+  document.getElementById("reveal").textContent = state.revealed ? "Hide x again" : "Reveal x";
+}
+
+function drawEquation(){
+  const box = document.getElementById("equation");
+  box.hidden = !state.showEq;
+  if(!state.showEq) return;
+  const parts = state.angles.map((a, i) =>
+    (i === state.hidden && !state.revealed)
+      ? '<span class="u">x</span>'
+      : a + "°");
+  box.innerHTML = parts.join(" + ") + " = " + total() + "°";
+}
+
+/* =============================================================================
+   THE SVG. Inline, so it stays sharp on a projector and uses the CSS variables.
+   Maths angles run anticlockwise from the positive x-axis; SVG y runs down, so
+   every point is (cx + r·cos θ, cy − r·sin θ).
+   ========================================================================== */
+const NS = "http://www.w3.org/2000/svg";
+const RAY = 190;
+const rad = d => d * Math.PI / 180;
+
+function el(name, attrs){
+  const n = document.createElementNS(NS, name);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+const centre = () => state.mode === "line" ? {cx:450, cy:270} : {cx:450, cy:250};
+const viewBox = () => state.mode === "line" ? "0 20 900 285" : "0 0 900 500";
+const startAngle = () => state.mode === "line" ? 0 : 0;
+const pt = (cx, cy, r, deg) => [cx + r * Math.cos(rad(deg)), cy - r * Math.sin(rad(deg))];
+
+/* An arc drawn as short straight steps. Slightly more path data than an SVG
+   arc command, and immune to getting the sweep flag the wrong way round. */
+function arcPath(cx, cy, r, from, to){
+  const step = 1.5, out = [];
+  for(let d = from; d < to; d += step) out.push(pt(cx, cy, r, d));
+  out.push(pt(cx, cy, r, to));
+  return "M " + out.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L ");
+}
+
+function boundaries(){
+  const b = [startAngle()];
+  state.angles.forEach(a => b.push(b[b.length - 1] + a));
+  return b;                                   /* n+1 values; ends at 180 or 360 */
+}
+
+function drawBoard(){
+  const svg = document.getElementById("board");
+  svg.textContent = "";
+  svg.setAttribute("viewBox", viewBox());
+  const {cx, cy} = centre();
+  const b = boundaries();
+
+  /* the straight line, or nothing at all for angles at a point */
+  if(state.mode === "line"){
+    svg.appendChild(el("line", {x1:cx - RAY - 40, y1:cy, x2:cx + RAY + 40, y2:cy, class:"base"}));
+  }
+
+  /* One ring per angle, biggest angle on the outside. Ordering by size rather
+     than by position matters at a point: a 199° arc drawn on the inner ring
+     closes up into what looks like a circle rather than an angle. */
+  const ring = {};
+  state.angles.map((a, i) => [a, i]).sort((p, q) => p[0] - q[0])
+              .forEach(([, i], rank) => { ring[i] = 50 + rank * 25; });
+
+  state.angles.forEach((a, i) => {
+    const r = ring[i];
+    const unknown = (i === state.hidden && !state.revealed);
+    svg.appendChild(el("path", {d:arcPath(cx, cy, r, b[i], b[i+1]),
+                                class:"arc" + (unknown ? " unknown" : "")}));
+    const mid = (b[i] + b[i+1]) / 2;
+    const [lx, ly] = pt(cx, cy, r + 30, mid);
+    const t = el("text", {x:lx.toFixed(1), y:ly.toFixed(1),
+                          class:"lbl" + (unknown ? " unknown" : "")});
+    t.textContent = unknown ? "x" : a + "°";
+    svg.appendChild(t);
+  });
+
+  /* the rays. The first and last are fixed on a straight line — they ARE the
+     line — so only the ones in between can be dragged. */
+  b.forEach((deg, i) => {
+    const fixed = state.mode === "line" && (i === 0 || i === b.length - 1);
+    if(state.mode === "point" && i === b.length - 1) return;   /* same ray as i = 0 */
+    const [x, y] = pt(cx, cy, RAY, deg);
+    const sel = state.selected === i ? " sel" : "";
+    svg.appendChild(el("line", {x1:cx, y1:cy, x2:x, y2:y, class:"ray" + sel}));
+    if(!fixed){
+      svg.appendChild(el("circle", {cx:x, cy:y, r:9, class:"grip" + sel, "data-ray":i}));
+      const hit = el("line", {x1:cx, y1:cy, x2:x, y2:y, class:"hit", "data-ray":i});
+      hit.setAttribute("tabindex", "0");
+      svg.appendChild(hit);
+    }
+  });
+
+  svg.appendChild(el("circle", {cx:cx, cy:cy, r:5, class:"vertex"}));
+}
+
+/* =============================================================================
+   DRAGGING
+   Moving boundary i changes only the two angles either side of it, so the
+   total is untouched. Whole degrees, and neither neighbour may drop below
+   MIN_ANGLE — which is what stops the picture collapsing in a lesson.
+   ========================================================================== */
+function setBoundary(i, deg){
+  const b = boundaries();
+  const lo = b[i-1] + MIN_ANGLE, hi = b[i+1] - MIN_ANGLE;
+  const clamped = Math.round(Math.max(lo, Math.min(hi, deg)));
+  state.angles[i-1] = clamped - b[i-1];
+  state.angles[i]   = b[i+1] - clamped;
+  render();
+}
+
+function degFromEvent(evt){
+  const svg = document.getElementById("board");
+  const r = svg.getBoundingClientRect();
+  const {cx, cy} = centre();
+  /* viewBox is 900 wide; map the pointer back into viewBox units */
+  const vb = viewBox().split(" ").map(Number);        /* minX minY width height */
+  const scale = vb[2] / r.width;
+  const x = vb[0] + (evt.clientX - r.left) * scale - cx;
+  const y = cy - (vb[1] + (evt.clientY - r.top) * scale);
+  let d = Math.atan2(y, x) * 180 / Math.PI;
+  if(d < 0) d += 360;
+  return d;
+}
+
+let dragging = null;
+const board = document.getElementById("board");
+
+board.addEventListener("pointerdown", e => {
+  const i = e.target.getAttribute && e.target.getAttribute("data-ray");
+  if(i === null || i === undefined) return;
+  dragging = Number(i);
+  state.selected = dragging;
+  board.setPointerCapture(e.pointerId);
+  render();
+});
+board.addEventListener("pointermove", e => {
+  if(dragging === null) return;
+  setBoundary(dragging, degFromEvent(e));
+});
+board.addEventListener("pointerup", () => { dragging = null; });
+board.addEventListener("pointercancel", () => { dragging = null; });
+
+/* arrow keys nudge the selected ray — adjust the diagram without turning round */
+document.addEventListener("keydown", e => {
+  if(state.selected === null) return;
+  if(e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  e.preventDefault();
+  const b = boundaries();
+  setBoundary(state.selected, b[state.selected] + (e.key === "ArrowRight" ? -1 : 1));
+});
+
+/* =============================================================================
+   CONTROLS — each one edits state, then calls render(). Nothing else.
+   ========================================================================== */
+document.getElementById("mode").addEventListener("click", e => {
+  const m = e.target.getAttribute("data-mode");
+  if(!m || m === state.mode) return;
+  state.mode = m;
+  [...e.currentTarget.children].forEach(btn =>
+    btn.setAttribute("aria-pressed", String(btn.getAttribute("data-mode") === m)));
+  state.angles = randomAngles(state.angles.length);
+  state.selected = null;
+  render();
+});
+
+document.getElementById("count").addEventListener("input", e => {
+  state.angles = randomAngles(Number(e.target.value));
+  if(state.hidden !== null) state.hidden = Math.floor(Math.random() * state.angles.length);
+  state.selected = null; state.revealed = false;
+  render();
+});
+
+document.getElementById("shuffle").addEventListener("click", () => {
+  state.angles = randomAngles(state.angles.length);
+  if(state.hidden !== null) state.hidden = Math.floor(Math.random() * state.angles.length);
+  state.selected = null; state.revealed = false;
+  render();
+});
+
+document.getElementById("showEq").addEventListener("change", e => {
+  state.showEq = e.target.checked; render();
+});
+
+document.getElementById("hideOne").addEventListener("change", e => {
+  state.hidden = e.target.checked ? Math.floor(Math.random() * state.angles.length) : null;
+  state.revealed = false;
+  render();
+});
+
+document.getElementById("reveal").addEventListener("click", () => {
+  state.revealed = !state.revealed; render();
+});
+
+render();
+</script>
+</body>
+</html>

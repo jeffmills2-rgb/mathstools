@@ -11,7 +11,9 @@ Every quiz page in this template has three parts:
 2. **`checkAnswer()`** — compares, gives feedback, records the attempt.
 3. **The loop** — runs N questions, then shows a score and a review list.
 
-See `stage-4/number/example-integers-quiz/index.html`.
+See `stage-4/number/example-integers-quiz/index.html`, and
+`stage-4/statistics/example-dot-plot/index.html`, whose teacher panel can fire every
+misconception rule at the correct answer and tell you if any of them go off.
 
 ## Rules for this section
 
