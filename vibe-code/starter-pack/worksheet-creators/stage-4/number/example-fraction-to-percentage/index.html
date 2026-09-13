@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraction to Percentage — Worksheet Creator</title>
+
+<!--
+  =========================================================================
+  EXAMPLE WORKSHEET CREATOR — makes a printable page.
+
+  Same shape as the times tables creator:
+    1. OPTIONS PANEL  — teacher choices, on screen only (class="no-print")
+    2. generate()     — builds an array of questions, ONCE
+    3. THE SHEETS     — plain HTML laid out for A4, printed by the browser
+
+  What is different here, and worth keeping:
+
+  * THE MODEL GOES ON THE PAPER. With "Show number line" on, every question
+    prints the teaching tool's FIRST REVEAL — the whole partitioned, the
+    fraction marked, the distance shaded, and a blank ruled under the tick
+    for the answer. A student who was shown the double number line on the
+    board gets the same picture in front of them, rather than a bare
+    "3/8 = ___" that throws away the representation they were taught with.
+
+  * TWO LAYOUTS, BECAUSE THE PICTURE NEEDS ROOM. Model on: 8 to a page,
+    2 across. Model off: 18 to a page, 3 across. Trying to fit the model
+    into an 18-up grid gives you ticks a millimetre apart.
+
+  * THE LEVEL IS RE-CHECKED AFTER REDUCING. See buildQuestion(). Without
+    that one line a "Recurring" worksheet quietly contains 50% and 20%.
+
+  * DENOMINATORS ARE TRIMMED WHEN THE MODEL SHOWS, not crowded. 50 ticks
+    across 85mm of paper is a grey smear.
+  =========================================================================
+-->
+
+<style>
+  :root{
+    --brand:#047857;      /* PLACEHOLDER: match your homepage token */
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+    /* Same two-sided palette as the teaching tool and the quiz: green is the
+       fraction reading of the line, blue the percentage reading, pink the
+       point being named. */
+    --frac:#059669;
+    --pct:#1d4ed8;
+    --mark:#db2777;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:1.5rem 1rem 4rem;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);background:#f6f9f6;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:1rem;color:var(--brand);text-decoration:none;font-weight:800;font-size:.86rem}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.5rem;box-shadow:0 8px 20px rgba(16,34,28,.06);margin-bottom:1.5rem}
+  h1{margin:0 0 .3rem;font-size:1.5rem;letter-spacing:-.03em}
+  .sub{margin:0 0 1.4rem;color:var(--muted);font-size:.92rem}
+
+  .row{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:.3rem}
+  .field label{font-size:.76rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .field input,.field select{padding:.5rem .7rem;border:1px solid var(--line);border-radius:12px;font-weight:800;min-width:140px}
+  .switches{display:flex;gap:.45rem;flex-wrap:wrap;margin:1rem 0 .2rem}
+  .switches label{
+    display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);border-radius:999px;
+    padding:.42rem .8rem;font-size:.85rem;font-weight:850;cursor:pointer;user-select:none;background:#fff
+  }
+  .switches input{accent-color:var(--brand)}
+  .actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem}
+  button{
+    padding:.65rem 1.15rem;font-size:.9rem;font-weight:900;cursor:pointer;
+    border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff
+  }
+  button.ghost{background:#fff;color:var(--brand)}
+
+  /* ---------- a sheet of paper ---------- */
+  .sheet{
+    background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:16mm 14mm;max-width:210mm;margin:0 auto 1.5rem;
+    box-shadow:0 18px 40px rgba(16,34,28,.11);
+  }
+  .sheet-head{border-bottom:2px solid var(--ink);padding-bottom:.55rem;margin-bottom:1rem}
+  .sheet-head h2{margin:0;font-size:1.2rem;letter-spacing:-.02em}
+  .sheet-head .meta{display:flex;justify-content:space-between;gap:1rem;margin-top:.45rem;font-size:.82rem;color:var(--muted);flex-wrap:wrap}
+  .name-line{display:inline-block;border-bottom:1px solid var(--ink);height:1.3rem}
+  .ver{font-weight:900;color:var(--ink)}
+  .sheet.key .sheet-head h2::after{content:" — answer key";color:var(--brand)}
+
+  /* Two grids, because the picture needs room. */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem .9rem}
+  .grid.withLine{grid-template-columns:repeat(2,1fr);gap:.7rem 1.1rem}
+  .q{
+    position:relative;border:1px solid var(--line);border-radius:12px;
+    padding:.6rem .7rem .5rem;break-inside:avoid;display:flex;flex-direction:column;gap:.35rem
+  }
+  .q .badge{position:absolute;top:.35rem;right:.5rem;font-size:.7rem;font-weight:900;color:var(--muted)}
+  .q .say{font-size:.68rem;font-weight:800;color:var(--muted);line-height:1.3;padding-right:1.4rem}
+  .q .big{text-align:center;font-size:1.35rem;font-weight:850;padding:.35rem 0}
+  .q .ans{display:flex;align-items:center;gap:.4rem;font-size:.76rem;font-weight:800;color:var(--muted);margin-top:auto}
+  .q .box{flex:1;min-width:3rem;height:1.5rem;border:1px solid #93a49c;border-radius:6px}
+  .q .box.filled{
+    border-color:var(--brand);background:#ecfdf5;color:var(--brand);
+    display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:900;height:auto;padding:.15rem .4rem
+  }
+  .q svg{display:block;width:100%;height:auto}
+
+  /* An inline stacked fraction. vertical-align:middle, not a fixed em offset. */
+  .fr{
+    display:inline-flex;flex-direction:column;align-items:center;
+    vertical-align:middle;line-height:1.04;margin:0 .16em;font-size:.62em;font-weight:800
+  }
+  .fr b,.fr i{display:block;padding:0 .18em;font-style:normal;font-weight:800}
+  .fr i{border-top:2px solid currentColor}
+
+  /* ---- the teacher check panel: screen only, never printed ---- */
+  .check{margin-top:1.2rem;border-top:1px dashed var(--line);padding-top:1rem}
+  .check summary{cursor:pointer;font-size:.8rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .check p{font-size:.84rem;color:var(--muted);line-height:1.55}
+  .check-grid{margin-top:.9rem;display:grid;grid-template-columns:repeat(3,1fr);gap:0 1.2rem;font-size:.86rem}
+  .check-grid span.crow{display:flex;gap:.45rem;align-items:center;padding:.22rem 0;border-bottom:1px solid #f0f4f2}
+  .check-grid .n{color:var(--muted);font-weight:800;min-width:1.7rem}
+  .tally{margin-top:.8rem;font-size:.86rem;font-weight:800}
+  .tally.ok{color:#15803d}
+  .tally.warn{color:#b45309}
+  @media (max-width:640px){ .check-grid{grid-template-columns:1fr} }
+
+  /* =====================================================================
+     PRINT RULES — written first, not last.
+     Every sheet is its own page. Colour adjust is forced exact, or the
+     shading and the pink target tick print as pale grey nothing.
+     ===================================================================== */
+  @page{ size:A4; margin:12mm; }
+  @media print{
+    body{background:#fff;padding:0;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .no-print{display:none !important}
+    .wrap{max-width:none}
+    .sheet{border:0;box-shadow:none;padding:0;max-width:none;border-radius:0;margin:0}
+    .sheet + .sheet{break-before:page}
+    .q{font-size:10.5pt}
+    .q .say{font-size:7.6pt}
+    .q .big{font-size:15pt}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back no-print" href="../../../../index.html">← All resources</a>
+
+  <!-- ================= OPTIONS PANEL (screen only) ================= -->
+  <div class="panel no-print">
+    <h1>Fraction to Percentage</h1>
+    <p class="sub">Prints the same double number line the class was taught with. PLACEHOLDER: your instructions here.</p>
+
+    <div class="row">
+      <div class="field">
+        <label for="level">Level</label>
+        <select id="level">
+          <option value="friendly">Friendly — whole-number %</option>
+          <option value="term">Terminating — stops, like 12.5%</option>
+          <option value="rec">Recurring — never stops, like 33⅓%</option>
+          <option value="mixed">Mixed — all three</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="count">Questions</label>
+        <input type="number" id="count" value="16" min="2" max="72" step="2">
+      </div>
+      <div class="field">
+        <label for="versions">Versions</label>
+        <select id="versions">
+          <option value="1">One sheet</option>
+          <option value="2">Two — A and B</option>
+          <option value="3">Three — A, B and C</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="seed">Sheet code</label>
+        <input type="text" id="seed" value="" placeholder="auto">
+      </div>
+      <div class="field">
+        <label for="title">Sheet title</label>
+        <input type="text" id="title" value="Fraction to Percentage">
+      </div>
+    </div>
+
+    <div class="switches">
+      <label><input type="checkbox" id="showLine" checked> Show number line</label>
+      <label><input type="checkbox" id="improper"> Include past 100%</label>
+      <label><input type="checkbox" id="keys" checked> Answer key pages</label>
+    </div>
+
+    <div class="actions">
+      <button id="genBtn">Generate new sheet</button>
+      <button class="ghost" id="printBtn">Print</button>
+    </div>
+    <p class="sub" style="margin:.9rem 0 0">
+      The <strong>sheet code</strong> reproduces an identical sheet — type last term's
+      code to reprint exactly the same questions. <strong>Versions</strong> give the same
+      questions in a different order. With the number line showing, a page holds
+      <strong>8</strong> questions; without it, <strong>18</strong>.
+    </p>
+
+    <!-- =================================================================
+         THE CHECK PANEL — the same one as the other generators.
+         ================================================================= -->
+    <details class="check">
+      <summary>Teacher check — preview 20 and verify the level</summary>
+      <p>
+        Twenty questions from the current settings, with answers. Mark them by hand and
+        look for: answers of the wrong kind for the level you picked, denominators too
+        big to draw, and repeats. The line underneath re-derives every answer a second
+        way and counts how many are the kind the level promised.
+      </p>
+      <div class="actions" style="margin-top:0">
+        <button class="ghost" id="previewBtn">Generate 20</button>
+      </div>
+      <div class="check-grid" id="previewGrid"></div>
+      <div class="tally" id="tally"></div>
+    </details>
+  </div>
+
+  <!-- ================= THE SHEETS ================= -->
+  <div id="sheets"></div>
+</div>
+
+<script>
+/* =======================================================================
+   1. THE MATHS — the same core as the teaching tool and the quiz.
+   Reduce 100n/d as whole numbers and look at what is left on the bottom:
+   only 2s and 5s means the decimal stops, anything else means it recurs.
+   ======================================================================= */
+function gcd(a, b){ return b === 0 ? a : gcd(b, a % b); }
+function isTerminating(d){ while(d % 2 === 0) d /= 2; while(d % 5 === 0) d /= 5; return d === 1; }
+function pctOf(n, d){
+  const N = 100 * n, g = gcd(N, d) || 1, rn = N / g, rd = d / g;
+  return { value:N / d, kind: rd === 1 ? "int" : isTerminating(rd) ? "dec" : "rec",
+           whole:Math.floor(rn / rd), rem:rn % rd, rd };
+}
+function trim(x){ return String(Number(x.toFixed(8))); }
+function frHTML(n, d){ return '<span class="fr"><b>' + n + "</b><i>" + d + "</i></span>"; }
+/* Recurring percentages are written as exact mixed numbers — 33⅓%, never
+   33.33% and never 33.3... An answer key that rounds teaches rounding. */
+function pctHTML(n, d){
+  const p = pctOf(n, d);
+  if(p.kind !== "rec") return trim(p.value) + "%";
+  return (p.whole ? p.whole : "") + frHTML(p.rem, p.rd) + "%";
+}
+
+/* =======================================================================
+   2. A SEEDED RANDOM NUMBER GENERATOR — the same one as the times tables
+   creator. Plain Math.random() means you can never reprint the same sheet.
+   ======================================================================= */
+function makeRandom(seedText){
+  let h = 2166136261;
+  for(let i = 0; i < seedText.length; i++){ h ^= seedText.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return function(){
+    h += 0x6D2B79F5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function randomCode(){
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";   /* no I, L or O — unreadable handwritten */
+  let s = "";
+  for(let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+/* =======================================================================
+   3. THE QUESTION BANKS
+
+   Two lists per level. With the number line showing, anything past about
+   twenty parts is a grey smear at this size, so the levels are TRIMMED
+   rather than the ticks being crowded — trimming loses a few questions,
+   crowding loses the diagram.
+   ======================================================================= */
+const TIER_DENS      = { friendly:[2,4,5,10,20,25,50], term:[8,16,32,40,80], rec:[3,6,7,9,11,12,15] };
+const TIER_DENS_LINE = { friendly:[2,4,5,10,20],       term:[8,16],          rec:[3,6,7,9,11,12,15] };
+const TIER_KIND      = { friendly:"int", term:"dec", rec:"rec" };
+const TIER_NAME      = { friendly:"Friendly", term:"Terminating", rec:"Recurring", mixed:"Mixed" };
+const TIERS          = ["friendly", "term", "rec"];
+const MAX_TICKS      = 26;
+
+function buildQuestion(rand, tier, opts, seen){
+  const dens = (opts.showLine ? TIER_DENS_LINE : TIER_DENS)[tier];
+  const ri = (a, b) => a + Math.floor(rand() * (b - a + 1));
+
+  for(let tries = 0; tries < 400; tries++){
+    const d = dens[ri(0, dens.length - 1)];
+    let n;
+    if(opts.improper && rand() < 0.25){
+      n = d + ri(1, Math.min(d - 1, 8));
+      if(n / d > 2.2) continue;                       /* never much past two wholes */
+    } else {
+      n = ri(1, d - 1);
+    }
+    if(n <= 0 || n === d) continue;
+    if(opts.showLine && (n > d ? n + 1 : d) > MAX_TICKS) continue;
+
+    /* KEEP THE LEVEL HONEST AFTER REDUCING.
+       3/6 and 6/12 are drawn from the recurring bank and are actually 50%.
+       2/8 and 4/16 are drawn from the terminating bank and are actually 25%.
+       Classify by what 100n/d reduces to, not by the denominator you drew,
+       and throw the draw away when it does not match. Without this line a
+       "Recurring" worksheet silently contains whole numbers — and because
+       every individual question is correct, nothing looks wrong. */
+    if(pctOf(n, d).kind !== TIER_KIND[tier]) continue;
+
+    if(seen.has(n + "/" + d)) continue;
+    seen.add(n + "/" + d);
+    return { n, d, tier };
+  }
+  const d = dens[0];
+  return { n:Math.max(1, d - 1), d, tier };   /* a repeat beats a blank card */
+}
+
+/* =======================================================================
+   4. THE PICTURE ON THE PAPER — the teaching tool's first reveal.
+
+   The whole partitioned, the distance shaded, the fraction named above
+   its tick, and a ruled blank with a % sign below it. Everything the
+   student needs to count on, and nothing that does it for them.
+   ======================================================================= */
+const NS = "http://www.w3.org/2000/svg";
+function mk(tag, attrs, text){
+  const node = document.createElementNS(NS, tag);
+  for(const k in attrs) node.setAttribute(k, attrs[k]);
+  if(text !== undefined) node.textContent = text;
+  return node;
+}
+function svgText(x, y, text, o){
+  return mk("text", Object.assign({ x, y, "text-anchor":"middle", "font-size":13, "font-weight":800,
+    fill:"#10221c", "font-family":"ui-sans-serif,system-ui,sans-serif",
+    stroke:"#ffffff", "stroke-width":3.5, "paint-order":"stroke" }, o || {}), text);
+}
+function svgFrac(x, yMid, n, d, fill, size){
+  const g = mk("g", {});
+  const w = Math.max(String(n).length, String(d).length) * size * 0.62 + 4;
+  g.appendChild(svgText(x, yMid - size * 0.18, String(n), {"font-size":size, fill}));
+  g.appendChild(mk("line", {x1:x - w/2, y1:yMid + size*0.06, x2:x + w/2, y2:yMid + size*0.06,
+                            stroke:fill, "stroke-width":Math.max(1.6, size*0.09)}));
+  g.appendChild(svgText(x, yMid + size * 0.92, String(d), {"font-size":size, fill}));
+  return g;
+}
+
+/* Does a label of width w centred at x land on one of the labels already
+   reserved at the two ends of the line? Used to bump a colliding label onto a
+   second row instead of letting it print on top of "100%".
+
+   This is worth doing rather than hoping. A worksheet is generated fresh every
+   time, so "it looked fine when I tried it" means you tried 3/4 and not 15/16.
+   Anything positioned relative to a value the generator chooses has to survive
+   that value being at either extreme. */
+function clashes(x, w, boxes){
+  return boxes.some(b => Math.abs(x - b.x) < (w + b.w) / 2 + 4);
+}
+
+function lineSVG(q){
+  const svg = mk("svg", {viewBox:"0 0 520 178", role:"img",
+    "aria-label":"A number line with the whole split into " + q.d + " equal parts and " + q.n + " over " + q.d + " marked"});
+  const L = 46, R = 484, Y = 100;
+  const amax = q.n > q.d ? (q.n + 1) / q.d : 1;
+  const X = v => L + (v / amax) * (R - L);
+
+  /* shading first, so it sits behind the ticks */
+  svg.appendChild(mk("rect", {x:L, y:Y - 10, width:X(q.n/q.d) - L, height:8, rx:3,
+                              fill:"var(--frac)", "fill-opacity":.22}));
+  svg.appendChild(mk("line", {x1:L, y1:Y, x2:R, y2:Y, stroke:"#10221c", "stroke-width":2.6, "stroke-linecap":"round"}));
+
+  [[L, "0", "0%"], [X(1), "1 whole", "100%"]].forEach(([x, above, below]) => {
+    svg.appendChild(mk("line", {x1:x, y1:Y - 16, x2:x, y2:Y + 16, stroke:"#10221c", "stroke-width":3}));
+    svg.appendChild(svgText(x, Y - 22, above, {"font-size":13}));
+    svg.appendChild(svgText(x, Y + 34, below, {"font-size":13, fill:"var(--pct)"}));
+  });
+
+  const parts = Math.round(amax * q.d);
+  for(let k = 1; k <= parts; k++){
+    if(k === q.d) continue;
+    const x = X(k / q.d), target = (k === q.n);
+    svg.appendChild(mk("line", {x1:x, y1:Y - (target ? 15 : 9), x2:x, y2:Y + (target ? 15 : 9),
+                                stroke: target ? "var(--mark)" : "#10221c", "stroke-width": target ? 3 : 1.8}));
+  }
+
+  /* The fraction, named above its own tick — and the blank underneath it,
+     where the answer goes. Either can land on an endpoint label when the
+     fraction is close to 0 or to 1 whole (15/16 puts its label straight
+     through "1 whole"), so each takes a second row rather than being
+     dropped or printed on top. */
+  const xt = X(q.n / q.d);
+  const wFrac = Math.max(String(q.n).length, String(q.d).length) * 17 * 0.62 + 10;
+  const bumpUp   = clashes(xt, wFrac, [{x:L, w:22}, {x:X(1), w:78}]);
+  const bumpDown = clashes(xt + 7, 66, [{x:L, w:40}, {x:X(1), w:62}]);
+
+  svg.appendChild(svgFrac(xt, Y - (bumpUp ? 76 : 48), q.n, q.d, "var(--mark)", 17));
+
+  const yBlank = Y + (bumpDown ? 58 : 40);
+  svg.appendChild(mk("line", {x1:xt - 26, y1:yBlank, x2:xt + 22, y2:yBlank, stroke:"var(--mark)", "stroke-width":1.6}));
+  svg.appendChild(svgText(xt + 32, yBlank, "%", {"font-size":14, fill:"var(--mark)", "text-anchor":"start"}));
+  return svg;
+}
+
+/* =======================================================================
+   5. GENERATE — build the array ONCE, then render from it.
+   ======================================================================= */
+const el = id => document.getElementById(id);
+const LETTERS = ["A", "B", "C"];
+let sheets = [];
+
+const perPage = () => el("showLine").checked ? 8 : 18;
+
+function shuffledWith(rand, list){
+  const out = list.slice();
+  for(let i = out.length - 1; i > 0; i--){
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function buildQuestions(code, opts){
+  const rand = makeRandom(code), seen = new Set(), out = [];
+  for(let i = 0; i < opts.count; i++){
+    /* Mixed deals the three levels round-robin, so the spread is even, then
+       the whole list is shuffled so the order is not predictable. */
+    const tier = opts.level === "mixed" ? TIERS[i % 3] : opts.level;
+    out.push(buildQuestion(rand, tier, opts, seen));
+    if(seen.size > 90) seen.clear();       /* don't starve a long worksheet */
+  }
+  return opts.level === "mixed" ? shuffledWith(rand, out) : out;
+}
+
+function generate(){
+  const code = (el("seed").value.trim() || randomCode()).toUpperCase();
+  el("seed").value = code;
+
+  const opts = {
+    level:    el("level").value,
+    showLine: el("showLine").checked,
+    improper: el("improper").checked,
+    count:    Math.max(2, Math.min(72, +el("count").value || 16))
+  };
+  const nVer = Math.max(1, Math.min(3, +el("versions").value || 1));
+  const base = buildQuestions(code, opts);
+
+  /* Version A is the base order; B and C are reorderings of the SAME
+     questions, each seeded from the code plus its own letter — so every
+     version is the same paper, and the marking is identical. */
+  sheets = LETTERS.slice(0, nVer).map((letter, i) => ({
+    letter, code,
+    questions: i === 0 ? base : shuffledWith(makeRandom(code + "-" + letter), base)
+  }));
+  render(opts);
+}
+
+/* The title goes into innerHTML and a teacher will one day type
+   "Fractions & <Year 7>" into it. Escape it. */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function questionCard(q, i, showLine, answer){
+  const card = document.createElement("div");
+  card.className = "q";
+  card.innerHTML =
+    '<span class="badge">' + (i + 1) + "</span>" +
+    '<span class="say">' + (showLine ? "Write the marked fraction as a percentage."
+                                     : "Write the fraction as a percentage.") + "</span>";
+  if(showLine){
+    card.appendChild(lineSVG(q));
+  } else {
+    const big = document.createElement("div");
+    big.className = "big";
+    big.innerHTML = frHTML(q.n, q.d) + " &nbsp;=";
+    card.appendChild(big);
+  }
+  const ans = document.createElement("div");
+  ans.className = "ans";
+  ans.innerHTML = "Answer:" + (answer
+    ? '<span class="box filled">' + pctHTML(q.n, q.d) + "</span>"
+    : '<span class="box"></span>');
+  card.appendChild(ans);
+  return card;
+}
+
+function render(opts){
+  const title = el("title").value || "Fraction to Percentage";
+  const per   = perPage();
+  const multi = sheets.length > 1;
+  const wantKeys = el("keys").checked;
+  const host  = el("sheets");
+  host.replaceChildren();
+
+  /* A page of questions, and — separately, at the end — the same pages again
+     with the answers filled in. Same array both times, so a key can never
+     drift out of step with the sheet a student is holding. */
+  const pagesFor = (s, answers) => {
+    const total = Math.ceil(s.questions.length / per);
+    for(let pg = 0; pg < total; pg++){
+      const sheet = document.createElement("div");
+      sheet.className = "sheet" + (answers ? " key" : "");
+      sheet.innerHTML =
+        '<div class="sheet-head"><h2>' + escapeHtml(title) + "</h2>" +
+        '<div class="meta">' +
+          (answers ? "<span>&nbsp;</span>"
+                   : '<span>Name: <span class="name-line" style="width:150px"></span></span>' +
+                     '<span>Class: <span class="name-line" style="width:100px"></span></span>') +
+          "<span>" + TIER_NAME[opts.level] + " &middot; Sheet " + s.code +
+            (multi ? ' &middot; <span class="ver">Version ' + s.letter + "</span>" : "") +
+            " &middot; page " + (pg + 1) + " of " + total + "</span>" +
+        "</div></div>";
+      const grid = document.createElement("div");
+      grid.className = "grid" + (opts.showLine ? " withLine" : "");
+      s.questions.slice(pg * per, (pg + 1) * per)
+        .forEach((q, i) => grid.appendChild(questionCard(q, pg * per + i, opts.showLine, answers)));
+      sheet.appendChild(grid);
+      host.appendChild(sheet);
+    }
+  };
+
+  sheets.forEach(s => pagesFor(s, false));
+  if(wantKeys) sheets.forEach(s => pagesFor(s, true));
+}
+
+/* =======================================================================
+   6. THE TEACHER CHECK PANEL
+
+   Worth knowing before you ask for a long sheet: some levels have far
+   fewer questions in them than they look like they do. "Terminating" with
+   the number line showing is only eighths and sixteenths — and half of
+   those reduce to whole-number percentages and get thrown out — so there
+   are twelve distinct proper fractions in the whole level. Ask for twenty
+   and you will get repeats, and there is nothing the generator can do
+   about it except tell you. Counting the pool is more useful than
+   pretending.
+   ======================================================================= */
+function poolSize(opts){
+  if(opts.level === "mixed") return "plenty of";
+  const dens = (opts.showLine ? TIER_DENS_LINE : TIER_DENS)[opts.level];
+  let count = 0;
+  dens.forEach(d => { for(let n = 1; n < d; n++) if(pctOf(n, d).kind === TIER_KIND[opts.level]) count++; });
+  return count;
+}
+
+el("previewBtn").addEventListener("click", () => {
+  const opts = {
+    level:    el("level").value,
+    showLine: el("showLine").checked,
+    improper: el("improper").checked,
+    count:    20
+  };
+  const qs = buildQuestions(randomCode(), opts);
+  el("previewGrid").innerHTML = qs.map((q, i) =>
+    '<span class="crow"><span class="n">' + (i + 1) + ".</span> " +
+    frHTML(q.n, q.d) + " = " + pctHTML(q.n, q.d) + "</span>"
+  ).join("");
+
+  /* Re-derive the kind a second way and count. If the level says
+     "Recurring" and this line says anything other than 20 out of 20, the
+     after-reducing check in buildQuestion() has stopped working. */
+  const want = opts.level === "mixed" ? null : TIER_KIND[opts.level];
+  const hit  = qs.filter(q => want === null || pctOf(q.n, q.d).kind === want).length;
+  const dup  = qs.length - new Set(qs.map(q => q.n + "/" + q.d)).size;
+  const t = el("tally");
+  t.className = "tally " + (hit === qs.length && !dup ? "ok" : "warn");
+  t.textContent =
+    (want === null
+      ? "Mixed: " + qs.filter(q => pctOf(q.n,q.d).kind === "int").length + " whole, " +
+        qs.filter(q => pctOf(q.n,q.d).kind === "dec").length + " terminating, " +
+        qs.filter(q => pctOf(q.n,q.d).kind === "rec").length + " recurring."
+      : hit + " of " + qs.length + " are " + TIER_NAME[opts.level].toLowerCase() + " percentages.") +
+    (dup
+      ? " " + dup + " repeats — there are only " + poolSize(opts) + " fractions of this kind that fit" +
+        (opts.showLine ? " on a number line this size. Turn the number line off, or shorten the sheet."
+                       : ". Shorten the sheet, or use Mixed.")
+      : " No repeats.");
+});
+
+/* =======================================================================
+   7. WIRING
+   ======================================================================= */
+el("genBtn").addEventListener("click", () => { el("seed").value = ""; generate(); });
+el("printBtn").addEventListener("click", () => window.print());
+["level","count","versions","title","improper","keys"].forEach(id =>
+  el(id).addEventListener("change", generate));
+/* Changing the layout changes how many fit on a page, so snap the count to a
+   full page — otherwise the teacher is left with two questions on page 3. */
+el("showLine").addEventListener("change", () => {
+  el("count").value = perPage() * 2;
+  el("seed").value = "";
+  generate();
+});
+el("level").addEventListener("change", () => { el("seed").value = ""; generate(); });
+
+generate();
+</script>
+</body>
+</html>

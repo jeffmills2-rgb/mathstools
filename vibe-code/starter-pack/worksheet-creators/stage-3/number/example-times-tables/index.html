@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Times Tables Practice — Worksheet Creator</title>
+
+<!--
+  =========================================================================
+  EXAMPLE WORKSHEET CREATOR — makes a printable page.
+
+  The shape of every worksheet creator in this template:
+    1. OPTIONS PANEL  — teacher choices, on screen only (class="no-print")
+    2. generate()     — builds an array of {prompt, answer} objects
+    3. THE SHEETS     — plain HTML laid out for A4, printed by the browser
+
+  The two things people always get wrong the first time:
+    a) They style for the screen and print comes out wrong. Write the print
+       rules FIRST (@media print at the bottom of this file) and check with
+       Ctrl/Cmd+P before you polish anything.
+    b) They regenerate the questions when you click Print. Don't — the
+       answer key must match the sheet the student is holding. Generate
+       once into an array, render from the array.
+
+  THE SHEET CODE is a seed. The same code always produces the same
+  questions, so you can reprint an identical sheet next term without
+  keeping the file.
+
+  VERSIONS A/B/C are the same questions in a different order. Same code,
+  same difficulty, same marking — but the person next to you has them in
+  a different order. This falls straight out of having a seed, which is
+  the best argument for bothering with one.
+  =========================================================================
+-->
+
+<style>
+  :root{
+    --brand:#047857;      /* PLACEHOLDER: match your homepage token */
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:1.5rem 1rem 4rem;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);background:#f6f9f6;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:1rem;color:var(--brand);text-decoration:none;font-weight:800;font-size:.86rem}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.5rem;box-shadow:0 8px 20px rgba(16,34,28,.06);margin-bottom:1.5rem}
+  h1{margin:0 0 .3rem;font-size:1.5rem;letter-spacing:-.03em}
+  .sub{margin:0 0 1.4rem;color:var(--muted);font-size:.92rem}
+
+  fieldset{border:1px solid var(--line);border-radius:16px;padding:.9rem 1rem 1rem;margin:0 0 1rem}
+  legend{font-size:.76rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 .4rem}
+  .tables{display:flex;gap:.45rem;flex-wrap:wrap}
+  .tables label{
+    display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--line);border-radius:999px;
+    padding:.38rem .7rem;font-size:.85rem;font-weight:850;cursor:pointer;user-select:none;background:#fff
+  }
+  .tables input{accent-color:var(--brand)}
+  .row{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:.3rem}
+  .field label{font-size:.76rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .field input,.field select{padding:.5rem .7rem;border:1px solid var(--line);border-radius:12px;font-weight:800;min-width:130px}
+  .actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.4rem}
+  button{
+    padding:.65rem 1.15rem;font-size:.9rem;font-weight:900;cursor:pointer;
+    border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff
+  }
+  button.ghost{background:#fff;color:var(--brand)}
+
+  /* ---------- the sheet itself ---------- */
+  .sheet{
+    background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:18mm 16mm;max-width:210mm;margin:0 auto 1.5rem;
+    box-shadow:0 18px 40px rgba(16,34,28,.11);
+  }
+  .sheet-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.2rem}
+  .sheet-head h2{margin:0;font-size:1.25rem;letter-spacing:-.02em}
+  .sheet-head .meta{display:flex;justify-content:space-between;gap:1rem;margin-top:.5rem;font-size:.85rem;color:var(--muted);flex-wrap:wrap}
+  .name-line{flex:1;min-width:200px;border-bottom:1px solid var(--ink);height:1.4rem}
+  .ver{font-weight:900;color:var(--ink)}
+
+  .q-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem 1.4rem}
+  .q{display:flex;align-items:baseline;gap:.5rem;padding:.28rem 0;font-size:1.02rem;break-inside:avoid}
+  .q .n{color:var(--muted);font-weight:800;font-size:.82rem;min-width:1.8rem}
+  .q .p{font-weight:700;font-variant-numeric:tabular-nums}
+  .q .space{flex:1;border-bottom:1px dotted #93a49c;min-width:2.4rem;align-self:flex-end}
+
+  /* All the answer keys together, on their own page — one sheet of paper the
+     teacher keeps, however many versions were printed. */
+  .answers{
+    background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:18mm 16mm;max-width:210mm;margin:0 auto;
+    box-shadow:0 18px 40px rgba(16,34,28,.11);
+  }
+  .answers h3{margin:0 0 .8rem;font-size:1rem;letter-spacing:-.02em;border-bottom:2px solid var(--ink);padding-bottom:.4rem}
+  .a-block{margin-bottom:1.4rem;break-inside:avoid}
+  .a-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem 1rem;font-size:.86rem}
+  .a-grid span{font-variant-numeric:tabular-nums}
+  .a-grid .n{color:var(--muted);font-weight:800}
+
+  /* ---- the check panel: teacher-facing, never printed ---- */
+  .check{margin-top:1.2rem;border-top:1px dashed var(--line);padding-top:1rem}
+  .check summary{cursor:pointer;font-size:.8rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .check p{font-size:.84rem;color:var(--muted);line-height:1.55}
+  .check-grid{margin-top:.9rem;display:grid;grid-template-columns:repeat(2,1fr);gap:0 1.2rem;font-size:.86rem}
+  .check-grid span.row{display:flex;gap:.45rem;align-items:baseline;padding:.2rem 0;border-bottom:1px solid #f0f4f2;font-variant-numeric:tabular-nums}
+  .check-grid .n{color:var(--muted);font-weight:800;min-width:1.7rem}
+  .tally{margin-top:.8rem;font-size:.86rem;font-weight:800}
+  .tally.ok{color:#15803d}
+  .tally.warn{color:#b45309}
+  @media (max-width:520px){ .check-grid{grid-template-columns:1fr} }
+
+  /* =====================================================================
+     PRINT RULES — write these first, not last.
+     Hide the controls, drop the shadows, let the paper be paper.
+     Each version starts a new page; the answer keys go on the last page.
+     ===================================================================== */
+  @page{ size:A4; margin:14mm; }
+  @media print{
+    body{background:#fff;padding:0;margin:0}
+    .no-print{display:none !important}
+    .wrap{max-width:none}
+    .sheet,.answers{border:0;box-shadow:none;padding:0;max-width:none;border-radius:0;margin:0}
+    .sheet + .sheet{break-before:page}
+    .q{font-size:11.5pt}
+    .q .space{border-bottom:1px solid #000}
+    .answers{break-before:page}
+    .answers.hide-in-print{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back no-print" href="../../../../index.html">← All resources</a>
+
+  <!-- ================= OPTIONS PANEL (screen only) ================= -->
+  <div class="panel no-print">
+    <h1>Times Tables Practice</h1>
+    <p class="sub">Choose the tables and the length, then print. PLACEHOLDER: your instructions here.</p>
+
+    <fieldset>
+      <legend>Tables to include</legend>
+      <div class="tables" id="tables"></div>
+    </fieldset>
+
+    <div class="row">
+      <div class="field">
+        <label for="count">Questions</label>
+        <input type="number" id="count" value="30" min="6" max="120" step="6">
+      </div>
+      <div class="field">
+        <label for="mode">Question type</label>
+        <select id="mode">
+          <option value="mult">Multiplication only</option>
+          <option value="div">Division only</option>
+          <option value="mixed">Mixed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="versions">Versions</label>
+        <select id="versions">
+          <option value="1">One sheet</option>
+          <option value="2">Two — A and B</option>
+          <option value="3">Three — A, B and C</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="seed">Sheet code</label>
+        <input type="text" id="seed" value="" placeholder="auto">
+      </div>
+      <div class="field">
+        <label for="title">Sheet title</label>
+        <input type="text" id="title" value="Times Tables Practice">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="genBtn">Generate new sheet</button>
+      <button class="ghost" id="printBtn">Print worksheets</button>
+      <button class="ghost" id="printAnsBtn">Print with answer keys</button>
+      <button class="ghost" id="toggleAnsBtn">Show answers on screen</button>
+    </div>
+    <p class="sub" style="margin:.9rem 0 0">
+      The <strong>sheet code</strong> reproduces an identical sheet — type last week's
+      code to reprint exactly the same questions. <strong>Versions</strong> give the
+      same questions in a different order, so neighbours can't copy but the marking
+      is identical.
+    </p>
+
+    <!-- =================================================================
+         THE CHECK PANEL.
+         WORKSHOP.md tells you to generate twenty questions and mark them by
+         hand before you trust a generator. This is that instruction, as a
+         button. It also counts how many questions on the current sheet are
+         repeats — the failure that the shuffle bag in generate() exists to
+         prevent, and the one students spot first.
+         ================================================================= -->
+    <details class="check">
+      <summary>Teacher check — preview 20 and count repeats</summary>
+      <p>
+        Twenty questions from the current settings, with answers. Mark them by hand
+        and look for: questions outside the tables you ticked, divisions that don't
+        come out exactly, answers that don't match, and repeats.
+      </p>
+      <div class="actions" style="margin-top:0">
+        <button class="ghost" id="previewBtn">Generate 20</button>
+      </div>
+      <div class="check-grid" id="previewGrid"></div>
+      <div class="tally" id="tally"></div>
+    </details>
+  </div>
+
+  <!-- ================= THE SHEETS ================= -->
+  <div id="sheets"></div>
+
+  <!-- ================= THE ANSWER KEYS ================= -->
+  <div class="answers hide-in-print" id="answers" style="display:none">
+    <h3 id="ansHead">Answers</h3>
+    <div id="answerBlocks"></div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   A SEEDED RANDOM NUMBER GENERATOR.
+   Plain Math.random() means you can never reprint the same sheet. This
+   small function takes a text code and always produces the same sequence
+   from it — so "Sheet A1B2" is reproducible forever.
+
+   It is also what makes versions A/B/C possible: seed the shuffle with
+   the code plus the version letter and you get a different ORDER of the
+   same questions, every time, reproducibly.
+   ======================================================================= */
+function makeRandom(seedText){
+  let h = 2166136261;
+  for(let i = 0; i < seedText.length; i++){
+    h ^= seedText.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return function(){
+    h += 0x6D2B79F5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function randomCode(){
+  /* No I, L or O — nobody can read a handwritten "SheetI1O0". */
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for(let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+const el = id => document.getElementById(id);
+const LETTERS = ["A", "B", "C"];
+
+/* ---------- build the table checkboxes ---------- */
+const DEFAULT_TABLES = [3, 4, 6, 7, 8];
+el("tables").innerHTML = Array.from({length: 11}, (_, i) => i + 2).map(n =>
+  '<label><input type="checkbox" value="' + n + '"' +
+  (DEFAULT_TABLES.includes(n) ? " checked" : "") + '> ' + n + '×</label>'
+).join("");
+
+/* =======================================================================
+   GENERATE — build the array of questions ONCE, then render from it.
+   ======================================================================= */
+let sheets = [];      /* [{letter, code, questions:[{prompt, answer}]}] */
+
+function chosenTables(){
+  const picked = Array.from(document.querySelectorAll("#tables input:checked")).map(i => +i.value);
+  return picked.length ? picked : DEFAULT_TABLES;
+}
+
+function shuffledWith(rand, list){
+  const out = list.slice();
+  for(let i = out.length - 1; i > 0; i--){
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/* Build ONE set of questions from a seed. Versions reorder this set; they
+   never regenerate it, so every version is the same questions and the same
+   difficulty. */
+function buildQuestions(code, tables, count, mode){
+  const rand = makeRandom(code);
+
+  /* ---- A SHUFFLE BAG, so the sheet doesn't repeat itself ----------------
+     Picking each question at random independently means duplicates appear
+     almost immediately — with 5 tables × 11 multipliers there are only 55
+     possible facts, so a 30-question sheet will usually repeat several.
+     Students notice, and it wastes half the practice.
+
+     Instead: build every possible fact once, shuffle the whole list, and deal
+     from the top. Only when the bag runs out do we refill and shuffle again.
+     This is worth remembering — "sample without replacement" is what people
+     almost always mean when they say "random questions".
+
+     Measured over 2000 sheets of 30 questions from five tables: picking each
+     question independently at random averages 6.75 repeats per sheet. The
+     shuffle bag averages none. The check panel above counts the repeats on
+     your current sheet, so you can see this rather than take it on trust.
+     -------------------------------------------------------------------- */
+  const allFacts = [];
+  tables.forEach(a => { for(let b = 2; b <= 12; b++) allFacts.push([a, b]); });
+
+  let bag = shuffledWith(rand, allFacts);
+  const questions = [];
+
+  for(let i = 0; i < count; i++){
+    if(bag.length === 0) bag = shuffledWith(rand, allFacts);   /* refill only when empty */
+    const [a, b] = bag.pop();
+
+    const asDivision =
+      mode === "div"   ? true :
+      mode === "mixed" ? rand() < 0.5 : false;
+
+    /* Division is always written as (a × b) ÷ a, so it always comes out
+       exactly. A generator that picks two numbers and divides them will
+       cheerfully produce 8 ÷ 3 on a whole-number sheet. */
+    questions.push(asDivision
+      ? { prompt: (a * b) + " ÷ " + a + " =", answer: b }
+      : { prompt: a + " × " + b + " =",       answer: a * b });
+  }
+  return questions;
+}
+
+function generate(){
+  const code   = (el("seed").value.trim() || randomCode()).toUpperCase();
+  el("seed").value = code;
+
+  const tables = chosenTables();
+  const count  = Math.max(6, Math.min(120, +el("count").value || 30));
+  const mode   = el("mode").value;
+  const nVer   = Math.max(1, Math.min(3, +el("versions").value || 1));
+
+  const base = buildQuestions(code, tables, count, mode);
+
+  /* Version A is the base order. B and C are reorderings of the SAME
+     questions, each seeded from the code plus its own letter. */
+  sheets = LETTERS.slice(0, nVer).map((letter, i) => ({
+    letter,
+    code,
+    questions: i === 0 ? base : shuffledWith(makeRandom(code + "-" + letter), base)
+  }));
+
+  render();
+}
+
+function render(){
+  const title = el("title").value || "Times Tables Practice";
+  const multi = sheets.length > 1;
+
+  el("sheets").innerHTML = sheets.map(s =>
+    '<div class="sheet">' +
+      '<div class="sheet-head">' +
+        "<h2>" + escapeHtml(title) + "</h2>" +
+        '<div class="meta">' +
+          '<span>Name: <span class="name-line" style="display:inline-block;width:180px"></span></span>' +
+          '<span>Class: <span class="name-line" style="display:inline-block;width:110px"></span></span>' +
+          "<span>Sheet " + s.code + (multi ? ' &middot; <span class="ver">Version ' + s.letter + "</span>" : "") + "</span>" +
+        "</div>" +
+      "</div>" +
+      '<div class="q-grid">' +
+        s.questions.map((q, i) =>
+          '<div class="q"><span class="n">' + (i + 1) + '.</span>' +
+          '<span class="p">' + q.prompt + '</span><span class="space"></span></div>'
+        ).join("") +
+      "</div>" +
+    "</div>"
+  ).join("");
+
+  el("ansHead").textContent = "Answers — Sheet " + (sheets[0] ? sheets[0].code : "");
+  el("answerBlocks").innerHTML = sheets.map(s =>
+    '<div class="a-block">' +
+      (multi ? "<h3>Version " + s.letter + "</h3>" : "") +
+      '<div class="a-grid">' +
+        s.questions.map((q, i) =>
+          '<span><span class="n">' + (i + 1) + ".</span> " + q.answer + "</span>"
+        ).join("") +
+      "</div>" +
+    "</div>"
+  ).join("");
+}
+
+/* The sheet title goes into innerHTML, and a teacher will one day type
+   "Fractions & Decimals <Year 7>" into it. Escape it. */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+/* ---------- the teacher check panel ---------- */
+function preview(){
+  const qs = buildQuestions(randomCode(), chosenTables(), 20, el("mode").value);
+  el("previewGrid").innerHTML = qs.map((q, i) =>
+    '<span class="row"><span class="n">' + (i + 1) + ".</span> " + q.prompt + " " + q.answer + "</span>"
+  ).join("");
+
+  /* Count repeats on the sheet currently generated, not on this preview —
+     that is the number that matters. */
+  const current = sheets[0] ? sheets[0].questions : qs;
+  const seen = new Set(), dupes = current.filter(q => seen.size === seen.add(q.prompt).size);
+  const t = el("tally");
+  t.className = "tally " + (dupes.length ? "warn" : "ok");
+  t.textContent = dupes.length
+    ? dupes.length + " of the " + current.length + " questions on the current sheet are repeats — " +
+      "there aren't enough facts in the tables you ticked. Tick more tables or shorten the sheet."
+    : "No repeats on the current sheet (" + current.length + " questions).";
+}
+
+/* ---------- wiring ---------- */
+el("genBtn").addEventListener("click", () => { el("seed").value = ""; generate(); });
+el("printBtn").addEventListener("click", () => {
+  el("answers").classList.add("hide-in-print");
+  window.print();
+});
+el("printAnsBtn").addEventListener("click", () => {
+  el("answers").style.display = "block";
+  el("answers").classList.remove("hide-in-print");
+  window.print();
+});
+el("toggleAnsBtn").addEventListener("click", () => {
+  const shown = el("answers").style.display !== "none";
+  el("answers").style.display = shown ? "none" : "block";
+  el("toggleAnsBtn").textContent = shown ? "Show answers on screen" : "Hide answers";
+});
+["count","mode","title","versions"].forEach(id => el(id).addEventListener("change", generate));
+document.querySelectorAll("#tables input").forEach(i =>
+  i.addEventListener("change", () => { el("seed").value = ""; generate(); }));
+el("previewBtn").addEventListener("click", preview);
+
+generate();
+</script>
+</body>
+</html>

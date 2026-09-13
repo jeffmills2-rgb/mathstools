@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraction Bar — Interactive Tool</title>
+
+<!--
+  =========================================================================
+  EXAMPLE INTERACTIVE TOOL — a thing you drive on the board.
+
+  The shape of every interactive tool in this template:
+    1. STATE      — a few plain variables describing what is being shown
+    2. render()   — draws the whole picture from that state, every time
+    3. controls   — anything a teacher touches changes STATE, then render()
+
+  That "redraw everything from state" pattern is worth insisting on. It is
+  slower in theory and far easier to reason about in practice — you never
+  end up with a half-updated diagram.
+
+  The picture is inline SVG, so it scales to any projector without blurring
+  and can be styled with the same CSS variables as the rest of the site.
+
+  Two details in here are worth stealing:
+
+  * PIN A FRACTION, then change the denominator. The pinned length stays on
+    screen against the same whole, so 2/4 and 4/8 can be seen to be the same
+    length rather than asserted to be. Equivalence is the main reason to own
+    a fraction bar at all, and a bar that shows one fraction cannot do it.
+
+  * THE DECIMAL IS TOLD HONESTLY. 1/3 shows as 0.3̇, not 0.3333. A tool that
+    puts "1/3 = 0.3333" on the board is teaching something false, and it is
+    exactly the kind of plausible-looking wrongness AI-written maths code
+    produces by default. See decimalString() further down.
+  =========================================================================
+-->
+
+<style>
+  :root{
+    --brand:#047857;        /* PLACEHOLDER: match your homepage token */
+    --brand-soft:#d1fae5;
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+    --fill:#059669;
+    --pin:#b45309;          /* the pinned fraction — deliberately not the brand colour */
+    --pin-soft:#fef3c7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:1.5rem 1rem 4rem;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);background:#f6f9f6;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:1rem;color:var(--brand);text-decoration:none;font-weight:800;font-size:.86rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.6rem;box-shadow:0 8px 20px rgba(16,34,28,.06)}
+  h1{margin:0 0 .3rem;font-size:1.5rem;letter-spacing:-.03em}
+  .sub{margin:0 0 1.5rem;color:var(--muted);font-size:.92rem}
+
+  .controls{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.4rem}
+  .control{display:flex;flex-direction:column;gap:.35rem}
+  .control label{font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .control .value{font-size:1.6rem;font-weight:900;letter-spacing:-.04em;line-height:1}
+  input[type=range]{width:200px;accent-color:var(--brand)}
+  .toggles{display:flex;gap:.5rem;flex-wrap:wrap;margin-left:auto;align-items:center}
+  .toggles label{
+    display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);
+    border-radius:999px;padding:.42rem .8rem;font-size:.83rem;font-weight:850;background:#fff;cursor:pointer;user-select:none
+  }
+  .toggles input{accent-color:var(--brand)}
+  button.pin{
+    border-radius:999px;padding:.44rem .9rem;font-size:.83rem;font-weight:900;cursor:pointer;
+    border:1px solid var(--pin);background:#fff;color:var(--pin)
+  }
+  button.pin.on{background:var(--pin);color:#fff}
+
+  .stage{background:#fbfdfa;border:1px solid var(--line);border-radius:18px;padding:1.4rem 1rem;margin-bottom:1.2rem}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  .readout{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center}
+  .chip{
+    border-radius:999px;background:var(--brand-soft);color:#065f46;
+    padding:.5rem .95rem;font-size:1rem;font-weight:900
+  }
+  .chip.muted{background:#eef3f0;color:#4c5b55}
+  .chip.pinned{background:var(--pin-soft);color:var(--pin)}
+  .chip.match{background:var(--pin);color:#fff}
+  .hint{margin-top:1.2rem;color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../../../../index.html">← All resources</a>
+
+  <div class="card">
+    <h1>Fraction Bar</h1>
+    <p class="sub">The same fraction as a part of a whole, as a point on a number line, and as a decimal. Pin one, change the denominator, then find the equivalent. PLACEHOLDER: your teaching note here.</p>
+
+    <div class="controls">
+      <div class="control">
+        <label for="den">Denominator</label>
+        <span class="value" id="denValue">4</span>
+        <input type="range" id="den" min="2" max="20" value="4" step="1">
+      </div>
+      <div class="control">
+        <label for="num">Numerator</label>
+        <span class="value" id="numValue">3</span>
+        <input type="range" id="num" min="0" max="4" value="3" step="1">
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="showBar" checked> Bar</label>
+        <label><input type="checkbox" id="showLine" checked> Number line</label>
+        <label><input type="checkbox" id="showDecimal"> Decimal</label>
+        <label><input type="checkbox" id="showSimplify"> Simplify</label>
+        <button class="pin" id="pinBtn">Pin this fraction</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <svg id="canvas" viewBox="0 0 800 285" role="img" aria-labelledby="svgTitle">
+        <title id="svgTitle">A fraction shown as a bar and on a number line</title>
+      </svg>
+    </div>
+
+    <div class="readout" id="readout"></div>
+    <p class="hint">Click anywhere on the bar or the number line to move the fraction. Arrow keys nudge it.</p>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   1. STATE — everything the picture depends on, in one place.
+   ======================================================================= */
+const state = {
+  num: 3,
+  den: 4,
+  showBar: true,
+  showLine: true,
+  showDecimal: false,
+  showSimplify: false,
+  pin: null            /* {num, den} once a fraction is pinned, else null */
+};
+
+const el = id => document.getElementById(id);
+const svg = el("canvas");
+const NS  = "http://www.w3.org/2000/svg";
+
+/* Geometry constants — one place to change the layout. */
+const L = 60, R = 740, W = R - L;   /* left, right, width of the drawing area */
+const BAR_Y = 34, BAR_H = 64;
+const PIN_Y = 116, PIN_H = 18;      /* the pinned-length strip, under the bar */
+const LINE_Y = 200;
+
+/* =======================================================================
+   2. RENDER — wipes the SVG and redraws it from state. Every time.
+   ======================================================================= */
+function make(tag, attrs, text){
+  const node = document.createElementNS(NS, tag);
+  for(const k in attrs) node.setAttribute(k, attrs[k]);
+  if(text !== undefined) node.textContent = text;
+  return node;
+}
+
+function render(){
+  /* keep the numerator inside the denominator */
+  el("num").max = state.den;
+  if(state.num > state.den) state.num = state.den;
+
+  el("denValue").textContent = state.den;
+  el("numValue").textContent = state.num;
+  el("num").value = state.num;
+  el("den").value = state.den;
+
+  el("pinBtn").textContent = state.pin ? "Clear pin" : "Pin this fraction";
+  el("pinBtn").classList.toggle("on", !!state.pin);
+
+  /* Wipe the picture, then put the accessible <title> back. Clearing everything
+     and redrawing is the whole point of the pattern — see the note at the top. */
+  svg.replaceChildren();
+  svg.appendChild(make("title", {id:"svgTitle"}, "A fraction shown as a bar and on a number line"));
+
+  const frac    = state.num / state.den;
+  const pinFrac = state.pin ? state.pin.num / state.pin.den : null;
+
+  /* ---------- the bar ---------- */
+  if(state.showBar){
+    const w = W / state.den;
+    for(let i = 0; i < state.den; i++){
+      svg.appendChild(make("rect", {
+        x: L + i * w, y: BAR_Y, width: w, height: BAR_H,
+        fill: i < state.num ? "var(--fill)" : "#ffffff",
+        stroke: "#10221c", "stroke-width": 1.5,
+        opacity: i < state.num ? 0.92 : 1
+      }));
+    }
+    svg.appendChild(make("rect", {
+      x: L, y: BAR_Y, width: W, height: BAR_H,
+      fill: "none", stroke: "#10221c", "stroke-width": 2.5
+    }));
+    svg.appendChild(make("text", {
+      x: L, y: BAR_Y - 12, "font-size": 15, "font-weight": 800, fill: "#5b6b64"
+    }, "0"));
+    svg.appendChild(make("text", {
+      x: R, y: BAR_Y - 12, "font-size": 15, "font-weight": 800, fill: "#5b6b64",
+      "text-anchor": "end"
+    }, "1 whole"));
+  }
+
+  /* ---------- the pinned fraction ----------------------------------------
+     A second strip using the SAME left edge and the SAME total width, so
+     "the same length" is something a student can see rather than something
+     you assert. The dashed line carries the comparison up through the bar
+     and down through the number line at once.
+     ---------------------------------------------------------------------- */
+  if(pinFrac !== null){
+    const px = L + W * pinFrac;
+
+    svg.appendChild(make("rect", {
+      x: L, y: PIN_Y, width: W, height: PIN_H,
+      fill: "#fff", stroke: "var(--pin)", "stroke-width": 1.5, opacity: .55
+    }));
+    svg.appendChild(make("rect", {
+      x: L, y: PIN_Y, width: W * pinFrac, height: PIN_H,
+      fill: "var(--pin)", opacity: .85
+    }));
+    svg.appendChild(make("text", {
+      x: L - 8, y: PIN_Y + PIN_H - 3, "text-anchor": "end",
+      "font-size": 15, "font-weight": 900, fill: "var(--pin)"
+    }, state.pin.num + "/" + state.pin.den));
+    svg.appendChild(make("text", {
+      x: R + 6, y: PIN_Y + PIN_H - 3, "font-size": 13, "font-weight": 800, fill: "var(--pin)"
+    }, "pinned"));
+
+    svg.appendChild(make("line", {
+      x1: px, y1: BAR_Y - 6, x2: px, y2: LINE_Y + 18,
+      stroke: "var(--pin)", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: .9
+    }));
+  }
+
+  /* ---------- the number line ---------- */
+  if(state.showLine){
+    svg.appendChild(make("line", {
+      x1: L, y1: LINE_Y, x2: R, y2: LINE_Y, stroke: "#10221c", "stroke-width": 2.5
+    }));
+    for(let i = 0; i <= state.den; i++){
+      const x = L + (W / state.den) * i;
+      const major = (i === 0 || i === state.den);
+      svg.appendChild(make("line", {
+        x1: x, y1: LINE_Y - (major ? 14 : 8), x2: x, y2: LINE_Y + (major ? 14 : 8),
+        stroke: major ? "#10221c" : "#93a49c", "stroke-width": major ? 2.5 : 1.5
+      }));
+      if(major){
+        svg.appendChild(make("text", {
+          x: x, y: LINE_Y + 36, "text-anchor": "middle",
+          "font-size": 16, "font-weight": 800, fill: "#10221c"
+        }, i === 0 ? "0" : "1"));
+      }
+    }
+    /* the point */
+    const px = L + W * frac;
+    svg.appendChild(make("circle", {
+      cx: px, cy: LINE_Y, r: 11, fill: "var(--fill)", stroke: "#fff", "stroke-width": 3
+    }));
+    svg.appendChild(make("text", {
+      x: px, y: LINE_Y - 26, "text-anchor": "middle",
+      "font-size": 17, "font-weight": 900, fill: "#065f46"
+    }, state.num + "/" + state.den));
+  }
+
+  renderReadout(frac, pinFrac);
+}
+
+function gcd(a, b){ return b === 0 ? a : gcd(b, a % b); }
+
+/* =======================================================================
+   TELLING THE TRUTH ABOUT DECIMALS.
+
+   The obvious version of this is (num/den).toFixed(4), which puts
+   "1/3 = 0.3333" on a projector in front of thirty children. It is not
+   true, and it is very easy to ship without noticing, because it looks
+   like a decimal and nobody checks.
+
+   So instead we do the long division by hand and watch the remainders. A
+   remainder that comes round again means the digits from that point repeat
+   forever, which gives the exact recurring form: 1/3 = 0.3̇, 1/7 = 0.1̇42857̇.
+   Only when the repeating block is too long to read do we fall back to an
+   approximation — and then we say "≈", not "=".
+
+   Worth doing this by hand once yourself for 1/7 to see why it works.
+   ======================================================================= */
+function decimalParts(n, d){
+  const intPart = Math.floor(n / d);
+  let r = n % d;
+  const digits = [], seen = new Map();
+  while(r !== 0 && !seen.has(r)){
+    seen.set(r, digits.length);          /* where this remainder first appeared */
+    r *= 10;
+    digits.push(Math.floor(r / d));
+    r = r % d;
+  }
+  if(r === 0) return { intPart, prefix: digits.join(""), period: "" };
+  const start = seen.get(r);             /* the digits repeat from here onwards */
+  return { intPart, prefix: digits.slice(0, start).join(""), period: digits.slice(start).join("") };
+}
+
+const DOT = "̇";   /* combining dot above — sits over the digit before it */
+
+function decimalString(n, d){
+  const { intPart, prefix, period } = decimalParts(n, d);
+  if(!prefix && !period) return { text: String(intPart), exact: true };
+  if(!period)            return { text: intPart + "." + prefix, exact: true };
+  if(period.length > 8)  return { text: (n / d).toFixed(6).replace(/0+$/, "").replace(/\.$/, ""), exact: false };
+  const dotted = period.length === 1
+    ? period + DOT
+    : period[0] + DOT + period.slice(1, -1) + period[period.length - 1] + DOT;
+  return { text: intPart + "." + prefix + dotted, exact: true };
+}
+
+function renderReadout(frac, pinFrac){
+  const chips = [];
+  chips.push('<span class="chip">' + state.num + " / " + state.den + "</span>");
+
+  if(state.showSimplify){
+    /* Note the two special cases. 0/n and n/n both simplify to a whole number,
+       and "0 / 1" on the board is worse than useless. Edge cases like this are
+       exactly what to look for when you check AI-written maths code. */
+    if(state.num === 0)              chips.push('<span class="chip muted">= 0</span>');
+    else if(state.num === state.den) chips.push('<span class="chip muted">= 1 whole</span>');
+    else {
+      const g = gcd(state.num, state.den) || 1;
+      chips.push('<span class="chip ' + (g === 1 ? "muted" : "") + '">' +
+        (g === 1 ? "already simplest" : "= " + (state.num/g) + " / " + (state.den/g)) + "</span>");
+    }
+  }
+
+  if(state.showDecimal){
+    const dec = decimalString(state.num, state.den);
+    const pct = decimalString(state.num * 100, state.den);
+    chips.push('<span class="chip muted">' + (dec.exact ? "= " : "≈ ") + dec.text + "</span>");
+    chips.push('<span class="chip muted">' + (pct.exact ? "= " : "≈ ") + pct.text + "%</span>");
+  }
+
+  /* The pinned comparison.
+     Note that it cross-multiplies rather than comparing frac === pinFrac.
+     Two divisions that should be equal often are not, once floating point has
+     had a turn: 1/3 * 3 is not reliably 1. Compare whole numbers wherever you
+     can — this is the single most useful habit for keeping maths code honest. */
+  if(pinFrac !== null){
+    const same     = state.num * state.pin.den === state.pin.num * state.den;
+    const identical = state.num === state.pin.num && state.den === state.pin.den;
+    if(same && !identical){
+      chips.push('<span class="chip match">' + state.num + "/" + state.den + " = " +
+                 state.pin.num + "/" + state.pin.den + " — same length</span>");
+    } else if(same){
+      chips.push('<span class="chip pinned">pinned</span>');
+    } else {
+      chips.push('<span class="chip pinned">' +
+                 (frac > pinFrac ? "bigger than " : "smaller than ") +
+                 state.pin.num + "/" + state.pin.den + "</span>");
+    }
+  }
+
+  el("readout").innerHTML = chips.join("");
+}
+
+/* =======================================================================
+   3. CONTROLS — each one edits state, then calls render(). Nothing else.
+   ======================================================================= */
+el("den").addEventListener("input", e => { state.den = +e.target.value; render(); });
+el("num").addEventListener("input", e => { state.num = +e.target.value; render(); });
+["showBar","showLine","showDecimal","showSimplify"].forEach(id=>{
+  el(id).addEventListener("change", e => { state[id] = e.target.checked; render(); });
+});
+el("pinBtn").addEventListener("click", () => {
+  state.pin = state.pin ? null : { num: state.num, den: state.den };
+  render();
+});
+
+/* Click or drag on the picture to set the numerator. */
+function pointFromEvent(e){
+  const rect = svg.getBoundingClientRect();
+  const x = ((e.clientX ?? e.touches[0].clientX) - rect.left) / rect.width * 800;
+  const frac = Math.min(1, Math.max(0, (x - L) / W));
+  state.num = Math.round(frac * state.den);
+  render();
+}
+let dragging = false;
+svg.addEventListener("pointerdown", e => { dragging = true; svg.setPointerCapture(e.pointerId); pointFromEvent(e); });
+svg.addEventListener("pointermove", e => { if(dragging) pointFromEvent(e); });
+svg.addEventListener("pointerup",   () => { dragging = false; });
+
+document.addEventListener("keydown", e => {
+  /* Ignore keys aimed at a control that already handles them.
+     Without this guard, pressing ArrowLeft while a slider has focus moves the
+     fraction TWICE — once here, and once from the slider's own built-in
+     behaviour. On screen that reads as the tool being "jumpy" rather than as
+     a bug, which is why this sort of thing survives for months. When a
+     keyboard shortcut behaves oddly, check what has focus first. */
+  const tag = e.target && e.target.tagName;
+  if(tag === "INPUT" || tag === "BUTTON" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+  if(e.key === "ArrowRight"){ state.num = Math.min(state.den, state.num + 1); render(); e.preventDefault(); }
+  if(e.key === "ArrowLeft"){  state.num = Math.max(0, state.num - 1);         render(); e.preventDefault(); }
+  if(e.key === "ArrowUp"){    state.den = Math.min(20, state.den + 1);        render(); e.preventDefault(); }
+  if(e.key === "ArrowDown"){  state.den = Math.max(2,  state.den - 1);        render(); e.preventDefault(); }
+});
+
+render();
+</script>
+</body>
+</html>

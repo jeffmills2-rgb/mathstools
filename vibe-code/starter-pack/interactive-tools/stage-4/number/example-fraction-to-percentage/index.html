@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraction to Percentage — Interactive Tool</title>
+
+<!--
+  =========================================================================
+  EXAMPLE INTERACTIVE TOOL — a thing you drive on the board.
+
+  Same shape as the Fraction Bar next door:
+    1. STATE      — a few plain variables describing what is being shown
+    2. render()   — draws the whole picture from that state, every time
+    3. controls   — anything a teacher touches changes STATE, then render()
+
+  What makes THIS one worth building, and what to keep if you adapt it:
+
+  * ONE LINE, READ FROM BOTH SIDES. Not two number lines — one, with the
+    fraction names written above the ticks and the percentage names below
+    them. The whole argument of the lesson is "the point never moved, it
+    just has two names", and that argument collapses the moment there are
+    two separate lines to compare. If you change nothing else, keep this.
+
+  * NAME ALMOST NOTHING. One fraction label. One percentage label at a
+    time, at the place you have just counted to. A full trail of numbers
+    along the line is more to read than it is worth — step back and forth
+    to show the rest.
+
+  * THE FRACTION DISTANCE IS COMPLETE FROM THE START; THE PERCENTAGE
+    DISTANCE GROWS. That asymmetry is what carries the counting on.
+
+  * THE UNIT FRACTION IS THE PIVOT. 100 ÷ d gets a whole step of its own,
+    before any multiplying happens.
+
+  * ESTIMATE BEFORE VALUE. Predict mode blocks Next until the class has
+    committed to a position, and never shows a number while they choose.
+  =========================================================================
+-->
+
+<style>
+  :root{
+    --brand:#047857;        /* PLACEHOLDER: match your homepage token */
+    --brand-soft:#d1fae5;
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+
+    /* The two sides of the line get their OWN colours, and that is the point:
+       green is the fraction reading, blue is the percentage reading, and they
+       are deliberately different so a student can see which track they are on
+       from the back of the room. Pink is the one point being talked about;
+       amber is the class's own estimate. Don't collapse these into the brand
+       colour — you would lose the whole idea. */
+    --frac:#059669;
+    --pct:#1d4ed8;
+    --mark:#db2777;
+    --predict:#b45309;
+    --predict-soft:#fef3c7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:1.5rem 1rem 4rem;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);background:#f6f9f6;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:1rem;color:var(--brand);text-decoration:none;font-weight:800;font-size:.86rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.6rem;box-shadow:0 8px 20px rgba(16,34,28,.06)}
+  h1{margin:0 0 .3rem;font-size:1.5rem;letter-spacing:-.03em}
+  .sub{margin:0 0 1.5rem;color:var(--muted);font-size:.92rem}
+
+  .controls{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.4rem}
+  .control{display:flex;flex-direction:column;gap:.35rem}
+  .control label{font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .control .value{font-size:1.6rem;font-weight:900;letter-spacing:-.04em;line-height:1}
+  input[type=range]{width:180px;accent-color:var(--brand)}
+  .toggles{display:flex;gap:.5rem;flex-wrap:wrap;margin-left:auto;align-items:center}
+  .toggles label{
+    display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);
+    border-radius:999px;padding:.42rem .8rem;font-size:.83rem;font-weight:850;background:#fff;cursor:pointer;user-select:none
+  }
+  .toggles input{accent-color:var(--brand)}
+  select{border:1px solid var(--line);border-radius:999px;padding:.42rem .7rem;font-size:.83rem;font-weight:850;background:#fff}
+
+  .stage{background:#fbfdfa;border:1px solid var(--line);border-radius:18px;padding:1.2rem .8rem .6rem;margin-bottom:1rem}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  svg.draggable{cursor:ew-resize}
+
+  /* The narration — one question for the class, one line of maths. */
+  .say{text-align:center;min-height:4.6rem;margin-bottom:1rem}
+  .prompt{margin:0 0 .4rem;font-size:1.12rem;font-weight:850;letter-spacing:-.02em}
+  .maths{margin:0;font-size:1.3rem;font-weight:800;color:#6d28d9;font-variant-numeric:tabular-nums}
+  .maths.final{color:var(--mark)}
+  .approx{font-size:.72em;font-weight:700;color:var(--muted);margin-left:.4rem}
+
+  .nav{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;align-items:center}
+  button{
+    padding:.6rem 1.1rem;font-size:.9rem;font-weight:900;cursor:pointer;
+    border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff
+  }
+  button.ghost{background:#fff;color:var(--brand)}
+  button.lock{border-color:var(--predict);background:var(--predict);color:#fff}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .count{font-size:.82rem;font-weight:900;color:var(--muted);margin-left:.3rem}
+  .hint{margin:1.1rem 0 0;color:var(--muted);font-size:.85rem;text-align:center}
+
+  /* An inline stacked fraction, for the narration text.
+     vertical-align:middle, NOT a negative em offset — a stacked fraction is
+     about twice the height of the text around it, so any fixed offset that
+     looks right at one font size drops it off the line at another. */
+  .fr{
+    display:inline-flex;flex-direction:column;align-items:center;
+    vertical-align:middle;line-height:1.04;margin:0 .16em;font-size:.62em;font-weight:800
+  }
+  .fr b,.fr i{display:block;padding:0 .18em;font-style:normal;font-weight:800}
+  .fr i{border-top:2px solid currentColor}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../../../../index.html">← All resources</a>
+
+  <div class="card">
+    <h1>Fraction to Percentage</h1>
+    <p class="sub">One number line, read from both sides. Step through it with the class. PLACEHOLDER: your teaching note here.</p>
+
+    <div class="controls">
+      <div class="control">
+        <label for="den">Denominator</label>
+        <span class="value" id="denValue">5</span>
+        <input type="range" id="den" min="2" max="20" value="5" step="1">
+      </div>
+      <div class="control">
+        <label for="num">Numerator</label>
+        <span class="value" id="numValue">3</span>
+        <input type="range" id="num" min="1" max="5" value="3" step="1">
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="predict"> Predict</label>
+        <label><input type="checkbox" id="shade" checked> Shade</label>
+        <label><input type="checkbox" id="tenths"> 10% ticks</label>
+        <select id="tier" aria-label="Random fraction difficulty">
+          <option value="friendly">Friendly — whole %</option>
+          <option value="term">Terminating — 12.5%</option>
+          <option value="rec">Recurring — 33⅓%</option>
+        </select>
+        <button class="ghost" id="randBtn">Random</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <svg id="canvas" viewBox="0 0 800 250" role="img" aria-label="A number line with fractions above and percentages below"></svg>
+    </div>
+
+    <div class="say">
+      <p class="prompt" id="prompt"></p>
+      <p class="maths" id="maths"></p>
+    </div>
+
+    <div class="nav">
+      <button class="ghost" id="backBtn">◀ Back</button>
+      <button id="nextBtn">Next ▶</button>
+      <button class="lock" id="lockBtn" style="display:none">Lock in estimate</button>
+      <button class="ghost" id="allBtn">Reveal all</button>
+      <button class="ghost" id="resetBtn">Start again</button>
+      <span class="count" id="count">Step 1 of 7</span>
+    </div>
+
+    <p class="hint" id="hint">Space or → for the next step, ← to go back.</p>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   1. THE MATHS — worked out exactly, in whole numbers, before anything
+   is drawn.
+
+   Everything downstream depends on knowing whether 100n/d is a whole
+   number, a decimal that stops, or one that recurs. Do NOT decide that by
+   looking at the decimal: (100*n/d) for 1/3 gives 33.33333333333333 and
+   any threshold you pick to test it will be wrong for some other
+   fraction. Reduce 100n/d as whole numbers, then look at what is left on
+   the bottom — if its only prime factors are 2 and 5 it terminates,
+   otherwise it recurs. That test is exact for every fraction.
+   ======================================================================= */
+function gcd(a, b){ return b === 0 ? a : gcd(b, a % b); }
+function isTerminating(d){ while(d % 2 === 0) d /= 2; while(d % 5 === 0) d /= 5; return d === 1; }
+
+function pctOf(n, d){
+  const N = 100 * n, g = gcd(N, d) || 1, rn = N / g, rd = d / g;
+  return {
+    value: N / d,
+    kind:  rd === 1 ? "int" : isTerminating(rd) ? "dec" : "rec",
+    whole: Math.floor(rn / rd),
+    rem:   rn % rd,
+    rd:    rd
+  };
+}
+/* Kill float noise: 62.500000000000004 should print as 62.5. */
+function trim(x){ return String(Number(x.toFixed(8))); }
+
+/* Recurring percentages are written as MIXED NUMBERS — 33⅓%, not 33.33%
+   and not 33.3̇%. That is how they are read aloud and written in an exercise
+   book at this stage, and it is exact. The rounded decimal is shown too, but
+   demoted: small, grey, and behind a ≈ sign. Never the other way round. */
+function pctHTML(n, d){
+  const p = pctOf(n, d);
+  if(p.kind !== "rec") return trim(p.value) + "%";
+  return (p.whole ? p.whole : "") + frHTML(p.rem, p.rd) + "%";
+}
+function approxHTML(n, d){
+  const p = pctOf(n, d);
+  if(p.kind !== "rec") return "";
+  return '<span class="approx">&#8776; ' + (Math.round(p.value * 10) / 10) + "%</span>";
+}
+function frHTML(n, d){ return '<span class="fr"><b>' + n + "</b><i>" + d + "</i></span>"; }
+
+/* =======================================================================
+   2. STATE
+   ======================================================================= */
+const state = {
+  n: 3, d: 5,
+  step: 0,
+  predict: false, predictAt: null, predictLocked: false,
+  shade: true, tenths: false
+};
+
+const el = id => document.getElementById(id);
+const svg = el("canvas");
+const NS  = "http://www.w3.org/2000/svg";
+
+/* Geometry — one place to change the layout. The line starts well in from
+   the left so the "Fraction" / "Percentage" row captions have somewhere to
+   live without landing on top of the 0 and 0% labels. */
+const L = 134, R = 744, LINE_Y = 132;
+
+/* =======================================================================
+   3. THE STEP LIST — rebuilt whenever the fraction changes.
+
+   A unit fraction has no counting-on to do, so it gets no hop steps: the
+   step that names 100 ÷ d has already named the answer. A big numerator
+   would generate thirty steps, so past twelve the jumps collapse into one.
+   ======================================================================= */
+function steps(){
+  const out = ["bare", "partition", "read", "unit"];
+  if(state.n > 12)     out.push("hopAll");
+  else if(state.n > 1) for(let k = 2; k <= state.n; k++) out.push("hop" + k);
+  out.push("answer");
+  return out;
+}
+const at        = () => steps()[state.step];
+const lastStep  = () => steps().length - 1;
+/* How many parts have been counted out in percent, at this step. */
+function hopsNow(){
+  const s = at();
+  if(s === "unit")   return 1;
+  if(s === "hopAll") return state.n;
+  if(s.startsWith("hop")) return +s.slice(3);
+  if(s === "answer") return state.n;
+  return 0;
+}
+/* The line runs one part past the fraction when it sits beyond the whole,
+   so the target is never jammed against the right-hand end. */
+const axisMax = () => state.n > state.d ? (state.n + 1) / state.d : 1;
+const X = v => L + (v / axisMax()) * (R - L);
+
+/* =======================================================================
+   4. RENDER
+   ======================================================================= */
+function mk(tag, attrs, text){
+  const node = document.createElementNS(NS, tag);
+  for(const k in attrs) node.setAttribute(k, attrs[k]);
+  if(text !== undefined) node.textContent = text;
+  return node;
+}
+/* Text with a white halo behind it, so a label crossing a tick stays readable. */
+function label(x, y, text, opts){
+  const o = Object.assign({ "text-anchor":"middle", "font-size":16, "font-weight":900, fill:"var(--ink)" }, opts || {});
+  const t = mk("text", Object.assign({ x, y, stroke:"#fbfdfa", "stroke-width":4, "paint-order":"stroke" }, o), text);
+  return t;
+}
+/* A stacked fraction drawn in SVG: numerator, rule, denominator. */
+function svgFrac(x, yMid, n, d, fill, size){
+  const g = mk("g", {});
+  const w = Math.max(String(n).length, String(d).length) * size * 0.62 + 4;
+  g.appendChild(label(x, yMid - size * 0.18, String(n), {"font-size":size, fill}));
+  g.appendChild(mk("line", {x1:x - w/2, y1:yMid + size*0.06, x2:x + w/2, y2:yMid + size*0.06,
+                            stroke:fill, "stroke-width":Math.max(2, size*0.09)}));
+  g.appendChild(label(x, yMid + size * 0.92, String(d), {"font-size":size, fill}));
+  return g;
+}
+/* A percentage drawn on the line: "60%", "62.5%", or "33" + stacked 1/3 + "%".
+
+   The first version of this guessed the pixel width of each piece from the
+   character count and laid them out left to right. The guesses were wrong —
+   a bold "%" is nearly twice the width of a digit in most system fonts —
+   and "60%" printed with the per-cent sign sitting on top of the zero.
+
+   So: don't measure text you didn't draw. The simple cases are ONE text
+   element and need no layout at all. The mixed number is anchored around
+   the piece whose width we do control — the stacked fraction — using
+   text-anchor end and start, so nothing depends on knowing how wide a
+   glyph is. Any time you find yourself estimating text width, look for the
+   version of the layout that doesn't need to. */
+function svgPct(x, yBase, n, d, fill, size){
+  const p = pctOf(n, d);
+  if(p.kind !== "rec") return label(x, yBase, trim(p.value) + "%", {"font-size":size, fill});
+
+  const g  = mk("g", {});
+  const fw = Math.max(String(p.rem).length, String(p.rd).length) * size * 0.46 + 5;
+  g.appendChild(svgFrac(x, yBase - size * 0.44, p.rem, p.rd, fill, size * 0.60));
+  if(p.whole){
+    g.appendChild(label(x - fw / 2 - 2, yBase, String(p.whole),
+                        {"font-size":size, fill, "text-anchor":"end"}));
+  }
+  g.appendChild(label(x + fw / 2 + 2, yBase, "%", {"font-size":size, fill, "text-anchor":"start"}));
+  return g;
+}
+
+function render(){
+  /* Keep the sliders honest. The numerator may go past the denominator —
+     4/3 is 133%, and watching "1 whole" slide back down the line is the
+     clearest thing this tool does — but not so far that the ticks vanish. */
+  const nMax = Math.min(state.d + 8, Math.floor(2.2 * state.d));
+  el("num").max = nMax;
+  if(state.n > nMax) state.n = nMax;
+  el("den").value = state.d; el("num").value = state.n;
+  el("denValue").textContent = state.d;
+  el("numValue").textContent = state.n;
+
+  const s     = at();
+  const shown = steps().indexOf(s);
+  const parts = Math.round(axisMax() * state.d);
+  const hops  = hopsNow();
+  const showPartition = s !== "bare";
+  const showPct       = s !== "bare" && s !== "partition";
+
+  svg.replaceChildren();
+  svg.classList.toggle("draggable", canDrag());
+
+  /* ---- the shaded distances ------------------------------------------
+     Above: the fraction, complete as soon as the parts exist.
+     Below: the percentage, growing one jump at a time.
+     Two bars of different lengths on the same line is the whole lesson. */
+  if(state.shade && showPartition){
+    svg.appendChild(mk("rect", {x:L, y:LINE_Y - 11, width:X(state.n / state.d) - L, height:9,
+                                rx:4, fill:"var(--frac)", "fill-opacity":.22}));
+  }
+  if(state.shade && hops > 0){
+    svg.appendChild(mk("rect", {x:L, y:LINE_Y + 2, width:X(hops / state.d) - L, height:9,
+                                rx:4, fill:"var(--pct)", "fill-opacity":.22}));
+  }
+
+  /* ---- faint 10% ticks, hanging below the line only ---- */
+  if(state.tenths && showPct){
+    for(let t = 1; t * 0.1 < axisMax() + 1e-9; t++){
+      const v = t * 0.1;
+      if(Math.abs(v - Math.round(v)) < 1e-9) continue;            /* the whole already has a tick */
+      if(Math.abs(v * state.d - Math.round(v * state.d)) < 1e-9) continue;  /* don't double up on a part */
+      const half = Math.abs(v - 0.5) < 1e-9;                      /* half is worth emphasising */
+      svg.appendChild(mk("line", {x1:X(v), y1:LINE_Y + 3, x2:X(v), y2:LINE_Y + (half ? 17 : 12),
+                                  stroke: half ? "#94a3b8" : "#cbd5e1", "stroke-width": half ? 2.5 : 1.5}));
+    }
+  }
+
+  /* ---- the axis ---- */
+  svg.appendChild(mk("line", {x1:L, y1:LINE_Y, x2:R, y2:LINE_Y, stroke:"#10221c",
+                              "stroke-width":3.5, "stroke-linecap":"round"}));
+
+  /* ---- what each side of the line is called ---- */
+  svg.appendChild(label(6, LINE_Y - 34, "Fraction",   {"text-anchor":"start", "font-size":13, "font-weight":800, fill:"var(--muted)"}));
+  svg.appendChild(label(6, LINE_Y + 46, "Percentage", {"text-anchor":"start", "font-size":13, "font-weight":800, fill:"var(--pct)"}));
+
+  /* ---- the two ends, always ---- */
+  const xW = X(1);
+  [[L, "0", "0%"], [xW, "1 whole", "100%"]].forEach(([x, above, below]) => {
+    svg.appendChild(mk("line", {x1:x, y1:LINE_Y - 22, x2:x, y2:LINE_Y + 22, stroke:"#10221c", "stroke-width":4}));
+    svg.appendChild(label(x, LINE_Y - 30, above, {"font-size":19}));
+    svg.appendChild(label(x, LINE_Y + 44, below, {"font-size":19, fill:"var(--pct)"}));
+  });
+
+  /* ---- the partition: ONE set of ticks, read from both sides ---- */
+  if(showPartition){
+    for(let k = 1; k <= parts; k++){
+      if(k === state.d) continue;                       /* that tick is "1 whole" already */
+      const x = X(k / state.d), target = (k === state.n);
+      svg.appendChild(mk("line", {
+        x1:x, y1:LINE_Y - (target ? 19 : 12), x2:x, y2:LINE_Y + (target ? 19 : 12),
+        stroke: target ? "var(--mark)" : "#10221c", "stroke-width": target ? 4 : 2.4
+      }));
+    }
+    /* Only the fraction being asked about is named. The in-between unit
+       fractions are noise — the counting-on happens underneath, in percent. */
+    svg.appendChild(svgFrac(X(state.n / state.d), LINE_Y - 62, state.n, state.d, "var(--mark)", 22));
+  }
+
+  /* ---- the counting-on arc, one jump at a time ---- */
+  if(hops > 0 && hops <= state.d + 8 && s !== "answer" && state.n > 1){
+    const x1 = X((hops - 1) / state.d), x2 = X(hops / state.d);
+    if(x2 - x1 > 2){
+      svg.appendChild(mk("path", {
+        d:"M " + x1 + " " + (LINE_Y + 15) + " Q " + ((x1 + x2) / 2) + " " + (LINE_Y - 6) + " " + x2 + " " + (LINE_Y + 15),
+        fill:"none", stroke:"var(--pct)", "stroke-width":3, "stroke-linecap":"round", opacity:.85
+      }));
+    }
+  }
+
+  /* ---- ONE percentage label, at the place just counted to ---- */
+  if(hops > 0 && hops !== state.d){
+    const isTarget = (hops === state.n);
+    svg.appendChild(svgPct(X(hops / state.d), LINE_Y + 44, hops, state.d,
+                           isTarget ? "var(--mark)" : "var(--pct)", isTarget ? 21 : 18));
+  }
+
+  /* ---- the answer: one tick, two names ---- */
+  if(s === "answer"){
+    svg.appendChild(mk("circle", {cx:X(state.n / state.d), cy:LINE_Y, r:10,
+                                  fill:"#fff", stroke:"var(--mark)", "stroke-width":4.5}));
+  }
+
+  /* ---- the class's estimate ---- */
+  if(state.predict && state.predictAt !== null){
+    const x = X(state.predictAt);
+    svg.appendChild(mk("line", {x1:x, y1:LINE_Y - 16, x2:x, y2:LINE_Y + 16, stroke:"var(--predict)", "stroke-width":3}));
+    svg.appendChild(mk("path", {d:"M " + x + " " + (LINE_Y + 20) + " l -8 -12 l 16 0 Z", fill:"var(--predict)"}));
+    svg.appendChild(label(x, LINE_Y + 74, state.predictLocked ? "estimate" : "drag me",
+                          {"font-size":13, "font-weight":800, fill:"var(--predict)"}));
+  }
+
+  say();
+  renderNav();
+}
+
+/* =======================================================================
+   5. THE NARRATION — one question for the class, one line of maths.
+   These strings ARE the lesson. Rewrite them in your own words before you
+   rewrite any of the code above.
+   ======================================================================= */
+function say(){
+  const s = at(), n = state.n, d = state.d;
+  const unit = pctHTML(1, d).replace("%", "");       /* the size of one jump, no % sign */
+  let prompt = "", maths = "", final = false;
+
+  if(s === "bare"){
+    prompt = state.predict && !state.predictLocked
+      ? "Drag the orange marker to where you think " + frHTML(n, d) + " sits, then lock it in."
+      : (n > d ? "More or less than one whole? How do you know?"
+               : "More or less than half? How do you know?");
+    maths  = frHTML(n, d) + " = ?%";
+  } else if(s === "partition"){
+    prompt = "The whole is split into " + d + " equal parts. Where is " + frHTML(n, d) + "?";
+    maths  = "1 whole = " + d + " parts";
+  } else if(s === "read"){
+    prompt = "Read the same ticks from underneath. What is <em>one</em> jump worth?";
+    maths  = "100% ÷ " + d + " = ?";
+  } else if(s === "unit"){
+    prompt = "One part of the whole is one part of 100%.";
+    maths  = "100 ÷ " + d + " = " + unit + " so " + frHTML(1, d) + " = " + pctHTML(1, d) + approxHTML(1, d);
+  } else if(s === "hopAll"){
+    prompt = "Count on in jumps of " + unit + " — " + n + " of them.";
+    maths  = n + " × " + unit + " = " + pctHTML(n, d) + approxHTML(n, d);
+  } else if(s.startsWith("hop")){
+    const k = +s.slice(3);
+    prompt = "Count on in jumps of " + unit + ".";
+    maths  = k + " × " + unit + " = " + pctHTML(k, d) + approxHTML(k, d);
+  } else if(s === "answer"){
+    prompt = "One tick, two names. The point never moved.";
+    maths  = frHTML(n, d) + " = " + pctHTML(n, d) + approxHTML(n, d);
+    final  = true;
+    /* Judge the class's guess in words, not marks. */
+    if(state.predict && state.predictLocked && state.predictAt !== null){
+      const est = Math.round(state.predictAt * 1000) / 10;
+      const off = Math.abs(est - 100 * n / d);
+      const word = off < 1 ? "spot on" : off < 5 ? "very close" : off < 12 ? "in the right area" : "worth a rethink";
+      prompt += " — the estimate was " + est + "%, " + word + ".";
+    }
+  }
+
+  el("prompt").innerHTML = prompt;
+  el("maths").innerHTML  = maths;
+  el("maths").className  = "maths" + (final ? " final" : "");
+}
+
+/* =======================================================================
+   6. CONTROLS
+   ======================================================================= */
+const canDrag = () => state.predict && state.step === 0 && !state.predictLocked;
+
+function renderNav(){
+  const waiting = state.predict && state.step === 0 && !state.predictLocked;
+  el("backBtn").disabled = state.step === 0;
+  el("nextBtn").disabled = state.step >= lastStep() || waiting;
+  el("allBtn").disabled  = state.step >= lastStep() || waiting;
+  el("lockBtn").style.display = canDrag() ? "" : "none";
+  el("lockBtn").disabled = state.predictAt === null;
+  el("count").textContent = "Step " + (state.step + 1) + " of " + steps().length;
+  el("hint").textContent = waiting
+    ? "Drag on the line to place the estimate. The value stays hidden until it is locked in."
+    : "Space or → for the next step, ← to go back.";
+}
+
+function go(delta){
+  const waiting = state.predict && state.step === 0 && !state.predictLocked;
+  if(delta > 0 && waiting) return;
+  state.step = Math.max(0, Math.min(lastStep(), state.step + delta));
+  render();
+}
+function restart(){ state.step = 0; state.predictAt = null; state.predictLocked = false; render(); }
+
+el("den").addEventListener("input", e => { state.d = +e.target.value; restart(); });
+el("num").addEventListener("input", e => { state.n = +e.target.value; restart(); });
+el("predict").addEventListener("change", e => { state.predict = e.target.checked; restart(); });
+el("shade").addEventListener("change",  e => { state.shade  = e.target.checked; render(); });
+el("tenths").addEventListener("change", e => { state.tenths = e.target.checked; render(); });
+
+el("backBtn").addEventListener("click", () => go(-1));
+el("nextBtn").addEventListener("click", () => go(1));
+el("allBtn").addEventListener("click",  () => { state.step = lastStep(); render(); });
+el("resetBtn").addEventListener("click", restart);
+el("lockBtn").addEventListener("click", () => { state.predictLocked = true; render(); });
+
+/* ---- dragging the estimate. No number is shown while they choose. ---- */
+function fromEvent(e){
+  const r = svg.getBoundingClientRect();
+  const x = ((e.clientX ?? e.touches[0].clientX) - r.left) / r.width * 800;
+  state.predictAt = Math.max(0, Math.min(axisMax(), (x - L) / (R - L) * axisMax()));
+  render();
+}
+let dragging = false;
+svg.addEventListener("pointerdown", e => { if(!canDrag()) return; dragging = true; svg.setPointerCapture(e.pointerId); fromEvent(e); });
+svg.addEventListener("pointermove", e => { if(dragging && canDrag()) fromEvent(e); });
+svg.addEventListener("pointerup",   () => { dragging = false; });
+
+/* =======================================================================
+   7. THE RANDOMISER
+
+   The three tiers are the mathematical shape of this topic, so they are
+   worth having on the board: denominators that divide 100 give whole
+   percentages, denominators built from 2s and 5s give percentages that
+   stop, everything else recurs.
+
+   The catch, and it is the interesting bit: you cannot pick the tier from
+   the denominator alone. 3/6 is drawn from the recurring bank and is
+   actually 50%. So the tier is CHECKED AFTER REDUCING and the draw is
+   thrown away if it does not match. Without that line a "recurring"
+   button quietly serves whole numbers, and you would not notice for weeks.
+   ======================================================================= */
+const TIER_DENS = { friendly:[2,4,5,10,20], term:[8,16], rec:[3,6,7,9,12,15] };
+const TIER_KIND = { friendly:"int", term:"dec", rec:"rec" };
+
+function randomFraction(){
+  const tier = el("tier").value, dens = TIER_DENS[tier];
+  for(let tries = 0; tries < 300; tries++){
+    const d = dens[Math.floor(Math.random() * dens.length)];
+    const n = 1 + Math.floor(Math.random() * (d - 1));
+    if(n === state.n && d === state.d) continue;              /* don't serve the same one twice */
+    if(pctOf(n, d).kind !== TIER_KIND[tier]) continue;        /* keep the tier honest after reducing */
+    state.n = n; state.d = d; restart();
+    return;
+  }
+}
+el("randBtn").addEventListener("click", randomFraction);
+el("tier").addEventListener("change", randomFraction);
+
+document.addEventListener("keydown", e => {
+  /* Ignore keys aimed at a control that already handles them — see the note
+     in the Fraction Bar about arrow keys double-stepping. */
+  const tag = e.target && e.target.tagName;
+  if(tag === "INPUT" || tag === "BUTTON" || tag === "SELECT" || tag === "TEXTAREA") return;
+  if(e.key === "ArrowRight" || e.key === " "){ go(1);  e.preventDefault(); }
+  if(e.key === "ArrowLeft"){                  go(-1); e.preventDefault(); }
+});
+
+render();
+</script>
+</body>
+</html>

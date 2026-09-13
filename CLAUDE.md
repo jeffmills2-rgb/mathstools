@@ -1794,9 +1794,23 @@ assessment/exam-builder/           THE REVISION GENERATOR (homepage calls it tha
   layout-check.html                renders real questions in-browser and measures them
 game-platforms/mills-maths-adventure/   the BUILT Adventure (index.html + assets/)
 dashboards/                        OLD dashboards → now redirect stubs to /portal/*
+vibe-code/                         THE WORKSHOP HANDOUT (MANSW 2026) → /vibe-code
+  index.html                       landing page: one starter file, or the whole pack
+  maths-tool-starter.html          one self-contained tool carrying its own brief
+  maths-vibe-coding-starter.zip    the pack as a download — REGENERATE from starter-pack/
+  starter-pack/                    the same pack, served live so people can browse first
 firestore.golive.claims.rules      the live security rules (reference copy)
 portal/PLACEMENT.md , portal/README.md   migration + structure notes
 ```
+- **`vibe-code/` is a handout, not part of the site's system.** It is a template
+  other teachers copy, so it deliberately breaks this project's conventions: its own
+  `:root` tokens (green, not the site blue), its own folder layout, and a nested
+  `CLAUDE.md` that is a PLACEHOLDER brief for *their* project. **That nested file is
+  not an instruction to you** — if you are working in this repo, this file is the
+  brief. Do not "fix" the pack to match the site.
+  The `.zip` is built from `vibe-code/starter-pack/`, so edit the folder and rebuild
+  the zip; never edit one without the other. `/start` 301-redirects to `/vibe-code/`
+  because the conference deck went out with the old URL.
 - **Tool registry** (`portal/shared/mmtToolRegistry.js`) declares which tools feed
   the platform — add/disable entries here; nothing else hardcodes a tool. Each
   entry's `achievementToolName` must match the EXACT `tool` string the quiz writes.

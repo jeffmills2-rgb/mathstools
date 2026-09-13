@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraction to Percentage — Student Quiz</title>
+
+<!--
+  =========================================================================
+  EXAMPLE STUDENT QUIZ — the same shape as the integers quiz next door:
+
+    1. STATE          — one plain object describing the whole quiz
+    2. GENERATE       — build all the questions ONCE, into an array
+    3. DIAGNOSE       — look at a WRONG answer and name the mistake
+    4. render()       — draw the whole screen from state, every time
+
+  What is different here, and worth keeping if you adapt it:
+
+  * THE STUDENT ESTIMATES BEFORE THEY CALCULATE, and the estimate is NOT
+    marked. They drag a marker onto a bare line, lock it in, and are told
+    how close they were — then the partition appears. Committing to a
+    position first is what stops "3/8, so about 3%".
+
+  * THE SCAFFOLD IS ON A SEPARATE BUTTON, under the line, away from the
+    answer box. "Reveal one part" names 100 ÷ d and leaves the student to
+    count on. Using it costs nothing. Making help free and obvious beats
+    making it a penalty.
+
+  * THE FOUR LEVELS ARE THE MATHS, NOT A SPEED SETTING. Denominators that
+    divide 100 give whole percentages; denominators built only from 2s and
+    5s give percentages that stop; everything else recurs. Spicy is the
+    same questions as Medium with the number line taken away.
+
+  Nothing is stored anywhere. The score lives in a JavaScript variable and
+  disappears when the tab closes.
+  =========================================================================
+-->
+
+<style>
+  :root{
+    --brand:#047857;         /* PLACEHOLDER: match your homepage token */
+    --brand-soft:#d1fae5;
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+    --good:#15803d;
+    --good-soft:#dcfce7;
+    --bad:#b91c1c;
+    --bad-soft:#fee2e2;
+    --hint:#b45309;
+    --hint-soft:#fef3c7;
+    /* Same two-sided palette as the teaching tool: green is the fraction
+       reading of the line, blue is the percentage reading, pink is the point
+       under discussion, amber is the student's own estimate. */
+    --frac:#059669;
+    --pct:#1d4ed8;
+    --mark:#db2777;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:1.5rem 1rem 4rem;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);background:#f6f9f6;
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:1rem;color:var(--brand);text-decoration:none;font-weight:800;font-size:.86rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.6rem;box-shadow:0 8px 20px rgba(16,34,28,.06)}
+  h1{margin:0 0 .3rem;font-size:1.5rem;letter-spacing:-.03em}
+  .sub{margin:0 0 1.4rem;color:var(--muted);font-size:.92rem}
+
+  .progress{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem}
+  .bar{flex:1;height:9px;border-radius:999px;background:#dde7e2;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:var(--brand);transition:width .25s ease}
+  .progress small{color:var(--muted);font-weight:900;font-size:.8rem;white-space:nowrap}
+
+  /* ---- the level menu ---- */
+  .levels{display:grid;gap:.6rem;margin-bottom:1.2rem}
+  .levels button{
+    display:block;width:100%;text-align:left;padding:.9rem 1.1rem;border-radius:16px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer
+  }
+  .levels button:hover{border-color:var(--brand)}
+  .levels b{display:block;font-size:1rem;font-weight:900;margin-bottom:.2rem}
+  .levels span{display:block;font-size:.85rem;font-weight:600;color:var(--muted);line-height:1.45}
+
+  .qline{text-align:center;margin:1rem 0 .5rem;font-size:1.5rem;font-weight:850;letter-spacing:-.02em}
+  .qhint{text-align:center;color:var(--muted);font-size:.86rem;margin:0 0 .9rem;min-height:1.2rem;line-height:1.4}
+
+  .stage{background:#fbfdfa;border:1px solid var(--line);border-radius:16px;padding:.9rem .6rem .4rem;margin-bottom:.8rem}
+  .stage svg{display:block;width:100%;height:auto;touch-action:none}
+  .stage svg.draggable{cursor:ew-resize}
+  .modelRow{display:flex;justify-content:center;margin-bottom:1rem}
+
+  .answer-row{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;align-items:center}
+  .answer-row .eq{font-size:1.3rem;font-weight:900}
+  .answer-row .pc{font-size:1.2rem;font-weight:900;color:var(--muted)}
+  input[type=text].ans{
+    width:130px;padding:.65rem .8rem;font-size:1.1rem;text-align:center;font-weight:800;
+    border:2px solid var(--line);border-radius:14px;outline:none;font-variant-numeric:tabular-nums
+  }
+  input[type=text].ans:focus{border-color:var(--brand)}
+  input[type=text].ans.ok{border-color:var(--good);background:var(--good-soft)}
+  input[type=text].ans.bad{border-color:var(--bad);background:var(--bad-soft)}
+  button{
+    padding:.65rem 1.15rem;font-size:.92rem;font-weight:900;cursor:pointer;
+    border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff
+  }
+  button.ghost{background:#fff;color:var(--brand)}
+  button.model{border-color:var(--hint);background:#fff;color:var(--hint)}
+  button:disabled{opacity:.42;cursor:not-allowed}
+
+  .feedback{margin-top:1rem;padding:.85rem 1rem;border-radius:14px;font-weight:800;text-align:center;display:none}
+  .feedback.show{display:block}
+  .feedback.ok{background:var(--good-soft);color:var(--good)}
+  .feedback.no{background:var(--bad-soft);color:var(--bad)}
+  .feedback.hint{background:var(--hint-soft);color:var(--hint)}
+  .feedback.info{background:#e0eaff;color:#1e40af}
+  .feedback .why{display:block;font-weight:650;font-size:.9rem;margin-top:.35rem;line-height:1.45}
+
+  .final{display:none;text-align:center}
+  .final.show{display:block}
+  .final .score{font-size:3.2rem;font-weight:900;letter-spacing:-.05em;margin:.5rem 0}
+  .final .msg{color:var(--muted);margin-bottom:1.2rem}
+  .bytype{text-align:left;margin:1.3rem 0 0}
+  .bytype h3{margin:0 0 .5rem;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .bytype div{display:flex;justify-content:space-between;gap:1rem;padding:.38rem 0;font-size:.9rem;border-bottom:1px solid var(--line)}
+  .bytype .weak{color:var(--bad);font-weight:800}
+  .bytype .strong{color:var(--good);font-weight:800}
+  .review{text-align:left;margin:1.2rem 0;border-top:1px solid var(--line)}
+  .review div{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.9rem;align-items:center}
+  .review .r-no{color:var(--bad);font-weight:800}
+  .review .r-ok{color:var(--good);font-weight:800}
+
+  /* ---- the teacher check panel: never seen by a student ---- */
+  .check{margin-top:1.6rem;border-top:1px dashed var(--line);padding-top:1rem}
+  .check summary{cursor:pointer;font-size:.8rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .check p{font-size:.84rem;color:var(--muted);line-height:1.55}
+  .check-grid{margin-top:.9rem;display:grid;grid-template-columns:repeat(2,1fr);gap:0 1.2rem;font-size:.86rem}
+  .check-grid span.row{display:flex;gap:.45rem;align-items:center;padding:.22rem 0;border-bottom:1px solid #f0f4f2}
+  .check-grid .n{color:var(--muted);font-weight:800;min-width:1.7rem}
+  .check-grid .tag{margin-left:auto;font-size:.68rem;color:var(--muted);font-weight:800}
+  @media (max-width:520px){ .check-grid{grid-template-columns:1fr} }
+
+  /* An inline stacked fraction. vertical-align:middle, not a fixed em offset
+     — see the note in the teaching tool. */
+  .fr{
+    display:inline-flex;flex-direction:column;align-items:center;
+    vertical-align:middle;line-height:1.04;margin:0 .16em;font-size:.62em;font-weight:800
+  }
+  .fr b,.fr i{display:block;padding:0 .18em;font-style:normal;font-weight:800}
+  .fr i{border-top:2px solid currentColor}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../../../../index.html">← All resources</a>
+
+  <div class="card">
+    <h1>Fraction to Percentage</h1>
+    <p class="sub">Ten questions, two goes at each. Estimate first, then work it out. PLACEHOLDER: your instructions here.</p>
+
+    <!-- ---- level menu ---- -->
+    <div id="setup">
+      <div class="levels" id="levels"></div>
+
+      <details class="check">
+        <summary>Teacher check — preview 20 questions</summary>
+        <p>
+          Twenty questions from the level chosen below, with the answer and the kind of
+          percentage each one produces. Mark them by hand and look for: unit fractions
+          (the "reveal one part" step would hand over the answer), a level containing
+          the wrong kind of percentage, denominators too big to draw, and repeats.
+        </p>
+        <div class="answer-row" style="justify-content:flex-start">
+          <select id="previewLevel" style="padding:.5rem .8rem;border:1px solid var(--line);border-radius:999px;font-weight:800"></select>
+          <button class="ghost" id="previewBtn">Generate 20</button>
+        </div>
+        <div class="check-grid" id="previewGrid"></div>
+      </details>
+    </div>
+
+    <!-- ---- quiz screen ---- -->
+    <div id="quiz" style="display:none">
+      <div class="progress">
+        <div class="bar"><i id="bar"></i></div>
+        <small id="progressLabel">1 / 10</small>
+      </div>
+
+      <p class="qline" id="qline"></p>
+      <p class="qhint" id="qhint"></p>
+
+      <div class="stage" id="stage">
+        <svg id="canvas" viewBox="0 0 640 172" role="img" aria-label="A number line"></svg>
+      </div>
+      <div class="modelRow"><button class="model" id="modelBtn"></button></div>
+
+      <div class="answer-row" id="answerRow">
+        <span class="eq">=</span>
+        <input type="text" class="ans" id="answer" inputmode="decimal" autocomplete="off" aria-label="Your answer as a percentage" placeholder="e.g. 60">
+        <span class="pc">%</span>
+        <button id="checkBtn">Enter</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- ---- results screen ---- -->
+    <div class="final" id="final">
+      <p class="sub" style="margin:0">You scored, first go</p>
+      <div class="score" id="scoreText">0 / 10</div>
+      <p class="msg" id="scoreMsg"></p>
+      <div class="bytype" id="byType"></div>
+      <div class="review" id="review"></div>
+      <button class="ghost" id="againBtn">Back to the levels</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   1. THE MATHS — exactly the same core as the teaching tool and the
+   worksheet creator. Reduce 100n/d as whole numbers and look at what is
+   left on the bottom: only 2s and 5s means the decimal stops, anything
+   else means it recurs. Never decide that by looking at the decimal —
+   100/3 is 33.33333333333333 and any threshold you pick to test it will
+   be wrong for some other fraction.
+   ======================================================================= */
+function gcd(a, b){ return b === 0 ? a : gcd(b, a % b); }
+function isTerminating(d){ while(d % 2 === 0) d /= 2; while(d % 5 === 0) d /= 5; return d === 1; }
+function pctOf(n, d){
+  const N = 100 * n, g = gcd(N, d) || 1, rn = N / g, rd = d / g;
+  return { value:N / d, kind: rd === 1 ? "int" : isTerminating(rd) ? "dec" : "rec",
+           whole:Math.floor(rn / rd), rem:rn % rd, rd };
+}
+function trim(x){ return String(Number(x.toFixed(8))); }
+function frHTML(n, d){ return '<span class="fr"><b>' + n + "</b><i>" + d + "</i></span>"; }
+/* Recurring percentages are written as mixed numbers — 66⅔%, not 66.67%. */
+function pctHTML(n, d){
+  const p = pctOf(n, d);
+  if(p.kind !== "rec") return trim(p.value) + "%";
+  return (p.whole ? p.whole : "") + frHTML(p.rem, p.rd) + "%";
+}
+
+/* =======================================================================
+   2. THE QUESTION BANKS
+
+   NO UNIT FRACTIONS ANYWHERE. With one part revealed, 1/d would BE the
+   answer and there would be nothing left to count on. This is the sort of
+   constraint that only shows up when you sit down and read twenty
+   questions, which is what the check panel on the setup screen is for.
+
+   Denominators are split by what kind of percentage they produce, and
+   again by whether a number line is on screen — past about twenty parts
+   the ticks are unreadable at this width, so the model levels use a
+   shorter list rather than a crowded line.
+   ======================================================================= */
+const DENS = {
+  int: { model:[4,5,10,20],  plain:[4,5,10,20,25,50] },
+  dec: { model:[8,16],       plain:[8,16,32,40]      },
+  rec: { model:[3,6,7,9,12], plain:[3,6,7,9,11,12,15]}
+};
+const MAX_TICKS  = 22;
+const QUIZ_LEN   = 10;
+const MAX_ATTEMPTS = 2;
+
+const KINDS = {
+  int: "Whole-number percentages",
+  dec: "Percentages that stop",
+  rec: "Percentages that recur"
+};
+
+/* Each level is a list of blocks: [kind, how many, from which index they go
+   past one whole]. Spicy is Medium's plan with the model switched off. */
+const PLANS = {
+  sweet:  [["int", 10, null]],
+  mild:   [["int", 5, 3], ["dec", 5, 3]],
+  medium: [["int", 4, 2], ["dec", 3, 2], ["rec", 3, 1]]
+};
+PLANS.spicy = PLANS.medium;
+
+const LEVELS = {
+  sweet:  { name:"Sweet",  model:true,
+            blurb:"Friendly fractions only — denominators that divide 100, so every answer is a whole number. Estimate, then the whole is split into parts, then one part is named for you." },
+  mild:   { name:"Mild",   model:true,
+            blurb:"Friendly fractions, then percentages that stop but are not whole — like 12.5%. Some go past one whole." },
+  medium: { name:"Medium", model:true,
+            blurb:"Whole, then terminating, then recurring — percentages that never stop, like 33⅓%. Improper fractions throughout." },
+  spicy:  { name:"Spicy",  model:false,
+            blurb:"The same questions as Medium, with no number line at all. Just the fraction and the answer box." }
+};
+
+function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+
+function makeQuestion(kind, improper, model, seen){
+  const dens = DENS[kind][model ? "model" : "plain"];
+  for(let tries = 0; tries < 400; tries++){
+    const d = dens[randInt(0, dens.length - 1)];
+    let n;
+    if(improper){
+      n = d + randInt(1, Math.min(d - 1, 8));
+      if(n / d > 2.2) continue;                        /* never much past two wholes */
+    } else {
+      n = randInt(2, d - 1);                           /* never 1 — see the note above */
+    }
+    if(n < 2 || n === d) continue;
+    if(model && (n > d ? n + 1 : d) > MAX_TICKS) continue;   /* too many ticks to draw */
+    /* Keep the level honest AFTER reducing. 3/6 is drawn from the recurring
+       bank and is actually 50%; 2/8 is drawn from the terminating bank and is
+       actually 25%. Without this line a "recurring" level quietly serves
+       whole numbers and you would not notice for weeks. */
+    if(pctOf(n, d).kind !== kind) continue;
+    if(seen.has(n + "/" + d)) continue;
+    seen.add(n + "/" + d);
+    return { n, d, kind, prompt:frHTML(n, d) };
+  }
+  /* A repeat beats a blank question. */
+  const fallback = { int:[3,4], dec:[3,8], rec:[2,3] }[kind];
+  return { n:fallback[0], d:fallback[1], kind, prompt:frHTML(fallback[0], fallback[1]) };
+}
+
+/* Build the whole set at once — "generate once, render from the array". */
+function makeQuiz(levelKey){
+  const model = LEVELS[levelKey].model, seen = new Set(), out = [];
+  PLANS[levelKey].forEach(([kind, count, improperFrom]) => {
+    for(let i = 0; i < count; i++){
+      out.push(makeQuestion(kind, improperFrom !== null && i >= improperFrom, model, seen));
+    }
+  });
+  return out;
+}
+
+/* =======================================================================
+   3. READING AND MARKING THE ANSWER
+
+   Accepts 60, 12.5, "33 1/3", "1/3", "100/3", with or without a % sign.
+   ======================================================================= */
+function parseAnswer(raw){
+  const s = String(raw).replace(/%/g, "").replace(/\s+/g, " ").trim();
+  if(!s) return null;
+  let m = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);            /* 66 2/3 */
+  if(m) return +m[3] === 0 ? null : +m[1] + (+m[2]) / (+m[3]);
+  m = s.match(/^(\d+)\s*\/\s*(\d+)$/);                         /* 200/3 */
+  if(m) return +m[2] === 0 ? null : (+m[1]) / (+m[2]);
+  m = s.match(/^\d*\.?\d+$/);                                  /* 66.7 */
+  if(m) return parseFloat(s);
+  return null;
+}
+
+/* A recurring answer may be rounded, but only to one decimal place — so
+   66.7 passes and 66.6 does not. Whole and terminating answers have to be
+   exact, because there is nothing to round. */
+function isCorrect(q, val){
+  const exact = 100 * q.n / q.d;
+  if(Math.abs(val - exact) < 1e-9) return true;
+  return q.kind === "rec" && Math.abs(val - exact) <= 0.05;
+}
+
+/* =======================================================================
+   4. THE MARKER — given a WRONG answer, name the mistake.
+
+   These rules are teaching knowledge, not programming knowledge. Change
+   them to match what your own classes do.
+   ======================================================================= */
+function diagnose(q, val){
+  if(isCorrect(q, val)) return null;      /* never explain a right answer */
+  const { n, d } = q, exact = 100 * n / d;
+  const near = (a, b) => Math.abs(a - b) < 0.005;
+
+  if(near(val, n / d))
+    return "That is the fraction written as a decimal. A percentage is out of 100, so it is a hundred times bigger.";
+  if(near(val, 100 / d))
+    return "That is <em>one</em> part. There are " + n + " parts — the last step is to multiply.";
+  if(d !== 0 && near(val, 100 * d / n))
+    return "The fraction has gone upside down. The denominator is how many parts the whole is split into.";
+  if(near(val, n))
+    return "That is the numerator, not the percentage. How much is one part worth first?";
+  if(near(val, 100 - exact))
+    return "That is the part that is left over. The shaded distance is the one being named.";
+  if(near(val, exact * 10) || near(val, exact / 10))
+    return "The digits are right but the place value is not — check where the decimal point lands.";
+  if(q.kind === "rec" && Math.abs(val - exact) < 1)
+    return "Very close. This one recurs, so a whole number is not enough — write it as a mixed number, or round to 1 decimal place.";
+  if(q.kind !== "rec" && Math.abs(val - exact) < 1)
+    return "Very close. This one does not recur, so it has an exact answer — no rounding needed.";
+  return null;
+}
+
+/* =======================================================================
+   5. STATE
+   ======================================================================= */
+const PHASES = ["estimate", "held", "placed", "unit", "done"];
+const state = {
+  screen:   "setup",       /* "setup" | "quiz" | "results" */
+  level:    "sweet",
+  questions: [],
+  index:    0,
+  attempt:  0,
+  phase:    "estimate",
+  estimate: null,
+  estimateMoved: false,
+  message:  null,
+  results:  []
+};
+const el = id => document.getElementById(id);
+const model = () => LEVELS[state.level].model;
+const q     = () => state.questions[state.index];
+
+/* =======================================================================
+   6. THE NUMBER LINE — wiped and redrawn from state, every time.
+   ======================================================================= */
+const NS = "http://www.w3.org/2000/svg";
+function mk(tag, attrs, text){
+  const node = document.createElementNS(NS, tag);
+  for(const k in attrs) node.setAttribute(k, attrs[k]);
+  if(text !== undefined) node.textContent = text;
+  return node;
+}
+function label(x, y, text, opts){
+  const o = Object.assign({ "text-anchor":"middle", "font-size":15, "font-weight":900, fill:"var(--ink)" }, opts || {});
+  return mk("text", Object.assign({ x, y, stroke:"#fbfdfa", "stroke-width":4, "paint-order":"stroke" }, o), text);
+}
+function svgFrac(x, yMid, n, d, fill, size){
+  const g = mk("g", {});
+  const w = Math.max(String(n).length, String(d).length) * size * 0.62 + 4;
+  g.appendChild(label(x, yMid - size * 0.18, String(n), {"font-size":size, fill}));
+  g.appendChild(mk("line", {x1:x - w/2, y1:yMid + size*0.06, x2:x + w/2, y2:yMid + size*0.06,
+                            stroke:fill, "stroke-width":Math.max(2, size*0.09)}));
+  g.appendChild(label(x, yMid + size * 0.92, String(d), {"font-size":size, fill}));
+  return g;
+}
+/* Anchored around the stacked fraction, so nothing depends on guessing how
+   wide a glyph is — see the same note in the teaching tool. */
+function svgPct(x, yBase, n, d, fill, size){
+  const p = pctOf(n, d);
+  if(p.kind !== "rec") return label(x, yBase, trim(p.value) + "%", {"font-size":size, fill});
+  const g = mk("g", {});
+  const fw = Math.max(String(p.rem).length, String(p.rd).length) * size * 0.46 + 5;
+  g.appendChild(svgFrac(x, yBase - size * 0.44, p.rem, p.rd, fill, size * 0.60));
+  if(p.whole) g.appendChild(label(x - fw/2 - 2, yBase, String(p.whole), {"font-size":size, fill, "text-anchor":"end"}));
+  g.appendChild(label(x + fw/2 + 2, yBase, "%", {"font-size":size, fill, "text-anchor":"start"}));
+  return g;
+}
+
+const L = 120, R = 604, LINE_Y = 86;
+const amax = () => q().n > q().d ? (q().n + 1) / q().d : 1;
+const X = v => L + (v / amax()) * (R - L);
+
+function drawLine(){
+  const svg = el("canvas");
+  svg.replaceChildren();
+  if(!model()) return;
+
+  const cur = q(), ph = state.phase;
+  const placed = ph === "placed" || ph === "unit" || ph === "done";
+
+  /* the fraction distance, complete as soon as the parts appear */
+  if(placed) svg.appendChild(mk("rect", {x:L, y:LINE_Y - 11, width:X(cur.n/cur.d) - L, height:9,
+                                         rx:4, fill:"var(--frac)", "fill-opacity":.22}));
+  /* the percentage distance — one part only, when it has been revealed */
+  if(ph === "unit" || ph === "done"){
+    svg.appendChild(mk("rect", {x:L, y:LINE_Y + 2, width:X(1/cur.d) - L, height:9,
+                                rx:4, fill:"var(--pct)", "fill-opacity":.22}));
+  }
+
+  svg.appendChild(mk("line", {x1:L, y1:LINE_Y, x2:R, y2:LINE_Y, stroke:"#10221c", "stroke-width":3.2, "stroke-linecap":"round"}));
+  svg.appendChild(label(6, LINE_Y - 30, "Fraction",   {"text-anchor":"start", "font-size":12, "font-weight":800, fill:"var(--muted)"}));
+  svg.appendChild(label(6, LINE_Y + 42, "Percentage", {"text-anchor":"start", "font-size":12, "font-weight":800, fill:"var(--pct)"}));
+
+  [[L, "0", "0%"], [X(1), "1 whole", "100%"]].forEach(([x, above, below]) => {
+    svg.appendChild(mk("line", {x1:x, y1:LINE_Y - 20, x2:x, y2:LINE_Y + 20, stroke:"#10221c", "stroke-width":3.6}));
+    svg.appendChild(label(x, LINE_Y - 27, above, {"font-size":16}));
+    svg.appendChild(label(x, LINE_Y + 40, below, {"font-size":16, fill:"var(--pct)"}));
+  });
+
+  if(placed){
+    const parts = Math.round(amax() * cur.d);
+    for(let k = 1; k <= parts; k++){
+      if(k === cur.d) continue;
+      const x = X(k / cur.d), target = (k === cur.n);
+      svg.appendChild(mk("line", {x1:x, y1:LINE_Y - (target ? 17 : 11), x2:x, y2:LINE_Y + (target ? 17 : 11),
+                                  stroke: target ? "var(--mark)" : "#10221c", "stroke-width": target ? 3.6 : 2.2}));
+    }
+    svg.appendChild(svgFrac(X(cur.n/cur.d), LINE_Y - 52, cur.n, cur.d, "var(--mark)", 19));
+  }
+
+  /* one part named — the arc and the value of 100 ÷ d. No words: the line says it. */
+  if(ph === "unit" || ph === "done"){
+    const x1 = L, x2 = X(1/cur.d);
+    svg.appendChild(mk("path", {d:"M " + x1 + " " + (LINE_Y+14) + " Q " + ((x1+x2)/2) + " " + (LINE_Y-6) + " " + x2 + " " + (LINE_Y+14),
+                                fill:"none", stroke:"var(--pct)", "stroke-width":2.6, "stroke-linecap":"round", opacity:.85}));
+    if(cur.d > 2) svg.appendChild(svgPct(x2, LINE_Y + 40, 1, cur.d, "var(--pct)", 15));
+  }
+
+  /* the answer, once the question is finished */
+  if(ph === "done"){
+    svg.appendChild(mk("circle", {cx:X(cur.n/cur.d), cy:LINE_Y, r:9, fill:"#fff", stroke:"var(--mark)", "stroke-width":4}));
+    svg.appendChild(svgPct(X(cur.n/cur.d), LINE_Y + 40, cur.n, cur.d, "var(--mark)", 18));
+  }
+
+  /* the student's estimate, while it is theirs to move */
+  if((state.phase === "estimate" || state.phase === "held") && state.estimate !== null){
+    const x = X(state.estimate);
+    svg.appendChild(mk("line", {x1:x, y1:LINE_Y - 15, x2:x, y2:LINE_Y + 15, stroke:"var(--hint)", "stroke-width":3}));
+    svg.appendChild(mk("path", {d:"M " + x + " " + (LINE_Y+19) + " l -7 -11 l 14 0 Z", fill:"var(--hint)"}));
+    svg.appendChild(label(x, LINE_Y + 62, state.estimateMoved ? (state.phase === "held" ? "your estimate" : "drag me") : "drag me",
+                          {"font-size":12, "font-weight":800, fill:"var(--hint)"}));
+  }
+  svg.classList.toggle("draggable", state.phase === "estimate");
+}
+
+/* =======================================================================
+   7. RENDER — the whole screen, from state.
+   ======================================================================= */
+function render(){
+  el("setup").style.display = state.screen === "setup" ? "block" : "none";
+  el("quiz").style.display  = state.screen === "quiz"  ? "block" : "none";
+  el("final").classList.toggle("show", state.screen === "results");
+  if(state.screen === "quiz")    renderQuiz();
+  if(state.screen === "results") renderResults();
+}
+
+const MODEL_BTN = { estimate:"Lock in estimate", held:"Next →", placed:"Reveal one part", unit:null, done:null };
+
+function renderQuiz(){
+  const cur = q(), ph = state.phase;
+
+  el("progressLabel").textContent = (state.index + 1) + " / " + QUIZ_LEN;
+  el("bar").style.width = (state.index / QUIZ_LEN * 100) + "%";
+
+  /* While estimating there is nothing on screen but the fraction and a bare
+     line — no answer box to peek at, nothing to type into. */
+  const answering = ph === "placed" || ph === "unit" || ph === "done";
+  el("answerRow").style.display = answering ? "flex" : "none";
+  el("stage").style.display = model() ? "block" : "none";
+
+  el("qline").innerHTML = ph === "estimate"
+    ? "Estimate — where does " + cur.prompt + " sit?"
+    : cur.prompt;
+
+  el("qhint").innerHTML =
+    ph === "estimate" ? "Drag the orange marker on the line, then lock it in. This one is not marked."
+    : ph === "held"   ? ""
+    : cur.kind === "rec" ? "This one recurs. Write it as a mixed number like 33 1/3, or round to 1 decimal place."
+    : cur.kind === "dec" ? "This one stops, but it is not a whole number."
+    : "";
+
+  const btnText = MODEL_BTN[ph];
+  el("modelBtn").style.display = (model() && btnText) ? "" : "none";
+  if(btnText) el("modelBtn").textContent = btnText;
+  el("modelBtn").disabled = (ph === "estimate" && !state.estimateMoved);
+
+  const done = ph === "done";
+  el("answer").disabled = done;
+  el("checkBtn").textContent = done
+    ? (state.index + 1 >= QUIZ_LEN ? "See my score" : "Next →")
+    : "Enter";
+
+  const fb = el("feedback");
+  if(state.message){
+    fb.className = "feedback show " + state.message.tone;
+    fb.innerHTML = state.message.text + (state.message.why ? '<span class="why">' + state.message.why + "</span>" : "");
+  } else { fb.className = "feedback"; fb.innerHTML = ""; }
+
+  drawLine();
+}
+
+function renderResults(){
+  const firstGo    = state.results.filter(r => r.correct && r.attempts === 1).length;
+  const eventually = state.results.filter(r => r.correct).length;
+  el("scoreText").textContent = firstGo + " / " + QUIZ_LEN;
+  el("scoreMsg").textContent =
+    firstGo === QUIZ_LEN ? "Every one first go. Try the next level up."
+    : firstGo >= 7       ? "Solid — and " + (eventually - firstGo) + " more came right on the second go."
+    :                      "Worth another go. Look at which kind you are losing below.";
+
+  /* By KIND of percentage, not by question number. "6 out of 10" tells a
+     teacher nothing; "fine on whole numbers, lost on every recurring one"
+     tells them what to teach tomorrow. */
+  el("byType").innerHTML = "<h3>By kind of percentage — first go</h3>" +
+    Object.keys(KINDS).map(k => {
+      const set = state.results.filter(r => r.kind === k);
+      if(!set.length) return "";
+      const got = set.filter(r => r.correct && r.attempts === 1).length;
+      return "<div><span>" + KINDS[k] + "</span><span class='" + (got === set.length ? "strong" : "weak") + "'>" +
+             got + " / " + set.length + "</span></div>";
+    }).join("");
+
+  el("review").innerHTML = state.results.map((r, i) =>
+    "<div><span>" + (i + 1) + ". " + frHTML(r.n, r.d) + " = " + pctHTML(r.n, r.d) + "</span>" +
+    (r.correct && r.attempts === 1 ? '<span class="r-ok">✓</span>'
+     : r.correct                   ? '<span class="r-ok">✓ 2nd go</span>'
+                                   : '<span class="r-no">✗ you said ' + r.given + "</span>") + "</div>"
+  ).join("");
+}
+
+/* =======================================================================
+   8. ACTIONS — each one edits state, then calls render().
+   ======================================================================= */
+function startLevel(key){
+  state.level     = key;
+  state.questions = makeQuiz(key);
+  state.index     = 0;
+  state.results   = [];
+  state.screen    = "quiz";
+  beginQuestion();
+}
+function beginQuestion(){
+  state.attempt  = 0;
+  state.message  = null;
+  state.estimate = model() ? amaxSafe() / 2 : null;
+  state.estimateMoved = false;
+  state.phase    = model() ? "estimate" : "placed";
+  render();
+  el("answer").value = "";
+  el("answer").className = "ans";
+  if(state.phase === "placed") el("answer").focus();
+}
+/* amax() needs the current question, which exists by the time this is called. */
+function amaxSafe(){ return q().n > q().d ? (q().n + 1) / q().d : 1; }
+
+function modelStep(){
+  if(state.phase === "estimate"){
+    if(!state.estimateMoved) return;
+    const est = Math.round(state.estimate * 1000) / 10;
+    const off = Math.abs(est - 100 * q().n / q().d);
+    const word = off < 1 ? "spot on" : off < 5 ? "very close" : off < 12 ? "in the right area" : "worth a rethink";
+    state.phase   = "held";
+    state.message = { tone:"info", text:"Your estimate was <b>" + est + "%</b> — " + word + "." };
+  } else if(state.phase === "held"){
+    state.phase = "placed"; state.message = null;
+  } else if(state.phase === "placed"){
+    state.phase = "unit";
+  }
+  render();
+  if(state.phase === "placed" || state.phase === "unit") el("answer").focus();
+}
+
+function submit(){
+  if(state.phase === "done"){
+    state.index++;
+    if(state.index >= QUIZ_LEN){ state.screen = "results"; render(); return; }
+    beginQuestion();
+    return;
+  }
+  const val = parseAnswer(el("answer").value);
+  if(val === null){
+    /* An unreadable box is not an attempt — the student retypes and loses nothing. */
+    el("answer").className = "ans bad";
+    state.message = { tone:"hint", text: q().kind === "rec"
+      ? "Type a percentage — a number like 60 or 12.5, or a mixed number like 33 1/3."
+      : "Type a percentage — a number like 60 or 12.5." };
+    render();
+    return;
+  }
+
+  const cur = q();
+  state.attempt++;
+  const right = isCorrect(cur, val);
+
+  if(right){
+    state.phase = "done";
+    state.message = { tone:"ok", text:(state.attempt === 1 ? "Correct — " : "Correct on the second go — ") +
+                      frHTML(cur.n, cur.d) + " = " + pctHTML(cur.n, cur.d) + "." };
+    state.results.push({ ...cur, given:el("answer").value.trim(), correct:true, attempts:state.attempt });
+  } else if(state.attempt < MAX_ATTEMPTS){
+    state.message = { tone:"hint", text:"Not quite — have another go.",
+                      why: diagnose(cur, val) ||
+                           (model() && state.phase === "placed" ? "Try <b>Reveal one part</b> under the line." : "") };
+    el("answer").className = "ans bad";
+    render();
+    el("answer").select();
+    return;
+  } else {
+    state.phase = "done";
+    state.message = { tone:"no", text:"Not quite — " + frHTML(cur.n, cur.d) + " = " + pctHTML(cur.n, cur.d) + ".",
+                      why: diagnose(cur, val) };
+    state.results.push({ ...cur, given:el("answer").value.trim(), correct:false, attempts:state.attempt });
+  }
+  el("answer").className = "ans " + (right ? "ok" : "bad");
+  render();
+  el("checkBtn").focus();
+}
+
+/* ---- dragging the estimate. No number is shown while they choose. ---- */
+function fromEvent(e){
+  if(state.phase !== "estimate") return;
+  const svg = el("canvas"), r = svg.getBoundingClientRect();
+  const x = ((e.clientX ?? e.touches[0].clientX) - r.left) / r.width * 640;
+  state.estimate = Math.max(0, Math.min(amaxSafe(), (x - L) / (R - L) * amaxSafe()));
+  state.estimateMoved = true;
+  render();
+}
+let dragging = false;
+el("canvas").addEventListener("pointerdown", e => {
+  if(state.phase !== "estimate") return;
+  dragging = true; el("canvas").setPointerCapture(e.pointerId); fromEvent(e);
+});
+el("canvas").addEventListener("pointermove", e => { if(dragging) fromEvent(e); });
+el("canvas").addEventListener("pointerup",   () => { dragging = false; });
+
+/* ---- the level menu, built from LEVELS so adding one is a single entry ---- */
+el("levels").innerHTML = Object.keys(LEVELS).map(k =>
+  '<button data-level="' + k + '"><b>' + LEVELS[k].name + "</b><span>" + LEVELS[k].blurb + "</span></button>"
+).join("");
+el("levels").addEventListener("click", e => {
+  const b = e.target.closest("button[data-level]");
+  if(b) startLevel(b.dataset.level);
+});
+el("previewLevel").innerHTML = Object.keys(LEVELS).map(k =>
+  '<option value="' + k + '">' + LEVELS[k].name + "</option>").join("");
+
+/* ---- the teacher check panel ---- */
+el("previewBtn").addEventListener("click", () => {
+  const key = el("previewLevel").value, mdl = LEVELS[key].model, seen = new Set(), rows = [];
+  for(let i = 0; i < 20; i++){
+    const [kind, , improperFrom] = PLANS[key][i % PLANS[key].length];
+    const item = makeQuestion(kind, improperFrom !== null && i % 4 === 3, mdl, seen);
+    rows.push('<span class="row"><span class="n">' + (i+1) + ".</span> " + frHTML(item.n, item.d) +
+              " = " + pctHTML(item.n, item.d) + '<span class="tag">' + item.kind + "</span></span>");
+  }
+  el("previewGrid").innerHTML = rows.join("");
+});
+
+/* ---- wiring ---- */
+el("modelBtn").addEventListener("click", modelStep);
+el("checkBtn").addEventListener("click", submit);
+el("againBtn").addEventListener("click", () => { state.screen = "setup"; render(); });
+el("answer").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); submit(); } });
+el("answer").addEventListener("input", () => { if(state.phase !== "done") el("answer").className = "ans"; });
+document.addEventListener("keydown", e => {
+  const tag = e.target && e.target.tagName;
+  if(tag === "INPUT" || tag === "BUTTON" || tag === "SELECT" || tag === "TEXTAREA") return;
+  if(e.key === "Enter" && state.screen === "quiz"){
+    if(state.phase === "done") submit();
+    else if(model() && MODEL_BTN[state.phase] && !el("modelBtn").disabled) modelStep();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Number Line Jumps — starter tool</title>
+
+<!--
+================================================================================
+  ONE-FILE STARTER  ·  Mathematics vibe coding
+================================================================================
+
+  HOW TO USE THIS FILE
+  --------------------
+  1. Open it in a browser. It works right now — try it before you change it.
+  2. Drag this file into a Claude (or ChatGPT) chat.
+  3. Paste the prompt below, with the [SQUARE BRACKETS] filled in.
+  4. Save what comes back over this file. Open it again. Check the maths.
+
+  THE PROMPT — four parts. Miss one and you spend twenty minutes correcting.
+  ------------------------------------------------------------------------
+
+      [Context]  This is my starter file. Read the brief in the comment at the
+      top of it and follow those rules.
+
+      [The change]  Change it from number line jumps to [YOUR THING].
+
+      [The test]  It works when I can [ONE SENTENCE — the thing you'd do to
+      check it, e.g. "set the denominator to 7, drag to 3/7, and the bar and
+      the decimal agree"].
+
+      [The limits]  Keep it one self-contained file, no libraries, keep the
+      :root design tokens, and don't add anything I didn't ask for.
+
+  Ask for the WHOLE file back, not just the changed part.
+
+================================================================================
+  THE BRIEF  —  rules for whoever edits this file, human or AI
+================================================================================
+
+  WHAT THIS IS
+  A single-file mathematics teaching tool. Built by a teacher, driven by a
+  teacher on a projector, or sent home as one file. No accounts, no server, no
+  data collection.
+
+  HARD RULES — do not break these without being asked
+  · ONE FILE. HTML, CSS and JavaScript all live in this file. It must work when
+    opened directly from disk, offline, with no web server.
+  · NO DEPENDENCIES. No CDN links, no npm, no frameworks, no web fonts. A school
+    filter or a flaky wifi must not be able to break a lesson.
+  · NO STUDENT DATA LEAVES THE DEVICE. No analytics, no logging, no storage of
+    typed answers, no network requests of any kind.
+  · DESIGN TOKENS AT THE TOP. Every colour is a var(--token) declared in :root.
+    Never a hex code further down the file.
+  · STATE, THEN RENDER. All state lives in one plain object. Controls change the
+    object and call render(), which redraws everything from scratch. No partial
+    DOM updates — that is the bug that eats an evening.
+  · DIAGRAMS ARE INLINE SVG. Not canvas, not images. It has to stay sharp on a
+    projector and take its colours from the CSS variables.
+
+  MATHS RULES — the ones that actually catch errors
+  · SAY WHAT IS TRUE. Recurring decimals get recurring notation or ≈. Never
+    write "1/3 = 0.3333" on a projector in front of thirty children.
+  · COMPARE WHOLE NUMBERS, NOT DIVISIONS. To test whether two fractions are
+    equal, cross-multiply. Never a/b === c/d — floating point will betray you.
+  · WORK IN INTEGERS WHERE YOU CAN. This file scales decimal input up to whole
+    numbers before doing any arithmetic, so 0.1 + 0.2 cannot produce
+    0.30000000000000004. Keep that.
+  · IF YOU ADD A QUESTION GENERATOR, IT NEEDS TWO THINGS:
+      – Deal from a SHUFFLED BAG, not independent random draws. "Random" nearly
+        always means without replacement, or the case the tool exists for turns
+        up one time in eight.
+      – A TEACHER CHECK PANEL: a <details> block with a "Generate 20" button
+        showing questions and answers. Screen only, never printed. Non-negotiable.
+  · IF IT PRINTS, write the @media print block before polishing the screen, and
+    generate the questions ONCE into an array — render both the sheet and the
+    answer key from that same array. Never regenerate at print time.
+
+  WHERE THINGS ARE IN THIS FILE
+    :root            the six colours. Change --brand first.
+    #controls        the inputs. Each one writes to `state` then calls render().
+    const state      everything the tool is currently showing.
+    render()         reads state, redraws the whole diagram. Start here.
+    drawLine()       the SVG. Values are integers scaled by SCALE.
+    fmt()            turns a scaled integer back into a readable label.
+
+================================================================================
+-->
+
+<style>
+  /* ------------------------------------------------------------------
+     DESIGN TOKENS — change these six lines and the whole tool changes.
+     ------------------------------------------------------------------ */
+  :root{
+    --brand:#047857;        /* CHANGE ME FIRST — your main colour */
+    --brand-soft:#d1fae5;   /* a pale version of it */
+    --ink:#10221c;          /* body text */
+    --muted:#5b6b64;        /* secondary text */
+    --line:#dde7e2;         /* rules and borders */
+    --bg:#fbfaf7;           /* page background */
+
+    --sans:ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:24px 20px 48px;
+    background:var(--bg); color:var(--ink);
+    font-family:var(--sans); line-height:1.55;
+  }
+  .shell{max-width:960px; margin:0 auto}
+
+  header{border-bottom:2px solid var(--brand); padding-bottom:14px; margin-bottom:22px}
+  h1{margin:0; font-size:1.7rem; letter-spacing:-.01em}
+  header p{margin:6px 0 0; color:var(--muted); font-size:.98rem}
+
+  /* controls -------------------------------------------------------- */
+  #controls{
+    display:flex; flex-wrap:wrap; gap:18px 26px; align-items:flex-end;
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    padding:16px 18px; margin-bottom:22px;
+  }
+  .field{display:flex; flex-direction:column; gap:5px}
+  .field label{font-size:.78rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
+  .field input[type=number]{
+    font-family:var(--mono); font-size:1.05rem; width:110px;
+    padding:7px 9px; border:1px solid var(--line); border-radius:6px; background:var(--bg);
+    color:var(--ink);
+  }
+  .field input[type=range]{width:150px; accent-color:var(--brand)}
+  .toggles{display:flex; flex-direction:column; gap:6px}
+  .toggles label{display:flex; align-items:center; gap:8px; font-size:.95rem; text-transform:none; letter-spacing:0; color:var(--ink)}
+  input[type=checkbox]{accent-color:var(--brand); width:17px; height:17px}
+  input:focus-visible, button:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  /* diagram --------------------------------------------------------- */
+  figure{margin:0; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 8px}
+  svg{display:block; width:100%; height:auto; max-width:100%}
+  .axis{stroke:var(--ink); stroke-width:2}
+  .tick{stroke:var(--ink); stroke-width:2}
+  .arc{fill:none; stroke:var(--brand); stroke-width:2.5}
+  .dot{fill:var(--brand)}
+  .lbl{fill:var(--ink); font-family:var(--mono); font-size:15px; text-anchor:middle}
+  .step-lbl{fill:var(--brand); font-family:var(--sans); font-size:14px; font-weight:600; text-anchor:middle}
+  .total-lbl{fill:var(--muted); font-family:var(--mono); font-size:13px; text-anchor:middle}
+
+  .readout{
+    margin-top:18px; padding:14px 16px; background:var(--brand-soft);
+    border-left:3px solid var(--brand); border-radius:0 8px 8px 0;
+    font-family:var(--mono); font-size:1.05rem;
+  }
+  .note{margin-top:26px; color:var(--muted); font-size:.9rem; border-top:1px solid var(--line); padding-top:14px}
+
+  @media print{
+    body{background:#fff; padding:0}
+    #controls, .note{display:none}
+    figure{border:none}
+  }
+  @media (max-width:520px){
+    .field input[type=number]{width:88px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <h1>Number Line Jumps</h1>
+    <p>Set a starting point and a step, then watch the jumps land. Skip counting,
+       multiples, adding a constant, negative steps.</p>
+  </header>
+
+  <div id="controls">
+    <div class="field">
+      <label for="start">Start at</label>
+      <input type="number" id="start" value="0" step="any" />
+    </div>
+    <div class="field">
+      <label for="step">Jump of</label>
+      <input type="number" id="step" value="3" step="any" />
+    </div>
+    <div class="field">
+      <label for="jumps">Jumps — <span id="jumpsOut">6</span></label>
+      <input type="range" id="jumps" min="1" max="12" value="6" />
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="showSteps" checked /> Label each jump</label>
+      <label><input type="checkbox" id="showTotals" /> Show running total</label>
+    </div>
+  </div>
+
+  <figure>
+    <svg id="board" viewBox="0 0 920 250" role="img"
+         aria-label="A number line showing equal jumps from a starting value."></svg>
+  </figure>
+
+  <p class="readout" id="readout"></p>
+
+  <p class="note">
+    One file. No libraries. Nothing leaves this device. Read the comment at the top
+    of the source for the rules, and the prompt to hand this to an AI.
+  </p>
+
+</div>
+
+<script>
+/* =============================================================================
+   STATE — everything the tool is currently showing lives here.
+   Controls change this object, then call render(). Nothing else holds state.
+   ========================================================================== */
+const state = {
+  start: 0,
+  step: 3,
+  jumps: 6,
+  showSteps: true,
+  showTotals: false,
+};
+
+/* =============================================================================
+   EXACT ARITHMETIC
+   Decimal input is scaled up to whole numbers before any adding happens, so
+   0.1 + 0.2 can never produce 0.30000000000000004 on a projector.
+   ========================================================================== */
+const MAX_DP = 3;
+
+function decimals(v){
+  const s = String(v);
+  const i = s.indexOf(".");
+  return i === -1 ? 0 : Math.min(MAX_DP, s.length - i - 1);
+}
+
+/* One scale for the whole diagram: whichever input has the most decimal places. */
+function scaleFor(a, b){
+  return Math.pow(10, Math.max(decimals(a), decimals(b)));
+}
+
+/* A scaled integer back into a label a child would recognise.
+   Note the minus sign: U+2212, not the hyphen the keyboard gives you. On a
+   projector a hyphen reads as a dash and Year 7 will ask about it. */
+function fmt(scaledValue, scale){
+  const whole = scaledValue / scale;
+  const text = Number.isInteger(whole)
+    ? String(whole)
+    : String(Number(whole.toFixed(MAX_DP)));      /* trims 1.500 to 1.5 */
+  return text.replace(/^-/, "\u2212");
+}
+
+/* =============================================================================
+   RENDER — reads state, redraws everything from scratch. Always everything.
+   ========================================================================== */
+function render(){
+  const SCALE = scaleFor(state.start, state.step);
+  const s0 = Math.round(state.start * SCALE);
+  const st = Math.round(state.step  * SCALE);
+
+  /* Landing points as exact integers — this is the whole reason for SCALE. */
+  const points = [];
+  for (let i = 0; i <= state.jumps; i++) points.push(s0 + i * st);
+
+  drawLine(points, st, SCALE);
+
+  const last = points[points.length - 1];
+  document.getElementById("readout").textContent =
+    state.jumps + " × " + fmt(st, SCALE) + " from " + fmt(s0, SCALE) +
+    "  →  " + fmt(last, SCALE);
+  document.getElementById("jumpsOut").textContent = state.jumps;
+}
+
+/* =============================================================================
+   THE SVG. Inline, so it stays sharp on a projector and uses the CSS variables.
+   ========================================================================== */
+const NS = "http://www.w3.org/2000/svg";
+
+function el(name, attrs){
+  const n = document.createElementNS(NS, name);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+
+function drawLine(points, st, SCALE){
+  const svg = document.getElementById("board");
+  svg.textContent = "";                       /* redraw from scratch, every time */
+
+  const W = 920, H = 250, PAD = 56;
+  const axisY = 176;
+
+  const lo = Math.min(points[0], points[points.length - 1]);
+  const hi = Math.max(points[0], points[points.length - 1]);
+  const span = (hi - lo) || Math.abs(st) || 1;      /* a zero step still draws */
+
+  const x = v => PAD + ((v - lo) / span) * (W - 2 * PAD);
+
+  /* the line itself */
+  svg.appendChild(el("line", {x1:PAD-22, y1:axisY, x2:W-PAD+22, y2:axisY, class:"axis"}));
+
+  /* arrowheads, so it reads as a number line and not a ruler */
+  for (const [tipX, dir] of [[PAD-22, -1], [W-PAD+22, 1]]){
+    svg.appendChild(el("polygon", {
+      points: [tipX+dir*9, axisY, tipX, axisY-6, tipX, axisY+6].join(" "),
+      fill:"currentColor"
+    }));
+  }
+
+  points.forEach((p, i) => {
+    const px = x(p);
+
+    svg.appendChild(el("line", {x1:px, y1:axisY-9, x2:px, y2:axisY+9, class:"tick"}));
+    svg.appendChild(el("circle", {cx:px, cy:axisY, r:5, class:"dot"}));
+
+    const value = el("text", {x:px, y:axisY+32, class:"lbl"});
+    value.textContent = fmt(p, SCALE);
+    svg.appendChild(value);
+
+    if (state.showTotals && i > 0){
+      const t = el("text", {x:px, y:axisY+53, class:"total-lbl"});
+      t.textContent = "jump " + i;
+      svg.appendChild(t);
+    }
+
+    /* the arc from the previous landing point to this one */
+    if (i > 0){
+      const prevX = x(points[i-1]);
+      const midX  = (prevX + px) / 2;
+      const lift  = Math.min(74, Math.max(34, Math.abs(px - prevX) * 0.55));
+
+      svg.appendChild(el("path", {
+        d: "M " + prevX + " " + (axisY-10) +
+           " Q " + midX + " " + (axisY-10-lift) + " " + px + " " + (axisY-10),
+        class: "arc"
+      }));
+
+      if (state.showSteps){
+        const s = el("text", {x:midX, y:axisY-16-lift*0.72, class:"step-lbl"});
+        s.textContent = (st < 0 ? "−" : "+") + fmt(Math.abs(st), SCALE);
+        svg.appendChild(s);
+      }
+    }
+  });
+}
+
+/* =============================================================================
+   CONTROLS — each one writes to state, then calls render(). That is the pattern.
+   ========================================================================== */
+function bind(id, event, fn){
+  document.getElementById(id).addEventListener(event, e => { fn(e.target); render(); });
+}
+
+bind("start",      "input",  t => state.start = Number(t.value) || 0);
+bind("step",       "input",  t => state.step  = Number(t.value) || 0);
+bind("jumps",      "input",  t => state.jumps = Number(t.value));
+bind("showSteps",  "change", t => state.showSteps  = t.checked);
+bind("showTotals", "change", t => state.showTotals = t.checked);
+
+render();
+</script>
+</body>
+</html>

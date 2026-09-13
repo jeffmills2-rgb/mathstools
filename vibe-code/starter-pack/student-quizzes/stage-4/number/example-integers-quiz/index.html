@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adding and Subtracting Integers — Student Quiz</title>
+
+<!--
+  =========================================================================
+  EXAMPLE STUDENT QUIZ — read this before you build your own.
+
+  The shape of every quiz page in this template:
+    1. STATE          — one plain object describing the whole quiz
+    2. GENERATE       — build all the questions ONCE, into an array
+    3. DIAGNOSE       — look at a WRONG answer and name the mistake
+    4. render()       — draw the whole screen from state, every time
+
+  Two things here are worth copying deliberately.
+
+  (a) The questions are generated up front, all ten, into an array — the
+      same "generate once, render from the array" rule the worksheet
+      creator follows. It costs nothing, and it means you can print the
+      whole set out and check it (see the "Preview 20" button) before a
+      student ever sees one.
+
+  (b) The marker does not just say "wrong". It compares the student's
+      answer against what they WOULD have got from each common mistake,
+      and names the one they made. This is the part an AI cannot write for
+      you: knowing that a Year 8 who answers −10 to −7 − (−3) has kept
+      subtracting instead of adding is your expertise, not its.
+
+  Nothing is stored anywhere. The score lives in a JavaScript variable and
+  disappears when the tab closes. That is deliberate: no accounts, no
+  database, no privacy paperwork.
+  =========================================================================
+-->
+
+<style>
+  :root{
+    --brand:#047857;         /* PLACEHOLDER: match your homepage token */
+    --brand-soft:#d1fae5;
+    --ink:#10221c;
+    --muted:#5b6b64;
+    --line:#dde7e2;
+    /* Feedback colours are deliberately NOT the brand colour. A student needs
+       "correct" to look different from "this is a button" at a glance, from the
+       back of a room, on a bad screen. Keep them a bit brighter and warmer than
+       your brand — and if you pick a red or green brand, move these further away. */
+    --good:#15803d;
+    --good-soft:#dcfce7;
+    --bad:#b91c1c;
+    --bad-soft:#fee2e2;
+    --hint:#b45309;
+    --hint-soft:#fef3c7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:1.5rem 1rem 4rem;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);background:#f6f9f6;
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:1rem;color:var(--brand);text-decoration:none;font-weight:800;font-size:.86rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.6rem;box-shadow:0 8px 20px rgba(16,34,28,.06)}
+  h1{margin:0 0 .3rem;font-size:1.5rem;letter-spacing:-.03em}
+  .sub{margin:0 0 1.4rem;color:var(--muted);font-size:.92rem}
+
+  .progress{display:flex;align-items:center;gap:.6rem;margin-bottom:1.2rem}
+  .bar{flex:1;height:9px;border-radius:999px;background:#dde7e2;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:var(--brand);transition:width .25s ease}
+  .progress small{color:var(--muted);font-weight:900;font-size:.8rem;white-space:nowrap}
+
+  .prompt{font-size:2.1rem;font-weight:800;letter-spacing:-.03em;text-align:center;margin:1.4rem 0}
+  .answer-row{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;align-items:center}
+
+  /* type=text with inputmode=numeric, NOT type=number.
+     On an iPad the numeric keypad has no minus key, so a student physically
+     cannot type −3 into a number field. Text plus the ± button solves it, and
+     readAnswer() normalises whatever they type. This is the kind of thing you
+     only find by handing the tool to a class on the devices they actually use. */
+  input[type=text].ans{
+    width:130px;padding:.7rem .9rem;font-size:1.15rem;text-align:center;font-weight:800;
+    border:2px solid var(--line);border-radius:14px;outline:none;font-variant-numeric:tabular-nums;
+  }
+  input[type=text].ans:focus{border-color:var(--brand)}
+  button{
+    padding:.7rem 1.2rem;font-size:.95rem;font-weight:900;cursor:pointer;
+    border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff;
+  }
+  button.ghost{background:#fff;color:var(--brand)}
+  button.sign{
+    width:3rem;padding:.7rem 0;font-size:1.2rem;background:#fff;color:var(--ink);
+    border:2px solid var(--line);border-radius:14px;
+  }
+  button:disabled{opacity:.45;cursor:not-allowed}
+
+  .feedback{margin-top:1.1rem;padding:.9rem 1rem;border-radius:14px;font-weight:800;text-align:center;display:none}
+  .feedback.show{display:block}
+  .feedback.ok{background:var(--good-soft);color:var(--good)}
+  .feedback.no{background:var(--bad-soft);color:var(--bad)}
+  .feedback.hint{background:var(--hint-soft);color:var(--hint)}
+  .feedback .why{display:block;font-weight:650;font-size:.9rem;margin-top:.35rem;line-height:1.45}
+
+  .jump{margin-top:.9rem;display:none}
+  .jump.show{display:block}
+  .jump svg{display:block;width:100%;height:auto}
+
+  .options{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.2rem}
+  .options label{
+    display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);
+    border-radius:999px;padding:.4rem .75rem;font-size:.83rem;font-weight:850;background:#fff;cursor:pointer
+  }
+
+  .final{display:none;text-align:center}
+  .final.show{display:block}
+  .final .score{font-size:3.2rem;font-weight:900;letter-spacing:-.05em;margin:.5rem 0}
+  .final .msg{color:var(--muted);margin-bottom:1.4rem}
+  .review{text-align:left;margin:1.2rem 0;border-top:1px solid var(--line)}
+  .review div{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+  .review .r-no{color:var(--bad);font-weight:800}
+  .review .r-ok{color:var(--good);font-weight:800}
+
+  /* Breakdown by question type — the bit that is useful to the teacher. */
+  .bytype{text-align:left;margin:1.4rem 0 0}
+  .bytype h3{margin:0 0 .5rem;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .bytype div{display:flex;justify-content:space-between;gap:1rem;padding:.38rem 0;font-size:.9rem;border-bottom:1px solid var(--line)}
+  .bytype .weak{color:var(--bad);font-weight:800}
+  .bytype .strong{color:var(--good);font-weight:800}
+
+  /* ---- the check panel: teacher-facing, never seen by a student ---- */
+  .check{margin-top:1.6rem;border-top:1px dashed var(--line);padding-top:1rem}
+  .check summary{cursor:pointer;font-size:.8rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .check p{font-size:.84rem;color:var(--muted);line-height:1.55}
+  .check-grid{margin-top:.9rem;display:grid;grid-template-columns:repeat(2,1fr);gap:0 1.2rem;font-size:.86rem}
+  .check-grid span.row{display:flex;gap:.45rem;align-items:baseline;padding:.2rem 0;border-bottom:1px solid #f0f4f2;font-variant-numeric:tabular-nums}
+  .check-grid .n{color:var(--muted);font-weight:800;min-width:1.7rem}
+  .check-grid .tag{margin-left:auto;font-size:.68rem;color:var(--muted);font-weight:800}
+  @media (max-width:520px){ .check-grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../../../../index.html">← All resources</a>
+
+  <div class="card">
+    <h1>Adding and Subtracting Integers</h1>
+    <p class="sub">Ten questions, two goes at each. Type your answer and press Enter. PLACEHOLDER: your instructions here.</p>
+
+    <!-- ---- setup screen ---- -->
+    <div id="setup">
+      <div class="options">
+        <label><input type="radio" name="level" value="easy" checked> Easier (−12 to 12)</label>
+        <label><input type="radio" name="level" value="hard"> Harder (−40 to 40)</label>
+      </div>
+      <div class="answer-row"><button id="startBtn">Start the quiz</button></div>
+
+      <!-- =================================================================
+           THE CHECK PANEL.
+           WORKSHOP.md tells you to generate twenty questions and mark them
+           by hand before you trust a generator. This is that instruction,
+           as a button. It sits inside a <details> so no student will open
+           it, and it costs nothing to leave in. Copy it into every
+           generator you build.
+           ================================================================= -->
+      <details class="check">
+        <summary>Teacher check — preview 20 questions</summary>
+        <p>
+          Twenty questions from the generator at the level chosen above, with the answer
+          and the case each one tests. Mark them by hand and look for four things:
+          questions that aren't really about the topic, duplicates, wrong answers, and
+          a case that never appears.
+        </p>
+        <div class="answer-row" style="justify-content:flex-start">
+          <button class="ghost" id="previewBtn">Generate 20</button>
+        </div>
+        <div class="check-grid" id="previewGrid"></div>
+      </details>
+    </div>
+
+    <!-- ---- quiz screen ---- -->
+    <div id="quiz" style="display:none">
+      <div class="progress">
+        <div class="bar"><i id="bar"></i></div>
+        <small id="progressLabel">1 / 10</small>
+      </div>
+      <div class="prompt" id="prompt">−7 + 4 =</div>
+      <div class="answer-row">
+        <button class="sign" id="signBtn" aria-label="Change the sign of your answer" title="Make it negative or positive">±</button>
+        <input type="text" class="ans" id="answer" inputmode="numeric" autocomplete="off" aria-label="Your answer">
+        <button id="checkBtn">Check</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="jump" id="jump"><svg id="jumpSvg" viewBox="0 0 640 148" role="img" aria-label="A number line showing the jump"></svg></div>
+    </div>
+
+    <!-- ---- results screen ---- -->
+    <div class="final" id="final">
+      <p class="sub" style="margin:0">You scored, first go</p>
+      <div class="score" id="scoreText">0 / 10</div>
+      <p class="msg" id="scoreMsg"></p>
+      <div class="bytype" id="byType"></div>
+      <div class="review" id="review"></div>
+      <button class="ghost" id="againBtn">Try another ten</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   1. CONFIG — the knobs a teacher actually wants to turn.
+   ======================================================================= */
+const TOTAL_QUESTIONS = 10;
+const MAX_ATTEMPTS    = 2;
+const RANGES = { easy: { max: 12 }, hard: { max: 40 } };
+
+/* The four things this quiz is actually testing. Naming them is what makes
+   the rest of the file possible: the generator can guarantee all four turn
+   up, the marker can give case-specific feedback, and the results screen
+   can tell you which one the class cannot do. */
+const CASES = {
+  addPos: { label: "Adding a positive",      op: "+" },
+  addNeg: { label: "Adding a negative",      op: "+" },
+  subPos: { label: "Subtracting a positive", op: "−" },
+  subNeg: { label: "Subtracting a negative", op: "−" }
+};
+
+/* =======================================================================
+   2. STATE — one object. Everything on screen is drawn from this.
+   ======================================================================= */
+const state = {
+  screen:    "setup",     /* "setup" | "quiz" | "results" */
+  level:     "easy",
+  questions: [],          /* the whole set, generated once at the start */
+  index:     0,
+  attempt:   0,           /* goes taken at THIS question */
+  phase:     "asking",    /* "asking" | "hint" | "marked" */
+  message:   null,        /* {tone, text, why} for the feedback box */
+  results:   []           /* one entry per finished question */
+};
+
+const el = id => document.getElementById(id);
+
+/* Use the proper minus sign, not a hyphen. Small thing; students notice. */
+function fmt(n){ return String(n).replace("-", "−"); }
+
+/* =======================================================================
+   3. THE GENERATOR — returns {a, op, b, answer, caseKey, prompt}.
+
+   The important part is that the four cases are dealt from a SHUFFLED BAG
+   rather than drawn at random each time.
+
+   Choosing the operation and the signs independently at random looks fine
+   and is quietly useless. "Subtracting a negative" — the case this quiz
+   exists for — would turn up about one question in four, and a run of ten
+   would fairly often contain none at all. A student could finish a quiz on
+   integers without ever meeting the hard part.
+
+   Dealing from a shuffled bag of the four cases guarantees each appears at
+   least twice in ten, in an unpredictable order. Same idea as the shuffle
+   bag in the worksheet creator — worth recognising in both places.
+   ======================================================================= */
+function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function shuffle(list){
+  const out = list.slice();
+  for(let i = out.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function makeQuestion(caseKey, level){
+  const M = RANGES[level].max;
+  let a, b;
+
+  /* Each case has a guard so the question genuinely tests that case. Without
+     them you get "8 − 1 =" in a quiz about integers: correct maths, wrong
+     purpose. That is the most common way an AI-written generator disappoints,
+     and it stays invisible until you sit down and read twenty of them. */
+  switch(caseKey){
+    case "addPos":                     /* −7 + 4 : start below zero, move right */
+      a = randInt(-M, -1);
+      b = randInt(1, M);
+      break;
+    case "addNeg":                     /* 5 + (−8) : adding a negative */
+      a = randInt(-M, M) || randInt(1, M);
+      b = randInt(-M, -1);
+      break;
+    case "subPos":                     /* 3 − 8 : must land below zero */
+      do {
+        a = randInt(-M, M);
+        b = randInt(1, M);
+      } while(a >= b);
+      break;
+    case "subNeg":                     /* −7 − (−3) : the one that matters */
+      a = randInt(-M, M) || randInt(-M, -1);
+      b = randInt(-M, -1);
+      break;
+  }
+
+  const op     = CASES[caseKey].op;
+  const answer = op === "+" ? a + b : a - b;
+  const bText  = b < 0 ? "(" + fmt(b) + ")" : fmt(b);
+
+  return { a, op, b, answer, caseKey, prompt: fmt(a) + " " + op + " " + bText + " =" };
+}
+
+/* Build the whole set at once — "generate once, render from the array". */
+function makeQuiz(level, count){
+  const keys = Object.keys(CASES);
+  let bag = [], out = [];
+  for(let i = 0; i < count; i++){
+    if(bag.length === 0) bag = shuffle(keys);
+    out.push(makeQuestion(bag.pop(), level));
+  }
+  return out;
+}
+
+/* =======================================================================
+   4. THE MARKER — given a WRONG answer, name the mistake.
+
+   Each rule works out what the student would have got if they had made one
+   particular error, and compares. If it matches we can say something
+   specific instead of "not quite".
+
+   These rules are teaching knowledge, not programming knowledge. Edit them
+   to match the errors your own classes actually make — that is the whole
+   value of the thing.
+   ======================================================================= */
+function diagnose(q, given){
+  const { a, b, op } = q;
+
+  /* Never explain a right answer. This guard looks pointless — diagnose() is
+     only ever called on a wrong one — and it is not: while writing this file
+     the "combined the sizes" rule below was firing on thousands of CORRECT
+     answers, because −8 + (−5) = −13 really does have size 8 + 5. A rule that
+     is true of correct answers cannot explain wrong ones. Worth testing your
+     own rules the same way: run them against the right answer and check that
+     every single one stays silent. */
+  if(given === q.answer) return null;
+
+  /* Read "− (−3)" as "− 3": kept subtracting instead of adding. */
+  if(q.caseKey === "subNeg" && given === a + b)
+    return "Subtracting a negative is the same as adding. " +
+           fmt(a) + " − (" + fmt(b) + ") means " + fmt(a) + " + " + Math.abs(b) + ".";
+
+  /* Ignored the sign of b and added its size instead. */
+  if(q.caseKey === "addNeg" && given === a - b)
+    return "Adding a negative moves you left along the number line, not right.";
+
+  /* Subtracted the wrong way round. */
+  if(op === "−" && given === b - a && a !== b)
+    return "Order matters in subtraction — " + fmt(a) + " − " + fmt(b) +
+           " is not the same as " + fmt(b) + " − " + fmt(a) + ".";
+
+  /* Used the wrong operation entirely. */
+  if(op === "−" && given === a + b) return "Check the sign between them — this one is a subtraction.";
+  if(op === "+" && given === a - b) return "Check the sign between them — this one is an addition.";
+
+  /* Right size, wrong side of zero. The most common integer slip there is. */
+  if(given === -q.answer && given !== 0)
+    return "The size is right but the sign is not. Which side of zero do you land on?";
+
+  /* Added the two sizes and ignored the directions. Only meaningful when the
+     right answer does NOT already have that size — see the guard at the top. */
+  if(Math.abs(given) === Math.abs(a) + Math.abs(b) &&
+     Math.abs(q.answer) !== Math.abs(a) + Math.abs(b))
+    return "You have combined the sizes. Check which way each one moves you.";
+
+  return null;   /* nothing recognised — the number line below still helps */
+}
+
+/* =======================================================================
+   5. THE NUMBER LINE — "start here, jump this far, land there".
+   Wiped and redrawn from scratch every time, same as the fraction bar.
+   Never patched in place.
+   ======================================================================= */
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs, text){
+  const n = document.createElementNS(NS, tag);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  if(text !== undefined) n.textContent = text;
+  return n;
+}
+
+function drawJump(q, reveal){
+  const svg = el("jumpSvg");
+  svg.replaceChildren();
+
+  const start = q.a, end = q.answer;
+  const pad = Math.max(1, Math.round(Math.abs(end - start) * 0.3));
+  const lo  = Math.min(start, end, 0) - pad;
+  const hi  = Math.max(start, end, 0) + pad;
+  const span = hi - lo;
+
+  const L = 34, R = 606, W = R - L, Y = 86;
+  const x = v => L + (v - lo) / span * W;
+
+  /* Tick every 1 while that stays readable, otherwise every 5 or 10. */
+  const step = span <= 26 ? 1 : span <= 60 ? 5 : 10;
+  const labelEvery = span <= 16 ? step : span <= 30 ? step * 2 : step;
+
+  svg.appendChild(svgEl("line", {x1:L, y1:Y, x2:R, y2:Y, stroke:"#10221c", "stroke-width":2.5}));
+  for(let v = Math.ceil(lo / step) * step; v <= hi; v += step){
+    const zero = (v === 0);
+    svg.appendChild(svgEl("line", {
+      x1:x(v), y1:Y - (zero ? 13 : 7), x2:x(v), y2:Y + (zero ? 13 : 7),
+      stroke: zero ? "#10221c" : "#93a49c", "stroke-width": zero ? 2.5 : 1.5
+    }));
+    if(v % labelEvery === 0){
+      svg.appendChild(svgEl("text", {
+        x:x(v), y:Y + 30, "text-anchor":"middle", "font-size":13,
+        "font-weight": zero ? 900 : 700, fill: zero ? "#10221c" : "#5b6b64"
+      }, fmt(v)));
+    }
+  }
+
+  /* The jump: an arc from where you start to where you land. */
+  const x1 = x(start), x2 = x(end), move = end - start;
+  if(move !== 0){
+    const lift = Math.min(52, 22 + Math.abs(x2 - x1) * 0.16);
+    svg.appendChild(svgEl("path", {
+      d: "M " + x1 + " " + (Y - 5) + " Q " + ((x1 + x2) / 2) + " " + (Y - 5 - lift * 2) + " " + x2 + " " + (Y - 5),
+      fill:"none", stroke:"var(--hint)", "stroke-width":2.5, "stroke-linecap":"round"
+    }));
+    const dir = move > 0 ? 1 : -1;
+    svg.appendChild(svgEl("path", {
+      d: "M " + x2 + " " + (Y - 2) + " L " + (x2 - dir * 9) + " " + (Y - 13) +
+         " L " + (x2 - dir * 9) + " " + (Y + 5) + " Z",
+      fill:"var(--hint)"
+    }));
+    svg.appendChild(svgEl("text", {
+      x:(x1 + x2) / 2, y:16, "text-anchor":"middle", "font-size":14, "font-weight":900, fill:"var(--hint)"
+    }, move > 0 ? "move " + move + " right" : "move " + Math.abs(move) + " left"));
+  }
+
+  /* Where you start, and — only on the reveal — where you land. */
+  svg.appendChild(svgEl("circle", {cx:x1, cy:Y, r:7, fill:"#fff", stroke:"var(--ink)", "stroke-width":2.5}));
+  if(reveal){
+    svg.appendChild(svgEl("circle", {cx:x2, cy:Y, r:8, fill:"var(--good)", stroke:"#fff", "stroke-width":3}));
+  }
+
+  /* ONE caption, centred under the whole line, rather than a label floating
+     over each point.
+
+     The floating labels were the first thing tried here and they looked fine
+     on −7 − (−3). On a one-step jump they sat either side of the top of the
+     arc and collided with it, and with each other. Anything positioned
+     relative to a moving part has to be checked at its extremes — the widest
+     jump AND the narrowest — and a caption that is always in the same place
+     cannot collide with anything. Prefer the boring layout. */
+  svg.appendChild(svgEl("text", {
+    x:(L + R) / 2, y:Y + 52, "text-anchor":"middle",
+    "font-size":14, "font-weight":800, fill:"#5b6b64"
+  }, reveal ? "start at " + fmt(start) + ", land on " + fmt(end)
+            : "start at " + fmt(start)));
+}
+
+/* =======================================================================
+   6. RENDER — draws the whole screen from state. Nothing else touches the
+   DOM. If you take one pattern from this file, take this one.
+   ======================================================================= */
+function render(){
+  el("setup").style.display = state.screen === "setup" ? "block" : "none";
+  el("quiz").style.display  = state.screen === "quiz"  ? "block" : "none";
+  el("final").classList.toggle("show", state.screen === "results");
+
+  if(state.screen === "quiz")    renderQuiz();
+  if(state.screen === "results") renderResults();
+}
+
+function renderQuiz(){
+  const q = state.questions[state.index];
+
+  el("prompt").textContent        = q.prompt;
+  el("progressLabel").textContent = (state.index + 1) + " / " + TOTAL_QUESTIONS;
+  el("bar").style.width           = (state.index / TOTAL_QUESTIONS * 100) + "%";
+
+  const done = state.phase === "marked";
+  el("answer").disabled  = done;
+  el("signBtn").disabled = done;
+  el("checkBtn").textContent = !done ? "Check"
+    : (state.index + 1 >= TOTAL_QUESTIONS ? "See my score" : "Next question");
+
+  const fb = el("feedback");
+  if(state.message){
+    fb.className = "feedback show " + state.message.tone;
+    fb.innerHTML = state.message.text +
+      (state.message.why ? '<span class="why">' + state.message.why + "</span>" : "");
+  } else {
+    fb.className = "feedback";
+    fb.innerHTML = "";
+  }
+
+  const showJump = state.phase === "hint" ||
+                   (state.phase === "marked" && state.message && state.message.tone === "no");
+  el("jump").classList.toggle("show", !!showJump);
+  if(showJump) drawJump(q, state.phase === "marked");
+}
+
+function renderResults(){
+  const firstGo    = state.results.filter(r => r.correct && r.attempts === 1).length;
+  const eventually = state.results.filter(r => r.correct).length;
+
+  el("scoreText").textContent = firstGo + " / " + TOTAL_QUESTIONS;
+  el("scoreMsg").textContent =
+    firstGo === TOTAL_QUESTIONS ? "Every one first go. Try the harder level."
+    : firstGo >= 7              ? "Solid — and " + (eventually - firstGo) + " more came right on the second go."
+    :                             "Worth another go. Look at which type you are losing below.";
+
+  /* Breakdown by case. This is the bit worth reading over a student's
+     shoulder: it turns "6 out of 10" into "cannot subtract a negative". */
+  el("byType").innerHTML = "<h3>By question type — first go</h3>" +
+    Object.keys(CASES).map(key => {
+      const set = state.results.filter(r => r.caseKey === key);
+      if(!set.length) return "";
+      const got = set.filter(r => r.correct && r.attempts === 1).length;
+      return "<div><span>" + CASES[key].label + "</span>" +
+             '<span class="' + (got === set.length ? "strong" : "weak") + '">' +
+             got + " / " + set.length + "</span></div>";
+    }).join("");
+
+  el("review").innerHTML = state.results.map((r, i) =>
+    "<div><span>" + (i + 1) + ". " + r.prompt + " " + fmt(r.given) + "</span>" +
+    (r.correct && r.attempts === 1 ? '<span class="r-ok">✓</span>'
+     : r.correct                   ? '<span class="r-ok">✓ 2nd go</span>'
+                                   : '<span class="r-no">✗ ' + fmt(r.answer) + "</span>") + "</div>"
+  ).join("");
+}
+
+/* =======================================================================
+   7. ACTIONS — each one edits state, then calls render(). Nothing else.
+   ======================================================================= */
+function start(){
+  state.level     = document.querySelector("input[name=level]:checked").value;
+  state.questions = makeQuiz(state.level, TOTAL_QUESTIONS);
+  state.index     = 0;
+  state.attempt   = 0;
+  state.phase     = "asking";
+  state.message   = null;
+  state.results   = [];
+  state.screen    = "quiz";
+  render();
+  el("answer").value = "";
+  el("answer").focus();
+}
+
+/* Accept "-3", "−3" (the real minus sign) and stray spaces. */
+function readAnswer(){
+  const raw = el("answer").value.trim().replace(/−/g, "-").replace(/\s+/g, "");
+  return /^-?\d+$/.test(raw) ? Number(raw) : null;
+}
+
+function submit(){
+  /* A second press of the button means "move on". */
+  if(state.phase === "marked"){
+    state.index++;
+    state.attempt = 0;
+    state.phase   = "asking";
+    state.message = null;
+    if(state.index >= TOTAL_QUESTIONS) state.screen = "results";
+    render();
+    if(state.screen === "quiz"){ el("answer").value = ""; el("answer").focus(); }
+    return;
+  }
+
+  const given = readAnswer();
+  if(given === null) return;              /* never mark an empty or half-typed box */
+
+  const q = state.questions[state.index];
+  state.attempt++;
+
+  if(given === q.answer){
+    state.phase   = "marked";
+    state.message = { tone:"ok", text: state.attempt === 1 ? "Correct." : "Correct — good second go." };
+    state.results.push({ ...q, given, correct:true, attempts:state.attempt });
+  } else if(state.attempt < MAX_ATTEMPTS){
+    /* First miss: name the mistake and show the jump, but do NOT give the
+       answer away. A quiz that reveals on the first wrong answer teaches
+       nothing; one that says "here is what you did, try again" teaches a lot. */
+    state.phase   = "hint";
+    state.message = { tone:"hint", text:"Not quite — have another go.",
+                      why: diagnose(q, given) || "Use the number line below." };
+  } else {
+    state.phase   = "marked";
+    state.message = { tone:"no", text:"The answer is " + fmt(q.answer) + ".", why: diagnose(q, given) };
+    state.results.push({ ...q, given, correct:false, attempts:state.attempt });
+  }
+
+  render();
+  if(state.phase === "hint") el("answer").select();
+  else                       el("checkBtn").focus();
+}
+
+function flipSign(){
+  const v = el("answer").value.trim();
+  el("answer").value = (v.startsWith("−") || v.startsWith("-")) ? v.slice(1)
+                     : v === "" ? "−"
+                     : "−" + v;
+  el("answer").focus();
+}
+
+/* ---------- the teacher check panel ---------- */
+function preview(){
+  const level = document.querySelector("input[name=level]:checked").value;
+  el("previewGrid").innerHTML = makeQuiz(level, 20).map((q, i) =>
+    '<span class="row"><span class="n">' + (i + 1) + ".</span> " + q.prompt + " " + fmt(q.answer) +
+    '<span class="tag">' + CASES[q.caseKey].label + "</span></span>"
+  ).join("");
+}
+
+/* ---------- wiring ---------- */
+el("startBtn").addEventListener("click", start);
+el("checkBtn").addEventListener("click", submit);
+el("signBtn").addEventListener("click", flipSign);
+el("previewBtn").addEventListener("click", preview);
+el("againBtn").addEventListener("click", () => { state.screen = "setup"; render(); });
+el("answer").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); submit(); } });
+
+/* Show a proper minus sign even when they type a hyphen, so the box matches the
+   question above it. Same number of characters, so the cursor doesn't jump. */
+el("answer").addEventListener("input", e => {
+  const pos = e.target.selectionStart;
+  const fixed = e.target.value.replace(/-/g, "−");
+  if(fixed !== e.target.value){ e.target.value = fixed; e.target.setSelectionRange(pos, pos); }
+});
+
+document.addEventListener("keydown", e => {
+  if(e.key === "Enter" && state.screen === "quiz" && state.phase === "marked") submit();
+});
+
+render();
+</script>
+</body>
+</html>
