@@ -21,9 +21,35 @@ const R = 52;                        /* ring radius in the 120-box viewBox */
 const CIRC = 2 * Math.PI * R;
 
 const css = `
+/* THE CLOCK FILLS THE CARD UNTIL YOU REACH FOR IT.
+
+   A timer on a classroom wall is a clock, not a control panel — the mode
+   chips, the presets and the start button are all for the teacher, and for
+   the other fifty-nine minutes of the lesson they are just things making the
+   numbers smaller. So at rest they collapse and the face scales up to fill
+   the card; hovering brings them back and the face returns to its place.
+
+   The zoom is a TRANSFORM, not a change of layout. Scaling does not reflow
+   anything, so the ring cannot shove the controls around on its way up and
+   the whole thing is one cheap, smooth transition rather than a relayout
+   every time the mouse crosses the card. The factor is measured in JS
+   (see paintZoom below) because it depends on the card's shape, which CSS
+   cannot know.
+
+   NOTE: this comment is inside a CSS template literal, so it must not contain
+   a backtick — one ends the string and silently takes every rule after it. */
 .tm{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
      gap:calc(var(--u,1) * 8px); padding:calc(var(--u,1) * 10px); }
-.tm-face{ position:relative; display:grid; place-items:center; flex:none; }
+.tm-face{ position:relative; display:grid; place-items:center; flex:none;
+          transition:transform .3s cubic-bezier(.22,.61,.36,1); }
+.tm-modes, .tm-presets, .tm-ctrl{
+  transition:opacity .22s ease, max-height .3s ease, margin .3s ease;
+  max-height:12rem; overflow:hidden;
+}
+.w:not(:hover) .tm-face{ transform:scale(var(--tmzoom, 1)); }
+.w:not(:hover) .tm-modes,
+.w:not(:hover) .tm-presets,
+.w:not(:hover) .tm-ctrl{ opacity:0; max-height:0; margin:0; pointer-events:none; }
 .tm-ring{ width:calc(var(--u,1) * 150px); height:calc(var(--u,1) * 150px); display:block; transform:rotate(-90deg); }
 .tm-ring .track{ fill:none; stroke:#e2e8f0; stroke-width:7; }
 .tm-ring .prog{ fill:none; stroke:#2563eb; stroke-width:7; stroke-linecap:round;
@@ -215,11 +241,37 @@ export default {
       paint();
     }));
 
+    /* How far the face can grow once the controls have collapsed. offsetWidth,
+       not getBoundingClientRect — the rect already has the transform applied,
+       so measuring it would feed the scale back into itself and the clock
+       would creep bigger on every resize. */
+    function paintZoom(){
+      const face = el.querySelector('.tm-face');
+      if(!face) return;
+      const fw = face.offsetWidth, fh = face.offsetHeight;
+      if(!fw || !fh) return;
+      const zoom = Math.max(1, Math.min(
+        (el.clientWidth  * 0.92) / fw,
+        (el.clientHeight * 0.92) / fh,
+        2.6));                                  /* a ring bigger than this is
+                                                   all line and no numbers */
+      el.querySelector('.tm').style.setProperty('--tmzoom', zoom.toFixed(3));
+    }
+
     fitUnit(el, NAT);
     paint();
+    paintZoom();
 
     return () => { if(raf) cancelAnimationFrame(raf); };
   },
 
-  onResize(el){ fitUnit(el, NAT); },
+  onResize(el){
+    fitUnit(el, NAT);
+    const face = el.querySelector('.tm-face'), tm = el.querySelector('.tm');
+    if(!face || !tm) return;
+    const fw = face.offsetWidth, fh = face.offsetHeight;
+    if(!fw || !fh) return;
+    tm.style.setProperty('--tmzoom', Math.max(1, Math.min(
+      (el.clientWidth * 0.92) / fw, (el.clientHeight * 0.92) / fh, 2.6)).toFixed(3));
+  },
 };

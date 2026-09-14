@@ -25,7 +25,7 @@
    answer to "what if a screen document were tampered with" is "nothing".
    ======================================================================= */
 
-import { EQ_CSS, STRUCTS, mathify, eqBoxAt, insertMaths, leaveBox, guardSlotDelete, stepSlot } from './mathfield.js';
+import { EQ_CSS, STRUCTS, mathify, eqBoxAt, insertMaths, leaveBox, guardSlotDelete, stepSlot, arrowStep } from './mathfield.js';
 
 const TONES = [
   { id:'plain',  name:'White',  bg:'#ffffff', ink:'#0f172a', edge:'#e2e8f0' },
@@ -67,23 +67,31 @@ const I = {
   centre: '<svg viewBox="0 0 24 24"><path d="M3 4h18v2.3H3V4Zm3 4.8h12V11H6V8.8ZM3 13.6h18v2.3H3v-2.3Zm3 4.8h12v2.3H6v-2.3Z"/></svg>',
   right:  '<svg viewBox="0 0 24 24"><path d="M3 4h18v2.3H3V4Zm6 4.8h12V11H9V8.8ZM3 13.6h18v2.3H3v-2.3Zm6 4.8h12v2.3H9v-2.3Z"/></svg>',
   fill:   '<svg viewBox="0 0 24 24"><path d="M9.4 2 8 3.4l2.1 2.1-6 6a2 2 0 0 0 0 2.8l4.8 4.8a2 2 0 0 0 2.8 0l6.1-6.1a2 2 0 0 0 0-2.8L9.4 2Zm2.1 5.1 5.1 5.1H6.4l5.1-5.1ZM19.5 15s-2 2.4-2 3.8a2 2 0 1 0 4 0c0-1.4-2-3.8-2-3.8Z"/></svg>',
+  /* Vertical alignment: a bar showing which edge the text is pinned to, with
+     the lines of text beneath, above, or either side of it. */
+  vtop:   '<svg viewBox="0 0 24 24"><path d="M3 3h18v2.4H3V3Zm2 5h14v2.3H5V8Zm3 4.8h8V15H8v-2.2Z"/></svg>',
+  vmid:   '<svg viewBox="0 0 24 24"><path d="M5 4h14v2.3H5V4Zm-2 6.8h18v2.4H3v-2.4ZM5 17.7h14V20H5v-2.3Z"/></svg>',
+  vbot:   '<svg viewBox="0 0 24 24"><path d="M8 9h8v2.2H8V9Zm-3 4.7h14V16H5v-2.3ZM3 18.6h18V21H3v-2.4Z"/></svg>',
   caret:  '<svg viewBox="0 0 24 24" class="cx"><path d="M7 10h10l-5 6-5-6Z"/></svg>',
 };
 
 const css = EQ_CSS + `
 .tx{ height:100%; display:flex; flex-direction:column; }
 
-.tx-bar, .tx-eqbar{
-  display:flex; align-items:center; gap:2px; flex:none;
-  padding:.28rem .35rem; background:var(--surface-soft);
-  border-bottom:1px solid var(--line);
-  overflow-x:auto; scrollbar-width:none;
-  opacity:0; transition:opacity .18s ease;
+/* The toolbars sit in the card's floating strip, styled as their own panel. */
+.tx-bars{
+  border:1px solid var(--line); border-radius:12px;
+  background:var(--surface); box-shadow:var(--shadow-md); overflow:hidden;
 }
+.tx-bar, .tx-eqbar{
+  display:flex; align-items:center; gap:2px;
+  padding:.3rem .4rem; background:var(--surface);
+  overflow-x:auto; scrollbar-width:none;
+}
+.tx-eqbar{ border-top:1px solid var(--line); background:var(--surface-soft); }
 .tx-bar::-webkit-scrollbar, .tx-eqbar::-webkit-scrollbar{ display:none; }
-.w:hover .tx-bar, .w:hover .tx-eqbar, .tx.focused .tx-bar, .tx.focused .tx-eqbar{ opacity:1; }
 .tx-eqbar{ display:none; }
-.tx.eq .tx-eqbar{ display:flex; }
+.tx-bars.eq .tx-eqbar{ display:flex; }
 
 .tx-btn{
   display:inline-flex; align-items:center; gap:1px; flex:none;
@@ -119,9 +127,9 @@ const css = EQ_CSS + `
    computed weight, decided 650 already was, and so the first press UN-bolded the
    selection to font-weight:normal. 500 still reads weighty on a projector. */
 .tx-mid{
-  flex:1; min-height:0; overflow:auto; cursor:text;
+  flex:1; min-height:0; overflow:auto; cursor:text; border-radius:var(--radius-sm);
   padding:calc(var(--txp,14) * 1px);
-  display:flex; flex-direction:column; justify-content:center;
+  display:flex; flex-direction:column; justify-content:var(--txv,center);
 }
 .tx-body{
   font-size:calc(var(--txs,26) * 1px); font-weight:500; line-height:1.34;
@@ -164,6 +172,8 @@ const css = EQ_CSS + `
   border:0; background:none; border-radius:8px; cursor:pointer; font-size:.85rem; text-align:left;
 }
 .tx-menu .row:hover{ background:var(--surface-soft); }
+.tx-menu .row.on{ background:var(--brand-soft); color:var(--brand); font-weight:650; }
+.tx-menu .row.on svg{ fill:var(--brand); }
 .tx-menu .row svg{ width:15px; height:15px; fill:var(--muted); }
 `;
 
@@ -213,8 +223,9 @@ export default {
   css,
   defaultSize:{ w:560, h:300 },
   minSize:{ w:260, h:160 },
+  chromeAbove:true,
 
-  initialState: () => ({ text:'', tone:'plain', size:26, ink:'#0f172a', eq:false }),
+  initialState: () => ({ text:'', tone:'plain', size:26, ink:'#0f172a', eq:false, valign:'middle' }),
 
   render(el, ctx){
     const st = ctx.state;
@@ -222,17 +233,23 @@ export default {
 
     el.innerHTML = `
       <div class="tx">
-        <div class="tx-bar"></div>
-        <div class="tx-eqbar"></div>
         <div class="tx-mid">
           <div class="tx-body" contenteditable="true" spellcheck="false"
                data-placeholder="Type the instructions for the class…"></div>
         </div>
       </div>`;
 
+    /* The two toolbars live in the strip above the card, so the panel itself
+       is nothing but the text — no reserved band at the top waiting for a
+       hover that has not happened. */
+    const bars = document.createElement('div');
+    bars.className = 'tx-bars';
+    bars.innerHTML = `<div class="tx-bar"></div><div class="tx-eqbar"></div>`;
+    (ctx.above || el.querySelector('.tx')).appendChild(bars);
+
     const root = el.querySelector('.tx');
-    const bar  = el.querySelector('.tx-bar');
-    const eqbar= el.querySelector('.tx-eqbar');
+    const bar  = bars.querySelector('.tx-bar');
+    const eqbar= bars.querySelector('.tx-eqbar');
     const mid  = el.querySelector('.tx-mid');
     const body = el.querySelector('.tx-body');
 
@@ -460,10 +477,36 @@ export default {
         });
       }), { menu:'align' });
 
+    /* VERTICAL ALIGNMENT IS A PROPERTY OF THE BOX, NOT OF THE SELECTION.
+       Horizontal alignment above is an execCommand, because each paragraph can
+       be aligned differently. There is no equivalent for the vertical axis —
+       "align this paragraph to the top" is meaningless when the paragraphs
+       share one column — so this is widget state, applied to the whole panel,
+       and it does not need the selection restoring afterwards. */
+    const VALIGNS = [
+      ['top',    'flex-start', I.vtop, 'Top'],
+      ['middle', 'center',     I.vmid, 'Middle'],
+      ['bottom', 'flex-end',   I.vbot, 'Bottom'],
+    ];
+    const valignIcon = () => (VALIGNS.find(v => v[0] === st.valign) || VALIGNS[1])[2];
+
+    const valignBtn = btn(I.vmid + I.caret, 'Vertical alignment',
+      e => showMenu(e.currentTarget, m => {
+        VALIGNS.forEach(([id, , ic, name]) => {
+          const r = document.createElement('button');
+          r.type = 'button'; r.className = 'row' + (st.valign === id ? ' on' : '');
+          r.innerHTML = ic + '<span>' + name + '</span>';
+          r.addEventListener('mousedown', ev => ev.preventDefault());
+          r.addEventListener('click', () => { ctx.setState({ valign: id }); closeMenu(); paint(); });
+          m.appendChild(r);
+        });
+      }), { menu:'valign' });
+
     const eqBtn = btn('<span class="mf" style="font-size:.68rem"><span class="mf-n">a</span><span class="mf-d">b</span></span>',
       'Maths symbols', () => { ctx.setState({ eq: !st.eq }); paint(); });
 
-    bar.append(sizeWrap, sep(), boldBtn, italicBtn, underBtn, sep(), inkBtn, bgBtn, sep(), alignBtn, sep(), eqBtn);
+    bar.append(sizeWrap, sep(), boldBtn, italicBtn, underBtn, sep(), inkBtn, bgBtn,
+               sep(), alignBtn, valignBtn, sep(), eqBtn);
 
     /* ------------------------------------------------------- equation bar */
     EQ_GROUPS.forEach(group => {
@@ -497,11 +540,14 @@ export default {
       if(card) card.style.borderColor = tone.edge;
       body.style.setProperty('--txs', st.size);
       mid.style.setProperty('--txp', Math.max(10, Math.round(st.size * 0.55)));
+      const va = VALIGNS.find(v => v[0] === st.valign) || VALIGNS[1];
+      mid.style.setProperty('--txv', va[1]);
+      valignBtn.innerHTML = valignIcon() + I.caret;
       sizeIn.value = shownSize();
       inkBtn.querySelector('.tx-ink i').style.background = st.ink;
       bgBtn.querySelector('.tx-swatch').style.background = tone.bg;
       eqBtn.classList.toggle('on', !!st.eq);
-      root.classList.toggle('eq', !!st.eq);
+      bars.classList.toggle('eq', !!st.eq);
       paintStates();
     }
 
@@ -534,13 +580,30 @@ export default {
 
     /* Escape steps out of an equation and back into the sentence. Without it
        the only way out of a box that fills the line is the mouse. */
+    /* Inside an equation: the arrows walk in and out of structures, Tab jumps
+       between slots selecting each one, Escape leaves. Outside an equation all
+       three keep their ordinary meaning. */
+    const EQ_KEYS = ['Escape', 'Tab', 'ArrowRight', 'ArrowLeft'];
     body.addEventListener('keydown', e => {
-      if(e.key !== 'Escape' && e.key !== 'Tab') return;
+      if(!EQ_KEYS.includes(e.key)) return;
+      if(e.metaKey || e.ctrlKey || e.altKey) return;
       const box = eqBoxAt(window.getSelection().anchorNode);
       if(!box) return;
-      e.preventDefault(); e.stopPropagation();
-      if(e.key === 'Tab') stepSlot(body, box, e.shiftKey ? -1 : 1);
-      else leaveBox(body, box);
+
+      if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+        /* Only swallow the key when this actually moved the caret — inside a
+           slot with room left, the browser's own arrow handling is correct
+           and taking it over would break selecting and word jumps. */
+        if(e.shiftKey) return;
+        const moved = arrowStep(body, box, e.key === 'ArrowRight' ? 1 : -1);
+        if(!moved) return;
+        e.preventDefault(); e.stopPropagation();
+      }else{
+        e.preventDefault(); e.stopPropagation();
+        if(e.key === 'Tab') stepSlot(body, box, e.shiftKey ? -1 : 1);
+        else leaveBox(body, box);
+      }
+
       saveRange();
       commit();
     });
@@ -556,7 +619,10 @@ export default {
 
     body.addEventListener('keyup', () => { saveRange(); paintStates(); });
     body.addEventListener('mouseup', () => { saveRange(); paintStates(); });
-    body.addEventListener('focus', () => root.classList.add('focused'));
+    body.addEventListener('focus', () => {
+      root.classList.add('focused');
+      if(ctx.holdChrome) ctx.holdChrome(true);
+    });
     /* Clean the invisible filler out of slots that now hold something, but only
        once the teacher has clicked away. Doing it while they are typing would
        mean shifting the caret's character offset every time a placeholder is
@@ -577,6 +643,7 @@ export default {
 
     body.addEventListener('blur', () => {
       root.classList.remove('focused');
+      if(ctx.holdChrome) ctx.holdChrome(false);
       stripFiller();
       commit();
     });

@@ -18,6 +18,7 @@
    =========================================================================== */
 
 import { WIDGETS, WIDGET_ORDER } from './widgets/index.js';
+import { BORDERS, TINTS, borderDef, borderUrl, normaliseBorder, frameStyle, frameInset } from './borders.js';
 
 const STORE_KEY = 'mmtScreen.v1';
 const GRID = 8;                    /* drag/resize snap, in px */
@@ -25,6 +26,36 @@ const TOPBAR_H = 66;               /* keeps widgets clear of the chrome */
 const DOCK_H = 104;
 
 /* -------------------------------------------------------------- backgrounds */
+/* PHOTOGRAPHS SHIPPED WITH THE SITE. Put the file in `mmt-screen/backgrounds/`
+   and add a line here; it appears in the picker next to the gradients.
+
+     { id:'valley', name:'Valley', file:'valley.webp' }
+
+   Optional per photo:
+     `scrim`  a white veil over the picture, 0 to 1. Widgets are white cards,
+              and a busy photograph under them makes every edge fight for
+              attention — a light wash settles it without washing the picture
+              out. 0.22 is the default; set 0 for a photo that is already pale.
+     `dark`   true for a photo dark enough that the board's own text (the empty
+              state, the screen name) needs to go light.
+
+   SIZE THEM BEFORE THEY GO IN. The board loads this file on every visit, so a
+   straight-off-the-drone 4K JPEG is several megabytes for something that ends
+   up mostly behind widgets. 1920×1080 WebP at quality ~78 is the target: sharp
+   on any classroom projector, and a few hundred KB. */
+const PHOTOS = [
+  { id:'valley', name:'Valley', file:'valley.webp' },
+];
+
+const photoCss = p => {
+  const s = p.scrim == null ? 0.22 : p.scrim;
+  const veil = s > 0 ? `linear-gradient(rgba(255,255,255,${s}),rgba(255,255,255,${s})),` : '';
+  /* The trailing colour is what shows for the moment before the file arrives,
+     so a slow school connection gets the board's own grey rather than a white
+     flash and then a photograph. */
+  return `${veil}url("backgrounds/${p.file}") center/cover no-repeat #e9eef4`;
+};
+
 export const BACKGROUNDS = [
   { id:'mmt',    name:'MMT',        css:'radial-gradient(circle at 12% -5%, rgba(37,99,235,.14), transparent 34rem), radial-gradient(circle at 92% 8%, rgba(20,184,166,.13), transparent 30rem), linear-gradient(180deg,#fbfdff 0%,#f6f8fb 46%,#eef2f7 100%)' },
   { id:'paper',  name:'Paper',      css:'linear-gradient(180deg,#fffdf7,#fdf6e8)' },
@@ -34,6 +65,7 @@ export const BACKGROUNDS = [
   { id:'slate',  name:'Slate',      css:'linear-gradient(160deg,#0f172a 0%,#1e293b 60%,#334155 100%)' },
   { id:'grid',   name:'Grid paper', css:'linear-gradient(#dbeafe 1px, transparent 1px) 0 0/28px 28px, linear-gradient(90deg,#dbeafe 1px, transparent 1px) 0 0/28px 28px, #f8fbff' },
   { id:'plain',  name:'Plain',      css:'#ffffff' },
+  ...PHOTOS.map(p => ({ id:p.id, name:p.name, css:photoCss(p), dark:!!p.dark, photo:true })),
 ];
 
 /* --------------------------------------------------------------------- state */
@@ -41,7 +73,7 @@ let state = null;
 let saveTimer = null;
 
 function blankScreen(name){
-  return { id:uid(), name:name||'Screen 1', background:'mmt', widgets:[] };
+  return { id:uid(), name:name||'Screen 1', background:'mmt', border:null, widgets:[] };
 }
 function defaultState(){
   const s = blankScreen('Screen 1');
@@ -57,6 +89,10 @@ function load(){
        wedge the board on a type we removed. */
     parsed.screens.forEach(sc => {
       sc.widgets = (sc.widgets||[]).filter(w => WIDGETS[w.type]);
+      /* Same idea as the widget filter above: a border we have since stopped
+         shipping becomes no border, rather than a broken frame nobody can
+         work out how to turn off. */
+      sc.border = normaliseBorder(sc.border);
     });
     if(!parsed.screens.some(sc => sc.id === parsed.activeId)) parsed.activeId = parsed.screens[0].id;
     return parsed;
@@ -114,6 +150,7 @@ const board = document.getElementById('board');
 const layerHost = document.getElementById('layerHost');
 const dock = document.getElementById('dock');
 const bgLayer = document.getElementById('bgLayer');
+const frameLayer = document.getElementById('frameLayer');
 const nameInput = document.getElementById('screenName');
 
 /* Live widget instances: id -> { def, node, ctx, destroy } */
@@ -131,7 +168,8 @@ function mountWidget(w){
      no drag, and it lives above the board rather than on it. */
   if(def.fullscreen) return mountLayer(w, def);
 
-  const node = el('div', 'w' + (def.bare ? ' bare' : '') + (def.headOverlay ? ' hug' : ''));
+  const node = el('div', 'w' + (def.bare ? ' bare' : '') + (def.headOverlay ? ' hug' : '') +
+                       (def.chromeAbove ? ' hoist' : ''));
   node.dataset.id = w.id;
   node.style.left = w.x + 'px';
   node.style.top = w.y + 'px';
@@ -151,8 +189,37 @@ function mountWidget(w){
   const grip = el('div', 'w-resize');
   grip.setAttribute('title','Drag to resize');
 
-  node.append(head, body, grip);
+  /* CHROME CAN LIVE ABOVE THE CARD INSTEAD OF INSIDE IT. A header and a
+     formatting bar that are invisible until you hover still take their space
+     the rest of the time, which on the instructions panel left a band of empty
+     white above the first line that no amount of padding tuning could explain
+     to anyone looking at it. A widget that asks for `chromeAbove` gets an
+     `above` container floating over the top edge, and its card is all content.
+     The widget can put its own toolbars in there alongside the header. */
+  let above = null;
+  if(def.chromeAbove){
+    above = el('div', 'w-above');
+    above.appendChild(head);
+    node.append(above, body, grip);
+  }else{
+    node.append(head, body, grip);
+  }
   board.appendChild(node);
+
+  /* ...AND IT FLIPS UNDERNEATH WHEN THERE IS NO ROOM ABOVE. A card parked at
+     the top of the board would otherwise push its toolbar off the board and
+     behind the topbar, where it is both unreadable and unclickable. Measured
+     rather than guessed, because the strip's height depends on what the widget
+     put in it (the instructions panel grows a second row for maths). */
+  const placeChrome = () => {
+    if(!above) return;
+    const need = above.offsetHeight + 14;
+    node.classList.toggle('flip', node.offsetTop < need);
+  };
+  if(above){
+    node.addEventListener('pointerenter', placeChrome);
+    requestAnimationFrame(placeChrome);
+  }
 
   const ctx = {
     id: w.id,
@@ -162,6 +229,10 @@ function mountWidget(w){
       save();
     },
     setTitle(text){ head.querySelector('.w-title').textContent = text; },
+    /* The floating strip above the card, for widgets that asked for one. */
+    above,
+    /* Keep that strip open while the widget is being used, not only hovered. */
+    holdChrome(on){ if(on) placeChrome(); node.classList.toggle('chrome-open', !!on); },
     remove(){ removeWidget(w.id); },
     resize(width, height){
       w.w = Math.round(width); w.h = Math.round(height);
@@ -174,7 +245,7 @@ function mountWidget(w){
   const destroy = def.render(body, ctx) || null;
   live.set(w.id, { def, node, ctx, destroy, body });
 
-  makeDraggable(node, head, w);
+  makeDraggable(node, head, w, above ? placeChrome : null);
   makeResizable(node, grip, w, def);
   node.addEventListener('pointerdown', () => raise(w.id), true);
 }
@@ -273,10 +344,14 @@ function freeSpot(size){
      toolbar only exists while drawing is on, but placement happens before
      that, so the strip is reserved always. 78px costs nothing on a board and
      the teacher can still drag a widget there deliberately. */
-  const minX = pad + 66;
-  const maxX = Math.max(minX, window.innerWidth - size.w - pad);
-  const minY = TOPBAR_H + 10;
-  const maxY = Math.max(minY, window.innerHeight - size.h - DOCK_H);
+  /* A decorative frame is drawn over the board's edges, so a widget dropped
+     there would sit half on top of it. Nothing stops the teacher dragging one
+     over the frame deliberately; this is only about where they land. */
+  const fr = frameInset(screen().border);
+  const minX = pad + 66 + fr;
+  const maxX = Math.max(minX, window.innerWidth - size.w - pad - fr);
+  const minY = TOPBAR_H + 10 + fr;
+  const maxY = Math.max(minY, window.innerHeight - size.h - DOCK_H - fr);
 
   const taken = screen().widgets
     .filter(w => { const d = WIDGETS[w.type]; return d && !d.fullscreen; })
@@ -301,7 +376,7 @@ function freeSpot(size){
 }
 
 /* ---------------------------------------------------------- drag and resize */
-function makeDraggable(node, handle, w){
+function makeDraggable(node, handle, w, onMove){
   let sx=0, sy=0, ox=0, oy=0, on=false;
   handle.addEventListener('pointerdown', e => {
     if(e.target.closest('.w-btn')) return;
@@ -318,6 +393,7 @@ function makeDraggable(node, handle, w){
     w.y = clamp(snap(oy + e.clientY - sy), 4, maxY);
     node.style.left = w.x + 'px';
     node.style.top = w.y + 'px';
+    if(onMove) onMove();
   });
   const end = e => {
     if(!on) return;
@@ -389,6 +465,7 @@ function renderScreen(){
   const sc = screen();
   nameInput.value = sc.name;
   applyBackground(sc.background);
+  applyBorder(sc.border);
   sc.widgets.slice().sort((a,b) => (a.z||1) - (b.z||1)).forEach(mountWidget);
   syncDock(); syncEmpty();
 }
@@ -398,8 +475,26 @@ function syncEmpty(){
 function applyBackground(id){
   const bg = BACKGROUNDS.find(b => b.id === id) || BACKGROUNDS[0];
   bgLayer.style.background = bg.css;
-  const dark = id === 'dusk' || id === 'slate';
+  const dark = id === 'dusk' || id === 'slate' || bg.dark;
   document.body.classList.toggle('dark-bg', dark);
+  /* A photograph is the one background that can be SLOW — everything else is
+     a gradient the browser paints instantly. Marking it lets the empty state
+     and the swatch fade in rather than flashing white first. */
+  document.body.classList.toggle('photo-bg', !!bg.photo);
+}
+
+/* THE FRAME IS A LAYER, NOT A BORDER ON THE BOARD. Putting the border on
+   #board itself would inset the board's coordinate space, so every saved
+   x/y would shift the moment a teacher turned a border on — the widgets
+   would all jump. A separate fixed layer over the background leaves every
+   coordinate exactly where it was, and `pointer-events:none` keeps it out of
+   the way of dragging, the pen, and everything else. */
+function applyBorder(border){
+  const st = frameStyle(border);
+  frameLayer.style.cssText = '';
+  if(!st){ frameLayer.hidden = true; return; }
+  frameLayer.hidden = false;
+  Object.assign(frameLayer.style, st);
 }
 
 /* ==================================================================== the dock */
@@ -510,8 +605,26 @@ function buildScreensPop(){
   }
 }
 
+/* The Background button opens one popover with two tabs, because background
+   and border are the same decision made twice — what does the screen look
+   like behind the widgets. Which tab is showing is deliberately NOT saved:
+   it belongs to this moment, not to the screen. */
+let bgTab = 'background';
+
 function buildBgPop(){
-  bgPop.innerHTML = '<h4>Background</h4>';
+  bgPop.innerHTML = '';
+  const tabs = el('div','pop-tabs');
+  [['background','Background'],['border','Border']].forEach(([id,label]) => {
+    const b = el('button','pop-tab' + (bgTab === id ? ' on' : ''));
+    b.type = 'button'; b.textContent = label;
+    b.addEventListener('click', () => { bgTab = id; buildBgPop(); });
+    tabs.appendChild(b);
+  });
+  bgPop.appendChild(tabs);
+  (bgTab === 'border' ? buildBorderPane : buildBackgroundPane)();
+}
+
+function buildBackgroundPane(){
   const grid = el('div','bg-grid');
   BACKGROUNDS.forEach(bg => {
     const sw = el('button','bg-swatch' + (screen().background === bg.id ? ' on' : ''));
@@ -526,6 +639,74 @@ function buildBgPop(){
     grid.appendChild(sw);
   });
   bgPop.appendChild(grid);
+}
+
+function setBorder(patch){
+  const sc = screen();
+  sc.border = patch === null ? null : normaliseBorder({ ...(sc.border || {}), ...patch });
+  applyBorder(sc.border); save(); buildBgPop();
+}
+
+function buildBorderPane(){
+  const cur = screen().border;
+  const grid = el('div','bd-grid');
+
+  const none = el('button','bd-swatch none' + (cur ? '' : ' on'));
+  none.type = 'button'; none.title = 'No border'; none.setAttribute('aria-label','No border');
+  none.textContent = 'None';
+  none.addEventListener('click', () => setBorder(null));
+  grid.appendChild(none);
+
+  BORDERS.forEach(def => {
+    const on = cur && cur.id === def.id;
+    const sw = el('button','bd-swatch' + (on ? ' on' : ''));
+    sw.type = 'button'; sw.title = def.name; sw.setAttribute('aria-label', def.name);
+    /* The swatch is the frame itself at a small size, so what you pick is
+       what you get rather than a name you have to imagine. */
+    const tint = on && cur.tint ? cur.tint : TINTS[0];
+    sw.style.borderImageSource = `url("${borderUrl(def.id, tint)}")`;
+    sw.style.borderImageSlice = def.kind === 'file' ? def.slice + '%' : '33.333%';
+    sw.style.borderImageRepeat = def.repeat || 'round';
+    sw.addEventListener('click', () => setBorder({ id: def.id, width: def.width, repeat: def.repeat }));
+    grid.appendChild(sw);
+  });
+  bgPop.appendChild(grid);
+
+  if(!cur){
+    const note = el('p','pop-note');
+    note.textContent = 'A frame around the whole screen. It sits behind the widgets and never gets in the way of the pen.';
+    bgPop.appendChild(note);
+    return;
+  }
+
+  const def = borderDef(cur.id);
+  bgPop.appendChild(el('div','pop-div'));
+
+  if(def && def.tintable){
+    const row = el('div','bd-tints');
+    TINTS.forEach(t => {
+      const b = el('button','bd-tint' + (cur.tint === t ? ' on' : ''));
+      b.type = 'button'; b.style.background = t;
+      b.title = 'Colour'; b.setAttribute('aria-label','Colour ' + t);
+      b.addEventListener('click', () => setBorder({ tint: t }));
+      row.appendChild(b);
+    });
+    bgPop.appendChild(row);
+  }
+
+  const slider = el('label','bd-slider');
+  slider.innerHTML = `<span>Thickness</span><input type="range" min="8" max="160" step="2" value="${cur.width}"><b>${cur.width}</b>`;
+  const input = slider.querySelector('input');
+  /* Painted live on `input` so dragging shows the result, but only written to
+     the save file on `change` — a drag fires input a hundred times. */
+  input.addEventListener('input', () => {
+    slider.querySelector('b').textContent = input.value;
+    const sc = screen();
+    sc.border = normaliseBorder({ ...sc.border, width: input.value });
+    applyBorder(sc.border);
+  });
+  input.addEventListener('change', () => setBorder({ width: input.value }));
+  bgPop.appendChild(slider);
 }
 
 document.getElementById('screensBtn').addEventListener('click', e => {

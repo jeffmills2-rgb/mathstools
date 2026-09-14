@@ -60,6 +60,23 @@
       linear-gradient(180deg,#fbfdff 0%,#f6f8fb 46%,#eef2f7 100%);
     transition:background .4s ease;
   }
+  /* The decorative frame. Above the background, below the widgets, and deaf
+     to the mouse — it is scenery, not furniture. `box-sizing:border-box` with
+     inset:0 means the border is drawn INSIDE the screen edges rather than
+     hanging off them. */
+  /* IT FRAMES THE BOARD, NOT THE MONITOR. Run to the very top and the frame's
+     top edge disappears behind the blue bar — three sides of a frame, which
+     looks like a bug rather than a choice. Starting below the bar frames the
+     working area instead. Hide the chrome (H) or go fullscreen and there is
+     nothing in the way, so it takes the whole screen. */
+  #frameLayer{
+    position:fixed; top:var(--frame-top,66px); left:0; right:0; bottom:0; z-index:5;
+    box-sizing:border-box; pointer-events:none;
+    border:0 solid transparent;
+    transition:top .28s ease;
+  }
+  body.chrome-hidden #frameLayer{ --frame-top:0px; }
+  #frameLayer[hidden]{ display:none; }
   #board{
     position:fixed; inset:0; z-index:10;
     overflow:hidden;
@@ -202,6 +219,42 @@
   }
   .bg-swatch.on{ border-color:var(--brand-2); }
 
+  /* ------------------------------------------------------------ border picker */
+  .pop-tabs{ display:flex; gap:.25rem; margin:0 0 .7rem; }
+  .pop-tab{
+    flex:1; padding:.35rem .5rem; border:0; border-radius:8px;
+    background:var(--surface-soft); color:var(--muted);
+    font-size:.76rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  }
+  .pop-tab:hover{ color:var(--ink); }
+  .pop-tab.on{ background:var(--brand-soft); color:var(--brand); }
+
+  .bd-grid{ display:grid; grid-template-columns:repeat(3,68px); gap:.5rem; }
+  /* Each swatch IS the frame, drawn small: border-image on a little box, with
+     the same slice the board uses. The source and slice come from JS. */
+  .bd-swatch{
+    height:54px; box-sizing:border-box;
+    border:13px solid transparent; border-image-width:1; border-image-repeat:round;
+    border-radius:4px; background:var(--surface-soft);
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.06);
+    outline:2px solid transparent; outline-offset:2px;
+  }
+  .bd-swatch.on{ outline-color:var(--brand-2); }
+  .bd-swatch.none{
+    border:1px dashed var(--line-strong); border-image:none;
+    color:var(--muted); font-size:.72rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em;
+  }
+  .bd-tints{ display:flex; gap:.35rem; margin:0 0 .6rem; }
+  .bd-tint{
+    width:22px; height:22px; border-radius:7px; border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.15);
+  }
+  .bd-tint.on{ border-color:var(--ink); }
+  .bd-slider{ display:flex; align-items:center; gap:.5rem; font-size:.78rem; font-weight:600; color:var(--muted); }
+  .bd-slider input{ flex:1; accent-color:var(--brand); }
+  .bd-slider b{ min-width:2.2em; text-align:right; color:var(--ink); }
+
   /* ------------------------------------------------------------ widget frame */
   .w{
     position:absolute;
@@ -246,6 +299,30 @@
      for a widget with its own toolbar, two bars stacked is worse. */
   .w.hug .w-head{ position:absolute; top:0; left:0; right:0; z-index:4; border-radius:var(--radius-sm) var(--radius-sm) 0 0; }
   .w.hug .w-body{ height:100%; }
+
+  /* Chrome floating above the card. `overflow:visible` is what lets it escape,
+     so a hoisting widget has to round and clip its own contents. */
+  .w.hoist{ overflow:visible; }
+  .w.hoist .w-body{ height:100%; border-radius:var(--radius-sm); overflow:hidden; }
+  .w-above{
+    position:absolute; bottom:100%; left:0; right:0; margin-bottom:8px; z-index:30;
+    display:flex; flex-direction:column; gap:5px;
+    opacity:0; pointer-events:none; transform:translateY(4px);
+    transition:opacity .16s ease, transform .16s ease;
+  }
+  .w.hoist:hover .w-above,
+  .w.hoist.chrome-open .w-above{ opacity:1; pointer-events:auto; transform:none; }
+  /* No room above (a card parked under the topbar): the strip drops below the
+     card instead, so it is never off the board or behind the header. */
+  .w.hoist.flip .w-above{
+    bottom:auto; top:100%; margin-bottom:0; margin-top:8px;
+    transform:translateY(-4px);
+  }
+  .w-above .w-head{
+    opacity:1; border:1px solid var(--line); border-radius:12px;
+    background:var(--surface); box-shadow:var(--shadow-md);
+    padding:.32rem .4rem .32rem .7rem;
+  }
   .w-resize{
     position:absolute; right:0; bottom:0; width:18px; height:18px;
     cursor:nwse-resize; z-index:5;
@@ -304,6 +381,13 @@
     text-align:center; color:var(--muted); pointer-events:none; padding:2rem;
   }
   #empty .box{ max-width:30rem; }
+  /* On a photograph the same words sit on trees and rooftops, so the empty
+     state gets a panel of its own to stay readable. */
+  body.photo-bg #empty .box{
+    background:rgba(255,255,255,.88); backdrop-filter:blur(6px);
+    padding:1.4rem 1.6rem; border-radius:var(--radius);
+    box-shadow:var(--shadow-lg);
+  }
   #empty h2{ margin:.4rem 0 .5rem; font-size:1.5rem; letter-spacing:-.02em; color:var(--ink); }
   #empty p{ margin:0; font-size:.95rem; line-height:1.6; }
   #empty .kbd{
@@ -323,6 +407,7 @@
 <body>
 
 <div id="bgLayer"></div>
+<div id="frameLayer" hidden></div>
 
 <main id="board" aria-label="Classroom screen board">
   <div id="empty">

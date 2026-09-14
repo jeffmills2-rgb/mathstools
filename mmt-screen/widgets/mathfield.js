@@ -31,18 +31,47 @@
    =========================================================================== */
 
 export const EQ_CSS = `
+/* ---- the two fonts, in one place --------------------------------------- */
+.tx-body{
+  --mmt-math-font:"Latin Modern Math","STIX Two Math","Cambria Math","Asana Math",
+                  Cambria,"Palatino Linotype",Palatino,"Book Antiqua",
+                  Georgia,"Times New Roman",serif;
+  --mmt-math-var-font:"Latin Modern Math","STIX Two Math","Cambria Math",
+                      "Palatino Linotype",Palatino,"Book Antiqua","URW Palladio L",
+                      Georgia,"Times New Roman",serif;
+}
+
 /* ---- the box ----------------------------------------------------------- */
 .tx-body .meq{
   display:inline-block; vertical-align:middle;
   padding:.1em .32em; margin:0 .14em;
   border:1px solid #c7d2fe; border-radius:5px;
   background:rgba(239,246,255,.6);
-  font-family:"Latin Modern Math","STIX Two Math","Cambria Math",Cambria,Georgia,"Times New Roman",serif;
+  font-family:var(--mmt-math-font);
   font-style:normal; font-weight:400; letter-spacing:0;
   line-height:1.15;
 }
 .tx-body .meq:focus-within{ border-color:#6366f1; background:rgba(238,242,255,.92); }
-.tx-body .meq .mv{ font-style:italic; }          /* letters are variables */
+
+/* VARIABLES GET A CALLIGRAPHIC SERIF ITALIC OF THEIR OWN.
+
+   The maths fonts at the front of the stack are the right answer and are what
+   TeX and Google Docs draw with, but almost nobody has them installed — so on
+   a stock Mac the whole thing was quietly falling through to Georgia italic,
+   which is an upright-ish text italic and reads as emphasis rather than as
+   algebra. Palatino is the one genuinely calligraphic serif that ships on both
+   macOS and Windows, with the single-storey italic 'a' and the sloped 'x' that
+   make a variable look like a variable. It goes ahead of the text serifs, and
+   only for the letters — digits and operators stay in the upright face, which
+   is the actual typographic rule and half of why the Docs version reads well.
+
+   Both stacks are custom properties so the whole look can be changed in one
+   line at the top of this file. */
+.tx-body .meq .mv{
+  font-family:var(--mmt-math-var-font);
+  font-style:italic;
+  padding-right:.03em;      /* italic letters lean into whatever follows */
+}
 
 /* ---- slots: every part a teacher can type into ------------------------- */
 .tx-body .mslot{ display:inline-block; min-width:.62em; text-align:center; }
@@ -65,11 +94,17 @@ export const EQ_CSS = `
 }
 
 /* ---- roots ------------------------------------------------------------- */
+/* THE RADICAL IS THE √ GLYPH, SCALED UP TO REACH THE OVERBAR — and how well
+   the two meet depends on which font in the stack above the browser actually
+   had, which is different on every machine. Two CSS-drawn strokes were tried
+   instead, so it would look identical everywhere; getting the join right took
+   longer than it was worth and it is not a correctness problem. IF IT LOOKS
+   WRONG ON A PARTICULAR MACHINE, THE SCALE BELOW IS THE ONE NUMBER TO CHANGE
+   (and margin-top on .msq-c moves the bar).
+   NOTE: this comment sits inside a template literal, so it must never contain
+   a backtick — one in an earlier draft ended the CSS string mid-file and took
+   every style below it with it. */
 .tx-body .msq{ display:inline-flex; align-items:stretch; vertical-align:middle; margin:0 .1em; }
-/* The tick is scaled to reach the overbar rather than left sitting on the
-   baseline with a gap above it — a radical whose two halves do not meet reads
-   as a typo. scaleY on the glyph is the only way to do this without knowing
-   the radicand's height, which CSS cannot. */
 .tx-body .msq-sign{ display:inline-block; transform:scaleY(1.25); transform-origin:bottom;
                     margin-right:-.02em; }
 .tx-body .msq-c{ border-top:.055em solid currentColor; padding:0 .22em 0 .06em; margin-top:.1em; }
@@ -418,6 +453,121 @@ export function stepSlot(body, box, dir){
   return true;
 }
 
+/* ===================================================== moving about inside
+
+   ARROW KEYS HAVE TO WALK OUT OF A STRUCTURE, or the equation is a trap. Tab
+   already stepped between slots, but nobody reaches for Tab in the middle of
+   writing "3x + 4/5 = " — they press the right arrow, and it did nothing: the
+   caret sat at the end of the denominator with the browser seeing no further
+   text position to move to, because a fraction is a flex column with nothing
+   after it. The expression could be started and never finished.
+
+   The rule is the one any editor uses: inside a slot the browser handles the
+   arrows as normal, and only AT THE EDGE of a slot does this take over — to
+   the next slot of the same structure, or out past the structure entirely.
+   At the edge of the whole equation, the arrows leave the box and return to
+   the sentence, so there is always a way back to plain text.
+   ====================================================================== */
+
+/** The direct child of `box` that contains this node — a whole structure. */
+function topStructure(node, box){
+  let n = node;
+  while(n && n.parentNode && n.parentNode !== box) n = n.parentNode;
+  return (n && n.parentNode === box) ? n : null;
+}
+
+/* A CARET CANNOT LIVE IN AN EMPTY TEXT NODE, and this is the third place that
+   has had to learn it. Chrome leaves zero-length text nodes lying around a
+   contenteditable; put the caret in one and the next keystroke is quietly
+   re-homed into whatever element is nearby — which is how "type, arrow right,
+   keep typing" ended up burying the rest of the expression inside the
+   denominator it had just left. Every caret landing goes through here, so a
+   node either holds a character or gets one. */
+function usableTextNode(node){
+  if(!node || node.nodeType !== 3) return null;
+  if(node.nodeValue.length === 0) node.nodeValue = '\u200b';
+  return node;
+}
+
+/** Put the caret at one end of a slot, without selecting it. */
+function caretInSlot(body, slotEl, edge){
+  body.focus();
+  let t = usableTextNode(edge === 'end' ? slotEl.lastChild : slotEl.firstChild);
+  if(!t){
+    t = document.createTextNode('\u200b');
+    if(edge === 'end') slotEl.append(t); else slotEl.prepend(t);
+  }
+  const r = document.createRange();
+  r.setStart(t, edge === 'end' ? t.nodeValue.length : 0);
+  r.collapse(true);
+  const sel = window.getSelection();
+  sel.removeAllRanges(); sel.addRange(r);
+}
+
+/** Put the caret immediately before or after a whole structure, box level. */
+function caretBeside(body, structure, where){
+  body.focus();
+  let t = usableTextNode(where === 'after' ? structure.nextSibling : structure.previousSibling);
+  if(!t){
+    t = document.createTextNode('\u200b');
+    if(where === 'after') structure.after(t); else structure.before(t);
+  }
+  const r = document.createRange();
+  r.setStart(t, where === 'after' ? Math.min(1, t.nodeValue.length) : t.nodeValue.length);
+  r.collapse(true);
+  const sel = window.getSelection();
+  sel.removeAllRanges(); sel.addRange(r);
+}
+
+/**
+ * Handle one arrow press inside an equation box.
+ * Returns true if it moved the caret (and the key should be swallowed),
+ * false to let the browser do its normal thing inside a slot.
+ */
+export function arrowStep(body, box, dir){
+  const sel = window.getSelection();
+  if(!sel.rangeCount) return false;
+  const range = sel.getRangeAt(0);
+  if(!range.collapsed) return false;      /* a highlight collapses as usual */
+
+  let node = range.startContainer;
+  if(node.nodeType === 3) node = node.parentElement;
+  const slotEl = node && node.closest ? node.closest('.mslot') : null;
+
+  /* At box level: the arrows only matter at the two ends, where they leave. */
+  if(!slotEl){
+    const offset = caretOffsetIn(box);
+    if(offset == null) return false;
+    const text = box.textContent;
+    if(dir > 0 && offset >= text.length){ leaveBox(body, box); return true; }
+    /* The box carries a zero-width space at the front so the caret has
+       somewhere to sit; being just after it still counts as the start. */
+    const lead = text.startsWith('\u200b') ? 1 : 0;
+    if(dir < 0 && offset <= lead){ leaveBox(body, box, 'before'); return true; }
+    return false;
+  }
+
+  /* Inside a slot, but not at its edge — the browser handles it. */
+  const offset = caretOffsetIn(slotEl);
+  if(offset == null) return false;
+  const len = slotEl.textContent.length;
+  if(dir > 0 && offset < len) return false;
+  if(dir < 0 && offset > 0) return false;
+
+  const structure = topStructure(slotEl, box);
+  if(!structure) return false;
+
+  const slots = [...structure.querySelectorAll('.mslot')];
+  const next = slots.indexOf(slotEl) + dir;
+
+  if(next >= 0 && next < slots.length){
+    caretInSlot(body, slots[next], dir > 0 ? 'start' : 'end');
+  }else{
+    caretBeside(body, structure, dir > 0 ? 'after' : 'before');
+  }
+  return true;
+}
+
 /** Put the caret at the very start or end of an equation, still inside it. */
 export function caretToBoxEdge(body, box, edge){
   body.focus();
@@ -466,6 +616,7 @@ export function leaveBox(body, box, where){
      A sibling only counts if it actually holds a character. */
   const sideways = node => {
     if(!node || node.nodeType !== 3) return null;
+    /* Outside the equation a visible space is right — this is the sentence. */
     if(node.nodeValue.length === 0) node.nodeValue = '\u00a0';
     return node;
   };
