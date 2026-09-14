@@ -1844,7 +1844,99 @@
 >     the teacher from the cached profile. It did, so the auth callback could
 >     never clear it — a cached session with a dead token showed a Save button
 >     forever and every press failed with a permission error.
-> * Still to build: group maker, scoreboard, work symbols, clock, QR, embed.
+> * **WIDGETS FILL THEIR CARD (2026-09-13).** `fitUnit(el, {nw, nh})` scales
+>   from each widget's OWN natural content size instead of a fixed base with a
+>   ~2.2x cap, which is why a dragged-out widget used to sit in a lake of white
+>   space: past roughly double, the contents just stopped growing. Two rules
+>   learned the hard way:
+>   - **The natural width must be MEASURED, not guessed.** The timer claimed
+>     250, then 285; the presets row actually needs 310 at --u: 1, and until it
+>     said so "20m" kept dropping onto a second line. The widest row in the
+>     layout IS the natural width.
+>   - **Everything that contributes to that width has to scale.** The chips had
+>     `font-size: calc(var(--u)*12px)` but `padding: .2rem` — so the numbers
+>     grew and the pills around them did not, and the layout stopped widening.
+> * **`def.aspect` LOCKS A WIDGET'S PROPORTIONS** (width ÷ height of the whole
+>   card) and `def.headOverlay` floats its header instead of letting it take
+>   ~30px off the top forever. The traffic light uses both: it is now JUST the
+>   light — the caption and hint are gone, because a light on a classroom wall
+>   does not come with a paragraph, and the text was what forced a wide card
+>   that was mostly empty. It fills 87% of its card at any size.
+> * **THE TEXT WIDGET HAS A REAL FORMATTING BAR** — size stepper, B/I/U, text
+>   colour, background colour and alignment as dropdowns, plus a second bar of
+>   maths symbols (Greek · operators · relations · structures · arrows) that
+>   opens under it. Four things in that file are non-obvious and each one was a
+>   bug first:
+>   - **The base font-weight must not already be bold.** It was 650, so the
+>     browser judged the text already bold and the FIRST press of B set
+>     `font-weight: normal`. 500 reads weighty on a projector and still counts
+>     as not-bold.
+>   - **Maths is inserted with the Range API, NOT `execCommand('insertHTML')`.**
+>     insertHTML runs markup through the paste sanitiser, which with
+>     styleWithCSS on rewrites classes into computed inline styles — a fraction
+>     went in as a two-span stack and came out as a loose span carrying
+>     `text-align:center; font-weight:650` with the numerator torn out.
+>   - **The editable area is a plain block inside a centring wrapper.** Making
+>     `.tx-body` itself a grid (to centre vertically) turned every element child
+>     into a full-width grid item, so a fraction drew its bar right across the
+>     box and forced a line break after itself.
+>   - **Maths is spans and borders, not MathLive or KaTeX.** Every part stays
+>     editable (click into a denominator and retype it), the saved state is
+>     still just a string of HTML, and the board keeps no network dependency.
+>     Stored markup is sanitised on load — it is the one field that round trips
+>     through a database as markup.
+> * **FONT SIZE APPLIES TO THE SELECTION** (2026-09-13). `execCommand('fontSize')`
+>   only understands the seven legacy HTML sizes, so it marks the selection as
+>   size 7 and those elements are rewritten to the real px value — and
+>   `styleWithCSS` must be turned OFF for that one call or it emits a span and
+>   leaves no `<font size="7">` to find. Two traps, each a bug first:
+>   - **The number input steals the selection it is meant to resize.** The +/-
+>     buttons cancel their own mousedown so the highlight survives, but a real
+>     `<input>` has to take focus, so "highlight a heading, type 64" resized the
+>     whole panel. The last real highlight (tracked via `selectionchange`, not
+>     just keyup/mouseup) is restored before the size is applied.
+>   - **Sizing the FIRST words leaves a phantom blank line.** Chrome
+>     materialises the pending style as `<div><span style="font-size:…"><br>`
+>     at the top of the editable, a moment AFTER the command returns — so an
+>     inline check is too early to see it. `dropPhantomLine()` runs on every
+>     commit and only removes a leading empty block that CONTAINS a sized span,
+>     so a blank line typed with Enter is left alone.
+> * **MATHS LIVES IN ITS OWN BOX** (`widgets/mathfield.js`). Loose structures in
+>   the running text were wrong three ways at once — a fraction sat low against
+>   the words, letters looked like prose, and nothing said where the equation
+>   ended. One `.meq` container fixes all three because they are the same
+>   question: is this text or is this maths? Hard-won details:
+>   - **Alignment is `vertical-align: middle`**, which IS the mathematical axis.
+>     The old `-0.45em` was eyeballed against one font at one size.
+>   - **Letters italic, digits upright.** CSS cannot select digits, so letter
+>     runs are wrapped in `<i class="mv">` as they are typed, with the caret
+>     saved and restored as a character offset.
+>   - **EVERY SLOT IS `display:inline-block`, AND A DELETE THAT WOULD EMPTY ONE
+>     IS INTERCEPTED.** A `<sup>` is a plain inline element: replace all its
+>     contents and Chrome deletes the element too, which is exactly why typing a
+>     power gave "x3" on the baseline. `guardSlotDelete()` empties the slot to a
+>     zero-width space instead. `tidy()` also strips the font-size/font-style
+>     Chrome carries forward as a typing style when a slot is emptied.
+>   - **NORMALISE BEFORE SELECTING THE PLACEHOLDER, NOT AFTER.** Italicising
+>     replaces the text node inside it, collapsing the selection; the caret was
+>     then restored by offset and landed before the whole structure.
+>   - **Tab walks the slots and parks at the END OF THE EQUATION, not outside
+>     it** — tabbing out made every later structure start a new box, so one
+>     expression became three fields. Escape is what leaves.
+>   - **A caret needs a real text node to sit in.** `(box, childCount)` gets
+>     normalised by Chrome into the deepest inline descendant, and an empty text
+>     node silently swallows the next keystroke — both bugs looked like "Tab
+>     does nothing".
+> * **GROUP MAKER** (`widgets/group-maker.js` + `widgets/lists.js`). Groups are
+>   DEALT round-robin, not sliced: slicing 17 names into 7 groups leaves an
+>   empty group on the board. The made groups ARE saved — a reload that
+>   re-dealt would send half the room to the wrong table; only the button deals
+>   again. **Class lists live in their own store** (`mmtScreen.lists.v1`),
+>   shared by every screen and every widget, and deliberately NOT part of a
+>   saved screen — so a class roll does not travel to Firestore unless the
+>   teacher names a list inside a widget.
+> * Still to build: scoreboard, work symbols, clock, QR, embed. Also worth
+>   doing: point the name picker at `lists.js` so a class is typed once.
 
 ---
 

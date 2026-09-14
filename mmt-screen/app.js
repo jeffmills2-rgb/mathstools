@@ -131,7 +131,7 @@ function mountWidget(w){
      no drag, and it lives above the board rather than on it. */
   if(def.fullscreen) return mountLayer(w, def);
 
-  const node = el('div', 'w' + (def.bare ? ' bare' : ''));
+  const node = el('div', 'w' + (def.bare ? ' bare' : '') + (def.headOverlay ? ' hug' : ''));
   node.dataset.id = w.id;
   node.style.left = w.x + 'px';
   node.style.top = w.y + 'px';
@@ -329,8 +329,17 @@ function makeDraggable(node, handle, w){
   handle.addEventListener('pointercancel', end);
 }
 
+/* A WIDGET MAY LOCK ITS OWN PROPORTIONS. `def.aspect` is width ÷ height for
+   the whole card, and a widget sets it when its contents have a real shape —
+   a traffic light is a tall rectangle and there is no size of white card
+   around it that is not wasted space. Whichever axis the teacher drags
+   furthest drives the size and the other follows, so a diagonal drag does the
+   obvious thing and a purely vertical one still works. */
 function makeResizable(node, grip, w, def){
   const min = def.minSize || { w:220, h:140 };
+  const aspect = def.aspect || null;
+  const maxW = () => window.innerWidth - 20;
+  const maxH = () => window.innerHeight - 20;
   let sx=0, sy=0, ow=0, oh=0, on=false;
   grip.addEventListener('pointerdown', e => {
     on = true; sx = e.clientX; sy = e.clientY; ow = w.w; oh = w.h;
@@ -339,8 +348,24 @@ function makeResizable(node, grip, w, def){
   });
   grip.addEventListener('pointermove', e => {
     if(!on) return;
-    w.w = clamp(snap(ow + e.clientX - sx), min.w, window.innerWidth - 20);
-    w.h = clamp(snap(oh + e.clientY - sy), min.h, window.innerHeight - 20);
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+
+    if(aspect){
+      const driven = Math.abs(dx) >= Math.abs(dy) ? (ow + dx) : (oh + dy) * aspect;
+      let width = clamp(snap(driven), min.w, maxW());
+      let height = width / aspect;
+      /* If the height hits a limit, re-derive the width from it rather than
+         clamping the two separately — that is what silently breaks the ratio
+         at the top and bottom of the screen. */
+      if(height < min.h){ height = min.h; width = height * aspect; }
+      if(height > maxH()){ height = maxH(); width = height * aspect; }
+      w.w = Math.round(width);
+      w.h = Math.round(height);
+    }else{
+      w.w = clamp(snap(ow + dx), min.w, maxW());
+      w.h = clamp(snap(oh + dy), min.h, maxH());
+    }
+
     node.style.width = w.w + 'px';
     node.style.height = w.h + 'px';
     notifyResize(w.id);

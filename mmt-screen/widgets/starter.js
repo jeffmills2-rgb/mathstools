@@ -71,6 +71,7 @@ const BANK = [
   { t:'tf',  q:'True or false: a number with an even number of factors cannot be a square number.', a:'True. Factors pair up except when a number is a square, where one factor pairs with itself.' },
 ];
 
+const NAT = { nw: 430, nh: 235 };      /* a question, an answer panel, two buttons */
 const TYPE_LABEL = { puzzle:'Problem', wodb:'Which one doesn’t belong?', tf:'True or false', custom:'Yours' };
 const FILTERS = [
   { id:'all',    label:'All' },
@@ -269,9 +270,9 @@ export default {
       ctx.toast(`${custom.length} starter${custom.length === 1 ? '' : 's'} saved`);
     });
 
-    fitUnit(el, { base: 300, min: 0.6, max: 2 });
+    fitUnit(el, NAT);
     if(!st.current) next(); else paint();
   },
 
-  onResize(el){ fitUnit(el, { base: 300, min: 0.6, max: 2 }); },
+  onResize(el){ fitUnit(el, NAT); },
 };

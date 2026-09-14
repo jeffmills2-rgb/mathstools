@@ -7,15 +7,26 @@
    for the first widget that needs a helper at module-evaluation time.
    =========================================================================== */
 
-/* Scale a widget's contents to its box. Widgets call this from render() and
-   onResize(); it sets --u ("one unit") on the element and the widget's CSS
-   sizes everything in multiples of it. Done in JS rather than with
-   container-query units so it still works on the older Chrome and Edge
-   builds sitting on school desktops. */
-export function fitUnit(el, { base = 200, min = 0.5, max = 3.2 } = {}){
-  const h = el.clientHeight || base;
-  const w = el.clientWidth || base;
-  const u = Math.max(min, Math.min(max, Math.min(h / base, w / (base * 1.6))));
+/* SCALE A WIDGET'S CONTENTS TO FILL ITS BOX.
+
+   The widget declares the size its layout wants at scale 1 — `nw` by `nh`,
+   measured in the same px its CSS is written in — and this works out how many
+   times that fits in the box it actually has, then sets `--u` to it. The
+   widget's CSS sizes everything in multiples of `--u`, so the contents grow
+   with the card instead of sitting in the middle of it.
+
+   The first version divided by a fixed `base` with a hard cap of about 2.2,
+   which is why a dragged-out widget left a lake of white space: past roughly
+   double, the contents simply stopped growing. Scaling from the natural size
+   has no such ceiling — the ratio IS the answer — and `pad` leaves the small
+   border rather than letting text touch the edge.
+
+   Done in JS rather than with container-query units so it still works on the
+   older Chrome and Edge builds sitting on school desktops. */
+export function fitUnit(el, { nw = 240, nh = 240, pad = 0.94, min = 0.3, max = 14 } = {}){
+  const w = el.clientWidth  || nw;
+  const h = el.clientHeight || nh;
+  const u = Math.max(min, Math.min(max, Math.min(w / nw, h / nh) * pad));
   el.style.setProperty('--u', u.toFixed(3));
   return u;
 }

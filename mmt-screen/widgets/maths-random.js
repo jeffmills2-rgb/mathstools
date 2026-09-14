@@ -25,6 +25,7 @@
 
 import { fitUnit } from './shared.js';
 
+const NAT = { nw: 300, nh: 225 };      /* mode chips, the value, the button */
 const MODES = [
   { id:'integer',    label:'Integers' },
   { id:'dice',       label:'Dice' },
@@ -344,10 +345,10 @@ export default {
 
     rollBtn.addEventListener('click', roll);
 
-    fitUnit(el, { base: 300, min: 0.55, max: 2.2 });
+    fitUnit(el, NAT);
     paintMode();
     roll();
   },
 
-  onResize(el){ fitUnit(el, { base: 300, min: 0.55, max: 2.2 }); },
+  onResize(el){ fitUnit(el, NAT); },
 };

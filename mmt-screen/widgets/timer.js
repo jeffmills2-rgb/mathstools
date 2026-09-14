@@ -10,6 +10,12 @@
 
 import { fitUnit, chime } from './shared.js';
 
+/* Measured, not guessed: the presets row needs 290px at --u: 1 and the panel
+   adds 20px of padding either side of it. Claiming 250 (and then 285) was why
+   "20m" kept dropping onto a second line — the widest row in the layout has to
+   be what the natural width says, or the scale is computed against a number
+   the content cannot actually fit into. */
+const NAT = { nw: 310, nh: 290 };
 const PRESETS = [1, 2, 5, 10, 15, 20];
 const R = 52;                        /* ring radius in the 120-box viewBox */
 const CIRC = 2 * Math.PI * R;
@@ -26,11 +32,18 @@ const css = `
           font-size:calc(var(--u,1) * 38px); line-height:1; color:#0f172a; }
 .tm-time.small{ font-size:calc(var(--u,1) * 28px); }
 .tm-ctrl{ display:flex; align-items:center; gap:calc(var(--u,1) * 6px); flex-wrap:wrap; justify-content:center; }
-.tm-presets{ display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
-.tm-presets .chip{ cursor:pointer; padding:.2rem .55rem; font-size:calc(var(--u,1) * 12px); }
+.tm-presets{ display:flex; gap:calc(var(--u,1) * 4px); flex-wrap:wrap; justify-content:center; }
+/* The chip PADDING scales with --u as well as the font. Leaving it in fixed
+   rem was why a dragged-out timer still looked under-filled: the numbers grew
+   but the pills around them did not, so the widest row in the layout stopped
+   growing and left a margin down both sides. Anything that contributes to the
+   natural width has to scale, or the natural width is a lie. */
+.tm-presets .chip{ cursor:pointer; padding:calc(var(--u,1) * 3px) calc(var(--u,1) * 9px);
+                   font-size:calc(var(--u,1) * 12px); border-radius:999px; }
 .tm-presets .chip:hover{ background:#dbeafe; color:#1d4ed8; }
-.tm-modes{ display:flex; gap:4px; }
-.tm-modes .chip{ cursor:pointer; font-size:calc(var(--u,1) * 12px); padding:.2rem .6rem; }
+.tm-modes{ display:flex; gap:calc(var(--u,1) * 4px); }
+.tm-modes .chip{ cursor:pointer; font-size:calc(var(--u,1) * 12px);
+                 padding:calc(var(--u,1) * 3px) calc(var(--u,1) * 10px); border-radius:999px; }
 .tm .btn.round{ width:calc(var(--u,1) * 42px); height:calc(var(--u,1) * 42px); }
 .tm .btn.round svg{ width:calc(var(--u,1) * 17px); height:calc(var(--u,1) * 17px); }
 .tm.done .tm-time{ color:#b91c1c; }
@@ -58,8 +71,12 @@ export default {
   blurb:'A countdown or a stopwatch, with a ring that empties as the time goes.',
   icon:'<svg viewBox="0 0 24 24"><path d="M9 2h6v2H9V2Zm2 5h2v6h-2V7Zm1-2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm6.3 1.1 1.4-1.4 1.8 1.8-1.4 1.4a10 10 0 0 0-1.8-1.8Z"/></svg>',
   css,
-  defaultSize:{ w:360, h:300 },
-  minSize:{ w:240, h:220 },
+  /* The layout at scale 1 is about 250 x 290 — ring, mode chips, the control
+     row and the presets. Locking to that ratio means growing the widget grows
+     the clock, instead of parking a fixed clock in a bigger white box. */
+  defaultSize:{ w:390, h:365 },
+  minSize:{ w:240, h:225 },
+  aspect: NAT.nw / NAT.nh,
 
   initialState: () => ({ mode:'countdown', duration:600 }),
 
@@ -198,11 +215,11 @@ export default {
       paint();
     }));
 
-    fitUnit(el, { base: 300 });
+    fitUnit(el, NAT);
     paint();
 
     return () => { if(raf) cancelAnimationFrame(raf); };
   },
 
-  onResize(el){ fitUnit(el, { base: 300 }); },
+  onResize(el){ fitUnit(el, NAT); },
 };

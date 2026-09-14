@@ -13,6 +13,7 @@
 
 import { fitUnit, shuffle } from './shared.js';
 
+const NAT = { nw: 230, nh: 165 };      /* name, count, buttons */
 const SAMPLE = ['Amelia','Ben','Charlotte','Dev','Eli','Freya','Grace','Hamish',
                 'Isla','Jack','Kiara','Liam','Mia','Noah','Olivia','Priya'];
 
@@ -171,11 +172,11 @@ export default {
       ctx.toast(`${names.length} name${names.length === 1 ? '' : 's'} saved`);
     });
 
-    fitUnit(el, { base: 280, min: 0.55, max: 2.4 });
+    fitUnit(el, NAT);
     paint();
 
     return () => clearInterval(spinTimer);
   },
 
-  onResize(el){ fitUnit(el, { base: 280, min: 0.55, max: 2.4 }); },
+  onResize(el){ fitUnit(el, NAT); },
 };

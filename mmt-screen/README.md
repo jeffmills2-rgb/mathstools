@@ -48,6 +48,56 @@ Results are ranked — title hits beat keyword hits — because the homepage's
 keyword strings are generous enough that page order put *Length* above
 *Circumference of a Circle* for the search "circumference".
 
+## Sizing
+
+Widgets scale from their own natural content size (`fitUnit(el, {nw, nh})`), so
+dragging one bigger grows what is in it rather than the white space around it.
+
+A widget can set `aspect` to lock its proportions, and `headOverlay` to float
+its header instead of reserving a strip at the top. The traffic light uses both
+— it is the shape of the light, at every size.
+
+**If you add a widget:** measure the widest row in its layout and use that as
+`nw`. Guessing it low is the one mistake that looks like a sizing bug later.
+And anything contributing to that width — padding included — must scale with
+`--u`, not sit in fixed rem.
+
+## The text widget
+
+Size stepper, bold/italic/underline, text colour, background colour and
+alignment. **Size applies to whatever is highlighted**, or to the whole box when
+nothing is.
+
+The maths button opens a second bar: Greek, operators, relations, structures
+(fractions, roots, powers, big operators with limits) and arrows. Anything from
+it goes into an **equation box** — a bordered field with a maths font, italic
+letters and upright digits, sitting on the mathematical axis.
+
+Inside an equation:
+
+| Key | Does |
+| --- | --- |
+| `Tab` / `Shift+Tab` | next / previous slot; past the last one, the end of the equation |
+| `Esc` | leave the equation and carry on writing |
+
+Maths is built from spans and borders, not a library — every part stays
+editable, the saved state is still a string of HTML, and the board gains no
+network dependency. Stored markup is sanitised when it loads. The mechanics and
+the browser quirks behind them are documented at the top of
+`widgets/mathfield.js`.
+
+## Group maker
+
+Save a class list, tick who is in today, choose how many groups, press the
+button. Groups are dealt round-robin so sizes differ by at most one, and the
+widget tells you what sizes you will get before you press.
+
+The groups are **saved** — a reload brings back the same ones rather than
+re-dealing and sending half the room to the wrong table.
+
+Class lists live in their own store (`mmtScreen.lists.v1`), shared by every
+screen, and are **not** uploaded when you save a screen to your account.
+
 ## Starters
 
 43 built in — problems, "which one doesn't belong", true/false. Add your own
