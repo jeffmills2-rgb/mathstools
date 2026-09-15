@@ -136,6 +136,48 @@ export async function loadScreen(id){
   }
 }
 
+/* ===================================================== the teacher's classes
+   ONE DOCUMENT PER TEACHER, KEYED BY THEIR OWN CODE. That makes the rule for
+   it trivial and tight — the document id IS the thing being scoped — and it
+   means a class roll is stored once for a teacher rather than copied into
+   every screen they save.
+
+   The lists go up as a JSON string for the same reason the widgets do: the
+   shape is nobody's business but this app's, and a string cannot be refused
+   for having the wrong one. */
+const LISTS = 'teacherLists';
+
+export async function saveLists(lists){
+  const teacherCode = currentTeacher();
+  if(!teacherCode) return { ok:false, error:'Sign in first.' };
+  try{
+    await setDoc(doc(getDb(), LISTS, teacherCode), {
+      teacherCode,
+      listsJson: JSON.stringify(lists || {}),
+      version: 1,
+      updatedAt: serverTimestamp(),
+    });
+    return { ok:true };
+  }catch(err){
+    return { ok:false, error: friendly(err) };
+  }
+}
+
+export async function loadLists(){
+  const teacherCode = currentTeacher();
+  if(!teacherCode) return { ok:false, error:'Sign in first.', lists:{} };
+  try{
+    const snap = await getDoc(doc(getDb(), LISTS, teacherCode));
+    if(!snap.exists()) return { ok:true, lists:{} };
+    const v = snap.data() || {};
+    let lists = {};
+    try{ lists = JSON.parse(v.listsJson || '{}') || {}; }catch(_){ lists = {}; }
+    return { ok:true, lists };
+  }catch(err){
+    return { ok:false, error: friendly(err), lists:{} };
+  }
+}
+
 export async function deleteScreen(id){
   try{
     await deleteDoc(doc(getDb(), COLLECTION, id));

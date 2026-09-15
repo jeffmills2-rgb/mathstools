@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // Mills Maths Tools — PRODUCTION claim-based rules (Phase 4A go-live + classes +
-// dashboard tasks + ADMIN CONSOLE 2026-07 + MMT SCREEN saved boards 2026-09-13).
+// dashboard tasks + ADMIN CONSOLE 2026-07 + MMT SCREEN saved boards 2026-09-13
+// + MMT SCREEN class lists 2026-09-15).
 //
 // Every STUDENT/TEACHER client signs in via the secure code-exchange Cloud
 // Functions (exchangeStudentCode / exchangeTeacherCode), which mint a Firebase
@@ -135,6 +136,28 @@ service cloud.firestore {
                        && resource.data.teacherCode == myTeacher()
                        && request.resource.data.teacherCode == myTeacher());
       allow delete: if isAdmin() || (isTeacher() && resource.data.teacherCode == myTeacher());
+    }
+
+    // MMT Screen class lists (2026-09-15): the teacher's own class rolls, so the
+    // group maker and the name picker have the same classes on every computer
+    // they sign in on. ONE DOCUMENT PER TEACHER, KEYED BY THE TEACHER CODE —
+    // the document id IS the thing being scoped, which makes this the tightest
+    // rule in the file: there is no way to address another teacher's document
+    // without failing the id check. A teacher reads and writes only their own;
+    // there is no listing, because nothing needs to enumerate them.
+    //
+    // These hold student FIRST NAMES, the same ones the platform already holds
+    // for the student portal, and only the ones a teacher typed in deliberately.
+    // Note they were already travelling inside any saved screen that had a
+    // group maker or name picker on it; this stores them once, on purpose,
+    // instead of copied into every board.
+    match /teacherLists/{teacherCode} {
+      allow get:    if isAdmin() || (isTeacher() && myTeacher() == teacherCode);
+      allow list:   if isAdmin();
+      allow create, update: if isAdmin() || (isTeacher()
+                       && myTeacher() == teacherCode
+                       && request.resource.data.teacherCode == myTeacher());
+      allow delete: if isAdmin() || (isTeacher() && myTeacher() == teacherCode);
     }
 
     // Admin settings (capacity caps etc.): admin-only, read + write. Nobody else

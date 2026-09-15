@@ -78,6 +78,38 @@ export function widgetCount(docData){
   return unpackWidgets(v).length;
 }
 
+/* WHETHER THIS SCREEN IS THE ONE IN THE ACCOUNT.
+
+   The Save button used to say nothing about that. You pressed it, a toast
+   appeared for two seconds, and afterwards there was no way to tell whether
+   what you were looking at had ever reached your account — which is exactly
+   how a save that was failing every single time went unnoticed for days.
+
+   A fingerprint of what WOULD be uploaded, taken at the moment of a successful
+   save and kept beside the screen, answers it: equal means the account has
+   this, different means it does not. It covers only what actually travels —
+   the name, the background, the border and the widgets — so moving the mouse
+   or running the timer does not make a saved screen look unsaved, and drawing
+   ink (which is never uploaded) does not either. */
+export function fingerprint(screen){
+  const s = screen || {};
+  const seed = JSON.stringify({
+    name: s.name || '',
+    background: s.background || 'mmt',
+    border: s.border || null,
+    widgets: stripForCloud(s).widgets || [],
+  });
+  /* djb2 — tiny, stable across machines, and this is a change detector, not a
+     security check. Two hex words make an accidental collision fanciful. */
+  let h1 = 5381, h2 = 52711;
+  for(let i = 0; i < seed.length; i++){
+    const c = seed.charCodeAt(i);
+    h1 = (((h1 << 5) + h1) ^ c) >>> 0;
+    h2 = (((h2 << 5) + h2) + c) >>> 0;
+  }
+  return h1.toString(16) + '-' + h2.toString(16);
+}
+
 /* Walks a screen looking for what Firestore will not take, so a test can prove
    the packing above is doing its job rather than trusting that it is. Returns
    the path of the first offender, or null. */

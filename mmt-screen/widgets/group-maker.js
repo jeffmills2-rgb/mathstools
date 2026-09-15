@@ -18,7 +18,7 @@
    ========================================================================= */
 
 import { fitUnit, escapeHtml, shuffle } from './shared.js';
-import { allLists, getList, saveList, deleteList, parseNames } from './lists.js';
+import { saveList, parseNames, renderListChips, onListsChanged } from './lists.js';
 
 const NAT = { nw: 520, nh: 340 };
 
@@ -253,36 +253,22 @@ export default {
       el.querySelectorAll('.gm-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === st.tab));
       el.querySelectorAll('.gm-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === st.tab));
 
-      /* saved lists */
-      const chips = el.querySelector('.savedLists');
-      const lists = allLists();
-      const names = Object.keys(lists).sort();
-      chips.innerHTML = '';
-      if(!names.length){
-        chips.innerHTML = '<p class="gm-note">None saved yet — paste a class below and give it a name.</p>';
-      }else{
-        names.forEach(name => {
-          const chip = document.createElement('button');
-          chip.className = 'gm-chip' + (name === st.listName ? ' on' : '');
-          chip.type = 'button';
-          chip.innerHTML = `<span>${escapeHtml(name)}</span><span class="x" title="Delete this list">&times;</span>`;
-          chip.addEventListener('click', e => {
-            if(e.target.classList.contains('x')){
-              e.stopPropagation();
-              if(!confirm(`Delete the list "${name}"? Groups already on the board are not affected.`)) return;
-              deleteList(name);
-              if(st.listName === name) ctx.setState({ listName:null });
-              paintPanel();
-              return;
-            }
-            const people = getList(name);
-            ctx.setState({ listName:name, names:people, excluded:[], made:null });
-            el.querySelector('.namesIn').value = people.join('\n');
-            paintPanel(); paint();
-          });
-          chips.appendChild(chip);
-        });
-      }
+      /* Saved lists — drawn by lists.js, the same control the name picker
+         shows, so the two can never disagree about what a saved class is. */
+      renderListChips(el.querySelector('.savedLists'), {
+        selected: st.listName,
+        chipClass: 'gm-chip',
+        emptyHtml: '<p class="gm-note">None saved yet — paste a class below and give it a name, and the name picker will have it too.</p>',
+        onChoose(name, people){
+          ctx.setState({ listName:name, names:people, excluded:[], made:null });
+          el.querySelector('.namesIn').value = people.join('\n');
+          paintPanel(); paint();
+        },
+        onDelete(name){
+          if(st.listName === name) ctx.setState({ listName:null });
+          paintPanel();
+        },
+      });
 
       /* who is in */
       const picks = el.querySelector('.gm-picks');
@@ -359,6 +345,12 @@ export default {
     el.querySelector('.namesIn').value = st.names.join('\n');
     fitUnit(el, NAT);
     paint();
+
+    /* Repaint the chips when the name picker saves or deletes a class, so two
+       open panels never disagree about which classes exist. */
+    return onListsChanged(() => {
+      if(el.querySelector('.gm-panel.open')) paintPanel();
+    });
   },
 
   onResize(el){ fitUnit(el, NAT); },

@@ -89,6 +89,63 @@ Two things came out of the same look:
 
 No change to the Firestore rules is needed.
 
+## 7. The name picker and the group maker share your class lists
+
+Save a class in either one and the other has it. The chips at the top of the
+name picker's **Edit list** panel are the same saved classes the group maker
+offers, and **Save class** in either puts a list where both can reach it.
+
+The footer of the picker now shows which class is loaded, so you can see at a
+glance whether it is picking from 8MA5 or from something you typed once.
+
+Two details that matter in a lesson:
+
+- **Switching class resets the pack.** Someone who had already had a turn in
+  8MA5 does not stay used up when you change to 9MX2.
+- **A one-off list stays a one-off.** *Use these names* applies a list to that
+  widget only — a list of table numbers or topics has no business becoming a
+  saved class. Only *Save class* creates one.
+
+Saving or deleting a class shows up immediately in the other widget, even with
+both panels open. Class lists still live in their own store on the computer
+they were typed on, and are still never uploaded with a saved screen.
+
+## 8. The Save button now says where things stand
+
+It used to say nothing. You pressed Save, a toast appeared for two seconds, and
+after that there was no way to tell whether what you were looking at had ever
+reached your account — which is exactly how a save that was failing every time
+went unnoticed for days.
+
+Now the button itself carries the answer: **Saved** with a tick when the screen
+matches the copy in your account, **Save** with an amber dot when it does not.
+Hovering it says which, and why.
+
+It only counts what actually travels — the name, background, border and
+widgets — so a running timer does not make a saved screen look unsaved, and
+neither does drawing on it (ink is never uploaded). And a refused save never
+claims success.
+
+## 9. Class lists follow you between computers
+
+Sign in on another computer and your saved classes come down with you: 8MA5 and
+9MX2 are in the group maker and the name picker on every machine you use, with
+no re-typing.
+
+They are stored as **one document per teacher**, keyed by your teacher code —
+not copied into every screen you save. A class that exists only on the computer
+in front of you is kept and pushed up rather than dropped, and if the same class
+exists in both places the account's copy wins, so nothing is ever lost to two
+machines disagreeing.
+
+Signing out stops that computer pushing lists, which matters on a shared
+classroom machine. With no account, or on a network that cannot reach Firestore,
+class lists work exactly as they always did — on that computer.
+
+**This needs a Firestore rules update.** A new `teacherLists` block is in
+`firestore.golive.claims.rules`; paste the file into the Firebase Console before
+this goes live, or saving a class will be refused.
+
 ## Files
 
 | File | What changed |
@@ -97,8 +154,11 @@ No change to the Firestore rules is needed.
 | `index.html` | The floating strip, the frame layer, the Border tab and picker, the empty-state panel on a photo. |
 | `widgets/text.js` | Asks for the strip and moves both toolbars into it; vertical alignment. |
 | `widgets/timer.js` | Idle zoom, computed from the card's own size. |
-| `screenPayload.js` | Widgets packed as one JSON string; a checker for shapes Firestore refuses. |
-| `cloudSync.js` | Saves and restores the border; packs the widgets; names a rejected shape honestly. |
+| `screenPayload.js` | Widgets packed as one JSON string; a fingerprint for the Save state; a checker for shapes Firestore refuses. |
+| `cloudSync.js` | Saves and restores the border; packs the widgets; names a rejected shape honestly; reads and writes the class lists document. |
 | `borders.js` | **New.** The frame catalogue and the 9-slice maths. |
+| `widgets/lists.js` | Draws the chooser both widgets use, tells them when a class changes, and syncs to the account when signed in. |
+| `widgets/randomiser.js` | Picks from your saved classes; shows which one is loaded. |
+| `widgets/group-maker.js` | Uses the shared chooser instead of its own copy. |
 | `borders/` | **New.** Where border images go, with a README. |
 | `backgrounds/` | **New.** Where photographs go, with a README. Contains `valley.webp`. |

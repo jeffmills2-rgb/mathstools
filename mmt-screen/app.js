@@ -19,6 +19,10 @@
 
 import { WIDGETS, WIDGET_ORDER } from './widgets/index.js';
 import { BORDERS, TINTS, borderDef, borderUrl, normaliseBorder, frameStyle, frameInset } from './borders.js';
+/* Safe to import directly: screenPayload.js is plain functions over plain
+   objects, with no Firebase in it — that separation is why it exists. */
+import { fingerprint } from './screenPayload.js';
+import { setRemote as setListsRemote, mergeRemote as mergeRemoteLists } from './widgets/lists.js';
 
 const STORE_KEY = 'mmtScreen.v1';
 const GRID = 8;                    /* drag/resize snap, in px */
@@ -110,6 +114,30 @@ function writeNow(){
 function save(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(writeNow, 250);
+  paintSaveState();
+}
+
+/* SAY WHETHER THIS SCREEN IS IN THE ACCOUNT, ALL THE TIME — not for two
+   seconds after a press. `cloudPrint` is the fingerprint taken at the last
+   successful save (or at the moment the screen was opened from the account,
+   where it matches by definition). */
+function paintSaveState(){
+  if(!saveBtn || saveBtn.hidden) return;
+  const sc = screen();
+  const label = saveBtn.querySelector('span');
+  if(!label || saveBtn.dataset.busy === '1') return;
+  const saved = sc.cloudPrint && sc.cloudPrint === fingerprint(sc);
+  saveBtn.classList.toggle('is-saved', !!saved);
+  label.textContent = saved ? 'Saved' : 'Save';
+  saveBtn.title = saved
+    ? 'This screen matches the copy in your account'
+    : (sc.cloudPrint
+        ? 'This screen has changes that are not in your account yet'
+        : 'This screen has never been saved to your account');
+}
+function markSaved(sc){
+  sc.cloudPrint = fingerprint(sc);
+  paintSaveState();
 }
 
 /* THE DEBOUNCE NEEDS AN ESCAPE HATCH. Batching writes keeps a drag from
@@ -467,7 +495,7 @@ function renderScreen(){
   applyBackground(sc.background);
   applyBorder(sc.border);
   sc.widgets.slice().sort((a,b) => (a.z||1) - (b.z||1)).forEach(mountWidget);
-  syncDock(); syncEmpty();
+  syncDock(); syncEmpty(); paintSaveState();
 }
 function syncEmpty(){
   document.body.classList.toggle('has-widgets', screen().widgets.length > 0);
@@ -784,7 +812,7 @@ const cloudLabel= document.getElementById('cloudLabel');
     paintCloudChrome();     /* signed out until Firebase says otherwise */
     /* Custom-token sessions persist, so a teacher who signed in last period is
        still signed in — but only once Firebase has restored the session. */
-    cloud.onCloudAuth(code => { teacher = code; paintCloudChrome(); });
+    cloud.onCloudAuth(code => { teacher = code; paintCloudChrome(); syncLists(); });
   }catch(err){
     console.warn('[MMT Screen] saving to an account is unavailable here', err);
   }
@@ -801,6 +829,32 @@ function paintCloudChrome(){
   if(!cloud) return;
   cloudLabel.textContent = teacher || 'Sign in';
   saveBtn.hidden = !teacher;
+  paintSaveState();
+}
+
+/* CLASS LISTS FOLLOW THE TEACHER, NOT THE COMPUTER. On sign-in, pull what the
+   account has and merge it in (see lists.js for which side wins), then push
+   the merged set back so a class typed on this machine reaches the others.
+   Every later save or delete pushes on its own through the remote below.
+
+   All of it is best effort. A teacher on a network that cannot reach Firestore
+   still gets their local lists, and nothing about the board changes. */
+async function syncLists(){
+  if(!cloud || !teacher){ setListsRemote(null); return; }
+  setListsRemote({ push: lists => cloud.saveLists(lists) });
+  try{
+    const res = await cloud.loadLists();
+    if(!res.ok) return;
+    const merged = mergeRemoteLists(res.lists);
+    /* Push back, so a class that existed only here is now on the account too.
+       Skipped when there is nothing to add, to avoid a pointless write on
+       every sign-in. */
+    const remoteNames = Object.keys(res.lists || {});
+    const localOnly = Object.keys(merged).filter(n => !remoteNames.includes(n));
+    if(localOnly.length) cloud.saveLists(merged);
+  }catch(err){
+    console.warn('[MMT Screen] class lists could not be synced', err);
+  }
 }
 
 function fmtWhen(d){
@@ -858,6 +912,9 @@ async function buildCloudPop(){
   cloudPop.querySelector('#cloudSignOut').addEventListener('click', async () => {
     await cloud.signOutTeacher();
     teacher = null;
+    /* Stop pushing class lists the moment the session ends — on a shared
+       classroom machine the next person to type a list is not this teacher. */
+    setListsRemote(null);
     paintCloudChrome();
     buildCloudPop();
     toast('Signed out — your screens are still on this computer');
@@ -916,6 +973,7 @@ function openCloudScreen(incoming){
   if(existing >= 0) state.screens[existing] = incoming;
   else state.screens.push(incoming);
   state.activeId = incoming.id;
+  incoming.cloudPrint = fingerprint(incoming);
   renderScreen();
   save();
   toast('Opened “' + incoming.name + '”');
@@ -928,13 +986,19 @@ cloudBtn.addEventListener('click', e => {
 
 saveBtn.addEventListener('click', async () => {
   if(!cloud || !teacher) return;
+  const sc = screen();
   saveBtn.disabled = true;
+  saveBtn.dataset.busy = '1';
   const label = saveBtn.querySelector('span');
   label.textContent = 'Saving…';
-  const res = await cloud.saveScreen(screen());
+  const res = await cloud.saveScreen(sc);
   saveBtn.disabled = false;
-  label.textContent = 'Save';
-  toast(res.ok ? `“${screen().name}” saved to ${teacher}` : res.error);
+  saveBtn.dataset.busy = '';
+  /* Only a save that actually succeeded may claim the screen is in the
+     account — the whole point of the indicator. */
+  if(res.ok) markSaved(sc); else paintSaveState();
+  save();
+  toast(res.ok ? `“${sc.name}” saved to ${teacher}` : res.error);
 });
 
 function escapeHtml(s){
