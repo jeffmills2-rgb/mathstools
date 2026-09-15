@@ -32,13 +32,14 @@ import {
   doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
-import { stripForCloud, payloadSize, MAX_BYTES, docId } from './screenPayload.js';
+import { stripForCloud, payloadSize, MAX_BYTES, docId,
+         packWidgets, unpackWidgets, widgetCount } from './screenPayload.js';
 
 const COLLECTION = 'screens';
 
 /* Re-exported so the board can ask about a payload without importing the
    Firebase half of this module. */
-export { stripForCloud, payloadSize, MAX_BYTES };
+export { stripForCloud, payloadSize, MAX_BYTES, packWidgets, unpackWidgets };
 
 export function initCloud(){ initPortal(); }
 
@@ -80,8 +81,12 @@ export async function saveScreen(screen){
       screenId: screen.id,
       name: screen.name || 'Untitled',
       background: screen.background || 'mmt',
-      widgets: clean.widgets,
-      version: 1,
+      border: screen.border || null,
+      /* See screenPayload.js: one JSON string, because Firestore refuses an
+         array inside an array and a widget is free to hold one. */
+      widgetsJson: packWidgets(screen),
+      widgetCount: (clean.widgets || []).length,
+      version: 2,
       updatedAt: serverTimestamp(),
     });
     return { ok:true, id, size };
@@ -104,7 +109,7 @@ export async function listScreens(){
         id: d.id,
         screenId: v.screenId,
         name: v.name || 'Untitled',
-        widgets: (v.widgets || []).length,
+        widgets: widgetCount(v),
         updatedAt: v.updatedAt && v.updatedAt.toDate ? v.updatedAt.toDate() : null,
       };
     }).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
@@ -123,7 +128,8 @@ export async function loadScreen(id){
       id: v.screenId,
       name: v.name || 'Untitled',
       background: v.background || 'mmt',
-      widgets: v.widgets || [],
+      border: v.border || null,
+      widgets: unpackWidgets(v),
     }};
   }catch(err){
     return { ok:false, error: friendly(err) };
@@ -144,5 +150,11 @@ function friendly(err){
   if(/permission|insufficient/i.test(m)) return 'Your account cannot save screens yet — the Firestore rules may not be updated.';
   if(/unavailable|network|offline/i.test(m)) return 'No connection to the server. Your screen is still saved on this computer.';
   if(/not-found/i.test(m)) return 'That screen is no longer saved.';
+  /* A shape Firestore will not accept is thrown here on the laptop, before any
+     network call — so blaming the connection, as this used to, sends everyone
+     looking at rules and quotas for a bug that is in the data. Say what it is. */
+  if(/invalid-argument|invalid data|not supported/i.test(m)){
+    return 'Something on this screen could not be saved to your account. Please report it — the board is still saved on this computer.';
+  }
   return 'Could not reach the server. Your screen is still saved on this computer.';
 }

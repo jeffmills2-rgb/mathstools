@@ -40,6 +40,67 @@ export function payloadSize(screen){
 
 export function tooBig(screen){ return payloadSize(screen) > MAX_BYTES; }
 
+/* THE WIDGETS GO UP AS ONE JSON STRING, NOT AS A STRUCTURED FIELD.
+
+   This is not a micro-optimisation, it is a bug fix, and the bug was a good
+   one. FIRESTORE DOES NOT ALLOW AN ARRAY INSIDE AN ARRAY. The group maker
+   stores its dealt groups as exactly that — `made: [['Ava','Cam'], ['Ben']]`,
+   one array per table — so the moment a teacher dealt groups and pressed Save,
+   the SDK threw `invalid-argument: Nested arrays are not supported` before a
+   single byte left the laptop. The screen that had never dealt groups saved
+   perfectly, which made it look like a rules problem or a quota, and it was
+   neither.
+
+   Patching `made` alone would have fixed today and left the trap armed: the
+   next widget to store a matrix, a list of lists, or an `undefined` walks into
+   the same wall. A screen's widget list is opaque to everything outside this
+   app — no rule reads it, no query filters on it, the admin console does not
+   touch it — so there is nothing to gain from Firestore understanding its
+   shape, and everything to gain from it not having an opinion. A string has no
+   shape to object to.
+
+   Saved documents written before this change still carry a structured
+   `widgets` array, so the reader below accepts either. */
+export function packWidgets(screen){
+  return JSON.stringify(stripForCloud(screen).widgets || []);
+}
+export function unpackWidgets(docData){
+  const v = docData || {};
+  if(typeof v.widgetsJson === 'string'){
+    try{ const a = JSON.parse(v.widgetsJson); return Array.isArray(a) ? a : []; }
+    catch(_){ return []; }
+  }
+  return Array.isArray(v.widgets) ? v.widgets : [];   /* saved before the fix */
+}
+export function widgetCount(docData){
+  const v = docData || {};
+  if(typeof v.widgetCount === 'number') return v.widgetCount;
+  return unpackWidgets(v).length;
+}
+
+/* Walks a screen looking for what Firestore will not take, so a test can prove
+   the packing above is doing its job rather than trusting that it is. Returns
+   the path of the first offender, or null. */
+export function unsupportedValue(value, path = ''){
+  if(Array.isArray(value)){
+    for(let i = 0; i < value.length; i++){
+      const item = value[i];
+      if(Array.isArray(item)) return `${path}[${i}] is an array inside an array`;
+      const inner = unsupportedValue(item, `${path}[${i}]`);
+      if(inner) return inner;
+    }
+    return null;
+  }
+  if(value && typeof value === 'object'){
+    for(const k of Object.keys(value)){
+      if(value[k] === undefined) return `${path}.${k} is undefined`;
+      const inner = unsupportedValue(value[k], `${path}.${k}`);
+      if(inner) return inner;
+    }
+  }
+  return null;
+}
+
 /* One teacher can never write into another's id space — the rules check this
    prefix too, so the two must agree. */
 export function docId(teacherCode, screenId){ return `${teacherCode}__${screenId}`; }

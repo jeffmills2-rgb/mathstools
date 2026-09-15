@@ -66,6 +66,29 @@ Ships with one: **Valley**.
 See `backgrounds/README.md` for how to size an image before it goes in — the
 short version is 1920×1080 WebP at quality 78.
 
+## 6. Fixed: a screen with dealt groups could not be saved to your account
+
+Firestore does not allow an array inside an array. The group maker stores its
+dealt groups as exactly that — one array per table — so the moment you dealt
+groups and pressed Save, the write was rejected on the laptop, before anything
+left it. A screen that had never dealt groups saved perfectly, which made it
+look like a rules problem or a quota. It was neither.
+
+The widget list now travels as a single JSON string, so Firestore has no
+opinion about its shape and no future widget can walk into the same wall.
+Documents saved before this change still open.
+
+Two things came out of the same look:
+
+- **Borders now save with the screen.** They were added after the sync code was
+  written and never wired into it, so a saved screen came back without its
+  frame.
+- **The error message told the wrong story.** Anything Firestore refused said
+  "Could not reach the server", which sends you looking at rules and network
+  for a bug in the data. A rejected shape now says so.
+
+No change to the Firestore rules is needed.
+
 ## Files
 
 | File | What changed |
@@ -74,6 +97,8 @@ short version is 1920×1080 WebP at quality 78.
 | `index.html` | The floating strip, the frame layer, the Border tab and picker, the empty-state panel on a photo. |
 | `widgets/text.js` | Asks for the strip and moves both toolbars into it; vertical alignment. |
 | `widgets/timer.js` | Idle zoom, computed from the card's own size. |
+| `screenPayload.js` | Widgets packed as one JSON string; a checker for shapes Firestore refuses. |
+| `cloudSync.js` | Saves and restores the border; packs the widgets; names a rejected shape honestly. |
 | `borders.js` | **New.** The frame catalogue and the 9-slice maths. |
 | `borders/` | **New.** Where border images go, with a README. |
 | `backgrounds/` | **New.** Where photographs go, with a README. Contains `valley.webp`. |
