@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your turn — build something in the next fifteen minutes</title>
+<meta name="description" content="Two tracks and a ladder of prompts. Change one tool, or change the whole site. Copy, paste, edit the bits in brackets." />
+<style>
+  :root{
+    --bg:#f6f8fb; --surface:#ffffff; --surface-soft:#f8fafc;
+    --ink:#0f172a; --muted:#64748b; --muted-light:#94a3b8;
+    --line:#e2e8f0; --line-strong:#cbd5e1;
+    --brand:#1d4ed8; --brand-2:#2563eb; --brand-soft:#dbeafe;
+    --green:#15803d; --green-soft:#dcfce7;
+    --orange:#c2410c; --orange-soft:#ffedd5;
+    --amber:#b45309; --amber-soft:#fef3c7;
+    --shadow-sm:0 8px 20px rgba(15,23,42,.06);
+    --shadow-md:0 18px 40px rgba(15,23,42,.11);
+    --radius:22px; --radius-sm:16px;
+    --sans:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.6}
+  .wrap{max-width:900px; margin:0 auto; padding-inline:20px; padding-block:40px 80px}
+  a{color:var(--brand)}
+
+  header{margin-bottom:30px}
+  .kicker{font-size:.76rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--brand)}
+  h1{margin:.3em 0 .25em; font-size:clamp(1.9rem,4.6vw,2.6rem); line-height:1.1; letter-spacing:-.02em}
+  header p{margin:0; color:var(--muted); font-size:1.08rem; max-width:62ch}
+
+  /* ---------- the shared first step ---------- */
+  .first{background:var(--surface); border:2px solid var(--amber); border-radius:var(--radius);
+         padding:24px 26px; box-shadow:var(--shadow-md); margin-bottom:34px}
+  .first .tag{display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.1em;
+       text-transform:uppercase; padding:5px 11px; border-radius:999px;
+       background:var(--amber-soft); color:var(--amber); margin-bottom:12px}
+  .first h2{margin:0 0 6px; font-size:1.35rem; letter-spacing:-.01em}
+  .first > p{margin:0 0 16px; color:var(--muted)}
+
+  /* ---------- prompt block ---------- */
+  .pblock{position:relative}
+  pre{background:var(--ink); color:#e2e8f0; border-radius:var(--radius-sm);
+      padding:18px 20px; margin:0; font-family:var(--mono); font-size:.9rem; line-height:1.7;
+      overflow-x:auto; white-space:pre-wrap; word-break:break-word}
+  pre b{color:#fff; font-weight:600}
+  pre .fill{color:#fbbf24; font-weight:600}
+  .copy{position:absolute; top:10px; right:10px; font:600 .72rem/1 var(--sans);
+        letter-spacing:.06em; text-transform:uppercase; color:var(--brand);
+        background:var(--surface); border:1px solid var(--line); border-radius:8px;
+        padding:8px 11px; cursor:pointer}
+  .copy:hover{background:var(--brand-soft)}
+  .copy.done{color:#fff; background:var(--green); border-color:var(--green)}
+
+  /* ---------- track picker ---------- */
+  .pick{margin-bottom:8px}
+  .pick h2{font-size:1.2rem; margin:0 0 4px}
+  .pick p{margin:0 0 16px; color:var(--muted)}
+  .tracks{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:34px}
+  .track{text-align:left; font:inherit; cursor:pointer; background:var(--surface);
+         border:2px solid var(--line); border-radius:var(--radius); padding:20px 22px;
+         box-shadow:var(--shadow-sm)}
+  .track:hover{border-color:var(--line-strong)}
+  .track .letter{display:inline-flex; align-items:center; justify-content:center;
+        width:34px; height:34px; border-radius:50%; font-weight:800; font-size:1.05rem;
+        background:var(--brand-soft); color:var(--brand); margin-bottom:10px}
+  .track h3{margin:0 0 5px; font-size:1.22rem; letter-spacing:-.01em}
+  .track .drag{margin:0 0 8px; font-family:var(--mono); font-size:.82rem; color:var(--brand)}
+  .track p{margin:0; color:var(--muted); font-size:.97rem}
+  .track[aria-pressed="true"]{border-color:var(--brand); background:#fbfdff}
+  .track.b .letter{background:var(--green-soft); color:var(--green)}
+  .track.b .drag{color:var(--green)}
+  .track.b[aria-pressed="true"]{border-color:var(--green)}
+  .track:focus-visible, .copy:focus-visible, a:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+
+  /* ---------- the ladder ---------- */
+  .ladder h2{font-size:1.28rem; margin:0 0 6px; letter-spacing:-.01em}
+  .ladder .intro{margin:0 0 22px; color:var(--muted)}
+  .step{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+        padding:22px 24px; box-shadow:var(--shadow-sm); margin-bottom:16px}
+  .step .head{display:flex; align-items:baseline; gap:12px; margin-bottom:4px; flex-wrap:wrap}
+  .step .n{font-family:var(--mono); font-weight:700; font-size:1.05rem; color:var(--brand)}
+  .ladder.b .step .n{color:var(--green)}
+  .step h3{margin:0; font-size:1.15rem; letter-spacing:-.01em}
+  .step .lead{margin:0 0 14px; color:var(--muted); font-size:.99rem}
+  .step .why{margin:12px 0 0; font-size:.9rem; color:var(--muted)}
+  .step .why b{color:var(--ink)}
+
+  .note{background:var(--surface-soft); border:1px dashed var(--line-strong);
+        border-radius:var(--radius-sm); padding:16px 20px; margin:26px 0 0; color:var(--muted); font-size:.97rem}
+  .note b{color:var(--ink)}
+
+  .stuck{margin-top:38px; background:var(--ink); color:#e2e8f0; border-radius:var(--radius);
+         padding:26px 28px}
+  .stuck h2{margin:0 0 14px; font-size:1.25rem; color:#fff}
+  .stuck dl{margin:0; display:grid; gap:14px}
+  .stuck dt{font-weight:700; color:#fff; font-size:1rem}
+  .stuck dd{margin:3px 0 0; color:#a8b6c9; font-size:.97rem}
+
+  footer{margin-top:40px; padding-top:22px; border-top:1px solid var(--line);
+         color:var(--muted); font-size:.94rem; display:flex; flex-wrap:wrap; gap:8px 20px;
+         justify-content:space-between}
+  footer b{color:var(--ink)}
+
+  @media print{ .copy,.tracks{display:none} .ladder{display:block !important} body{background:#fff} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="kicker">MANSW Annual 2026 · Jeff Mills</p>
+    <h1>Your turn</h1>
+    <p>Copy a prompt, paste it in, change the bits in brackets. The goal is not a good
+       tool — it is <b>one thing you changed, working, in front of you</b>.</p>
+  </header>
+
+  <!-- ============ EVERYONE DOES THIS ONE ============ -->
+  <section class="first">
+    <span class="tag">Everyone, first</span>
+    <h2>Make it yours — ninety seconds</h2>
+    <p>Download <b>maths-tool-starter.html</b>, open it so you have seen it work, then drag
+       the file into a new Claude or ChatGPT chat and paste this.</p>
+    <div class="pblock">
+<pre>This is my starter file. Read the brief in the comment at the top and follow those rules.
+
+Change the <b>--brand</b> colour to <span class="fill">[a deep purple]</span> and <b>--brand-soft</b> to a pale version of it.
+Change the title to <span class="fill">["MY TOOL'S NAME"]</span> and the subtitle underneath to <span class="fill">[ONE SENTENCE]</span>.
+
+Change nothing else. Give me back the whole file.</pre>
+    </div>
+    <p class="why" style="margin:14px 0 0; font-size:.9rem; color:var(--muted)">
+      <b style="color:var(--ink)">Why this one first.</b> It cannot fail, it takes under a minute,
+      and it proves the design tokens do what the guide says they do. Save it over a copy, open it,
+      and you have already changed something.</p>
+  </section>
+
+  <!-- ============ PICK A TRACK ============ -->
+  <div class="pick">
+    <h2>Now pick a track</h2>
+    <p>Same method either way. The only difference is how much you are changing at once.</p>
+  </div>
+
+  <div class="tracks">
+    <button type="button" class="track a" id="pickA" aria-pressed="true" aria-controls="ladderA">
+      <span class="letter">A</span>
+      <h3>One tool</h3>
+      <p class="drag">drag in: maths-tool-starter.html</p>
+      <p>Make the starter into something you would actually use on Monday.</p>
+    </button>
+    <button type="button" class="track b" id="pickB" aria-pressed="false" aria-controls="ladderB">
+      <span class="letter">B</span>
+      <h3>The whole site</h3>
+      <p class="drag">drag in: index.html + one tool</p>
+      <p>Rebrand it, change the sections, add a tool and wire it into the homepage.</p>
+    </button>
+  </div>
+
+  <!-- ============ TRACK A ============ -->
+  <section class="ladder a" id="ladderA">
+    <h2>Track A — one tool</h2>
+    <p class="intro">Work down as far as you get. Stopping at step 2 is a good session.</p>
+
+    <div class="step">
+      <div class="head"><span class="n">1</span><h3>Change what it teaches</h3></div>
+      <p class="lead">The big one. Everything else on this page is decoration next to it.</p>
+      <div class="pblock">
+<pre>Change it from number line jumps to <span class="fill">[YOUR THING]</span>.
+
+Keep the same structure: one <b>state</b> object, a <b>render()</b> that redraws everything from
+scratch, inline SVG, and whole-number arithmetic so nothing rounds.
+
+It works when I can <span class="fill">[ONE SENTENCE — what you would do to check it]</span>.
+
+One self-contained file, no libraries, keep the design tokens. Give me back the whole file.</pre>
+      </div>
+      <p class="why"><b>Move 3 and move 4.</b> Plain English, and a test sentence instead of a
+        specification. You are saying what it must do, not how to build it.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">2</span><h3>Ask before you build</h3></div>
+      <p class="lead">Use this <em>instead of</em> step 1 if you want the better version. It is the
+        prompt that started the fraction-to-percentage tool.</p>
+      <div class="pblock">
+<pre>I want to make an interactive I can drive on the board as a classroom teacher. It should
+<span class="fill">[WHAT IT DOES, IN TWO SENTENCES]</span>.
+
+My plan for teaching this is <span class="fill">[HOW YOU WOULD ACTUALLY TEACH IT — the steps, in order]</span>.
+
+What pedagogical thoughts do you have on this idea before we build it? Ask me any
+questions you need answered first.</pre>
+      </div>
+      <p class="why"><b>Move 1.</b> Nothing gets built until the thinking has been checked —
+        the only point at which changing your mind is free. Read the answer, then say "build it".</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">3</span><h3>Make it fit your class</h3></div>
+      <p class="lead">One change. Ask for two and you will spend the next ten minutes untangling them.</p>
+      <div class="pblock">
+<pre>Add <span class="fill">[a button / a dropdown / a checkbox]</span> that <span class="fill">[WHAT IT SHOULD DO]</span>.
+
+Everything else stays exactly as it is. Give me back the whole file.</pre>
+      </div>
+      <p class="why"><b>One thing at a time.</b> If it breaks, you know what broke it.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">4</span><h3>Say what you can see</h3></div>
+      <p class="lead">When it comes back not quite right. Screenshot it first, then attach the
+        screenshot with this.</p>
+      <div class="pblock">
+<pre>See the screenshot. <span class="fill">[WHAT IS WRONG, AS YOU SEE IT — e.g. "the labels overlap when
+there are more than four", "the number line is squashed and buried under the controls"]</span>.
+
+Fix just that. Do not change anything else.</pre>
+      </div>
+      <p class="why"><b>Move 2.</b> Point at it rather than describing it. Lead with the failing
+        case, not a guess at the cause.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">5</span><h3>Check the maths</h3></div>
+      <p class="lead">Before it goes anywhere near a class. This is the one people skip.</p>
+      <div class="pblock">
+<pre>Look at this tool and list every input a student or I could give it that would produce
+something mathematically wrong or misleading for a Year <span class="fill">[X]</span> class — rounding
+that shows 0.30000000000000004, a recurring decimal written with an equals sign, a
+divisor that can be zero, a "random" case that never comes up.
+
+Don't fix anything yet. Just list what you find and how each one could happen.</pre>
+      </div>
+      <p class="why"><b>The expensive part of you.</b> It writes fluent code instantly, including
+        when it is wrong. Knowing what a Year 8 needs is the half you keep.</p>
+    </div>
+  </section>
+
+  <!-- ============ TRACK B ============ -->
+  <section class="ladder b" id="ladderB" hidden>
+    <h2>Track B — the whole site</h2>
+    <p class="intro">Download the pack, unzip it, and drag in <b>two files</b>: <b>index.html</b>
+      from the top of the folder, and any one tool from inside it. Two files is enough for all
+      of this — you do not need to give it the whole folder.</p>
+
+    <div class="step">
+      <div class="head"><span class="n">1</span><h3>Make it my school's</h3></div>
+      <div class="pblock">
+<pre>This is the homepage of my maths tools site. Change the <b>:root</b> colour tokens to
+<span class="fill">[YOUR COLOURS, or "something that goes with my school's dark green"]</span>, change the title to
+<span class="fill">[YOUR SITE NAME]</span>, and rewrite the intro paragraph as <span class="fill">[ONE SENTENCE ABOUT YOUR CLASSES]</span>.
+
+Do not change the structure. That page is deliberately plain HTML with no JavaScript —
+keep it that way. Give me back the whole file.</pre>
+      </div>
+      <p class="why"><b>Tokens again, at site scale.</b> Six lines change everything below them.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">2</span><h3>Change the sections</h3></div>
+      <div class="pblock">
+<pre>I don't use <span class="fill">[worksheet creators]</span>. Remove that section from the homepage and add one
+called <span class="fill">[YOUR SECTION]</span> in its place, using exactly the same markup pattern as the
+others. Renumber the sections and fix the item counts.
+
+Tell me what folder I should create to match it.</pre>
+      </div>
+      <p class="why"><b>Move 4.</b> You are describing the shape of your teaching, not the HTML.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">3</span><h3>Add a tool and link it up</h3></div>
+      <p class="lead">The one that makes it a site rather than a folder.</p>
+      <div class="pblock">
+<pre>Here is my homepage and one of my existing tools.
+
+Make me a new tool that <span class="fill">[WHAT IT DOES — two sentences]</span>, for <span class="fill">[STAGE AND TOPIC]</span>.
+Follow the same conventions as the tool I have given you: one self-contained file, the
+same design tokens, state-then-render, inline SVG for any diagram, no libraries.
+
+It works when I can <span class="fill">[ONE SENTENCE]</span>.
+
+Give me back two files: the new tool, and the updated homepage with it added to the
+right section. Tell me what to name the folder.</pre>
+      </div>
+      <p class="why"><b>Conventions carry.</b> Give it one file that already follows your rules and
+        it copies them, which is why the folder convention is worth the bother.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">4</span><h3>Write my project brief</h3></div>
+      <p class="lead">Do this one before you close the laptop. It is what makes the next chat fast.</p>
+      <div class="pblock">
+<pre>Read these files and draft a CLAUDE.md for my project: what this is, how the folders are
+structured, and the conventions you can see I am following — including any I have not
+written down.
+
+Flag anything where I have been inconsistent. Keep it short and high-signal.</pre>
+      </div>
+      <p class="why"><b>Move 7.</b> The project's memory between conversations. Without it you
+        re-explain yourself every time.</p>
+    </div>
+
+    <div class="step">
+      <div class="head"><span class="n">5</span><h3>Plan the next five</h3></div>
+      <p class="lead">Two minutes, and you leave with a list instead of an intention.</p>
+      <div class="pblock">
+<pre>Based on what you can see in my files, suggest five more tools I could build for
+<span class="fill">[STAGE / TOPIC]</span>. For each one, give me a single sentence on the specific lesson it
+fixes — not "a fractions tool", but the moment in a lesson where something is hard.
+
+Don't build any of them.</pre>
+      </div>
+      <p class="why"><b>Q1 from the workshop guide.</b> If you cannot name the lesson, you will
+        build something impressive that nobody opens.</p>
+    </div>
+  </section>
+
+  <div class="note">
+    <b>Save over a copy, not the original.</b> Before a big change,
+    <code>index-working.html</code> is a perfectly respectable backup until you are comfortable
+    with git. And ask for the <b>whole file</b> back every time — stitching a fragment into the
+    middle of a file is where beginners lose an afternoon.
+  </div>
+
+  <section class="stuck">
+    <h2>If it goes sideways</h2>
+    <dl>
+      <dt>You hit a usage limit</dt>
+      <dd>You are on the free plan and it ran out. That is normal and it isn't you. Look at the
+        screen next to you for the rest of the session and pick it up at home.</dd>
+
+      <dt>It gave you something huge you don't understand</dt>
+      <dd>“That's more than I can follow. Rewrite it as the simplest version that does only
+        <em>[the one thing]</em>, with a comment above each section.” Never keep code you cannot
+        read — you will not be able to fix it in front of a class.</dd>
+
+      <dt>It keeps breaking things that worked</dt>
+      <dd>One change per message. If the chat has drifted, start a fresh one and paste in your
+        brief plus the last version that worked. It costs thirty seconds.</dd>
+
+      <dt>You are stuck and can't say why</dt>
+      <dd>“I don't know what any of this means, walk me through it like I have never seen a
+        computer.” Being your dumbest self is a technique, not a confession.</dd>
+    </dl>
+  </section>
+
+  <footer>
+    <div><b>Everything from the session:</b> <a href="./">millsmathstools.au/vibe-code</a></div>
+    <div>Pedagogy first. Prompts and code second.</div>
+  </footer>
+
+</div>
+
+<script>
+/* copy button on every prompt — copies the prompt text only, brackets and all */
+document.querySelectorAll(".pblock").forEach(function(block){
+  var pre = block.querySelector("pre");
+  var b = document.createElement("button");
+  b.className = "copy"; b.type = "button"; b.textContent = "Copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(pre.innerText.trim()).then(function(){
+      b.textContent = "Copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "Copy"; b.classList.remove("done"); }, 1800);
+    });
+  });
+  block.appendChild(b);
+});
+
+/* one track at a time — less to scroll past mid-activity */
+var A = document.getElementById("ladderA"), B = document.getElementById("ladderB");
+var pA = document.getElementById("pickA"), pB = document.getElementById("pickB");
+function show(which){
+  var a = which === "a";
+  A.hidden = !a; B.hidden = a;
+  pA.setAttribute("aria-pressed", String(a));
+  pB.setAttribute("aria-pressed", String(!a));
+}
+pA.addEventListener("click", function(){ show("a"); });
+pB.addEventListener("click", function(){ show("b"); });
+</script>
+</body>
+</html>
