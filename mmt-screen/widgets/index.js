@@ -35,8 +35,9 @@ import launcher from './launcher.js';
 import groups from './group-maker.js';
 import starter from './starter.js';
 import mathsRandom from './maths-random.js';
+import qr from './qr-code.js';
 
-const ALL = [ timer, traffic, text, randomiser, groups, starter, mathsRandom, launcher, drawing ];
+const ALL = [ timer, traffic, text, randomiser, groups, starter, mathsRandom, qr, launcher, drawing ];
 
 export const WIDGETS = Object.fromEntries(ALL.map(d => [d.type, d]));
 export const WIDGET_ORDER = ALL.map(d => d.type);

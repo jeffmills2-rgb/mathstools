@@ -1796,6 +1796,14 @@
 >   localStorage, but it also means the last quarter-second is still in memory
 >   when the page goes away — and the way this page goes away is a teacher
 >   shutting the lid right after changing something.
+> * **THE QR CODE WIDGET ENCODES LOCALLY** (`widgets/qr-code.js`, 2026-09-16).
+>   The encoder is Project Nayuki's qrcodegen, compiled from TS and vendored at
+>   `widgets/vendor/qrcodegen.js` with one added `export default` — no CDN, no
+>   QR API, the link never leaves the laptop. Bare domains get `https://`
+>   prepended (phones treat a scheme-less address as text); `3.14`, `mailto:`
+>   and plain text are untouched. The generated `code` is saved (a reload keeps
+>   the same code); dark-on-white square modules only. Verified in Playwright by
+>   decoding the on-board SVG and the downloaded PNG with jsQR.
 > * **The dock icons must stay visually distinct.** Name picker (people) and
 >   Random maths (two dice) shipped with the SAME icon and it was a coin toss
 >   which one you hit; caught in a screenshot, not by a test.

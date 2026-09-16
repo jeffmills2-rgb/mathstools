@@ -108,6 +108,22 @@ The current problem and whether the answer is showing are both **saved**, so a
 reload or a projector blink brings back the same question rather than wiping
 out what half the class has already started writing.
 
+## QR code
+
+Type or paste a link, press **Generate QR code** (or Enter), and the class
+scans it. A bare domain like `mathstools.com.au` gets `https://` put in front,
+because phone cameras read an address with no scheme as plain text; the hint
+under the box says what phones will open before you press the button. Ordinary
+text and `mailto:`/`tel:` links go in exactly as typed.
+
+The code is made **on the laptop** by a vendored encoder
+(`widgets/vendor/qrcodegen.js`, Project Nayuki, MIT) — no QR website, nothing
+for the school filter to block, and the link is never sent anywhere. Always
+dark on white with square modules so it scans off a washed-out projector.
+
+The generated code is **saved**, so a reload brings back the same code. Hover
+for: Show link, Copy (as a picture), Download (1000px+ PNG) and Edit.
+
 ## Saving
 
 Everything lives in `localStorage` under `mmtScreen.v1`, on that computer, in
