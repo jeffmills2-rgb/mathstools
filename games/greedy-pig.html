@@ -399,6 +399,99 @@
       font-family:var(--mathFont);
       font-weight:1000;
     }
+    .room-code-trigger{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin:-6px -10px;
+      padding:6px 10px;
+      border:1px solid transparent;
+      border-radius:14px;
+      background:transparent;
+      color:inherit;
+      font-weight:950;
+      font-size:inherit;
+      cursor:zoom-in;
+    }
+    .room-code-trigger:hover{background:rgba(255,255,255,.75);border-color:#bfdbfe;}
+    .room-code-trigger .zoom-hint{font-size:.78rem;font-weight:850;color:#2563eb;background:white;border:1px solid #bfdbfe;border-radius:999px;padding:3px 9px;letter-spacing:0;}
+
+    /* Enlarged room code: covers the game card only, so the leaderboard stays in view. */
+    #gameScreen{position:relative;}
+    .code-zoom{
+      position:absolute;
+      inset:0;
+      z-index:30;
+      display:grid;
+      grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
+      grid-template-rows:1fr auto;
+      gap:10px 24px;
+      padding:26px 28px 16px;
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.10),transparent 26rem),
+        radial-gradient(circle at bottom right,rgba(236,72,153,.10),transparent 24rem),
+        #ffffff;
+      cursor:zoom-out;
+      opacity:0;
+      visibility:hidden;
+      transform:scale(.97);
+      transform-origin:top left;
+      transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s;
+    }
+    .code-zoom.open{opacity:1;visibility:visible;transform:none;transition:opacity .18s ease,transform .18s ease,visibility 0s;}
+    .code-zoom-main{container-type:inline-size;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:0;}
+    .code-zoom-step{display:flex;align-items:center;gap:10px;color:#475569;font-weight:950;font-size:clamp(1rem,1.5vw,1.3rem);}
+    .code-zoom-num{display:inline-grid;place-items:center;width:1.9em;height:1.9em;border-radius:50%;background:#1e3a8a;color:white;font-size:.85em;flex:0 0 auto;}
+    .code-zoom-code{
+      font-family:var(--uiFont);
+      font-weight:1000;
+      font-size:6rem;
+      font-size:clamp(3rem,15cqi,8.5rem);
+      line-height:1;
+      letter-spacing:.1em;
+      color:#0f172a;
+      background:#eef6ff;
+      border:2px solid #bfdbfe;
+      border-radius:24px;
+      padding:.14em .1em .14em .2em;
+      text-align:center;
+      margin-bottom:12px;
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+    .code-zoom-link{
+      font-weight:1000;
+      font-size:2.4rem;
+      font-size:clamp(1.5rem,9.5cqi,4rem);
+      color:#1d4ed8;
+      letter-spacing:-.01em;
+      overflow-wrap:break-word;
+      line-height:1.2;
+    }
+    .code-zoom-actions{display:flex;margin-top:4px;}
+    .code-zoom-actions .btn-soft{cursor:pointer;padding:9px 14px;font-size:.92rem;}
+    .code-zoom-qr{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-width:0;}
+    .code-zoom-qr-box{
+      width:min(100%,340px);
+      aspect-ratio:1;
+      background:white;
+      border:1px solid #e2e8f0;
+      border-radius:22px;
+      padding:14px;
+      box-shadow:0 18px 40px rgba(15,23,42,.12);
+      display:grid;
+      place-items:center;
+    }
+    .code-zoom-qr-box svg{width:100%;height:100%;display:block;}
+    .code-zoom-qr-box .qr-fallback{color:#64748b;font-weight:850;text-align:center;font-size:.95rem;}
+    .code-zoom-qr figcaption{font-weight:950;color:#334155;text-align:center;font-size:clamp(.95rem,1.3vw,1.15rem);}
+    .code-zoom-hint{grid-column:1 / -1;text-align:center;color:#94a3b8;font-weight:850;font-size:.88rem;}
+    @media (prefers-reduced-motion:reduce){.code-zoom,.code-zoom.open{transition:none;transform:none;}}
+    @media(max-width:700px){
+      .code-zoom{grid-template-columns:1fr;grid-template-rows:auto auto auto;padding:18px;overflow:auto;}
+      .code-zoom-qr-box{width:min(100%,260px);}
+    }
+
     .form-grid{display:grid;gap:14px;max-width:520px;}
     .join-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
 
@@ -682,6 +775,20 @@
 
     <section class="card main-card hidden" id="gameScreen">
       <div id="gameContent"></div>
+      <div class="code-zoom" id="codeZoom" role="dialog" aria-modal="false" aria-labelledby="codeZoomTitle" aria-hidden="true">
+        <div class="code-zoom-main">
+          <div class="code-zoom-step" id="codeZoomTitle"><span class="code-zoom-num">1</span> Go to</div>
+          <div class="code-zoom-link" id="codeZoomLink"></div>
+          <div class="code-zoom-actions"><button class="btn-soft" id="codeZoomCopyLinkBtn" type="button">Copy link</button></div>
+          <div class="code-zoom-step" style="margin-top:14px;"><span class="code-zoom-num">2</span> Enter the room code</div>
+          <div class="code-zoom-code" id="codeZoomCode" aria-live="polite"></div>
+        </div>
+        <figure class="code-zoom-qr">
+          <div class="code-zoom-qr-box" id="codeZoomQr"></div>
+          <figcaption>Or scan to join &mdash; the code fills in for you</figcaption>
+        </figure>
+        <div class="code-zoom-hint">Click anywhere to shrink</div>
+      </div>
     </section>
 
     <aside class="card panel-card hidden" id="sidePanel">
@@ -798,7 +905,8 @@
         'Standing':'واقف', 'Banked':'تم الحفظ', 'Busted':'خاسر', 'Waiting':'انتظار', 'Bank':'احفظ النقاط', 'Waiting for your teacher to roll.':'انتظر المعلم ليرمي النرد.',
         'The dice is rolling. Bank is locked.':'النرد يتحرك. زر الحفظ مقفل.', 'You are safe this round.':'أنت آمن في هذه الجولة.', 'Poison number! Standing players score 0 this round.':'رقم سام! اللاعبون الواقفون يحصلون على 0 في هذه الجولة.',
         'Game finished':'انتهت اللعبة', 'Current roll':'الرمي الحالي', 'Latest roll':'آخر رمية', 'Students':'الطلاب', 'Total score':'المجموع الكلي',
-        'All players have banked':'قام جميع اللاعبين بحفظ نقاطهم'
+        'All players have banked':'قام جميع اللاعبين بحفظ نقاطهم',
+        'Room code added. Type your name, then press Join.':'تمت إضافة رمز الغرفة. اكتب اسمك ثم اضغط انضمام.'
       },
       fa: {
         'Language':'زبان', 'Join Game':'پیوستن به بازی', "Enter the room code and your name to join your teacher's game.":'کد اتاق و نام خود را وارد کنید تا به بازی معلم بپیوندید.',
@@ -807,7 +915,8 @@
         'Standing':'ایستاده', 'Banked':'ذخیره شده', 'Busted':'سوخت', 'Waiting':'در انتظار', 'Bank':'ذخیره', 'Waiting for your teacher to roll.':'منتظر بمانید تا معلم تاس بیندازد.',
         'The dice is rolling. Bank is locked.':'تاس در حال چرخش است. دکمه ذخیره قفل است.', 'You are safe this round.':'شما در این دور امن هستید.', 'Poison number! Standing players score 0 this round.':'عدد سمی! بازیکنان ایستاده در این دور ۰ می‌گیرند.',
         'Game finished':'بازی تمام شد', 'Current roll':'رول فعلی', 'Latest roll':'آخرین رول', 'Students':'دانش‌آموزان', 'Total score':'امتیاز کل',
-        'All players have banked':'همه بازیکنان امتیاز خود را ذخیره کردند'
+        'All players have banked':'همه بازیکنان امتیاز خود را ذخیره کردند',
+        'Room code added. Type your name, then press Join.':'کد اتاق وارد شد. نام خود را بنویسید و سپس «پیوستن» را بزنید.'
       }
     };
 
@@ -843,6 +952,7 @@
     }
 
     function showScreen(screenId, single=false){
+      if(screenId !== 'gameScreen') closeCodeZoom();
       ['homeScreen','teacherSetupScreen','studentJoinScreen','gameScreen'].forEach(id => $(id).classList.add('hidden'));
       $(screenId).classList.remove('hidden');
       els.sidePanel.classList.add('hidden');
@@ -1144,6 +1254,83 @@
       }, AUTO_ROUND_ADVANCE_MS);
     }
 
+    // ---- Enlarged room code + QR --------------------------------------
+    // The QR is encoded locally with the vendored qrcodegen (same one the MMT Screen
+    // QR widget uses) — no QR API, nothing leaves the laptop.
+    const PUBLIC_PAGE_URL = 'https://www.millsmathstools.au/games/greedy-pig.html';
+    // Short link shown on the board for students to type (points at the join page).
+    const SHORT_JOIN_LINK = 'bit.ly/4cNNmzo';
+    let qrLibPromise = null;
+    let codeZoomOpen = false;
+    let codeZoomRenderedFor = '';
+
+    function loadQrLib(){
+      if(!qrLibPromise){
+        qrLibPromise = import('../mmt-screen/widgets/vendor/qrcodegen.js')
+          .then(mod => mod.default)
+          .catch(err => { console.error('QR library failed to load', err); qrLibPromise = null; return null; });
+      }
+      return qrLibPromise;
+    }
+
+    function joinPageUrl(){
+      // On the live site (or a Netlify preview) link to this exact page. Locally, a phone
+      // can't reach localhost or file://, so point at the live site instead.
+      const host = location.hostname;
+      const isLocal = location.protocol === 'file:' || !host || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+      return isLocal ? PUBLIC_PAGE_URL : location.origin + location.pathname;
+    }
+
+    function qrSvg(qr, border = 2){
+      const n = qr.size + border * 2;
+      let d = '';
+      for(let y = 0; y < qr.size; y++){
+        for(let x = 0; x < qr.size; x++){
+          if(qr.getModule(x, y)) d += `M${x + border} ${y + border}h1v1h-1z`;
+        }
+      }
+      return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="QR code to join the game"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#0f172a"/></svg>`;
+    }
+
+    async function renderCodeZoom(code){
+      if(!code || codeZoomRenderedFor === code) return;
+      codeZoomRenderedFor = code;
+      const base = joinPageUrl();
+      $('codeZoomCode').textContent = code;
+      $('codeZoomLink').textContent = SHORT_JOIN_LINK;
+      const qrBox = $('codeZoomQr');
+      qrBox.innerHTML = '';
+      const lib = await loadQrLib();
+      if(codeZoomRenderedFor !== code) return;
+      if(!lib){
+        qrBox.innerHTML = '<div class="qr-fallback">QR code unavailable.<br>Use the link and code.</div>';
+        codeZoomRenderedFor = '';
+        return;
+      }
+      const qr = lib.QrCode.encodeText(`${base}?join=${encodeURIComponent(code)}`, lib.QrCode.Ecc.MEDIUM);
+      qrBox.innerHTML = qrSvg(qr);
+    }
+
+    function openCodeZoom(){
+      const code = localGame?.roomCode || roomCode;
+      if(!code || role !== 'teacher') return;
+      renderCodeZoom(code);
+      codeZoomOpen = true;
+      const el = $('codeZoom');
+      el.classList.add('open');
+      el.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeCodeZoom(){
+      if(!codeZoomOpen) return;
+      codeZoomOpen = false;
+      const el = $('codeZoom');
+      el.classList.remove('open');
+      el.setAttribute('aria-hidden', 'true');
+      const btn = $('codeZoomCopyLinkBtn');
+      if(btn) btn.textContent = 'Copy link';
+    }
+
     function renderTeacher(game){
       showGameWithPanel();
       const players = sortedPlayers(game);
@@ -1172,14 +1359,17 @@
             : (game.message || stateMessage(game));
 
       if(isFinished){
+        closeCodeZoom();
         els.gameContent.innerHTML = renderFinished(game, true);
         attachTeacherButtonHandlers();
         return;
       }
+      if(codeZoomOpen) renderCodeZoom(game.roomCode);
+      loadQrLib();
 
       els.gameContent.innerHTML = `
         <div class="room-code-box">
-          <span>Room <span class="room-code">${escapeHtml(game.roomCode)}</span> · d${diceSides}</span>
+          <button class="room-code-trigger" id="roomCodeZoomBtn" type="button" title="Show the code big for the class" aria-controls="codeZoom">Room <span class="room-code">${escapeHtml(game.roomCode)}</span> · d${diceSides} <span class="zoom-hint">⤢ Show big</span></button>
           <button class="btn-soft" id="copyCodeBtn" type="button">Copy code</button>
         </div>
         <div class="stat-grid">
@@ -1310,6 +1500,7 @@
       $('copyCodeBtn')?.addEventListener('click', async () => {
         try{ await navigator.clipboard.writeText(roomCode || localGame?.roomCode || ''); }catch(e){}
       });
+      $('roomCodeZoomBtn')?.addEventListener('click', e => { e.stopPropagation(); openCodeZoom(); });
       $('startGameBtn')?.addEventListener('click', startGame);
       $('rollTeacherBtn')?.addEventListener('click', teacherRoll);
       $('endRoundBtn')?.addEventListener('click', endRoundBankStanding);
@@ -1597,7 +1788,35 @@
       applyStudentLanguage();
     });
 
+    // Clicking anywhere (other than Copy link) shrinks the enlarged code; so does Escape.
+    $('codeZoomCopyLinkBtn').addEventListener('click', async e => {
+      e.stopPropagation();
+      const btn = e.currentTarget;
+      const code = localGame?.roomCode || roomCode || '';
+      try{
+        await navigator.clipboard.writeText(`${joinPageUrl()}?join=${encodeURIComponent(code)}`);
+        btn.textContent = 'Link copied';
+      }catch(err){
+        btn.textContent = 'Copy failed';
+      }
+    });
+    document.addEventListener('click', () => { if(codeZoomOpen) closeCodeZoom(); });
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeCodeZoom(); });
+
     showScreen('homeScreen', true);
+
+    // A QR scan lands on ?join=CODE: go straight to the student join screen with the code filled in.
+    (function handleJoinLink(){
+      const params = new URLSearchParams(location.search);
+      const joinCode = String(params.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+      if(joinCode.length !== 6) return;
+      setRole('student');
+      els.studentRoomCodeInput.value = joinCode;
+      els.studentJoinMessage.dataset.studentI18n = 'Room code added. Type your name, then press Join.';
+      els.studentJoinMessage.className = 'callout good';
+      els.studentJoinMessage.innerHTML = t('Room code added. Type your name, then press Join.');
+      els.studentNameInput.focus();
+    })();
   </script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c7e5713b5e4f4993907eb285797dc89b"}'></script>
