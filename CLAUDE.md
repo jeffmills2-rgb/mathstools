@@ -48,6 +48,60 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-18, session — being pushed): GAMES ON A PHONE.** Every game in
+> `games/` now has a phone layout, following the one Greedy Pig got on 2026-09-17.
+> Each file carries ONE appended block, fenced by
+> `/* ==== MMT PHONE LAYOUT (added 2026-09-18) ... */` markers immediately before
+> its closing `</style>`, so it is the last thing in the cascade and overrides the
+> file's own breakpoints without touching them. **Re-run or re-edit that block
+> rather than adding a second one** — everything above the start marker is the
+> original stylesheet.
+> * **THE SHARED PART IS THE SAME IN ALL ELEVEN FILES** (the `.mmtTopbar` shell is
+>   byte-for-byte identical across the games, so it transplants): at
+>   `max-width:700px` the header goes `position:relative` (it scrolls away instead
+>   of holding the top third of the screen), the brand text hides, logo and title
+>   share one row and `.actions` becomes a wrapping flex row of >=38px buttons.
+>   That alone took 150-500px off every game. Modals get
+>   `max-height:calc(100dvh - 20px);overflow:auto` and their backdrop
+>   `align-items:start` — **seven games had a centred modal with no max-height, so
+>   a setup panel taller than the phone lost its buttons off the bottom with no
+>   way to scroll to them.** Rows & Columns could not be started on a phone at all.
+>   Every `<select>`/`<input>` is 16px so iOS does not zoom the page on tap.
+> * **THE REAL BREAKAGES WERE ALL min-content, NOT BREAKPOINTS.** A grid item
+>   cannot shrink below its min-content, so ONE `white-space:nowrap` pill deep
+>   inside a card widens the whole track past the screen. Battleships' placement
+>   coach ("Coordinates are written as (x,y)") widened `.layout` to **552px** and
+>   cut the grid, the ship list and the Submit button off the right edge — the
+>   game was unplayable on a phone. Fraction Hex Path's
+>   `@media(max-width:1180px){.goal-frame{min-width:max-content}}` made the frame
+>   **620px**; releasing it lets the frame fit and the board scroll inside
+>   `.board-wrap` instead (a 5-wide hex board cannot fit 390px at a size the
+>   fractions are readable at — that scroll is deliberate). Connect 4's and
+>   Ultimate Tic-Tac-Toe's `.settings-menu` is `position:absolute;right:0` against
+>   its button, so once the header buttons wrapped the 364px panel hung off the
+>   LEFT edge; on a phone it is a `position:fixed` sheet pinned to the bottom.
+> * **HEIGHT MATTERED AS MUCH AS WIDTH.** Dots and Boxes' four full-width score
+>   cards put the board ~1100px down the page; two-up cards bring it onto the
+>   first screen (1165px -> 879px total). Same two-up treatment in Closest to 100,
+>   Connect 4 (1543 -> 1051) and Ultimate Tic-Tac-Toe. Taxed by the King's
+>   `.card-stage` and `.hero-left` each reserve 340px, which pushed the student's
+>   **Bank** button off the bottom — trimmed to 212px/auto, exactly as Greedy Pig's
+>   `.dice-stage` was.
+> * **Dots and Boxes' line hit areas** are `stroke-width:28` in a 720 viewBox —
+>   about 13px once the board is phone sized. Widened to 52 (~26px), still far
+>   under half the gap between neighbouring lines, so the wrong line is never hit.
+> * **Verified in headless Chromium at 360/390/430 x 780**, landing screen and
+>   in-game, by driving each game into play with a stubbed Firebase module (the
+>   games are one ES module that statically imports `firebasejs`, so with no
+>   network NOTHING wires up and every button is dead — stub
+>   `initializeApp`/`getAuth`/`getFirestore` etc. to test offline). No horizontal
+>   overflow anywhere, no button under 34px, no input under 16px. Harness is in
+>   the session scratch, not the repo.
+> * **Greedy Pig was already done and is untouched.** Battleships' tap-a-ship then
+>   tap-the-grid placement path already existed (`setupFleetSvg` has a `click`
+>   handler as well as HTML5 drag), so touch placement works — HTML5 `dragstart`
+>   alone would not have.
+>
 > **NEW (2026-09-17, session — being pushed): ONE-ROW SITE NAV.** The homepage
 > banner had grown to 13 links over two rows. It is now ONE row: **Browse ▾** (a
 > panel of the eight categories in Teach / Practise / More columns, each with a
