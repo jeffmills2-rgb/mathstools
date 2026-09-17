@@ -48,6 +48,24 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-17, session — being pushed): ONE-ROW SITE NAV.** The homepage
+> banner had grown to 13 links over two rows. It is now ONE row: **Browse ▾** (a
+> panel of the eight categories in Teach / Practise / More columns, each with a
+> blurb and a live card count), four **feature links** — Resources by Stage,
+> Games, Adventure, MMT Screen — that keep their colour only in a round icon chip, and
+> one amber **Sign in ▾** holding the Student and Teacher dashboards. **Games**
+> was moved out of Browse into the feature links (it opens the Games category, and
+> lights up while you are in it). At 1080px and below it all folds into a **Menu** sheet. Click to open, never hover (the
+> board is often a touch screen); Escape or a click elsewhere closes.
+> * **The SAME nav block (CSS + markup + script) is in `index.html` AND
+>   `resources/index.html`** — they are the only two pages with `.site-nav`.
+>   Change one, change the other. On Resources by Stage the Browse items link to
+>   `/?cat=<cat>#browse`, and the homepage now opens that category on load.
+> * **Every non-anchor nav link carries `data-label`.** The MMT Screen launcher
+>   reads `.nav-links a[href]` for its "places", and the menu blurbs sit inside
+>   the links, so `launcher.js` now uses `a.dataset.label || textContent`. Leave
+>   `data-label` off a new link and its title will have the blurb glued on.
+>
 > **NEW (2026-09-17, session — being pushed): RESOURCES BY STAGE — TYPE CARDS.**
 > `resources/index.html` no longer lists an outcome's resources as one flat
 > column. Each outcome now shows one CARD PER TYPE, in this order: PDFs &

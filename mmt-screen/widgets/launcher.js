@@ -104,7 +104,9 @@ function parseCatalogue(html){
      collected too and tagged as sections. Links to an on-page anchor, and to
      this board itself, are skipped. */
   const places = [...doc.querySelectorAll('.nav-links a[href]')]
-    .map(a => ({ raw: a.getAttribute('href') || '', label: a.textContent.trim() }))
+    /* data-label: nav menu items carry a one-line blurb inside the link, so
+       textContent would glue it onto the title. */
+    .map(a => ({ raw: a.getAttribute('href') || '', label: (a.dataset.label || a.textContent).trim() }))
     .filter(x => x.raw && !x.raw.startsWith('#') && !x.raw.includes('mmt-screen') && x.label)
     .map(x => ({
       href: /^https?:/i.test(x.raw) ? x.raw : new URL(x.raw.replace(/^\/+/, ''), location.origin + '/').href,
