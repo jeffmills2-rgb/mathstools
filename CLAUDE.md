@@ -48,6 +48,20 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-17, session — being pushed): RESOURCES BY STAGE — TYPE CARDS.**
+> `resources/index.html` no longer lists an outcome's resources as one flat
+> column. Each outcome now shows one CARD PER TYPE, in this order: PDFs &
+> slides → Interactive tools → Worksheet creators → Student quizzes → Lesson
+> plans → Games & cards (empty cards are skipped). A closed topic shows one
+> tinted chip per type with its count, and a second row in the controls bar —
+> **Show** — filters the whole stage to one type (topics auto-open).
+> * The grouping lives in `GROUPS` / `groupOf()` in `resources/index.html`. Files
+>   from the manifest → `files`; tool links → by `kind` via `KIND_VARIANT`
+>   (flip/flash cards fold into `game`); a manifest `type:"link"` with no kind
+>   is placed by its URL folder (`/interactive-tools/` → tool, etc.).
+> * `"Worksheet creator"` is now mapped (it used to fall back to the globe).
+> * No data files changed — `resourcesManifest.js` and `toolLinks.js` are as before.
+>
 > **NEW (2026-09-08, session — being pushed): CIRCUMFERENCE OF A CIRCLE.** A
 > Stage 4 teaching tool at
 > `interactive-tools/stage-4/measurement-space/circumference-of-a-circle/index.html`,
