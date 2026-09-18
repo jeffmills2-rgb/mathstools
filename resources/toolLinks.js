@@ -396,7 +396,7 @@ window.MMT_TOOL_LINKS = {
       title: "Place Value: Multiply & Divide by 10",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-3/number/multiply-divide-by-ten/",
-      note: "Drag digits through a place-value grid to see ×10 and ÷10 shift the whole number.",
+      note: "The digits travel between place-value columns while the decimal point stays pinned. ×100 and ×1000 play as separate hops of ten.",
       tags: ["place value", "powers of 10", "decimals", "multiply", "divide"]
     },
     {
@@ -419,6 +419,13 @@ window.MMT_TOOL_LINKS = {
       url: "/flip-cards/divide-by-tens.html",
       note: "Quick flip-card fluency on dividing by 10.",
       tags: ["flip cards", "fluency", "division", "place value"]
+    },
+    {
+      title: "Multiplying and Dividing by 10 — Student Quiz",
+      kind: "Student quiz",
+      url: "/online-quizzes/stage-3/number/multiply-divide-by-ten.html",
+      note: "Sweet to Spicy. The level decides how much of the place value board the student keeps. Saves to the student dashboard.",
+      tags: ["quiz", "place value", "powers of 10", "decimals"]
     },
     {
       title: "Multiply & Divide by 10 — Class Flash Cards",

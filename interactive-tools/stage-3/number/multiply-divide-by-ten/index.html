@@ -1,1190 +1,1053 @@
-<!DOCTYPE html> 
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Place Value: Multiply &amp; Divide by 10</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Place Value: Multiply and Divide by 10 | Mills Maths Tools</title>
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Schoolbell&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap');
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --green:#22c55e;
+      --green-dark:#15803d;
+      --purple:#7c3aed;
+      --purple-dark:#5b21b6;
+      --orange:#f97316;
+      --orange-dark:#c2410c;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --red:#dc2626;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
 
-    :root {
-      --cell-width: 90px;
-      --cell-height: 90px;
-      --border-color: #444;
-      --label-color: #333;
-      --digit-color: #0066cc;
-      --decimal-color: #888;
-      --highlight-color: #fff8c2;
+      /* set by fitGrid() from the real board */
+      --colW:104px;
+      --digitFS:3.1rem;
+      --rowH:104px;
     }
 
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+
+    .app{ min-height:100dvh; display:flex; flex-direction:column; min-width:0; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px;
+      margin-left:-12px; font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4); }
+    .mmtBrandLogo{
+      width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08); flex:0 0 auto;
+    }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{
+      font-weight:850; font-size:clamp(1.05rem,1.9vw,1.5rem); letter-spacing:-.04em;
+      text-align:center; color:white; white-space:nowrap;
+    }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px;
+      cursor:pointer; transition:.18s ease; user-select:none;
+    }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover,.toolLink:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+
+    .settingsMenu.open{ gap:11px; padding:15px 18px; min-width:330px; max-height:min(74vh,640px); overflow:auto; }
+    .settingsHead{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .settingsNote{ margin:0; font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.4; }
+    .settingsRule{ height:1px; background:var(--border); margin:1px 0; }
+
+    .selRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .selRow > span{ font-weight:900; font-size:.92rem; color:var(--ink); white-space:nowrap; }
+    .selRow select{
+      appearance:none; border:1.5px solid var(--border);
+      padding:8px 11px; border-radius:11px; font-weight:850; font-size:.88rem;
+      color:var(--line);
+      background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
+      background-size:11px; padding-right:30px; cursor:pointer; min-width:172px;
+    }
+    .selRow select:hover{ border-color:var(--line-soft); }
+    .selRow select:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+
+    .sw{ display:inline-flex; align-items:center; gap:11px; cursor:pointer; user-select:none; font-weight:850; color:var(--line); font-size:.93rem; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:50px; height:29px; border-radius:999px; background:#cbd5e1; transition:.18s ease; flex:0 0 auto; box-shadow:inset 0 1px 3px rgba(15,23,42,.18); }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(15,23,42,.3); transition:.18s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(21px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.28); }
+
+    /* ---------- layout ---------- */
+    .layout{
+      flex:1; width:min(1700px,100%); margin:0 auto; padding:18px 22px 26px;
+      display:flex; flex-direction:column; gap:14px; min-width:0;
+    }
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      box-shadow:var(--shadow); padding:14px 18px;
     }
 
-    body {
-      margin: 0;
-      padding: 20px;
-      padding-bottom: 64px; /* room for footer banner */
-      background: #f5f7fb;
-      color: #222;
+    /* ---------- the number bar ---------- */
+    .numberBar{
+      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      box-shadow:var(--shadow); padding:12px 18px;
+    }
+    .numberBar label{ font-weight:900; font-size:.95rem; color:var(--line); white-space:nowrap; }
+    .numInput{
+      appearance:none; border:1.5px solid var(--border); background:#fff;
+      padding:10px 14px; border-radius:13px; font-family:var(--mathFont);
+      font-size:1.35rem; font-weight:700; color:var(--blue-dark); width:clamp(150px,16vw,210px);
+      text-align:center;
+    }
+    .numInput:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+    .numInput.is-bad{ border-color:var(--red); box-shadow:0 0 0 4px rgba(220,38,38,.14); }
+
+    .genBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:9px 14px; border-radius:13px; font-weight:900; font-size:.88rem; cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px; transition:.18s ease; white-space:nowrap;
+    }
+    .genBtn:hover:not(:disabled){ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; transform:translateY(-1px); }
+    .genBtn:disabled{ opacity:.45; cursor:not-allowed; }
+
+    .opGroups{ display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; }
+    .opCol{ display:flex; flex-direction:column; gap:7px; }
+    .opRow{ display:flex; gap:7px; }
+    .opBtn{
+      appearance:none; border:2px solid transparent; border-radius:14px;
+      padding:10px 16px; font-weight:950; font-size:1.02rem; cursor:pointer;
+      font-family:var(--mathFont); letter-spacing:.01em; min-width:92px;
+      transition:.16s ease; white-space:nowrap;
+    }
+    .opBtn.up{ background:rgba(34,197,94,.13); color:var(--green-dark); border-color:rgba(21,128,61,.28); }
+    .opBtn.up:hover:not(:disabled){ background:rgba(34,197,94,.22); transform:translateY(-1px); }
+    .opBtn.down{ background:rgba(249,115,22,.13); color:var(--orange-dark); border-color:rgba(194,65,12,.28); }
+    .opBtn.down:hover:not(:disabled){ background:rgba(249,115,22,.22); transform:translateY(-1px); }
+    .opBtn:disabled{ opacity:.34; cursor:not-allowed; transform:none; }
+    .opBtn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(37,99,235,.24); }
+
+    .outcomeTag{
+      font-size:.66rem; letter-spacing:.1em; font-weight:950; text-transform:uppercase;
+      color:var(--purple-dark); background:rgba(124,58,237,.11); border:1px solid rgba(124,58,237,.24);
+      padding:5px 9px; border-radius:999px; white-space:nowrap;
     }
 
-    h1 {
-      margin: 0;
-      font-size: 1.9rem;
-      line-height: 1.2;
+    /* ---------- prompt ---------- */
+    .promptBar{
+      display:flex; align-items:center; gap:12px; padding:11px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line);
+      font-size:1rem; line-height:1.35; min-height:50px;
+    }
+    .promptBar .pIco{ font-size:1.25rem; line-height:1; flex:0 0 auto; }
+    .promptBar.is-warn{ background:linear-gradient(135deg,rgba(249,115,22,.16),rgba(220,38,38,.08)); border-color:rgba(194,65,12,.30); color:var(--orange-dark); }
+    .promptBar .hopChip{
+      margin-left:auto; font-family:var(--mathFont); font-weight:800; font-size:.95rem;
+      background:#fff; border:1.5px solid rgba(37,99,235,.28); color:var(--blue-dark);
+      padding:4px 12px; border-radius:999px; white-space:nowrap;
+    }
+    /* ================= THE PLACE VALUE BOARD =================
+       The grid is a fixed window: hundred thousands down to thousandths.
+       Columns never move. The decimal point is not a digit and is not in the
+       digit layer at all — it is painted into its own column band, which is
+       why nothing in this file can ever move it. The digits are absolutely
+       positioned in a layer OVER the columns and animate between column
+       centres, so a class watches each digit travel to its new place. */
+    .boardCard{
+      background:var(--card); border:1px solid var(--border); border-radius:22px;
+      box-shadow:var(--shadow); padding:16px 18px 14px;
+      display:flex; flex-direction:column; align-items:center; gap:0;
+      overflow:hidden;
+    }
+    .pvGrid{
+      position:relative;
+      display:grid;
+      grid-template-rows:auto var(--rowH) auto;
+      justify-content:center;
+      width:max-content; max-width:100%;
+    }
+    .pvRow{ display:grid; grid-template-columns:var(--tpl); }
+    .pvCell{ display:flex; align-items:center; justify-content:center; text-align:center; min-width:0; }
+
+    /* --- labels --- */
+    .pvRow.labels .pvCell{
+      padding:0 4px 8px; align-items:flex-end; min-height:34px;
+    }
+    /* The cell is a flex box, so a <br> inside it would be ignored — the two
+       words of "hundred thousands" have to sit in a block of their own. */
+    .pvRow.labels .lbl{
+      display:block; width:100%; text-align:center;
+      font-weight:900; line-height:1.1; letter-spacing:-.01em;
+      font-size:clamp(.6rem,calc(var(--colW) * .118),.88rem);
+      color:var(--muted); hyphens:none;
+    }
+    .pvRow.labels .pvCell.frac .lbl{ color:var(--purple-dark); }
+    .pvRow.labels .pvCell.whole .lbl{ color:var(--blue-dark); }
+
+    /* --- the ruled boxes --- */
+    .pvRow.track{ position:relative; }
+    .pvRow.track .pvCell{ padding:0 3px; height:var(--rowH); }
+    .pvBox{
+      width:100%; height:100%; border-radius:16px;
+      border:2px solid var(--border); background:linear-gradient(180deg,#ffffff,#f8fafc);
+      box-shadow:inset 0 -3px 0 rgba(15,23,42,.04);
+    }
+    .pvBox.frac{ border-color:rgba(124,58,237,.26); background:linear-gradient(180deg,#ffffff,#faf7ff); }
+    .pvBox.whole{ border-color:rgba(37,99,235,.24); background:linear-gradient(180deg,#ffffff,#f6f9ff); }
+
+    /* --- the value row (100 000 … 0.001) --- */
+    .pvRow.values .pvCell{
+      padding:8px 3px 0; font-family:var(--mathFont); font-weight:700;
+      font-size:clamp(.62rem,calc(var(--colW) * .125),.92rem); color:var(--line-soft);
+      white-space:nowrap;
     }
 
-    .app-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      padding: 16px 24px 30px;
-      position: relative;
-      z-index: 1;
+    /* --- THE PINNED DECIMAL POINT ---------------------------------------
+       One band, spanning every row, drawn behind the digits. The point glyph
+       is inside the band, so it is structurally impossible for it to end up
+       anywhere else. --------------------------------------------------- */
+    .pointBand{
+      position:absolute; top:0; bottom:0; width:var(--pointW);
+      pointer-events:none; z-index:1;
+    }
+    .pointBand{ background:rgba(15,23,42,.045); border-radius:12px; }
+    .pointBand::before{
+      content:""; position:absolute; top:0; bottom:0; left:50%; width:3px;
+      transform:translateX(-50%);
+      background:linear-gradient(180deg,rgba(15,23,42,.10),rgba(15,23,42,.30) 22%,rgba(15,23,42,.30) 78%,rgba(15,23,42,.10));
+      border-radius:2px;
+    }
+    .pointPin{
+      position:absolute; z-index:2; left:50%; transform:translateX(-50%);
+      font-size:clamp(.56rem,calc(var(--colW) * .105),.7rem); font-weight:950;
+      letter-spacing:.06em; text-transform:uppercase; color:var(--line);
+      background:#fff; border:1.5px solid var(--border); border-radius:999px;
+      padding:2px 7px; white-space:nowrap; line-height:1.1;
+      box-shadow:0 2px 6px rgba(15,23,42,.10);
+    }
+    .pointDot{
+      position:absolute; z-index:2; left:0; right:0;
+      height:var(--rowH); display:flex; align-items:flex-end; justify-content:center;
+      padding-bottom:calc(var(--rowH) * .19);
+      font-family:var(--mathFont); font-weight:900; color:var(--ink);
+      font-size:calc(var(--digitFS) * 1.35); line-height:.4;
+    }
+    .boardCard.no-pin .pointPin{ display:none; }
+    /* the pin has its own lane above the labels (set in measureColumns) — at
+       narrow column widths it is wider than its column and would otherwise
+       land on top of "ones" and "tenths" */
+
+    /* --- the digits ----------------------------------------------------- */
+    /* Clipped, so a zero travelling in from off the right-hand end of the
+       board slides in from the edge rather than floating in the card. */
+    .digitLayer{
+      position:absolute; left:0; right:0; height:var(--rowH);
+      pointer-events:none; z-index:3; overflow:hidden;
+    }
+    .digit{
+      position:absolute; top:0; height:var(--rowH);
+      display:flex; align-items:center; justify-content:center;
+      width:var(--colW); transform:translateX(-50%);
+      font-family:var(--mathFont); font-weight:800; font-size:var(--digitFS);
+      line-height:1; color:var(--blue-dark);
+      transition:left var(--hop,520ms) cubic-bezier(.4,0,.22,1),
+                 color .3s ease, font-weight .3s ease, opacity .26s ease;
+      will-change:left;
+    }
+    /* Three states, and only three. A digit of the number is blue — INCLUDING
+       a zero, because a zero in the ones column of 450 is a digit of 450 like
+       any other. A trailing zero past the end of the number is faint. Anything
+       further out is carried but not drawn, so it still has somewhere to
+       travel from. */
+    .digit.trail{ color:var(--line-soft); font-weight:700; }
+    .digit.off{ opacity:0; }
+    .pvGrid.no-anim .digit{ transition:none; }
+
+    /* --- the reading of the number under the board --- */
+    .readout{
+      margin-top:12px; display:flex; align-items:center; justify-content:center; gap:14px;
+      flex-wrap:wrap; min-height:44px;
+    }
+    .readNum{
+      font-family:var(--mathFont); font-weight:700; letter-spacing:-.01em;
+      font-size:clamp(1.5rem,3.1vw,2.35rem); color:var(--ink); white-space:nowrap;
+    }
+    .readWords{
+      font-weight:800; font-size:clamp(.85rem,1.35vw,1.02rem); color:var(--purple-dark);
+      background:rgba(124,58,237,.09); border:1px solid rgba(124,58,237,.20);
+      padding:7px 14px; border-radius:999px; text-align:center; line-height:1.3;
     }
 
-    .header-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
+    /* ---------- the running expression ---------- */
+    .exprCard{
+      display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
+      padding:12px 18px; border-radius:18px; min-height:70px;
+      background:linear-gradient(135deg,rgba(34,197,94,.10),rgba(37,99,235,.07));
+      border:1px solid rgba(21,128,61,.22);
+    }
+    .expr{
+      font-family:var(--mathFont); font-weight:700; white-space:nowrap;
+      font-size:clamp(1.3rem,2.9vw,2.2rem); color:var(--green-dark); letter-spacing:-.01em;
+    }
+    .expr .from{ color:var(--blue-dark); }
+    .expr .op{ color:var(--orange-dark); }
+    .equivLine{
+      font-size:clamp(.8rem,1.3vw,.95rem); font-weight:800; color:var(--purple-dark);
+      background:rgba(124,58,237,.09); border:1px solid rgba(124,58,237,.20);
+      padding:6px 13px; border-radius:999px; white-space:nowrap;
     }
 
-    .header-left {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* ---------- responsive / short screens ---------- */
+    @media (max-width:1100px){
+      .numberBar{ padding:11px 14px; gap:11px; }
+      .opGroups{ margin-left:0; width:100%; justify-content:center; }
     }
-
-    .back-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 2px solid #111;
-      background: #fff;
-      color: #111;
-      text-decoration: none;
-      font-weight: 700;
-      width: fit-content;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      transition: transform 0.08s ease, box-shadow 0.12s ease;
+    @media (max-height:860px){
+      .layout{ padding:12px 20px 18px; gap:11px; }
+      .boardCard{ padding:12px 14px 10px; }
+      .promptBar{ min-height:44px; padding:8px 14px; font-size:.94rem; }
+      .exprCard{ min-height:58px; padding:9px 14px; }
+      .readout{ margin-top:9px; min-height:38px; }
     }
-    .back-pill:active {
-      transform: translateY(1px) scale(0.99);
-      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-    }
-    .back-pill img {
-      width: 26px;
-      height: 26px;
-      object-fit: contain;
-    }
+    @media print{ .mmtTopbar,.numberBar,.promptBar{ display:none; } }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .dropdown {
-      position: relative;
-    }
-
-    .pill-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 10px 16px;
-      min-width: 92px;
-      font-size: 0.98rem;
-      cursor: pointer;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: #eef1f8;
-      color: #111;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
-    }
-
-    .pill-btn:active {
-      transform: translateY(1px) scale(0.98);
-      box-shadow: none;
-    }
-
-    .pill-btn:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .reset-pill {
-      background: #ffe7ea;
-      color: #8a1f2a;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      min-width: 86px;
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      width: 220px;
-      background: #fff;
-      border: 1px solid #d6dbee;
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.10);
-      padding: 8px;
-      z-index: 50;
-      display: none;
-    }
-
-    .dropdown-menu.open {
-      display: block;
-    }
-
-    .dropdown-item {
-      width: 100%;
-      border: none;
-      background: transparent;
-      text-align: left;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 0.98rem;
-      font-weight: 700;
-      cursor: pointer;
-      color: #111;
-    }
-
-    .dropdown-item:hover {
-      background: #f3f6ff;
-    }
-
-    .top-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 14px;
-    }
-
-    .top-row label {
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-
-    #numberInput {
-      min-width: 260px;
-      padding: 11px 14px;
-      font-size: 1.25rem;
-      border-radius: 10px;
-      border: 1px solid #888;
-    }
-
-    .button-groups {
-      margin-left: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 6px;
-      justify-content: flex-end;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 16px;
-      min-width: 78px;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
-    }
-
-    button:active {
-      transform: translateY(1px) scale(0.98);
-      box-shadow: none;
-    }
-
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    #timesTenBtn, #timesHundredBtn, #timesThousandBtn {
-      background: #32b46c;
-      color: white;
-      box-shadow: 0 2px 6px rgba(50,180,108,0.5);
-    }
-
-    #divideTenBtn, #divideHundredBtn, #divideThousandBtn {
-      background: #f15757;
-      color: white;
-      box-shadow: 0 2px 6px rgba(241,87,87,0.5);
-    }
-
-    #resetBtnRow {
-      display: none !important;
-    }
-
-    #errorMessage {
-      margin-top: 4px;
-      color: #d62828;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .view-container {
-      margin-top: 18px;
-      border-radius: 10px;
-      border: 1px solid #d3d8ea;
-      background: #f9faff;
-      padding: 14px 12px 16px;
-      overflow-x: auto;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .pv-grid-wrapper {
-      min-height: 220px;
-      position: relative;
-      display: block;
-      text-align: center;
-    }
-
-    .pv-placeholder {
-      text-align: center;
-      color: #777;
-      padding: 30px 10px;
-      font-style: italic;
-    }
-
-    .pv-grid {
-      display: inline-block;
-      border-collapse: collapse;
-      white-space: nowrap;
-    }
-
-    .pv-row { display: flex; }
-
-    .pv-cell {
-      width: var(--cell-width);
-      height: var(--cell-height);
-      border: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      background: #fff;
-      overflow: hidden;
-    }
-
-    .pv-cell.decimal {
-      width: 28px;
-      min-width: 28px;
-      background: #f0f0f0;
-      border-left: none;
-      border-right: none;
-    }
-
-    .pv-labels .pv-cell {
-      height: 130px;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-      border-bottom: 0;
-      font-size: 0.75rem;
-      color: var(--label-color);
-      padding: 0 2px;
-      text-align: center;
-      overflow: visible;
-    }
-
-    .pv-label-text {
-      display: inline-block;
-      transform: rotate(-90deg);
-      transform-origin: center center;
-      white-space: nowrap;
-    }
-
-    .pv-digits-row { display: flex; align-items: stretch; }
-    .pv-digits-left, .pv-digits-right { display: flex; }
-
-    .pv-digits-row .pv-cell {
-      border-top: 0;
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--digit-color);
-      overflow: visible;
-      position: relative;
-      background: #ffffff;
-    }
-
-    .pv-digits-row .pv-cell.decimal {
-      font-size: 2.2rem;
-      color: var(--decimal-color);
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-    }
-
-    .digit-span { display: inline-block; position: relative; z-index: 2; }
-
-    .digit-slide-left-1 { animation: digitSlideLeft1 1s ease-out forwards; }
-    .digit-slide-right-1 { animation: digitSlideRight1 1s ease-out forwards; }
-    .digit-slide-left-2 { animation: digitSlideLeft2 1s ease-out forwards; }
-    .digit-slide-right-2 { animation: digitSlideRight2 1s ease-out forwards; }
-    .digit-slide-left-3 { animation: digitSlideLeft3 1s ease-out forwards; }
-    .digit-slide-right-3 { animation: digitSlideRight3 1s ease-out forwards; }
-
-    @keyframes digitSlideLeft1 { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--cell-width))); } }
-    @keyframes digitSlideRight1 { from { transform: translateX(0); } to { transform: translateX(var(--cell-width)); } }
-    @keyframes digitSlideLeft2 { from { transform: translateX(0); } to { transform: translateX(calc(-2 * var(--cell-width))); } }
-    @keyframes digitSlideRight2 { from { transform: translateX(0); } to { transform: translateX(calc(2 * var(--cell-width))); } }
-    @keyframes digitSlideLeft3 { from { transform: translateX(0); } to { transform: translateX(calc(-3 * var(--cell-width))); } }
-    @keyframes digitSlideRight3 { from { transform: translateX(0); } to { transform: translateX(calc(3 * var(--cell-width))); } }
-
-    .pv-cell.highlight { animation: cellHighlight 0.6s ease-out; }
-    @keyframes cellHighlight {
-      0%   { background-color: var(--highlight-color); }
-      100% { background-color: #ffffff; }
-    }
-
-    #sciView { text-align: center; padding: 20px 10px 12px; }
-    #sciView h2 { margin: 0 0 10px; font-size: 1.2rem; color: #333; }
-    #sciNumber { font-size: 1.9rem; font-weight: 700; color: #0066cc; }
-    #sciStandard { margin-top: 8px; font-size: 1rem; color: #555; }
-
-    .words-row { margin-top: 16px; display: flex; align-items: flex-start; gap: 10px; }
-
-    #wordsBtn {
-      border-radius: 999px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      background: #ffd66b;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    }
-
-    #wordsBtn:disabled { opacity: 0.5; cursor: default; }
-
-    #wordsBox {
-      flex: 1;
-      min-height: 40px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px dashed #c5c8dd;
-      background: #fffdf4;
-      font-size: 1rem;
-      color: #444;
-    }
-
-    .expression-row { margin-top: 14px; }
-
-    #expressionBox {
-      width: 100%;
-      min-height: 40px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid #d3d8ea;
-      background: #ffffff;
-      font-size: 4.6rem;
-      font-weight: 400;
-      text-align: center;
-      color: #174d45;
-      font-family: "Kalam","Gloria Hallelujah","Patrick Hand","Schoolbell","Shadows Into Light",sans-serif;
-    }
-
-    .equivalence-row { margin-top: 10px; }
-
-    #equivalenceBox {
-      width: 100%;
-      min-height: 32px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px dashed #e1c8ff;
-      background: #faf5ff;
-      font-size: 1rem;
-      color: #4b2c7a;
-      font-style: italic;
-    }
-
-    .mmt-footer {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #ffffff;
-      border-top: 1px solid rgba(0,0,0,0.18);
-      text-align: center;
-      padding: 8px 10px;
-      font-size: 0.95rem;
-      color: #333;
-      box-shadow: 0 -6px 16px rgba(0,0,0,0.06);
-      z-index: 999;
-    }
-    .mmt-footer a {
-      font-weight: 800;
-      color: #111;
-      text-decoration: underline;
-    }
-    .mmt-footer a:hover {
-      text-decoration: none;
-    }
-
-    @media (max-width: 600px) {
-      :root { --cell-width: 70px; --cell-height: 70px; }
-      .pv-digits-row .pv-cell { font-size: 1.6rem; }
-      h1 { font-size: 1.6rem; }
-      #expressionBox { font-size: 3.2rem; }
-      body { padding-bottom: 72px; }
-    }
   </style>
-<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
 </head>
-
 <body>
-  <main>
-    <div class="app-container">
-      <div class="header-bar">
-        <div class="header-left">
-          <a class="back-pill" href="https://www.millsmathstools.au" aria-label="Back to Mills Maths Tools">
-            <img src="../../../../assets/mmt.png" alt="MMT logo" />
-            <span>Back to Mills Maths Tools</span>
-          </a>
-          <h1>Place Value: Multiply &amp; Divide by 10</h1>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Place Value: Multiply and Divide by 10</div>
+      <div class="topActions">
+        <div class="menuWrap">
+          <button class="btn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false">Settings &#9662;</button>
+          <nav class="dropMenu settingsMenu" id="settingsMenu" aria-label="Settings">
+            <div class="settingsHead">Movement</div>
+            <label class="selRow"><span>Speed</span>
+              <select id="speedSel" aria-label="Animation speed">
+                <option value="820">Calm</option>
+                <option value="520" selected>Normal</option>
+                <option value="320">Quick</option>
+                <option value="0">Straight there</option>
+              </select>
+            </label>
+            <p class="settingsNote">&times;&nbsp;100 and &times;&nbsp;1000 are played as two and three separate hops of &times;&nbsp;10, so a class sees that multiplying by 1000 is multiplying by 10 three times over.</p>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">On the board</div>
+            <label class="sw"><input type="checkbox" id="namesToggle" checked><span class="track"></span><span>Place value names</span></label>
+            <label class="sw"><input type="checkbox" id="valuesToggle" checked><span class="track"></span><span>What each place is worth</span></label>
+            <label class="sw"><input type="checkbox" id="pinToggle" checked><span class="track"></span><span>&ldquo;Point stays&rdquo; label</span></label>
+            <label class="sw"><input type="checkbox" id="wordsToggle"><span class="track"></span><span>Read the number in words</span></label>
+            <label class="sw"><input type="checkbox" id="trailToggle"><span class="track"></span><span>Show trailing zeroes</span></label>
+            <label class="sw"><input type="checkbox" id="equivToggle"><span class="track"></span><span>Show the matching division</span></label>
+            <p class="settingsNote">Trailing zeroes writes the zeroes that are always there after the last digit &mdash; 45 as 45.0000 &mdash; in faint grey. Multiply, and one of them crosses the point into the ones column and turns blue. That is where the zero in 450 comes from.</p>
+            <p class="settingsNote">The matching division writes &times;&nbsp;10 as &divide;&nbsp;0.1 underneath &mdash; a stretch for a class that is ready for it.</p>
+          </nav>
         </div>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="flash-cards.html">Class Flash Cards<small>The same moves as a whole-class card routine</small></a>
+            <a class="toolLink" href="student-flash.html">Student Quiz<small>Students practise the moves themselves</small></a>
+            <a class="toolLink" href="../../../../worksheet-creators/stage-3/number/multiply-divide-by-ten.html">Worksheet Creator<small>Printable questions with an answer key</small></a>
+            <a class="toolLink" href="/interactive-tools/stage-3/number/partition-splitter/">Partition Splitter<small>Breaking a number into its place value parts</small></a>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
 
-        <div class="header-right">
-          <div class="dropdown">
-            <button id="toolsBtn" class="pill-btn" type="button" aria-haspopup="true" aria-expanded="false">
-              Tools <span aria-hidden="true">▼</span>
-            </button>
+    <main class="layout">
 
-            <div id="toolsMenu" class="dropdown-menu" role="menu" aria-label="Tools menu">
-              <button class="dropdown-item" type="button" role="menuitem" id="toolClassFlash">
-                Class flash card
-              </button>
-              <button class="dropdown-item" type="button" role="menuitem" id="toolStudentQuiz">
-                Student Quiz
-              </button>
+      <div class="numberBar">
+        <label for="numInput">Number</label>
+        <input id="numInput" class="numInput" type="text" inputmode="decimal" autocomplete="off"
+               spellcheck="false" value="523.146" aria-label="The number to multiply or divide" />
+        <button class="genBtn" id="randBtn" type="button" title="A new number to work with">
+          <span aria-hidden="true">&#9860;</span><span>New number</span>
+        </button>
+        <span class="outcomeTag">MA3-RN-01</span>
 
-              <!-- NEW: worksheet generator -->
-              <button class="dropdown-item" type="button" role="menuitem" id="toolWorksheet">
-                Worksheet generator
-              </button>
+        <div class="opGroups">
+          <div class="opCol">
+            <div class="opRow">
+              <button class="opBtn up" type="button" data-k="1">&times; 10</button>
+              <button class="opBtn up" type="button" data-k="2">&times; 100</button>
+              <button class="opBtn up" type="button" data-k="3">&times; 1000</button>
+            </div>
+            <div class="opRow">
+              <button class="opBtn down" type="button" data-k="-1">&divide; 10</button>
+              <button class="opBtn down" type="button" data-k="-2">&divide; 100</button>
+              <button class="opBtn down" type="button" data-k="-3">&divide; 1000</button>
             </div>
           </div>
-
-          <button id="resetTopBtn" class="pill-btn reset-pill" type="button">Reset</button>
         </div>
       </div>
 
-      <div class="top-row">
-        <label for="numberInput" id="numberInputLabel">Enter a positive number:</label>
-        <input
-          id="numberInput"
-          type="text"
-          inputmode="decimal"
-          autocomplete="off"
-          placeholder="e.g. 523.146 or 4.3 × 10^-5"
-        />
+      <div class="promptBar" id="promptBar">
+        <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+        <span id="promptText">Type a number, then multiply or divide it by 10. Watch which way the digits travel.</span>
+        <span class="hopChip" id="hopChip" hidden></span>
+      </div>
 
-        <div class="button-groups">
-          <div class="button-row">
-            <button id="timesTenBtn" type="button">&times; 10</button>
-            <button id="timesHundredBtn" type="button">&times; 100</button>
-            <button id="timesThousandBtn" type="button">&times; 1000</button>
+      <div class="boardCard" id="boardCard">
+        <div class="pvGrid" id="pvGrid">
+          <div class="pvRow labels" id="rowLabels"></div>
+          <div class="pvRow track" id="rowTrack"></div>
+          <div class="pvRow values" id="rowValues"></div>
+          <div class="pointBand" id="pointBand">
+            <div class="pointPin" id="pointPin">point stays</div>
+            <div class="pointDot" id="pointDot">.</div>
           </div>
-          <div class="button-row">
-            <button id="divideTenBtn" type="button">&divide; 10</button>
-            <button id="divideHundredBtn" type="button">&divide; 100</button>
-            <button id="divideThousandBtn" type="button">&divide; 1000</button>
-          </div>
+          <div class="digitLayer" id="digitLayer" aria-hidden="true"></div>
         </div>
-
-        <button id="resetBtnRow" type="button">Reset</button>
-      </div>
-
-      <div id="errorMessage" role="alert" aria-live="assertive">Invalid input</div>
-
-      <div class="view-container" aria-live="polite">
-        <div id="placeValueView" class="pv-grid-wrapper">
-          <div class="pv-placeholder">Enter a number above to see its digits in the place-value grid.</div>
-        </div>
-
-        <div id="sciView" class="hidden">
-          <h2>Scientific notation view</h2>
-          <div id="sciNumber"></div>
-          <div id="sciStandard"></div>
+        <div class="readout">
+          <div class="readNum" id="readNum" aria-live="polite"></div>
+          <div class="readWords" id="readWords" hidden></div>
         </div>
       </div>
 
-      <div class="words-row">
-        <button id="wordsBtn" type="button">In words</button>
-        <div id="wordsBox" class="hidden" aria-live="polite"></div>
+      <div class="exprCard" id="exprCard" hidden>
+        <div class="expr" id="expr"></div>
+        <div class="equivLine" id="equivLine" hidden></div>
       </div>
 
-      <div class="expression-row">
-        <div id="expressionBox" class="hidden" aria-live="polite"></div>
-      </div>
-
-      <div class="equivalence-row">
-        <div id="equivalenceBox" class="hidden" aria-live="polite"></div>
-      </div>
-    </div>
-  </main>
-
-  <div class="mmt-footer">
-    This tool and more can be found at
-    <a href="https://www.millsmathstools.au" target="_blank" rel="noopener noreferrer">www.millsmathstools.au</a>
+    </main>
   </div>
-
   <script>
-    const DEFAULT_VALUE = 1;
+  (() => {
+    "use strict";
+    const $ = id => document.getElementById(id);
 
-    const positivePlaces = [
-      "trillions","hundred-billions","ten-billions","billions","hundred-millions",
-      "ten-millions","millions","hundred-thousands","ten-thousands","thousands",
-      "hundreds","tens","ones"
-    ];
+    /* ================================================================
+       THE NUMBER IS A TAPE OF DIGITS, ONE PER PLACE.
+       Not a JavaScript number, and not just the digits you can see. Every
+       place carries a digit, and the ones outside the number are zeros —
+       leading zeros above it, trailing zeros below it, running off both
+       ends of the board into a buffer.
 
-    const negativePlaces = [
-      "tenths","hundredths","thousandths","ten-thousandths","hundred-thousandths","millionths"
-    ];
+       That is what makes x10 a single honest operation: SHIFT THE WHOLE
+       TAPE ONE PLACE. Nothing is created and nothing is destroyed, so the
+       zero that turns up in the ones column when 45 becomes 450 is not a
+       zero that appeared — it is the trailing zero from the tenths, and
+       the class watches it travel there. "Add a zero" is exactly the
+       misconception this tool exists to head off, so no digit on this
+       board may ever pop into being in a column it did not travel to.
 
-    const MAX_LEFT_DIGITS  = positivePlaces.length;
-    const MAX_RIGHT_DIGITS = negativePlaces.length;
-    const MAX_INT_VALUE    = Math.pow(10, MAX_LEFT_DIGITS);
-    const MIN_POS_VALUE    = Math.pow(10, -MAX_RIGHT_DIGITS);
+       The decimal point is not on the tape at all. It is painted into its
+       own column band, which is why no code path here can move it.
 
-    const inputEl        = document.getElementById("numberInput");
-    const errorEl        = document.getElementById("errorMessage");
-    const placeValueView = document.getElementById("placeValueView");
-    const sciView        = document.getElementById("sciView");
-    const sciNumberEl    = document.getElementById("sciNumber");
-    const sciStandardEl  = document.getElementById("sciStandard");
-    const viewContainer  = document.querySelector(".view-container");
+       Arithmetic is never done on a float, so 523.146 x 10 is exactly
+       5231.46 and never 5231.459999999.
+       ================================================================ */
+    const MAX_P = 5;           // hundred thousands
+    const MIN_P = -4;          // ten thousandths
+    const BUF   = 3;           // places held off each end of the board
+    const TAPE_HI = MAX_P + BUF, TAPE_LO = MIN_P - BUF;
 
-    const timesTenBtn       = document.getElementById("timesTenBtn");
-    const divideTenBtn      = document.getElementById("divideTenBtn");
-    const timesHundredBtn   = document.getElementById("timesHundredBtn");
-    const divideHundredBtn  = document.getElementById("divideHundredBtn");
-    const timesThousandBtn  = document.getElementById("timesThousandBtn");
-    const divideThousandBtn = document.getElementById("divideThousandBtn");
+    const PLACES = [];
+    for (let p = MAX_P; p >= MIN_P; p--) PLACES.push(p);
 
-    const resetTopBtn       = document.getElementById("resetTopBtn");
-    const wordsBtn          = document.getElementById("wordsBtn");
-    const wordsBox          = document.getElementById("wordsBox");
-    const expressionBox     = document.getElementById("expressionBox");
-    const equivalenceBox    = document.getElementById("equivalenceBox");
+    const NAMES = {
+      5:"hundred\nthousands", 4:"ten\nthousands", 3:"thousands", 2:"hundreds",
+      1:"tens", 0:"ones",
+      "-1":"tenths", "-2":"hundredths", "-3":"thousandths", "-4":"ten\nthousandths"
+    };
+    const WORTH = {
+      5:"100 000", 4:"10 000", 3:"1000", 2:"100", 1:"10", 0:"1",
+      "-1":"0.1", "-2":"0.01", "-3":"0.001", "-4":"0.0001"
+    };
 
-    const toolsBtn         = document.getElementById("toolsBtn");
-    const toolsMenu        = document.getElementById("toolsMenu");
-    const toolClassFlash   = document.getElementById("toolClassFlash");
-    const toolStudentQuiz  = document.getElementById("toolStudentQuiz");
+    /* ---------- state ------------------------------------------------ */
+    let tape = [];            // [{id, d, place, el, role}] one per place, TAPE_HI..TAPE_LO
+    let uid = 0;
+    let startDigits = [];     // the number as typed, for the expression
+    let exponent = 0;         // net power of ten applied since then
+    let busy = false;
+    let colX = new Map();     // place -> centre x within .pvGrid
+    let pitchL = 100, pitchR = 100;
 
-    // NEW
-    const toolWorksheet    = document.getElementById("toolWorksheet");
+    const S = {
+      speed:520, names:true, values:true, pin:true,
+      words:false, equiv:false, trail:false
+    };
 
-    let currentValue  = null;
-    let originalValue = null;
-    let currentMode   = null;
-
-    function clearViews() {
-      placeValueView.innerHTML =
-        '<div class="pv-placeholder">Enter a number above to see its digits in the place-value grid.</div>';
-      sciView.classList.add("hidden");
-      placeValueView.classList.remove("hidden");
-      currentMode = null;
-    }
-
-    function setError(msg) {
-      errorEl.textContent = msg;
-      errorEl.style.display = "block";
-    }
-
-    function clearError() {
-      errorEl.textContent = "";
-      errorEl.style.display = "none";
-    }
-
-    function normalizeValue(v) {
-      if (!isFinite(v)) return v;
-      const INT_EPS = 1e-12;
-      const nearestInt = Math.round(v);
-      if (nearestInt !== 0 && Math.abs(v - nearestInt) < INT_EPS) return nearestInt;
-      return v;
-    }
-
-    function parseInput(raw) {
-      let s = (raw || "").replace(/,/g, "").trim();
-      s = s.replace(/\u2212/g, "-");
-      s = s.replace(/\s+/g, "");
-
-      if (s === "") return { status: "empty" };
-      if (s.startsWith(".")) s = "0" + s;
-      if (s === "." || /^\d+\.$/.test(s)) return { status: "partial" };
-      if (/^-/.test(s)) return { status: "invalid" };
-
-      const sciPattern =
-        /^(\d*\.?\d+)\s*(?:[eE]\s*([+\-]?\d+)|(?:[xX*×]\s*10\^?\s*([+\-]?\d+)))$/;
-      const sciMatch = s.match(sciPattern);
-
-      if (sciMatch) {
-        const a = parseFloat(sciMatch[1]);
-        const n = parseInt(sciMatch[2] || sciMatch[3], 10);
-        if (!isFinite(a) || !isFinite(n) || a <= 0) return { status: "invalid" };
-        const mantissa = parseFloat(a.toFixed(1));
-        let value = mantissa * Math.pow(10, n);
-        value = normalizeValue(value);
-        return { status: "ok", value, fromSci: true, mantissa, exponent: n };
+    /* ---------- the tape --------------------------------------------- */
+    function buildTape(digits){
+      const m = new Map(digits.map(x => [x.place, x.d]));
+      tape = [];
+      for (let p = TAPE_HI; p >= TAPE_LO; p--){
+        tape.push({ id: ++uid, d: m.get(p) ?? "0", place: p, el: null, role: "hidden" });
       }
-
-      let num = Number(s);
-      if (!isFinite(num) || num <= 0) return { status: "invalid" };
-      num = normalizeValue(num);
-      return { status: "ok", value: num, fromSci: false };
     }
 
-    function formatStandard(value, options = {}) {
-      const { forGrid = false, withSpaces = false } = options;
+    // the outermost non-zero digits — what the number actually reaches
+    function sigRange(){
+      const nz = tape.filter(t => t.d !== "0");
+      if (!nz.length) return null;
+      return { hi: Math.max(...nz.map(t => t.place)), lo: Math.min(...nz.map(t => t.place)) };
+    }
 
-      let s;
-      if (forGrid) {
-        s = value.toFixed(MAX_RIGHT_DIGITS);
-        s = s.replace(/\.?0+$/, "");
-      } else {
-        s = value.toPrecision(15);
-        if (s.includes("e") || s.includes("E")) s = Number(s).toString();
-        if (s.includes(".")) s = s.replace(/\.?0+$/, "");
+    // which columns are written: out to the last non-zero digit each way, but
+    // always as far as the ones. That is what puts the 0 in front of 0.52 and
+    // the 0 behind 450.
+    function spanAt(places){
+      const nz = tape.filter(t => t.d !== "0");
+      if (!nz.length) return { hi:0, lo:0 };
+      const ps = nz.map(t => places.get(t.id));
+      return { hi: Math.max(Math.max(...ps), 0), lo: Math.min(Math.min(...ps), 0) };
+    }
+    const currentPlaces = () => new Map(tape.map(t => [t.id, t.place]));
+
+    function roleFor(place, span){
+      if (place <= span.hi && place >= span.lo) return "sig";
+      if (place < 0 && place >= MIN_P && S.trail) return "trail";
+      return "hidden";
+    }
+
+    function canShift(k){
+      const r = sigRange();
+      if (!r) return true;
+      return r.hi + k <= MAX_P && r.lo + k >= MIN_P;
+    }
+
+    function toDigitString(digits, spaced){
+      const m = new Map(digits.map(x => [x.place, x.d]));
+      const nz = digits.filter(x => x.d !== "0");
+      if (!nz.length) return "0";
+      const hi = Math.max(Math.max(...nz.map(x => x.place)), 0);
+      const lo = Math.min(Math.min(...nz.map(x => x.place)), 0);
+      let intStr = "", frcStr = "";
+      for (let p = hi; p >= lo; p--){
+        const ch = m.get(p) ?? "0";
+        if (p >= 0) intStr += ch; else frcStr += ch;
       }
+      if (spaced && intStr.length > 4) intStr = intStr.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+      return frcStr ? intStr + "." + frcStr : intStr;
+    }
+    const tapeString = spaced => toDigitString(tape.map(t => ({ d:t.d, place:t.place })), spaced);
 
-      if (s === "") s = "0";
-      let [intPart, fracPart = ""] = s.split(".");
-      intPart = intPart.replace(/^0+/, "") || "0";
-
-      if (withSpaces) {
-        intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-      }
-
-      return fracPart ? `${intPart}.${fracPart}` : intPart;
+    /* ---------- reading the input ------------------------------------ */
+    function parseNumber(raw){
+      const s = String(raw).replace(/[\s,_ ]/g, "");
+      if (!s || !/^\d*\.?\d*$/.test(s) || !/\d/.test(s)) return null;
+      const dot = s.indexOf(".");
+      const intPart = dot < 0 ? s : s.slice(0, dot);
+      const frcPart = dot < 0 ? "" : s.slice(dot + 1);
+      const digits = [];
+      for (let i = 0; i < intPart.length; i++) digits.push({ d: intPart[i], place: intPart.length - 1 - i });
+      for (let i = 0; i < frcPart.length; i++) digits.push({ d: frcPart[i], place: -(i + 1) });
+      const nz = digits.filter(x => x.d !== "0");
+      if (!nz.length) return [{ d:"0", place:0 }];
+      const hi = Math.max(...nz.map(x => x.place));
+      const lo = Math.min(...nz.map(x => x.place));
+      return digits.filter(x => x.place <= hi && x.place >= lo).sort((a,b) => b.place - a.place);
+    }
+    function fitsGrid(digits){
+      const nz = digits.filter(x => x.d !== "0");
+      if (!nz.length) return true;
+      return Math.max(...nz.map(x => x.place)) <= MAX_P && Math.min(...nz.map(x => x.place)) >= MIN_P;
     }
 
-    function getDigitInfoForGrid(value) {
-      let s = value.toFixed(MAX_RIGHT_DIGITS);
-      if (!s.includes(".")) s += ".";
-      let [intPart, fracPart] = s.split(".");
-      intPart = intPart.replace(/^0+/, "") || "0";
-      if (!fracPart) fracPart = "";
-      if (fracPart.length < MAX_RIGHT_DIGITS) fracPart = fracPart.padEnd(MAX_RIGHT_DIGITS, "0");
-      else if (fracPart.length > MAX_RIGHT_DIGITS) fracPart = fracPart.slice(0, MAX_RIGHT_DIGITS);
-      return { leftDigits: intPart.split(""), rightDigits: fracPart.split("") };
-    }
+    /* ---------- building the board ----------------------------------- */
+    function buildGrid(){
+      const labels = $("rowLabels"), track = $("rowTrack"), values = $("rowValues");
+      labels.innerHTML = ""; track.innerHTML = ""; values.innerHTML = "";
+      let tpl = "";
+      for (const p of PLACES){
+        const kind = p < 0 ? "frac" : "whole";
 
-    function isInPlaceValueRange(value) {
-      if (value >= MAX_INT_VALUE) return false;
-      if (value < MIN_POS_VALUE) return false;
-      return true;
-    }
+        const lab = document.createElement("div");
+        lab.className = "pvCell " + kind;
+        lab.innerHTML = `<span class="lbl">${NAMES[p].replace("\n"," <br>")}</span>`;
+        labels.appendChild(lab);
 
-    function toScientific(value) {
-      const expStr = value.toExponential(1);
-      const m = expStr.match(/^(\d+(?:\.\d)?)e([+\-]?\d+)$/i);
-      if (!m) return { mantissa: value, exponent: 0 };
-      const mantissa = parseFloat(m[1]);
-      const exponent = parseInt(m[2], 10);
-      return { mantissa: parseFloat(mantissa.toFixed(1)), exponent };
-    }
+        const cell = document.createElement("div");
+        cell.className = "pvCell";
+        cell.dataset.place = String(p);
+        const box = document.createElement("div");
+        box.className = "pvBox " + kind;
+        cell.appendChild(box);
+        track.appendChild(cell);
 
-    function sciToHtml(sci) {
-      const mantStr = sci.mantissa.toFixed(1).replace(/\.0$/, "");
-      return `${mantStr} &times; 10<sup>${sci.exponent}</sup>`;
-    }
+        const val = document.createElement("div");
+        val.className = "pvCell " + kind;
+        val.textContent = WORTH[p];
+        values.appendChild(val);
 
-    function sciToText(sci) {
-      const mantStr = sci.mantissa.toFixed(1).replace(/\.0$/, "");
-      return `${mantStr} × 10^${sci.exponent}`;
-    }
-
-    function toggleButtons(enabled) {
-      timesTenBtn.disabled       = !enabled;
-      divideTenBtn.disabled      = !enabled;
-      timesHundredBtn.disabled   = !enabled;
-      divideHundredBtn.disabled  = !enabled;
-      timesThousandBtn.disabled  = !enabled;
-      divideThousandBtn.disabled = !enabled;
-      resetTopBtn.disabled       = !enabled;
-      wordsBtn.disabled          = !enabled;
-    }
-
-    function centerDecimal() {
-      const decimalCell = placeValueView.querySelector(".pv-digits-row .pv-cell.decimal");
-      if (!decimalCell) return;
-      const left = decimalCell.offsetLeft;
-      const center = left + decimalCell.offsetWidth / 2;
-      const target = center - viewContainer.clientWidth / 2;
-      viewContainer.scrollLeft = Math.max(0, target);
-    }
-
-    function renderPlaceValueGrid(value) {
-      const { leftDigits, rightDigits } = getDigitInfoForGrid(value);
-      const leftCells  = new Array(positivePlaces.length).fill("");
-      const rightCells = new Array(negativePlaces.length).fill("");
-
-      for (let i = 0; i < leftDigits.length; i++) {
-        const targetIndex = leftCells.length - 1 - i;
-        if (targetIndex < 0) break;
-        leftCells[targetIndex] = leftDigits[leftDigits.length - 1 - i];
-      }
-
-      for (let i = 0; i < Math.min(rightDigits.length, rightCells.length); i++) {
-        rightCells[i] = rightDigits[i];
-      }
-
-      let html = '<div class="pv-grid">';
-      html += '<div class="pv-row pv-labels">';
-      for (const name of positivePlaces) html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
-      html += '<div class="pv-cell decimal"></div>';
-      for (const name of negativePlaces) html += `<div class="pv-cell"><span class="pv-label-text">${name}</span></div>`;
-      html += '</div>';
-
-      html += '<div class="pv-digits-row">';
-      html += '<div class="pv-digits-left">';
-      for (const d of leftCells) html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
-      html += '</div>';
-
-      html += '<div class="pv-cell decimal">.</div>';
-
-      html += '<div class="pv-digits-right">';
-      for (const d of rightCells) html += `<div class="pv-cell">${d ? `<span class="digit-span">${d}</span>` : ""}</div>`;
-      html += '</div></div></div>';
-
-      placeValueView.innerHTML = html;
-      placeValueView.classList.remove("hidden");
-      sciView.classList.add("hidden");
-      currentMode = "grid";
-      centerDecimal();
-    }
-
-    function renderScientificView(value) {
-      const sci = toScientific(value);
-      sciNumberEl.innerHTML     = sciToHtml(sci);
-      sciStandardEl.textContent = "Standard form: " + value.toPrecision(6);
-      sciView.classList.remove("hidden");
-      placeValueView.classList.add("hidden");
-      currentMode = "sci";
-      viewContainer.scrollLeft = 0;
-    }
-
-    function animateSlide(direction, steps, callback) {
-      const spans = placeValueView.querySelectorAll(".pv-digits-row .digit-span");
-      if (!spans.length || steps <= 0) {
-        if (typeof callback === "function") callback();
-        return;
-      }
-      const cls = `digit-slide-${direction}-${steps}`;
-      spans.forEach(s => s.classList.add(cls));
-      setTimeout(() => {
-        spans.forEach(s => s.classList.remove(
-          "digit-slide-left-1","digit-slide-right-1",
-          "digit-slide-left-2","digit-slide-right-2",
-          "digit-slide-left-3","digit-slide-right-3"
-        ));
-        if (typeof callback === "function") callback();
-      }, 1000);
-    }
-
-    function groupWithSpaces(digits) {
-      return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    }
-
-    function powerOfTenString(n) {
-      if (n === 0) return "1";
-      return groupWithSpaces("1" + "0".repeat(n));
-    }
-
-    function decimalFromExponent(n) {
-      const k = Math.abs(n);
-      if (k === 0) return "1";
-      return "0." + "0".repeat(k - 1) + "1";
-    }
-
-    function hideEquivalenceBox() {
-      equivalenceBox.textContent = "";
-      equivalenceBox.classList.add("hidden");
-    }
-
-    function inferExponentFromValues() {
-      if (originalValue == null || currentValue == null) return 0;
-      const ratio = currentValue / originalValue;
-      if (!isFinite(ratio) || ratio <= 0) return 0;
-      const nApprox = Math.round(Math.log10(ratio));
-      const expected = Math.pow(10, nApprox);
-      if (!isFinite(expected) || expected === 0) return 0;
-      const relErr = Math.abs(ratio - expected) / expected;
-      return relErr < 1e-10 ? nApprox : 0;
-    }
-
-    function updateEquivalenceBox() {
-      if (originalValue == null || currentValue == null) { hideEquivalenceBox(); return; }
-      const n = inferExponentFromValues();
-      if (n === 0) { hideEquivalenceBox(); return; }
-
-      const inRangeOrig = isInPlaceValueRange(originalValue);
-      const inRangeCurr = isInPlaceValueRange(currentValue);
-      if (!inRangeOrig || !inRangeCurr) { hideEquivalenceBox(); return; }
-
-      const decStr  = decimalFromExponent(n);
-      const origStr = formatStandard(originalValue, { forGrid: true, withSpaces: false });
-      const currStr = formatStandard(currentValue, { forGrid: true, withSpaces: false });
-
-      let equation = (n > 0)
-        ? `${origStr} ÷ ${decStr} = ${currStr}`
-        : `${origStr} × ${decStr} = ${currStr}`;
-
-      equivalenceBox.textContent = `Did you know ${equation}`;
-      equivalenceBox.classList.remove("hidden");
-    }
-
-    function updateExpressionBox() {
-      if (originalValue == null || currentValue == null) {
-        expressionBox.innerHTML = "";
-        expressionBox.classList.add("hidden");
-        hideEquivalenceBox();
-        return;
-      }
-
-      const inRangeOrig = isInPlaceValueRange(originalValue);
-      const inRangeCurr = isInPlaceValueRange(currentValue);
-
-      const origStr = inRangeOrig
-        ? formatStandard(originalValue, { forGrid: true, withSpaces: true })
-        : sciToHtml(toScientific(originalValue));
-
-      const currStr = inRangeCurr
-        ? formatStandard(currentValue, { forGrid: true, withSpaces: true })
-        : sciToHtml(toScientific(currentValue));
-
-      const n = inferExponentFromValues();
-
-      let opText;
-      if (n === 0) {
-        opText = "&times; 1";
-      } else if (n > 0) {
-        opText = inRangeOrig && inRangeCurr
-          ? "&times; " + powerOfTenString(n)
-          : `&times; 10<sup>${n}</sup>`;
-      } else {
-        const k = Math.abs(n);
-        opText = inRangeOrig && inRangeCurr
-          ? "&divide; " + powerOfTenString(k)
-          : `&divide; 10<sup>${k}</sup>`;
-      }
-
-      expressionBox.innerHTML = `${origStr} ${opText} = ${currStr}`;
-      expressionBox.classList.remove("hidden");
-      updateEquivalenceBox();
-    }
-
-    function updateFromInput(isUserTyping = false) {
-      const raw = inputEl.value;
-      const parsed = parseInput(raw);
-
-      wordsBox.classList.add("hidden");
-      wordsBox.textContent = "";
-
-      if (parsed.status === "empty" || parsed.status === "partial") {
-        currentValue = null;
-        originalValue = null;
-        toggleButtons(false);
-        clearError();
-        clearViews();
-        updateExpressionBox();
-        return;
-      }
-
-      if (parsed.status === "invalid") {
-        currentValue = null;
-        originalValue = null;
-        toggleButtons(false);
-        setError("Invalid input");
-        clearViews();
-        updateExpressionBox();
-        return;
-      }
-
-      clearError();
-      const value = normalizeValue(parsed.value);
-      currentValue = value;
-      if (isUserTyping) originalValue = value;
-
-      if (isInPlaceValueRange(value)) {
-        renderPlaceValueGrid(value);
-      } else {
-        const sci = toScientific(value);
-        if (!isUserTyping) inputEl.value = sciToText(sci);
-        renderScientificView(value);
-      }
-
-      if (!isUserTyping && isInPlaceValueRange(value)) {
-        inputEl.value = formatStandard(value, { forGrid: true, withSpaces: true });
-      }
-
-      toggleButtons(true);
-      updateExpressionBox();
-    }
-
-    const ones = [
-      "", "one","two","three","four","five","six","seven","eight","nine",
-      "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen",
-      "seventeen","eighteen","nineteen"
-    ];
-    const tensWords = [
-      "", "", "twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"
-    ];
-    const scalesForWords = [
-      "", "thousand","million","billion","trillion","quadrillion","quintillion",
-      "sextillion","septillion","octillion","nonillion","decillion","undecillion",
-      "duodecillion","tredecillion","quattuordecillion","quindecillion",
-      "sexdecillion","septendecillion","octodecillion","novemdecillion",
-      "vigintillion"
-    ];
-
-    function chunkToWords(n) {
-      let words = "";
-      const hundreds = Math.floor(n / 100);
-      const rest = n % 100;
-      if (hundreds > 0) {
-        words += ones[hundreds] + " hundred";
-        if (rest > 0) words += " ";
-      }
-      if (rest > 0) {
-        if (rest < 20) words += ones[rest];
-        else {
-          const t = Math.floor(rest / 10);
-          const u = rest % 10;
-          words += tensWords[t];
-          if (u > 0) words += "-" + ones[u];
+        tpl += "var(--colW) ";
+        if (p === 0){                 // the point column, between ones and tenths
+          for (const row of [labels, track, values]){
+            const spacer = document.createElement("div");
+            spacer.className = "pvCell spacer";
+            row.appendChild(spacer);
+          }
+          tpl += "var(--pointW) ";
         }
       }
-      return words;
+      $("pvGrid").style.setProperty("--tpl", tpl.trim());
     }
 
-    function intToWords(num) {
-      if (num === 0) return "zero";
-      let s = String(num).replace(/^0+/, "") || "0";
-      if (s === "0") return "zero";
+    /* ---------- fitting the board to the screen ---------------------- */
+    // Measured, not guessed: grow the columns until the page would start to
+    // scroll, then step back, then spend whatever height is left over on
+    // taller boxes. A projector at 1366x768 and a laptop at 1920x1080 both
+    // then get the biggest board that still fits whole.
+    let hMul = 1.02;
+    function applyColW(w, m){
+      if (m != null) hMul = m;
+      const root = document.documentElement;
+      root.style.setProperty("--colW", w + "px");
+      root.style.setProperty("--pointW", Math.round(w * 0.44) + "px");
+      root.style.setProperty("--rowH", Math.round(w * hMul) + "px");
+      // the glyph has to sit INSIDE its box, so the type is a fraction of the
+      // box height, not of the column width
+      root.style.setProperty("--digitFS", (w * hMul * 0.0385).toFixed(2) + "rem");
+    }
 
-      const chunks = [];
-      for (let i = s.length; i > 0; i -= 3) {
-        const start = Math.max(0, i - 3);
-        chunks.push(parseInt(s.slice(start, i), 10));
+    function overflowing(){
+      return document.documentElement.scrollHeight > window.innerHeight + 1;
+    }
+
+    function fitGrid(){
+      const grid = $("pvGrid");
+      grid.classList.add("no-anim");
+
+      const avail = $("boardCard").clientWidth - 40;
+      const wMax = Math.max(44, Math.min(170, Math.floor(avail / 10.46)));
+
+      let lo = 44, best = 44;
+      applyColW(wMax);
+      if (!overflowing()) best = wMax;
+      else {
+        let hi = wMax;
+        for (let i = 0; i < 7 && hi - lo > 1; i++){
+          const mid = Math.floor((lo + hi) / 2);
+          applyColW(mid);
+          if (overflowing()) hi = mid; else { lo = mid; best = mid; }
+        }
       }
-      const parts = [];
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        if (chunk === 0) continue;
-        let w = chunkToWords(chunk);
-        if (i > 0 && scalesForWords[i]) w += " " + scalesForWords[i];
-        parts.unshift(w);
+      applyColW(best, 1.02);
+      let mLo = 1.02, mHi = 1.30, mBest = 1.02;
+      for (let i = 0; i < 6 && mHi - mLo > 0.015; i++){
+        const mid = (mLo + mHi) / 2;
+        applyColW(best, mid);
+        if (overflowing()) mHi = mid; else { mLo = mid; mBest = mid; }
       }
+      applyColW(best, mBest);
+      measureColumns();
+      positionAll();
+      requestAnimationFrame(() => grid.classList.remove("no-anim"));
+    }
+
+    function measureColumns(){
+      const grid = $("pvGrid");
+      const gRect = grid.getBoundingClientRect();
+      colX.clear();
+      $("rowTrack").querySelectorAll(".pvCell[data-place]").forEach(cell => {
+        const r = cell.getBoundingClientRect();
+        colX.set(Number(cell.dataset.place), r.left - gRect.left + r.width / 2);
+      });
+      pitchL = Math.abs(colX.get(MAX_P - 1) - colX.get(MAX_P)) || 100;
+      pitchR = Math.abs(colX.get(MIN_P) - colX.get(MIN_P + 1)) || 100;
+
+      const spacer = $("rowTrack").querySelector(".pvCell.spacer");
+      if (spacer){
+        const r = spacer.getBoundingClientRect();
+        $("pointBand").style.left = (r.left - gRect.left) + "px";
+      }
+      // The pin gets a lane of its own above the labels. Tucking it into the
+      // labels row saves 20px and costs a collision with "ones" and "tenths"
+      // as soon as the columns get narrow.
+      const pin = $("pointPin");
+      grid.style.paddingTop = (S.pin ? pin.offsetHeight + 7 : 0) + "px";
+      pin.style.top = "0px";
+      const trackTop = $("rowTrack").getBoundingClientRect().top - gRect.top;
+      $("digitLayer").style.top = trackTop + "px";
+      $("pointDot").style.top  = trackTop + "px";
+    }
+
+    // Buffer places sit off the ends of the board. A digit only becomes
+    // visible once it is on the board, but it has to have somewhere to travel
+    // FROM, so the off-board columns are extrapolated from the real pitch.
+    function xOf(place){
+      if (colX.has(place)) return colX.get(place);
+      if (place > MAX_P) return colX.get(MAX_P) - (place - MAX_P) * pitchL;
+      return colX.get(MIN_P) + (MIN_P - place) * pitchR;
+    }
+
+    /* ---------- painting --------------------------------------------- */
+    function elFor(t){
+      if (t.el) return t.el;
+      const el = document.createElement("div");
+      el.className = "digit";
+      el.dataset.id = String(t.id);
+      el.textContent = t.d;
+      $("digitLayer").appendChild(el);
+      t.el = el;
+      return el;
+    }
+
+    function setRole(t, role){
+      t.role = role;
+      const el = elFor(t);
+      el.classList.toggle("trail", role === "trail");
+      el.classList.toggle("off", role === "hidden");
+    }
+
+    function positionAll(){
+      for (const t of tape) elFor(t).style.left = xOf(t.place) + "px";
+    }
+
+    function renderFresh(){
+      $("digitLayer").innerHTML = "";
+      for (const t of tape){ t.el = null; elFor(t); }
+      const span = spanAt(currentPlaces());
+      for (const t of tape) setRole(t, roleFor(t.place, span));
+      positionAll();
+      paintReadout();
+    }
+
+    function paintReadout(){
+      $("readNum").textContent = tapeString(true);
+      const w = $("readWords");
+      if (S.words){ w.hidden = false; w.textContent = inWords(); }
+      else w.hidden = true;
+      paintExpression();
+    }
+
+    /* ---------- one hop of ten ---------------------------------------- */
+    // Reveal, then travel, then recolour. The reveal has to come FIRST and at
+    // the OLD position: a digit that is about to be on the board must be seen
+    // arriving from the column it came from, or it reads as a zero that was
+    // added, which is the whole misconception.
+    function hop(dir){
+      return new Promise(resolve => {
+        const willPlace = new Map(tape.map(t => [t.id, t.place + dir]));
+        const newSpan = spanAt(willPlace);
+
+        for (const t of tape){
+          const next = roleFor(willPlace.get(t.id), newSpan);
+          if (t.role === "hidden" && next !== "hidden"){
+            elFor(t).style.left = xOf(t.place) + "px";
+            setRole(t, "trail");                 // arrives faint, turns blue on landing
+          }
+        }
+        void $("digitLayer").offsetWidth;        // let the reveal paint before the move
+
+        for (const t of tape) t.place = willPlace.get(t.id);
+        recycle();
+        positionAll();
+
+        const land = () => {
+          const span = spanAt(currentPlaces());
+          for (const t of tape) setRole(t, roleFor(t.place, span));
+          paintReadout();
+          resolve();
+        };
+        if (S.speed === 0) land(); else setTimeout(land, S.speed + 20);
+      });
+    }
+
+    // The tape is endless in principle; in practice it is topped up at
+    // whichever end the shift emptied.
+    function recycle(){
+      const keep = [];
+      for (const t of tape){
+        if (t.place > TAPE_HI || t.place < TAPE_LO){ if (t.el) t.el.remove(); }
+        else keep.push(t);
+      }
+      tape = keep;
+      const have = new Set(tape.map(t => t.place));
+      for (let p = TAPE_HI; p >= TAPE_LO; p--){
+        if (!have.has(p)){
+          const t = { id: ++uid, d:"0", place:p, el:null, role:"hidden" };
+          tape.push(t);
+          const el = elFor(t);
+          el.classList.add("off");
+          el.style.left = xOf(p) + "px";
+        }
+      }
+      tape.sort((a,b) => b.place - a.place);
+    }
+
+    async function runMove(k){
+      if (busy || k === 0 || !canShift(k)) return;
+      busy = true;
+      setOps(false);
+
+      const dir = k > 0 ? 1 : -1;
+      const steps = Math.abs(k);
+      const word = dir > 0 ? "× 10" : "÷ 10";
+
+      for (let i = 0; i < steps; i++){
+        showHop(steps > 1 ? `${word} — hop ${i + 1} of ${steps}` : word);
+        exponent += dir;
+        await hop(dir);
+        if (i < steps - 1 && S.speed > 0) await new Promise(r => setTimeout(r, Math.round(S.speed * 0.42)));
+      }
+      hideHop();
+      setPrompt(`Every digit moved ${placeWord(steps)} to the ${dir > 0 ? "left" : "right"}. The decimal point did not move.`);
+      busy = false;
+      setOps(true);
+    }
+
+    const placeWord = n => n === 1 ? "one place" : n === 2 ? "two places" : "three places";
+    function showHop(text){ const c = $("hopChip"); c.hidden = false; c.textContent = text; }
+    function hideHop(){ $("hopChip").hidden = true; }
+
+    /* ---------- the expression under the board ----------------------- */
+    const powerString = n => ({1:"10",2:"100",3:"1000",4:"10 000",5:"100 000"})[Math.abs(n)] || ("10^" + Math.abs(n));
+    const reciprocalString = n => ({1:"0.1",2:"0.01",3:"0.001"})[Math.abs(n)] || ("0." + "0".repeat(Math.abs(n) - 1) + "1");
+
+    function paintExpression(){
+      const card = $("exprCard");
+      if (exponent === 0){ card.hidden = true; return; }
+      card.hidden = false;
+      const from = toDigitString(startDigits, true);
+      const to   = tapeString(true);
+      const op   = exponent > 0 ? "×" : "÷";
+      $("expr").innerHTML = `<span class="from">${from}</span> <span class="op">${op}</span> ${powerString(exponent)} = ${to}`;
+      const eq = $("equivLine");
+      if (S.equiv){
+        eq.hidden = false;
+        eq.textContent = `the same as ${from} ${exponent > 0 ? "÷" : "×"} ${reciprocalString(exponent)} = ${to}`;
+      } else eq.hidden = true;
+    }
+
+    /* ---------- reading the number in words -------------------------- */
+    const ONES = ["zero","one","two","three","four","five","six","seven","eight","nine",
+      "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+    const TENS = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+    function underThousand(n){
+      let out = "";
+      if (n >= 100){ out += ONES[Math.floor(n / 100)] + " hundred"; n %= 100; if (n) out += " and "; }
+      if (n >= 20){ out += TENS[Math.floor(n / 10)]; if (n % 10) out += "-" + ONES[n % 10]; }
+      else if (n > 0) out += ONES[n];
+      return out;
+    }
+    function intWords(n){
+      if (n === 0) return "zero";
+      const parts = [], th = Math.floor(n / 1000), rest = n % 1000;
+      if (th) parts.push(underThousand(th) + " thousand");
+      if (rest) parts.push((th && rest < 100 ? "and " : "") + underThousand(rest));
       return parts.join(" ");
     }
-
-    function negativePlaceNameForWords(index) {
-      if (index <= negativePlaces.length) return negativePlaces[index - 1];
-      return `ten to the power of negative ${intToWords(index)}`;
-    }
-
-    function decimalToWords(value) {
-      let s = formatStandard(value, { forGrid: true, withSpaces: false });
-      if (!s.includes(".")) return intToWords(parseInt(s, 10));
-
-      let [intStr, fracStr] = s.split(".");
-      const intVal = parseInt(intStr, 10);
-
-      let lastNonZero = -1;
-      for (let i = fracStr.length - 1; i >= 0; i--) {
-        if (fracStr[i] !== "0") { lastNonZero = i; break; }
+    const FRAC_NAME = { 1:["tenth","tenths"], 2:["hundredth","hundredths"],
+                        3:["thousandth","thousandths"], 4:["ten-thousandth","ten-thousandths"] };
+    function inWords(){
+      const [ip, fp = ""] = tapeString(false).split(".");
+      let out = intWords(Number(ip));
+      if (fp){
+        const n = Number(fp), name = FRAC_NAME[fp.length];
+        out += " and " + (n === 0 ? "zero" : intWords(n)) + " " + (n === 1 ? name[0] : name[1]);
       }
-      if (lastNonZero === -1) return intToWords(intVal);
-
-      const sigFrac = fracStr.slice(0, lastNonZero + 1);
-      const fracIntVal = parseInt(sigFrac, 10);
-      const placeName = negativePlaceNameForWords(lastNonZero + 1);
-
-      const intPartText = intToWords(intVal);
-      const fracText = intToWords(fracIntVal);
-
-      if (intVal === 0) return `${fracText} ${placeName}`;
-      return `${intPartText} and ${fracText} ${placeName}`;
+      return out.charAt(0).toUpperCase() + out.slice(1);
     }
 
-    function exponentToWords(n) {
-      const abs = Math.abs(n);
-      const base = intToWords(abs);
-      return n < 0 ? "negative " + base : base;
+    /* ---------- buttons, input, settings ----------------------------- */
+    function setOps(enabled){
+      document.querySelectorAll(".opBtn").forEach(b => {
+        b.disabled = !enabled || !canShift(Number(b.dataset.k));
+      });
+    }
+    function setPrompt(text, warn){
+      $("promptText").textContent = text;
+      $("promptBar").classList.toggle("is-warn", !!warn);
+      $("promptIco").textContent = warn ? "⚠️" : "💭";
     }
 
-    function mantissaToWords(m) {
-      const s = m.toFixed(1).replace(/\.0$/, "");
-      if (!s.includes(".")) return intToWords(parseInt(s, 10));
-      const [i, f] = s.split(".");
-      let result = intToWords(parseInt(i, 10)) + " point";
-      for (const ch of f) result += " " + ones[parseInt(ch, 10)];
-      return result;
+    function loadNumber(digits){
+      startDigits = digits.map(x => ({ d:x.d, place:x.place }));
+      exponent = 0;
+      buildTape(digits);
+      renderFresh();
+      setOps(true);
+      setPrompt("Multiply or divide by 10 and watch which way the digits travel.");
+      edgeNote();
     }
 
-    function sciValueToWords(value) {
-      const sci = toScientific(value);
-      const m = sci.mantissa;
-      const e = sci.exponent;
-      if (Math.abs(e) > 100) return "";
-      if (m === 1 && e === 100)  return "one googol";
-      if (m === 1 && e === -100) return "one googolth";
-      return `${mantissaToWords(m)} times ten to the power of ${exponentToWords(e)}`;
+    function edgeNote(){
+      const anyUp = [1,2,3].some(canShift), anyDn = [-1,-2,-3].some(canShift);
+      if (!anyUp && anyDn) setPrompt("This number fills the board to the left — multiplying again would push a digit past the hundred thousands column.", true);
+      else if (!anyDn && anyUp) setPrompt("This number fills the board to the right — dividing again would push a digit past the ten thousandths column.", true);
     }
 
-    function updateWordsBox() {
-      wordsBox.classList.add("hidden");
-      wordsBox.textContent = "";
-      if (currentValue == null) return;
-
-      const text = isInPlaceValueRange(currentValue)
-        ? decimalToWords(currentValue)
-        : sciValueToWords(currentValue);
-
-      if (!text) return;
-      wordsBox.textContent = text;
-      wordsBox.classList.remove("hidden");
-    }
-
-    function applyPowerOfTen(steps, isMultiply, doneCallback) {
-      if (currentValue == null) {
-        if (typeof doneCallback === "function") doneCallback();
+    function readInput(){
+      const el = $("numInput");
+      const parsed = parseNumber(el.value);
+      if (!parsed || !fitsGrid(parsed)){
+        el.classList.add("is-bad");
+        setPrompt(parsed
+          ? "This board runs from hundred thousands to ten thousandths — that number reaches past it."
+          : "That is not a number this board can show. Type a positive number, for example 523.146", true);
+        document.querySelectorAll(".opBtn").forEach(b => b.disabled = true);
         return;
       }
+      el.classList.remove("is-bad");
+      loadNumber(parsed);
+    }
 
-      const direction = isMultiply ? "left" : "right";
-      const factor = Math.pow(10, steps);
-
-      let newValue = isMultiply ? currentValue * factor : currentValue / factor;
-      newValue = normalizeValue(newValue);
-
-      if (!isFinite(newValue) || newValue <= 0) {
-        if (typeof doneCallback === "function") doneCallback();
-        return;
+    // A number worth working with: two to four digits, parked so that both
+    // multiplying and dividing are still available on the board.
+    function randomNumber(){
+      const len = 2 + Math.floor(Math.random() * 3);
+      let digits = "";
+      for (let i = 0; i < len; i++){
+        digits += i === 0 ? String(1 + Math.floor(Math.random() * 9)) : String(Math.floor(Math.random() * 10));
       }
-
-      const renderNewValue = () => {
-        currentValue = newValue;
-
-        if (isInPlaceValueRange(newValue)) {
-          inputEl.value = formatStandard(newValue, { forGrid: true, withSpaces: true });
-          renderPlaceValueGrid(newValue);
-        } else {
-          const sci = toScientific(newValue);
-          inputEl.value = sciToText(sci);
-          renderScientificView(newValue);
-        }
-
-        wordsBox.classList.add("hidden");
-        wordsBox.textContent = "";
-        updateExpressionBox();
-        if (typeof doneCallback === "function") doneCallback();
-      };
-
-      if (currentMode === "grid") {
-        animateSlide(direction, steps, renderNewValue);
-      } else {
-        renderNewValue();
-      }
+      if (digits[len - 1] === "0") digits = digits.slice(0, -1) + String(1 + Math.floor(Math.random() * 9));
+      const choices = [];
+      for (let lo = MIN_P + 1; lo + len - 1 <= MAX_P - 1; lo++) choices.push(lo);
+      const lo = choices[Math.floor(Math.random() * choices.length)];
+      const out = [];
+      for (let i = 0; i < len; i++) out.push({ d: digits[i], place: lo + (len - 1 - i) });
+      return out;
     }
 
-    function closeToolsMenu() {
-      toolsMenu.classList.remove("open");
-      toolsBtn.setAttribute("aria-expanded", "false");
+    /* ---------- settings --------------------------------------------- */
+    function applySettings(){
+      $("rowLabels").hidden = !S.names;
+      $("rowValues").hidden = !S.values;
+      $("boardCard").classList.toggle("no-pin", !S.pin);
+      const span = spanAt(currentPlaces());
+      for (const t of tape) setRole(t, roleFor(t.place, span));
+      paintReadout();
+      requestAnimationFrame(() => { measureColumns(); positionAll(); });
     }
 
-    function toggleToolsMenu() {
-      const isOpen = toolsMenu.classList.toggle("open");
-      toolsBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    // the CSS transition and the JS timer have to be the same number, or the
+    // digits are still moving when the colours change
+    function setSpeed(ms){
+      S.speed = ms;
+      document.documentElement.style.setProperty("--hop", ms + "ms");
     }
 
-    toolsBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleToolsMenu();
-    });
-
-    document.addEventListener("click", () => closeToolsMenu());
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeToolsMenu(); });
-
-    toolClassFlash.addEventListener("click", () => { window.location.href = "flash-cards.html"; });
-    toolStudentQuiz.addEventListener("click", () => { window.location.href = "student-flash.html"; });
-
-    // NEW: worksheet generator navigation
-    toolWorksheet.addEventListener("click", () => { window.location.href = "../../../../worksheet-creators/stage-3/number/multiply-divide-by-ten.html"; });
-
-    inputEl.addEventListener("input", () => updateFromInput(true));
-
-    timesTenBtn.addEventListener("click",      () => applyPowerOfTen(1, true));
-    divideTenBtn.addEventListener("click",     () => applyPowerOfTen(1, false));
-    timesHundredBtn.addEventListener("click",  () => applyPowerOfTen(2, true));
-    divideHundredBtn.addEventListener("click", () => applyPowerOfTen(2, false));
-    timesThousandBtn.addEventListener("click", () => applyPowerOfTen(3, true));
-    divideThousandBtn.addEventListener("click",() => applyPowerOfTen(3, false));
-
-    function setToDefaultState() {
-      clearError();
-      wordsBox.classList.add("hidden");
-      wordsBox.textContent = "";
-
-      currentValue  = DEFAULT_VALUE;
-      originalValue = DEFAULT_VALUE;
-
-      inputEl.value = formatStandard(DEFAULT_VALUE, { forGrid: true, withSpaces: true });
-
-      if (isInPlaceValueRange(DEFAULT_VALUE)) {
-        renderPlaceValueGrid(DEFAULT_VALUE);
-      } else {
-        renderScientificView(DEFAULT_VALUE);
-      }
-
-      toggleButtons(true);
-      updateExpressionBox();
+    function wireSettings(){
+      $("speedSel").addEventListener("change", e => setSpeed(Number(e.target.value)));
+      const bind = (id, key) => $(id).addEventListener("change", e => { S[key] = e.target.checked; applySettings(); });
+      bind("namesToggle","names");
+      bind("valuesToggle","values");
+      bind("pinToggle","pin");
+      bind("wordsToggle","words");
+      bind("equivToggle","equiv");
+      bind("trailToggle","trail");
     }
 
-    resetTopBtn.addEventListener("click", () => {
-      setToDefaultState();
-      closeToolsMenu();
-    });
+    function wireMenus(){
+      const close = () => ["settingsMenu","toolsMenu"].forEach(id => {
+        $(id).classList.remove("open");
+        $(id === "settingsMenu" ? "settingsBtn" : "toolsBtn").setAttribute("aria-expanded","false");
+      });
+      const toggle = (btnId, menuId) => $(btnId).addEventListener("click", e => {
+        e.stopPropagation();
+        const m = $(menuId), wasOpen = m.classList.contains("open");
+        close();
+        if (!wasOpen){ m.classList.add("open"); $(btnId).setAttribute("aria-expanded","true"); }
+      });
+      toggle("settingsBtn","settingsMenu");
+      toggle("toolsBtn","toolsMenu");
+      $("settingsMenu").addEventListener("click", e => e.stopPropagation());
+      document.addEventListener("click", close);
+      document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+    }
 
-    wordsBtn.addEventListener("click", updateWordsBox);
+    /* ---------- boot -------------------------------------------------- */
+    function boot(){
+      buildGrid();
+      wireMenus();
+      wireSettings();
+      setSpeed(S.speed);
 
-    /* ---------- init: default load is 1 ---------- */
-    setToDefaultState();
+      document.querySelectorAll(".opBtn").forEach(b => b.addEventListener("click", () => runMove(Number(b.dataset.k))));
+      $("numInput").addEventListener("input", readInput);
+      $("resetBtn").addEventListener("click", () => {
+        if (busy) return;
+        loadNumber(startDigits.map(x => ({ d:x.d, place:x.place })));
+        setPrompt("Back to the number you started with.");
+      });
+      $("randBtn").addEventListener("click", () => {
+        if (busy) return;
+        const list = randomNumber();
+        $("numInput").value = toDigitString(list, false);
+        $("numInput").classList.remove("is-bad");
+        loadNumber(list);
+      });
+
+      // The digits move left when you multiply, so the left arrow multiplies.
+      document.addEventListener("keydown", e => {
+        if (e.target.matches("input, select, textarea")) return;
+        if (e.key === "ArrowLeft"){ e.preventDefault(); runMove(1); }
+        if (e.key === "ArrowRight"){ e.preventDefault(); runMove(-1); }
+      });
+
+      let rt = null;
+      window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(fitGrid, 140); });
+
+      loadNumber(parseNumber($("numInput").value) || parseNumber("523.146"));
+      fitGrid();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitGrid);
+    }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+  })();
   </script>
 </body>
 </html>

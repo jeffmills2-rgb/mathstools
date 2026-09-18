@@ -48,6 +48,161 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-18, session 2 — being pushed): THE MULTIPLY/DIVIDE BY 10 FAMILY
+> IS COMPLETE.** The teaching tool got a second pass and its two siblings were
+> rebuilt on the current shell. All four files (tool, worksheet creator, student
+> quiz, class flash cards) are under **MA3-RN-01**.
+>
+> * **ZEROES ARE DIGITS OF THE NUMBER, AND THEY TRAVEL.** The first build derived
+>   a placeholder zero after each hop and popped it into the empty column, drawn
+>   grey. Teacher feedback 2026-09-18: a zero that APPEARS is exactly the "just
+>   add a zero" misconception the tool exists to kill. So the model is now a TAPE
+>   — one digit per place, zeros above and below the number, running off both
+>   ends into a three-place buffer — and x10 is a single operation: SHIFT THE
+>   WHOLE TAPE. The zero that turns up in the ones when 45 becomes 450 IS the
+>   trailing zero from the tenths, it travels there, and it is blue like every
+>   other digit of 450. **The harness asserts the element id of the zero in the
+>   ones after the hop equals the id of the digit that was in the tenths before
+>   it.** Nothing on this board may ever appear in a column it did not travel to.
+> * **A digit about to come on screen is revealed BEFORE the hop, at its old
+>   position.** Revealing it on landing is the same pop by another name. That
+>   ordering — reveal, travel, recolour — is the whole of `hop()`.
+> * **Settings › Show trailing zeroes** writes the zeros that are always there
+>   after the last digit (45 as 45.0000) in faint grey. Multiply, and one crosses
+>   the point into the ones and turns blue; another comes in at the far right.
+>   Off by default — it is a reveal a teacher chooses.
+> * **The board now runs hundred thousands to TEN THOUSANDTHS** (ten columns).
+> * **THE WORKSHEET CREATOR** (`worksheet-creators/stage-3/number/multiply-divide-by-ten.html`)
+>   was on the old banner shell with six numbered "levels" and float arithmetic.
+>   It is now the current creator shell (bands, spice chips, measured A4
+>   pagination, answer key) with a **Sweet/Mild/Medium/Spicy/Mixed** ladder and
+>   five sections: **A** the place value grid printed with the number in it and a
+>   blank row underneath, **B** multiply, **C** divide, **D** find what is
+>   missing, **E** use it. Sections carry their own question counts, and the six
+>   powers are a tick list so a sweet paper can still be all x1000.
+>   - **THE POINT IS PRINTED IN BOTH ROWS OF EVERY GRID.** Leaving the student to
+>     place it in the answer row teaches the opposite of the tool. There is a
+>     toggle to remove it, for a teacher deliberately setting that discussion,
+>     and it is the only thing in the Options band with a note explaining itself.
+>   - **The grid's column span is computed from the question AND the answer**, so
+>     540 ÷ 100 prints hundreds through tenths and nothing else.
+>   - **Pagination is measured, not estimated**: a row is appended and, if the
+>     sheet has overflowed, taken back off to start the next page. Nothing can
+>     land under the page footer and a split section says "continued".
+>   - **Every word problem is phrased with the given quantity as q and the answer
+>     as a, and declares the operation it needs.** The first draft phrased two of
+>     them around the answer and printed the given number as the answer on the
+>     key — caught by the harness, which re-derives every printed answer.
+> * **THE STUDENT QUIZ** moved from `student-flash.html` (a bespoke flash-card
+>   page with no sign-in and no saving) to
+>   `online-quizzes/stage-3/number/multiply-divide-by-ten.html`, registered as
+>   `multiply-divide-by-ten-quiz` writing `tool: "multiply-divide-by-ten-student-quiz"`,
+>   masteryTopic `multiply-divide-by-ten`. `student-flash.html` is left in place —
+>   it is linked from toolLinks and from the tool's Tools menu as Class Flash Cards'
+>   self-paced sibling.
+>   - **THE LEVEL IS HOW MUCH OF THE TEACHING TOOL THE STUDENT KEEPS**, the same
+>     design as the Perimeter and Division by Grouping quizzes. Sweet gives the
+>     board AND plays the move; Mild keeps the board but will not move it; Medium
+>     and Spicy take the board away. The numbers climb alongside, but the
+>     withdrawal of the model is the real ladder.
+>   - **The answer is never on screen before it is marked.** At Sweet the board
+>     may be moved — the digits in their new columns are the METHOD, and the
+>     student still has to read the number off and write it — but the number
+>     sentence keeps its `?`. A check plays all four levels right through and
+>     fails if the expected answer appears as a whole token anywhere on the page.
+>   - **Only the first attempt scores, but a settled question stays workable** —
+>     disabling Check after marking locks a student out of finishing their own
+>     thinking, which the harness caught.
+>   - Shared sign-in: one `<script src="/portal/shared/quizAuthUI.js">`, an
+>     `#mmtAuthSlot`, and a `window.MMTSave()` on finish. No Firebase config in
+>     the quiz, and **no typed answer is ever in the payload** — both asserted.
+> * **Verified** through Playwright: **77 checks on the tool** (the point at the
+>   same pixel after every operation at five viewports, 96 exact shifts, the zero
+>   travelling rather than appearing, trailing zeroes crossing and turning blue,
+>   the ten columns, three hops for x1000, the board edges, words, keyboard),
+>   **48 on the worksheet creator** (2880 generated questions exact and inside
+>   their level, every printed answer re-derived, every grid's point in both rows,
+>   no sheet overflowing at three sizes and five levels, each section alone, the
+>   operation tick list obeyed) and **52 on the quiz** (240 generated papers, what
+>   each level hands over, no answer on screen before marking, first-attempt-only
+>   scoring, the whole save payload, the point not moving, a phone width).
+>   Harnesses live in the session scratch, not the repo: `check.mjs`,
+>   `wscheck.mjs`, `qcheck.mjs`.
+> * **Deliberately NOT done: the trilingual EN/AR/FA worksheet layer** that the
+>   other creators carry. Every one of those notes says the AR/FA strings want a
+>   fluent proofread, and adding a third set I cannot check seemed worse than
+>   leaving it — it is a clean addition whenever Jeff wants it.
+>
+> **NEW (2026-09-18, session — being pushed): PLACE VALUE — MULTIPLY AND DIVIDE
+> BY 10, REBUILT.** `interactive-tools/stage-3/number/multiply-divide-by-ten/index.html`
+> was an early tool on the old back-pill shell. It is now on the shared MMT
+> topbar with Settings and Tools menus, same tokens as the other Stage 3 tools,
+> and the model underneath was rewritten. Same URL, same three siblings (class
+> flash cards, student practice, worksheet creator); filed under **MA3-RN-01** as
+> before, which is the right outcome precisely because that outcome is about
+> place value AND THE ROLE OF ZERO.
+> * **THE DECIMAL POINT IS NOT A DIGIT AND IS NOT IN THE DIGIT LAYER.** It is
+>   painted into its own column band — a tinted strip with a vertical line
+>   running the full height of the grid and a "POINT STAYS" pin above it — so it
+>   is not merely that the point does not move, it is that no code path exists
+>   that could move it. That is the whole pedagogy of the tool: the digits change
+>   place, the point does not. **The harness asserts the point glyph is at the
+>   same pixel after every operation**, across four starting numbers, sixteen
+>   operations and five viewports. Do not make the point part of the number.
+> * **NOTHING MULTIPLIES A JAVASCRIPT NUMBER.** A number is a list of
+>   `{id, d, place}` digits and x10 is `place + 1` on every one of them. So
+>   523.146 x 10 is exactly 5231.46, never 5231.459999999 — the old tool did the
+>   arithmetic in floats. 78 shifts are re-derived in the harness against
+>   string-shifted expectations that owe nothing to floats.
+> * **THE DIGITS TRAVEL; THEY ARE NOT RE-RENDERED.** Each digit is one absolutely
+>   positioned element in a layer over the columns, animating its `left` between
+>   measured column centres. The old tool ran a CSS slide and THEN redrew the
+>   grid, so the digits slid and snapped. A digit crossing the point travels
+>   further in pixels than the others, because the point column sits between
+>   them — the harness checks the landing COLUMN, not a constant pixel step, and
+>   that is why.
+> * **PLACEHOLDER ZEROS ARE DERIVED, NOT CARRIED.** A zero that is only holding a
+>   column open is not one of the digits that travelled, so it never travels: it
+>   is recomputed after each hop, pops in when a column is left empty, and fades
+>   when it is no longer needed. It is drawn hollow/grey so a class can tell it
+>   from a digit that moved. This is the answer to "just add a zero" — 52 x 10
+>   shows the 5 and the 2 moving and a zero being WRITTEN IN behind them. An
+>   internal zero (the 0 in 5031) IS a digit of the number and does travel.
+>   **The old tool printed trailing zeros — 5231.46 displayed as 4 6 0 0 0 0.**
+> * **THE GRID IS A FIXED NINE-COLUMN WINDOW**, hundred thousands to thousandths,
+>   all on screen at once. The old one was nineteen columns with sideways
+>   scrolling and vertical labels, so the digits were tiny and the class had to
+>   scroll to follow the movement. A move that would push a digit off either end
+>   DISABLES that button rather than erroring afterwards, and a typed number past
+>   the window is refused at the input. The scientific-notation fallback is gone
+>   (teacher decision 2026-09-18) — it is a different lesson.
+> * **x100 AND x1000 ARE PLAYED AS SEPARATE HOPS OF TEN**, with a chip reading
+>   "x 10 — hop 2 of 3" (teacher decision 2026-09-18). Multiplying by 1000 IS
+>   multiplying by 10 three times and the tool should show that, not slide three
+>   columns in one motion. Settings › Speed › "Straight there" turns the
+>   animation off entirely, which is also what the harness runs at.
+> * **THE BOARD IS MEASURED TO FIT, TWICE.** `fitGrid()` binary-searches the
+>   column width against the real page, then binary-searches the box HEIGHT
+>   separately, because a projector usually leaves vertical room over and a
+>   guessed cap wastes it. Boxes are capped near square — a tall thin box stops
+>   reading as a place value column. Verified at 1920x1080, 1366x768, 1280x800,
+>   1024x768 and 1512x982 with no page scroll and no digit outside the grid.
+> * **The "POINT STAYS" pin has a lane of its own above the labels.** Tucking it
+>   into the labels row saves 20px and costs a collision with "ones" and "tenths"
+>   as soon as the columns narrow — it did, at 1024.
+> * **Verified** through Playwright: 59 checks — the point at the same pixel
+>   after every operation and at every viewport, 78 exact shifts with the
+>   out-of-range ones correctly disabled, the zero rules (no invented trailing
+>   zeros, a leading zero before the point, an internal zero travelling), every
+>   digit landing one column along, x1000 announced as three hops, the board
+>   edges and the four input refusals, the running expression accumulating and
+>   Reset clearing it, all five settings, 40 random numbers all still movable
+>   both ways, five viewports, and the arrow keys. Harness is in the session
+>   scratch, not the repo: `check.mjs` (it sets Speed and the switches through
+>   `dispatchEvent`, since both live inside menus or behind styled toggles).
+> * Left arrow multiplies and right arrow divides, because that is the way the
+>   digits go.
+>
 > **NEW (2026-09-18, session — being pushed): GAMES ON A PHONE.** Every game in
 > `games/` now has a phone layout, following the one Greedy Pig got on 2026-09-17.
 > Each file carries ONE appended block, fenced by

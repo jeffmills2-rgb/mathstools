@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Multiplying and Dividing by 10 — Student Quiz | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue-dark:#1d4ed8;
+      --green:#22c55e; --green-dark:#15803d;
+      --purple:#7c3aed; --purple-dark:#5b21b6;
+      --orange:#f97316; --orange-dark:#c2410c;
+      --red:#dc2626; --line:#334155; --line-soft:#94a3b8;
+      --sweet:#16a34a; --mild:#d97706; --medium:#ea580c; --spicy:#b91c1c;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+      --colW:74px; --pointW:32px; --rowH:76px; --digitFS:2.2rem; --hop:520ms;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0; font-family:var(--uiFont); color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+    .app{ min-height:100dvh; display:flex; flex-direction:column; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px; box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{ display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px; margin-left:-12px; font-weight:900; }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); }
+    .mmtBrandLogo{ width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em; flex:0 0 auto; }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{ font-weight:850; font-size:clamp(1rem,1.8vw,1.42rem); letter-spacing:-.04em; text-align:center; color:white; white-space:nowrap; }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+
+    .btn{ appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px;
+      border-radius:10px; color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; }
+    .toolLink:hover{ background:#eef2ff; color:#1d4ed8; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+
+    .lvlChip{ font-weight:1000; font-size:.82rem; padding:6px 13px; border-radius:999px;
+      background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.3); color:#fff; white-space:nowrap; }
+
+    .progressWrap{ height:6px; background:rgba(15,23,42,.10); }
+    .progressFill{ height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--purple)); transition:width .3s ease; }
+
+    /* ---------- layout ---------- */
+    .layout{ flex:1; width:min(1180px,100%); margin:0 auto; padding:18px 20px 28px;
+      display:flex; flex-direction:column; gap:13px; }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow); padding:14px 18px; }
+
+    .qCard{ background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:14px 18px; display:flex; flex-direction:column; gap:8px; align-items:center; }
+    .sentence{ font-family:var(--mathFont); font-weight:700; font-size:clamp(1.8rem,4.2vw,2.9rem);
+      line-height:1.05; display:flex; align-items:baseline; gap:.24em; white-space:nowrap; letter-spacing:-.01em; }
+    .sentence .dv{ color:var(--blue-dark); }
+    .sentence .op{ color:var(--orange-dark); }
+    .sentence .ans{ color:var(--line-soft); min-width:1.2em; display:inline-block; text-align:center; }
+    .wordText{ font-weight:850; font-size:clamp(1rem,1.8vw,1.22rem); line-height:1.4; text-align:center; max-width:46ch; }
+    .qMeta{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .kindTag{ font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; font-weight:950;
+      color:var(--purple-dark); background:rgba(124,58,237,.11); border:1px solid rgba(124,58,237,.24);
+      padding:4px 10px; border-radius:999px; }
+    .qCounter{ font-size:.82rem; font-weight:900; color:var(--muted); }
+
+    .promptBar{ display:flex; align-items:center; gap:12px; padding:11px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line); font-size:1rem; min-height:50px; }
+    .promptBar .pIco{ font-size:1.25rem; flex:0 0 auto; }
+    .promptBar.good{ background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(37,99,235,.06)); border-color:rgba(21,128,61,.28); color:var(--green-dark); }
+    .promptBar.bad{ background:linear-gradient(135deg,rgba(220,38,38,.13),rgba(249,115,22,.07)); border-color:rgba(185,28,28,.28); color:#991b1b; }
+
+    /* ---------- the board (the same one as the teaching tool) ---------- */
+    .boardCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow);
+      padding:14px 16px 12px; display:flex; flex-direction:column; align-items:center; overflow:hidden; }
+    .pvGrid{ position:relative; display:grid; grid-template-rows:auto var(--rowH) auto; justify-content:center; width:max-content; max-width:100%; }
+    .pvRow{ display:grid; grid-template-columns:var(--tpl); }
+    .pvCell{ display:flex; align-items:center; justify-content:center; text-align:center; min-width:0; }
+    .pvRow.labels .pvCell{ padding:0 3px 7px; align-items:flex-end; min-height:30px; }
+    .pvRow.labels .lbl{ display:block; width:100%; text-align:center; font-weight:900; line-height:1.1;
+      font-size:clamp(.54rem,calc(var(--colW) * .112),.78rem); color:var(--muted); }
+    .pvRow.labels .pvCell.frac .lbl{ color:var(--purple-dark); }
+    .pvRow.labels .pvCell.whole .lbl{ color:var(--blue-dark); }
+    .pvRow.track .pvCell{ padding:0 3px; height:var(--rowH); }
+    .pvBox{ width:100%; height:100%; border-radius:14px; border:2px solid var(--border);
+      background:linear-gradient(180deg,#ffffff,#f8fafc); }
+    .pvBox.frac{ border-color:rgba(124,58,237,.26); background:linear-gradient(180deg,#ffffff,#faf7ff); }
+    .pvBox.whole{ border-color:rgba(37,99,235,.24); background:linear-gradient(180deg,#ffffff,#f6f9ff); }
+
+    .pointBand{ position:absolute; top:0; bottom:0; width:var(--pointW); pointer-events:none; z-index:1;
+      background:rgba(15,23,42,.045); border-radius:12px; }
+    .pointBand::before{ content:""; position:absolute; top:0; bottom:0; left:50%; width:3px; transform:translateX(-50%);
+      background:linear-gradient(180deg,rgba(15,23,42,.10),rgba(15,23,42,.30) 22%,rgba(15,23,42,.30) 78%,rgba(15,23,42,.10)); border-radius:2px; }
+    .pointPin{ position:absolute; z-index:2; left:50%; transform:translateX(-50%);
+      font-size:.56rem; font-weight:950; letter-spacing:.06em; text-transform:uppercase; color:var(--line);
+      background:#fff; border:1.5px solid var(--border); border-radius:999px; padding:2px 7px; white-space:nowrap; }
+    .pointDot{ position:absolute; z-index:2; left:0; right:0; height:var(--rowH);
+      display:flex; align-items:flex-end; justify-content:center; padding-bottom:calc(var(--rowH) * .19);
+      font-family:var(--mathFont); font-weight:900; color:var(--ink); font-size:calc(var(--digitFS) * 1.35); line-height:.4; }
+
+    .digitLayer{ position:absolute; left:0; right:0; height:var(--rowH); pointer-events:none; z-index:3; overflow:hidden; }
+    .digit{ position:absolute; top:0; height:var(--rowH); display:flex; align-items:center; justify-content:center;
+      width:var(--colW); transform:translateX(-50%);
+      font-family:var(--mathFont); font-weight:800; font-size:var(--digitFS); line-height:1; color:var(--blue-dark);
+      transition:left var(--hop) cubic-bezier(.4,0,.22,1), color .3s ease, opacity .26s ease; }
+    .digit.trail{ color:var(--line-soft); font-weight:700; }
+    .digit.off{ opacity:0; }
+    .pvGrid.no-anim .digit{ transition:none; }
+
+    .moveRow{ display:flex; align-items:center; gap:10px; margin-top:11px; flex-wrap:wrap; justify-content:center; }
+    .moveBtn{ appearance:none; border:2px solid rgba(21,128,61,.28); background:rgba(34,197,94,.13); color:var(--green-dark);
+      padding:10px 18px; border-radius:14px; font-weight:950; font-size:1rem; cursor:pointer; font-family:var(--mathFont); }
+    .moveBtn:hover:not(:disabled){ background:rgba(34,197,94,.22); }
+    .moveBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .moveNote{ font-size:.84rem; font-weight:850; color:var(--muted); }
+
+    .noBoard{ border:1.6px dashed var(--border); border-radius:18px; padding:16px 18px; text-align:center;
+      font-weight:850; color:var(--muted); font-size:.98rem; line-height:1.45; }
+
+    /* ---------- answering ---------- */
+    .answerCard{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center;
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow); padding:13px 18px; }
+    .answerLab{ font-weight:900; font-size:1rem; color:var(--line); }
+    .ansIn{ appearance:none; border:2px solid var(--border); background:#fff; border-radius:14px;
+      padding:11px 15px; font-family:var(--mathFont); font-size:1.5rem; font-weight:700; color:var(--blue-dark);
+      width:clamp(130px,16vw,190px); text-align:center; }
+    .ansIn:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+    .ansIn.right{ border-color:var(--green); background:#f0fdf4; color:var(--green-dark); }
+    .ansIn.wrong{ border-color:var(--red); background:#fef2f2; color:var(--red); }
+    .checkBtn{ appearance:none; border:none; background:var(--blue); color:#fff; padding:12px 22px;
+      border-radius:14px; font-weight:950; font-size:1rem; cursor:pointer; }
+    .checkBtn:hover:not(:disabled){ background:var(--blue-dark); }
+    .checkBtn:disabled{ opacity:.45; cursor:not-allowed; }
+    .fb{ font-weight:950; font-size:.98rem; }
+    .fb.ok{ color:var(--green-dark); } .fb.no{ color:var(--red); }
+
+    .navRow{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .navBtn{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 18px; border-radius:14px; font-weight:900; cursor:pointer; }
+    .navBtn:hover:not(:disabled){ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; }
+    .navBtn.next{ background:var(--blue); color:#fff; border-color:var(--blue); }
+    .navBtn.next:hover:not(:disabled){ background:var(--blue-dark); }
+    .navBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .spacer{ flex:1 1 auto; }
+
+    /* ---------- level chooser + certificate ---------- */
+    .modalBack{ position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; place-items:center; z-index:200; padding:14px; }
+    .modalBack.open{ display:grid; }
+    .modal{ width:min(640px,100%); max-height:calc(100dvh - 28px); overflow:auto; background:#fff;
+      border-radius:26px; box-shadow:0 34px 90px rgba(15,23,42,.34); border:1px solid #dbe3ef; padding:22px; }
+    .modal h2{ margin:0 0 6px; font-size:1.6rem; letter-spacing:-.03em; }
+    .modal p.sub{ margin:0 0 14px; color:var(--muted); font-weight:800; font-size:.95rem; line-height:1.4; }
+    .lvlList{ display:grid; gap:10px; }
+    .lvlRow{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:4px 14px; align-items:center;
+      border:2px solid var(--border); border-radius:18px; padding:13px 16px; background:#fff; cursor:pointer;
+      text-align:left; font-family:inherit; }
+    .lvlRow:hover{ border-color:#bfdbfe; background:#f8fbff; }
+    .lvlIco{ grid-column:1; grid-row:1/3; font-size:1.7rem; }
+    .lvlRow strong{ grid-column:2; grid-row:1; font-size:1.12rem; font-weight:1000; }
+    .lvlRow span.d{ grid-column:2; grid-row:2; color:var(--muted); font-weight:800; font-size:.88rem; }
+    .lvlRow .go{ grid-column:3; grid-row:1/3; font-weight:1000; color:var(--blue); font-size:1.3rem; }
+    .lvlRow.sweet strong{ color:var(--sweet); } .lvlRow.mild strong{ color:var(--mild); }
+    .lvlRow.medium strong{ color:var(--medium); } .lvlRow.spicy strong{ color:var(--spicy); }
+
+    .certBig{ font-size:2.6rem; font-weight:1000; text-align:center; color:var(--blue-dark); letter-spacing:-.03em; }
+    .certSub{ text-align:center; font-weight:850; color:var(--muted); font-size:.92rem; line-height:1.45; margin-top:8px; }
+    .certBreak{ margin-top:12px; font-weight:900; font-size:.95rem; line-height:1.7; }
+    .modalActions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+    .modalActions button{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 17px; border-radius:14px; font-weight:900; cursor:pointer; }
+    .modalActions button.primary{ background:var(--blue); color:#fff; border-color:var(--blue); }
+
+    .brandFoot{ text-align:center; font-size:.85rem; font-weight:850; color:var(--muted); padding:0 0 16px; }
+    .brandFoot a{ color:var(--blue); text-decoration:none; font-weight:1000; }
+
+    @media (max-width:700px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr); gap:6px 8px; padding:8px 10px; }
+      .mmtBrandText{ display:none; }
+      .mmtTopTitle{ grid-column:2; justify-self:start; text-align:left; font-size:1.02rem; white-space:normal; }
+      .topActions{ grid-column:1/-1; justify-content:center; }
+      .layout{ padding:12px 12px 20px; }
+      .ansIn{ font-size:16px; }
+    }
+    @media (max-height:820px){
+      .layout{ gap:10px; padding:12px 18px 18px; }
+      .qCard{ padding:10px 14px; }
+      .boardCard{ padding:10px 12px 8px; }
+      .promptBar{ min-height:42px; padding:8px 13px; font-size:.93rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Multiplying and Dividing by 10 &mdash; Student Quiz</div>
+      <div class="topActions">
+        <span id="mmtAuthSlot"></span>
+        <span class="lvlChip" id="levelChip" hidden>Sweet</span>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-3/number/multiply-divide-by-ten/">Teaching Tool<small>The whole-class board this quiz is built on</small></a>
+            <a class="toolLink" href="/worksheet-creators/stage-3/number/multiply-divide-by-ten.html">Worksheet Creator<small>Printable practice with an answer key</small></a>
+            <a class="toolLink" href="/interactive-tools/stage-3/number/multiply-divide-by-ten/flash-cards.html">Class Flash Cards<small>A whole-class card routine</small></a>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="menuBtn" type="button">Change level</button>
+      </div>
+    </header>
+
+    <div class="progressWrap"><div class="progressFill" id="progressFill"></div></div>
+
+    <main class="layout">
+
+      <div class="qCard" id="qCard">
+        <div class="sentence" id="sentence" aria-live="polite">
+          <span class="dv" id="sNum">45</span><span class="op" id="sOp">&times;</span><span class="op" id="sPow">10</span><span>=</span><span class="ans" id="sAns">?</span>
+        </div>
+        <div class="wordText" id="wordText" hidden></div>
+        <div class="qMeta">
+          <span class="kindTag" id="kindTag">Multiply</span>
+          <span class="qCounter" id="qCounter">Question 1 / 12</span>
+        </div>
+      </div>
+
+      <div class="promptBar" id="promptBar">
+        <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+        <span id="promptText">Choose a level to begin.</span>
+      </div>
+
+      <div class="boardCard" id="boardCard">
+        <div class="pvGrid" id="pvGrid">
+          <div class="pvRow labels" id="rowLabels"></div>
+          <div class="pvRow track" id="rowTrack"></div>
+          <div class="pointBand" id="pointBand">
+            <div class="pointPin" id="pointPin">point stays</div>
+            <div class="pointDot" id="pointDot">.</div>
+          </div>
+          <div class="digitLayer" id="digitLayer" aria-hidden="true"></div>
+        </div>
+        <div class="moveRow" id="moveRow">
+          <button class="moveBtn" id="moveBtn" type="button">Show the move</button>
+          <span class="moveNote" id="moveNote">Watch where each digit lands, then read the answer off the board.</span>
+        </div>
+      </div>
+
+      <div class="noBoard" id="noBoard" hidden>
+        No board at this level &mdash; picture the columns yourself, and remember that
+        the decimal point is not one of the things that moves.
+      </div>
+
+      <div class="answerCard" id="answerCard">
+        <span class="answerLab" id="answerLab">Your answer</span>
+        <input id="ansInput" class="ansIn" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Your answer" />
+        <button class="checkBtn" id="checkBtn" type="button">Check</button>
+        <span class="fb" id="feedback"></span>
+      </div>
+
+      <div class="navRow">
+        <button class="navBtn" id="prevBtn" type="button">&larr; Previous</button>
+        <button class="navBtn next" id="nextBtn" type="button">Next &rarr;</button>
+        <span class="spacer"></span>
+        <span id="submitSlot"></span>
+      </div>
+    </main>
+
+    <div class="brandFoot">
+      This tool and more can be found at <a href="https://www.millsmathstools.au" target="_blank" rel="noopener">www.millsmathstools.au</a>
+    </div>
+  </div>
+
+  <!-- level chooser -->
+  <div class="modalBack" id="levelModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lvlTitle">
+      <h2 id="lvlTitle">Choose your level</h2>
+      <p class="sub">The level decides how much of the teaching tool you keep. The board goes
+        first, then the movement, then you are on your own.</p>
+      <div class="lvlList" id="lvlList"></div>
+    </div>
+  </div>
+
+  <!-- certificate -->
+  <div class="modalBack" id="certModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="certTitle">
+      <h2 id="certTitle">Finished</h2>
+      <div class="certBig" id="certScore">0 / 12</div>
+      <div class="certSub" id="certSub"></div>
+      <div class="certBreak" id="certBreak"></div>
+      <div class="modalActions">
+        <button class="primary" id="againBtn" type="button">Try again</button>
+        <button id="changeLvlBtn" type="button">Change level</button>
+        <button id="copyBtn" type="button">Copy my result</button>
+      </div>
+    </div>
+  </div>
+  <script>
+  (() => {
+    "use strict";
+    const $ = id => document.getElementById(id);
+    const randInt = (a,b) => a + Math.floor(Math.random() * (b - a + 1));
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+
+    /* ================================================================
+       THE LEVEL IS HOW MUCH OF THE TEACHING TOOL THE STUDENT KEEPS.
+       Sweet hands over the whole board and lets them watch the digits
+       travel. Mild keeps the board but takes the movement away, so they
+       have to work out where the digits land. Medium and Spicy take the
+       board away as well. The numbers climb alongside, but the
+       withdrawal of the model is the real ladder.
+
+       THE ANSWER IS NEVER ON THE SCREEN BEFORE IT IS MARKED. The board
+       at Sweet shows the digits in their new columns, which is the
+       METHOD — the student still has to read the number off it and
+       write it — but the sentence keeps its ? and nothing prints the
+       answer. A check asserts that at every level.
+       ================================================================ */
+    const MAX_P = 5, MIN_P = -4;
+
+    const LEVELS = {
+      sweet:  { name:"Sweet",  ico:"🍬", board:true,  move:true,
+                dp:0, len:[2,3], ks:[1,-1], kinds:["mult","div"], n:12,
+                desc:"The board is here and it shows you the move. Whole numbers, × and ÷ 10." },
+      mild:   { name:"Mild",   ico:"🌶️", board:true,  move:false,
+                dp:1, len:[2,3], ks:[1,2,-1,-2], kinds:["mult","div","word"], n:12,
+                desc:"The board is still here, but it will not move for you. One decimal place." },
+      medium: { name:"Medium", ico:"🔥", board:false, move:false,
+                dp:2, len:[2,4], ks:[1,2,3,-1,-2,-3], kinds:["mult","div","missing","word"], n:12,
+                desc:"No board. Two decimal places, and powers up to 1000." },
+      spicy:  { name:"Spicy",  ico:"🌋", board:false, move:false,
+                dp:3, len:[3,4], ks:[1,2,3,-1,-2,-3], kinds:["mult","div","missing","word"], n:12,
+                cross:true,
+                desc:"No board, three decimal places, and the digits cross the point." }
+    };
+    const ORDER = ["sweet","mild","medium","spicy"];
+    const KIND_LABEL = { mult:"Multiply", div:"Divide", missing:"What is missing", word:"Use it" };
+    const KIND_ORDER = ["mult","div","missing","word"];
+
+    /* ---------- exact numbers, as strings ---------------------------- */
+    const mk = (digits, lo) => ({ digits, lo });
+    const hiOf = n => n.lo + n.digits.length - 1;
+    const dpOf = n => Math.max(0, -n.lo);
+    const shiftN = (n,k) => mk(n.digits, n.lo + k);
+    const inRange = n => hiOf(n) <= MAX_P && n.lo >= MIN_P;
+    function numStr(n){
+      const hi = Math.max(hiOf(n), 0), lo = Math.min(n.lo, 0);
+      let out = "";
+      for (let p = hi; p >= lo; p--){
+        const i = hiOf(n) - p;
+        out += (i >= 0 && i < n.digits.length) ? n.digits[i] : "0";
+        if (p === 0 && lo < 0) out += ".";
+      }
+      return out;
+    }
+    // 5.20, 05.2 and 5.2 are the same answer
+    function normalise(s){
+      const t = String(s).trim().replace(/[\s,]/g, "");
+      if (!/^\d*\.?\d*$/.test(t) || !/\d/.test(t)) return null;
+      let [i, f = ""] = t.split(".");
+      i = i.replace(/^0+(?=\d)/, "") || "0";
+      f = f.replace(/0+$/, "");
+      return f ? i + "." + f : i;
+    }
+
+    const POWER = { 1:"10", 2:"100", 3:"1000" };
+    const powStr = k => POWER[Math.abs(k)];
+
+    function randDigits(len){
+      let s = String(randInt(1,9));
+      for (let i = 1; i < len; i++) s += String(randInt(0,9));
+      if (s[len-1] === "0") s = s.slice(0,-1) + String(randInt(1,9));
+      return s;
+    }
+
+    function makePair(L, k){
+      for (let a = 0; a < 40; a++){
+        const len = randInt(L.len[0], L.len[1]);
+        const digits = randDigits(len);
+        const ok = [];
+        for (let lo = MIN_P; lo + len - 1 <= MAX_P; lo++){
+          const q = mk(digits, lo), ans = shiftN(q, k);
+          if (!inRange(q) || !inRange(ans)) continue;
+          if (dpOf(q) > L.dp || dpOf(ans) > L.dp) continue;
+          ok.push(lo);
+        }
+        if (!ok.length) continue;
+        let choice = ok;
+        if (L.cross){
+          const c = ok.filter(lo => (lo >= 0) !== (lo + k >= 0));
+          if (c.length) choice = c;
+        }
+        if (L.dp > 0){
+          const d = choice.filter(lo => lo < 0 || lo + k < 0);
+          if (d.length) choice = d;
+        }
+        const lo = pick(choice);
+        return { q: mk(digits, lo), a: shiftN(mk(digits, lo), k) };
+      }
+      return null;
+    }
+
+    const WORDS = [
+      { k: 1, t:q=>`A tank holds ${q} litres. How much do 10 tanks hold?` },
+      { k: 2, t:q=>`A ribbon is ${q} cm long. A roll holds 100 of them. How long is the roll?` },
+      { k: 3, t:q=>`One tile is ${q} mm wide. How wide are 1000 tiles laid in a row?` },
+      { k:-1, t:q=>`A rope ${q} m long is cut into 10 equal pieces. How long is one piece?` },
+      { k:-2, t:q=>`${q} litres of juice is shared equally into 100 bottles. How much is in each bottle?` },
+      { k:-3, t:q=>`A stack of 1000 sheets of paper is ${q} mm thick. How thick is one sheet?` }
+    ];
+
+    /* ---------- building a paper -------------------------------------- */
+    function buildPaper(levelKey){
+      const L = LEVELS[levelKey];
+      const items = [];
+      // spread the kinds rather than dealing them at random, so a paper is
+      // never four of the same question in a row
+      const kinds = [];
+      for (let i = 0; i < L.n; i++) kinds.push(L.kinds[i % L.kinds.length]);
+      for (let i = kinds.length - 1; i > 0; i--){          // gentle shuffle
+        const j = randInt(0, i);
+        if (kinds[j] !== kinds[i-1] && kinds[i] !== kinds[j === 0 ? 0 : j-1]){
+          [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+        }
+      }
+      let lastK = null;
+      for (let i = 0; i < L.n; i++){
+        const kind = kinds[i];
+        let k, word = null;
+        if (kind === "word"){
+          const pool = WORDS.filter(w => L.ks.includes(w.k));
+          word = pick(pool.length ? pool : WORDS);
+          k = word.k;
+        } else if (kind === "mult"){
+          const pool = L.ks.filter(x => x > 0 && x !== lastK);
+          k = pick(pool.length ? pool : L.ks.filter(x => x > 0));
+        } else if (kind === "div"){
+          const pool = L.ks.filter(x => x < 0 && x !== lastK);
+          k = pick(pool.length ? pool : L.ks.filter(x => x < 0));
+        } else {
+          const pool = L.ks.filter(x => x !== lastK);
+          k = pick(pool.length ? pool : L.ks);
+        }
+        const pair = makePair(L, k) || makePair(LEVELS.medium, k);
+        if (!pair) continue;
+        lastK = k;
+        items.push({
+          kind, k, q: pair.q, a: pair.a, word,
+          // "missing" asks for the power of ten, everything else for the answer
+          expect: kind === "missing" ? powStr(k) : numStr(pair.a),
+          given: null, correct: null, settled: false, tries: 0
+        });
+      }
+      return items;
+    }
+
+    /* ---------- the board --------------------------------------------- */
+    const PLACES = [];
+    for (let p = MAX_P; p >= MIN_P; p--) PLACES.push(p);
+    const NAMES = { 5:"hundred\nthousands", 4:"ten\nthousands", 3:"thousands", 2:"hundreds", 1:"tens",
+      0:"ones", "-1":"tenths", "-2":"hundredths", "-3":"thousandths", "-4":"ten\nthousandths" };
+
+    let tape = [], uid = 0, colX = new Map(), pitchR = 80, moved = false;
+    const TAPE_HI = MAX_P + 3, TAPE_LO = MIN_P - 3;
+
+    function buildGrid(){
+      const labels = $("rowLabels"), track = $("rowTrack");
+      labels.innerHTML = ""; track.innerHTML = "";
+      let tpl = "";
+      for (const p of PLACES){
+        const kind = p < 0 ? "frac" : "whole";
+        const lab = document.createElement("div");
+        lab.className = "pvCell " + kind;
+        lab.innerHTML = `<span class="lbl">${NAMES[p].replace("\n"," <br>")}</span>`;
+        labels.appendChild(lab);
+        const cell = document.createElement("div");
+        cell.className = "pvCell"; cell.dataset.place = String(p);
+        const box = document.createElement("div");
+        box.className = "pvBox " + kind; cell.appendChild(box);
+        track.appendChild(cell);
+        tpl += "var(--colW) ";
+        if (p === 0){
+          for (const row of [labels, track]){
+            const sp = document.createElement("div"); sp.className = "pvCell spacer"; row.appendChild(sp);
+          }
+          tpl += "var(--pointW) ";
+        }
+      }
+      $("pvGrid").style.setProperty("--tpl", tpl.trim());
+    }
+
+    function fitBoard(){
+      const avail = $("boardCard").clientWidth - 32;
+      const w = Math.max(34, Math.min(92, Math.floor(avail / 10.46)));
+      const r = document.documentElement.style;
+      r.setProperty("--colW", w + "px");
+      r.setProperty("--pointW", Math.round(w * 0.44) + "px");
+      r.setProperty("--rowH", Math.round(w * 1.05) + "px");
+      r.setProperty("--digitFS", (w * 1.05 * 0.0385).toFixed(2) + "rem");
+      measure();
+    }
+
+    function measure(){
+      const grid = $("pvGrid"), g = grid.getBoundingClientRect();
+      colX.clear();
+      $("rowTrack").querySelectorAll(".pvCell[data-place]").forEach(c => {
+        const r = c.getBoundingClientRect();
+        colX.set(Number(c.dataset.place), r.left - g.left + r.width / 2);
+      });
+      pitchR = Math.abs(colX.get(MIN_P) - colX.get(MIN_P + 1)) || 80;
+      const sp = $("rowTrack").querySelector(".pvCell.spacer");
+      if (sp){ const r = sp.getBoundingClientRect(); $("pointBand").style.left = (r.left - g.left) + "px"; }
+      const pin = $("pointPin");
+      grid.style.paddingTop = (pin.offsetHeight + 6) + "px";
+      pin.style.top = "0px";
+      const top = $("rowTrack").getBoundingClientRect().top - g.top;
+      $("digitLayer").style.top = top + "px";
+      $("pointDot").style.top = top + "px";
+      for (const t of tape) if (t.el) t.el.style.left = xOf(t.place) + "px";
+    }
+    const xOf = p => colX.has(p) ? colX.get(p)
+      : (p > MAX_P ? colX.get(MAX_P) - (p - MAX_P) * pitchR : colX.get(MIN_P) + (MIN_P - p) * pitchR);
+
+    function spanOf(places){
+      const nz = tape.filter(t => t.d !== "0");
+      if (!nz.length) return { hi:0, lo:0 };
+      const ps = nz.map(t => places.get(t.id));
+      return { hi: Math.max(Math.max(...ps), 0), lo: Math.min(Math.min(...ps), 0) };
+    }
+    const roleFor = (p, s) => (p <= s.hi && p >= s.lo) ? "sig" : "hidden";
+
+    function showNumber(n){
+      const m = new Map();
+      for (let p = hiOf(n); p >= n.lo; p--) m.set(p, n.digits[hiOf(n) - p]);
+      tape = [];
+      $("digitLayer").innerHTML = "";
+      for (let p = TAPE_HI; p >= TAPE_LO; p--){
+        const t = { id: ++uid, d: m.get(p) ?? "0", place: p, el: null };
+        const el = document.createElement("div");
+        el.className = "digit"; el.dataset.id = String(t.id); el.textContent = t.d;
+        $("digitLayer").appendChild(el); t.el = el;
+        tape.push(t);
+      }
+      const places = new Map(tape.map(t => [t.id, t.place]));
+      const s = spanOf(places);
+      for (const t of tape){ t.el.classList.toggle("off", roleFor(t.place, s) === "hidden"); t.el.style.left = xOf(t.place) + "px"; }
+      moved = false;
+    }
+
+    // one hop, the same shape as the teaching tool: reveal, travel, recolour
+    function hop(dir){
+      const will = new Map(tape.map(t => [t.id, t.place + dir]));
+      const s = spanOf(will);
+      for (const t of tape){
+        const next = roleFor(will.get(t.id), s);
+        if (t.el.classList.contains("off") && next !== "hidden"){
+          t.el.style.left = xOf(t.place) + "px";
+          t.el.classList.remove("off"); t.el.classList.add("trail");
+        }
+      }
+      void $("digitLayer").offsetWidth;
+      for (const t of tape) t.place = will.get(t.id);
+      // top the tape up at whichever end emptied
+      tape = tape.filter(t => { if (t.place > TAPE_HI || t.place < TAPE_LO){ t.el.remove(); return false; } return true; });
+      const have = new Set(tape.map(t => t.place));
+      for (let p = TAPE_HI; p >= TAPE_LO; p--) if (!have.has(p)){
+        const t = { id: ++uid, d:"0", place:p, el:null };
+        const el = document.createElement("div");
+        el.className = "digit off"; el.dataset.id = String(t.id); el.textContent = "0";
+        $("digitLayer").appendChild(el); t.el = el; tape.push(t);
+      }
+      for (const t of tape) t.el.style.left = xOf(t.place) + "px";
+      return new Promise(res => setTimeout(() => {
+        const now = new Map(tape.map(t => [t.id, t.place]));
+        const s2 = spanOf(now);
+        for (const t of tape){
+          const r = roleFor(t.place, s2);
+          t.el.classList.toggle("off", r === "hidden");
+          t.el.classList.remove("trail");
+        }
+        res();
+      }, 560));
+    }
+
+    /* ---------- state -------------------------------------------------- */
+    const S = { levelKey:null, items:[], i:0, started:false };
+
+    function openLevels(){ $("levelModal").classList.add("open"); }
+    function closeLevels(){ $("levelModal").classList.remove("open"); }
+
+    function buildLevelList(){
+      const list = $("lvlList");
+      list.innerHTML = "";
+      for (const key of ORDER){
+        const L = LEVELS[key];
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "lvlRow " + key;
+        b.innerHTML = `<span class="lvlIco" aria-hidden="true">${L.ico}</span>
+          <strong>${L.name}</strong><span class="go" aria-hidden="true">&rsaquo;</span>
+          <span class="d">${L.desc}</span>`;
+        b.addEventListener("click", () => startLevel(key));
+        list.appendChild(b);
+      }
+    }
+
+    function startLevel(key){
+      S.levelKey = key;
+      S.items = buildPaper(key);
+      S.i = 0; S.started = true;
+      $("levelChip").hidden = false;
+      $("levelChip").textContent = LEVELS[key].name;
+      closeLevels();
+      $("certModal").classList.remove("open");
+      paint();
+    }
+
+    /* ---------- painting a question ------------------------------------ */
+    function paint(){
+      const L = LEVELS[S.levelKey], it = S.items[S.i];
+      if (!it) return;
+
+      $("qCounter").textContent = `Question ${S.i + 1} / ${S.items.length}`;
+      $("kindTag").textContent = KIND_LABEL[it.kind];
+      $("progressFill").style.width = ((S.i) / S.items.length * 100).toFixed(1) + "%";
+
+      const qs = numStr(it.q), as = numStr(it.a);
+      const word = it.kind === "word";
+      $("sentence").hidden = word;
+      $("wordText").hidden = !word;
+      if (word) $("wordText").textContent = it.word.t(qs);
+      else {
+        $("sNum").textContent = it.kind === "missing" ? qs : qs;
+        $("sOp").textContent = it.k > 0 ? "×" : "÷";
+        // the missing-number question hides the POWER, never the answer
+        $("sPow").textContent = it.kind === "missing" ? "?" : powStr(it.k);
+        $("sPow").style.color = it.kind === "missing" ? "var(--line-soft)" : "";
+        $("sAns").textContent = it.kind === "missing" ? as
+          : (it.settled ? as : "?");
+        $("sAns").style.color = it.settled ? "var(--green-dark)" : "";
+      }
+
+      $("answerLab").textContent = it.kind === "missing" ? "Which power of ten?" : "Your answer";
+
+      // the board, and how much of it this level hands over
+      const wantBoard = L.board && it.kind !== "missing";
+      $("boardCard").hidden = !wantBoard;
+      $("noBoard").hidden = wantBoard || S.i > 0;
+      if (wantBoard){
+        showNumber(it.q);
+        fitBoard();
+        $("moveRow").hidden = !L.move;
+        $("moveBtn").disabled = false;
+        $("moveBtn").textContent = "Show the move";
+        $("moveNote").textContent = "Watch where each digit lands, then read the answer off the board.";
+      }
+
+      const ai = $("ansInput");
+      ai.value = it.given ?? "";
+      ai.className = "ansIn" + (it.settled ? (it.correct ? " right" : " wrong") : "");
+      // A settled question stays workable — the mark is already banked, but a
+      // student who got it wrong should be able to finish the thinking rather
+      // than be locked out of their own question.
+      ai.readOnly = false;
+      $("checkBtn").disabled = false;
+      $("feedback").textContent = it.settled ? (it.correct ? "Correct" : "Not this time — the answer is " + it.expect) : "";
+      $("feedback").className = "fb " + (it.settled ? (it.correct ? "ok" : "no") : "");
+
+      $("prevBtn").disabled = S.i === 0;
+      $("nextBtn").textContent = S.i === S.items.length - 1 ? "Finish" : "Next →";
+
+      if (!it.settled){
+        setPrompt(L.move
+          ? "Press “Show the move” if you want to watch the digits travel, then write the answer."
+          : (L.board ? "The board shows the number you are starting from. Where does each digit land?"
+                     : "Work it out, then write the answer."));
+      }
+      requestAnimationFrame(() => { if (wantBoard) measure(); });
+    }
+
+    function setPrompt(text, tone){
+      $("promptText").textContent = text;
+      $("promptBar").className = "promptBar" + (tone ? " " + tone : "");
+      $("promptIco").textContent = tone === "good" ? "✅" : tone === "bad" ? "💡" : "💭";
+    }
+
+    /* ---------- marking -------------------------------------------------- */
+    // Only the FIRST attempt scores, but a wrong answer stays on screen and
+    // the board is unlocked, so the thinking can be finished.
+    function check(){
+      const it = S.items[S.i];
+      if (!it) return;
+      const raw = $("ansInput").value;
+      const got = normalise(raw);
+      if (got === null){ setPrompt("Write a number, for example 4.5", "bad"); return; }
+      const right = got === normalise(it.expect);
+      it.tries++;
+
+      if (!it.settled){
+        it.given = raw;
+        it.correct = right;              // ONLY the first attempt scores
+        it.settled = true;
+        paint();
+        setPrompt(right ? "Correct." : `The answer is ${it.expect}. Look at where each digit had to land.`,
+                  right ? "good" : "bad");
+        return;
+      }
+      // already marked — say what a later go got, without moving the mark
+      $("ansInput").className = "ansIn" + (right ? " right" : " wrong");
+      setPrompt(right
+        ? "That is right. The mark for this one is from your first answer."
+        : `Still not it \u2014 the answer is ${it.expect}.`, right ? "good" : "bad");
+    }
+
+    function next(){
+      if (S.i < S.items.length - 1){ S.i++; paint(); }
+      else finish();
+    }
+
+    /* ---------- finishing -------------------------------------------------- */
+    function scores(){
+      const by = {};
+      for (const k of KIND_ORDER) by[k] = { s:0, t:0 };
+      let s = 0;
+      for (const it of S.items){
+        by[it.kind].t++;
+        if (it.correct){ s++; by[it.kind].s++; }
+      }
+      return { score:s, total:S.items.length, by };
+    }
+
+    function finish(){
+      for (const it of S.items) if (!it.settled){ it.settled = true; it.correct = false; }
+      const s = scores();
+      $("progressFill").style.width = "100%";
+      $("certScore").textContent = `${s.score} / ${s.total}`;
+      const pct = s.total ? Math.round(s.score / s.total * 100) : 0;
+      $("certSub").innerHTML = `Multiplying and Dividing by 10 &mdash; ${LEVELS[S.levelKey].name} &middot; ${pct}%`
+        + (window.MMTAuth && window.MMTAuth.certTail ? "<br>" + window.MMTAuth.certTail() : "");
+      $("certBreak").innerHTML = KIND_ORDER.filter(k => s.by[k].t)
+        .map(k => `${KIND_LABEL[k]}: ${s.by[k].s} / ${s.by[k].t}`).join("<br>");
+      $("certModal").classList.add("open");
+
+      if (window.MMTSave) window.MMTSave({
+        tool:"multiply-divide-by-ten-student-quiz", topic:"number",
+        level:LEVELS[S.levelKey].name, levelKey:S.levelKey,
+        score:s.score, total:s.total, percent:pct,
+        masteryTopic:"multiply-divide-by-ten",
+        types: KIND_ORDER.filter(k => s.by[k].t).map(k => k + ":" + s.by[k].s + "/" + s.by[k].t)
+                .concat(["level:" + S.levelKey]),
+        certificateText:"Multiplying and Dividing by 10 — " + LEVELS[S.levelKey].name + ": " + s.score + "/" + s.total,
+        ...(window.MMTSubmit && window.MMTSubmit.fields ? window.MMTSubmit.fields() : {})
+      });
+    }
+
+    /* ---------- wiring --------------------------------------------------- */
+    function wire(){
+      buildGrid();
+      buildLevelList();
+
+      $("moveBtn").addEventListener("click", async () => {
+        const it = S.items[S.i];
+        if (!it || moved) return;
+        moved = true;
+        $("moveBtn").disabled = true;
+        const steps = Math.abs(it.k), dir = it.k > 0 ? 1 : -1;
+        for (let i = 0; i < steps; i++){
+          $("moveNote").textContent = steps > 1 ? `× 10 — hop ${i+1} of ${steps}` : (dir > 0 ? "× 10" : "÷ 10");
+          await hop(dir);
+          if (i < steps - 1) await new Promise(r => setTimeout(r, 220));
+        }
+        $("moveNote").textContent = "Now read the number off the board and write it in.";
+        $("moveBtn").textContent = "Moved";
+      });
+
+      $("checkBtn").addEventListener("click", check);
+      $("ansInput").addEventListener("keydown", e => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const it = S.items[S.i];
+        if (it && !it.settled) check(); else next();
+      });
+      $("nextBtn").addEventListener("click", next);
+      $("prevBtn").addEventListener("click", () => { if (S.i > 0){ S.i--; paint(); } });
+      $("menuBtn").addEventListener("click", openLevels);
+      $("changeLvlBtn").addEventListener("click", () => { $("certModal").classList.remove("open"); openLevels(); });
+      $("againBtn").addEventListener("click", () => startLevel(S.levelKey));
+      $("copyBtn").addEventListener("click", async () => {
+        const s = scores();
+        const line = "🏆 Mills Maths Tools — Multiplying and Dividing by 10 Student Quiz\n"
+          + `${LEVELS[S.levelKey].name}: ${s.score}/${s.total}\n`
+          + (window.MMTAuth && window.MMTAuth.shareLine ? window.MMTAuth.shareLine() : "");
+        try { await navigator.clipboard.writeText(line); $("copyBtn").textContent = "Copied"; }
+        catch { $("copyBtn").textContent = "Could not copy"; }
+        setTimeout(() => { $("copyBtn").textContent = "Copy my result"; }, 1800);
+      });
+
+      $("toolsBtn").addEventListener("click", e => {
+        e.stopPropagation();
+        $("toolsMenu").classList.toggle("open");
+      });
+      document.addEventListener("click", () => $("toolsMenu").classList.remove("open"));
+      document.addEventListener("keydown", e => { if (e.key === "Escape") $("toolsMenu").classList.remove("open"); });
+
+      let rt = null;
+      window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (!$("boardCard").hidden) fitBoard(); }, 140); });
+
+      openLevels();
+    }
+
+    // exposed for the harness
+    window.__Q__ = { LEVELS, ORDER, KIND_ORDER, buildPaper, numStr, normalise, makePair, S, startLevel, scores, powStr };
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
+    else wire();
+  })();
+  </script>
+
+  <!-- ===== MMT student-code login + secure save + sign-in banner ===== -->
+  <!-- The overlay, the sign-in chip and window.MMTSave() live in one shared
+       file rather than a copy inside every quiz. -->
+  <script src="/portal/shared/quizAuthUI.js"></script>
+  <script src="/portal/shared/earlySubmit.js"></script>
+
+</body>
+</html>

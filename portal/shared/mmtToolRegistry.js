@@ -202,6 +202,14 @@ export const MMT_TOOLS = Object.freeze([
     notes: "Seeing a coefficient × factor as equal groups (lead-in to like terms). Added secure student-code login + achievements save (2026-07). masteryTopic 'number-groups'. (Page <title> was a copy-paste of the like-terms quiz — content is the groups quiz.)",
   },
   {
+    toolId: "multiply-divide-by-ten-quiz", title: "Multiplying and Dividing by 10 — Student Quiz", category: "Quiz",
+    enabled: true, resultCollection: "achievements", richCollection: null,
+    achievementToolName: "multiply-divide-by-ten-student-quiz", topics: ["number"], stage: "Stage 3",
+    launchUrl: "/online-quizzes/stage-3/number/multiply-divide-by-ten.html",
+    supportsAdventureAttempts: false, supportsSkillBreakdown: false,
+    notes: "Sweet/Mild/Medium/Spicy. The LEVEL is how much of the teaching tool the student keeps: Sweet gives the place value board AND plays the move, Mild keeps the board but will not move it, Medium and Spicy take the board away. Numbers climb alongside (whole -> 1dp -> 2dp -> 3dp and crossing the point). 12 questions. Four kinds — multiply, divide, what is missing, use it — with subtotals by kind in types[]. The answer is never on screen before it is marked; at Sweet the board may be moved, which is the METHOD, but the number sentence keeps its ?. Only the FIRST attempt scores, though a settled question stays workable. masteryTopic 'multiply-divide-by-ten'. Pairs with the teaching tool and the worksheet creator, all under MA3-RN-01.",
+  },
+  {
     toolId: "division-grouping-quiz", title: "Division by Grouping — Student Quiz", category: "Quiz",
     enabled: true, resultCollection: "achievements", richCollection: null,
     achievementToolName: "division-grouping-student-quiz", topics: ["number"], stage: "Stage 3",
