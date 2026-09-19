@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Sudoku v1 (2026-09-19): five levels graded by technique, notes, explained hints, race mode -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Sudoku | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --purple:#7c3aed;
+      --green:#6cbc4a;
+      --green2:#49a529;
+      --red:#ef4444;
+      --amber:#f59e0b;
+      --btn:#eef2f7;
+      --btnHover:#e5ebf3;
+      --grid:#b7c7dc;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+    }
+
+    .mmtTopbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white;
+      padding:14px 24px;
+      display:grid;
+      grid-template-columns:minmax(240px,1fr) auto minmax(460px,1fr);
+      align-items:center;
+      gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-self:start;
+      text-decoration:none;
+      color:white;
+      border-radius:14px;
+      padding:8px 12px;
+      margin-left:-12px;
+      font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+      user-select:none;
+    }
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    .language-control{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:6px 8px;color:white;}
+    .language-control label{font-size:12px;font-weight:950;opacity:.9;white-space:nowrap;color:white;}
+    .language-control select{width:auto;min-width:110px;height:34px;border:1px solid rgba(255,255,255,.25);border-radius:10px;background:white;color:#1d4ed8;font-weight:900;padding:0 8px;outline:none;}
+
+    .i18n-dual{display:inline-flex;flex-direction:column;gap:2px;line-height:1.12;}
+    .i18n-dual .native{font-weight:inherit;}
+    html[lang='ar'] .i18n-dual .native,
+    html[lang='fa'] .i18n-dual .native{direction:rtl;unicode-bidi:isolate;}
+    .i18n-dual .english-under{font-size:.72em;opacity:.72;font-weight:800;line-height:1.12;}
+    .message .english-under,.status-title .english-under,.status-subtitle .english-under{display:block;margin-top:3px;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .mmtTopbar .btn-primary:hover{background:#eef2ff;color:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.18);}
+    .btn-active{background:#fef3c7!important;border-color:#f59e0b!important;color:#92400e!important;box-shadow:0 0 0 4px rgba(245,158,11,.16)!important;}
+
+    input[type="text"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;transition:border-color .16s ease,box-shadow .16s ease;}
+    input[type="text"]:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .menu-card{padding:28px;display:grid;gap:22px;min-height:620px;place-items:center;position:relative;}
+    .hero{display:grid;grid-template-columns:1fr;gap:22px;align-items:stretch;width:min(980px,100%);}
+    .hero-main{display:none;}
+    .eyebrow{display:inline-flex;width:max-content;padding:8px 12px;border-radius:999px;background:white;color:#1d4ed8;font-weight:950;border:1px solid #bfdbfe;}
+    h1,h2,h3,p{margin-top:0;}
+    h1{font-size:clamp(2rem,4vw,3.4rem);line-height:.95;letter-spacing:-.07em;margin-bottom:4px;}
+    .hero-main p{font-size:1.05rem;font-weight:750;color:#475569;line-height:1.5;max-width:680px;margin-bottom:0;}
+    .mode-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .menu-panel{border-radius:26px;background:#f8fafc;border:1px solid var(--border);padding:20px;display:grid;gap:16px;}
+    .menu-center-panel{width:min(980px,100%);background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(15,23,42,.12);padding:28px;border:1px solid #dbe3ef;}
+    .setup-modal-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 36px));max-height:calc(100vh - 48px);overflow:auto;display:none;z-index:95;background:white;box-shadow:0 34px 90px rgba(15,23,42,.25);padding:28px;}
+    .setup-modal-panel.open{display:grid;}
+    .setup-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .setup-modal-head h2{margin-bottom:0;}
+    .setup-modal-back{padding:10px 14px;}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+    .level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:6px;padding:16px;border-radius:18px;align-content:start;}
+    .level-icon{width:44px;height:44px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;font-size:1.55rem;box-shadow:inset 0 -3px 0 rgba(15,23,42,.06);}
+    .level-title-row{display:flex;align-items:center;gap:12px;}
+    .level-copy{display:grid;gap:2px;}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn.selected .level-icon{background:#ede9fe;}
+    .level-btn strong{font-size:1rem;}
+    .level-btn span{font-size:.78rem;color:var(--muted);font-weight:850;}
+
+    .game-card{display:grid;grid-template-rows:auto minmax(0,1fr);padding:18px;gap:16px;}
+    .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:68px;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+    .toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+    .game-area{display:grid;grid-template-columns:minmax(560px,1fr) 340px;gap:20px;align-items:start;}
+    .board-stage{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:18px;align-items:start;}
+    .board-shell{display:grid;gap:12px;position:relative;}
+    .waiting-overlay{position:absolute;inset:0;display:none;place-items:center;z-index:8;padding:24px;background:rgba(255,255,255,.82);backdrop-filter:blur(3px);border-radius:24px;}
+    .waiting-overlay.show{display:grid;}
+    .waiting-card{width:min(520px,100%);background:rgba(255,255,255,.98);border:1px solid #dbe3ef;border-radius:28px;box-shadow:0 30px 90px rgba(15,23,42,.18);padding:24px;display:grid;gap:14px;}
+    .waiting-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .waiting-title{font-size:1.55rem;font-weight:950;letter-spacing:-.04em;margin:0;}
+    .waiting-sub{margin:0;color:var(--muted);font-weight:750;line-height:1.4;}
+    .waiting-players{display:grid;gap:10px;}
+    .waiting-player{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:900;}
+    .waiting-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .board-wrap{position:relative;width:100%;max-width:760px;margin:0 auto;aspect-ratio:1/1;background:linear-gradient(180deg,#ffffff,#f9fafb);border-radius:24px;border:1px solid var(--border);overflow:hidden;touch-action:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);}
+
+    .message{padding:14px 16px;border-radius:18px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-weight:850;min-height:52px;display:flex;align-items:center;line-height:1.35;}
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .message.error{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+
+    .side-panel{display:grid;gap:16px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    .panel-section h2{font-size:1.1rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .stat-card{border-radius:18px;padding:14px;background:white;border:1px solid var(--border);}
+    .stat-card span{display:block;color:#334155;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .stat-card strong{display:block;font-size:1.55rem;margin-top:3px;}
+    .progress-list{display:grid;gap:12px;}
+    .progress-item{display:grid;gap:6px;}
+    .progress-top{display:flex;justify-content:space-between;gap:8px;font-weight:950;color:#334155;}
+    .progress-bar{height:13px;border-radius:999px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1;}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),#a3e635);border-radius:999px;transition:width .25s ease;}
+    .progress-fill.opponent{background:linear-gradient(90deg,var(--purple),#60a5fa);}
+    .room-badge{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;}
+    .room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont);}
+    .player-list{display:grid;gap:10px;}
+    .player-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:16px;background:white;border:1px solid var(--border);font-weight:900;}
+    .pill{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:999px;background:#e2e8f0;color:#334155;font-weight:900;font-size:.86rem;}
+    .pill.good{background:#dcfce7;color:#166534;}
+    .pill.warn{background:#fff7ed;color:#9a3412;}
+    .lobby-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+
+    .race-setup{display:none;}
+    .race-setup.open{display:grid;gap:14px;}
+    .race-join{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;}
+    .setup-fields{display:grid;gap:12px;}
+    .form-note{font-size:.86rem;color:var(--muted);font-weight:750;line-height:1.35;margin:0;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(620px,100%);background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .rules-list{display:grid;gap:12px;margin:18px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:13px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:850;line-height:1.35;color:#334155;}
+    .rules-list .english-under{display:block;margin-top:5px;color:#64748b;font-size:.82em;}
+    .end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .countdown{position:absolute;inset:0;background:rgba(255,255,255,.60);display:none;place-items:center;z-index:9;font-size:clamp(4rem,12vw,8rem);font-weight:950;color:#4c1d95;text-shadow:0 12px 28px rgba(124,58,237,.18);}
+    .countdown.show{display:grid;}
+    .brand-footer{width:min(1340px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .hidden{display:none!important;}
+
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{width:min(1500px,calc(100vw - 36px));margin:12px auto 8px;}
+      .board-wrap{max-width:min(760px,calc(100dvh - 180px));}
+      .brand-footer{width:min(1500px,calc(100vw - 36px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .layout{width:calc(100vw - 28px);margin-top:14px;}
+      .hero{grid-template-columns:1fr;}
+      .game-area{grid-template-columns:1fr;}
+      .board-wrap{width:100%;}
+      .status-strip{grid-template-columns:1fr;}
+      .toolbar{justify-content:center;}
+    }
+    @media(max-width:700px){
+      .mmtBrandText span{display:none;}
+      .actions button{font-size:14px;padding:10px 12px;}
+      .board-stage{grid-template-columns:1fr;}
+      .layout{width:calc(100vw - 20px);}
+      .menu-card,.game-card{padding:14px;}
+      .hero-main{padding:20px;}
+      .level-grid,.stat-grid,.lobby-actions{grid-template-columns:1fr;}
+      .race-join{grid-template-columns:1fr;}
+      .brand-footer{width:calc(100vw - 20px);padding:8px 10px;}
+    }
+  
+
+    /* ================================================== SUDOKU — game styles */
+    :root{
+      --line-thin:#cbd5e1;
+      --line-box:#334155;
+      --given:#0f172a;
+      --entry:#1d4ed8;
+      --sel:#ddd6fe;
+      --peer:#eef2ff;
+      --same:#c7d2fe;
+      --clash:#fee2e2;
+      --clashInk:#b91c1c;
+    }
+    .mode-card.continue-card{border-color:#bbf7d0;background:linear-gradient(180deg,#f0fdf4,#fff);}
+    .mode-card.continue-card .mode-icon{background:#dcfce7;}
+    .level-grid.five{grid-template-columns:repeat(5,minmax(0,1fr));}
+    .level-btn .level-size{display:inline-flex;width:max-content;margin-top:4px;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:.74rem;font-weight:950;}
+    .level-btn .level-tech{font-size:.78rem;color:var(--muted);font-weight:800;line-height:1.3;}
+    .level-title-row{align-items:flex-start;}
+    .level-btn .level-title-row{flex-direction:column;gap:8px;}
+
+    .game-area{grid-template-columns:minmax(0,1fr) 320px;}
+    .board-stage{--bs:min(720px,calc(100dvh - 268px));display:grid;grid-template-columns:minmax(300px,var(--bs)) 270px;gap:18px;align-items:start;justify-content:center;}
+    .board-col{display:grid;gap:10px;min-width:0;}
+    .status-strip{grid-template-columns:minmax(0,1fr) auto;}
+    .turn-card{transition:background .2s ease,border-color .2s ease;}
+    .turn-text{min-width:0;}
+    .turn-card .status-subtitle{line-height:1.35;}
+    .turn-card[data-type=success]{background:linear-gradient(180deg,#f0fdf4,#fff);border-color:#86efac;}
+    .turn-card[data-type=success] .status-subtitle{color:#166534;}
+    .turn-card[data-type=warn]{background:linear-gradient(180deg,#fffbeb,#fff);border-color:#fcd34d;}
+    .turn-card[data-type=warn] .status-subtitle{color:#92400e;}
+    .turn-card[data-type=error]{background:linear-gradient(180deg,#fef2f2,#fff);border-color:#fca5a5;}
+    .turn-card[data-type=error] .status-subtitle{color:#991b1b;}
+    .toolbar .chip{min-height:40px;}
+    .phone-only{display:none!important;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:#f1f5f9;border:1px solid var(--border);font-weight:900;font-size:.9rem;color:#334155;white-space:nowrap;}
+    .chip strong{font-variant-numeric:tabular-nums;color:var(--ink);}
+    .chip.level-chip{background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6;}
+
+    .board-wrap{position:relative;width:100%;aspect-ratio:1/1;margin:0 auto;
+      border-radius:18px;border:3px solid var(--line-box);overflow:hidden;background:white;touch-action:manipulation;container-type:inline-size;
+      box-shadow:0 18px 40px rgba(15,23,42,.12);}
+    .board{display:grid;width:100%;height:100%;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);direction:ltr;outline:none;}
+    .cell{position:relative;display:grid;place-items:center;border-right:1px solid var(--line-thin);border-bottom:1px solid var(--line-thin);
+      background:white;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;min-width:0;min-height:0;
+      font-family:var(--uiFont);font-weight:800;font-variant-numeric:tabular-nums;line-height:1;
+      font-size:calc(100cqw / var(--n) * .58);color:var(--entry);transition:background .12s ease;}
+    .cell.edge-r{border-right:2.5px solid var(--line-box);}
+    .cell.edge-b{border-bottom:2.5px solid var(--line-box);}
+    .cell.last-c{border-right:none;}
+    .cell.last-r{border-bottom:none;}
+    .cell.given{color:var(--given);font-weight:950;}
+    .cell.peer{background:var(--peer);}
+    .cell.same{background:var(--same);}
+    .cell.sel{background:var(--sel);box-shadow:inset 0 0 0 3px #7c3aed;z-index:1;}
+    .cell.clash{color:var(--clashInk);background:var(--clash);}
+    .cell.clash.sel{background:#fecaca;}
+    .cell.wrong{color:var(--clashInk);}
+    .cell.wrong::after{content:"";position:absolute;left:18%;right:18%;bottom:12%;height:3px;border-radius:3px;background:var(--clashInk);}
+    .cell.revealed{color:#b45309;}
+    .cell.solution-fill{color:#b45309;font-style:italic;}
+    .cell.pop{animation:cellPop .28s ease;}
+    @keyframes cellPop{0%{transform:scale(.6);}70%{transform:scale(1.12);}100%{transform:scale(1);}}
+    .cell.done-wave{animation:doneWave .6s ease both;}
+    @keyframes doneWave{0%{background:white;}40%{background:#bbf7d0;}100%{background:white;}}
+    .notes{position:absolute;inset:6%;display:grid;grid-template-columns:repeat(var(--nc),1fr);grid-template-rows:repeat(var(--nr),1fr);pointer-events:none;}
+    .notes span{display:grid;place-items:center;font-size:calc(100cqw / var(--n) * .23);font-weight:850;color:#475569;line-height:1;}
+    .notes span.hot{color:#6d28d9;font-weight:950;background:rgba(124,58,237,.14);border-radius:4px;}
+    .board-cover{position:absolute;inset:0;display:none;place-items:center;z-index:5;background:rgba(248,250,252,.97);text-align:center;padding:20px;}
+    .board-cover.show{display:grid;}
+    .board-cover .cover-card{display:grid;gap:12px;justify-items:center;}
+    .board-cover .cover-icon{font-size:3rem;}
+    .board-cover strong{font-size:1.4rem;font-weight:950;letter-spacing:-.02em;}
+    .countdown{background:rgba(248,250,252,.98);}
+
+    .pad-col{display:grid;gap:12px;align-content:start;}
+    .tool-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding-top:6px;}
+    .tool-btn{display:grid;justify-items:center;gap:3px;padding:10px 4px;border-radius:16px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);
+      color:#334155;font-size:.7rem;font-weight:900;box-shadow:0 8px 18px rgba(15,23,42,.06);min-height:62px;position:relative;}
+    .tool-btn .ti{font-size:1.35rem;line-height:1;}
+    .tool-btn .english-under{display:none;}
+    .tool-btn{line-height:1.1;}
+    .tool-btn.active{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.12);}
+    .tool-btn .badge{position:absolute;top:-8px;right:-4px;font-size:.6rem;border:2px solid white;font-weight:950;background:#e2e8f0;color:#334155;border-radius:999px;padding:1px 6px;}
+    .tool-btn.active .badge{background:var(--purple);color:white;}
+    .num-pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;direction:ltr;}
+    .num-pad.n4{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .num-btn{position:relative;display:grid;place-items:center;aspect-ratio:1/1;border-radius:18px;border:2px solid #c7d2fe;background:linear-gradient(180deg,#fff,#eef2ff);
+      color:#1e3a8a;font-size:2rem;font-weight:950;font-variant-numeric:tabular-nums;padding:0;box-shadow:0 10px 20px rgba(37,99,235,.10);}
+    .num-btn:hover{border-color:#818cf8;}
+    .num-btn .left{position:absolute;bottom:5px;right:8px;font-size:.66rem;font-weight:900;color:#64748b;}
+    .num-btn.done{opacity:.35;}
+    .num-pad.notes-mode .num-btn{border-color:#ddd6fe;background:linear-gradient(180deg,#fff,#f5f3ff);color:#6d28d9;font-size:1.35rem;}
+    .pad-hint{margin:0;font-size:.78rem;color:var(--muted);font-weight:800;text-align:center;line-height:1.35;}
+    .pad-hint kbd{font-family:var(--uiFont);font-size:.72rem;padding:1px 5px;border-radius:5px;background:#f1f5f9;border:1px solid var(--border);}
+
+    .tech-list{display:grid;gap:8px;margin:0;padding:0;list-style:none;}
+    .tech-list li{padding:9px 11px;border-radius:14px;background:white;border:1px solid var(--border);font-size:.86rem;font-weight:800;color:#334155;line-height:1.35;}
+    .tech-list li b{display:block;color:var(--ink);font-weight:950;}
+    .tech-list li.new{border-color:#ddd6fe;background:#faf5ff;}
+
+    .settings-list{display:grid;gap:10px;margin-top:14px;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;}
+    .toggle-row .tr-text{display:grid;gap:3px;}
+    .toggle-row .tr-text strong{font-weight:950;color:var(--ink);}
+    .toggle-row .tr-text small{color:var(--muted);font-weight:750;font-size:.82rem;}
+    .toggle-row input{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:48px;height:28px;border-radius:999px;background:#cbd5e1;position:relative;cursor:pointer;transition:background .15s ease;margin:0;}
+    .toggle-row input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:white;box-shadow:0 2px 6px rgba(15,23,42,.25);transition:left .15s ease;}
+    .toggle-row input:checked{background:var(--purple);}
+    .toggle-row input:checked::after{left:23px;}
+    .toggle-row input:disabled{opacity:.5;}
+    .toggle-row.locked{opacity:.7;cursor:not-allowed;}
+    .end-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-top:10px;}
+    .end-stats .stat-card strong{font-size:1.3rem;}
+    .race-rank{display:grid;gap:8px;margin-top:10px;}
+    .race-rank .player-row.win{border-color:#86efac;background:#f0fdf4;}
+    .rules-list b{color:var(--ink);}
+
+    @media(max-width:1280px){
+      .game-area{grid-template-columns:1fr;}
+      .side-panel{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+    }
+    @media(max-width:1080px){
+      .status-strip{grid-template-columns:1fr;}
+      .level-grid.five{grid-template-columns:repeat(3,minmax(0,1fr));}
+      .board-stage{--bs:min(640px,calc(100dvh - 300px));}
+    }
+    @media(max-width:860px){
+      .board-stage{grid-template-columns:1fr;}
+      .board-col,.pad-col{width:min(100%,640px);margin:0 auto;}
+      .num-pad,.num-pad.n4{grid-template-columns:repeat(var(--n),minmax(0,1fr));}
+      .num-btn{aspect-ratio:auto;height:60px;font-size:1.7rem;}
+      .pad-hint{display:none;}
+    }
+    .waiting-overlay{overflow:auto;}
+
+/* ==== MMT PHONE LAYOUT (added 2026-09-18) — do not edit above this line ==== */
+/* ---- PHONES ----------------------------------------------------------------
+   The shell is built for a projector: a three-column header and side panels.
+   On a phone that header stacks into three or four rows and eats a third of the
+   screen before the board is reached, and a tall setup panel loses its buttons
+   off the bottom with no way to scroll to them. This block is the phone shell —
+   the same one Greedy Pig got. Per-game rules follow it.
+   -------------------------------------------------------------------------- */
+@media(max-width:700px){
+  /* Header: logo and title on one line, buttons wrapped underneath, and it
+     scrolls away with the page instead of holding the top third of the screen. */
+  .mmtTopbar{
+    position:relative;
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:center;
+    gap:6px 8px;
+    padding:7px 10px;
+    min-height:0;
+  }
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{
+    grid-column:2;justify-self:start;text-align:left;min-width:0;
+    font-size:1.1rem;line-height:1.14;
+  }
+  .actions{
+    grid-column:1/-1;margin:0;
+    display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;
+  }
+  /* Keep the buttons at a thumb-sized height rather than the 31px they
+     collapse to, or they are hard to hit accurately on a phone. */
+  .actions .btn,.actions button{
+    padding:9px 12px;font-size:13px;line-height:1.15;border-radius:11px;
+    white-space:nowrap;min-width:0;min-height:38px;
+  }
+  .language-control{padding:3px 6px;border-radius:12px;gap:6px;}
+  .language-control label{font-size:11px;}
+  /* 16px keeps iOS from zooming the whole page when the select is tapped. */
+  .language-control select{padding:5px 8px;font-size:16px;border-radius:9px;width:auto;}
+
+  /* Modals: a setup panel taller than the phone has to scroll, or its Continue
+     button sits off-screen with no way to reach it. */
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal,.modalBox{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;}
+
+  /* Grid items default to min-width:auto, so one nowrap pill deep inside a card
+     can widen the whole track past the screen. Let the tracks shrink. */
+  .layout,.layout>*,.main-card,.panel,.panel-card,.card{min-width:0;}
+
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+}
+
+/* ---- Sudoku on a phone ----------------------------------------------------
+   The board is the whole game, so it takes the full width, and the number pad
+   sits directly under it as one row a thumb can reach. Status and board bar
+   are trimmed so board + pad fit on a 390 x 780 screen without scrolling. */
+@media(max-width:700px){
+  .level-grid.five{grid-template-columns:1fr;}
+  .level-btn .level-title-row{flex-direction:row;align-items:center;}
+  .game-card{padding:10px;gap:10px;overflow:clip;}
+  .turn-card{min-height:0;padding:9px 12px;border-radius:16px;}
+  .status-icon{width:30px;height:30px;font-size:1.1rem;}
+  .status-title{font-size:.98rem;}
+  .status-subtitle{font-size:.82rem;}
+  .toolbar button{padding:9px 12px;font-size:13px;min-height:38px;}
+  .toolbar{gap:6px;}
+  .toolbar .chip{padding:5px 9px;font-size:.8rem;min-height:38px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .phone-only:not(.hidden){display:inline-flex!important;}
+  .no-phone{display:none!important;}
+  .lc-name,.btn-label{display:none;}
+  #pauseBtn{min-width:44px;justify-content:center;}
+  .board-wrap{width:100%;min-width:0;border-radius:12px;border-width:2.5px;}
+  .pad-col{width:auto;gap:8px;position:sticky;bottom:0;z-index:6;background:rgba(255,255,255,.96);margin:0 -10px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--border);box-shadow:0 -10px 24px rgba(15,23,42,.08);}
+  .tool-row{gap:6px;}
+  .tool-btn{min-height:50px;padding:6px 2px;font-size:.66rem;border-radius:12px;}
+  .tool-row{padding-top:4px;}
+  .tool-btn .ti{font-size:1.15rem;}
+  .num-pad,.num-pad.n4{gap:5px;}
+  .num-btn{height:52px;font-size:1.45rem;border-radius:12px;}
+  .num-btn .left{bottom:2px;right:4px;font-size:.58rem;}
+  .num-pad.notes-mode .num-btn{font-size:1.15rem;}
+  .side-panel{grid-template-columns:1fr;}
+  .end-stats{gap:6px;}
+  .end-stats .stat-card{padding:10px;}
+  .toggle-row{padding:10px 12px;}
+  /* The toolbar above the board already has Ready and Copy room code, so the
+     overlay card drops its copies and shrinks to fit inside a phone board. */
+  .waiting-overlay{padding:8px;place-items:start center;}
+  .waiting-card{padding:14px;gap:8px;border-radius:18px;}
+  .waiting-title{font-size:1.15rem;}
+  .waiting-sub{font-size:.85rem;}
+  .waiting-player{padding:8px 10px;}
+  .waiting-actions{display:none;}
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+</style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle" data-i18n="Sudoku">Sudoku</div>
+    <div class="actions">
+      <div class="language-control">
+        <label id="languageMainLabel" for="mainLanguageSelect">Language</label>
+        <select id="mainLanguageSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="ar">Arabic العربية</option>
+          <option value="fa">Farsi فارسی</option>
+        </select>
+      </div>
+      <button class="btn" id="rulesBtn" type="button" data-i18n="Rules">Rules</button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎</button>
+      <button class="btn btn-primary hidden phone-only" id="newPuzzleTopBtn" type="button" data-i18n="New Puzzle">New Puzzle</button>
+      <button class="btn hidden" id="backToMenuBtn" type="button" data-i18n="Back to menu">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============================================================ MENU -->
+    <section class="card menu-card" id="menuPage">
+      <div class="hero">
+        <div class="menu-panel menu-center-panel">
+          <h2 data-i18n="Choose a game mode">Choose a game mode</h2>
+          <div class="mode-grid">
+            <button class="mode-card continue-card hidden" id="continueBtn" type="button">
+              <span class="mode-icon">▶️</span>
+              <strong data-i18n="Continue puzzle">Continue puzzle</strong>
+              <span id="continueDesc">—</span>
+            </button>
+            <button class="mode-card" id="singleModeBtn" type="button">
+              <span class="mode-icon">🧩</span>
+              <strong data-i18n="Single Player">Single Player</strong>
+              <span data-i18n="Solve a Sudoku at your own pace.">Solve a Sudoku at your own pace.</span>
+            </button>
+            <button class="mode-card" id="raceModeBtn" type="button">
+              <span class="mode-icon">🏁</span>
+              <strong data-i18n="Race Mode">Race Mode</strong>
+              <span data-i18n="Two to four players race to solve the same puzzle on their own boards.">Two to four players race to solve the same puzzle on their own boards.</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-panel setup-modal-panel" id="singleSetupPanel" role="dialog" aria-modal="true" aria-labelledby="singleSetupTitle">
+        <div class="setup-modal-head"><h2 id="singleSetupTitle" data-i18n="Choose difficulty">Choose difficulty</h2><button class="btn-soft setup-modal-back" id="singleSetupBackBtn" type="button" data-i18n="Back">Back</button></div>
+        <p class="form-note" data-i18n="Levels are graded by the hardest thinking a puzzle needs, not just how many numbers are missing. Every puzzle has exactly one answer and never needs guessing.">Levels are graded by the hardest thinking a puzzle needs, not just how many numbers are missing. Every puzzle has exactly one answer and never needs guessing.</p>
+        <div class="level-grid five" id="singleLevelGrid"></div>
+        <button class="btn-primary" id="startSingleBtn" type="button" data-i18n="Start Single Player">Start Single Player</button>
+      </div>
+
+      <div class="menu-panel setup-modal-panel race-setup" id="raceSetupPanel" role="dialog" aria-modal="true" aria-labelledby="raceSetupTitle">
+        <div class="setup-modal-head"><h2 id="raceSetupTitle" data-i18n="Race Mode setup">Race Mode setup</h2><button class="btn-soft setup-modal-back" id="raceSetupBackBtn" type="button" data-i18n="Back">Back</button></div>
+        <p class="form-note" data-i18n="Create a room or join with a code. Everyone gets the same puzzle. Mistake checking is off in a race.">Create a room or join with a code. Everyone gets the same puzzle. Mistake checking is off in a race.</p>
+        <div class="setup-fields">
+          <label><span data-i18n="Your name">Your name</span><input id="raceNameInput" type="text" placeholder="Player name" maxlength="24" autocomplete="off" /></label>
+          <label><span data-i18n="Race difficulty">Race difficulty</span>
+            <select id="raceLevelSelect"></select>
+          </label>
+        </div>
+        <div class="lobby-actions">
+          <button class="btn-primary" id="createRoomBtn" type="button" data-i18n="Create Room">Create Room</button>
+          <button class="btn-soft" id="restoreRoomBtn" type="button" data-i18n="Restore last room">Restore last room</button>
+        </div>
+        <div class="race-join">
+          <label><span data-i18n="Room code">Room code</span><input id="roomCodeInput" type="text" placeholder="ABCD" maxlength="6" autocomplete="off" autocapitalize="characters" /></label>
+          <button class="btn-green" id="joinRoomBtn" type="button" data-i18n="Join Room">Join Room</button>
+        </div>
+        <div class="message" id="raceSetupMessage">Enter your name, then create or join a room.</div>
+      </div>
+      <div class="modal-backdrop" id="setupModalBackdrop" aria-hidden="true"></div>
+    </section>
+
+    <!-- ============================================================ GAME -->
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card" id="turnCard">
+          <div class="status-icon" id="statusIcon">🧩</div>
+          <div class="turn-text">
+            <div class="status-title" id="statusTitle">Fill every row, column and box.</div>
+            <div class="status-subtitle" id="messageBox" aria-live="polite">Tap a cell, then tap a number.</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span class="chip level-chip" id="levelChip">—</span>
+          <span class="chip" id="timerChipWrap">⏱ <strong id="timerChip">00:00</strong></span>
+          <span class="chip hidden" id="mistakeChipWrap">✗ <strong id="mistakeChip">0</strong></span>
+          <button class="btn-soft hidden" id="pauseBtn" type="button"><span aria-hidden="true">❚❚</span> <span class="btn-label" data-i18n="Pause">Pause</span></button>
+          <button class="btn-soft hidden" id="restartBtn" type="button" data-i18n="Restart">Restart</button>
+          <button class="btn-primary hidden no-phone" id="newPuzzleBtn" type="button" data-i18n="New Puzzle">New Puzzle</button>
+          <button class="btn-soft hidden" id="copyRoomBtn" type="button" data-i18n="Copy room code">Copy room code</button>
+          <button class="btn-green hidden" id="readyBtn" type="button" data-i18n="Ready">Ready</button>
+          <button class="btn-purple hidden" id="playAgainBtn" type="button" data-i18n="Play Again">Play Again</button>
+          <button class="btn-soft hidden" id="viewSolutionBtn" type="button" data-i18n="View Solution">View Solution</button>
+          <button class="btn-red hidden" id="leaveRoomBtn" type="button" data-i18n="Leave room">Leave room</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="board-stage">
+          <div class="board-col">
+            <div class="board-wrap" id="boardWrap">
+              <div class="board" id="board" role="grid" aria-label="Sudoku board" tabindex="-1"></div>
+              <div class="board-cover" id="pauseCover">
+                <div class="cover-card">
+                  <div class="cover-icon">❚❚</div>
+                  <strong data-i18n="Paused">Paused</strong>
+                  <button class="btn-primary" id="resumeBtn" type="button" data-i18n="Resume">Resume</button>
+                </div>
+              </div>
+              <div class="board-cover" id="loadingCover">
+                <div class="cover-card">
+                  <div class="cover-icon">🧩</div>
+                  <strong data-i18n="Making your puzzle…">Making your puzzle…</strong>
+                </div>
+              </div>
+              <div class="countdown" id="countdownOverlay">3</div>
+              <div class="waiting-overlay" id="waitingOverlay">
+                <div class="waiting-card">
+                  <div class="waiting-top">
+                    <p class="pill" style="width:max-content;margin:0;"><span data-i18n="Room">Room</span>&nbsp;<span class="room-code" id="waitingRoomCode">----</span></p>
+                  </div>
+                  <h2 class="waiting-title" id="waitingTitle">Waiting for players</h2>
+                  <p class="waiting-sub" id="waitingSubtitle">Everyone starts together when all players have pressed Ready.</p>
+                  <div class="waiting-players" id="waitingPlayers"></div>
+                  <div class="waiting-actions">
+                    <button class="btn-soft" id="overlayCopyRoomBtn" type="button" data-i18n="Copy room code">Copy room code</button>
+                    <button class="btn-green" id="overlayReadyBtn" type="button" data-i18n="Ready">Ready</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pad-col">
+            <div class="tool-row">
+              <button class="tool-btn" id="undoBtn" type="button"><span class="ti" aria-hidden="true">↶</span><span data-i18n="Undo">Undo</span></button>
+              <button class="tool-btn" id="eraseBtn" type="button"><span class="ti" aria-hidden="true">⌫</span><span data-i18n="Erase">Erase</span></button>
+              <button class="tool-btn" id="notesBtn" type="button" aria-pressed="false"><span class="badge" id="notesBadge">OFF</span><span class="ti" aria-hidden="true">✏️</span><span data-i18n="Notes">Notes</span></button>
+            </div>
+            <div class="num-pad" id="numPad" aria-label="Number pad"></div>
+            <p class="pad-hint" id="padHint"></p>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="panel-section hidden" id="roomPanel">
+            <div class="room-badge"><span><span data-i18n="Room">Room</span> <span class="room-code" id="roomCodeBadge">----</span></span><span class="pill" id="roomStatusPill">waiting</span></div>
+          </section>
+          <section class="panel-section hidden" id="playersPanel">
+            <h2 data-i18n="Race progress">Race progress</h2>
+            <div class="progress-list" id="progressList"></div>
+          </section>
+          <section class="panel-section">
+            <h2 data-i18n="Puzzle stats">Puzzle stats</h2>
+            <div class="stat-grid">
+              <div class="stat-card"><span data-i18n="Filled">Filled</span><strong id="filledStat">0/0</strong></div>
+              <div class="stat-card"><span data-i18n="Cells left">Cells left</span><strong id="leftStat">0</strong></div>
+              <div class="stat-card"><span data-i18n="Given">Given</span><strong id="givenStat">0</strong></div>
+              <div class="stat-card"><span data-i18n="Mistakes">Mistakes</span><strong id="mistakesStat">–</strong></div>
+            </div>
+          </section>
+          <section class="panel-section">
+            <h2 data-i18n="Thinking you may need">Thinking you may need</h2>
+            <ul class="tech-list" id="techList"></ul>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="brand-footer">This tool and more can be found at&nbsp;<a href="https://www.millsmathstools.au" target="_self">www.millsmathstools.au</a></div>
+
+  <div class="modal-backdrop" id="rulesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header">
+        <h2 id="rulesTitle" data-i18n="Sudoku rules">Sudoku rules</h2>
+        <button class="btn-soft" id="closeRulesBtn" type="button" data-i18n="Close">Close</button>
+      </div>
+      <ul class="rules-list" id="rulesList"></ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header">
+        <h2 id="settingsTitle" data-i18n="Settings">Settings</h2>
+        <button class="btn-soft" id="closeSettingsBtn" type="button" data-i18n="Close">Close</button>
+      </div>
+      <div class="settings-list" id="settingsList"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="endModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="modal-header">
+        <h2 id="endTitle">Puzzle complete!</h2>
+        <button class="btn-soft" id="closeEndBtn" type="button" data-i18n="Close">Close</button>
+      </div>
+      <div id="endBody"></div>
+      <div class="end-actions">
+        <button class="btn-primary" id="endPlayAgainBtn" type="button" data-i18n="Play Again">Play Again</button>
+        <button class="btn-soft" id="endViewSolutionBtn" type="button" data-i18n="View Solution">View Solution</button>
+        <button class="btn-soft" id="endBackMenuBtn" type="button" data-i18n="Back to menu">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* ============================================================== SUDOKU ENGINE
+   Pure logic, no DOM. Works for any n x n board with br x bc boxes
+   (4x4 = 2x2 boxes, 6x6 = 2x3 boxes, 9x9 = 3x3 boxes).
+
+   HOW A PUZZLE IS GRADED
+   A puzzle's difficulty is the HARDEST TECHNIQUE A HUMAN NEEDS to finish it,
+   not the number of givens. The grader solves the way a person does — always
+   using the easiest step that makes progress — and records the hardest tier
+   it had to reach:
+     tier 1  naked single, hidden single
+     tier 2  pointing / claiming (locked candidates), naked and hidden
+             pairs and triples
+     tier 3  X-Wing, Swordfish, XY-Wing, XYZ-Wing
+   If the grader finishes, the solution is unique by construction (every step
+   is a forced deduction), so no separate uniqueness check is needed and no
+   puzzle on this site ever needs guessing.
+
+   HOW A PUZZLE IS MADE
+   A random full grid is filled by backtracking. Cells are then removed in
+   180-degree-symmetric pairs (the classic newspaper look); a removal is kept
+   only if the puzzle is STILL solvable using techniques up to the level's
+   tier. The finished puzzle must actually need that tier — a "Spicy" that
+   only needs singles is thrown away and another is made.
+
+   ========================================================================= */
+const SudokuEngine = (() => {
+  const geoCache = {};
+
+  function geometry(n, br, bc) {
+    const key = `${n}:${br}x${bc}`;
+    if (geoCache[key]) return geoCache[key];
+    const N = n * n;
+    const rowOf = new Array(N), colOf = new Array(N), boxOf = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const r = Math.floor(i / n), c = i % n;
+      rowOf[i] = r; colOf[i] = c;
+      boxOf[i] = Math.floor(r / br) * (n / bc) + Math.floor(c / bc);
+    }
+    const units = [];      // 0..n-1 rows, n..2n-1 cols, 2n..3n-1 boxes
+    const unitKind = [];
+    for (let u = 0; u < n; u++) { units.push([]); unitKind.push('row'); }
+    for (let u = 0; u < n; u++) { units.push([]); unitKind.push('col'); }
+    for (let u = 0; u < n; u++) { units.push([]); unitKind.push('box'); }
+    for (let i = 0; i < N; i++) {
+      units[rowOf[i]].push(i);
+      units[n + colOf[i]].push(i);
+      units[2 * n + boxOf[i]].push(i);
+    }
+    const peers = [];
+    for (let i = 0; i < N; i++) {
+      const s = new Set([...units[rowOf[i]], ...units[n + colOf[i]], ...units[2 * n + boxOf[i]]]);
+      s.delete(i);
+      peers.push([...s]);
+    }
+    const peerSet = peers.map(p => new Set(p));
+    const g = { n, br, bc, N, ALL: (1 << n) - 1, rowOf, colOf, boxOf, units, unitKind, peers, peerSet };
+    geoCache[key] = g;
+    return g;
+  }
+
+  const bit = d => 1 << (d - 1);
+  function popcount(m) { let c = 0; while (m) { m &= m - 1; c++; } return c; }
+  function digitsOf(m) { const out = []; let d = 1; while (m) { if (m & 1) out.push(d); m >>= 1; d++; } return out; }
+  function firstDigit(m) { let d = 1; while (!(m & 1)) { m >>= 1; d++; } return d; }
+
+  function shuffle(arr, rng) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function combos(arr, k, start = 0, pick = [], out = []) {
+    if (pick.length === k) { out.push(pick.slice()); return out; }
+    for (let i = start; i < arr.length; i++) { pick.push(arr[i]); combos(arr, k, i + 1, pick, out); pick.pop(); }
+    return out;
+  }
+
+  /* ---------------------------------------------------------- backtracking */
+  // Counts solutions up to `limit`. Used to fill random grids and to derive
+  // the solution from the givens (race rooms store only the givens).
+  function search(grid, geo, limit, rng) {
+    const { N, ALL, rowOf, colOf, boxOf, n } = geo;
+    const g = grid.slice();
+    const rowM = new Array(n).fill(0), colM = new Array(n).fill(0), boxM = new Array(n).fill(0);
+    for (let i = 0; i < N; i++) {
+      const d = g[i]; if (!d) continue;
+      const b = bit(d);
+      if ((rowM[rowOf[i]] | colM[colOf[i]] | boxM[boxOf[i]]) & b) return { count: 0, solution: null };
+      rowM[rowOf[i]] |= b; colM[colOf[i]] |= b; boxM[boxOf[i]] |= b;
+    }
+    let count = 0, solution = null;
+    function rec() {
+      let best = -1, bestMask = 0, bestN = 99;
+      for (let i = 0; i < N; i++) {
+        if (g[i]) continue;
+        const m = ALL & ~(rowM[rowOf[i]] | colM[colOf[i]] | boxM[boxOf[i]]);
+        const c = popcount(m);
+        if (c < bestN) { bestN = c; best = i; bestMask = m; if (c <= 1) break; }
+      }
+      if (best < 0) { count++; if (!solution) solution = g.slice(); return count >= limit; }
+      if (!bestMask) return false;
+      let ds = digitsOf(bestMask);
+      if (rng) ds = shuffle(ds, rng);
+      for (const d of ds) {
+        const b = bit(d);
+        g[best] = d; rowM[rowOf[best]] |= b; colM[colOf[best]] |= b; boxM[boxOf[best]] |= b;
+        if (rec()) return true;
+        g[best] = 0; rowM[rowOf[best]] &= ~b; colM[colOf[best]] &= ~b; boxM[boxOf[best]] &= ~b;
+      }
+      return false;
+    }
+    rec();
+    return { count, solution };
+  }
+  function randomFull(geo, rng) { return search(new Array(geo.N).fill(0), geo, 1, rng).solution; }
+  function solve(grid, geo) { const r = search(grid, geo, 2, null); return r.count === 1 ? r.solution : null; }
+  function countSolutions(grid, geo, limit = 2) { return search(grid, geo, limit, null).count; }
+
+  /* --------------------------------------------------------- logical state */
+  function makeState(grid, geo) {
+    const { N, ALL, peers } = geo;
+    const g = grid.slice();
+    const cand = new Array(N).fill(0);
+    for (let i = 0; i < N; i++) {
+      if (g[i]) continue;
+      let m = ALL;
+      for (const p of peers[i]) if (g[p]) m &= ~bit(g[p]);
+      cand[i] = m;
+    }
+    return { g, cand };
+  }
+  function place(st, geo, i, d) {
+    st.g[i] = d; st.cand[i] = 0;
+    const b = bit(d);
+    for (const p of geo.peers[i]) st.cand[p] &= ~b;
+  }
+
+  /* -------------------------------------------------------- the techniques */
+  // Each returns a STEP or null. A step is
+  //   { tech, tier, place:[cell,digit] }            — a digit goes in, or
+  //   { tech, tier, elim:[[cell,mask],...] }        — candidates come out
+  // plus the unit, digit and cells involved.
+  function nakedSingle(st, geo) {
+    for (let i = 0; i < geo.N; i++) {
+      if (!st.g[i] && popcount(st.cand[i]) === 1) return { tech: 'naked-single', tier: 1, place: [i, firstDigit(st.cand[i])], cells: [i] };
+    }
+    return null;
+  }
+  const UNIT_ORDER_CACHE = {};
+  function unitOrder(geo) {           // boxes first: that is where people look first
+    const k = geo.n;
+    if (!UNIT_ORDER_CACHE[k]) {
+      const o = []; for (let u = 2 * k; u < 3 * k; u++) o.push(u); for (let u = 0; u < 2 * k; u++) o.push(u);
+      UNIT_ORDER_CACHE[k] = o;
+    }
+    return UNIT_ORDER_CACHE[k];
+  }
+  function hiddenSingle(st, geo) {
+    for (const u of unitOrder(geo)) {
+      const cells = geo.units[u];
+      for (let d = 1; d <= geo.n; d++) {
+        const b = bit(d);
+        let pos = -1, cnt = 0, placed = false;
+        for (const i of cells) {
+          if (st.g[i] === d) { placed = true; break; }
+          if (st.cand[i] & b) { cnt++; pos = i; }
+        }
+        if (!placed && cnt === 1) return { tech: 'hidden-single', tier: 1, place: [pos, d], unit: u, digit: d, cells: [pos] };
+      }
+    }
+    return null;
+  }
+  function lockedCandidates(st, geo) {
+    const { n, units, rowOf, colOf, boxOf } = geo;
+    // Pointing: inside a box, d is confined to one row/col -> out of the rest of that line.
+    for (let bx = 0; bx < n; bx++) {
+      const cells = units[2 * n + bx];
+      for (let d = 1; d <= n; d++) {
+        const b = bit(d);
+        const pos = cells.filter(i => st.cand[i] & b);
+        if (pos.length < 2) continue;
+        for (const kind of ['row', 'col']) {
+          const of = kind === 'row' ? rowOf : colOf;
+          const line = of[pos[0]];
+          if (!pos.every(i => of[i] === line)) continue;
+          const lineCells = units[(kind === 'row' ? 0 : n) + line];
+          const elim = lineCells.filter(i => boxOf[i] !== bx && (st.cand[i] & b)).map(i => [i, b]);
+          if (elim.length) return { tech: 'pointing', tier: 2, elim, digit: d, unit: 2 * n + bx, cells: pos };
+        }
+      }
+    }
+    // Claiming: inside a row/col, d is confined to one box -> out of the rest of that box.
+    for (let u = 0; u < 2 * n; u++) {
+      const cells = units[u];
+      for (let d = 1; d <= n; d++) {
+        const b = bit(d);
+        const pos = cells.filter(i => st.cand[i] & b);
+        if (pos.length < 2) continue;
+        const bx = boxOf[pos[0]];
+        if (!pos.every(i => boxOf[i] === bx)) continue;
+        const uset = new Set(cells);
+        const elim = units[2 * n + bx].filter(i => !uset.has(i) && (st.cand[i] & b)).map(i => [i, b]);
+        if (elim.length) return { tech: 'claiming', tier: 2, elim, digit: d, unit: u, cells: pos };
+      }
+    }
+    return null;
+  }
+  function nakedSubset(st, geo, k) {
+    for (const u of unitOrder(geo)) {
+      const cells = geo.units[u];
+      const open = cells.filter(i => !st.g[i] && popcount(st.cand[i]) >= 2 && popcount(st.cand[i]) <= k);
+      if (open.length < k) continue;
+      for (const set of combos(open, k)) {
+        let m = 0; for (const i of set) m |= st.cand[i];
+        if (popcount(m) !== k) continue;
+        const inSet = new Set(set);
+        const elim = cells.filter(i => !inSet.has(i) && !st.g[i] && (st.cand[i] & m)).map(i => [i, st.cand[i] & m]);
+        if (elim.length) return { tech: k === 2 ? 'naked-pair' : 'naked-triple', tier: 2, elim, unit: u, cells: set, mask: m };
+      }
+    }
+    return null;
+  }
+  function hiddenSubset(st, geo, k) {
+    for (const u of unitOrder(geo)) {
+      const cells = geo.units[u];
+      const placed = new Set(cells.map(i => st.g[i]).filter(Boolean));
+      const digits = [];
+      const where = {};
+      for (let d = 1; d <= geo.n; d++) {
+        if (placed.has(d)) continue;
+        const pos = cells.filter(i => st.cand[i] & bit(d));
+        if (pos.length >= 1 && pos.length <= k) { digits.push(d); where[d] = pos; }
+      }
+      if (digits.length < k) continue;
+      for (const ds of combos(digits, k)) {
+        const cs = new Set(); let m = 0;
+        for (const d of ds) { m |= bit(d); for (const i of where[d]) cs.add(i); }
+        if (cs.size !== k) continue;
+        const elim = [...cs].filter(i => st.cand[i] & ~m).map(i => [i, st.cand[i] & ~m]);
+        if (elim.length) return { tech: k === 2 ? 'hidden-pair' : 'hidden-triple', tier: 2, elim, unit: u, cells: [...cs], mask: m };
+      }
+    }
+    return null;
+  }
+  function fish(st, geo, s) {
+    const { n, units } = geo;
+    for (let d = 1; d <= n; d++) {
+      const b = bit(d);
+      for (const baseIsRow of [true, false]) {
+        const baseOff = baseIsRow ? 0 : n, coverOff = baseIsRow ? n : 0;
+        const lines = [];
+        for (let l = 0; l < n; l++) {
+          const pos = units[baseOff + l].filter(i => st.cand[i] & b);
+          if (pos.length >= 2 && pos.length <= s) lines.push({ l, cover: pos.map(i => baseIsRow ? geo.colOf[i] : geo.rowOf[i]), pos });
+        }
+        if (lines.length < s) continue;
+        for (const set of combos(lines, s)) {
+          const cover = new Set(); set.forEach(x => x.cover.forEach(c => cover.add(c)));
+          if (cover.size !== s) continue;
+          const baseLines = new Set(set.map(x => x.l));
+          const elim = [];
+          for (const c of cover) for (const i of units[coverOff + c]) {
+            const line = baseIsRow ? geo.rowOf[i] : geo.colOf[i];
+            if (!baseLines.has(line) && (st.cand[i] & b)) elim.push([i, b]);
+          }
+          if (elim.length) return { tech: s === 2 ? 'x-wing' : 'swordfish', tier: 3, elim, digit: d, cells: set.flatMap(x => x.pos) };
+        }
+      }
+    }
+    return null;
+  }
+  function xyWing(st, geo) {
+    const { N, peers, peerSet } = geo;
+    for (let p = 0; p < N; p++) {
+      if (st.g[p] || popcount(st.cand[p]) !== 2) continue;
+      const [a, bb] = digitsOf(st.cand[p]);
+      const pincers = peers[p].filter(i => !st.g[i] && popcount(st.cand[i]) === 2);
+      for (const x of pincers) {
+        if (!(st.cand[x] & bit(a)) || (st.cand[x] & bit(bb))) continue;
+        const c = firstDigit(st.cand[x] & ~bit(a));
+        for (const y of pincers) {
+          if (y === x) continue;
+          if (st.cand[y] !== (bit(bb) | bit(c))) continue;
+          const elim = peers[x].filter(i => i !== p && i !== y && peerSet[y].has(i) && (st.cand[i] & bit(c))).map(i => [i, bit(c)]);
+          if (elim.length) return { tech: 'xy-wing', tier: 3, elim, digit: c, cells: [p, x, y] };
+        }
+      }
+    }
+    return null;
+  }
+  function xyzWing(st, geo) {
+    const { N, peers, peerSet } = geo;
+    for (let p = 0; p < N; p++) {
+      if (st.g[p] || popcount(st.cand[p]) !== 3) continue;
+      const pm = st.cand[p];
+      const pincers = peers[p].filter(i => !st.g[i] && popcount(st.cand[i]) === 2 && (st.cand[i] & ~pm) === 0);
+      for (const [x, y] of combos(pincers, 2)) {
+        if ((st.cand[x] | st.cand[y]) !== pm) continue;
+        const common = st.cand[x] & st.cand[y];
+        if (popcount(common) !== 1) continue;
+        const elim = peers[p].filter(i => i !== x && i !== y && peerSet[x].has(i) && peerSet[y].has(i) && (st.cand[i] & common)).map(i => [i, common]);
+        if (elim.length) return { tech: 'xyz-wing', tier: 3, elim, digit: firstDigit(common), cells: [p, x, y] };
+      }
+    }
+    return null;
+  }
+
+  const TECHNIQUES = [
+    [1, nakedSingle], [1, hiddenSingle],
+    [2, lockedCandidates], [2, (s, g) => nakedSubset(s, g, 2)], [2, (s, g) => hiddenSubset(s, g, 2)],
+    [2, (s, g) => nakedSubset(s, g, 3)], [2, (s, g) => hiddenSubset(s, g, 3)],
+    [3, (s, g) => fish(s, g, 2)], [3, xyWing], [3, xyzWing], [3, (s, g) => fish(s, g, 3)],
+  ];
+  function nextStep(st, geo, maxTier = 3) {
+    for (const [tier, fn] of TECHNIQUES) {
+      if (tier > maxTier) break;
+      const step = fn(st, geo);
+      if (step) return step;
+    }
+    return null;
+  }
+  function applyStep(st, geo, step) {
+    if (step.place) place(st, geo, step.place[0], step.place[1]);
+    else for (const [i, m] of step.elim) st.cand[i] &= ~m;
+  }
+  function logicalSolve(grid, geo, maxTier = 3) {
+    const st = makeState(grid, geo);
+    let usedTier = 0; const used = {};
+    for (let guard = 0; guard < 5000; guard++) {
+      let empty = 0, dead = false;
+      for (let i = 0; i < geo.N; i++) if (!st.g[i]) { empty++; if (!st.cand[i]) dead = true; }
+      if (!empty) return { solved: true, tier: usedTier, used, grid: st.g };
+      if (dead) break;
+      const step = nextStep(st, geo, maxTier);
+      if (!step) break;
+      usedTier = Math.max(usedTier, step.tier);
+      used[step.tech] = (used[step.tech] || 0) + 1;
+      applyStep(st, geo, step);
+    }
+    return { solved: false, tier: usedTier, used, grid: st.g };
+  }
+
+  /* ------------------------------------------------------------ the levels */
+  const LEVELS = {
+    sweet:  { n: 4, br: 2, bc: 2, tier: 1, minGivens: 6 },
+    mild:   { n: 6, br: 2, bc: 3, tier: 1, minGivens: 12 },
+    medium: { n: 9, br: 3, bc: 3, tier: 1, minGivens: 30 },
+    spicy:  { n: 9, br: 3, bc: 3, tier: 2, minGivens: 22 },
+    extra:  { n: 9, br: 3, bc: 3, tier: 3, minGivens: 20 },
+  };
+
+  function toStr(g) { return g.join(''); }
+  function fromStr(s) { return [...s].map(Number); }
+
+  function generate(level, rng = Math.random, maxAttempts = 400) {
+    const cfg = LEVELS[level] || LEVELS.medium;
+    const geo = geometry(cfg.n, cfg.br, cfg.bc);
+    const { N } = geo;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const full = randomFull(geo, rng);
+      const puz = full.slice();
+      let givens = N;
+      const order = shuffle([...Array(Math.ceil(N / 2)).keys()], rng);
+      for (const i of order) {
+        const j = N - 1 - i;
+        const drop = i === j ? 1 : 2;
+        if (givens - drop < cfg.minGivens) continue;
+        const a = puz[i], b = puz[j];
+        puz[i] = 0; puz[j] = 0;
+        if (logicalSolve(puz, geo, cfg.tier).solved) givens -= drop;
+        else { puz[i] = a; puz[j] = b; }
+      }
+      const grade = logicalSolve(puz, geo, 3);
+      if (!grade.solved || grade.tier !== cfg.tier) continue;
+      return { level, n: cfg.n, br: cfg.br, bc: cfg.bc, givens: toStr(puz), solution: toStr(full), tier: grade.tier, used: grade.used, clues: givens };
+    }
+    return null;
+  }
+
+  // A difficulty-preserving shuffle of a bank puzzle: relabel digits, shuffle
+  // rows inside bands and bands themselves, the same for columns, and (square
+  // boxes only) maybe transpose. Every one of these keeps the logic identical.
+  function transform(p, rng = Math.random) {
+    const { n, br, bc } = p;
+    const relabel = [0, ...shuffle([...Array(n)].map((_, k) => k + 1), rng)];
+    const bandsR = shuffle([...Array(n / br).keys()], rng);
+    const rows = bandsR.flatMap(bd => shuffle([...Array(br).keys()], rng).map(k => bd * br + k));
+    const bandsC = shuffle([...Array(n / bc).keys()], rng);
+    const cols = bandsC.flatMap(bd => shuffle([...Array(bc).keys()], rng).map(k => bd * bc + k));
+    const flip = br === bc && rng() < 0.5;
+    const map = s => {
+      const src = fromStr(s), out = new Array(n * n);
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+        const sr = flip ? cols[c] : rows[r], sc = flip ? rows[r] : cols[c];
+        out[r * n + c] = relabel[src[sr * n + sc]];
+      }
+      return toStr(out);
+    };
+    return { ...p, givens: map(p.givens), solution: map(p.solution) };
+  }
+
+  return { geometry, LEVELS, generate, transform, logicalSolve, solve, countSolutions, makeState, digitsOf, popcount, bit, fromStr, toStr };
+})();
+window.SudokuEngine = SudokuEngine;
+
+  </script>
+  <script type="module">
+    /* ============================================================ SUDOKU APP
+       Single player works with NO network: Firebase is only imported (dynamic
+       import) when someone opens Race Mode, so a school network that blocks
+       gstatic.com still gets a fully working game.
+
+       RACE ROOMS live at games/sudoku/rooms/{CODE} on mmt-firebase-games,
+       which the existing  match /games/{gameId}/rooms/{roomCode}  rule
+       already covers — no rules change was needed. A room stores the GIVENS
+       only, never the solution: every client derives the solution itself with
+       the engine's solver (the puzzle has exactly one), so the answer is not
+       sitting in the room document for anyone to read.
+       ===================================================================== */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+      authDomain: "mmt-firebase-games.firebaseapp.com",
+      projectId: "mmt-firebase-games",
+      storageBucket: "mmt-firebase-games.firebasestorage.app",
+      messagingSenderId: "980506958719",
+      appId: "1:980506958719:web:729e491108918e92ba584a"
+    };
+    const FB_VER = '10.12.2';
+    const GAME_ID = 'sudoku';
+    const MAX_PLAYERS = 4;
+    const E = window.SudokuEngine;
+
+    let fbPromise = null;
+    function loadFirebase() {
+      if (fbPromise) return fbPromise;
+      fbPromise = (async () => {
+        const base = `https://www.gstatic.com/firebasejs/${FB_VER}`;
+        const [appMod, authMod, fs] = await Promise.all([
+          import(`${base}/firebase-app.js`), import(`${base}/firebase-auth.js`), import(`${base}/firebase-firestore.js`)
+        ]);
+        const app = appMod.initializeApp(firebaseConfig);
+        const auth = authMod.getAuth(app);
+        const db = fs.getFirestore(app);
+        const cred = await authMod.signInAnonymously(auth);
+        return { uid: cred.user.uid, db, fs };
+      })();
+      fbPromise.catch(() => { fbPromise = null; });
+      return fbPromise;
+    }
+    function firebaseErrorMessage(err) {
+      const code = err?.code || '';
+      const extra = {
+        'auth/operation-not-allowed': 'Anonymous Authentication is probably not enabled.',
+        'auth/unauthorized-domain': 'Add this site to Authentication → Settings → Authorised domains.',
+        'auth/network-request-failed': 'The browser or school network may be blocking Firebase.',
+        'permission-denied': 'Check the Firestore Rules match /games/{gameId}/rooms/{roomCode}.',
+        'unavailable': 'Firebase may be temporarily unavailable or blocked by the network.'
+      }[code];
+      return extra ? `${t('Could not reach the game server. Check your connection and try again.')} (${code}: ${extra})`
+                   : t('Could not reach the game server. Check your connection and try again.');
+    }
+
+    /* ------------------------------------------------------------- levels */
+    const LEVELS = [
+      { id:'sweet',  icon:'🍬',  name:'Sweet',       size:'4 × 4', tech:'Singles only. A first taste of Sudoku.' },
+      { id:'mild',   icon:'🍃',  name:'Mild',        size:'6 × 6', tech:'Singles, with 2 × 3 boxes.' },
+      { id:'medium', icon:'🌶️', name:'Medium',      size:'9 × 9', tech:'The classic board. Naked and hidden singles.' },
+      { id:'spicy',  icon:'🔥',  name:'Spicy',       size:'9 × 9', tech:'Needs pointing, claiming and pairs.' },
+      { id:'extra',  icon:'🌋',  name:'Extra Spicy', size:'9 × 9', tech:'Needs X-Wings and XY-Wings.' },
+    ];
+    const levelInfo = id => LEVELS.find(l => l.id === id) || LEVELS[2];
+    const TECH_GROUPS = [
+      { tier:1, name:'Naked single',          text:'A cell where only one number is still possible.' },
+      { tier:1, name:'Hidden single',         text:'A number that fits in only one cell of a row, column or box.' },
+      { tier:2, name:'Pointing and claiming', text:'When a number is stuck in one line of a box, cross it out of the rest of that line, and the other way round.' },
+      { tier:2, name:'Pairs and triples',     text:'Two cells in a unit that can only hold the same two numbers own them. Cross those numbers out of the rest of the unit.' },
+      { tier:3, name:'X-Wing and Swordfish',  text:'A number that sits in the same two columns of two rows can be crossed out of the rest of those columns.' },
+      { tier:3, name:'XY-Wing and XYZ-Wing',  text:'Three cells with two or three options that force a number out of any cell that sees both ends.' },
+    ];
+    const TECH_NAMES = {
+      'naked-single':'Naked single','hidden-single':'Hidden single','pointing':'Pointing','claiming':'Claiming',
+      'naked-pair':'Naked pair','naked-triple':'Naked triple','hidden-pair':'Hidden pair','hidden-triple':'Hidden triple',
+      'x-wing':'X-Wing','swordfish':'Swordfish','xy-wing':'XY-Wing','xyz-wing':'XYZ-Wing'
+    };
+
+    /* --------------------------------------------------------------- i18n */
+    const I18N = {"ar": {"Sudoku": "سودوكو", "Language": "اللغة", "Rules": "القواعد", "Settings": "الإعدادات", "New Puzzle": "لغز جديد", "Back to menu": "العودة إلى القائمة", "Choose a game mode": "اختر وضع اللعب", "Continue puzzle": "متابعة اللغز", "Single Player": "لاعب واحد", "Race Mode": "وضع السباق", "Two to four players race to solve the same puzzle on their own boards.": "يتسابق من لاعبَين إلى أربعة لاعبين لحل اللغز نفسه، كلٌّ على لوحته.", "Choose difficulty": "اختر الصعوبة", "Back": "رجوع", "Levels are graded by the hardest thinking a puzzle needs, not just how many numbers are missing. Every puzzle has exactly one answer and never needs guessing.": "تُصنَّف المستويات حسب أصعب تفكير يحتاجه اللغز، لا حسب عدد الأرقام الناقصة فقط. لكل لغز حل واحد فقط، ولا يحتاج أبداً إلى التخمين.", "Start Single Player": "ابدأ لاعب واحد", "Race Mode setup": "إعداد وضع السباق", "Your name": "اسمك", "Player name": "اسم اللاعب", "Race difficulty": "صعوبة السباق", "Create Room": "أنشئ غرفة", "Restore last room": "استعادة آخر غرفة", "Room code": "رمز الغرفة", "Join Room": "انضم إلى الغرفة", "Enter your name, then create or join a room.": "أدخل اسمك، ثم أنشئ غرفة أو انضم إليها.", "Copy room code": "نسخ رمز الغرفة", "Ready": "جاهز", "Not ready": "غير جاهز", "Play Again": "العب مرة أخرى", "View Solution": "عرض الحل", "Restart": "إعادة البدء", "Leave room": "مغادرة الغرفة", "Pause": "إيقاف مؤقت", "Paused": "متوقف مؤقتاً", "Resume": "متابعة", "Making your puzzle…": "جارٍ إعداد لغزك…", "Room": "الغرفة", "Undo": "تراجع", "Erase": "مسح", "Notes": "ملاحظات", "Hint": "تلميح", "Race progress": "تقدم السباق", "Puzzle stats": "إحصاءات اللغز", "Filled": "المملوءة", "Given": "المعطاة", "Mistakes": "الأخطاء", "Thinking you may need": "التفكير الذي قد تحتاجه", "Sudoku rules": "قواعد سودوكو", "Close": "إغلاق", "Sweet": "سهل جداً", "Mild": "سهل", "Medium": "متوسط", "Spicy": "صعب", "Extra Spicy": "صعب جداً", "Singles only. A first taste of Sudoku.": "خانات منفردة فقط. تجربة أولى مع سودوكو.", "Singles, with 2 × 3 boxes.": "خانات منفردة، مع مربعات 2 × 3.", "The classic board. Naked and hidden singles.": "اللوحة الكلاسيكية. المنفردات الظاهرة والمخفية.", "Needs pointing, claiming and pairs.": "يحتاج إلى الإشارة والمطالبة والأزواج.", "Needs X-Wings and XY-Wings.": "يحتاج إلى أجنحة X وأجنحة XY.", "Naked single": "منفرد ظاهر", "Hidden single": "منفرد مخفي", "Pointing": "الإشارة", "Claiming": "المطالبة", "Naked pair": "زوج ظاهر", "Naked triple": "ثلاثي ظاهر", "Hidden pair": "زوج مخفي", "Hidden triple": "ثلاثي مخفي", "X-Wing": "جناح X", "Swordfish": "سمكة أبو سيف", "XY-Wing": "جناح XY", "XYZ-Wing": "جناح XYZ", "Pointing and claiming": "الإشارة والمطالبة", "Pairs and triples": "الأزواج والثلاثيات", "X-Wing and Swordfish": "جناح X وسمكة أبو سيف", "XY-Wing and XYZ-Wing": "جناح XY وجناح XYZ", "A cell where only one number is still possible.": "خانة لا يزال فيها رقم واحد ممكن فقط.", "A number that fits in only one cell of a row, column or box.": "رقم لا يناسب إلا خانة واحدة في صف أو عمود أو مربع.", "When a number is stuck in one line of a box, cross it out of the rest of that line, and the other way round.": "عندما يكون رقم محصوراً في خط واحد داخل مربع، احذفه من بقية ذلك الخط، والعكس صحيح.", "Two cells in a unit that can only hold the same two numbers own them. Cross those numbers out of the rest of the unit.": "خانتان في وحدة لا تقبلان إلا الرقمين نفسيهما تملكانهما. احذف هذين الرقمين من بقية الوحدة.", "A number that sits in the same two columns of two rows can be crossed out of the rest of those columns.": "الرقم الموجود في العمودين نفسيهما في صفين يمكن حذفه من بقية هذين العمودين.", "Three cells with two or three options that force a number out of any cell that sees both ends.": "ثلاث خانات بخيارين أو ثلاثة تُخرج رقماً من أي خانة ترى الطرفين.", "Tap a cell, then tap a number.": "اضغط على خانة، ثم اضغط على رقم.", "Tap a cell first.": "اضغط على خانة أولاً.", "Fill every row, column and box.": "املأ كل صف وعمود ومربع.", "Use each number from 1 to {n} once in every row, column and box.": "استخدم كل رقم من 1 إلى {n} مرة واحدة في كل صف وعمود ومربع.", "That number is part of the puzzle.": "هذا الرقم جزء من اللغز.", "Clear the number first to write notes here.": "امسح الرقم أولاً لكتابة ملاحظات هنا.", "Notes on. Numbers you tap are pencilled in.": "الملاحظات مفعّلة. الأرقام التي تضغطها تُكتب بالقلم الرصاص.", "Notes off.": "الملاحظات متوقفة.", "Nothing to undo.": "لا يوجد شيء للتراجع عنه.", "Undone.": "تم التراجع.", "Restarted. Undo brings your numbers back.": "تمت إعادة البدء. زر التراجع يعيد أرقامك.", "That number is not right.": "هذا الرقم غير صحيح.", "This {d} clashes with another {d} in the same row, column or box.": "هذا الـ {d} يتعارض مع {d} آخر في الصف أو العمود أو المربع نفسه.", "Every cell is filled, but something is not right. Look for red clashes.": "كل الخانات ممتلئة، لكن هناك خطأ ما. ابحث عن التعارضات الحمراء.", "Puzzle complete!": "اكتمل اللغز!", "row": "صف", "column": "عمود", "box": "مربع", "empty": "فارغة", "given": "معطى", "Welcome back. Your puzzle is where you left it.": "مرحباً بعودتك. لغزك كما تركته.", "Could not reach the game server. Check your connection and try again.": "تعذر الوصول إلى خادم اللعبة. تحقق من اتصالك وحاول مرة أخرى.", "Creating room…": "جارٍ إنشاء الغرفة…", "Joining…": "جارٍ الانضمام…", "Enter a room code.": "أدخل رمز الغرفة.", "This room does not exist.": "هذه الغرفة غير موجودة.", "Room is full.": "الغرفة ممتلئة.", "This race has already started.": "هذا السباق بدأ بالفعل.", "Room code copied.": "تم نسخ رمز الغرفة.", "Waiting for players": "بانتظار اللاعبين", "Waiting for another player.": "في انتظار لاعب آخر.", "Share the room code. Up to four players can join.": "شارك رمز الغرفة. يمكن لأربعة لاعبين كحد أقصى الانضمام.", "Everyone starts together when all players have pressed Ready.": "يبدأ الجميع معاً عندما يضغط كل اللاعبين على جاهز.", "Press Ready when you are prepared to race.": "اضغط جاهز عندما تكون مستعداً للسباق.", "Get ready…": "استعد…", "Go!": "انطلق!", "The race is on!": "بدأ السباق!", "You solved it first!": "لقد حللته أولاً!", "{name} solved it first!": "{name} حلّه أولاً!", "Your board has been locked.": "تم قفل لوحتك.", "Everyone needs to press Play Again.": "يجب على الجميع الضغط على العب مرة أخرى.", "You": "أنت", "Time": "الوقت", "Level": "المستوى", "Players": "اللاعبون", "waiting": "بالانتظار", "ready": "جاهزة", "playing": "قيد اللعب", "finished": "انتهت", "{level} · {time} · {filled} of {total} filled": "{level} · {time} · {filled} من {total} مملوءة", "Fill the grid so every row, every column and every box contains each number exactly once.": "املأ الشبكة بحيث يحتوي كل صف وكل عمود وكل مربع على كل رقم مرة واحدة فقط.", "The numbers already on the board are the givens. They cannot be changed.": "الأرقام الموجودة على اللوحة هي المعطيات. لا يمكن تغييرها.", "Tap a cell, then a number. Turn on Notes to pencil in the numbers a cell could be.": "اضغط على خانة ثم على رقم. فعّل الملاحظات لتكتب بالقلم الرصاص الأرقام الممكنة للخانة.", "Every puzzle has exactly one answer, and you never need to guess. There is always a next step you can reason out.": "لكل لغز حل واحد فقط، ولا تحتاج أبداً إلى التخمين. هناك دائماً خطوة تالية يمكنك استنتاجها.", "Keyboard: numbers to fill, arrows to move, N for notes, Backspace to erase, Z to undo.": "لوحة المفاتيح: الأرقام للملء، الأسهم للتنقل، N للملاحظات، Backspace للمسح، Z للتراجع.", "Show wrong numbers straight away": "أظهر الأرقام الخاطئة فوراً", "A wrong number is underlined in red as soon as it is placed. Always off in Race Mode.": "يُسطَّر الرقم الخاطئ بالأحمر فور وضعه. متوقف دائماً في وضع السباق.", "Highlight matching numbers": "تظليل الأرقام المتطابقة", "Selecting a 5 lights up every other 5, and 5 in the notes.": "اختيار 5 يظلل كل 5 آخر، و5 في الملاحظات.", "Tidy notes automatically": "ترتيب الملاحظات تلقائياً", "Placing a number removes it from the notes in its row, column and box.": "وضع رقم يزيله من الملاحظات في صفه وعموده ومربعه.", "Show timer": "إظهار المؤقت", "Hide the clock if it adds pressure.": "أخفِ الساعة إذا كانت تسبب ضغطاً.", "Solve a Sudoku at your own pace.": "حل لغز سودوكو بالسرعة التي تناسبك.", "Create a room or join with a code. Everyone gets the same puzzle. Mistake checking is off in a race.": "أنشئ غرفة أو انضم برمز. يحصل الجميع على اللغز نفسه. فحص الأخطاء متوقف في السباق.", "In Race Mode everyone gets the same puzzle. The first correct board wins. Mistake checking is off.": "في وضع السباق يحصل الجميع على اللغز نفسه. أول لوحة صحيحة تفوز. فحص الأخطاء متوقف.", "Cells left": "الخانات المتبقية"}, "fa": {"Sudoku": "سودوکو", "Language": "زبان", "Rules": "قوانین", "Settings": "تنظیمات", "New Puzzle": "معمای جدید", "Back to menu": "بازگشت به منو", "Choose a game mode": "یک حالت بازی انتخاب کنید", "Continue puzzle": "ادامه معما", "Single Player": "تک‌نفره", "Race Mode": "حالت مسابقه", "Two to four players race to solve the same puzzle on their own boards.": "دو تا چهار بازیکن برای حل یک معما، هر کدام روی صفحه خودش، مسابقه می‌دهند.", "Choose difficulty": "انتخاب سختی", "Back": "بازگشت", "Levels are graded by the hardest thinking a puzzle needs, not just how many numbers are missing. Every puzzle has exactly one answer and never needs guessing.": "سطح‌ها بر اساس سخت‌ترین فکری که معما لازم دارد درجه‌بندی شده‌اند، نه فقط تعداد عددهای خالی. هر معما دقیقاً یک جواب دارد و هرگز به حدس زدن نیاز ندارد.", "Start Single Player": "شروع تک‌نفره", "Race Mode setup": "تنظیم حالت مسابقه", "Your name": "نام شما", "Player name": "نام بازیکن", "Race difficulty": "سختی مسابقه", "Create Room": "ساخت اتاق", "Restore last room": "بازیابی آخرین اتاق", "Room code": "کد اتاق", "Join Room": "ورود به اتاق", "Enter your name, then create or join a room.": "نام خود را وارد کنید، سپس اتاق بسازید یا وارد شوید.", "Copy room code": "کپی کد اتاق", "Ready": "آماده", "Not ready": "آماده نیست", "Play Again": "دوباره بازی کن", "View Solution": "نمایش جواب", "Restart": "شروع دوباره", "Leave room": "ترک اتاق", "Pause": "توقف", "Paused": "متوقف شد", "Resume": "ادامه", "Making your puzzle…": "در حال ساختن معمای شما…", "Room": "اتاق", "Undo": "بازگشت", "Erase": "پاک کردن", "Notes": "یادداشت", "Hint": "راهنما", "Race progress": "پیشرفت مسابقه", "Puzzle stats": "آمار معما", "Filled": "پر شده", "Given": "داده شده", "Mistakes": "اشتباه‌ها", "Thinking you may need": "فکرهایی که ممکن است لازم باشد", "Sudoku rules": "قوانین سودوکو", "Close": "بستن", "Sweet": "خیلی آسان", "Mild": "ملایم", "Medium": "متوسط", "Spicy": "تند", "Extra Spicy": "خیلی تند", "Singles only. A first taste of Sudoku.": "فقط تک‌ها. اولین تجربه سودوکو.", "Singles, with 2 × 3 boxes.": "تک‌ها، با جعبه‌های 2 × 3.", "The classic board. Naked and hidden singles.": "صفحه کلاسیک. تک‌های آشکار و پنهان.", "Needs pointing, claiming and pairs.": "به اشاره، ادعا و جفت‌ها نیاز دارد.", "Needs X-Wings and XY-Wings.": "به بال X و بال XY نیاز دارد.", "Naked single": "تک آشکار", "Hidden single": "تک پنهان", "Pointing": "اشاره", "Claiming": "ادعا", "Naked pair": "جفت آشکار", "Naked triple": "سه‌تایی آشکار", "Hidden pair": "جفت پنهان", "Hidden triple": "سه‌تایی پنهان", "X-Wing": "بال X", "Swordfish": "اره‌ماهی", "XY-Wing": "بال XY", "XYZ-Wing": "بال XYZ", "Pointing and claiming": "اشاره و ادعا", "Pairs and triples": "جفت‌ها و سه‌تایی‌ها", "X-Wing and Swordfish": "بال X و اره‌ماهی", "XY-Wing and XYZ-Wing": "بال XY و بال XYZ", "A cell where only one number is still possible.": "خانه‌ای که فقط یک عدد هنوز در آن ممکن است.", "A number that fits in only one cell of a row, column or box.": "عددی که فقط در یک خانه از یک سطر، ستون یا جعبه جا می‌شود.", "When a number is stuck in one line of a box, cross it out of the rest of that line, and the other way round.": "وقتی عددی در یک خط از یک جعبه گیر افتاده، آن را از بقیه آن خط خط بزنید، و برعکس.", "Two cells in a unit that can only hold the same two numbers own them. Cross those numbers out of the rest of the unit.": "دو خانه در یک واحد که فقط همان دو عدد را می‌گیرند، صاحب آن‌ها هستند. آن عددها را از بقیه واحد خط بزنید.", "A number that sits in the same two columns of two rows can be crossed out of the rest of those columns.": "عددی که در دو سطر، در همان دو ستون قرار دارد، از بقیه آن ستون‌ها خط می‌خورد.", "Three cells with two or three options that force a number out of any cell that sees both ends.": "سه خانه با دو یا سه گزینه که یک عدد را از هر خانه‌ای که هر دو سر را می‌بیند بیرون می‌کنند.", "Tap a cell, then tap a number.": "روی یک خانه بزنید، سپس روی یک عدد.", "Tap a cell first.": "اول روی یک خانه بزنید.", "Fill every row, column and box.": "هر سطر، ستون و جعبه را پر کنید.", "Use each number from 1 to {n} once in every row, column and box.": "هر عدد از 1 تا {n} را یک بار در هر سطر، ستون و جعبه به کار ببرید.", "That number is part of the puzzle.": "این عدد بخشی از معماست.", "Clear the number first to write notes here.": "برای نوشتن یادداشت، اول عدد را پاک کنید.", "Notes on. Numbers you tap are pencilled in.": "یادداشت روشن است. عددهایی که می‌زنید با مداد نوشته می‌شوند.", "Notes off.": "یادداشت خاموش است.", "Nothing to undo.": "چیزی برای بازگشت نیست.", "Undone.": "برگردانده شد.", "Restarted. Undo brings your numbers back.": "دوباره شروع شد. بازگشت عددهای شما را برمی‌گرداند.", "That number is not right.": "این عدد درست نیست.", "This {d} clashes with another {d} in the same row, column or box.": "این {d} با یک {d} دیگر در همان سطر، ستون یا جعبه تداخل دارد.", "Every cell is filled, but something is not right. Look for red clashes.": "همه خانه‌ها پر است، اما چیزی درست نیست. دنبال تداخل‌های قرمز بگردید.", "Puzzle complete!": "معما کامل شد!", "row": "سطر", "column": "ستون", "box": "جعبه", "empty": "خالی", "given": "داده شده", "Welcome back. Your puzzle is where you left it.": "خوش برگشتید. معمای شما همان‌جاست که رها کردید.", "Could not reach the game server. Check your connection and try again.": "به سرور بازی دسترسی نشد. اتصال خود را بررسی کنید و دوباره امتحان کنید.", "Creating room…": "در حال ساخت اتاق…", "Joining…": "در حال ورود…", "Enter a room code.": "کد اتاق را وارد کنید.", "This room does not exist.": "این اتاق وجود ندارد.", "Room is full.": "اتاق پر است.", "This race has already started.": "این مسابقه شروع شده است.", "Room code copied.": "کد اتاق کپی شد.", "Waiting for players": "در انتظار بازیکنان", "Waiting for another player.": "در انتظار بازیکن دیگر.", "Share the room code. Up to four players can join.": "کد اتاق را به اشتراک بگذارید. حداکثر چهار بازیکن می‌توانند وارد شوند.", "Everyone starts together when all players have pressed Ready.": "وقتی همه بازیکنان آماده را زدند، همه با هم شروع می‌کنند.", "Press Ready when you are prepared to race.": "وقتی برای مسابقه آماده هستید، آماده را بزنید.", "Get ready…": "آماده شوید…", "Go!": "برو!", "The race is on!": "مسابقه شروع شد!", "You solved it first!": "شما اول حلش کردید!", "{name} solved it first!": "{name} اول حلش کرد!", "Your board has been locked.": "صفحه شما قفل شده است.", "Everyone needs to press Play Again.": "همه باید دوباره بازی کن را بزنند.", "You": "شما", "Time": "زمان", "Level": "سطح", "Players": "بازیکنان", "waiting": "در انتظار", "ready": "آماده", "playing": "در حال بازی", "finished": "تمام شد", "{level} · {time} · {filled} of {total} filled": "{level} · {time} · {filled} از {total} پر شده", "Fill the grid so every row, every column and every box contains each number exactly once.": "جدول را طوری پر کنید که هر سطر، هر ستون و هر جعبه هر عدد را دقیقاً یک بار داشته باشد.", "The numbers already on the board are the givens. They cannot be changed.": "عددهایی که از قبل روی صفحه هستند، داده‌ها هستند. نمی‌توان آن‌ها را تغییر داد.", "Tap a cell, then a number. Turn on Notes to pencil in the numbers a cell could be.": "روی یک خانه و سپس یک عدد بزنید. یادداشت را روشن کنید تا عددهای ممکن یک خانه را با مداد بنویسید.", "Every puzzle has exactly one answer, and you never need to guess. There is always a next step you can reason out.": "هر معما دقیقاً یک جواب دارد و هرگز لازم نیست حدس بزنید. همیشه قدم بعدی‌ای هست که می‌توانید با استدلال پیدا کنید.", "Keyboard: numbers to fill, arrows to move, N for notes, Backspace to erase, Z to undo.": "صفحه‌کلید: عددها برای پر کردن، جهت‌ها برای حرکت، N برای یادداشت، Backspace برای پاک کردن، Z برای بازگشت.", "Show wrong numbers straight away": "نمایش فوری عددهای اشتباه", "A wrong number is underlined in red as soon as it is placed. Always off in Race Mode.": "عدد اشتباه به محض گذاشتن با قرمز زیرخط می‌خورد. در حالت مسابقه همیشه خاموش است.", "Highlight matching numbers": "رنگی کردن عددهای یکسان", "Selecting a 5 lights up every other 5, and 5 in the notes.": "انتخاب یک 5 همه 5های دیگر و 5 در یادداشت‌ها را روشن می‌کند.", "Tidy notes automatically": "مرتب کردن خودکار یادداشت‌ها", "Placing a number removes it from the notes in its row, column and box.": "گذاشتن یک عدد، آن را از یادداشت‌های سطر، ستون و جعبه‌اش پاک می‌کند.", "Show timer": "نمایش زمان‌سنج", "Hide the clock if it adds pressure.": "اگر ساعت فشار می‌آورد، آن را پنهان کنید.", "Solve a Sudoku at your own pace.": "یک سودوکو را با سرعت خودتان حل کنید.", "Create a room or join with a code. Everyone gets the same puzzle. Mistake checking is off in a race.": "یک اتاق بسازید یا با کد وارد شوید. همه همان معما را می‌گیرند. بررسی اشتباه در مسابقه خاموش است.", "In Race Mode everyone gets the same puzzle. The first correct board wins. Mistake checking is off.": "در حالت مسابقه همه همان معما را می‌گیرند. اولین صفحه درست برنده است. بررسی اشتباه خاموش است.", "Cells left": "خانه‌های باقی‌مانده"}};
+    const state = { lang:'en', mode:'menu', level:'medium', msg:{ key:'Tap a cell, then tap a number.', type:'', params:{} } };
+
+    function t(key, params = {}) {
+      let value = state.lang === 'en' ? key : (I18N[state.lang]?.[key] || key);
+      const tp = {};
+      Object.entries(params).forEach(([k, v]) => { tp[k] = (typeof v === 'string' && state.lang !== 'en') ? (I18N[state.lang]?.[v] || v) : v; });
+      Object.entries(tp).forEach(([k, v]) => value = value.replaceAll(`{${k}}`, String(v)));
+      return value;
+    }
+    function esc(str) { return String(str).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+    function dual(key, params = {}) {
+      if (state.lang === 'en') return esc(t(key, params));
+      const en = key.replace(/\{(.*?)\}/g, (_, k) => params[k] ?? `{${k}}`);
+      return `<span class="i18n-dual"><span class="native">${esc(t(key, params))}</span><span class="english-under">${esc(en)}</span></span>`;
+    }
+
+    const el = id => document.getElementById(id);
+    const store = {
+      get(k, fallback) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+      set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+      del(k) { try { localStorage.removeItem(k); } catch {} },
+    };
+    const SAVE_KEY = 'mmtSudokuSave.v1', SETTINGS_KEY = 'mmtSudokuSettings.v1', RACE_KEY = 'mmtSudokuRaceSession';
+    const settings = Object.assign({ showMistakes:false, highlightSame:true, autoNotes:true, showTimer:true }, store.get(SETTINGS_KEY, {}));
+
+    /* --------------------------------------------------------- game state */
+    let game = null;
+    const race = { active:false, uid:null, code:null, ref:null, unsub:null, data:null, puzzleKey:null, syncTimer:null, endShownFor:null };
+    let cells = [];
+    let ticker = null;
+
+    function formatTime(ms) {
+      const s = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      return (h ? `${h}:${String(m).padStart(2,'0')}` : String(m).padStart(2,'0')) + ':' + String(sec).padStart(2,'0');
+    }
+
+    function newGame(p, opts = {}) {
+      const geo = E.geometry(p.n, p.br, p.bc);
+      const givens = E.fromStr(p.givens);
+      const solution = p.solution ? E.fromStr(p.solution) : E.solve(givens, geo);
+      game = {
+        puzzle: { level:p.level, n:p.n, br:p.br, bc:p.bc, givens:p.givens, solution:E.toStr(solution) },
+        geo, solution,
+        given: givens.map(Boolean),
+        grid: opts.grid ? opts.grid.slice() : givens.slice(),
+        notes: opts.notes ? opts.notes.slice() : new Array(geo.N).fill(0),
+        revealed: new Set(opts.revealed || []),
+        sel: -1, notesMode: false, history: [],
+        mistakes: opts.mistakes || 0,
+        elapsed: opts.elapsed || 0, runStart: null, paused: false,
+        finished: false, showSolution: false,
+      };
+      buildBoard();
+      buildPad();
+      renderTechList();
+    }
+
+    /* -------------------------------------------------------------- board */
+    function buildBoard() {
+      const { n, br, bc, N } = game.geo;
+      const board = el('board');
+      board.style.setProperty('--n', n);
+      board.style.setProperty('--nr', game.geo.n === 6 ? 2 : Math.sqrt(n));
+      board.style.setProperty('--nc', game.geo.n === 6 ? 3 : Math.sqrt(n));
+      board.innerHTML = '';
+      cells = [];
+      for (let i = 0; i < N; i++) {
+        const r = Math.floor(i / n), c = i % n;
+        const d = document.createElement('div');
+        d.setAttribute('role', 'gridcell');
+        d.dataset.i = i;
+        d.tabIndex = -1;
+        d.dataset.base = ['cell',
+          (c + 1) % bc === 0 && c < n - 1 ? 'edge-r' : '',
+          (r + 1) % br === 0 && r < n - 1 ? 'edge-b' : '',
+          c === n - 1 ? 'last-c' : '', r === n - 1 ? 'last-r' : ''].filter(Boolean).join(' ');
+        board.appendChild(d);
+        cells.push(d);
+      }
+      el('boardWrap').style.setProperty('--n', n);
+    }
+    function buildPad() {
+      const n = game.geo.n;
+      const pad = el('numPad');
+      pad.style.setProperty('--n', n);
+      pad.classList.toggle('n4', n === 4);
+      pad.innerHTML = '';
+      for (let d = 1; d <= n; d++) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'num-btn'; b.dataset.d = d;
+        b.innerHTML = `${d}<span class="left"></span>`;
+        pad.appendChild(b);
+      }
+    }
+
+    function boardVeiled() {
+      if (state.mode !== 'race' || !race.data) return false;
+      const st = race.data.status;
+      if (st === 'finished') return false;
+      if (st !== 'playing') return true;
+      return Date.now() < (race.data.startGateAtMs || 0);
+    }
+    function boardLocked() {
+      if (!game) return true;
+      if (game.finished || game.paused) return true;
+      if (state.mode === 'race') {
+        if (!race.data || race.data.status !== 'playing') return true;
+        if (Date.now() < (race.data.startGateAtMs || 0)) return true;
+      }
+      return false;
+    }
+
+    function clashSet() {
+      const out = new Set();
+      const { units } = game.geo;
+      for (const unit of units) {
+        const seen = {};
+        for (const i of unit) {
+          const v = game.grid[i]; if (!v) continue;
+          (seen[v] = seen[v] || []).push(i);
+        }
+        Object.values(seen).forEach(list => { if (list.length > 1) list.forEach(i => out.add(i)); });
+      }
+      return out;
+    }
+    function checkingMistakes() { return state.mode === 'single' && settings.showMistakes; }
+
+    function renderBoard() {
+      if (!game) return;
+      const { N, n, peerSet, rowOf, colOf } = game.geo;
+      const veiled = boardVeiled();
+      const clashes = clashSet();
+      const sel = game.sel;
+      const selVal = sel >= 0 ? game.grid[sel] : 0;
+      for (let i = 0; i < N; i++) {
+        const node = cells[i];
+        const v = veiled ? 0 : game.grid[i];
+        const cls = [node.dataset.base];
+        if (!veiled && game.given[i]) cls.push('given');
+        if (!veiled) {
+          if (sel >= 0 && i !== sel && peerSet[sel].has(i)) cls.push('peer');
+          if (settings.highlightSame && selVal && v === selVal && i !== sel) cls.push('same');
+          if (i === sel) cls.push('sel');
+          if (v && clashes.has(i)) cls.push('clash');
+          if (v && !game.given[i] && v !== game.solution[i] && checkingMistakes()) cls.push('wrong');
+          if (game.revealed.has(i)) cls.push('revealed');
+        }
+        let showV = v;
+        if (!veiled && !v && game.showSolution) { showV = game.solution[i]; cls.push('solution-fill'); }
+        node.className = cls.join(' ');
+        node.tabIndex = i === (sel >= 0 ? sel : 0) ? 0 : -1;
+        if (showV) {
+          if (node.textContent !== String(showV) || node.firstElementChild) node.textContent = showV;
+        } else if (!veiled && game.notes[i]) {
+          let html = '<div class="notes">';
+          for (let d = 1; d <= n; d++) {
+            const on = game.notes[i] & E.bit(d);
+            html += `<span class="${on && settings.highlightSame && selVal === d ? 'hot' : ''}">${on ? d : ''}</span>`;
+          }
+          node.innerHTML = html + '</div>';
+        } else if (node.textContent || node.firstElementChild) node.textContent = '';
+        const label = `${t('row')} ${rowOf[i] + 1}, ${t('column')} ${colOf[i] + 1}: ${showV ? showV : (t('empty'))}${!veiled && game.given[i] ? ` (${t('given')})` : ''}`;
+        if (node.getAttribute('aria-label') !== label) node.setAttribute('aria-label', label);
+      }
+      renderPad();
+      renderStats();
+    }
+    function renderPad() {
+      if (!game) return;
+      const n = game.geo.n;
+      const counts = new Array(n + 1).fill(0);
+      game.grid.forEach(v => { if (v) counts[v]++; });
+      el('numPad').classList.toggle('notes-mode', game.notesMode);
+      el('numPad').querySelectorAll('.num-btn').forEach(b => {
+        const d = +b.dataset.d;
+        const left = boardVeiled() ? n : Math.max(0, n - counts[d]);
+        b.querySelector('.left').textContent = left;
+        b.classList.toggle('done', left === 0);
+        b.disabled = boardLocked();
+        b.setAttribute('aria-label', game.notesMode ? `${t('Notes')} ${d}` : String(d));
+      });
+      el('notesBtn').classList.toggle('active', game.notesMode);
+      el('notesBtn').setAttribute('aria-pressed', String(game.notesMode));
+      el('notesBadge').textContent = game.notesMode ? 'ON' : 'OFF';
+      const locked = boardLocked();
+      ['undoBtn','eraseBtn','notesBtn'].forEach(id => el(id).disabled = locked);
+    }
+    function renderStats() {
+      if (!game) return;
+      const { N } = game.geo;
+      const givenCount = game.given.filter(Boolean).length;
+      const filled = game.grid.filter(Boolean).length - givenCount;
+      el('filledStat').textContent = `${boardVeiled() ? 0 : filled}/${N - givenCount}`;
+      el('givenStat').textContent = givenCount;
+      el('leftStat').textContent = boardVeiled() ? N - givenCount : game.grid.filter(v => !v).length;
+      el('mistakesStat').textContent = checkingMistakes() ? game.mistakes : '–';
+      el('mistakeChip').textContent = game.mistakes;
+      el('mistakeChipWrap').classList.toggle('hidden', !checkingMistakes());
+      const info = levelInfo(game.puzzle.level);
+      el('levelChip').innerHTML = `${info.icon} <span class="lc-name">${esc(t(info.name))} ·</span> ${info.size}`;
+    }
+    function renderTimer() {
+      if (!game) return;
+      let ms = 0;
+      if (state.mode === 'race' && race.data) {
+        const start = race.data.startGateAtMs;
+        if (start && race.data.status === 'playing') ms = Date.now() - start;
+        else if (start && race.data.status === 'finished') ms = (race.data.finishedAtMs || Date.now()) - start;
+      } else ms = timeMs();
+      el('timerChip').textContent = formatTime(ms);
+      el('timerChipWrap').classList.toggle('hidden', !settings.showTimer);
+    }
+    function timeMs() { return game ? game.elapsed + (game.runStart ? Date.now() - game.runStart : 0) : 0; }
+    function runClock(on) {
+      if (!game) return;
+      if (on && !game.runStart && !game.finished && !game.paused) game.runStart = Date.now();
+      if (!on && game.runStart) { game.elapsed += Date.now() - game.runStart; game.runStart = null; }
+    }
+
+    function renderTechList() {
+      if (!game) return;
+      const tier = { sweet:1, mild:1, medium:1, spicy:2, extra:3 }[game.puzzle.level] || 1;
+      el('techList').innerHTML = TECH_GROUPS.filter(g => g.tier <= tier)
+        .map(g => `<li class="${g.tier === tier && tier > 1 ? 'new' : ''}"><b>${dual(g.name)}</b>${dual(g.text)}</li>`).join('');
+    }
+
+    function setMessage(key, type = '', params = {}) {
+      state.msg = { key, type, params };
+      el('messageBox').innerHTML = dual(key, params);
+      el('turnCard').dataset.type = type;
+    }
+    function setRaceSetupMessage(key, type = '', params = {}) {
+      const box = el('raceSetupMessage');
+      box.className = `message ${type}`.trim();
+      box.innerHTML = dual(key, params);
+    }
+    function setStatus(icon, title, params = {}) {
+      el('statusIcon').textContent = icon;
+      el('statusTitle').innerHTML = dual(title, params);
+    }
+
+    /* ------------------------------------------------------------- moves */
+    function snapshot() {
+      game.history.push({ grid: game.grid.slice(), notes: game.notes.slice(), revealed: [...game.revealed] });
+      if (game.history.length > 400) game.history.shift();
+    }
+    function select(i, focus = true) {
+      if (!game || i < 0 || i >= game.geo.N) return;
+      game.sel = i;
+      if (focus) cells[i]?.focus({ preventScroll: true });
+      renderBoard();
+    }
+    function afterChange(i, placed) {
+      renderBoard();
+      if (placed && cells[i]) { cells[i].classList.remove('pop'); void cells[i].offsetWidth; cells[i].classList.add('pop'); }
+      if (placed) waveCompletedUnits(i);
+      checkComplete();
+      saveSingle();
+      queueRaceSync();
+    }
+    function enterDigit(d, forceNote = false) {
+      if (!game || boardLocked()) return;
+      const i = game.sel;
+      if (i < 0) { setMessage('Tap a cell first.', 'warn'); return; }
+      if (game.given[i]) { setMessage('That number is part of the puzzle.', 'warn'); return; }
+      if (game.notesMode || forceNote) {
+        if (game.grid[i]) { setMessage('Clear the number first to write notes here.', 'warn'); return; }
+        snapshot();
+        game.notes[i] ^= E.bit(d);
+        afterChange(i, false);
+        return;
+      }
+      snapshot();
+      if (game.grid[i] === d) { game.grid[i] = 0; game.revealed.delete(i); afterChange(i, false); return; }
+      game.grid[i] = d;
+      game.notes[i] = 0;
+      game.revealed.delete(i);
+      if (settings.autoNotes) for (const p of game.geo.peers[i]) game.notes[p] &= ~E.bit(d);
+      const clashes = clashSet();
+      if (checkingMistakes() && d !== game.solution[i]) { game.mistakes++; setMessage('That number is not right.', 'error'); }
+      else if (clashes.has(i)) setMessage('This {d} clashes with another {d} in the same row, column or box.', 'error', { d });
+      else if (state.msg.type === 'error' || state.msg.type === 'warn') setMessage('Tap a cell, then tap a number.');
+      afterChange(i, true);
+    }
+    function eraseCell() {
+      if (!game || boardLocked()) return;
+      const i = game.sel;
+      if (i < 0) { setMessage('Tap a cell first.', 'warn'); return; }
+      if (game.given[i]) { setMessage('That number is part of the puzzle.', 'warn'); return; }
+      if (!game.grid[i] && !game.notes[i]) return;
+      snapshot();
+      game.grid[i] = 0; game.notes[i] = 0; game.revealed.delete(i);
+      afterChange(i, false);
+    }
+    function undo() {
+      if (!game || boardLocked()) return;
+      const h = game.history.pop();
+      if (!h) { setMessage('Nothing to undo.', 'warn'); return; }
+      game.grid = h.grid; game.notes = h.notes; game.revealed = new Set(h.revealed);
+      setMessage('Undone.');
+      renderBoard(); saveSingle(); queueRaceSync();
+    }
+    function toggleNotes() {
+      if (!game || boardLocked()) return;
+      game.notesMode = !game.notesMode;
+      setMessage(game.notesMode ? 'Notes on. Numbers you tap are pencilled in.' : 'Notes off.');
+      renderBoard();
+    }
+    function restartPuzzle() {
+      if (!game || state.mode !== 'single' || game.finished) return;
+      snapshot();
+      game.grid = game.given.map((g, i) => g ? game.grid[i] : 0);
+      game.notes = game.notes.map(() => 0);
+      game.revealed = new Set();
+      setMessage('Restarted. Undo brings your numbers back.');
+      renderBoard(); saveSingle();
+    }
+
+    function waveCompletedUnits(i) {
+      const { units, rowOf, colOf, boxOf, n } = game.geo;
+      const clashes = clashSet();
+      [rowOf[i], n + colOf[i], 2 * n + boxOf[i]].forEach(u => {
+        const unit = units[u];
+        if (unit.every(k => game.grid[k] && !clashes.has(k))) {
+          unit.forEach((k, idx) => {
+            const c = cells[k];
+            c.style.animationDelay = `${idx * 30}ms`;
+            c.classList.remove('done-wave'); void c.offsetWidth; c.classList.add('done-wave');
+            setTimeout(() => { c.classList.remove('done-wave'); c.style.animationDelay = ''; }, 700 + idx * 30);
+          });
+        }
+      });
+    }
+
+    /* ---------------------------------------------------------- finishing */
+    function isSolved() { return game.grid.every((v, i) => v === game.solution[i]); }
+    function checkComplete() {
+      if (!game || game.finished) return;
+      if (!game.grid.every(Boolean)) return;
+      if (!isSolved()) {
+        setMessage('Every cell is filled, but something is not right. Look for red clashes.', 'warn');
+        return;
+      }
+      if (state.mode === 'race') { raceSolved(); return; }
+      runClock(false);
+      game.finished = true;
+      store.del(SAVE_KEY);
+      setMessage('Puzzle complete!', 'success');
+      setStatus('🏆', 'Puzzle complete!');
+      renderBoard(); renderButtons();
+      celebrate();
+      setTimeout(() => showEndModal('single'), 650);
+    }
+    function celebrate() {
+      launchConfetti();
+      cells.forEach((c, idx) => {
+        const { n } = game.geo;
+        const delay = ((idx % n) + Math.floor(idx / n)) * 25;
+        c.style.animationDelay = `${delay}ms`;
+        c.classList.remove('done-wave'); void c.offsetWidth; c.classList.add('done-wave');
+        setTimeout(() => { c.classList.remove('done-wave'); c.style.animationDelay = ''; }, 800 + delay);
+      });
+    }
+    function launchConfetti() {
+      const colors = ['#2563eb','#7c3aed','#6cbc4a','#f59e0b','#ef4444','#14b8a6'];
+      for (let i = 0; i < 90; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random() * 260}ms`;
+        piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1300);
+      }
+    }
+    function openModal(id) { el(id).classList.add('open'); el(id).setAttribute('aria-hidden','false'); }
+    function closeModal(id) { el(id).classList.remove('open'); el(id).setAttribute('aria-hidden','true'); }
+    function anyModalOpen() { return ['rulesModal','settingsModal','endModal'].some(id => el(id).classList.contains('open')) || el('setupModalBackdrop').classList.contains('open'); }
+
+    function showEndModal(kind) {
+      const info = levelInfo(game.puzzle.level);
+      const lvl = `${info.icon} ${esc(t(info.name))}`;
+      if (kind === 'single') {
+        el('endTitle').innerHTML = dual('Puzzle complete!');
+        el('endBody').innerHTML = `<div class="end-stats">
+          <div class="stat-card"><span>${dual('Time')}</span><strong>${formatTime(timeMs())}</strong></div>
+          <div class="stat-card"><span>${dual('Level')}</span><strong>${lvl}</strong></div>
+          ${checkingMistakes() ? `<div class="stat-card"><span>${dual('Mistakes')}</span><strong>${game.mistakes}</strong></div>` : ''}</div>`;
+        el('endViewSolutionBtn').classList.add('hidden');
+      } else {
+        const d = race.data || {};
+        const winner = d.winnerId === race.uid;
+        el('endTitle').innerHTML = winner ? dual('You solved it first!') : dual('{name} solved it first!', { name: d.winnerName || 'Player' });
+        const elapsed = (d.finishedAtMs || Date.now()) - (d.startGateAtMs || d.startedAtMs || Date.now());
+        const players = Object.entries(d.players || {}).sort((a, b) => (b[1].solved - a[1].solved) || ((b[1].filled || 0) - (a[1].filled || 0)));
+        const total = game.given.filter(g => !g).length;
+        el('endBody').innerHTML = `<p>${winner ? '' : dual('Your board has been locked.')}</p>
+          <div class="end-stats"><div class="stat-card"><span>${dual('Time')}</span><strong>${formatTime(elapsed)}</strong></div>
+          <div class="stat-card"><span>${dual('Level')}</span><strong>${lvl}</strong></div>
+          <div class="stat-card"><span>${dual('Players')}</span><strong>${players.length}</strong></div></div>
+          <div class="race-rank">${players.map(([uid, p]) => `<div class="player-row ${uid === d.winnerId ? 'win' : ''}"><span>${uid === d.winnerId ? '🏆 ' : ''}${esc(p.name || 'Player')}${uid === race.uid ? ` (${esc(t('You'))})` : ''}</span><span class="pill">${Math.min(p.filled || 0, total)}/${total}</span></div>`).join('')}</div>`;
+        el('endViewSolutionBtn').classList.remove('hidden');
+      }
+      openModal('endModal');
+    }
+    function viewSolution() {
+      if (!game) return;
+      if (state.mode === 'race' && race.data?.status !== 'finished') return;
+      game.showSolution = true;
+      closeModal('endModal');
+      renderBoard();
+    }
+
+    /* -------------------------------------------------------- single mode */
+    function saveSingle() {
+      if (!game || state.mode !== 'single' || game.finished) return;
+      store.set(SAVE_KEY, { puzzle: game.puzzle, grid: game.grid, notes: game.notes, revealed:[...game.revealed], mistakes: game.mistakes, elapsed: timeMs(), savedAt: Date.now() });
+    }
+    function makePuzzle(level) {
+      let p = null;
+      for (let k = 0; k < 6 && !p; k++) p = E.generate(level);
+      return p;
+    }
+    function startSingle(level, saved = null) {
+      closeSetupModal();
+      state.mode = 'single';
+      state.level = level;
+      showGame();
+      el('loadingCover').classList.add('show');
+      // Let the "Making your puzzle…" cover paint before the generator runs.
+      setTimeout(() => {
+        const p = saved ? saved.puzzle : makePuzzle(level);
+        newGame(p, saved || {});
+        el('loadingCover').classList.remove('show');
+        setStatus(levelInfo(level).icon, 'Fill every row, column and box.');
+        if (saved) setMessage('Welcome back. Your puzzle is where you left it.');
+        else setMessage('Use each number from 1 to {n} once in every row, column and box.', '', { n: p.n });
+        runClock(true);
+        renderAll();
+        select(game.given.findIndex(g => !g), false);
+        saveSingle();
+      }, 30);
+    }
+    function pause(on) {
+      if (!game || state.mode !== 'single' || game.finished) return;
+      if (on === game.paused) return;
+      if (on) { runClock(false); game.paused = true; }
+      else { game.paused = false; runClock(true); }
+      el('pauseCover').classList.toggle('show', game.paused);
+      saveSingle();
+      renderAll();
+    }
+
+    /* ---------------------------------------------------------- race mode */
+    function cleanRoomCode(v) { return String(v || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); }
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = ''; for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
+    function playerName() { return (el('raceNameInput').value || '').trim().slice(0, 24) || 'Player'; }
+    function freshPlayer(name) { return { name, ready:false, entries:'', filled:0, solved:false, finishedAtMs:null, rematchReady:false, joinedAtMs:Date.now() }; }
+    function roomPuzzle(level) { const p = makePuzzle(level); return { level, n:p.n, br:p.br, bc:p.bc, givens:p.givens }; }
+
+    async function createRoom() {
+      setRaceSetupMessage('Creating room…');
+      try {
+        const fb = await loadFirebase();
+        const { doc, getDoc, setDoc, serverTimestamp } = fb.fs;
+        race.uid = fb.uid;
+        const level = el('raceLevelSelect').value || 'medium';
+        let code = generateRoomCode();
+        for (let k = 0; k < 5; k++) {
+          const snap = await getDoc(doc(fb.db, 'games', GAME_ID, 'rooms', code));
+          if (!snap.exists()) break;
+          code = generateRoomCode();
+        }
+        const name = playerName();
+        await setDoc(doc(fb.db, 'games', GAME_ID, 'rooms', code), {
+          roomCode: code, status: 'waiting', puzzle: roomPuzzle(level), settings: { level },
+          players: { [fb.uid]: freshPlayer(name) },
+          winnerId: null, winnerName: null, startedAtMs: null, startGateAtMs: null, finishedAtMs: null,
+          createdAt: serverTimestamp(), createdAtMs: Date.now()
+        });
+        store.set(RACE_KEY, { roomCode: code, name });
+        attachRoom(code);
+      } catch (err) { console.error(err); setRaceSetupMessage(firebaseErrorMessage(err), 'error'); }
+    }
+    async function joinRoom() {
+      const code = cleanRoomCode(el('roomCodeInput').value);
+      if (!code) { setRaceSetupMessage('Enter a room code.', 'warn'); return; }
+      setRaceSetupMessage('Joining…');
+      try {
+        const fb = await loadFirebase();
+        const { doc, runTransaction } = fb.fs;
+        race.uid = fb.uid;
+        const ref = doc(fb.db, 'games', GAME_ID, 'rooms', code);
+        const name = playerName();
+        await runTransaction(fb.db, async tx => {
+          const snap = await tx.get(ref);
+          if (!snap.exists()) throw new Error('This room does not exist.');
+          const data = snap.data();
+          const players = data.players || {};
+          const already = Boolean(players[fb.uid]);
+          if (already) { tx.update(ref, { [`players.${fb.uid}.name`]: name }); return; }
+          if (Object.keys(players).length >= MAX_PLAYERS) throw new Error('Room is full.');
+          if (data.status === 'playing' || data.status === 'finished') throw new Error('This race has already started.');
+          tx.update(ref, { [`players.${fb.uid}`]: freshPlayer(name), status: 'ready' });
+        });
+        store.set(RACE_KEY, { roomCode: code, name });
+        attachRoom(code);
+      } catch (err) {
+        console.error(err);
+        const known = ['This room does not exist.','Room is full.','This race has already started.'];
+        if (known.includes(err.message)) setRaceSetupMessage(err.message, 'error');
+        else setRaceSetupMessage(firebaseErrorMessage(err), 'error');
+      }
+    }
+    async function restoreRoom() {
+      const s = store.get(RACE_KEY, {});
+      if (!s.roomCode) { setRaceSetupMessage('This room does not exist.', 'warn'); return; }
+      try { const fb = await loadFirebase(); race.uid = fb.uid; attachRoom(s.roomCode); }
+      catch (err) { console.error(err); setRaceSetupMessage(firebaseErrorMessage(err), 'error'); }
+    }
+    async function attachRoom(code) {
+      const fb = await loadFirebase();
+      const { doc, onSnapshot } = fb.fs;
+      if (race.unsub) race.unsub();
+      Object.assign(race, { active:true, code, ref: doc(fb.db, 'games', GAME_ID, 'rooms', code), data:null, puzzleKey:null });
+      state.mode = 'race';
+      race.unsub = onSnapshot(race.ref, snap => {
+        if (!snap.exists()) { setRaceSetupMessage('This room does not exist.', 'error'); leaveLocal(); return; }
+        const data = snap.data();
+        race.data = data;
+        const key = `${data.puzzle.givens}|${data.createdAtMs}|${data.startedAtMs || ''}`;
+        const puzzleChanged = !race.puzzleKey || race.puzzleKey.split('|')[0] !== data.puzzle.givens;
+        if (puzzleChanged) {
+          const me = data.players?.[race.uid];
+          const grid = me?.entries && me.entries.length === data.puzzle.n ** 2 ? E.fromStr(me.entries) : null;
+          newGame(data.puzzle, grid ? { grid } : {});
+          race.endShownFor = null;
+          setMessage('Use each number from 1 to {n} once in every row, column and box.', '', { n: data.puzzle.n });
+        }
+        race.puzzleKey = key;
+        if (data.status !== 'finished') game.showSolution = false;
+        if (data.status === 'finished') game.finished = true; else game.finished = false;
+        closeSetupModal();
+        showGame();
+        renderAll();
+        if (data.status === 'finished') maybeShowRaceEnd();
+      }, err => { console.error(err); setMessage(firebaseErrorMessage(err), 'error'); });
+      startTicker();
+    }
+    async function setReady() {
+      if (!race.ref) return;
+      try {
+        const fb = await loadFirebase();
+        await fb.fs.runTransaction(fb.db, async tx => {
+          const snap = await tx.get(race.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status === 'playing' || data.status === 'finished') return;
+          const players = data.players || {};
+          if (!players[race.uid]) return;
+          players[race.uid] = { ...players[race.uid], ready:true };
+          const list = Object.values(players);
+          const updates = { [`players.${race.uid}.ready`]: true };
+          if (list.length >= 2 && list.every(p => p.ready)) {
+            updates.status = 'playing';
+            updates.startedAtMs = Date.now();
+            updates.startGateAtMs = Date.now() + 3300;
+          } else if (list.length >= 2) updates.status = 'ready';
+          tx.update(race.ref, updates);
+        });
+      } catch (err) { console.error(err); setMessage(firebaseErrorMessage(err), 'error'); }
+    }
+    function queueRaceSync() {
+      if (state.mode !== 'race' || !race.ref || !race.data || race.data.status !== 'playing') return;
+      clearTimeout(race.syncTimer);
+      race.syncTimer = setTimeout(syncRace, 350);
+    }
+    async function syncRace() {
+      if (state.mode !== 'race' || !race.ref || !game) return;
+      try {
+        const fb = await loadFirebase();
+        const filled = game.grid.filter((v, i) => v && !game.given[i]).length;
+        await fb.fs.updateDoc(race.ref, { [`players.${race.uid}.entries`]: E.toStr(game.grid), [`players.${race.uid}.filled`]: filled });
+      } catch (err) { console.warn(err); }
+    }
+    async function raceSolved() {
+      clearTimeout(race.syncTimer);
+      try {
+        const fb = await loadFirebase();
+        const entries = E.toStr(game.grid);
+        await fb.fs.runTransaction(fb.db, async tx => {
+          const snap = await tx.get(race.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          const me = data.players?.[race.uid];
+          if (!me || data.status !== 'playing' || data.winnerId) return;
+          // The room holds no solution, so the check is the same one every
+          // client can make: the entries solve these givens.
+          const geo = E.geometry(data.puzzle.n, data.puzzle.br, data.puzzle.bc);
+          const sol = E.toStr(E.solve(E.fromStr(data.puzzle.givens), geo));
+          if (entries !== sol) return;
+          const filled = game.grid.filter((v, i) => v && !game.given[i]).length;
+          tx.update(race.ref, {
+            status:'finished', winnerId: race.uid, winnerName: me.name || 'Player', finishedAtMs: Date.now(),
+            [`players.${race.uid}.solved`]: true, [`players.${race.uid}.entries`]: entries,
+            [`players.${race.uid}.filled`]: filled, [`players.${race.uid}.finishedAtMs`]: Date.now()
+          });
+        });
+      } catch (err) { console.error(err); setMessage(firebaseErrorMessage(err), 'error'); }
+    }
+    function maybeShowRaceEnd() {
+      const id = `${race.code}_${race.data.finishedAtMs}`;
+      if (race.endShownFor === id) return;
+      race.endShownFor = id;
+      if (race.data.winnerId === race.uid) { celebrate(); setMessage('Puzzle complete!', 'success'); }
+      else { launchConfetti(); setMessage('Your board has been locked.', 'warn'); }
+      setTimeout(() => showEndModal('race'), 500);
+    }
+    async function playAgain() {
+      closeModal('endModal');
+      if (state.mode === 'single') { store.del(SAVE_KEY); startSingle(state.level); return; }
+      if (!race.ref || !race.data) return;
+      try {
+        const fb = await loadFirebase();
+        const puzzle = roomPuzzle(race.data.settings?.level || race.data.puzzle.level);
+        await fb.fs.runTransaction(fb.db, async tx => {
+          const snap = await tx.get(race.ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status !== 'finished') return;
+          const players = data.players || {};
+          if (!players[race.uid]) return;
+          players[race.uid] = { ...players[race.uid], rematchReady:true };
+          const list = Object.entries(players);
+          if (!list.every(([, p]) => p.rematchReady)) { tx.update(race.ref, { [`players.${race.uid}.rematchReady`]: true }); return; }
+          const reset = {};
+          list.forEach(([uid, p]) => { reset[uid] = { ...freshPlayer(p.name), joinedAtMs: p.joinedAtMs || Date.now() }; });
+          tx.update(race.ref, { status: list.length >= 2 ? 'ready' : 'waiting', puzzle, players: reset, winnerId:null, winnerName:null, startedAtMs:null, startGateAtMs:null, finishedAtMs:null });
+        });
+        setMessage('Everyone needs to press Play Again.', 'success');
+      } catch (err) { console.error(err); setMessage(firebaseErrorMessage(err), 'error'); }
+    }
+    async function leaveRoom() {
+      try {
+        if (race.ref && race.data && race.data.status !== 'playing') {
+          const fb = await loadFirebase();
+          await fb.fs.updateDoc(race.ref, { [`players.${race.uid}`]: fb.fs.deleteField() });
+        }
+      } catch (err) { console.warn(err); }
+      store.del(RACE_KEY);
+      leaveLocal();
+    }
+    function leaveLocal() {
+      if (race.unsub) race.unsub();
+      Object.assign(race, { active:false, code:null, ref:null, unsub:null, data:null, puzzleKey:null });
+      showMenu();
+    }
+    async function copyRoomCode() {
+      if (!race.code) return;
+      try { await navigator.clipboard.writeText(race.code); } catch {}
+      setMessage('Room code copied.', 'success');
+    }
+
+    function renderRace() {
+      const inRace = state.mode === 'race' && race.data;
+      el('roomPanel').classList.toggle('hidden', !inRace);
+      el('playersPanel').classList.toggle('hidden', !inRace);
+      if (!inRace) { el('waitingOverlay').classList.remove('show'); el('countdownOverlay').classList.remove('show'); return; }
+      const d = race.data;
+      const players = Object.entries(d.players || {}).sort((a, b) => (a[1].joinedAtMs || 0) - (b[1].joinedAtMs || 0));
+      const total = game ? game.given.filter(g => !g).length : 1;
+      el('roomCodeBadge').textContent = race.code;
+      el('waitingRoomCode').textContent = race.code;
+      el('roomStatusPill').textContent = t({ waiting:'waiting', ready:'ready', playing:'playing', finished:'finished' }[d.status] || d.status);
+      el('progressList').innerHTML = players.map(([uid, p]) => {
+        const pct = Math.round(100 * Math.min(p.filled || 0, total) / total);
+        return `<div class="progress-item"><div class="progress-top"><span>${p.solved ? '🏆 ' : ''}${esc(p.name || 'Player')}${uid === race.uid ? ` (${esc(t('You'))})` : ''}</span><span>${Math.min(p.filled || 0, total)}/${total}</span></div>
+          <div class="progress-bar"><div class="progress-fill ${uid === race.uid ? '' : 'opponent'}" style="width:${pct}%"></div></div></div>`;
+      }).join('');
+      const waiting = d.status === 'waiting' || d.status === 'ready';
+      el('waitingOverlay').classList.toggle('show', waiting);
+      if (waiting) {
+        const me = d.players?.[race.uid];
+        el('waitingTitle').innerHTML = players.length < 2 ? dual('Waiting for another player.') : dual('Waiting for players');
+        el('waitingSubtitle').innerHTML = players.length < 2 ? dual('Share the room code. Up to four players can join.') : dual('Everyone starts together when all players have pressed Ready.');
+        el('waitingPlayers').innerHTML = players.map(([uid, p]) => `<div class="waiting-player"><span>${esc(p.name || 'Player')}${uid === race.uid ? ` (${esc(t('You'))})` : ''}</span><span class="pill ${p.ready ? 'good' : 'warn'}">${esc(t(p.ready ? 'Ready' : 'Not ready'))}</span></div>`).join('');
+        el('overlayReadyBtn').disabled = Boolean(me?.ready) || players.length < 2;
+      }
+      const winner = d.status === 'finished';
+      if (waiting) setStatus('⏳', players.length < 2 ? 'Waiting for another player.' : 'Press Ready when you are prepared to race.');
+      else if (winner) setStatus('🏁', d.winnerId === race.uid ? 'You solved it first!' : '{name} solved it first!', { name: d.winnerName || 'Player' });
+      else if (Date.now() < (d.startGateAtMs || 0)) setStatus('⏳', 'Get ready…');
+      else setStatus('🏁', 'The race is on!');
+    }
+    function renderCountdown() {
+      const c = el('countdownOverlay');
+      if (state.mode !== 'race' || !race.data || race.data.status !== 'playing') { c.classList.remove('show'); return; }
+      const left = (race.data.startGateAtMs || 0) - Date.now();
+      if (left > 0) { c.classList.add('show'); c.textContent = Math.ceil(left / 1100) > 0 ? Math.min(3, Math.ceil(left / 1100)) : t('Go!'); }
+      else if (left > -700) { c.classList.add('show'); c.textContent = t('Go!'); }
+      else c.classList.remove('show');
+    }
+    let wasVeiled = null;
+    function startTicker() {
+      if (ticker) return;
+      ticker = setInterval(() => {
+        if (state.mode === 'menu') return;
+        renderTimer();
+        renderCountdown();
+        const v = boardVeiled();
+        if (v !== wasVeiled) { wasVeiled = v; renderAll(); }
+        if (state.mode === 'single' && game && !game.finished && !game.paused && Date.now() % 5000 < 260) saveSingle();
+      }, 250);
+    }
+
+    /* ------------------------------------------------------------ screens */
+    function renderButtons() {
+      const single = state.mode === 'single', inRace = state.mode === 'race' && race.data;
+      const d = race.data || {};
+      const me = d.players?.[race.uid];
+      el('newPuzzleBtn').classList.toggle('hidden', !single);
+      el('newPuzzleTopBtn').classList.toggle('hidden', !single);
+      el('backToMenuBtn').classList.toggle('hidden', state.mode === 'menu');
+      el('restartBtn').classList.toggle('hidden', !single || !game || game.finished);
+      el('pauseBtn').classList.toggle('hidden', !single || !game || game.finished);
+      el('copyRoomBtn').classList.toggle('hidden', !inRace || !(d.status === 'waiting' || d.status === 'ready'));
+      el('readyBtn').classList.toggle('hidden', !inRace || !(d.status === 'waiting' || d.status === 'ready') || Boolean(me?.ready));
+      el('playAgainBtn').classList.toggle('hidden', !(inRace && d.status === 'finished') && !(single && game?.finished));
+      el('playAgainBtn').disabled = Boolean(inRace && me?.rematchReady);
+      el('viewSolutionBtn').classList.toggle('hidden', !(inRace && d.status === 'finished') || Boolean(game?.showSolution) || isSolvedSafe());
+      el('leaveRoomBtn').classList.toggle('hidden', !inRace);
+    }
+    function isSolvedSafe() { return game ? isSolved() : false; }
+    function renderAll() {
+      if (state.mode === 'race') renderRace();
+      renderBoard(); renderTimer(); renderButtons(); renderCountdown();
+    }
+    function showGame() {
+      el('menuPage').classList.add('hidden');
+      el('gamePage').classList.remove('hidden');
+      el('pauseCover').classList.remove('show');
+      renderButtons();
+      startTicker();
+    }
+    function showMenu() {
+      if (state.mode === 'single') { runClock(false); saveSingle(); }
+      state.mode = 'menu';
+      game = null;
+      closeModal('endModal');
+      el('gamePage').classList.add('hidden');
+      el('menuPage').classList.remove('hidden');
+      el('waitingOverlay').classList.remove('show');
+      el('countdownOverlay').classList.remove('show');
+      el('loadingCover').classList.remove('show');
+      renderButtons();
+      renderContinue();
+    }
+    function renderContinue() {
+      const s = store.get(SAVE_KEY, null);
+      const btn = el('continueBtn');
+      if (!s || !s.puzzle || !s.grid) { btn.classList.add('hidden'); return; }
+      const info = levelInfo(s.puzzle.level);
+      const empty = [...s.puzzle.givens].filter(ch => ch === '0').length;
+      const filled = s.grid.filter((v, i) => v && s.puzzle.givens[i] === '0').length;
+      el('continueDesc').innerHTML = dual('{level} · {time} · {filled} of {total} filled', { level: `${info.icon} ${t(info.name)} ${info.size}`, time: formatTime(s.elapsed || 0), filled, total: empty });
+      btn.classList.remove('hidden');
+    }
+    function openSetupModal(which) {
+      el('setupModalBackdrop').classList.add('open');
+      el('singleSetupPanel').classList.toggle('open', which === 'single');
+      el('raceSetupPanel').classList.toggle('open', which === 'race');
+      if (which === 'race') {
+        setRaceSetupMessage('Enter your name, then create or join a room.');
+        loadFirebase().catch(err => setRaceSetupMessage(firebaseErrorMessage(err), 'error'));
+      }
+      // Move focus into the dialog, unless the person has already clicked into it.
+      setTimeout(() => {
+        const panel = el(which === 'single' ? 'singleSetupPanel' : 'raceSetupPanel');
+        if (!panel.contains(document.activeElement)) el(which === 'single' ? 'startSingleBtn' : 'raceNameInput').focus();
+      }, 30);
+    }
+    function closeSetupModal() {
+      el('setupModalBackdrop').classList.remove('open');
+      el('singleSetupPanel').classList.remove('open');
+      el('raceSetupPanel').classList.remove('open');
+    }
+
+    function renderLevels() {
+      el('singleLevelGrid').innerHTML = LEVELS.map(l => `<button class="level-btn ${l.id === state.level ? 'selected' : ''}" data-level="${l.id}" type="button" aria-pressed="${l.id === state.level}">
+          <div class="level-title-row"><div class="level-icon" aria-hidden="true">${l.icon}</div>
+          <div class="level-copy"><strong>${dual(l.name)}</strong><span class="level-size">${l.size}</span><span class="level-tech">${dual(l.tech)}</span></div></div></button>`).join('');
+      const sel = el('raceLevelSelect');
+      const cur = sel.value || 'medium';
+      sel.innerHTML = LEVELS.map(l => `<option value="${l.id}">${esc(t(l.name))} (${l.size})</option>`).join('');
+      sel.value = cur;
+    }
+    function renderRules() {
+      const rules = [
+        'Fill the grid so every row, every column and every box contains each number exactly once.',
+        'The numbers already on the board are the givens. They cannot be changed.',
+        'Tap a cell, then a number. Turn on Notes to pencil in the numbers a cell could be.',
+        'Every puzzle has exactly one answer, and you never need to guess. There is always a next step you can reason out.',
+        'In Race Mode everyone gets the same puzzle. The first correct board wins. Mistake checking is off.',
+        'Keyboard: numbers to fill, arrows to move, N for notes, Backspace to erase, Z to undo.'
+      ];
+      el('rulesList').innerHTML = rules.map(r => `<li>${dual(r)}</li>`).join('');
+    }
+    const SETTING_ROWS = [
+      { key:'showMistakes', title:'Show wrong numbers straight away', note:'A wrong number is underlined in red as soon as it is placed. Always off in Race Mode.' },
+      { key:'highlightSame', title:'Highlight matching numbers', note:'Selecting a 5 lights up every other 5, and 5 in the notes.' },
+      { key:'autoNotes', title:'Tidy notes automatically', note:'Placing a number removes it from the notes in its row, column and box.' },
+      { key:'showTimer', title:'Show timer', note:'Hide the clock if it adds pressure.' },
+    ];
+    function renderSettings() {
+      el('settingsList').innerHTML = SETTING_ROWS.map(s => {
+        const locked = s.key === 'showMistakes' && state.mode === 'race';
+        return `<label class="toggle-row ${locked ? 'locked' : ''}"><span class="tr-text"><strong>${dual(s.title)}</strong><small>${dual(s.note)}</small></span>
+          <input type="checkbox" data-key="${s.key}" ${settings[s.key] && !locked ? 'checked' : ''} ${locked ? 'disabled' : ''} /></label>`;
+      }).join('');
+    }
+    function renderPadHint() {
+      el('padHint').innerHTML = dual('Keyboard: numbers to fill, arrows to move, N for notes, Backspace to erase, Z to undo.');
+    }
+    function applyTranslations() {
+      document.documentElement.lang = state.lang;
+      document.documentElement.dir = (state.lang === 'ar' || state.lang === 'fa') ? 'rtl' : 'ltr';
+      el('languageMainLabel').innerHTML = dual('Language');
+      document.querySelectorAll('[data-i18n]').forEach(node => node.innerHTML = dual(node.dataset.i18n));
+      el('raceNameInput').placeholder = t('Player name');
+      renderLevels(); renderRules(); renderSettings(); renderPadHint(); renderTechList(); renderContinue();
+      setMessage(state.msg.key, state.msg.type, state.msg.params);
+      if (game) renderAll();
+      if (state.mode === 'single' && game) setStatus(game.finished ? '🏆' : levelInfo(game.puzzle.level).icon, game.finished ? 'Puzzle complete!' : 'Fill every row, column and box.');
+    }
+
+    /* ------------------------------------------------------------- events */
+    el('board').addEventListener('click', e => {
+      const c = e.target.closest('.cell');
+      if (!c || !game || boardVeiled()) return;
+      select(+c.dataset.i);
+    });
+    el('numPad').addEventListener('click', e => { const b = e.target.closest('.num-btn'); if (b) enterDigit(+b.dataset.d); });
+    el('undoBtn').addEventListener('click', undo);
+    el('eraseBtn').addEventListener('click', eraseCell);
+    el('notesBtn').addEventListener('click', toggleNotes);
+    el('pauseBtn').addEventListener('click', () => pause(true));
+    el('resumeBtn').addEventListener('click', () => pause(false));
+    el('restartBtn').addEventListener('click', restartPuzzle);
+
+    document.addEventListener('keydown', e => {
+      if (!game || state.mode === 'menu') { if (e.key === 'Escape') { closeSetupModal(); ['rulesModal','settingsModal'].forEach(closeModal); } return; }
+      if (e.key === 'Escape') { ['rulesModal','settingsModal','endModal'].forEach(closeModal); return; }
+      if (anyModalOpen()) return;
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+      if (tag === 'button' && (e.key === 'Enter' || e.key === ' ')) return;
+      const { n, N } = game.geo;
+      const m = /^(Digit|Numpad)([0-9])$/.exec(e.code || '');
+      const digit = m ? +m[2] : (/^[0-9]$/.test(e.key) ? +e.key : null);
+      if (digit !== null && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        if (digit === 0) eraseCell(); else if (digit <= n) enterDigit(digit, e.shiftKey);
+        return;
+      }
+      const k = e.key;
+      if (k.startsWith('Arrow')) {
+        e.preventDefault();
+        let i = game.sel < 0 ? 0 : game.sel, r = Math.floor(i / n), c = i % n;
+        if (k === 'ArrowUp') r = (r + n - 1) % n;
+        if (k === 'ArrowDown') r = (r + 1) % n;
+        if (k === 'ArrowLeft') c = (c + n - 1) % n;
+        if (k === 'ArrowRight') c = (c + 1) % n;
+        select(r * n + c);
+        return;
+      }
+      if (k === 'Backspace' || k === 'Delete') { e.preventDefault(); eraseCell(); return; }
+      if ((k === 'z' || k === 'Z') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undo(); return; }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (k === 'n' || k === 'N') { e.preventDefault(); toggleNotes(); }
+      else if (k === 'z' || k === 'Z' || k === 'u' || k === 'U') { e.preventDefault(); undo(); }
+      else if ((k === 'p' || k === 'P') && state.mode === 'single') { e.preventDefault(); pause(!game.paused); }
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && state.mode === 'single' && game && !game.finished) pause(true); });
+    window.addEventListener('pagehide', () => { if (state.mode === 'single' && game) { runClock(false); saveSingle(); } });
+
+    el('mainLanguageSelect').addEventListener('change', e => { state.lang = e.target.value; applyTranslations(); });
+    el('rulesBtn').addEventListener('click', () => openModal('rulesModal'));
+    el('closeRulesBtn').addEventListener('click', () => closeModal('rulesModal'));
+    el('settingsBtn').addEventListener('click', () => { renderSettings(); openModal('settingsModal'); });
+    el('closeSettingsBtn').addEventListener('click', () => closeModal('settingsModal'));
+    el('settingsList').addEventListener('change', e => {
+      const key = e.target.dataset.key; if (!key) return;
+      settings[key] = e.target.checked;
+      store.set(SETTINGS_KEY, settings);
+      renderAll();
+    });
+    ['rulesModal','settingsModal','endModal'].forEach(id => el(id).addEventListener('click', e => { if (e.target.id === id) closeModal(id); }));
+    el('singleModeBtn').addEventListener('click', () => openSetupModal('single'));
+    el('raceModeBtn').addEventListener('click', () => openSetupModal('race'));
+    el('continueBtn').addEventListener('click', () => { const s = store.get(SAVE_KEY, null); if (s) startSingle(s.puzzle.level, s); });
+    el('singleSetupBackBtn').addEventListener('click', closeSetupModal);
+    el('raceSetupBackBtn').addEventListener('click', closeSetupModal);
+    el('setupModalBackdrop').addEventListener('click', closeSetupModal);
+    el('singleLevelGrid').addEventListener('click', e => {
+      const b = e.target.closest('.level-btn'); if (!b) return;
+      state.level = b.dataset.level;
+      renderLevels();
+    });
+    el('singleLevelGrid').addEventListener('dblclick', e => { const b = e.target.closest('.level-btn'); if (b) startSingle(b.dataset.level); });
+    el('startSingleBtn').addEventListener('click', () => { store.del(SAVE_KEY); startSingle(state.level); });
+    ['newPuzzleBtn','newPuzzleTopBtn'].forEach(id => el(id).addEventListener('click', () => { store.del(SAVE_KEY); startSingle(state.level); }));
+    el('backToMenuBtn').addEventListener('click', () => { if (state.mode === 'race') leaveLocal(); else showMenu(); });
+    el('createRoomBtn').addEventListener('click', createRoom);
+    el('joinRoomBtn').addEventListener('click', joinRoom);
+    el('restoreRoomBtn').addEventListener('click', restoreRoom);
+    el('roomCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+    el('readyBtn').addEventListener('click', setReady);
+    el('overlayReadyBtn').addEventListener('click', setReady);
+    el('leaveRoomBtn').addEventListener('click', leaveRoom);
+    el('playAgainBtn').addEventListener('click', playAgain);
+    el('copyRoomBtn').addEventListener('click', copyRoomCode);
+    el('overlayCopyRoomBtn').addEventListener('click', copyRoomCode);
+    el('viewSolutionBtn').addEventListener('click', viewSolution);
+    el('endViewSolutionBtn').addEventListener('click', viewSolution);
+    el('endPlayAgainBtn').addEventListener('click', playAgain);
+    el('endBackMenuBtn').addEventListener('click', () => { closeModal('endModal'); if (state.mode === 'race') leaveRoom(); else showMenu(); });
+    el('closeEndBtn').addEventListener('click', () => closeModal('endModal'));
+
+    const lastRace = store.get(RACE_KEY, {});
+    if (lastRace.name) el('raceNameInput').value = lastRace.name;
+    applyTranslations();
+    showMenu();
+    window.__sudoku = { get game() { return game; }, get race() { return race; }, state, settings, E };
+
+  </script>
+  <!-- Cloudflare Web Analytics -->
+<script
+  defer
+  src="https://static.cloudflareinsights.com/beacon.min.js"
+  data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'>
+</script>
+<!-- End Cloudflare Web Analytics -->
+</body>
+</html>

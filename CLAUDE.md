@@ -48,6 +48,59 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-19, session — being pushed): SUDOKU.** A new game at
+> `games/sudoku.html`, one self-contained file on the same `.mmtTopbar` shell and
+> tokens as Shikaku, with the shared MMT PHONE LAYOUT block (plus Sudoku's own
+> phone rules inside the same fence). Homepage card added after Shikaku; the
+> Games stat tile and group count went 12 -> 13. Not in `toolLinks.js` — no
+> syllabus outcome is about Sudoku. The MMT Screen launcher picks it up from the
+> homepage card by itself.
+> * **FIVE LEVELS, GRADED BY TECHNIQUE, NOT CLUE COUNT.** Sweet 4x4 (2x2 boxes),
+>   Mild 6x6 (2x3 boxes), Medium 9x9 (naked + hidden singles), Spicy 9x9 (needs
+>   pointing/claiming or naked/hidden pairs/triples), Extra Spicy 9x9 (needs
+>   X-Wing, Swordfish, XY-Wing or XYZ-Wing). The engine's grader solves like a
+>   person — always the easiest step that works — and a puzzle's level is the
+>   hardest tier it had to use. A Spicy that only needed singles is thrown away.
+> * **EVERY PUZZLE IS UNIQUE AND NEEDS NO GUESSING, BY CONSTRUCTION.** Cells come
+>   out in 180-degree-symmetric pairs, and a removal is kept only if the grader
+>   can STILL finish using the level's tiers. A logical finish implies a unique
+>   solution, so there is no separate uniqueness count in the generator (the
+>   harness checks it independently anyway). Generated live in the browser:
+>   Extra Spicy median ~75 ms, worst seen ~340 ms on a laptop.
+> * **NO HINT BUTTON AND NO FILL-NOTES BUTTON — teacher decision 2026-09-19.**
+>   The first build had both (a two-press explained hint, and a button that
+>   pencilled every candidate in); both were removed so students do the
+>   noticing and the note-taking themselves. Do not add them back. The engine
+>   still grades by technique, and the "Thinking you may need" panel still
+>   names the techniques a level needs — that is information, not a hint.
+> * **Player tools:** notes (pencil marks, `N` or Shift+digit, entered by
+>   hand), undo (whole-board snapshots, so Restart is undoable too), erase, clash
+>   highlighting (always on — it is a rule, not the answer), "show wrong numbers"
+>   (a setting, OFF by default, forced off in a race), matching-number highlight,
+>   auto-tidy notes, pause (auto on tab hide), timer. Single-player progress is
+>   saved to localStorage (`mmtSudokuSave.v1`) and the menu offers Continue.
+> * **RACE MODE: 2-4 PLAYERS** at `games/sudoku/rooms/{CODE}` on
+>   `mmt-firebase-games`, covered by the existing `/games/{gameId}/rooms/{roomCode}`
+>   rule — **no rules change, nothing to publish in the console** (the reference
+>   file's audit list was updated). **The room stores the givens only, never the
+>   solution**; each client derives it with the solver. The board is blank until
+>   the countdown gate so nobody reads the givens early. Late joiners after the
+>   start are refused. Progress bars show cells FILLED, not cells correct.
+> * **Firebase is a dynamic import, only on opening Race Mode**, so single player
+>   works on a network that blocks gstatic.com (Shikaku imports statically and is
+>   dead offline).
+> * **Verified** through Playwright + Node: 11,477 grader steps across 300
+>   generated puzzles, every placement the correct digit and no elimination
+>   ever removing the true digit; every level's puzzles unique and at
+>   exactly their tier; UI checks (no hint/fill-notes buttons, notes, undo,
+>   restart, pause, continue, keyboard, settings, AR/FA RTL with the board kept
+>   LTR) and 29 race checks with a stubbed Firestore across three pages
+>   (create/join/ready/countdown/veil/progress sync/win/lock/view solution/
+>   rematch/leave/late join). Layout checked at 1440x900 and 1366x768 (no page
+>   scroll), 1024, 390x780 and 360x740 (sticky number pad, no horizontal
+>   overflow, no button under 34px). Harnesses in the session scratch.
+> * AR/FA strings want a fluent proofread, as everywhere else.
+>
 > **NEW (2026-09-18, session 2 — being pushed): THE MULTIPLY/DIVIDE BY 10 FAMILY
 > IS COMPLETE.** The teaching tool got a second pass and its two siblings were
 > rebuilt on the current shell. All four files (tool, worksheet creator, student
