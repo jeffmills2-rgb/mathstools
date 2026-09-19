@@ -48,6 +48,73 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-19, session — being pushed): CHESS.** `games/chess.html`, one
+> self-contained file on the `.mmtTopbar` shell with the shared MMT PHONE LAYOUT
+> block (plus Chess's own phone rules inside the fence). Homepage card before
+> Closest to 100; Games stat tile and group count 13 -> 14. EN/AR/FA as the other
+> games (AR/FA want a fluent proofread). Three modes:
+> * **Play the Computer — five levels** (Sweet/Mild/Medium/Spicy/Extra Spicy).
+>   Negamax alpha-beta + quiescence, MVV-LVA and killer/history ordering, a
+>   transposition table on Zobrist keys, check extensions, piece-square tables.
+>   Levels differ by depth, time AND deliberate noise: Sweet (depth 1, big score
+>   noise, 35% random moves), Mild (depth 2, noise, 10% random), Medium (depth 3,
+>   small noise), Spicy (to depth 5, 1.6 s), Extra Spicy (iterative deepening,
+>   3.2 s). Self-play: Mild beat Sweet 4/4, Medium beat Mild 4/4. The engine runs
+>   in a **Web Worker built from the page's own `<script id="chessEngineSrc">`**
+>   (its textContent is the worker source), so the board never freezes while it
+>   thinks; if Worker creation fails it falls back to the main thread. A reply is
+>   held to at least 450 ms so the move can be seen.
+>   **Takeback only — no hint or best-move button (teacher decision 2026-09-19,
+>   consistent with Sudoku).** Takeback undoes back to the player's turn; it is
+>   not offered in Pass and Play or Play a Friend. No draw offers vs computer.
+> * **Pass and Play** — names for both sides, optional clocks, "Agree a draw",
+>   resign, and a setting to turn the board each move (off by default).
+> * **Play a Friend** — room code at `games/chess/rooms/{CODE}` on
+>   `mmt-firebase-games`, covered by the existing `/games/{gameId}/rooms/{roomCode}`
+>   rule: **no rules change, nothing to publish**. The room stores the MOVE LIST
+>   (UCI), clocks, result, draw offer and rematch flags; every write is a
+>   transaction that REPLAYS the moves through the engine and refuses an illegal
+>   or out-of-turn move, and every client rebuilds its board from the list. Third
+>   player refused. Rematch swaps colours (`gen` increments). Firebase is a
+>   dynamic import, only when Play a Friend is opened.
+> * **Clocks** (none, 3+2, 5+0, 10+0, 15+10): White's first move is untimed, then
+>   each side runs from the end of the opponent's move, increment after each timed
+>   move. Online, remaining time is `times[side] - (now - lastMoveAtMs)`; either
+>   client may claim a flag in a transaction that re-checks it. A flag against a
+>   side that cannot possibly mate is a draw.
+> * **Rules are exact and perft-verified**: castling (not out of/through/into
+>   check), en passant, all four promotions, checkmate, stalemate, threefold
+>   repetition (Zobrist keys, en passant counted only when capturable), fifty-move
+>   rule, insufficient material. Perft matches the published counts for the start
+>   position (d4), Kiwipete (d3), and positions 3–6 of the standard set, and the
+>   incremental hash equals a from-scratch hash after 200 random games. SAN with
+>   disambiguation, `+`/`#`, `=Q`.
+> * **Pieces are original SVG artwork drawn for this game** (`PIECE_SVG`), not a
+>   copied set and not Unicode glyphs (iOS turns the black pawn into an emoji).
+>   One path set per piece, White light-fill/dark-outline, Black dark-fill with
+>   light detail lines.
+> * **Board UX:** tap-tap or drag (pointer events with capture; ghost follows
+>   the finger), legal-move dots and capture rings, last-move and check shading,
+>   promotion picker (or "always queen" setting), coordinates, slide animation,
+>   flip board, captured pieces with material count, SAN move list, keyboard
+>   (arrows + Enter/Space, roving tabindex, aria-labels per square). Computer and
+>   Pass-and-Play games are saved to localStorage (`mmtChessSave.v1`) and offered
+>   as Continue. Rules modal teaches each piece with its icon, the special moves
+>   and every way a game ends.
+> * **Layout:** board beside a status/actions/moves column on desktop (fits 1366x768
+>   and 1440x900 with no page scroll); below 1080px the side column becomes
+>   `display:contents` so status sits above the board and actions/moves below.
+>   Phone: full-width board (46px squares at 390px), both player bars and clocks
+>   on the first screen, no horizontal overflow, no button under 36px.
+> * **Verified**: perft + hash harness (Node), 37 UI checks (castling, en passant,
+>   under-promotion, illegal-move message, fool's mate end modal, drag, keyboard,
+>   resign, agreed draw, clocks incl. untimed first move/increment/flag, takeback,
+>   continue, playing Black flips the board, settings, AR RTL with the board kept
+>   LTR) and 23 online checks with a stubbed Firestore across three pages (join,
+>   third player refused, turn enforcement, sync, clock charge + increment, draw
+>   offer/decline, checkmate result on both boards, rematch colour swap, timeout
+>   claim, resign). Harnesses in the session scratch.
+>
 > **NEW (2026-09-19, session — being pushed): SUDOKU.** A new game at
 > `games/sudoku.html`, one self-contained file on the same `.mmtTopbar` shell and
 > tokens as Shikaku, with the shared MMT PHONE LAYOUT block (plus Sudoku's own
