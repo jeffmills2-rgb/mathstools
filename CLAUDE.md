@@ -48,6 +48,46 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-19, session — being pushed): CHECKERS.** `games/checkers.html`,
+> built on the CHESS shell (same modes, clocks, online room shape, takeback-only
+> policy, phone layout, EN/AR/FA) — read the Chess block below; this one lists
+> only what differs. Homepage card before Closest to 100; Games 14 -> 15.
+> * **ENGLISH DRAUGHTS, EXACTLY** (what Australian schools and clubs play):
+>   8x8, dark squares, **Black moves first**; men move and capture forward only;
+>   kings one square any diagonal (not flying); **captures compulsory** (any
+>   capture, not the longest); a multi-jump must be finished; captured pieces
+>   stay on the board until the move ends (cannot be jumped twice); **a man that
+>   is crowned ends its move** even if the new king could jump on; no legal move
+>   = loss; draws by threefold repetition or 40 moves each with no capture and no
+>   man move. Standard square numbers 1-32 (1-4 on Black's back row, top-left
+>   with White at the bottom) and standard notation `11-15`, `22x15x8`.
+> * **Perft matches the published English-draughts counts to depth 8**
+>   (7, 49, 302, 1469, 7361, 36768, 179740, 845931). Incremental Zobrist hash
+>   checked against from-scratch after 200 random games.
+> * **Result strings follow Chess: `1-0` = WHITE wins** even though Black moves
+>   first. The first build had this backwards in `status()` and the self-play
+>   harness caught it (every level appeared to lose to the one below).
+> * AI: negamax alpha-beta + TT + killers, and a **capture quiescence** (captures
+>   are forced, so the search never stops mid-exchange). Eval: men 100 + advance,
+>   kings 175, back-row guard, centre, trade-down when ahead, king-to-enemy
+>   distance in the endgame. Levels by depth/time/noise; self-play Mild 4/4 v
+>   Sweet, Medium 4/4 v Mild, Spicy 4/4 v Medium.
+> * **Multi-jumps are entered one landing at a time** (tap, or drag the first hop
+>   then tap on); the piece is drawn where it has got to and the next landing
+>   squares are ringed. Trying to move a non-capturing piece when a capture exists
+>   says "You must capture!" and flashes the pieces that can jump. Crowning shows
+>   a gold crown and a message.
+> * Pieces are original SVG discs with a gold crown for kings (`DRAUGHT_SVG`).
+>   Setting "Show square numbers" (off by default) for writing moves down.
+> * **Verified**: perft/hash harness, 37 UI checks (Black first, forced capture
+>   + flashing movers, tap and drag multi-jumps, crowning ends the move, win by
+>   no pieces, keyboard, resign, draw, clocks with Black's first move untimed,
+>   takeback, continue, playing White flips and lets the computer open, rules,
+>   square numbers, FA RTL) and 18 online checks with a stubbed Firestore
+>   (join, third refused, White can't open, sync, clock charge, forced capture
+>   and recapture synced, draw offer/accept, rematch swap, resign). FA name
+>   "چکرز" is a transliteration; a fluent speaker may prefer another word.
+>
 > **NEW (2026-09-19, session — being pushed): CHESS.** `games/chess.html`, one
 > self-contained file on the `.mmtTopbar` shell with the shared MMT PHONE LAYOUT
 > block (plus Chess's own phone rules inside the fence). Homepage card before
