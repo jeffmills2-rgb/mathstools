@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Order Up v1 (2026-09-19): place 1..n² so every row and column hits the target, order of operations applies -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Order Up | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --red:#ef4444; --amber:#f59e0b; --btn:#eef2f7; --btnHover:#e5ebf3; --grid:#b7c7dc;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --c:72px; --o:36px; --b:62px;
+    }
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:14px 24px;display:grid;grid-template-columns:minmax(240px,1fr) auto minmax(460px,1fr);align-items:center;gap:18px;box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:12px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:8px 12px;margin-left:-12px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.18);}
+    input[type="text"],input[type="number"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;}
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .menu-card{padding:28px;display:grid;gap:22px;min-height:620px;place-items:center;position:relative;}
+    h1,h2,h3,p{margin-top:0;}
+    .mode-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .menu-panel{border-radius:26px;background:#f8fafc;border:1px solid var(--border);padding:20px;display:grid;gap:16px;}
+    .menu-center-panel{width:min(980px,100%);background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(15,23,42,.12);padding:28px;border:1px solid #dbe3ef;}
+    .menu-intro{display:grid;gap:6px;}
+    .menu-intro p{color:#475569;font-weight:750;line-height:1.45;margin:0;}
+    .setup-modal-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 36px));max-height:calc(100vh - 48px);overflow:auto;display:none;z-index:95;background:white;box-shadow:0 34px 90px rgba(15,23,42,.25);padding:28px;}
+    .setup-modal-panel.open{display:grid;}
+    .setup-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .setup-modal-head h2{margin-bottom:0;}
+    .level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:6px;padding:16px;border-radius:18px;align-content:start;}
+    .level-icon{width:44px;height:44px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;font-size:1.55rem;box-shadow:inset 0 -3px 0 rgba(15,23,42,.06);}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn strong{font-size:1rem;}
+    .level-btn span{font-size:.78rem;color:var(--muted);font-weight:850;line-height:1.3;}
+    .form-note{font-size:.9rem;color:var(--muted);font-weight:750;line-height:1.4;margin:0;}
+
+    .game-card{display:grid;padding:18px;gap:16px;}
+    .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:64px;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+    .status-subtitle.good{color:#166534;} .status-subtitle.warn{color:#9a3412;}
+    .toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;font-size:.9rem;border:1px solid #c7d2fe;white-space:nowrap;}
+    .game-area{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start;}
+    .board-col{display:grid;gap:14px;justify-items:center;min-width:0;}
+    .side-panel{display:grid;gap:14px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    .panel-section h2{font-size:1.05rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    .hidden{display:none!important;}
+
+    /* ---------- the board ----------
+       A CSS grid of cells with the operation circles in the gaps between them,
+       like the printed puzzle. Cell (r,c) sits at grid row 2r+1, column 2c+1;
+       a row's badge closes the row on the right, a column's closes it below. */
+    .board-wrap{position:relative;padding:14px;border-radius:24px;background:linear-gradient(180deg,#ffffff,#f9fafb);border:1px solid var(--border);touch-action:none;max-width:100%;}
+    .ou-board{display:grid;justify-content:center;align-content:center;user-select:none;-webkit-user-select:none;position:relative;}
+    .ou-line{pointer-events:none;z-index:0;align-self:center;justify-self:stretch;height:0;border-top:2px dotted #b7c7dc;margin:0 calc(var(--c)*.5);}
+    .ou-line.v{align-self:stretch;justify-self:center;width:0;height:auto;border-top:0;border-left:2px dotted #b7c7dc;margin:calc(var(--c)*.5) 0;}
+    .ou-line.hit{border-color:var(--green2);border-style:solid;}
+    .ou-line.miss{border-color:#fca5a5;border-style:solid;}
+    .ou-cell{z-index:1;width:var(--c);height:var(--c);border-radius:calc(var(--c)*.2);border:2px dashed #cbd5e1;background:#fff;display:grid;place-items:center;font-weight:950;font-size:calc(var(--c)*.46);color:var(--ink);padding:0;cursor:pointer;font-variant-numeric:tabular-nums;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;}
+    .ou-cell:hover{transform:none;border-color:#93c5fd;}
+    .ou-cell.given{background:linear-gradient(180deg,#eef2f7,#e2e8f0);border:2px solid #b7c7dc;color:#0f172a;cursor:default;}
+    .ou-cell.filled{border:2px solid #93c5fd;background:linear-gradient(180deg,#eff6ff,#dbeafe);color:#1d4ed8;}
+    .ou-cell.inline{background-color:#fffbeb;}
+    .ou-cell.sel{border:2px solid var(--amber);box-shadow:0 0 0 5px rgba(245,158,11,.28);}
+    .ou-cell.drop{border:2px solid var(--purple);box-shadow:0 0 0 5px rgba(124,58,237,.22);}
+    .ou-cell.solved{border-color:#86efac;background:linear-gradient(180deg,#f0fdf4,#dcfce7);color:#166534;}
+    .ou-cell.shown{border-color:#fbbf24;background:linear-gradient(180deg,#fffbeb,#fef3c7);color:#92400e;}
+    .ou-cell.pop{animation:pop .22s ease;}
+    @keyframes pop{0%{transform:scale(.8)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+    .ou-op{z-index:1;display:grid;place-items:center;width:var(--o);height:var(--o);}
+    .ou-op .sym{width:calc(var(--o)*.86);height:calc(var(--o)*.86);border-radius:50%;border:2px solid #94a3b8;background:#fff;display:grid;place-items:center;font-size:calc(var(--o)*.6);font-weight:900;color:#334155;line-height:1;padding:0;font-family:var(--uiFont);}
+    .ou-board.strong .ou-op.md .sym{border-color:#a78bfa;background:#f5f3ff;color:#6d28d9;}
+    .ou-board.create .ou-op .sym{cursor:pointer;border-style:solid;box-shadow:0 3px 8px rgba(15,23,42,.10);}
+    .ou-board.create .ou-op .sym:hover{transform:scale(1.08);}
+    .ou-badge{z-index:1;justify-self:center;align-self:center;min-width:calc(var(--b)*.86);height:calc(var(--c)*.56);padding:0 8px;border-radius:999px;border:2px solid #e2e8f0;background:#f8fafc;color:#94a3b8;font-weight:950;font-size:calc(var(--c)*.26);display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;font-variant-numeric:tabular-nums;}
+    .ou-badge:hover{transform:none;}
+    .ou-badge.hit{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .ou-badge.miss{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+    .ou-badge.part{color:#475569;}
+    .ou-badge.picked{box-shadow:0 0 0 4px rgba(37,99,235,.22);border-color:#93c5fd;}
+    .ou-target{position:absolute;right:14px;bottom:10px;font-weight:950;color:#64748b;font-size:calc(var(--c)*.2);}
+
+    .tray{--t:52px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:calc(var(--t)*8 + 7*8px + 4px);touch-action:none;}
+    .tray.n3{max-width:none;}
+    .tile{width:var(--t);height:var(--t);border-radius:14px;border:2px solid #93c5fd;background:linear-gradient(180deg,#eff6ff,#dbeafe);color:#1d4ed8;font-weight:950;font-size:1.35rem;padding:0;display:grid;place-items:center;box-shadow:0 4px 10px rgba(37,99,235,.12);font-variant-numeric:tabular-nums;}
+    .tile.sel{border-color:var(--amber);background:#fef3c7;color:#92400e;box-shadow:0 0 0 4px rgba(245,158,11,.25);}
+    .tile.used{opacity:.28;box-shadow:none;}
+    .tile.given{opacity:.22;background:#e2e8f0;border-color:#cbd5e1;color:#475569;cursor:default;box-shadow:none;}
+    .drag-ghost{position:fixed;z-index:200;pointer-events:none;width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-weight:950;font-size:1.5rem;background:#fef3c7;border:2px solid var(--amber);color:#92400e;box-shadow:0 16px 30px rgba(15,23,42,.25);transform:translate(-50%,-50%) scale(1.06);}
+
+    .target-card{display:flex;align-items:center;gap:14px;}
+    .target-num{min-width:74px;height:74px;padding:0 10px;border-radius:22px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:white;display:grid;place-items:center;font-size:2.3rem;font-weight:950;letter-spacing:-.04em;box-shadow:0 12px 26px rgba(124,58,237,.25);}
+    .target-text{font-weight:850;color:#334155;line-height:1.35;}
+    .bodmas{display:grid;gap:8px;margin:0;padding:0;list-style:none;}
+    .bodmas li{display:flex;gap:10px;align-items:center;padding:9px 11px;border-radius:14px;background:white;border:1px solid var(--border);font-weight:850;color:#334155;font-size:.92rem;line-height:1.3;}
+    .bodmas b{flex:0 0 auto;display:grid;place-items:center;min-width:60px;height:32px;font-size:1.2rem;letter-spacing:.12em;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;}
+    .bodmas .md b{background:#f5f3ff;color:#6d28d9;}
+    .progress-bar{height:13px;border-radius:999px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1;margin-top:8px;}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),#a3e635);border-radius:999px;transition:width .25s ease;}
+    .progress-top{display:flex;justify-content:space-between;gap:8px;font-weight:950;color:#334155;}
+
+    .tray-col{display:grid;gap:14px;justify-items:center;align-content:center;min-width:0;}
+    .tray-col #workingSection{width:100%;min-width:240px;max-width:300px;}
+    @media(min-width:1081px){ .tray-col{width:270px;} }
+    .working{display:grid;gap:6px;font-family:var(--mathFont);font-size:1.28rem;color:var(--ink);}
+    .working .wl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:white;border:1px solid var(--border);}
+    .working .wl:first-child{background:#eef6ff;border-color:#bfdbfe;}
+    .working .eq{color:#94a3b8;font-family:var(--uiFont);font-weight:900;}
+    .working .nw{font-weight:700;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:0 5px;}
+    .working .fr{display:inline-flex;flex-direction:column;align-items:center;font-size:.8em;line-height:1;}
+    .working .fr span:first-child{border-bottom:1.5px solid currentColor;padding:0 2px 1px;}
+    .working-empty{color:var(--muted);font-weight:750;font-size:.92rem;line-height:1.4;margin:0;}
+
+    .create-controls{display:grid;gap:10px;}
+    .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#e2e8f0;padding:4px;border-radius:14px;}
+    .seg button{padding:9px 10px;border-radius:11px;background:transparent;color:#334155;}
+    .seg button.on{background:white;color:var(--blue2);box-shadow:0 3px 8px rgba(15,23,42,.1);}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .row-actions button{flex:1 1 auto;}
+    .share-box{display:grid;gap:8px;}
+    .share-box input{font-size:.8rem;font-weight:700;color:#475569;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(640px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .rules-list{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:800;line-height:1.4;color:#334155;}
+    .rules-list .ex{font-family:var(--mathFont);font-size:1.12rem;color:var(--ink);white-space:nowrap;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);margin-top:10px;}
+    .toggle-row .tr-text{display:grid;gap:2px;}
+    .toggle-row .tr-text span{font-size:.84rem;color:var(--muted);font-weight:750;}
+    .toggle-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--blue);}
+    .radio-set{display:grid;gap:8px;margin-top:10px;}
+    .radio-set label{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;}
+    .radio-set label span{display:grid;gap:2px;}
+    .radio-set label small{color:var(--muted);font-weight:750;}
+    .radio-set input{margin-top:3px;accent-color:var(--blue);}
+    .end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .end-big{font-size:1.05rem;font-weight:800;color:#334155;line-height:1.45;margin:8px 0 0;}
+    .brand-footer{width:min(1340px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:210;background:#0f172a;color:white;padding:11px 16px;border-radius:14px;font-weight:850;box-shadow:0 14px 34px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+    .toast.show{opacity:1;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .shake{animation:shake .32s ease;}
+    @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{width:min(1500px,calc(100vw - 36px));margin:12px auto 8px;}
+      .game-card{padding:14px 18px;gap:12px;}
+      .brand-footer{width:min(1500px,calc(100vw - 36px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+      /* On a wide screen the numbers sit BESIDE the board as a little grid of
+         their own, so the board gets the full height of the projector. */
+      .board-col{grid-template-columns:auto auto;align-items:center;justify-content:center;gap:22px;}
+      .tray,.tray.n3{display:grid;grid-template-columns:repeat(4,var(--t));max-width:none;--t:clamp(46px,6.2vh,60px);}
+      .tray.n3{grid-template-columns:repeat(3,var(--t));}
+      .tile{font-size:calc(var(--t)*.42);}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:auto 1fr;}
+      .mmtTopTitle{text-align:left;}
+      .actions{grid-column:1/-1;justify-content:center;}
+      .game-area{grid-template-columns:1fr;}
+      .side-panel{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+      .level-grid{grid-template-columns:repeat(2,1fr);}
+    }
+/* ==== MMT PHONE LAYOUT (added 2026-09-19) — do not edit above this line ==== */
+@media(max-width:700px){
+  .mmtTopbar{position:relative;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 8px;padding:7px 10px;min-height:0;}
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{grid-column:2;justify-self:start;text-align:left;min-width:0;font-size:1.1rem;line-height:1.14;}
+  .actions{grid-column:1/-1;margin:0;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;}
+  .actions .btn,.actions button{padding:9px 12px;font-size:13px;line-height:1.15;border-radius:11px;white-space:nowrap;min-width:0;min-height:38px;}
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;}
+  .layout,.layout>*,.card{min-width:0;}
+  .layout{width:calc(100vw - 16px);margin:8px auto;}
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+  input,select{font-size:16px!important;}
+
+  /* Order Up on a phone: the board takes the width, the tray sits right under
+     it, and the side panel follows below. */
+  .menu-card{padding:12px;min-height:0;}
+  .menu-center-panel{padding:16px;}
+  .setup-modal-panel{padding:16px;max-height:calc(100dvh - 20px);}
+  .level-grid{grid-template-columns:1fr;}
+  .game-card{padding:10px;gap:10px;}
+  .status-strip{grid-template-columns:1fr;}
+  .turn-card{min-height:0;padding:9px 12px;border-radius:16px;}
+  .status-icon{width:30px;height:30px;font-size:1.1rem;}
+  .status-title{font-size:.98rem;}
+  .status-subtitle{font-size:.84rem;}
+  .toolbar{justify-content:center;gap:6px;}
+  .toolbar button{padding:9px 12px;font-size:13px;min-height:38px;}
+  .toolbar .chip{padding:6px 10px;font-size:.8rem;}
+  .no-phone{display:none!important;}
+  .board-wrap{padding:8px;border-radius:16px;}
+  .tray{--t:38px;gap:6px;max-width:calc(var(--t)*8 + 7*6px + 4px);}
+  .tile{font-size:1.1rem;border-radius:11px;}
+  .side-panel{grid-template-columns:1fr;}
+  .ou-badge{min-height:34px;}
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Order Up</div>
+    <div class="actions">
+      <button class="btn" id="rulesBtn" type="button">How to play</button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎ Settings</button>
+      <button class="btn hidden" id="backToMenuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============================================================ MENU -->
+    <section class="card menu-card" id="menuPage">
+      <div class="menu-panel menu-center-panel">
+        <div class="menu-intro">
+          <h2 style="margin:0">Order Up</h2>
+          <p>Put every number from 1 to 16 into the grid — once each — so that every row and every column works out to the same target. The signs are already there, and the order of operations applies: × and ÷ before + and −.</p>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card hidden" id="continueBtn" type="button">
+            <span class="mode-icon">▶️</span>
+            <strong>Continue puzzle</strong>
+            <span id="continueDesc">—</span>
+          </button>
+          <button class="mode-card" id="solveModeBtn" type="button">
+            <span class="mode-icon">🎯</span>
+            <strong>Solve a puzzle</strong>
+            <span>Five levels, from a 3 × 3 with only + and − up to Extra Spicy. Every puzzle has exactly one answer.</span>
+          </button>
+          <button class="mode-card" id="createModeBtn" type="button">
+            <span class="mode-icon">✏️</span>
+            <strong>Make your own</strong>
+            <span>Choose the signs, place the numbers and try to make every line match. Then turn it into a puzzle and share it with a link.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="menu-panel setup-modal-panel" id="levelPanel" role="dialog" aria-modal="true" aria-labelledby="levelTitle">
+        <div class="setup-modal-head"><h2 id="levelTitle">Choose a level</h2><button class="btn-soft" id="levelBackBtn" type="button">Back</button></div>
+        <p class="form-note">Sweet and Mild are 3 × 3 boards with the numbers 1 to 9. The others use the full 4 × 4 board and 1 to 16.</p>
+        <div class="level-grid" id="levelGrid"></div>
+        <button class="btn-primary" id="startBtn" type="button">Start</button>
+      </div>
+      <div class="modal-backdrop" id="setupBackdrop" aria-hidden="true"></div>
+    </section>
+
+    <!-- ============================================================ GAME -->
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">🎯</div>
+          <div>
+            <div class="status-title" id="statusTitle">Make every line hit the target.</div>
+            <div class="status-subtitle" id="messageBox" aria-live="polite">Tap a number, then tap a square — or drag it across.</div>
+          </div>
+        </div>
+        <div class="toolbar" id="playToolbar">
+          <span class="chip" id="levelChip">—</span>
+          <span class="chip" id="timerChipWrap">⏱ <strong id="timerChip">00:00</strong></span>
+          <button class="btn-soft" id="undoBtn" type="button" title="Undo (Ctrl+Z)">↶ Undo</button>
+          <button class="btn-soft" id="restartBtn" type="button">Restart</button>
+          <button class="btn-soft" id="answerBtn" type="button">Show answer</button>
+          <button class="btn-soft" id="shareBtn" type="button">Share</button>
+          <button class="btn-primary" id="newBtn" type="button">New puzzle</button>
+        </div>
+        <div class="toolbar hidden" id="createToolbar">
+          <span class="chip">✏️ Make your own</span>
+          <button class="btn-soft" id="cUndoBtn" type="button">↶ Undo</button>
+          <button class="btn-soft" id="cClearBtn" type="button">Clear numbers</button>
+          <button class="btn-soft" id="cSignsBtn" type="button">Random signs</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="board-col" id="boardCol">
+          <div class="board-wrap" id="boardWrap">
+            <div class="ou-board" id="board" role="grid" aria-label="Order Up board"></div>
+          </div>
+          <div class="tray-col" id="trayCol">
+            <div class="tray" id="tray" aria-label="Numbers to place"></div>
+            <section class="panel-section hidden" id="workingSection">
+            <h2 id="workingTitle">Working</h2>
+            <div class="working" id="working"></div>
+            <p class="working-empty" id="workingEmpty">Tap a line’s total to see it worked out one step at a time.</p>
+          </section>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="panel-section" id="targetSection">
+            <div class="target-card">
+              <div class="target-num" id="targetNum">—</div>
+              <div class="target-text" id="targetText">Every row and every column must equal this.</div>
+            </div>
+            <div id="progressWrap">
+              <div class="progress-top" style="margin-top:12px"><span>Lines on target</span><span id="progressText">0 / 8</span></div>
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
+          </section>
+
+          <section class="panel-section hidden" id="createSection">
+            <h2>Your board</h2>
+            <div class="create-controls">
+              <div class="seg" role="group" aria-label="Board size">
+                <button type="button" id="size3Btn">3 × 3 (1–9)</button>
+                <button type="button" id="size4Btn" class="on">4 × 4 (1–16)</button>
+              </div>
+              <p class="form-note">Tap a circle to change its sign. Place numbers the same way as in a puzzle. Each line shows what it works out to.</p>
+              <div id="createStatus" class="form-note" style="color:#334155;font-weight:850"></div>
+              <button class="btn-green" id="makePuzzleBtn" type="button">Turn it into a puzzle</button>
+              <details>
+                <summary style="cursor:pointer;font-weight:900;color:#334155">Or set a puzzle from a target</summary>
+                <div style="display:grid;gap:8px;margin-top:10px">
+                  <p class="form-note">Leave only the numbers you want to give away on the board, type the target, and it checks that there is exactly one way to finish it.</p>
+                  <label>Target <input id="customTarget" type="number" inputmode="numeric" placeholder="e.g. 9" /></label>
+                  <button class="btn-primary" id="checkCustomBtn" type="button">Check and play</button>
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h2>Order of operations</h2>
+            <ul class="bodmas">
+              <li class="md"><b>× ÷</b><span>First, working left to right</span></li>
+              <li><b>+ −</b><span>Then, working left to right</span></li>
+            </ul>
+          </section>
+
+
+
+          <section class="panel-section hidden" id="shareSection">
+            <h2>Share this puzzle</h2>
+            <div class="share-box">
+              <input id="shareInput" type="text" readonly aria-label="Puzzle link" />
+              <button class="btn-soft" id="copyLinkBtn" type="button">Copy link</button>
+              <p class="form-note">Anyone who opens the link gets this exact board. Nothing is saved online — the puzzle lives in the link.</p>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="brand-footer"><span>Order Up · <a href="https://www.millsmathstools.au">Mills Maths Tools</a></span></footer>
+
+  <!-- ============================================================ MODALS -->
+  <div class="modal-backdrop" id="rulesModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header"><h2 id="rulesTitle">How to play</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <ul class="rules-list">
+        <li>Use every number from 1 to 16 exactly once (1 to 9 on a 3 × 3 board). Some are already placed for you.</li>
+        <li>Each row is read left to right, and each column top to bottom, with the signs in the circles between the squares.</li>
+        <li>Every row and every column has to work out to the target.</li>
+        <li>The order of operations applies. Do all the × and ÷ first, left to right, then the + and −, left to right.<br>
+          <span class="ex">3 + 4 × 2 = 3 + 8 = 11</span> &nbsp;— not 14.<br>
+          <span class="ex">12 ÷ 4 × 3 = 3 × 3 = 9</span> &nbsp;— not 1.</li>
+        <li>Tap a number and then a square, or drag a number onto a square. Drag a number off the board, or tap it twice, to take it back. On a keyboard: arrows to move, type the number, Backspace to clear.</li>
+        <li>Any arrangement that makes every line hit the target counts as solved.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header"><h2 id="settingsTitle">Settings</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <div style="font-weight:950;color:#334155;margin-top:6px">Checking the lines</div>
+      <div class="radio-set" id="feedbackSet">
+        <label><input type="radio" name="fb" value="tick" /><span><strong>Tick or cross</strong><small>A full line shows ✓ or ✗. Students do the arithmetic themselves.</small></span></label>
+        <label><input type="radio" name="fb" value="values" /><span><strong>Show each line’s value and working</strong><small>A full line shows what it makes. Tap it to see the order of operations step by step.</small></span></label>
+        <label><input type="radio" name="fb" value="off" /><span><strong>No checking until the end</strong><small>Nothing is marked until every square is filled.</small></span></label>
+      </div>
+      <label class="toggle-row"><span class="tr-text"><strong>Colour the × and ÷ circles</strong><span>Makes the operations that go first stand out.</span></span><input type="checkbox" id="strongToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Show the timer</strong><span>Hide it for a calmer board.</span></span><input type="checkbox" id="timerToggle" /></label>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="answerModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerTitle">
+      <div class="modal-header"><h2 id="answerTitle">Show the answer?</h2></div>
+      <p class="end-big">This fills in the whole board and ends the puzzle.</p>
+      <div class="end-actions"><button class="btn-red" id="answerYes" type="button">Show the answer</button><button class="btn-soft" data-close type="button">Keep trying</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="winModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="modal-header"><h2 id="winTitle">Solved! 🎉</h2></div>
+      <p class="end-big" id="winText">Every row and every column hits the target.</p>
+      <div class="end-actions">
+        <button class="btn-primary" id="winNewBtn" type="button">Another at this level</button>
+        <button class="btn-soft" id="winLevelBtn" type="button">Change level</button>
+        <button class="btn-soft" data-close type="button">Look at the board</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   ORDER UP — engine. No DOM in here: generation, exact evaluation and
+   the solution counter. Ops are '+', '-', 'x', '/'.
+   A board of size n holds 1..n*n once each. hOps[r][c] sits between
+   (r,c) and (r,c+1); vOps[c][r] sits between (r,c) and (r+1,c).
+   =================================================================== */
+var OU = (function(){
+  'use strict';
+
+  function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a||1; }
+
+  /* Exact value of v[0] o[0] v[1] ... with × and ÷ first, then left to right.
+     Returns {n,d} in lowest terms, d > 0. Rationals, so a player's
+     4 ÷ 8 × 6 is 3, exactly as the mathematics says. */
+  function evalExact(v,o){
+    var sn=0, sd=1, tn=v[0], td=1, sign=1;
+    for (var i=0;i<o.length;i++){
+      var op=o[i], x=v[i+1];
+      if (op==='x'){ tn*=x; }
+      else if (op==='/'){ td*=x; }
+      else {
+        sn = sn*td + sign*tn*sd; sd = sd*td;
+        var g=gcd(sn,sd); sn/=g; sd/=g;
+        sign = op==='+' ? 1 : -1; tn=x; td=1;
+        var g2=gcd(tn,td); tn/=g2; td/=g2;
+      }
+      if (op==='x'||op==='/'){ var g3=gcd(tn,td); tn/=g3; td/=g3; }
+    }
+    sn = sn*td + sign*tn*sd; sd = sd*td;
+    var g4=gcd(sn,sd); sn/=g4; sd/=g4;
+    if (sd<0){ sd=-sd; sn=-sn; }
+    return {n:sn,d:sd};
+  }
+  function hits(v,o,T){ var r=evalExact(v,o); return r.d===1 && r.n===T; }
+
+  /* The same sum done the way a student writes it: every ÷ must come out
+     whole, and (unless allowed) the running total never drops below zero.
+     Returns the integer value, or null if the line breaks either rule.
+     Used only to CHOOSE the intended solution; marking uses evalExact. */
+  function evalFriendly(v,o,allowNeg){
+    var total=null, sign=1, term=v[0];
+    for (var i=0;i<o.length;i++){
+      var op=o[i], x=v[i+1];
+      if (op==='x') term*=x;
+      else if (op==='/'){ if (term % x) return null; term/=x; }
+      else {
+        total = total===null ? term : total + sign*term;
+        if (!allowNeg && total<0) return null;
+        sign = op==='+'?1:-1; term=x;
+      }
+    }
+    total = total===null ? term : total + sign*term;
+    if (!allowNeg && total<0) return null;
+    return total;
+  }
+
+  /* Step-by-step working for display: each step does ONE operation, all the
+     × and ÷ first (left to right), then + and − left to right. Works on
+     exact rationals and returns arrays of tokens {t:'num'|'op', v}. */
+  function workingSteps(v,o){
+    var toks=[]; for (var i=0;i<v.length;i++){ toks.push({t:'num',n:v[i],d:1}); if(i<o.length) toks.push({t:'op',v:o[i]}); }
+    var steps=[toks.map(function(k){return Object.assign({},k);})];
+    function combine(idx){
+      var a=toks[idx-1], op=toks[idx].v, b=toks[idx+1], n, d;
+      if (op==='x'){ n=a.n*b.n; d=a.d*b.d; }
+      else if (op==='/'){ n=a.n*b.d; d=a.d*b.n; }
+      else if (op==='+'){ n=a.n*b.d+b.n*a.d; d=a.d*b.d; }
+      else { n=a.n*b.d-b.n*a.d; d=a.d*b.d; }
+      var g=gcd(n,d); n/=g; d/=g; if(d<0){d=-d;n=-n;}
+      toks.splice(idx-1,3,{t:'num',n:n,d:d,fresh:true});
+    }
+    while (toks.length>1){
+      toks.forEach(function(k){ delete k.fresh; });
+      var idx=-1;
+      for (var j=1;j<toks.length;j+=2) if (toks[j].v==='x'||toks[j].v==='/'){ idx=j; break; }
+      if (idx<0) idx=1;
+      combine(idx);
+      steps.push(toks.map(function(k){return Object.assign({},k);}));
+    }
+    return steps;
+  }
+
+  /* ---------------- board helpers ---------------- */
+  function lineCells(n,k){ // k < n: row k; else column k-n
+    var out=[]; for (var i=0;i<n;i++) out.push(k<n ? k*n+i : i*n+(k-n)); return out;
+  }
+  function lineOps(p,k){ return k<p.n ? p.hOps[k] : p.vOps[k-p.n]; }
+
+  /* ---------------- random ---------------- */
+  var rnd=Math.random;
+  function setRandom(f){ rnd=f; }
+  function ri(a,b){ return a+Math.floor(rnd()*(b-a+1)); }
+  function shuffle(a){ for (var i=a.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function pick(a){ return a[Math.floor(rnd()*a.length)]; }
+
+  function allTriples(ops,len){
+    var out=[[]];
+    for (var i=0;i<len;i++){ var nx=[]; out.forEach(function(p){ ops.forEach(function(o){ nx.push(p.concat(o)); }); }); out=nx; }
+    return out;
+  }
+
+  /* ---------------- levels ----------------
+     n        board size (3 → 1..9, 4 → 1..16)
+     ops      operations the board may use
+     minMul   at least this many × or ÷ circles on the board
+     minDiv   at least this many ÷ circles
+     givens   numbers left showing — a FLOOR: removal stops here, and the
+              board keeps more if taking one away would allow a second answer
+     t        range the target is chosen from
+     neg      running totals may dip below zero in the intended solution  */
+  var LEVELS={
+    sweet:  {id:'sweet', n:3, ops:['+','-'],         minMul:0, minDiv:0, givens:3, t:[3,20],  neg:false},
+    mild:   {id:'mild',  n:3, ops:['+','-','x','/'], minMul:2, minDiv:1, givens:3, t:[2,30],  neg:false},
+    medium: {id:'medium',n:4, ops:['+','-','x'],     minMul:4, minDiv:0, givens:8, t:[2,30],  neg:false},
+    spicy:  {id:'spicy', n:4, ops:['+','-','x','/'], minMul:5, minDiv:2, givens:7, t:[1,20],  neg:false},
+    extra:  {id:'extra', n:4, ops:['+','-','x','/'], minMul:6, minDiv:3, givens:5, t:[1,20],  neg:true}
+  };
+
+  /* ---------------- generation ----------------
+     Built line by line, not by luck. A random 1..16 board almost never has
+     all eight lines sharing one target, so instead: choose the target, then
+     fill row 0, column 0, row 1, column 1, … choosing for each line a set of
+     operations AND numbers that make it hit the target, given the numbers the
+     earlier lines have already fixed at its start. Every candidate is worked
+     out the student's way (evalFriendly), so the intended answer never needs
+     a fraction or, below Extra Spicy, a negative running total. */
+  var genCache=new Map();
+  function friendlyIndex(n,trip,T,neg){
+    var key=n+'|'+trip.join('')+'|'+T+'|'+(neg?1:0);
+    if (genCache.has(key)) return genCache.get(key);
+    if (genCache.size>600) genCache.clear();
+    var N=n*n, maps=[]; for (var p=0;p<n;p++) maps.push(new Map());
+    var v=new Array(n), used=new Uint8Array(N+1);
+    (function rec(i){
+      if (i===n){
+        if (evalFriendly(v,trip,neg)!==T) return;
+        var t=v.slice();
+        for (var p2=0;p2<n;p2++){ var k=t.slice(0,p2).join(','); var m=maps[p2]; if(!m.has(k)) m.set(k,[]); m.get(k).push(t); }
+        return;
+      }
+      for (var x=1;x<=N;x++){ if (used[x]) continue; used[x]=1; v[i]=x; rec(i+1); used[x]=0; }
+    })(0);
+    genCache.set(key,maps);
+    return maps;
+  }
+  function weightOf(L,o){
+    var mul=0,dv=0; o.forEach(function(x){ if(x==='x'||x==='/') mul++; if(x==='/') dv++; });
+    return 1 + (L.minMul? mul*1.5 : 0) + (L.minDiv? dv*2.5 : 0);
+  }
+  function weightedOrder(L,trips){
+    var pool=trips.map(function(o){return {o:o,w:weightOf(L,o)};}), out=[];
+    while (pool.length){
+      var s=pool.reduce(function(a,b){return a+b.w;},0), r=rnd()*s, i=0;
+      for (;i<pool.length-1;i++){ r-=pool[i].w; if (r<=0) break; }
+      out.push(pool[i].o); pool.splice(i,1);
+    }
+    return out;
+  }
+  function tryBuild(L){
+    var n=L.n, N=n*n, T=ri(L.t[0],L.t[1]), trips=allTriples(L.ops,n-1);
+    var order=[]; for (var i=0;i<n;i++){ order.push({k:i,pre:i}); order.push({k:n+i,pre:i+1}); }
+    var grid=new Array(N).fill(0), used=new Uint8Array(N+1), lineOpsArr=new Array(2*n), nodes=0;
+    var ok=(function rec(d){
+      if (d===order.length) return true;
+      if (++nodes>4000) return false;
+      var o=order[d], cells=lineCells(n,o.k), pre=[];
+      for (var j=0;j<o.pre;j++) pre.push(grid[cells[j]]);
+      var key=pre.join(','), tl=weightedOrder(L,trips);
+      for (var a=0;a<tl.length;a++){
+        var maps=friendlyIndex(n,tl[a],T,L.neg);
+        var list = o.pre<n ? maps[o.pre].get(key) : null;
+        if (o.pre===n){ // every number already fixed: does this triple hit?
+          if (evalFriendly(pre,tl[a],L.neg)===T){ lineOpsArr[o.k]=tl[a]; if (rec(d+1)) return true; }
+          continue;
+        }
+        if (!list) continue;
+        var start=Math.floor(rnd()*list.length), tries=0;
+        for (var q=0;q<list.length && tries<6;q++){
+          var tup=list[(start+q)%list.length], free=true;
+          for (var j2=o.pre;j2<n;j2++) if (used[tup[j2]]){ free=false; break; }
+          if (!free) continue;
+          tries++;
+          for (j2=o.pre;j2<n;j2++){ used[tup[j2]]=1; grid[cells[j2]]=tup[j2]; }
+          lineOpsArr[o.k]=tl[a];
+          if (rec(d+1)) return true;
+          for (j2=o.pre;j2<n;j2++){ used[tup[j2]]=0; grid[cells[j2]]=0; }
+        }
+        if (nodes>4000) return false;
+      }
+      return false;
+    })(0);
+    if (!ok) return null;
+    var flat=[].concat.apply([],lineOpsArr);
+    var mul=flat.filter(function(x){return x==='x'||x==='/';}).length, dv=flat.filter(function(x){return x==='/';}).length;
+    var usedOps=new Set(flat);
+    if (mul<L.minMul || dv<L.minDiv || !L.ops.every(function(x){return usedOps.has(x);})) return null;
+    return {n:n, target:T, solution:grid.slice(), hOps:lineOpsArr.slice(0,n), vOps:lineOpsArr.slice(n)};
+  }
+
+  /* ---------------- solution counter ----------------
+     For each line, every ordered choice of distinct numbers that hits the
+     target is listed once (43 680 candidates on a 4 × 4). The search then
+     fills row 0, column 0, row 1, column 1, … and each line is looked up by
+     the numbers the earlier lines have already fixed at its start, so the
+     only branching is over candidates that already make their line work. */
+  function tuplesFor(n,N,ops,T){
+    var out=[], v=new Array(n), used=new Uint8Array(N+1);
+    (function rec(i){
+      if (i===n){ if (hits(v,ops,T)) out.push(v.slice()); return; }
+      for (var x=1;x<=N;x++){ if (used[x]) continue; used[x]=1; v[i]=x; rec(i+1); used[x]=0; }
+    })(0);
+    return out;
+  }
+  var tupleCache=new Map();
+  function lineTuples(p,k){
+    var key=p.n+'|'+p.target+'|'+lineOps(p,k).join('');
+    if (!tupleCache.has(key)){ if (tupleCache.size>64) tupleCache.clear(); tupleCache.set(key,tuplesFor(p.n,p.n*p.n,lineOps(p,k),p.target)); }
+    return tupleCache.get(key);
+  }
+
+  /* givens: array of N (0 = blank). Returns number of solutions, capped. */
+  function countSolutions(p,givens,cap,collect,budget){
+    cap=cap||2; budget=budget||Infinity; var nodes=0, blown=false;
+    var n=p.n, N=n*n, isGiven=new Uint8Array(N+1);
+    givens.forEach(function(g){ if (g) isGiven[g]=1; });
+    // order: row0, col0, row1, col1, ...; prefix length already fixed
+    var order=[]; for (var i=0;i<n;i++){ order.push({k:i, pre:i}); order.push({k:n+i, pre:i+1}); }
+    var idx=order.map(function(o){
+      var cells=lineCells(n,o.k), map=new Map();
+      lineTuples(p,o.k).forEach(function(t){
+        for (var j=0;j<n;j++){
+          var g=givens[cells[j]];
+          if (g ? t[j]!==g : isGiven[t[j]]) return;
+        }
+        var key=t.slice(0,o.pre).join(',');
+        if (!map.has(key)) map.set(key,[]);
+        map.get(key).push(t);
+      });
+      return {cells:cells, pre:o.pre, map:map};
+    });
+    var grid=new Array(N).fill(0), used=new Uint8Array(N+1), count=0, found=[];
+    (function rec(d){
+      if (count>=cap || blown) return;
+      if (++nodes>budget){ blown=true; return; }
+      if (d===idx.length){ count++; if (collect) found.push(grid.slice()); return; }
+      var L=idx[d], key=[]; for (var j=0;j<L.pre;j++) key.push(grid[L.cells[j]]);
+      var list=L.map.get(key.join(','));
+      if (!list) return;
+      for (var t=0;t<list.length;t++){
+        var tup=list[t], ok=true;
+        for (var j2=L.pre;j2<n;j2++){ if (used[tup[j2]]){ ok=false; break; } }
+        if (!ok) continue;
+        for (j2=L.pre;j2<n;j2++){ used[tup[j2]]=1; grid[L.cells[j2]]=tup[j2]; }
+        rec(d+1);
+        for (j2=L.pre;j2<n;j2++){ used[tup[j2]]=0; grid[L.cells[j2]]=0; }
+        if (count>=cap || blown) return;
+      }
+    })(0);
+    if (blown && count<cap) count=-1; // -1 = gave up before finishing the search
+    return collect ? {count:count, solutions:found} : count;
+  }
+
+  /* Take numbers away one at a time, keeping a removal only if the board
+     still has exactly one answer. Stops at the floor. The next number tried is
+     always one from the busiest row-plus-column, so what is left is SPREAD
+     across the board — a whole row handed over is a line with nothing to do. */
+  function reduceGivens(p,floor){
+    var n=p.n, N=n*n, givens=p.solution.slice(), stuck=new Uint8Array(N), left=N;
+    var jitter=Array.from({length:N},function(){return rnd();});
+    while (left>floor){
+      var best=-1, bestScore=-1;
+      for (var c=0;c<N;c++){
+        if (!givens[c] || stuck[c]) continue;
+        var r=Math.floor(c/n), k=c%n, sc=0;
+        for (var i=0;i<n;i++){ if (givens[r*n+i]) sc++; if (givens[i*n+k]) sc++; }
+        sc+=jitter[c]*1.5;
+        if (sc>bestScore){ bestScore=sc; best=c; }
+      }
+      if (best<0) break;
+      var keep=givens[best]; givens[best]=0;
+      if (countSolutions(p,givens,2)!==1){ givens[best]=keep; stuck[best]=1; } else { left--; jitter[best]=rnd(); }
+    }
+    return givens;
+  }
+
+  function generate(levelId){
+    var L=LEVELS[levelId]||LEVELS.medium;
+    for (var tries=0;tries<400;tries++){
+      var p=tryBuild(L);
+      if (!p) continue;
+      p.level=L.id;
+      p.givens=reduceGivens(p,L.givens);
+      return p;
+    }
+    throw new Error('Could not build a board');
+  }
+
+  /* ---------------- sharing ---------------- */
+  var OPCH={'+':'p','-':'m','x':'t','/':'d'}, CHOP={p:'+',m:'-',t:'x',d:'/'};
+  function encode(p){
+    var ops=[].concat.apply([],p.hOps.concat(p.vOps)).map(function(o){return OPCH[o];}).join('');
+    return 'v1.'+p.n+'.'+p.target+'.'+ops+'.'+p.givens.map(function(g){return g?g.toString(36):'0';}).join('');
+  }
+  function decode(s){
+    var m=/^v1\.([34])\.(-?\d+)\.([pmtd]+)\.([0-9a-g]+)$/.exec(s||''); if (!m) return null;
+    var n=+m[1], N=n*n, T=+m[2], oc=m[3].split('').map(function(c){return CHOP[c];}), gs=m[4].split('').map(function(c){return parseInt(c,36);});
+    if (oc.length!==2*n*(n-1) || gs.length!==N) return null;
+    var seen=new Set(); for (var i=0;i<N;i++){ var g=gs[i]; if (g<0||g>N) return null; if (g){ if (seen.has(g)) return null; seen.add(g);} }
+    var hOps=[], vOps=[];
+    for (var k=0;k<n;k++) hOps.push(oc.slice(k*(n-1),(k+1)*(n-1)));
+    for (k=0;k<n;k++) vOps.push(oc.slice(n*(n-1)+k*(n-1), n*(n-1)+(k+1)*(n-1)));
+    return {n:n, target:T, hOps:hOps, vOps:vOps, givens:gs, level:'custom'};
+  }
+
+  return {evalExact:evalExact, evalFriendly:evalFriendly, hits:hits, workingSteps:workingSteps,
+          lineCells:lineCells, lineOps:lineOps, LEVELS:LEVELS, generate:generate,
+          countSolutions:countSolutions, reduceGivens:reduceGivens, encode:encode, decode:decode,
+          setRandom:setRandom, tryBuild:tryBuild};
+})();
+
+</script>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var SAVE_KEY='mmtOrderUpSave.v1', SET_KEY='mmtOrderUpSettings.v1';
+var SYM={'+':'+','-':'−','x':'×','/':'÷'};
+var CYCLE=['+','-','x','/'];
+
+var LEVEL_UI=[
+  {id:'sweet',  icon:'🍬', name:'Sweet',       desc:'3 × 3 · + and − only'},
+  {id:'mild',   icon:'🌶️', name:'Mild',        desc:'3 × 3 · all four operations'},
+  {id:'medium', icon:'🌶️🌶️', name:'Medium',    desc:'4 × 4 · +, − and ×'},
+  {id:'spicy',  icon:'🔥', name:'Spicy',       desc:'4 × 4 · all four operations'},
+  {id:'extra',  icon:'🔥🔥', name:'Extra Spicy', desc:'4 × 4 · fewer numbers given, and the working may dip below zero'}
+];
+function levelName(id){ var l=LEVEL_UI.find(function(x){return x.id===id;}); return l ? l.name : 'Custom'; }
+
+/* ---------------- settings ---------------- */
+var SET={feedback:'tick', strong:true, timer:true};
+try{ Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)||'{}')); }catch(e){}
+function saveSettings(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SET)); }catch(e){} }
+
+/* ---------------- state ----------------
+   S.p      the puzzle: {n,target,hOps,vOps,givens,solution?,level}
+   S.board  what is on each square now (givens included); 0 = empty
+   Everything on screen is painted from these two. */
+var S={mode:'menu', p:null, board:[], selCell:-1, selNum:0, line:-1, undo:[],
+       elapsed:0, runStart:0, done:false, revealed:false, level:'medium', createN:4};
+
+function N(){ return S.p.n*S.p.n; }
+function isGiven(i){ return S.mode==='play' && !!S.p.givens[i]; }
+function whereIs(v){ return S.board.indexOf(v); }
+
+/* ---------------- evaluation ---------------- */
+function lineInfo(k){
+  var n=S.p.n, cells=OU.lineCells(n,k), vals=cells.map(function(c){return S.board[c];});
+  var full=vals.every(function(v){return v>0;}), filled=vals.filter(function(v){return v>0;}).length;
+  var r=null, hit=false;
+  if (full){ r=OU.evalExact(vals, OU.lineOps(S.p,k)); hit = S.p.target!=null && r.d===1 && r.n===S.p.target; }
+  return {cells:cells, vals:vals, full:full, filled:filled, value:r, hit:hit};
+}
+function fmtVal(r){ if (!r) return '?'; var s=r.d===1 ? String(r.n) : r.n+'/'+r.d; return s.replace('-','−'); }
+function allFull(){ return S.board.every(function(v){return v>0;}); }
+
+/* ---------------- board fitting ----------------
+   The board is sized from the room actually left for it — width of its
+   column, and the height below it once the tray is allowed for — so a 4 × 4
+   fits a 1366 × 768 projector without scrolling and fills a phone's width. */
+function fitBoard(){
+  if (!S.p) return;
+  var n=S.p.n, col=$('boardCol'), wide=window.innerWidth>1080, phone=window.innerWidth<=700;
+  var trayW=$('trayCol').offsetWidth||0, trayH=$('tray').offsetHeight||60;
+  var W=col.clientWidth - 30 - (wide ? trayW+22 : 0);
+  var top=$('boardWrap').getBoundingClientRect().top + window.scrollY;
+  var foot=document.querySelector('.brand-footer').offsetHeight+30;
+  var H=phone ? 9999 : window.innerHeight - top - foot - 32 - (wide ? 0 : trayH+14);
+  var units=n + (n-1)*0.5 + 0.95;          // cells + op gaps + badge
+  var c=Math.floor(Math.min(W/units, H/units));
+  c=Math.max(phone?38:48, Math.min(c, n===3?120:104));
+  var r=document.documentElement.style;
+  r.setProperty('--c', c+'px'); r.setProperty('--o', Math.round(c*.5)+'px'); r.setProperty('--b', Math.round(c*.95)+'px');
+}
+
+/* ---------------- rendering ---------------- */
+function buildBoard(){
+  var n=S.p.n, b=$('board');
+  b.innerHTML='';
+  var cols=[]; for (var i=0;i<n;i++){ cols.push('var(--c)'); if(i<n-1) cols.push('var(--o)'); } cols.push('var(--b)');
+  b.style.gridTemplateColumns=cols.join(' ');
+  b.style.gridTemplateRows=cols.join(' ').replace(/var\(--b\)$/,'calc(var(--c)*.72)');
+  b.classList.toggle('create', S.mode==='create');
+  function add(el,r,c,rs,cs){ el.style.gridRow=r+(rs?' / span '+rs:''); el.style.gridColumn=c+(cs?' / span '+cs:''); b.appendChild(el); return el; }
+  for (var r=0;r<n;r++){ var l=document.createElement('div'); l.className='ou-line'; l.dataset.line=r; add(l,2*r+1,1,0,2*n-1); }
+  for (var c=0;c<n;c++){ var l2=document.createElement('div'); l2.className='ou-line v'; l2.dataset.line=n+c; add(l2,1,2*c+1,2*n-1,0); }
+  for (r=0;r<n;r++) for (c=0;c<n;c++){
+    var cell=document.createElement('button'); cell.type='button'; cell.className='ou-cell'; cell.dataset.cell=r*n+c;
+    cell.setAttribute('role','gridcell');
+    add(cell,2*r+1,2*c+1);
+    if (c<n-1) add(opEl(r,c,'h'),2*r+1,2*c+2);
+    if (r<n-1) add(opEl(c,r,'v'),2*r+2,2*c+1);
+  }
+  for (r=0;r<n;r++){ add(badgeEl(r),2*r+1,2*n); }
+  for (c=0;c<n;c++){ add(badgeEl(n+c),2*n,2*c+1); }
+  buildTray();
+}
+function opEl(line,idx,dir){
+  var w=document.createElement('div'); w.className='ou-op';
+  var s=document.createElement(S.mode==='create'?'button':'span'); s.className='sym';
+  if (S.mode==='create'){ s.type='button'; s.setAttribute('aria-label','Change sign'); }
+  s.dataset.dir=dir; s.dataset.line=line; s.dataset.idx=idx;
+  w.appendChild(s); return w;
+}
+function badgeEl(k){ var e=document.createElement('button'); e.type='button'; e.className='ou-badge'; e.dataset.badge=k; return e; }
+function buildTray(){
+  var t=$('tray'); t.innerHTML=''; t.classList.toggle('n3', S.p.n===3);
+  for (var v=1;v<=N();v++){ var e=document.createElement('button'); e.type='button'; e.className='tile'; e.textContent=v; e.dataset.num=v; t.appendChild(e); }
+}
+
+function paint(){
+  if (!S.p) return;
+  var n=S.p.n, b=$('board'), mode=S.mode;
+  b.classList.toggle('strong', !!SET.strong);
+  // ops
+  b.querySelectorAll('.sym').forEach(function(s){
+    var arr = s.dataset.dir==='h' ? S.p.hOps : S.p.vOps, o=arr[+s.dataset.line][+s.dataset.idx];
+    s.textContent=SYM[o]; s.parentNode.classList.toggle('md', o==='x'||o==='/');
+    s.setAttribute('aria-label', mode==='create' ? 'Sign '+SYM[o]+', tap to change' : SYM[o]);
+  });
+  var infos=[]; for (var k=0;k<2*n;k++) infos.push(lineInfo(k));
+  var selRow=-1, selCol=-1; if (S.selCell>=0){ selRow=Math.floor(S.selCell/n); selCol=S.selCell%n; }
+  var finished=S.done||S.revealed;
+  b.querySelectorAll('.ou-cell').forEach(function(el){
+    var i=+el.dataset.cell, v=S.board[i];
+    el.textContent = v ? v : '';
+    el.className='ou-cell' + (isGiven(i)?' given':(v?' filled':'')) + (i===S.selCell?' sel':'');
+    if (!finished && S.selCell>=0 && i!==S.selCell && (Math.floor(i/n)===selRow || i%n===selCol)) el.classList.add('inline');
+    if (S.done && !isGiven(i)) el.classList.add('solved');
+    if (S.revealed && !isGiven(i)) el.classList.add('shown');
+    el.setAttribute('aria-label','Row '+(Math.floor(i/n)+1)+', column '+(i%n+1)+': '+(v? v+(isGiven(i)?' (given)':'') : 'empty'));
+  });
+  // lines + badges
+  var fb = mode==='create' ? 'values' : SET.feedback, hitCount=0, full=allFull();
+  infos.forEach(function(inf,k){ if (inf.hit) hitCount++; });
+  b.querySelectorAll('.ou-badge').forEach(function(e){
+    var k=+e.dataset.badge, inf=infos[k], txt='', cls='ou-badge';
+    var name=(k<n?'Row '+(k+1):'Column '+(k-n+1));
+    if (mode==='create'){
+      if (inf.full){ txt='= '+fmtVal(inf.value); cls+=' part'; if (S.createCommon!=null) cls+=' hit'; }
+      else txt='…';
+    } else if (fb==='values'){
+      if (inf.full){ txt='= '+fmtVal(inf.value); cls+= inf.hit?' hit':' miss'; } else txt='= ?';
+    } else if (fb==='tick'){
+      if (inf.full){ txt= inf.hit?'✓':'✗'; cls+= inf.hit?' hit':' miss'; } else txt='';
+    } else {
+      if (full && !finished){ txt= inf.hit?'✓':'✗'; cls+= inf.hit?' hit':' miss'; }
+      else if (finished){ txt='✓'; cls+=' hit'; } else txt='?';
+    }
+    if (k===S.line && (fb==='values')) cls+=' picked';
+    e.className=cls; e.textContent=txt;
+    e.setAttribute('aria-label', name+(inf.full? (fb==='off'&&!full?': full':': '+(fb==='values'||mode==='create'?'makes '+fmtVal(inf.value):(inf.hit?'hits the target':'misses the target'))) : ': not full yet'));
+  });
+  b.querySelectorAll('.ou-line').forEach(function(l){
+    var k=+l.dataset.line, inf=infos[k], cls=l.classList.contains('v')?'ou-line v':'ou-line';
+    var show = mode!=='create' && inf.full && (fb!=='off' || full || finished);
+    if (show) cls+= inf.hit?' hit':' miss';
+    if (mode==='create' && S.createCommon!=null) cls+=' hit';
+    l.className=cls;
+  });
+  // tray
+  $('tray').querySelectorAll('.tile').forEach(function(t){
+    var v=+t.dataset.num, at=whereIs(v), g= at>=0 && isGiven(at);
+    t.className='tile'+(g?' given':(at>=0?' used':''))+(v===S.selNum?' sel':'');
+    t.disabled=g || finished;
+    t.setAttribute('aria-label', v+(g?' (given)':at>=0?' (on the board)':''));
+  });
+  // side panel
+  if (mode==='play'){
+    $('targetNum').textContent=String(S.p.target).replace('-','−');
+    $('targetText').textContent='Every row and every column must equal this.';
+    $('progressWrap').classList.toggle('hidden', SET.feedback==='off' && !finished);
+    $('progressText').textContent=hitCount+' / '+(2*n);
+    $('progressFill').style.width=(hitCount/(2*n)*100)+'%';
+  }
+  var wsHide=!(mode==='create' || SET.feedback==='values');
+  if ($('workingSection').classList.contains('hidden')!==wsHide){ $('workingSection').classList.toggle('hidden', wsHide); requestAnimationFrame(fitBoard); }
+  paintWorking(infos);
+  $('undoBtn').disabled = !S.undo.length || finished;
+  $('cUndoBtn').disabled = !S.undo.length;
+  $('restartBtn').disabled = finished && !S.revealed ? false : false;
+  $('answerBtn').disabled = finished;
+  if (mode==='create') paintCreateStatus(infos);
+  $('timerChipWrap').classList.toggle('hidden', !SET.timer);
+}
+
+function paintWorking(infos){
+  var box=$('working'); box.innerHTML='';
+  var k=S.line, empty=$('workingEmpty');
+  if (k<0 || !infos[k] || !infos[k].full){
+    $('workingTitle').textContent='Working';
+    empty.textContent = k>=0 ? 'That line is not full yet.' : 'Tap a line’s total to see it worked out one step at a time.';
+    empty.classList.remove('hidden'); return;
+  }
+  empty.classList.add('hidden');
+  var n=S.p.n; $('workingTitle').textContent='Working — '+(k<n?'row '+(k+1):'column '+(k-n+1));
+  var steps=OU.workingSteps(infos[k].vals, OU.lineOps(S.p,k));
+  steps.forEach(function(st,i){
+    var row=document.createElement('div'); row.className='wl';
+    if (i>0){ var eq=document.createElement('span'); eq.className='eq'; eq.textContent='='; row.appendChild(eq); }
+    st.forEach(function(t){
+      var s=document.createElement('span');
+      if (t.t==='op'){ s.textContent=SYM[t.v]; }
+      else if (t.d===1){ s.textContent=String(t.n).replace('-','−'); }
+      else { s.className='fr'; s.innerHTML='<span>'+String(t.n).replace('-','−')+'</span><span>'+t.d+'</span>'; }
+      if (t.fresh) s.classList.add('nw');
+      row.appendChild(s);
+    });
+    box.appendChild(row);
+  });
+}
+
+/* ---------------- messages ---------------- */
+function say(title,msg,kind,icon){
+  if (title!=null) $('statusTitle').textContent=title;
+  var m=$('messageBox'); m.textContent=msg||''; m.className='status-subtitle'+(kind?' '+kind:'');
+  if (icon) $('statusIcon').textContent=icon;
+}
+var toastT=0;
+function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){e.classList.remove('show');},1800); }
+
+/* ---------------- moves ---------------- */
+function snapshot(){ S.undo.push({board:S.board.slice(), ops:S.mode==='create'?JSON.stringify([S.p.hOps,S.p.vOps]):null}); if (S.undo.length>200) S.undo.shift(); }
+function editable(i){ return !(S.done||S.revealed) && !isGiven(i); }
+function place(i,v){
+  if (!editable(i) || !v) return;
+  if (S.board[i]===v) return;
+  var from=whereIs(v);
+  if (from>=0 && isGiven(from)) return;
+  snapshot();
+  var old=S.board[i];
+  if (from>=0){ S.board[from]= old||0; }   // the number moves; a swap if the square had one
+  S.board[i]=v;
+  S.selNum=0;
+  afterMove([i]);
+}
+function clearCell(i){
+  if (!editable(i) || !S.board[i]) return;
+  snapshot(); S.board[i]=0; afterMove([]);
+}
+function afterMove(popped){
+  if (S.mode==='create') computeCommon();
+  paint();
+  (popped||[]).forEach(function(i){ var el=document.querySelector('.ou-cell[data-cell="'+i+'"]'); if(el){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } });
+  if (S.mode==='play'){ checkWin(); save(); }
+}
+function undo(){
+  var u=S.undo.pop(); if (!u) return;
+  S.board=u.board;
+  if (u.ops){ var o=JSON.parse(u.ops); S.p.hOps=o[0]; S.p.vOps=o[1]; }
+  if (S.mode==='create') computeCommon();
+  paint(); if (S.mode==='play') save();
+}
+
+function checkWin(){
+  if (S.done||S.revealed||!allFull()) { if (!S.done && !S.revealed) statusDuringPlay(); return; }
+  var n=S.p.n, bad=0; for (var k=0;k<2*n;k++) if (!lineInfo(k).hit) bad++;
+  if (!bad){
+    S.done=true; stopClock(); save(); paint();
+    say('Solved!','Every row and every column makes '+S.p.target+'.','good','🎉');
+    $('winText').textContent='Every row and every column makes '+S.p.target+'. Time: '+fmtTime(S.elapsed)+'.';
+    confetti(); setTimeout(function(){ openModal('winModal'); },650);
+  } else {
+    say('Not yet.', bad===1?'One line misses the target — find it and swap some numbers.':bad+' lines miss the target. Swap numbers around and try again.','warn','🤔');
+    if (SET.feedback==='off') paint();
+  }
+}
+function statusDuringPlay(){
+  var left=S.board.filter(function(v){return !v;}).length;
+  say('Make every line equal '+String(S.p.target).replace('-','−')+'.', left+(left===1?' square':' squares')+' to fill.',null,'🎯');
+}
+
+/* ---------------- clock ---------------- */
+var tick=0;
+function fmtTime(ms){ var s=Math.floor(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function startClock(){ if (S.runStart||S.done||S.revealed||S.mode!=='play') return; S.runStart=Date.now(); clearInterval(tick); tick=setInterval(showClock,500); showClock(); }
+function stopClock(){ if (S.runStart){ S.elapsed+=Date.now()-S.runStart; S.runStart=0; } clearInterval(tick); showClock(); }
+function elapsedNow(){ return S.elapsed + (S.runStart? Date.now()-S.runStart : 0); }
+function showClock(){ $('timerChip').textContent=fmtTime(elapsedNow()); }
+document.addEventListener('visibilitychange',function(){ if (document.hidden){ stopClock(); save(); } else if (S.mode==='play' && !$('gamePage').classList.contains('hidden')) startClock(); });
+
+/* ---------------- saving ----------------
+   Single-player progress survives a reload; Continue on the menu picks it up.
+   Create mode is not saved — it is a scratchpad, and its end product is a link. */
+function save(){
+  if (S.mode!=='play' || !S.p) return;
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({p:S.p, board:S.board, elapsed:elapsedNow(), done:S.done, revealed:S.revealed})); }catch(e){}
+}
+function loadSave(){ try{ var d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if (d && d.p && d.board && !d.done && !d.revealed) return d; }catch(e){} return null; }
+function paintContinue(){
+  var d=loadSave(), b=$('continueBtn');
+  b.classList.toggle('hidden', !d);
+  if (d){ var left=d.board.filter(function(v){return !v;}).length; $('continueDesc').textContent=levelName(d.p.level)+' · target '+d.p.target+' · '+left+' squares still to fill · '+fmtTime(d.elapsed||0); }
+}
+window.addEventListener('pagehide', function(){ stopClock(); save(); });
+
+/* ---------------- pages ---------------- */
+function showPage(which){
+  $('menuPage').classList.toggle('hidden', which!=='menu');
+  $('gamePage').classList.toggle('hidden', which==='menu');
+  $('backToMenuBtn').classList.toggle('hidden', which==='menu');
+}
+function toMenu(){
+  stopClock(); save(); S.mode='menu'; closeSetup();
+  if (location.hash) history.replaceState(null,'',location.pathname+location.search);
+  paintContinue(); showPage('menu');
+}
+function startPuzzle(p, board, elapsed){
+  S.mode='play'; S.p=p; S.board= board ? board.slice() : p.givens.slice();
+  S.selCell=-1; S.selNum=0; S.line=-1; S.undo=[]; S.done=false; S.revealed=false;
+  S.elapsed=elapsed||0; S.runStart=0;
+  $('playToolbar').classList.remove('hidden'); $('createToolbar').classList.add('hidden');
+  $('createSection').classList.add('hidden'); $('targetSection').classList.remove('hidden');
+  $('shareSection').classList.add('hidden');
+  $('levelChip').textContent=levelName(p.level)+' · '+p.n+' × '+p.n;
+  showPage('game'); buildBoard(); fitBoard(); paint(); statusDuringPlay(); startClock(); save();
+  requestAnimationFrame(function(){ fitBoard(); });
+}
+function newPuzzle(level){
+  S.level=level||S.level;
+  stopClock();
+  say('Mixing a new puzzle…','Checking it has exactly one answer.',null,'⏳');
+  showPage('game');
+  setTimeout(function(){
+    var p=OU.generate(S.level);
+    startPuzzle(p);
+  },30);
+}
+
+/* ---------------- create mode ---------------- */
+function blankCreate(n){
+  var ops=function(){ var a=[]; for (var i=0;i<n;i++){ var r=[]; for (var j=0;j<n-1;j++) r.push('+'); a.push(r);} return a; };
+  return {n:n, target:null, hOps:ops(), vOps:ops(), givens:new Array(n*n).fill(0), level:'custom'};
+}
+function startCreate(n){
+  stopClock();
+  S.mode='create'; S.createN=n||S.createN; S.p=blankCreate(S.createN); S.board=new Array(S.createN*S.createN).fill(0);
+  S.selCell=-1; S.selNum=0; S.line=-1; S.undo=[]; S.done=false; S.revealed=false; S.createCommon=null;
+  $('playToolbar').classList.add('hidden'); $('createToolbar').classList.remove('hidden');
+  $('createSection').classList.remove('hidden'); $('targetSection').classList.add('hidden'); $('shareSection').classList.add('hidden');
+  $('size3Btn').classList.toggle('on', S.createN===3); $('size4Btn').classList.toggle('on', S.createN===4);
+  showPage('game'); buildBoard(); fitBoard(); paint();
+  say('Make your own','Tap the circles to choose the signs, then place the numbers so every line matches.',null,'✏️');
+  requestAnimationFrame(fitBoard);
+}
+function computeCommon(){
+  S.createCommon=null;
+  if (!allFull()) return;
+  var n=S.p.n, v=null;
+  for (var k=0;k<2*n;k++){ var r=lineInfo(k).value; if (r.d!==1) return; if (v===null) v=r.n; else if (r.n!==v) return; }
+  S.createCommon=v;
+}
+function paintCreateStatus(infos){
+  var n=S.p.n, st=$('createStatus'), btn=$('makePuzzleBtn');
+  if (S.createCommon!=null){
+    st.innerHTML='Every line makes <b>'+S.createCommon+'</b>. That is a puzzle!';
+    btn.disabled=false; say('Every line makes '+S.createCommon+'!','Turn it into a puzzle to hide most of the numbers.','good','🎉');
+    return;
+  }
+  btn.disabled=true;
+  var full=infos.filter(function(i){return i.full;});
+  if (!full.length){ st.textContent='Fill a whole row or column to see what it makes.'; return; }
+  var counts={}; full.forEach(function(i){ var key=fmtVal(i.value); counts[key]=(counts[key]||0)+1; });
+  var best=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];})[0];
+  st.innerHTML=full.length+' of '+(2*n)+' lines are full. Most common value so far: <b>'+best+'</b> ('+counts[best]+(counts[best]===1?' line':' lines')+').';
+}
+function cycleOp(sym){
+  var arr = sym.dataset.dir==='h' ? S.p.hOps : S.p.vOps, L=+sym.dataset.line, I=+sym.dataset.idx;
+  snapshot();
+  arr[L][I]=CYCLE[(CYCLE.indexOf(arr[L][I])+1)%4];
+  computeCommon(); paint();
+}
+function randomSigns(){
+  snapshot();
+  var n=S.p.n;
+  [S.p.hOps,S.p.vOps].forEach(function(a){ for (var i=0;i<n;i++) for (var j=0;j<n-1;j++) a[i][j]=CYCLE[Math.floor(Math.random()*4)]; });
+  computeCommon(); paint();
+}
+function makePuzzle(){
+  if (S.createCommon==null) return;
+  var p={n:S.p.n, target:S.createCommon, hOps:S.p.hOps.map(function(r){return r.slice();}), vOps:S.p.vOps.map(function(r){return r.slice();}), solution:S.board.slice(), level:'custom'};
+  say('Hiding numbers…','Taking away as many as it can while keeping exactly one answer.',null,'⏳');
+  setTimeout(function(){
+    p.givens=OU.reduceGivens(p, p.n===3?2:4);
+    startPuzzle(p); showShare(p);
+    say('Your puzzle is ready.', p.givens.filter(Boolean).length+' numbers left showing, and there is only one way to finish it. Share the link below.','good','✏️');
+  },30);
+}
+function checkCustom(){
+  var T=parseInt($('customTarget').value,10);
+  if (!isFinite(T)){ $('customTarget').classList.add('shake'); setTimeout(function(){$('customTarget').classList.remove('shake');},400); say(null,'Type a target first.','warn'); return; }
+  var p={n:S.p.n, target:T, hOps:S.p.hOps.map(function(r){return r.slice();}), vOps:S.p.vOps.map(function(r){return r.slice();}), givens:S.board.slice(), level:'custom'};
+  say('Checking…','Looking for every way to finish this board.',null,'⏳');
+  setTimeout(function(){
+    var res=OU.countSolutions(p,p.givens,2,true,3e6);
+    if (res.count===0){ say('No way to finish this one.','With these signs and numbers nothing makes every line equal '+T+'. Change the target, the signs or the numbers.','warn','🚫'); return; }
+    p.solution=res.solutions[0];
+    startPuzzle(p); showShare(p);
+    if (res.count===1) say('It works — exactly one answer.','Share the link below, or solve it yourself first.','good','✅');
+    else if (res.count===2) say('It works, but has more than one answer.','Any answer counts. Place another number before sharing if you want only one.','warn','⚠️');
+    else say('It has at least one answer.','There were too many ways to try to check them all — place a few more numbers to be sure there is only one.','warn','⚠️');
+  },30);
+}
+
+/* ---------------- sharing ---------------- */
+function linkFor(p){ return location.origin+location.pathname+'#'+OU.encode(p); }
+function showShare(p){ $('shareInput').value=linkFor(p); $('shareSection').classList.remove('hidden'); }
+function copyLink(){
+  var v=$('shareInput').value;
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(v) : Promise.reject()).then(function(){ toast('Link copied'); }, function(){ $('shareInput').select(); document.execCommand('copy'); toast('Link copied'); });
+}
+function loadFromHash(){
+  var h=decodeURIComponent((location.hash||'').slice(1)); if (!h) return false;
+  var p=OU.decode(h); if (!p){ toast('That puzzle link is not valid'); return false; }
+  var res=OU.countSolutions(p,p.givens,2,true,3e6);
+  if (res.count===0){ toast('That puzzle has no answer'); return false; }
+  p.solution=res.solutions[0];
+  startPuzzle(p); showShare(p);
+  say('A shared puzzle','Make every line equal '+p.target+'.',null,'🔗');
+  return true;
+}
+
+/* ---------------- show answer ---------------- */
+function showAnswer(){
+  closeModals();
+  var sol=S.p.solution;
+  if (!sol){ var r=OU.countSolutions(S.p,S.p.givens,1,true); sol=r.solutions[0]; }
+  if (!sol) return;
+  S.board=sol.slice(); S.revealed=true; S.selCell=-1; S.selNum=0; stopClock(); save(); paint();
+  say('Here is the answer.','Tap New puzzle for another.',null,'💡');
+}
+
+/* ---------------- pointer: tap and drag ----------------
+   One pointer handler for the tray and the board. A press that moves more
+   than a few pixels becomes a drag with a ghost under the finger; anything
+   else is a tap. Dropping a placed number off the board sends it back. */
+var drag=null;
+function cellAt(x,y){ var el=document.elementFromPoint(x,y); el=el&&el.closest?el.closest('.ou-cell'):null; return el ? +el.dataset.cell : -1; }
+function onDown(e){
+  if (e.button>0) return;
+  var t=e.target.closest('.tile, .ou-cell'); if (!t || S.done || S.revealed) return;
+  var v=0, from=-1;
+  if (t.classList.contains('tile')){ if (t.disabled) return; v=+t.dataset.num; }
+  else { from=+t.dataset.cell; v=S.board[from]; if (!v || isGiven(from)) v=0; }
+  drag={x:e.clientX,y:e.clientY,v:v,from:from,el:t,moved:false,id:e.pointerId,ghost:null,over:-1};
+}
+function onMove(e){
+  if (!drag || e.pointerId!==drag.id) return;
+  if (!drag.moved){
+    if (!drag.v || Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<7) return;
+    drag.moved=true;
+    var g=document.createElement('div'); g.className='drag-ghost'; g.textContent=drag.v; document.body.appendChild(g); drag.ghost=g;
+    if (drag.from>=0){ var fc=document.querySelector('.ou-cell[data-cell="'+drag.from+'"]'); if (fc) fc.style.opacity='.35'; }
+  }
+  e.preventDefault();
+  drag.ghost.style.left=e.clientX+'px'; drag.ghost.style.top=e.clientY+'px';
+  var c=cellAt(e.clientX,e.clientY);
+  if (c!==drag.over){
+    document.querySelectorAll('.ou-cell.drop').forEach(function(x){x.classList.remove('drop');});
+    drag.over=c; if (c>=0 && editable(c)) document.querySelector('.ou-cell[data-cell="'+c+'"]').classList.add('drop');
+  }
+}
+function onUp(e){
+  if (!drag || e.pointerId!==drag.id) return;
+  var d=drag; drag=null;
+  document.querySelectorAll('.ou-cell.drop').forEach(function(x){x.classList.remove('drop');});
+  if (d.ghost) d.ghost.remove();
+  if (d.from>=0){ var fc=document.querySelector('.ou-cell[data-cell="'+d.from+'"]'); if (fc) fc.style.opacity=''; }
+  if (d.moved){
+    swallowClick=true; setTimeout(function(){ swallowClick=false; },0);
+    var c=cellAt(e.clientX,e.clientY);
+    if (c>=0 && editable(c)){ if (c!==d.from) place(c,d.v); }
+    else if (d.from>=0 && c<0){ clearCell(d.from); }
+    startClock(); return;
+  }
+}
+var swallowClick=false;   // the click a browser fires at the end of a drag
+function onClick(e){
+  if (swallowClick) return;
+  var tile=e.target.closest('.tile'), cell=e.target.closest('.ou-cell'), badge=e.target.closest('.ou-badge'), sym=e.target.closest('.sym');
+  if (sym && S.mode==='create'){ cycleOp(sym); return; }
+  if (badge){ var k=+badge.dataset.badge; S.line = S.line===k ? -1 : k; paint(); return; }
+  if (S.done||S.revealed) return;
+  if (tile){
+    if (tile.disabled) return;
+    var v=+tile.dataset.num;
+    if (S.selCell>=0 && editable(S.selCell)){ place(S.selCell,v); S.selCell=-1; paint(); startClock(); return; }
+    S.selNum = S.selNum===v ? 0 : v; paint(); return;
+  }
+  if (cell){
+    var i=+cell.dataset.cell;
+    if (isGiven(i)){ S.selCell=i; S.selNum=0; paint(); return; }
+    if (S.selNum){ place(i,S.selNum); S.selCell=-1; paint(); startClock(); return; }
+    if (S.selCell===i && S.board[i]){ clearCell(i); S.selCell=-1; paint(); return; }
+    S.selCell=i; S.line=-1; paint();
+    return;
+  }
+}
+
+/* ---------------- keyboard ---------------- */
+var typed='', typedT=0;
+function onKey(e){
+  if ($('gamePage').classList.contains('hidden') || document.querySelector('.modal-backdrop.open')) return;
+  if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
+  if (!S.p || S.done || S.revealed) return;
+  var n=S.p.n;
+  if (/^Arrow/.test(e.key)){
+    e.preventDefault();
+    if (S.selCell<0){ S.selCell=0; }
+    else {
+      var r=Math.floor(S.selCell/n), c=S.selCell%n;
+      if (e.key==='ArrowUp') r=(r+n-1)%n; if (e.key==='ArrowDown') r=(r+1)%n;
+      if (e.key==='ArrowLeft') c=(c+n-1)%n; if (e.key==='ArrowRight') c=(c+1)%n;
+      S.selCell=r*n+c;
+    }
+    typed=''; paint(); var el=document.querySelector('.ou-cell[data-cell="'+S.selCell+'"]'); if (el) el.focus({preventScroll:true}); return;
+  }
+  if (e.key==='Escape'){ S.selCell=-1; S.selNum=0; S.line=-1; paint(); return; }
+  if (S.selCell<0) return;
+  if (e.key==='Backspace'||e.key==='Delete'){ e.preventDefault(); clearCell(S.selCell); typed=''; return; }
+  if (/^\d$/.test(e.key)){
+    e.preventDefault();
+    clearTimeout(typedT);
+    typed+=e.key; var v=parseInt(typed,10), max=N();
+    var canGrow = v*10 <= max && v>0;          // e.g. "1" on a 4 × 4 might become 10–16
+    if (v>=1 && v<=max && !canGrow){ place(S.selCell,v); typed=''; startClock(); return; }
+    if (v>max || v===0){ typed=''; return; }
+    typedT=setTimeout(function(){ var w=parseInt(typed,10); typed=''; if (w>=1&&w<=max) { place(S.selCell,w); startClock(); } },650);
+  }
+}
+
+/* ---------------- modals ---------------- */
+function openModal(id){ $(id).classList.add('open'); }
+function closeModals(){ document.querySelectorAll('.modal-backdrop.open').forEach(function(m){ if (m.id!=='setupBackdrop') m.classList.remove('open'); }); }
+document.querySelectorAll('.modal-backdrop').forEach(function(m){
+  if (m.id==='setupBackdrop') return;
+  m.addEventListener('click',function(e){ if (e.target===m || e.target.closest('[data-close]')) m.classList.remove('open'); });
+});
+function openSetup(){ $('levelPanel').classList.add('open'); $('setupBackdrop').classList.add('open'); }
+function closeSetup(){ $('levelPanel').classList.remove('open'); $('setupBackdrop').classList.remove('open'); }
+
+function confetti(){
+  var cols=['#2563eb','#7c3aed','#6cbc4a','#f59e0b','#ef4444'];
+  for (var i=0;i<70;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.background=cols[i%cols.length]; c.style.animationDelay=Math.random()*400+'ms'; c.style.animationDuration=(800+Math.random()*900)+'ms'; document.body.appendChild(c); setTimeout(function(x){return function(){x.remove();};}(c),2400); }
+}
+
+/* ---------------- wiring ---------------- */
+function buildLevels(){
+  var g=$('levelGrid'); g.innerHTML='';
+  LEVEL_UI.forEach(function(l){
+    var b=document.createElement('button'); b.type='button'; b.className='level-btn'+(l.id===S.level?' selected':''); b.dataset.level=l.id;
+    b.innerHTML='<div class="level-icon">'+l.icon+'</div><strong>'+l.name+'</strong><span>'+l.desc+'</span>';
+    b.addEventListener('click',function(){ S.level=l.id; buildLevels(); });
+    b.addEventListener('dblclick',function(){ S.level=l.id; closeSetup(); newPuzzle(); });
+    g.appendChild(b);
+  });
+}
+$('solveModeBtn').addEventListener('click',function(){ buildLevels(); openSetup(); });
+$('levelBackBtn').addEventListener('click',closeSetup);
+$('setupBackdrop').addEventListener('click',closeSetup);
+$('startBtn').addEventListener('click',function(){ closeSetup(); newPuzzle(); });
+$('createModeBtn').addEventListener('click',function(){ startCreate(4); });
+$('continueBtn').addEventListener('click',function(){ var d=loadSave(); if (d){ S.level=d.p.level; startPuzzle(d.p,d.board,d.elapsed); if (d.p.level==='custom') showShare(d.p); } });
+$('backToMenuBtn').addEventListener('click',toMenu);
+$('rulesBtn').addEventListener('click',function(){ openModal('rulesModal'); });
+$('settingsBtn').addEventListener('click',function(){
+  document.querySelectorAll('#feedbackSet input').forEach(function(r){ r.checked = r.value===SET.feedback; });
+  $('strongToggle').checked=!!SET.strong; $('timerToggle').checked=!!SET.timer; openModal('settingsModal');
+});
+document.querySelectorAll('#feedbackSet input').forEach(function(r){ r.addEventListener('change',function(){ SET.feedback=r.value; if (SET.feedback!=='values') S.line=-1; saveSettings(); paint(); }); });
+$('strongToggle').addEventListener('change',function(e){ SET.strong=e.target.checked; saveSettings(); paint(); });
+$('timerToggle').addEventListener('change',function(e){ SET.timer=e.target.checked; saveSettings(); paint(); });
+$('undoBtn').addEventListener('click',undo);
+$('cUndoBtn').addEventListener('click',undo);
+$('restartBtn').addEventListener('click',function(){
+  if (S.board.every(function(v,i){return v===S.p.givens[i];}) && !S.revealed) return;
+  snapshot(); S.board=S.p.givens.slice(); S.done=false; S.revealed=false; S.selCell=-1; S.selNum=0; paint(); statusDuringPlay(); startClock(); save();
+});
+$('answerBtn').addEventListener('click',function(){ openModal('answerModal'); });
+$('answerYes').addEventListener('click',showAnswer);
+$('newBtn').addEventListener('click',function(){ if (S.p && S.p.level==='custom'){ buildLevels(); showPage('menu'); openSetup(); } else newPuzzle(); });
+$('shareBtn').addEventListener('click',function(){ showShare(S.p); copyLink(); });
+$('copyLinkBtn').addEventListener('click',copyLink);
+$('winNewBtn').addEventListener('click',function(){ closeModals(); if (S.p.level==='custom'){ buildLevels(); showPage('menu'); openSetup(); } else newPuzzle(); });
+$('winLevelBtn').addEventListener('click',function(){ closeModals(); buildLevels(); showPage('menu'); openSetup(); });
+$('cClearBtn').addEventListener('click',function(){ if (!S.board.some(Boolean)) return; snapshot(); S.board=S.board.map(function(){return 0;}); computeCommon(); paint(); });
+$('cSignsBtn').addEventListener('click',randomSigns);
+$('size3Btn').addEventListener('click',function(){ if (S.createN!==3) startCreate(3); });
+$('size4Btn').addEventListener('click',function(){ if (S.createN!==4) startCreate(4); });
+$('makePuzzleBtn').addEventListener('click',makePuzzle);
+$('checkCustomBtn').addEventListener('click',checkCustom);
+
+var bc=$('boardCol');
+bc.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',onMove,{passive:false});
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',function(e){ if (drag && drag.ghost) drag.ghost.remove(); drag=null; });
+bc.addEventListener('click',onClick);
+document.addEventListener('keydown',onKey);
+var rz=0; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(fitBoard,120); });
+window.addEventListener('hashchange',function(){ if (location.hash.length>1) loadFromHash(); });
+
+window.__OU__={S:S, paint:paint, place:place, OU:OU};
+paintContinue();
+if (!loadFromHash()) showPage('menu');
+})();
+
+</script>
+</body>
+</html>

@@ -48,6 +48,56 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-19, session — being pushed): ORDER UP.** `games/order-up.html`,
+> a logic puzzle after a printed "put 1–16 in a 4x4 so every row and column hits
+> the target" sheet, renamed and rebuilt from scratch (nothing copied). Homepage
+> card before Chess; Games 15 -> 16. One self-contained file on the `.mmtTopbar`
+> shell, no Firebase, English only (the EN/AR/FA layer is a clean addition).
+> * **ENGINE IS DOM-FREE** (the first `<script>`, `var OU`). `evalExact` marks with
+>   exact RATIONALS (4 ÷ 8 × 6 is 3), so ANY arrangement that hits every line wins.
+>   `evalFriendly` is used only to CHOOSE the intended answer: every ÷ whole and,
+>   below Extra Spicy, no running total under zero.
+> * **GENERATION IS CONSTRUCTIVE.** A random 1–16 board almost never has eight
+>   lines sharing a target, so it picks the target and fills row 0, col 0, row 1,
+>   col 1, … choosing ops AND numbers per line from a prefix-indexed list of
+>   candidates. Under 1 s at every level.
+> * **UNIQUENESS BY COUNTING** (`countSolutions`, same row/col interleave over
+>   every hitting tuple). Checked against a brute force over all 9! boards.
+>   Numbers are removed from the busiest row+column first, so no puzzle hands over
+>   a whole line. The printed sheet's top-right puzzle comes out unique too.
+> * **LEVELS:** Sweet 3x3 + − · Mild 3x3 all four · Medium 4x4 + − × (8 given) ·
+>   Spicy 4x4 all four (7) · Extra Spicy (5, negatives on the way).
+> * **LINE CHECKS DEFAULT TO TICK/CROSS** — students do the arithmetic. Settings
+>   offers values + step-by-step working (tap a total), or nothing until the end.
+>   No hints (consistent with Sudoku/Chess); "Show answer" ends the puzzle.
+> * **MAKE YOUR OWN:** tap circles to change signs; when every line matches,
+>   "Turn it into a puzzle" hides numbers while keeping one answer. Or set givens +
+>   a target and it checks 0/1/many. Puzzles SHARE AS A LINK (`#v1.n.T.ops.givens`)
+>   — nothing online.
+> * Progress in `mmtOrderUpSave.v1`, settings in `mmtOrderUpSettings.v1`.
+> * **RACE MODE (2–4 players)** at `games/order-up/rooms/{CODE}` on
+>   `mmt-firebase-games` — the existing `/games/{gameId}/rooms/{roomCode}` rule
+>   covers it, **no rules change**. Same shape as Sudoku's race (create/join,
+>   Ready, 3-2-1 gate, board veiled until then, late joiners refused, rematch when
+>   all press Play again, leave). Firebase is a DYNAMIC import. The room stores
+>   the puzzle as its share code (Firestore cannot hold nested arrays) and never
+>   the answer; a win is checked in a transaction by `boardOK`. "Values and
+>   working" drops to tick/cross in a race so nobody has a calculator.
+>   Verified with a stubbed Firestore across three pages (24 checks).
+> * Level icons are ONE emoji each (🍬 🍃 🌶️ 🔥 🌋, as Sudoku) — two emoji wrap
+>   inside the 44px icon box and spill into the title.
+>
+> **NEW (2026-09-19): THE GAMES CATEGORY IS THREE GROUPS.** `index.html` now has
+> three `data-resource-group data-cat="game"` sections: **Games related to
+> mathematics** (`#games`, topic "Maths games": Battleships, Cartesian Capture,
+> Cartesian Connect 4, Closest to 100, Fractional Hex, Greedy Pig, Maths Memory,
+> Row & Column Challenge, Taxed by the King), **Games** (`#games-strategy`,
+> "Strategy games": Chess, Checkers, Dots and Boxes, Ultimate Tic-Tac-Toe) and
+> **Puzzles** (`#games-puzzles`, "Puzzles": Order Up, Shikaku, Sudoku). Every
+> card is still `data-type="game"`, so the Games tab and counts are unchanged;
+> the topic filter now offers the three groups. A new game goes in one of the
+> three and its `group-count` pill is edited by hand.
+>
 > **NEW (2026-09-19, session — being pushed): CHECKERS.** `games/checkers.html`,
 > built on the CHESS shell (same modes, clocks, online room shape, takeback-only
 > policy, phone layout, EN/AR/FA) — read the Chess block below; this one lists
