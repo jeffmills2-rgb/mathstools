@@ -70,6 +70,19 @@
 >   part into any glowing box (all mirror), then the answers; "Show me" skips a
 >   stuck step. Quiz: 15 questions, first check scores, a wrong answer shows the
 >   right one. Old full-screen button dropped (the layout fills the screen).
+> * **THE AMOUNT IN THE QUESTION IS A FULL PALE CHIP, NOT A HIGHLIGHTER STRIPE**
+>   (teacher feedback 2026-09-21): a `linear-gradient(transparent 62%, …)` underline
+>   covers only the bottom of the text and reads as distracting. It is now the same
+>   amber as the label that amount becomes on the model, which is what ties the
+>   question to the bracket.
+> * **THE NUMBER IN A BOX IS SIZED FROM THE BOX'S MEASURED WIDTH** (`fitBoxText`),
+>   not from a breakpoint — a 13-part ratio on a 1024×768 projector clipped its
+>   digits otherwise. Short screens (`max-height:800px`) also shrink the bar, the
+>   question and the bracket labels, because Type 3's bracket row and Practice's
+>   answer row both pushed the controls under the fold at 1024×768.
+> * Types 2 and 3 get NO total brace at the answer: with ten boxes the extra
+>   column squeezes the bars, and the answer line already states the total.
+> * `prefers-reduced-motion` turns every animation off.
 > * Verified in Playwright: 9000 generated problems, every stage of every type
 >   (box counts, what is filled, answer never early), practice and quiz flows,
 >   and no overflow at 390/1024/1280/1366/1920 over 540 questions.
@@ -570,32 +583,41 @@
 >   handler as well as HTML5 drag), so touch placement works — HTML5 `dragstart`
 >   alone would not have.
 >
-> **NEW (2026-09-21, session — being pushed): THE SEARCH BOX MOVED UP.**
-> Teacher feedback: the homepage search existed but was buried three screens
-> down inside the Browse card and read as part of the furniture. There is now a
-> **find band** (`.findbar`, `id="findbar"`) between the hero and "Featured this
-> term": kicker, the heading *"Know what you want? Search below to find it!"*, a
-> line of explanation, the search field, and a row of **"Try:" chips**
-> (`.find-chip`, `data-q`) that fill the box and run the search.
+> **NEW (2026-09-21, session — being pushed): THE SEARCH BOX MOVED UP, AND
+> THE RESULTS MOVED IN WITH IT.** Teacher feedback: the homepage search existed
+> but was buried three screens down inside the Browse card and read as part of
+> the furniture. **The `#browse` section now sits directly under the hero** —
+> above "Featured this term", which moved below it — and its card
+> (`.browse-shell`) opens with a tinted **`.findbar-head`** (`id="findbar"`,
+> which is what the hero's "Search all resources" button scrolls to and focuses)
+> holding the search field and a row of **"Try:" chips** (`.find-chip`,
+> `data-q`) that fill the box and run the search. The section head above the
+> card carries the kicker *Find it fast* and the heading *"Know what you want?
+> Search below to find it!"*.
+> * **THE SEARCH BOX AND THE RESULTS ARE ONE CARD** (teacher feedback
+>   2026-09-21). A separate band above the results card read as disconnected —
+>   you typed in one box and the answers appeared in a different one. So the
+>   head is the TOP OF the results card, flush to its edges: `.browse-shell` is
+>   `padding:0;overflow:hidden`, the head is full-bleed with a bottom border,
+>   and every OTHER direct child of the shell is padded in by CSS
+>   (`.browse-shell > *:not(.findbar-head)`), which is why nothing there may
+>   rely on the shell's own padding.
 > * **THE INPUT WAS MOVED, NOT COPIED.** There is still exactly ONE
->   `#resourceSearch` on the page, so there is no second input to keep in sync
->   and every existing handler (`enterSearch`, `applyFilters`, `showHome`,
->   `backBtn`) works untouched. The `.browse-search` wrapper and its CSS are
->   gone; the `.filter-select:focus` rule that shared its selector was kept.
-> * **TYPING HIDES THE FEATURED STRIP** (`enterSearch()` already did this), so
->   the results land directly under the band — which is the whole reason the
->   band sits ABOVE the featured strip rather than below it.
-> * The hero's "Search all resources" button now points at `#findbar` and puts
->   the caret in the box after the smooth scroll, instead of resetting Browse.
->   The Browse heading was reworded to describe what is left there (tabs, stage
->   and topic filters).
+>   `#resourceSearch`, so there is no second input to keep in sync and every
+>   existing handler (`enterSearch`, `applyFilters`, `showHome`, `backBtn`)
+>   works untouched. The old `.browse-search` wrapper and its CSS are gone; the
+>   `.filter-select:focus` rule that shared its selector was kept.
+> * `enterSearch()` still hides the featured strip, which now sits BELOW the
+>   browse section, so a search never leaves a gap mid-page.
 > * **The MMT Screen launcher is unaffected** — it reads `a.resource-card` and
 >   `.nav-links a[href]`, and neither changed.
-> * Verified in Playwright at 1440x900, 1366x768 and 390x780 (47 checks): one
->   input, the band above the featured strip and Browse, no horizontal overflow,
->   typing filtering to sensible counts with results below the band, the chips,
->   Reset clearing the box, the hero button focusing it, and category browse
->   still working.
+> * Verified in Playwright at 1440x900, 1366x768 and 390x780 (50 checks): one
+>   input, the field and `#resultsArea` inside the same `.browse-shell`, the
+>   head flush to the card's edges, results drawn inside the card with padding
+>   under the last one, the card above the featured strip, no horizontal
+>   overflow, the chips, Reset clearing and bringing the featured strip back,
+>   the hero button focusing the box, and category browse still working with the
+>   search box on screen.
 >
 > **NEW (2026-09-17, session — being pushed): ONE-ROW SITE NAV.** The homepage
 > banner had grown to 13 links over two rows. It is now ONE row: **Browse ▾** (a
