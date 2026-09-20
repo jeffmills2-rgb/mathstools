@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Total Trail v1 (2026-09-20): walk a trail from the top-left to the target keeping a RUNNING TOTAL — each step applied as you go, never written as one sum -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Total Trail | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --red:#ef4444; --amber:#f59e0b; --btn:#eef2f7; --btnHover:#e5ebf3; --grid:#b7c7dc;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --c:84px;
+    }
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:14px 24px;display:grid;grid-template-columns:minmax(240px,1fr) auto minmax(460px,1fr);align-items:center;gap:18px;box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:12px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:8px 12px;margin-left:-12px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.18);}
+    input[type="text"],input[type="number"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;}
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .menu-card{padding:28px;display:grid;gap:22px;min-height:620px;place-items:center;position:relative;}
+    h1,h2,h3,p{margin-top:0;}
+    .mode-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .menu-panel{border-radius:26px;background:#f8fafc;border:1px solid var(--border);padding:20px;display:grid;gap:16px;}
+    .menu-center-panel{width:min(980px,100%);background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(15,23,42,.12);padding:28px;border:1px solid #dbe3ef;}
+    .menu-intro{display:grid;gap:6px;}
+    .menu-intro p{color:#475569;font-weight:750;line-height:1.45;margin:0;}
+    .setup-modal-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 36px));max-height:calc(100vh - 48px);overflow:auto;display:none;z-index:95;background:white;box-shadow:0 34px 90px rgba(15,23,42,.25);padding:28px;}
+    .setup-modal-panel.open{display:grid;}
+    .setup-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .setup-modal-head h2{margin-bottom:0;}
+    .level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:6px;padding:16px;border-radius:18px;align-content:start;}
+    .level-icon{white-space:nowrap;line-height:1;width:44px;height:44px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;font-size:1.55rem;box-shadow:inset 0 -3px 0 rgba(15,23,42,.06);}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn strong{font-size:1rem;}
+    .level-btn span{font-size:.78rem;color:var(--muted);font-weight:850;line-height:1.3;}
+    .form-note{font-size:.9rem;color:var(--muted);font-weight:750;line-height:1.4;margin:0;}
+
+    .game-card{display:grid;padding:18px;gap:16px;}
+    .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:64px;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+    .status-subtitle.good{color:#166534;} .status-subtitle.warn{color:#9a3412;}
+    .toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;font-size:.9rem;border:1px solid #c7d2fe;white-space:nowrap;}
+    .game-area{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start;}
+    .board-col{display:grid;gap:14px;justify-items:center;min-width:0;}
+    .side-panel{display:grid;gap:14px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    .panel-section h2{font-size:1.05rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    .hidden{display:none!important;}
+    /* race mode */
+
+    /* ---------- the board ----------
+       A plain grid of squares, like the printed page. The trail is an SVG
+       line drawn OVER the squares through their centres, so it reads as one
+       continuous snake rather than a set of shaded boxes. */
+    .board-col{display:grid;gap:12px;justify-items:center;min-width:0;}
+    .et-wrap{position:relative;padding:16px 16px 16px calc(var(--c)*.55 + 16px);border-radius:24px;background:linear-gradient(180deg,#ffffff,#f9fafb);border:1px solid var(--border);touch-action:none;user-select:none;-webkit-user-select:none;max-width:100%;}
+    .et-board{display:grid;position:relative;border:2px solid #334155;border-radius:14px;overflow:hidden;background:#fff;}
+    .et-cell .tx{position:relative;z-index:3;text-shadow:0 0 4px #fff,0 0 8px #fff,0 0 2px #fff;}
+    .et-cell.target .tx{text-shadow:none;}
+    .et-cell{width:var(--c);height:var(--c);border:1px solid #cbd5e1;background:#fff;display:grid;place-items:center;padding:0;border-radius:0;font-weight:900;font-size:calc(var(--c)*.42);color:var(--ink);font-variant-numeric:tabular-nums;transition:background .12s ease;cursor:pointer;position:relative;}
+    .et-cell:hover{transform:none;background:#f8fbff;}
+    .et-cell.sign{background:#f1f5f9;color:#475569;font-size:calc(var(--c)*.44);font-weight:800;}
+    .et-board.strong .et-cell.sign.md{color:#6d28d9;background:#f5f3ff;}
+    .et-cell.eq{background:#fef3c7;color:#92400e;}
+    .et-cell.target{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;font-size:calc(var(--c)*.38);cursor:default;}
+    .et-cell.on{background:#fde68a!important;}
+    .et-cell.on.sign{color:#78350f;}
+    .et-cell.head{background:#fbbf24!important;color:#451a03!important;}
+    .et-cell.next::after{content:"";position:absolute;inset:calc(var(--c)*.12);border-radius:10px;border:2px dashed rgba(245,158,11,.55);pointer-events:none;}
+    .et-cell.bad{animation:shake .32s ease;background:#fee2e2!important;}
+    .et-lines{position:absolute;pointer-events:none;overflow:visible;z-index:2;}
+    .et-arrow{position:absolute;left:14px;font-size:calc(var(--c)*.42);font-weight:950;color:#2563eb;line-height:1;transform:translateY(-50%);}
+    .et-legend{margin-top:-4px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-weight:850;color:var(--muted);font-size:.86rem;}
+
+    .found-list{display:grid;gap:8px;margin-top:12px;}
+    .found{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:white;border:1px solid var(--border);font-family:var(--mathFont);font-size:1.1rem;line-height:1.3;}
+    .found .dot{flex:0 0 auto;width:14px;height:14px;border-radius:50%;}
+    .found.empty{color:#94a3b8;font-family:var(--uiFont);font-weight:800;font-size:.92rem;border-style:dashed;}
+    .found.shown{background:#fffbeb;border-color:#fde68a;}
+    .expr{width:100%;max-width:640px;text-align:center;font-family:var(--mathFont);font-size:1.35rem;line-height:1.4;min-height:2.3em;padding:8px 14px;border-radius:14px;background:white;border:1px solid var(--border);word-break:break-word;}
+    .expr .q{color:#94a3b8;}
+    .expr{font-family:var(--uiFont);font-weight:850;display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:4px 10px;}
+    .expr .rt-label{color:#475569;font-size:1rem;}
+    .expr .rt{font-size:2rem;font-weight:950;color:#7c3aed;letter-spacing:-.03em;font-variant-numeric:tabular-nums;}
+    .expr .q{font-family:var(--mathFont);font-weight:600;font-size:1.15rem;}
+    /* The running total is written small in the corner of each number square on the trail. */
+    .et-cell .tot{position:absolute;right:4px;bottom:3px;z-index:3;font-size:calc(var(--c)*.2);font-weight:900;color:#7c3aed;background:rgba(255,255,255,.9);border-radius:6px;padding:0 4px;line-height:1.25;font-family:var(--uiFont);}
+    .et-cell .tot:empty{display:none;}
+    .found .chain{font-family:var(--uiFont);font-weight:800;font-size:.95rem;}
+    .found .chain .ar{color:#94a3b8;font-weight:700;}
+    .found .chain .op{color:#475569;white-space:nowrap;}
+    .how-note{margin:0;width:100%;max-width:640px;text-align:center;font-size:.86rem;font-weight:750;color:#475569;line-height:1.4;padding:8px 12px;border-radius:14px;background:#f5f3ff;border:1px solid #ddd6fe;}
+    #working{max-height:min(34vh,300px);overflow:auto;}
+    .working .wl{font-size:1.1rem;padding:4px 10px;}
+    .working .wl.latest{background:#f5f3ff;border-color:#ddd6fe;}
+    .bodmas b{min-width:64px;font-size:.9rem;letter-spacing:0;}
+    .expr .val{font-weight:700;color:#7c3aed;}
+
+
+    /* ---------- worksheet creator ----------
+       Controls in three bands like the other MMT creators; the preview is the
+       real A4 page in millimetres, shrunk to the screen with zoom. */
+    .ws-card{padding:18px;display:grid;gap:16px;}
+    .ws-controls{display:grid;gap:12px;}
+    .ws-band{border-radius:20px;padding:14px 16px;background:#f8fafc;border:1px solid var(--border);}
+    .ws-band-title{font-weight:950;color:#1e3a8a;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+    .ws-fields{display:grid;grid-template-columns:minmax(220px,1.2fr) minmax(130px,.5fr) minmax(330px,1.6fr);gap:12px;align-items:end;}
+    .ws-fields label{display:grid;gap:6px;}
+    .ws-perwrap{display:grid;gap:6px;}
+    .ws-lbl{color:#334155;font-weight:850;font-size:.92rem;}
+    .ws-lbl small{color:var(--muted);font-weight:750;}
+    .ws-per{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .ws-per button{display:grid;justify-items:center;gap:3px;padding:8px 6px;background:white;border:2px solid var(--border);color:#334155;font-size:.86rem;}
+    .ws-per button small{color:var(--muted);font-weight:800;font-size:.72rem;}
+    .ws-per button.on{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .pg{width:24px;height:32px;border:2px solid currentColor;border-radius:3px;display:grid;gap:2px;padding:2px;opacity:.8;}
+    .pg i{background:currentColor;opacity:.35;border-radius:1px;}
+    .pg.p2{grid-template-rows:1fr 1fr;} .pg.p4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+    .ws-toggles{display:flex;flex-wrap:wrap;gap:8px 18px;}
+    .ws-toggles label{display:flex;align-items:center;gap:8px;font-weight:850;}
+    .ws-toggles input{width:20px;height:20px;accent-color:var(--blue);}
+    .ws-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .ws-summary{color:var(--muted);font-weight:800;font-size:.9rem;}
+    .ws-out{--wsZoom:1;display:grid;justify-items:center;gap:18px;padding:18px 0;background:#e2e8f0;border-radius:20px;min-height:200px;overflow:hidden;}
+    .ws-empty{align-self:center;color:#475569;font-weight:800;padding:40px;}
+    .ws-page{zoom:var(--wsZoom);width:210mm;height:297mm;padding:12mm;box-sizing:border-box;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.18);display:flex;flex-direction:column;gap:3mm;overflow:hidden;color:#0f172a;font-family:var(--uiFont);}
+    .ws-head{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;border-bottom:.6mm solid #1e3a8a;padding-bottom:2mm;}
+    .ws-brand{font-size:8pt;font-weight:900;color:#2563eb;letter-spacing:.06em;text-transform:uppercase;}
+    .ws-head h1{margin:0;font-size:20pt;letter-spacing:-.03em;line-height:1.1;}
+    .ws-keytag{font-size:11pt;background:#dcfce7;color:#166534;border-radius:2mm;padding:.5mm 2.5mm;vertical-align:middle;}
+    .ws-name{display:flex;gap:6mm;font-size:10pt;font-weight:800;color:#334155;}
+    .ws-name span{border-bottom:.3mm solid #64748b;min-width:38mm;padding-bottom:4mm;}
+    .ws-name span:last-child{min-width:26mm;}
+    .ws-slim{display:flex;justify-content:space-between;font-size:8.5pt;font-weight:900;color:#475569;border-bottom:.4mm solid #cbd5e1;padding-bottom:1.5mm;}
+    .ws-rules{font-size:8.6pt;line-height:1.38;color:#1e293b;}
+    .ws-note{margin-top:1.5mm;padding:1.2mm 2.5mm;border-radius:2mm;background:#f5f3ff;border:.3mm solid #ddd6fe;}
+    .ws-tip{margin-top:1mm;color:#475569;}
+    .ws-grid{flex:1;min-height:0;display:grid;gap:4mm;}
+    .per1 .ws-grid{grid-template-rows:1fr;}
+    .per2 .ws-grid{grid-template-rows:1fr 1fr;}
+    .per4 .ws-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+    .ws-q{min-height:0;overflow:hidden;border:.35mm solid #cbd5e1;border-radius:3mm;padding:3mm 4mm;display:flex;flex-direction:column;gap:2.5mm;break-inside:avoid;}
+    .ws-qhead{display:flex;align-items:center;gap:2.5mm;font-size:10pt;flex-wrap:wrap;}
+    .per4 .ws-qhead{font-size:8.6pt;gap:1.8mm;}
+    .ws-qn{display:inline-grid;place-items:center;min-width:6.5mm;height:6.5mm;border-radius:50%;background:#1e3a8a;color:#fff;font-weight:900;font-size:9pt;}
+    .ws-lv{font-weight:900;color:#475569;font-size:.85em;border:.3mm solid #cbd5e1;border-radius:3mm;padding:.2mm 2mm;}
+    .ws-qbody{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:3mm;}
+    .ws-q.side .ws-qbody{flex-direction:row;align-items:stretch;}
+    .ws-board{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+    .ws-board svg{display:block;}
+    .ws-rec{flex:1;min-height:0;align-self:stretch;display:flex;flex-direction:column;justify-content:space-evenly;gap:1mm;}
+    .ws-line{border-bottom:.3mm solid #94a3b8;min-height:5mm;flex:1;max-height:14mm;display:flex;align-items:flex-end;padding-bottom:.8mm;}
+    .ws-line span{font-size:8pt;font-weight:900;color:#64748b;}
+    .ws-rec.key{justify-content:flex-start;gap:1.6mm;}
+    .ws-ans{display:flex;align-items:flex-start;gap:2mm;font-size:9pt;line-height:1.35;}
+    .per4 .ws-ans{font-size:7.6pt;}
+    .ws-ans .sw{flex:0 0 auto;width:9mm;height:3mm;margin-top:1mm;}
+    .ws-foot{font-size:7.5pt;color:#64748b;text-align:center;font-weight:700;}
+    @media(max-width:1080px){ .ws-fields{grid-template-columns:1fr 1fr;} .ws-perwrap{grid-column:1/-1;} }
+    @media print{
+      @page{size:A4;margin:0;}
+      html,body{background:#fff!important;}
+      body>*:not(main){display:none!important;}
+      main.layout{width:auto!important;margin:0!important;}
+      main.layout>section:not(#sheetPage){display:none!important;}
+      #sheetPage{display:block!important;padding:0!important;border:0!important;box-shadow:none!important;background:none!important;border-radius:0!important;}
+      .ws-controls{display:none!important;}
+      .ws-out{display:block!important;padding:0!important;background:none!important;border-radius:0!important;}
+      .ws-page{zoom:1!important;box-shadow:none!important;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .ws-page:last-child{break-after:auto;page-break-after:auto;}
+    }
+
+    .target-card{display:flex;align-items:center;gap:14px;}
+    .target-num{flex:0 0 auto;min-width:74px;height:74px;padding:0 10px;border-radius:22px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:white;display:grid;place-items:center;font-size:2.3rem;font-weight:950;letter-spacing:-.04em;box-shadow:0 12px 26px rgba(124,58,237,.25);}
+    .target-text{font-weight:850;color:#334155;line-height:1.35;}
+    .bodmas{display:grid;gap:8px;margin:0;padding:0;list-style:none;}
+    .bodmas li{display:flex;gap:10px;align-items:center;padding:9px 11px;border-radius:14px;background:white;border:1px solid var(--border);font-weight:850;color:#334155;font-size:.92rem;line-height:1.3;}
+    .bodmas b{flex:0 0 auto;display:grid;place-items:center;min-width:60px;height:32px;font-size:1.2rem;letter-spacing:.12em;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;}
+    .bodmas .md b{background:#f5f3ff;color:#6d28d9;}
+    .progress-bar{height:13px;border-radius:999px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1;margin-top:8px;}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),#a3e635);border-radius:999px;transition:width .25s ease;}
+    .progress-top{display:flex;justify-content:space-between;gap:8px;font-weight:950;color:#334155;}
+    .working{display:grid;gap:6px;font-family:var(--mathFont);font-size:1.28rem;color:var(--ink);}
+    .working .wl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:white;border:1px solid var(--border);}
+    .working .wl:first-child{background:#eef6ff;border-color:#bfdbfe;}
+    .working .eq{color:#94a3b8;font-family:var(--uiFont);font-weight:900;}
+    .working .nw{font-weight:700;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:0 5px;}
+    .working .fr{display:inline-flex;flex-direction:column;align-items:center;font-size:.8em;line-height:1;}
+    .working .fr span:first-child{border-bottom:1.5px solid currentColor;padding:0 2px 1px;}
+    .working-empty{color:var(--muted);font-weight:750;font-size:.92rem;line-height:1.4;margin:0;}
+
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .row-actions button{flex:1 1 auto;}
+    .share-box{display:grid;gap:8px;}
+    .share-box input{font-size:.8rem;font-weight:700;color:#475569;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(640px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .rules-list{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:800;line-height:1.4;color:#334155;}
+    .rules-list .ex{font-family:var(--mathFont);font-size:1.12rem;color:var(--ink);white-space:nowrap;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);margin-top:10px;}
+    .toggle-row .tr-text{display:grid;gap:2px;}
+    .toggle-row .tr-text span{font-size:.84rem;color:var(--muted);font-weight:750;}
+    .toggle-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--blue);}
+    .radio-set{display:grid;gap:8px;margin-top:10px;}
+    .radio-set label{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;}
+    .radio-set label span{display:grid;gap:2px;}
+    .radio-set label small{color:var(--muted);font-weight:750;}
+    .radio-set input{margin-top:3px;accent-color:var(--blue);}
+    .end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .end-big{font-size:1.05rem;font-weight:800;color:#334155;line-height:1.45;margin:8px 0 0;}
+    .brand-footer{width:min(1340px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:210;background:#0f172a;color:white;padding:11px 16px;border-radius:14px;font-weight:850;box-shadow:0 14px 34px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+    .toast.show{opacity:1;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .shake{animation:shake .32s ease;}
+    @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{width:min(1500px,calc(100vw - 36px));margin:12px auto 8px;}
+      .game-card{padding:14px 18px;gap:12px;}
+      .brand-footer{width:min(1500px,calc(100vw - 36px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:auto 1fr;}
+      .mmtTopTitle{text-align:left;}
+      .actions{grid-column:1/-1;justify-content:center;}
+      .game-area{grid-template-columns:1fr;}
+      .side-panel{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+      .level-grid{grid-template-columns:repeat(2,1fr);}
+    }
+/* ==== MMT PHONE LAYOUT (added 2026-09-19) — do not edit above this line ==== */
+@media(max-width:700px){
+  .mmtTopbar{position:relative;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 8px;padding:7px 10px;min-height:0;}
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{grid-column:2;justify-self:start;text-align:left;min-width:0;font-size:1.1rem;line-height:1.14;}
+  .actions{grid-column:1/-1;margin:0;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;}
+  .actions .btn,.actions button{padding:9px 12px;font-size:13px;line-height:1.15;border-radius:11px;white-space:nowrap;min-width:0;min-height:38px;}
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;}
+  .layout,.layout>*,.card{min-width:0;}
+  .layout{width:calc(100vw - 16px);margin:8px auto;}
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+  input,select{font-size:16px!important;}
+
+  .menu-card{padding:12px;min-height:0;}
+  .menu-center-panel{padding:16px;}
+  .setup-modal-panel{padding:16px;max-height:calc(100dvh - 20px);}
+  .level-grid{grid-template-columns:1fr;}
+  .game-card{padding:10px;gap:10px;}
+  .status-strip{grid-template-columns:1fr;}
+  .turn-card{min-height:0;padding:9px 12px;border-radius:16px;}
+  .status-icon{width:30px;height:30px;font-size:1.1rem;}
+  .status-title{font-size:.98rem;}
+  .status-subtitle{font-size:.84rem;}
+  .toolbar{justify-content:center;gap:6px;}
+  .toolbar button{padding:9px 12px;font-size:13px;min-height:38px;}
+  .toolbar .chip{padding:6px 10px;font-size:.8rem;}
+  .et-wrap{padding:8px 8px 8px calc(var(--c)*.5 + 8px);border-radius:16px;}
+  .et-arrow{left:6px;}
+  .side-panel{grid-template-columns:1fr;}
+  .ws-card{padding:10px;}
+  .ws-fields{grid-template-columns:1fr;}
+  .ws-per button{font-size:.78rem;}
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+</style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Total Trail</div>
+    <div class="actions">
+      <button class="btn" id="sheetBtn" type="button" title="Make a printable worksheet of these puzzles">🖨 Worksheet</button>
+      <button class="btn" id="rulesBtn" type="button">How to play</button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎ Settings</button>
+      <button class="btn hidden" id="backToMenuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card menu-card" id="menuPage">
+      <div class="menu-panel menu-center-panel">
+        <div class="menu-intro">
+          <h2 style="margin:0">Total Trail</h2>
+          <p>Walk a trail from the top-left square to the target in the bottom-right corner — up, down, left or right, never using a square twice. Your first number is your running total. Every sign and number you walk through changes the total straight away, one step at a time. Finish on the target. Every board hides more than one trail that does it. Can you find them all?</p>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card hidden" id="continueBtn" type="button">
+            <span class="mode-icon">▶️</span>
+            <strong>Continue puzzle</strong>
+            <span id="continueDesc">—</span>
+          </button>
+          <button class="mode-card" id="playBtn" type="button">
+            <span class="mode-icon">🐍</span>
+            <strong>Play</strong>
+            <span>Five levels, from a small board with only + and − up to Extra Spicy. The board tells you how many trails to find — and that is exactly how many there are.</span>
+          </button>
+          <button class="mode-card" id="sheetModeBtn" type="button">
+            <span class="mode-icon">🖨</span>
+            <strong>Printable worksheet</strong>
+            <span>Up to 12 puzzles on A4, one, two or four to a page, with an answer key that draws every trail.</span>
+          </button>
+        </div>
+      </div>
+      <div class="menu-panel setup-modal-panel" id="levelPanel" role="dialog" aria-modal="true" aria-labelledby="levelTitle">
+        <div class="setup-modal-head"><h2 id="levelTitle">Choose a level</h2><button class="btn-soft" id="levelBackBtn" type="button">Back</button></div>
+        <p class="form-note">Every board is checked by walking every possible trail, so the number of trails it asks for is exactly how many there are.</p>
+        <div class="level-grid" id="levelGrid"></div>
+        <button class="btn-primary" id="startBtn" type="button">Start</button>
+      </div>
+      <div class="modal-backdrop" id="setupBackdrop" aria-hidden="true"></div>
+    </section>
+
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">🐍</div>
+          <div>
+            <div class="status-title" id="statusTitle">Find a trail that finishes on the target.</div>
+            <div class="status-subtitle" id="messageBox" aria-live="polite">Start in the top-left square and drag, or tap one square at a time.</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span class="chip" id="levelChip">—</span>
+          <span class="chip" id="timerChipWrap">⏱ <strong id="timerChip">00:00</strong></span>
+          <button class="btn-soft" id="backStepBtn" type="button" title="Take the last step back (Backspace)">↶ Step back</button>
+          <button class="btn-soft" id="clearBtn" type="button" title="Start this trail again (Esc)">Clear trail</button>
+          <button class="btn-soft" id="answerBtn" type="button">Show answers</button>
+          <button class="btn-soft" id="shareBtn" type="button">Share</button>
+          <button class="btn-primary" id="newBtn" type="button">New puzzle</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="board-col" id="boardCol">
+          <div class="et-wrap" id="wrap">
+            <div class="et-arrow" id="arrow" aria-hidden="true">→</div>
+            <div class="et-board" id="board" role="grid" aria-label="Total Trail board"></div>
+            <svg class="et-lines" id="lines" aria-hidden="true"></svg>
+          </div>
+          <div class="expr" id="expr" aria-live="polite"></div>
+          <div class="et-legend" id="legend"></div>
+          <p class="how-note" id="howNote"><b>Steps, not one long sum:</b> 5 → +3 → ×2 gives 16. (As one sum, 5 + 3 × 2 is 11.)</p>
+        </div>
+
+        <aside class="side-panel">
+          <section class="panel-section">
+            <div class="target-card">
+              <div class="target-num" id="targetNum">—</div>
+              <div class="target-text" id="targetText">Find the trails whose running total finishes on this number.</div>
+            </div>
+            <div class="progress-top" style="margin-top:12px"><span>Trails found</span><span id="progressText">0 / 3</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="found-list" id="foundList"></div>
+          </section>
+
+          <section class="panel-section hidden" id="workingSection">
+            <h2 id="workingTitle">Your steps</h2>
+            <div class="working" id="working"></div>
+          </section>
+
+
+          <section class="panel-section hidden" id="shareSection">
+            <h2>Share this puzzle</h2>
+            <div class="share-box">
+              <input id="shareInput" type="text" readonly aria-label="Puzzle link" />
+              <button class="btn-soft" id="copyLinkBtn" type="button">Copy link</button>
+              <p class="form-note">Anyone who opens the link gets this exact board. Nothing is saved online — the puzzle lives in the link.</p>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+    <!-- ============================================================ WORKSHEET -->
+    <section class="card ws-card hidden" id="sheetPage">
+      <div class="ws-controls" id="wsControls">
+        <div class="ws-band">
+          <div class="ws-band-title">The paper</div>
+          <div class="ws-fields">
+            <label>Level
+              <select id="wsLevel">
+                <option value="sweet">🍬 Sweet — 4 × 4, + and −</option>
+                <option value="mild">🍃 Mild — 5 × 5, + and −</option>
+                <option value="medium">🌶️ Medium — + − ×</option>
+                <option value="spicy">🔥 Spicy — all four</option>
+                <option value="extra">🌋 Extra Spicy — to 12, below zero</option>
+                <option value="mixed">🎢 Mixed — a ladder, Sweet to Extra Spicy</option>
+              </select>
+            </label>
+            <label>Puzzles (1–12)
+              <input id="wsCount" type="number" min="1" max="12" step="1" inputmode="numeric" />
+            </label>
+            <div class="ws-perwrap">
+              <span class="ws-lbl">Puzzles per page <small>— fewer means bigger boards</small></span>
+              <div class="ws-per" id="wsPer" role="group" aria-label="Puzzles per page">
+                <button type="button" data-per="1"><span class="pg p1"><i></i></span>1 per page<small>Biggest</small></button>
+                <button type="button" data-per="2"><span class="pg p2"><i></i><i></i></span>2 per page<small>Large</small></button>
+                <button type="button" data-per="4"><span class="pg p4"><i></i><i></i><i></i><i></i></span>4 per page<small>Compact</small></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ws-band">
+          <div class="ws-band-title">Options</div>
+          <div class="ws-toggles">
+            <label><input type="checkbox" id="wsLines" /> Lines to record each trail</label>
+            <label><input type="checkbox" id="wsKey" /> Answer key</label>
+            <label><input type="checkbox" id="wsRule" /> “Steps, not one long sum” note</label>
+            <label><input type="checkbox" id="wsName" /> Name and date</label>
+            <label><input type="checkbox" id="wsColour" /> Colour the × and ÷ signs</label>
+          </div>
+        </div>
+        <div class="ws-actions">
+          <button class="btn-primary" id="wsGenBtn" type="button">Generate worksheet</button>
+          <button class="btn-green" id="wsPrintBtn" type="button" disabled>🖨 Print</button>
+          <span class="ws-summary" id="wsSummary" aria-live="polite">Every board is checked by walking every possible trail, so each one has exactly the number of trails it asks for.</span>
+        </div>
+      </div>
+      <div class="ws-out" id="wsOut"></div>
+    </section>
+  </main>
+
+  <footer class="brand-footer"><span>Total Trail · <a href="https://www.millsmathstools.au">Mills Maths Tools</a></span></footer>
+
+  <div class="modal-backdrop" id="rulesModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header"><h2 id="rulesTitle">How to play</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <ul class="rules-list">
+        <li>Start in the top-left square (the arrow) and finish on the target in the bottom-right corner.</li>
+        <li>Move one square at a time — up, down, left or right, never diagonally — and never use the same square twice. You reach the target through one of the two arrow squares next to it.</li>
+        <li><b>Keep a running total.</b> The first number is where the total starts. Each sign and the number after it change the total <b>straight away</b>, in the order you walk them.<br>
+          <span class="ex">5 → +8 → 13 → ×7 → 91 → −8 → 83</span></li>
+        <li><b>This is not one long sum.</b> Each step is worked on its own, so the order of operations does not come into it. If you wrote the same trail as a single sum, 5 + 8 × 7 − 8, the order of operations would make it 53 — a different answer. That is why the trail is never written that way.</li>
+        <li>Every step has to give a whole number, so you cannot step onto a number that does not divide the total exactly.</li>
+        <li>Every board has a set number of trails that finish on the target. Find them all.</li>
+        <li>Drag from the end of your trail, or tap the next square. Tap a square already on your trail to go back to it. Keyboard: arrows to move, Backspace to step back, Esc to clear.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header"><h2 id="settingsTitle">Settings</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <label class="toggle-row"><span class="tr-text"><strong>Show the running total</strong><span>On: the total, each step and the total on every trail square are shown. Off: students keep the running total in their heads or on paper.</span></span><input type="checkbox" id="totalToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Colour the × and ÷ squares</strong><span>Picks out the multiplying and dividing steps.</span></span><input type="checkbox" id="strongToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Show the timer</strong><span>Hide it for a calmer board.</span></span><input type="checkbox" id="timerToggle" /></label>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="answerModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerTitle">
+      <div class="modal-header"><h2 id="answerTitle">Show the answers?</h2></div>
+      <p class="end-big">This draws every trail you have not found yet, and ends the puzzle.</p>
+      <div class="end-actions"><button class="btn-red" id="answerYes" type="button">Show the answers</button><button class="btn-soft" data-close type="button">Keep looking</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="winModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="modal-header"><h2 id="winTitle">All trails found! 🎉</h2></div>
+      <p class="end-big" id="winText"></p>
+      <div class="end-actions">
+        <button class="btn-primary" id="winNewBtn" type="button">Another at this level</button>
+        <button class="btn-soft" id="winLevelBtn" type="button">Change level</button>
+        <button class="btn-soft" data-close type="button">Look at the board</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+<script>
+/* ===================================================================
+   TOTAL TRAIL — engine. No DOM.
+   A board is n × n. Squares where (row + col) is even hold numbers, the
+   others hold signs, so any path that moves up/down/left/right alternates
+   number, sign, number … by itself. The two squares next to the bottom-right
+   corner are the FINISH squares (shown as arrows into the corner), and the
+   corner holds the target.
+
+   THIS IS A RUNNING TOTAL, NOT ONE LONG SUM. The trail starts with the first
+   number as the total; every sign-and-number after it changes the total
+   straight away, in the order they are walked. 5, + 3, × 2 is 16. Nothing in
+   this file — or on screen — ever writes a trail out as a single expression,
+   because "5 + 3 × 2 = 16" is false under the order of operations and would
+   teach exactly the wrong thing. Each STEP (8 × 2 = 16) is a true equation.
+
+   A step that would leave a fraction (a ÷ that does not go exactly) is not
+   allowed, so every trail stays in whole numbers.
+   =================================================================== */
+var ET = (function(){
+  'use strict';
+  var rnd=Math.random;
+  function setRandom(f){ rnd=f; }
+  function ri(a,b){ return a+Math.floor(rnd()*(b-a+1)); }
+  function pick(a){ return a[Math.floor(rnd()*a.length)]; }
+
+  function isNumCell(r,c){ return (r+c)%2===0; }
+  function isEq(n,r,c){ return (r===n-2&&c===n-1)||(r===n-1&&c===n-2); }
+  function isTarget(n,r,c){ return r===n-1&&c===n-1; }
+
+  /* One step: the total after applying op and x, or null if it is not a whole number. */
+  function apply(total,op,x){
+    if (op==='+') return total+x;
+    if (op==='-') return total-x;
+    if (op==='x') return total*x;
+    if (op==='/') return (x!==0 && total%x===0) ? total/x : null;
+    return null;
+  }
+  /* The running totals along tokens [num, op, num, …]:
+     {ok, totals:[after first number, after each step…], steps:[{from,op,x,to}], lowest} */
+  function run(t){
+    var total=t[0], totals=[total], steps=[], lowest=total;
+    for (var i=1;i+1<t.length;i+=2){
+      var to=apply(total,t[i],t[i+1]);
+      if (to===null) return {ok:false, totals:totals, steps:steps, lowest:lowest, failAt:i};
+      steps.push({from:total, op:t[i], x:t[i+1], to:to});
+      total=to; totals.push(total); if (total<lowest) lowest=total;
+    }
+    return {ok:true, totals:totals, steps:steps, lowest:lowest, value:total};
+  }
+
+  /* Tokens a path reads, stopping before "=". path = cell indices. */
+  function tokensOf(p,path){
+    var out=[]; for (var i=0;i<path.length;i++){ var v=p.cells[path[i]]; if (v==='='||i===path.length-1&&isTarget(p.n,Math.floor(path[i]/p.n),path[i]%p.n)) break; out.push(v); }
+    return out;
+  }
+  function pathKey(path){ return path.join('.'); }
+
+  /* Every trail on the board, with the total it finishes on. A path through a
+     ÷ that does not go exactly is not a trail at all, so it is cut off there. */
+  function allTrails(p,limit){
+    var n=p.n, N=n*n, vis=new Uint8Array(N), path=[0], toks=[], out=[], count=0;
+    limit=limit||5e6;
+    vis[0]=1;
+    (function dfs(cell,total,op,lowest){
+      if (count>limit) return;
+      var r=Math.floor(cell/n), c=cell%n, v=p.cells[cell];
+      if (v==='='){ count++; out.push({path:path.concat(N-1), tokens:toks.slice(), value:total, lowest:lowest}); return; }
+      if (typeof v==='number'){
+        if (op){ total=apply(total,op,v); if (total===null) return; }
+        else total=v;
+        if (total<lowest) lowest=total;
+      }
+      toks.push(v);
+      var nb=[[r+1,c],[r-1,c],[r,c+1],[r,c-1]];
+      for (var i=0;i<4;i++){
+        var rr=nb[i][0], cc=nb[i][1];
+        if (rr<0||cc<0||rr>=n||cc>=n) continue;
+        var k=rr*n+cc; if (vis[k] || k===N-1) continue;
+        vis[k]=1; path.push(k); dfs(k,total,typeof v==='string'?v:null,lowest); path.pop(); vis[k]=0;
+      }
+      toks.pop();
+    })(0,0,null,Infinity);
+    return out;
+  }
+  function solutions(p){ return allTrails(p).filter(function(t){ return t.value===p.target; }); }
+
+  var INV={'+':'-','-':'+','x':'/','/':'x'};
+  function hasUndo(t){
+    for (var i=1;i+3<t.length;i+=2) if (t[i+2]===INV[t[i]] && t[i+1]===t[i+3]) return true;
+    return false;
+  }
+
+  /* ---------------- levels ---------------- */
+  var LEVELS={
+    sweet:  {id:'sweet',  n:4, ops:['+','-'],          w:[1,1],        nums:[1,9], find:2, t:[5,40],  neg:false},
+    mild:   {id:'mild',   n:5, ops:['+','-'],          w:[1,1],        nums:[1,9], find:3, t:[10,60], neg:false},
+    medium: {id:'medium', n:5, ops:['+','-','x'],      w:[3,2,1.6],    nums:[2,9], find:3, t:[20,200],neg:false},
+    spicy:  {id:'spicy',  n:5, ops:['+','-','x','/'],  w:[3,2,1.6,1.8],nums:[2,9], find:3, t:[10,150],neg:false},
+    extra:  {id:'extra',  n:5, ops:['+','-','x','/'],  w:[3,2.6,1.6,1.8],nums:[2,12],find:4, t:[-40,200],neg:true}
+  };
+  function wpick(ops,w){ var s=w.reduce(function(a,b){return a+b;},0), r=rnd()*s; for (var i=0;i<ops.length;i++){ r-=w[i]; if (r<=0) return ops[i]; } return ops[ops.length-1]; }
+
+  function buildGrid(L){
+    var n=L.n, cells=[];
+    for (var r=0;r<n;r++) for (var c=0;c<n;c++){
+      if (isTarget(n,r,c)) cells.push(0);
+      else if (isEq(n,r,c)) cells.push('=');
+      else if (isNumCell(r,c)) cells.push(ri(L.nums[0],L.nums[1]));
+      else cells.push(wpick(L.ops,L.w));
+    }
+    return {n:n, cells:cells};
+  }
+  /* Pick a board and a target that exactly `find` trails reach, where (below
+     Extra Spicy) none of those trails' running totals drops under zero. */
+  function generate(levelId){
+    var L=LEVELS[levelId]||LEVELS.medium;
+    for (var tries=0;tries<600;tries++){
+      var p=buildGrid(L);
+      if (L.ops.indexOf('/')>=0 && p.cells.filter(function(v){return v==='/';}).length<2) continue;
+      var trails=allTrails(p), by={};
+      trails.forEach(function(t){ (by[t.value]=by[t.value]||[]).push(t); });
+      var good=Object.keys(by).map(Number).filter(function(T){
+        var list=by[T];
+        if (T<L.t[0]||T>L.t[1]||list.length!==L.find) return false;
+        if (!L.neg && !list.every(function(t){ return t.lowest>=0; })) return false;
+        // No answer may contain a step straight after its own undo (+ 12 then − 12,
+        // × 6 then ÷ 6): that is a detour, not a different trail.
+        if (list.some(function(t){ return hasUndo(t.tokens); })) return false;
+        // Every answer must READ differently. Two trails through different
+        // squares that spell the same equation would feel like one answer found twice.
+        if (new Set(list.map(function(t){ return t.tokens.join(' '); })).size!==list.length) return false;
+        // …and must be worth finding separately: any two differ by at least
+        // four squares, so one is never the other plus a small detour.
+        for (var a=0;a<list.length;a++) for (var b=a+1;b<list.length;b++){
+          var A=new Set(list[a].path), diff=0;
+          list[b].path.forEach(function(k){ if (!A.has(k)) diff++; });
+          list[a].path.forEach(function(k){ if (list[b].path.indexOf(k)<0) diff++; });
+          if (diff<4) return false;
+        }
+        return true;
+      });
+      // A level with ÷ must actually need one: some answer divides by more than 1.
+      if (L.ops.indexOf('/')>=0) good=good.filter(function(T){ return by[T].some(function(t){ for (var i=1;i<t.tokens.length;i+=2) if (t.tokens[i]==='/' && t.tokens[i+1]>1) return true; return false; }); });
+      if (L.ops.indexOf('x')>=0) good=good.filter(function(T){ return by[T].some(function(t){ return t.tokens.indexOf('x')>=0; }); });
+      if (!good.length) continue;
+      var T=pick(good);
+      p.cells[p.cells.length-1]=T; p.target=T; p.level=L.id; p.find=L.find;
+      return p;
+    }
+    throw new Error('Could not build a board');
+  }
+
+  /* ---------------- sharing ---------------- */
+  var OPC={'+':'p','-':'m','x':'t','/':'d','=':'e'}, COP={p:'+',m:'-',t:'x',d:'/',e:'='};
+  function encode(p){
+    return 't1.'+p.n+'.'+p.target+'.'+p.cells.slice(0,-1).map(function(v){ return typeof v==='number' ? v.toString(36) : OPC[v]; }).join('');
+  }
+  function decode(s){
+    var m=/^t1\.([4-6])\.(-?\d+)\.([0-9a-z]+)$/.exec(s||''); if (!m) return null;
+    var n=+m[1], T=+m[2], chars=m[3].split(''); if (chars.length!==n*n-1) return null;
+    var cells=[];
+    for (var i=0;i<chars.length;i++){
+      var r=Math.floor(i/n), c=i%n, ch=chars[i];
+      if (isNumCell(r,c)){ var v=parseInt(ch,36); if (!(v>=0)) return null; cells.push(v); }
+      else { if (!COP[ch]) return null; if ((COP[ch]==='=')!==isEq(n,r,c)) return null; cells.push(COP[ch]); }
+    }
+    cells.push(T);
+    var p={n:n, cells:cells, target:T, level:'custom'};
+    p.find=solutions(p).length;
+    return p;
+  }
+
+  return {apply:apply, run:run, allTrails:allTrails, solutions:solutions,
+          tokensOf:tokensOf, pathKey:pathKey, isEq:isEq, isTarget:isTarget, isNumCell:isNumCell,
+          LEVELS:LEVELS, generate:generate, encode:encode, decode:decode, setRandom:setRandom};
+})();
+
+</script>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var SAVE_KEY='mmtTotalTrailSave.v1', SET_KEY='mmtTotalTrailSettings.v1';
+var SYM={'+':'+','-':'−','x':'×','/':'÷','=':'='};
+var COLS=['#16a34a','#7c3aed','#ea580c','#db2777','#0891b2'];
+var LEVEL_UI=[
+  {id:'sweet',  icon:'🍬', name:'Sweet',       desc:'4 × 4 board · + and − · find 2 trails'},
+  {id:'mild',   icon:'🍃', name:'Mild',        desc:'5 × 5 board · + and − · find 3 trails'},
+  {id:'medium', icon:'🌶️', name:'Medium',      desc:'5 × 5 · +, − and × · find 3'},
+  {id:'spicy',  icon:'🔥', name:'Spicy',       desc:'5 × 5 · all four operations · find 3'},
+  {id:'extra',  icon:'🌋', name:'Extra Spicy', desc:'5 × 5 · numbers to 12, all four operations, the total can go below zero · find 4'}
+];
+function levelName(id){ var l=LEVEL_UI.find(function(x){return x.id===id;}); return l?l.name:'Shared'; }
+
+var SET={showTotal:true, strong:true, timer:true};
+try{ Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)||'{}')); }catch(e){}
+function saveSettings(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SET)); }catch(e){} }
+
+/* ---------------- state ----------------
+   S.p      the board {n, cells, target, find, level}
+   S.sols   every trail that works (worked out once, by trying them all)
+   S.path   the trail being drawn: cell indices, always starting at 0
+   S.found  keys of the trails found so far, in the order found
+   Everything on screen is painted from these. */
+var S={mode:'menu', p:null, sols:[], path:[0], found:[], shown:false, done:false, level:'medium', elapsed:0, runStart:0, busy:false};
+
+function n(){ return S.p.n; }
+function rc(k){ return [Math.floor(k/n()), k%n()]; }
+function adjacent(a,b){ var A=rc(a), B=rc(b); return Math.abs(A[0]-B[0])+Math.abs(A[1]-B[1])===1; }
+function last(){ return S.path[S.path.length-1]; }
+function isTargetCell(k){ return k===n()*n()-1; }
+function cellVal(k){ return S.p.cells[k]; }
+function solKey(path){ return ET.pathKey(path); }
+function foundIndex(key){ return S.found.indexOf(key); }
+function tokens(){ return S.path.map(cellVal).filter(function(v,i){ return v!=='=' && !isTargetCell(S.path[i]); }); }
+/* The running total of the trail so far. The first number starts it; each
+   sign-and-number changes it straight away. A trail ending on a sign has a
+   step still waiting for its number. */
+function runNow(){ var t=tokens(); if (typeof t[t.length-1]!=='number') t=t.slice(0,-1); return ET.run(t); }
+function pendingOp(){ var t=tokens(); return typeof t[t.length-1]==='string' ? t[t.length-1] : null; }
+/* Why a step onto square k is refused, or '' if it is fine. */
+function stepProblem(k){
+  var op=pendingOp(), v=cellVal(k);
+  if (op==='/' && typeof v==='number'){ var tot=runNow().value; if (tot%v!==0) return tot+' ÷ '+v+' is not a whole number, so the trail cannot go that way.'; }
+  return '';
+}
+/* A step is allowed onto a neighbour that is not on the trail yet and is not
+   the target — the target is only ever reached through an "=" square. */
+function canStep(k){
+  if (S.busy || S.done || S.shown) return false;
+  var h=last(); if (cellVal(h)==='=') return false;
+  return adjacent(h,k) && S.path.indexOf(k)<0 && !isTargetCell(k) && !stepProblem(k);
+}
+
+/* ---------------- fitting ---------------- */
+function fitBoard(){
+  if (!S.p) return;
+  var N=n(), phone=window.innerWidth<=700, wide=window.innerWidth>1080;
+  var W=$('boardCol').clientWidth-34;
+  var top=$('wrap').getBoundingClientRect().top+window.scrollY;
+  var H=phone?9999:window.innerHeight-top-document.querySelector('.brand-footer').offsetHeight-$('expr').offsetHeight-$('legend').offsetHeight-$('howNote').offsetHeight-100;
+  var c=Math.floor(Math.min(W/(N+0.6), H/(N+0.1)));
+  c=Math.max(phone?48:56, Math.min(c, N===4?130:116));
+  document.documentElement.style.setProperty('--c', c+'px');
+  requestAnimationFrame(drawLines);
+}
+
+/* ---------------- building ---------------- */
+function buildBoard(){
+  var b=$('board'), N=n(); b.innerHTML='';
+  b.style.gridTemplateColumns='repeat('+N+',var(--c))';
+  for (var k=0;k<N*N;k++){
+    var v=cellVal(k), e=document.createElement('button'); e.type='button'; e.dataset.cell=k; e.setAttribute('role','gridcell');
+    var r=rc(k);
+    if (isTargetCell(k)){ e.className='et-cell target'; e.innerHTML='<span class="tx">'+v+'</span>'; e.tabIndex=-1; }
+    else if (v==='='){ e.className='et-cell sign eq'; e.innerHTML='<span class="tx">'+(r[1]===N-1?'↓':'→')+'</span>'; }
+    else if (typeof v==='string'){ e.className='et-cell sign'+((v==='x'||v==='/')?' md':''); e.innerHTML='<span class="tx">'+SYM[v]+'</span>'; }
+    else { e.className='et-cell num'; e.innerHTML='<span class="tx">'+v+'</span><span class="tot"></span>'; }
+    e.dataset.base=e.className;
+    e.setAttribute('aria-label','Row '+(r[0]+1)+', column '+(r[1]+1)+': '+(isTargetCell(k)?'target '+v:(typeof v==='string'?{'+':'plus','-':'minus','x':'times','/':'divided by','=':'finish'}[v]:v)));
+    b.appendChild(e);
+  }
+}
+
+/* ---------------- painting ---------------- */
+function paint(){
+  if (!S.p) return;
+  $('board').classList.toggle('strong', !!SET.strong);
+  var nextSet={}; if (!S.done && !S.shown && !S.busy){ var h=last(), N=n(); [h-N,h+N,h-1,h+1].forEach(function(k){ if (k>=0 && k<N*N && canStep(k)) nextSet[k]=1; }); }
+  var rn=runNow(), totals=rn.totals, numIndex={}, ni=0;
+  S.path.forEach(function(k){ if (typeof cellVal(k)==='number' && !isTargetCell(k)) numIndex[k]=ni++; });
+  $('board').querySelectorAll('.et-cell').forEach(function(e){
+    var k=+e.dataset.cell, i=S.path.indexOf(k), cls=e.dataset.base;
+    if (i>=0) cls+=' on'; if (i>=0 && i===S.path.length-1 && S.path.length>1) cls+=' head';
+    if (nextSet[k]) cls+=' next';
+    e.className=cls;
+    var tg=e.querySelector('.tot');
+    if (tg){ var ti=numIndex[k]; tg.textContent = (SET.showTotal && ti!=null && !S.done && !S.shown) ? fmtN(totals[ti]) : ''; }
+  });
+  // side panel
+  $('targetNum').textContent=S.p.target;
+  $('targetText').textContent='Find '+S.p.find+' different trails whose running total finishes on this number.';
+  $('progressText').textContent=S.found.length+' / '+S.p.find;
+  $('progressFill').style.width=(100*S.found.length/S.p.find)+'%';
+  var fl=$('foundList'); fl.innerHTML='';
+  var shownSols = S.shown ? S.sols.filter(function(s){ return foundIndex(solKey(s.path))<0; }) : [];
+  S.found.forEach(function(key,i){ var s=S.sols.find(function(x){ return solKey(x.path)===key; }); fl.appendChild(foundRow(s,COLS[i%COLS.length],false)); });
+  shownSols.forEach(function(s,j){ fl.appendChild(foundRow(s,COLS[(S.found.length+j)%COLS.length],true)); });
+  for (var j=S.found.length+shownSols.length;j<S.p.find;j++){ var d=document.createElement('div'); d.className='found empty'; d.textContent='Trail '+(j+1)+' — still to find'; fl.appendChild(d); }
+  paintExpr();
+  $('workingSection').classList.toggle('hidden', !SET.showTotal || S.done || S.shown);
+  $('backStepBtn').disabled = S.path.length<2 || S.busy || S.done || S.shown;
+  $('clearBtn').disabled = S.path.length<2 || S.busy || S.done || S.shown;
+  $('answerBtn').disabled = S.done || S.shown;
+  $('timerChipWrap').classList.toggle('hidden', !SET.timer);
+  var lg=$('legend'); lg.textContent= S.done||S.shown ? '' : 'Drag from the end of your trail, or tap the next square.';
+  drawLines();
+}
+function fmtN(v){ return String(v).replace('-','−'); }
+/* A trail is written as a chain of steps — 5 → +8 → ×7 → −8 → 83 — the way a
+   function machine is. It is NEVER written as one sum, because 5 + 8 × 7 − 8 = 83
+   is false under the order of operations. */
+function chainHTML(t,end){
+  var out='<b>'+fmtN(t[0])+'</b>';
+  for (var i=1;i+1<t.length;i+=2) out+=' <span class="ar">→</span> <span class="op">'+SYM[t[i]]+fmtN(t[i+1])+'</span>';
+  if (end!=null) out+=' <span class="ar">→</span> <b>'+fmtN(end)+'</b>';
+  return out;
+}
+function foundRow(s,col,shown){
+  var d=document.createElement('div'); d.className='found'+(shown?' shown':'');
+  d.innerHTML='<span class="dot" style="background:'+col+'"></span><span class="chain">'+chainHTML(s.tokens,S.p.target)+'</span>';
+  return d;
+}
+/* The bar under the board is the RUNNING TOTAL — one number, plus the single
+   step that made it. Each step on its own is a true equation (13 × 7 = 91);
+   the trail as a whole is not written as one. */
+function paintExpr(){
+  var box=$('expr');
+  if (S.done||S.shown){ box.innerHTML='<span class="q">'+(S.done?'Every trail found.':'All the trails are shown on the board.')+'</span>'; paintSteps(null); return; }
+  var rn=runNow(), op=pendingOp(), st=rn.steps[rn.steps.length-1];
+  var html='<span class="rt-label">Running total</span> <span class="rt">'+(SET.showTotal?fmtN(rn.value):'?')+'</span>';
+  if (op) html+=' <span class="q">then '+SYM[op]+' …</span>';
+  else if (SET.showTotal && st) html+=' <span class="q">('+fmtN(st.from)+' '+SYM[st.op]+' '+fmtN(st.x)+' = '+fmtN(st.to)+')</span>';
+  else if (!SET.showTotal && S.path.length>1) html+=' <span class="q">— work it out as you go</span>';
+  box.innerHTML=html;
+  paintSteps(rn);
+}
+function paintSteps(rn){
+  var box=$('working'); box.innerHTML='';
+  if (!rn || !SET.showTotal) return;
+  requestAnimationFrame(function(){ box.scrollTop=box.scrollHeight; });
+  var start=document.createElement('div'); start.className='wl'; start.innerHTML='<span class="q">Start with</span> <b>'+fmtN(rn.totals[0])+'</b>'; box.appendChild(start);
+  rn.steps.forEach(function(s,i){
+    var row=document.createElement('div'); row.className='wl'+(i===rn.steps.length-1?' latest':'');
+    row.innerHTML=fmtN(s.from)+' '+SYM[s.op]+' '+fmtN(s.x)+' = <span class="nw">'+fmtN(s.to)+'</span>';
+    box.appendChild(row);
+  });
+  box.scrollTop=box.scrollHeight;
+  if (!rn.steps.length){ var p=document.createElement('p'); p.className='working-empty'; p.textContent='Each step you take will be shown here as its own calculation.'; box.appendChild(p); }
+}
+
+/* The trails are lines through the centres of the squares. Found trails are
+   each nudged a little off-centre by their own amount, so where two share a
+   stretch of board both colours still show. */
+function drawLines(){
+  if (!S.p) return;
+  var svg=$('lines'), board=$('board'), wrap=$('wrap');
+  var br=board.getBoundingClientRect(), wr=wrap.getBoundingClientRect(), c=br.width/n();
+  svg.style.left=(br.left-wr.left)+'px'; svg.style.top=(br.top-wr.top)+'px';
+  svg.setAttribute('width',br.width); svg.setAttribute('height',br.height);
+  svg.setAttribute('viewBox','0 0 '+br.width+' '+br.height);
+  function pts(path,off){ return path.map(function(k){ var p=rc(k); return ((p[1]+.5)*c+off)+','+((p[0]+.5)*c+off); }).join(' '); }
+  var out='', list=[];
+  S.found.forEach(function(key,i){ var s=S.sols.find(function(x){return solKey(x.path)===key;}); if (s) list.push({path:s.path,col:COLS[i%COLS.length],dash:false}); });
+  if (S.shown) S.sols.filter(function(s){ return foundIndex(solKey(s.path))<0; }).forEach(function(s,j){ list.push({path:s.path,col:COLS[(S.found.length+j)%COLS.length],dash:true}); });
+  var m=list.length;
+  list.forEach(function(L,i){
+    var off=m>1 ? (i-(m-1)/2)*c*0.09 : 0;
+    out+='<polyline points="'+pts(L.path,off)+'" fill="none" stroke="'+L.col+'" stroke-opacity=".55" stroke-width="'+(c*0.1)+'" stroke-linecap="round" stroke-linejoin="round"'+(L.dash?' stroke-dasharray="'+(c*.18)+' '+(c*.14)+'"':'')+'/>';
+  });
+  if (S.path.length>1 && !S.done && !S.shown){
+    out+='<polyline points="'+pts(S.path,0)+'" fill="none" stroke="#d97706" stroke-width="'+(c*0.13)+'" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>';
+    var h=rc(last()); out+='<circle cx="'+((h[1]+.5)*c)+'" cy="'+((h[0]+.5)*c)+'" r="'+(c*0.1)+'" fill="#b45309" opacity=".7"/>';
+  }
+  var s0=rc(0); if (!S.done && !S.shown) out+='<circle cx="'+(.5*c)+'" cy="'+(.5*c)+'" r="'+(c*0.09)+'" fill="#b45309" opacity=".9"/>';
+  svg.innerHTML=out;
+  var ar=$('arrow'); ar.style.top=(br.top-wr.top+c*.5)+'px';
+}
+
+/* ---------------- messages ---------------- */
+function say(title,msg,kind,icon){
+  if (title!=null) $('statusTitle').textContent=title;
+  var m=$('messageBox'); m.textContent=msg||''; m.className='status-subtitle'+(kind?' '+kind:'');
+  if (icon) $('statusIcon').textContent=icon;
+}
+var toastT=0;
+function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){e.classList.remove('show');},1800); }
+function statusDuring(){
+  var left=S.p.find-S.found.length;
+  say('Find '+(left===S.p.find?'a trail':'another trail')+' that finishes on '+S.p.target+'.', left+(left===1?' trail':' trails')+' still to find.', null, '🐍');
+}
+
+/* ---------------- moves ---------------- */
+function step(k){
+  if (!canStep(k)){ var why=S.path.indexOf(k)<0 && adjacent(last(),k) ? stepProblem(k) : ''; if (why){ say(null,why,'warn'); flash(k); } return false; }
+  S.path.push(k); startClock();
+  if (cellVal(k)==='='){ S.path.push(n()*n()-1); paint(); finishTrail(); return true; }
+  paint(); return true;
+}
+function flash(k){ var e=document.querySelector('.et-cell[data-cell="'+k+'"]'); if (e){ e.classList.remove('bad'); void e.offsetWidth; e.classList.add('bad'); } }
+function stepBack(){ if (S.busy || S.path.length<2) return; S.path.pop(); paint(); }
+function cutTo(i){ if (S.busy) return; S.path=S.path.slice(0,i+1); paint(); }
+function clearTrail(){ if (S.busy) return; S.path=[0]; paint(); }
+
+function finishTrail(){
+  var t=tokens(), r=ET.run(t), key=solKey(S.path);
+  var hit = r.ok && r.value===S.p.target;
+  if (hit){
+    var fi=foundIndex(key);
+    if (fi>=0){
+      say('You have found that one already.','Look for a trail you have not used yet.','warn','🔁');
+      backOff(700); return;
+    }
+    S.found.push(key); save();
+    var left=S.p.find-S.found.length;
+    S.path=[0];
+    if (!left){
+      S.done=true; stopClock(); save(); paint();
+      say('All '+S.p.find+' trails found!','Every one of them finishes on '+S.p.target+'.','good','🎉');
+      $('winText').textContent='You found all '+S.p.find+' trails whose running total finishes on '+S.p.target+', in '+fmtTime(S.elapsed)+'.';
+      confetti(); setTimeout(function(){ openModal('winModal'); },700);
+    } else {
+      paint(); miniBurst();
+      say('Trail found! The running total finishes on '+S.p.target+'.', left+(left===1?' trail':' trails')+' still to find.','good','✅');
+    }
+    return;
+  }
+  // wrong: say so, then step back off the finish square so the student can fix it
+  if (SET.showTotal) say('Not this time.','That trail finishes on '+fmtN(r.value)+', not '+S.p.target+'. Step back and try another way.','warn','🤔');
+  else say('Not this time.','That trail does not finish on '+S.p.target+'. Check your running total, then step back and try another way.','warn','🤔');
+  var h=document.querySelector('.et-cell[data-cell="'+S.path[S.path.length-2]+'"]'); if (h){ h.classList.remove('bad'); void h.offsetWidth; h.classList.add('bad'); }
+  backOff(900);
+}
+function backOff(ms){
+  S.busy=true; paint();
+  setTimeout(function(){ S.busy=false; S.path.pop(); S.path.pop(); paint(); },ms);
+}
+
+/* ---------------- clock ---------------- */
+var tick=0;
+function fmtTime(ms){ var s=Math.floor(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function startClock(){ if (S.runStart||S.done||S.shown||S.mode!=='play') return; S.runStart=Date.now(); clearInterval(tick); tick=setInterval(showClock,500); showClock(); }
+function stopClock(){ if (S.runStart){ S.elapsed+=Date.now()-S.runStart; S.runStart=0; } clearInterval(tick); showClock(); }
+function elapsedNow(){ return S.elapsed+(S.runStart?Date.now()-S.runStart:0); }
+function showClock(){ $('timerChip').textContent=fmtTime(elapsedNow()); }
+document.addEventListener('visibilitychange',function(){ if (document.hidden){ stopClock(); save(); } else if (S.mode==='play' && S.path.length>1) startClock(); });
+
+/* ---------------- saving ---------------- */
+function save(){
+  if (S.mode!=='play'||!S.p) return;
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({code:ET.encode(S.p), level:S.p.level, found:S.found, elapsed:elapsedNow(), done:S.done, shown:S.shown})); }catch(e){}
+}
+function loadSave(){ try{ var d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if (d && d.code && !d.done && !d.shown) return d; }catch(e){} return null; }
+function paintContinue(){
+  var d=loadSave(); $('continueBtn').classList.toggle('hidden',!d);
+  if (d){ var p=ET.decode(d.code); if (!p){ $('continueBtn').classList.add('hidden'); return; } $('continueDesc').textContent=levelName(d.level)+' · target '+p.target+' · '+d.found.length+' of '+p.find+' trails found · '+fmtTime(d.elapsed||0); }
+}
+window.addEventListener('pagehide',function(){ stopClock(); save(); });
+
+/* ---------------- pages ---------------- */
+function showPage(w){ if (w!=='menu'&&w!=='sheet') w='game'; $('menuPage').classList.toggle('hidden',w!=='menu'); $('gamePage').classList.toggle('hidden',w!=='game'); $('sheetPage').classList.toggle('hidden',w!=='sheet'); $('backToMenuBtn').classList.toggle('hidden',w==='menu'); $('sheetBtn').classList.toggle('hidden',w==='sheet'); if (w==='sheet') stopClock(); }
+window.__ETshowPage=function(w){ if (w==='sheet'){ stopClock(); save(); } showPage(w); };
+function toMenu(){ stopClock(); save(); S.mode='menu'; closeSetup(); if (location.hash) history.replaceState(null,'',location.pathname+location.search); paintContinue(); showPage('menu'); }
+function startPuzzle(p, found, elapsed){
+  S.mode='play'; S.p=p; S.sols=ET.solutions(p); S.p.find=S.sols.length;
+  S.found=(found||[]).filter(function(k){ return S.sols.some(function(s){ return solKey(s.path)===k; }); });
+  S.path=[0]; S.done=false; S.shown=false; S.busy=false; S.elapsed=elapsed||0; S.runStart=0;
+  $('levelChip').textContent=levelName(p.level)+' · '+p.n+' × '+p.n;
+  $('shareSection').classList.add('hidden');
+  showPage('game'); buildBoard(); fitBoard(); paint(); statusDuring(); save();
+  requestAnimationFrame(fitBoard);
+}
+function newPuzzle(level){
+  S.level=level||S.level; stopClock();
+  say('Laying a new trail…','Checking every path on the board.',null,'⏳'); showPage('game');
+  setTimeout(function(){ var p=ET.generate(S.level); startPuzzle(p); },30);
+}
+function showAnswers(){
+  closeModals(); S.shown=true; S.path=[0]; stopClock(); save(); paint();
+  say('Here are all '+S.p.find+' trails.', 'The dashed lines are the trails you had not found yet.', null, '💡');
+}
+
+/* ---------------- sharing ---------------- */
+function linkFor(p){ return location.origin+location.pathname+'#'+ET.encode(p); }
+function showShare(){ $('shareInput').value=linkFor(S.p); $('shareSection').classList.remove('hidden'); }
+function copyLink(){ var v=$('shareInput').value; (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(v):Promise.reject()).then(function(){toast('Link copied');},function(){ $('shareInput').select(); try{document.execCommand('copy');}catch(e){} toast('Link copied'); }); }
+function loadFromHash(){
+  var h=decodeURIComponent((location.hash||'').slice(1)); if (!h) return false;
+  var p=ET.decode(h); if (!p){ toast('That puzzle link is not valid'); return false; }
+  if (!p.find){ toast('That board has no trail to its target'); return false; }
+  startPuzzle(p); showShare(); say('A shared puzzle','Find '+p.find+' trails that finish on '+p.target+'.',null,'🔗');
+  return true;
+}
+
+/* ---------------- pointer ----------------
+   Press on any square of your trail and drag: the trail is cut back to that
+   square and grows (or shrinks) as the finger moves. Sliding back onto the
+   square before the end takes the last step off, which is how a drag undoes
+   itself. A tap does the same thing one square at a time. */
+var drag=null;
+function cellAt(x,y){ var el=document.elementFromPoint(x,y); el=el&&el.closest?el.closest('.et-cell'):null; return el?+el.dataset.cell:-1; }
+function onDown(e){
+  if (e.button>0 || S.busy || S.done || S.shown) return;
+  var k=cellAt(e.clientX,e.clientY); if (k<0) return;
+  var i=S.path.indexOf(k);
+  drag={id:e.pointerId, moved:false, start:k, tapCut:i};
+  try{ $('board').setPointerCapture(e.pointerId); }catch(err){}
+  e.preventDefault();
+}
+function onMove(e){
+  if (!drag || e.pointerId!==drag.id) return;
+  var k=cellAt(e.clientX,e.clientY); if (k<0 || k===last()) return;
+  if (!drag.moved){
+    drag.moved=true;
+    if (drag.tapCut>=0) cutTo(drag.tapCut);       // pick the trail up from where the drag began
+  }
+  if (S.path.length>1 && k===S.path[S.path.length-2]){ stepBack(); return; }
+  if (canStep(k)) step(k);
+  else if (adjacent(last(),k) && S.path.indexOf(k)<0 && stepProblem(k) && drag.warned!==k){ drag.warned=k; step(k); }
+}
+function onUp(e){
+  if (!drag || e.pointerId!==drag.id) return;
+  var d=drag; drag=null;
+  if (d.moved) return;
+  tapCell(d.start);
+}
+function tapCell(k){
+  if (S.busy || S.done || S.shown) return;
+  var i=S.path.indexOf(k);
+  if (i>=0){
+    if (i===S.path.length-1 && i>0) stepBack();
+    else cutTo(i);
+    return;
+  }
+  if (!S.busy && adjacent(last(),k) && S.path.indexOf(k)<0 && !isTargetCell(k) && cellVal(last())!=='='){ step(k); return; }
+  if (isTargetCell(k)){ say(null,'You reach the target by stepping onto one of the = squares next to it.','warn'); return; }
+  say(null,'Trails move one square at a time — up, down, left or right — from the end of your trail.','warn');
+}
+
+/* ---------------- keyboard ---------------- */
+function onKey(e){
+  if ($('gamePage').classList.contains('hidden') || document.querySelector('.modal-backdrop.open')) return;
+  if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (!S.p || S.done || S.shown) return;
+  var N=n(), h=last(), r=rc(h), t=-1;
+  if (e.key==='ArrowUp' && r[0]>0) t=h-N;
+  if (e.key==='ArrowDown' && r[0]<N-1) t=h+N;
+  if (e.key==='ArrowLeft' && r[1]>0) t=h-1;
+  if (e.key==='ArrowRight' && r[1]<N-1) t=h+1;
+  if (/^Arrow/.test(e.key)){ e.preventDefault(); if (t<0) return; if (S.path.length>1 && t===S.path[S.path.length-2]) stepBack(); else if (S.path.indexOf(t)<0) step(t); return; }
+  if (e.key==='Backspace'){ e.preventDefault(); stepBack(); return; }
+  if (e.key==='Escape'){ clearTrail(); return; }
+}
+
+/* ---------------- modals ---------------- */
+function openModal(id){ $(id).classList.add('open'); }
+function closeModals(){ document.querySelectorAll('.modal-backdrop.open').forEach(function(m){ if (m.id!=='setupBackdrop') m.classList.remove('open'); }); }
+document.querySelectorAll('.modal-backdrop').forEach(function(m){ if (m.id==='setupBackdrop') return; m.addEventListener('click',function(e){ if (e.target===m || e.target.closest('[data-close]')) m.classList.remove('open'); }); });
+function openSetup(){ buildLevels(); $('levelPanel').classList.add('open'); $('setupBackdrop').classList.add('open'); }
+function closeSetup(){ $('levelPanel').classList.remove('open'); $('setupBackdrop').classList.remove('open'); }
+function confetti(){ var cols=['#2563eb','#7c3aed','#6cbc4a','#f59e0b','#ef4444']; for (var i=0;i<70;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.background=cols[i%5]; c.style.animationDelay=Math.random()*400+'ms'; c.style.animationDuration=(800+Math.random()*900)+'ms'; document.body.appendChild(c); setTimeout(function(x){return function(){x.remove();};}(c),2400); } }
+function miniBurst(){ var cols=COLS; for (var i=0;i<18;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=(35+Math.random()*30)+'vw'; c.style.background=cols[i%cols.length]; c.style.animationDuration=(700+Math.random()*500)+'ms'; document.body.appendChild(c); setTimeout(function(x){return function(){x.remove();};}(c),1500); } }
+
+function buildLevels(){
+  var g=$('levelGrid'); g.innerHTML='';
+  LEVEL_UI.forEach(function(l){
+    var b=document.createElement('button'); b.type='button'; b.className='level-btn'+(l.id===S.level?' selected':''); b.dataset.level=l.id;
+    b.innerHTML='<div class="level-icon">'+l.icon+'</div><strong>'+l.name+'</strong><span>'+l.desc+'</span>';
+    b.addEventListener('click',function(){ S.level=l.id; buildLevels(); });
+    b.addEventListener('dblclick',function(){ S.level=l.id; closeSetup(); newPuzzle(); });
+    g.appendChild(b);
+  });
+}
+
+/* ---------------- wiring ---------------- */
+$('playBtn').addEventListener('click',openSetup);
+$('levelBackBtn').addEventListener('click',closeSetup);
+$('setupBackdrop').addEventListener('click',closeSetup);
+$('startBtn').addEventListener('click',function(){ closeSetup(); newPuzzle(); });
+$('continueBtn').addEventListener('click',function(){ var d=loadSave(); if (!d) return; var p=ET.decode(d.code); p.level=d.level; S.level=d.level in {sweet:1,mild:1,medium:1,spicy:1,extra:1}?d.level:S.level; startPuzzle(p,d.found,d.elapsed); });
+$('backToMenuBtn').addEventListener('click',toMenu);
+$('rulesBtn').addEventListener('click',function(){ openModal('rulesModal'); });
+$('settingsBtn').addEventListener('click',function(){ $('totalToggle').checked=!!SET.showTotal; $('strongToggle').checked=!!SET.strong; $('timerToggle').checked=!!SET.timer; openModal('settingsModal'); });
+$('totalToggle').addEventListener('change',function(e){ SET.showTotal=e.target.checked; saveSettings(); paint(); });
+$('strongToggle').addEventListener('change',function(e){ SET.strong=e.target.checked; saveSettings(); paint(); });
+$('timerToggle').addEventListener('change',function(e){ SET.timer=e.target.checked; saveSettings(); paint(); });
+$('backStepBtn').addEventListener('click',stepBack);
+$('clearBtn').addEventListener('click',clearTrail);
+$('answerBtn').addEventListener('click',function(){ openModal('answerModal'); });
+$('answerYes').addEventListener('click',showAnswers);
+$('newBtn').addEventListener('click',function(){ if (S.p && S.p.level==='custom'){ showPage('menu'); openSetup(); } else newPuzzle(); });
+$('shareBtn').addEventListener('click',function(){ showShare(); copyLink(); });
+$('copyLinkBtn').addEventListener('click',copyLink);
+$('winNewBtn').addEventListener('click',function(){ closeModals(); if (S.p.level==='custom'){ showPage('menu'); openSetup(); } else newPuzzle(); });
+$('winLevelBtn').addEventListener('click',function(){ closeModals(); showPage('menu'); openSetup(); });
+var bd=$('board');
+bd.addEventListener('pointerdown',onDown);
+bd.addEventListener('pointermove',onMove);
+bd.addEventListener('pointerup',onUp);
+bd.addEventListener('pointercancel',function(){ drag=null; });
+document.addEventListener('keydown',onKey);
+var rz=0; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(fitBoard,120); });
+window.addEventListener('hashchange',function(){ if (location.hash.length>1) loadFromHash(); });
+
+window.__ET__={S:S, step:step, paint:paint, ET:ET, tapCell:tapCell, runNow:runNow};
+paintContinue();
+if (!loadFromHash()) showPage('menu');
+})();
+
+</script>
+<script>
+/* ===================================================================
+   TOTAL TRAIL — WORKSHEET CREATOR
+   Builds A4 pages of puzzles from the same engine as the game, so a printed
+   board has exactly the number of trails it asks for, like the screen does.
+   * Puzzles per page is a SIZE control: 1 per page gives the biggest board,
+     4 per page the smallest. Every size is a fixed layout in millimetres, so
+     nothing is measured and nothing can overflow the page.
+   * The board is an SVG, so it prints crisp at any size.
+   * A trail is never written as one sum here either: the answer key writes
+     each trail as a chain of steps (5 → +8 → ×7 → 91), the same as the game.
+   =================================================================== */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var SYM={'+':'+','-':'−','x':'×','/':'÷'};
+var COLS=['#15803d','#7c3aed','#c2410c','#be185d'];
+var DASH=['', '10 7', '3 6', '16 6 3 6'];          // tells trails apart in black and white too
+var LV=[
+  {id:'sweet',icon:'🍬',name:'Sweet'},{id:'mild',icon:'🍃',name:'Mild'},{id:'medium',icon:'🌶️',name:'Medium'},
+  {id:'spicy',icon:'🔥',name:'Spicy'},{id:'extra',icon:'🌋',name:'Extra Spicy'}
+];
+function lvInfo(id){ return LV.find(function(l){return l.id===id;})||LV[2]; }
+var WS_KEY='mmtTotalTrailSheet.v1';
+var O={level:'medium', count:4, per:2, lines:true, key:true, rule:true, name:true, colour:true};
+try{ Object.assign(O, JSON.parse(localStorage.getItem(WS_KEY)||'{}')); }catch(e){}
+function saveO(){ try{ localStorage.setItem(WS_KEY, JSON.stringify(O)); }catch(e){} }
+var PUZ=[];                                          // the generated puzzles (kept so toggles re-lay without re-rolling)
+var BUSY=false;
+
+/* ---------------- layouts (mm) ----------------
+   Page 210 × 297 with 12 mm margins → 186 × 273 to work in. The first page
+   carries the header; later pages carry a slim running header, so each size
+   is laid out for the worst case (the first page). */
+var LAYOUT={
+  1:{cols:1, rows:1, board:156, side:false},
+  2:{cols:1, rows:2, board:90,  side:true},
+  4:{cols:2, rows:2, board:60,  side:false}
+};
+
+/* ---------------- the board as SVG ---------------- */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function fmtN(v){ return String(v).replace('-','−'); }
+function boardSVG(p, mm, sols){
+  var n=p.n, U=100, L=46, W=n*U+L, H=n*U;
+  var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" style="width:'+(mm*W/(n*U))+'mm;height:'+mm+'mm" role="img" aria-label="Total Trail board">';
+  s+='<text x="'+(L/2-2)+'" y="'+(U/2)+'" text-anchor="middle" dominant-baseline="central" font-size="40" font-weight="900" fill="#1d4ed8">→</text>';
+  for (var k=0;k<n*n;k++){
+    var r=Math.floor(k/n), c=k%n, x=L+c*U, y=r*U, v=p.cells[k], target=k===n*n-1;
+    var fill = target ? '#ede9fe' : (typeof v==='string' ? '#f1f5f9' : '#ffffff');
+    s+='<rect x="'+x+'" y="'+y+'" width="'+U+'" height="'+U+'" fill="'+fill+'" stroke="#475569" stroke-width="2"/>';
+    var txt, size=46, col='#0f172a', wt=800;
+    if (target){ txt=fmtN(v); size=String(v).length>2?38:46; wt=900; col='#4c1d95'; }
+    else if (v==='='){ txt= c===n-1 ? '↓' : '→'; col='#92400e'; }
+    else if (typeof v==='string'){ txt=SYM[v]; col= (O.colour && (v==='x'||v==='/')) ? '#6d28d9' : '#334155'; size=48; wt=700; }
+    else { txt=v; wt=800; }
+    s+='<text x="'+(x+U/2)+'" y="'+(y+U/2+2)+'" text-anchor="middle" dominant-baseline="central" font-family="system-ui,Segoe UI,Arial,sans-serif" font-size="'+size+'" font-weight="'+wt+'" fill="'+col+'">'+esc(txt)+'</text>';
+  }
+  s+='<rect x="'+L+'" y="0" width="'+(n*U)+'" height="'+(n*U)+'" fill="none" stroke="#0f172a" stroke-width="5"/>';
+  if (sols){
+    var m=sols.length;
+    sols.forEach(function(t,i){
+      var off=m>1 ? (i-(m-1)/2)*9 : 0;
+      var pts=t.path.map(function(k){ return (L+(k%n+.5)*U+off)+','+((Math.floor(k/n)+.5)*U+off); }).join(' ');
+      s+='<polyline points="'+pts+'" fill="none" stroke="'+COLS[i%4]+'" stroke-width="8" stroke-opacity=".8" stroke-linecap="round" stroke-linejoin="round"'+(DASH[i%4]?' stroke-dasharray="'+DASH[i%4]+'"':'')+'/>';
+    });
+  }
+  return s+'</svg>';
+}
+function swatch(i){
+  return '<svg class="sw" viewBox="0 0 40 10" aria-hidden="true"><line x1="2" y1="5" x2="38" y2="5" stroke="'+COLS[i%4]+'" stroke-width="5" stroke-linecap="round"'+(DASH[i%4]?' stroke-dasharray="'+DASH[i%4].split(' ').map(function(v){return v*0.5;}).join(' ')+'"':'')+'/></svg>';
+}
+function chain(t,end){
+  var out='<b>'+fmtN(t[0])+'</b>';
+  for (var i=1;i+1<t.length;i+=2) out+=' → '+SYM[t[i]]+fmtN(t[i+1]);
+  return out+' → <b>'+fmtN(end)+'</b>';
+}
+
+/* ---------------- one puzzle block ---------------- */
+function block(p, idx, key){
+  var lay=LAYOUT[O.per], info=lvInfo(p.level), sols=key ? ET.solutions(p) : null;
+  var h='<div class="ws-q'+(lay.side?' side':'')+'">';
+  h+='<div class="ws-qhead"><span class="ws-qn">'+(idx+1)+'</span><span class="ws-lv">'+info.icon+' '+info.name+'</span><span class="ws-ask">Find <b>'+p.find+'</b> trails that finish on <b>'+fmtN(p.target)+'</b>.</span></div>';
+  h+='<div class="ws-qbody"><div class="ws-board">'+boardSVG(p, lay.board, sols)+'</div>';
+  if (key){
+    h+='<div class="ws-rec key">'+sols.map(function(t,i){ return '<div class="ws-ans">'+swatch(i)+'<span>'+chain(t.tokens,p.target)+'</span></div>'; }).join('')+'</div>';
+  } else if (O.lines){
+    h+='<div class="ws-rec">';
+    for (var i=0;i<p.find;i++) h+='<div class="ws-line"><span>Trail '+(i+1)+'</span></div>';
+    h+='</div>';
+  }
+  return h+'</div></div>';
+}
+
+/* ---------------- pages ---------------- */
+function sheetHead(first, key, pageNo, pages){
+  if (!first) return '<div class="ws-slim"><span>Total Trail'+(key?' — answers':'')+'</span><span>Page '+pageNo+' of '+pages+'</span></div>';
+  var h='<div class="ws-head"><div><div class="ws-brand">Mills Maths Tools</div><h1>Total Trail'+(key?' <span class="ws-keytag">Answers</span>':'')+'</h1></div>';
+  if (O.name && !key) h+='<div class="ws-name"><span>Name</span><span>Date</span></div>';
+  h+='</div>';
+  if (!key){
+    h+='<div class="ws-rules"><b>How to play.</b> Draw a trail from the arrow to the target in the bottom-right corner, moving up, down, left or right, never using a square twice. You finish through one of the arrow squares beside the target. '
+     +'<b>Keep a running total:</b> start with the first number, then each sign and number changes the total straight away, in the order you walk them. Every step must give a whole number.';
+    if (O.rule) h+='<div class="ws-note"><b>Steps, not one long sum:</b> 5 → +3 → ×2 gives <b>16</b>. (Written as one sum, 5 + 3 × 2 would be 11, because the order of operations does × first.)</div>';
+    if (O.lines) h+='<div class="ws-tip">Trace each trail in a different colour, and write its steps on a line, e.g. 5 → +3 → ×2 → 16.</div>';
+    h+='</div>';
+  } else {
+    h+='<div class="ws-rules">Every trail that works is shown — each board has exactly this many. Students may find them in any order.</div>';
+  }
+  return h;
+}
+function pages(key){
+  var per=O.per, out=[], total=Math.ceil(PUZ.length/per);
+  for (var pg=0;pg<total;pg++){
+    var h='<section class="ws-page per'+per+'">'+sheetHead(pg===0,key,pg+1,total)+'<div class="ws-grid">';
+    for (var j=pg*per;j<Math.min(PUZ.length,(pg+1)*per);j++) h+=block(PUZ[j],j,key);
+    h+='</div><div class="ws-foot">Total Trail · millsmathstools.au · '+(key?'Answers · ':'')+'Page '+(pg+1)+' of '+total+'</div></section>';
+    out.push(h);
+  }
+  return out.join('');
+}
+function render(){
+  var out=$('wsOut');
+  if (!PUZ.length){ out.innerHTML='<div class="ws-empty">Choose your options, then press <b>Generate worksheet</b>.</div>'; $('wsPrintBtn').disabled=true; fitPreview(); return; }
+  out.innerHTML=pages(false)+(O.key?pages(true):'');
+  $('wsPrintBtn').disabled=false;
+  var sheets=Math.ceil(PUZ.length/O.per)*(O.key?2:1);
+  $('wsSummary').textContent=PUZ.length+(PUZ.length===1?' puzzle':' puzzles')+' · '+O.per+' per page · '+sheets+(sheets===1?' page':' pages')+(O.key?' including the answer key':'');
+  fitPreview();
+}
+/* The preview is the real A4 page, shrunk to fit the screen. Printing ignores
+   the shrink. */
+function fitPreview(){
+  var w=$('wsOut').clientWidth, px=210*96/25.4;
+  var z=Math.min(1,(w-8)/px);
+  $('wsOut').style.setProperty('--wsZoom', z.toFixed(3));
+}
+
+/* ---------------- generating ---------------- */
+function levelFor(i,n){
+  if (O.level!=='mixed') return O.level;
+  var ids=LV.map(function(l){return l.id;});
+  return ids[Math.min(ids.length-1, Math.floor(i*ids.length/n))];      // a ladder: sweet first, extra last
+}
+function generate(){
+  if (BUSY) return;
+  var n=Math.max(1,Math.min(12, parseInt($('wsCount').value,10)||1)); O.count=n; $('wsCount').value=n; saveO();
+  BUSY=true; PUZ=[]; $('wsGenBtn').disabled=true; $('wsPrintBtn').disabled=true;
+  var i=0, list=[];
+  (function next(){
+    $('wsSummary').textContent='Making puzzle '+(i+1)+' of '+n+' — checking every trail…';
+    setTimeout(function(){
+      var tries=0, p;
+      do { p=ET.generate(levelFor(i,n)); tries++; }
+      while (tries<6 && list.some(function(q){ return q.target===p.target && q.n===p.n; }));   // no two targets the same on one sheet
+      list.push(p); i++;
+      if (i<n) next();
+      else { PUZ=list; BUSY=false; $('wsGenBtn').disabled=false; render(); }
+    },15);
+  })();
+}
+
+/* ---------------- controls ---------------- */
+function syncControls(){
+  $('wsLevel').value=O.level; $('wsCount').value=O.count;
+  document.querySelectorAll('#wsPer button').forEach(function(b){ var on=+b.dataset.per===O.per; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); });
+  $('wsLines').checked=O.lines; $('wsKey').checked=O.key; $('wsRule').checked=O.rule; $('wsName').checked=O.name; $('wsColour').checked=O.colour;
+}
+function open(){ window.__ETshowPage('sheet'); syncControls(); render(); window.scrollTo(0,0); }
+$('sheetBtn').addEventListener('click',open);
+$('sheetModeBtn').addEventListener('click',open);
+$('wsGenBtn').addEventListener('click',generate);
+$('wsPrintBtn').addEventListener('click',function(){ window.print(); });
+$('wsLevel').addEventListener('change',function(e){ O.level=e.target.value; saveO(); });
+$('wsCount').addEventListener('change',function(e){ var v=Math.max(1,Math.min(12,parseInt(e.target.value,10)||1)); e.target.value=v; O.count=v; saveO(); });
+document.querySelectorAll('#wsPer button').forEach(function(b){ b.addEventListener('click',function(){ O.per=+b.dataset.per; saveO(); syncControls(); render(); }); });
+[['wsLines','lines'],['wsKey','key'],['wsRule','rule'],['wsName','name'],['wsColour','colour']].forEach(function(x){
+  $(x[0]).addEventListener('change',function(e){ O[x[1]]=e.target.checked; saveO(); render(); });
+});
+var rz=0; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(fitPreview,120); });
+window.__WS__={O:O, generate:generate, get puzzles(){ return PUZ; }, render:render};
+})();
+
+</script>
+</body>
+</html>

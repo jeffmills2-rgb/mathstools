@@ -48,6 +48,52 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-20, session — being pushed): TOTAL TRAIL.**
+> `games/total-trail.html` (briefly built as "Equation Trail", which used the
+> order of operations — replaced the same day, teacher decision). After a
+> printed "snakes" sheet, renamed and rebuilt. Card in the **Puzzles** group.
+> Self-contained, no Firebase, English only.
+> * **IT IS A RUNNING TOTAL, NOT ONE LONG SUM — teacher decision 2026-09-20.**
+>   The first number starts the total; each sign-and-number changes it straight
+>   away, in walking order (5, +3, ×2 → 16). **A trail is NEVER written as a
+>   single expression anywhere on screen**, because "5 + 3 × 2 = 16" is false under
+>   BODMAS and would plant exactly the misconception the site fights elsewhere.
+>   Trails are written as function-machine chains (`5 → +3 → ×2 → 16`), the bar
+>   under the board shows ONE number (the running total) plus the single step
+>   that made it, and "Your steps" lists each step as its own true equation
+>   (`8 × 2 = 16`). The finish squares next to the target are ARROWS, not "=".
+>   A note under the board and the rules say outright that as one sum the order
+>   of operations would give a different answer. A UI check fails if any text
+>   the game writes about a trail contains two operations in a row.
+> * **A ÷ that does not go exactly is refused** ("34 ÷ 4 is not a whole number…"),
+>   so every running total is a whole number. Negative totals are allowed while
+>   playing; generated answers only dip below zero at Extra Spicy.
+> * **GENERATION BY EXHAUSTION** (`ET.allTrails`, running total carried through
+>   the DFS): a board is kept only if some target is reached by exactly `find`
+>   trails, which spell different step chains, differ by at least four squares,
+>   and contain no step followed by its own undo (+12 −12, ×6 ÷6). ×/÷ levels use
+>   numbers from 2. Levels: Sweet 4x4 + − find 2 · Mild 5x5 + − find 3 · Medium
+>   + − × · Spicy all four · Extra Spicy numbers to 12, negatives, find 4.
+> * The running total is written in the corner of each number square on the
+>   trail. Settings › "Show the running total" (on by default) hides all of it
+>   so students keep the total themselves.
+> * **WORKSHEET CREATOR, built into the same page** (🖨 Worksheet in the topbar,
+>   or the menu card). Level (or Mixed — a Sweet-to-Extra-Spicy ladder), 1–12
+>   puzzles, and **puzzles per page 1 / 2 / 4, which is a SIZE control** (board
+>   156 / 90 / 60 mm; 2-per-page puts the record lines beside the board). A4 pages
+>   in millimetres, boards as SVG, the preview is the real page shrunk with
+>   `zoom`, and `@media print` hides everything but the pages. Options: record
+>   lines, answer key, the "steps, not one long sum" note, name/date, coloured
+>   × ÷. The key draws every trail in its own colour AND dash pattern (readable
+>   on a black-and-white copier) and writes each as a step chain, never a sum.
+>   Changing the layout re-lays the SAME puzzles; only Generate re-rolls. No two
+>   puzzles on a sheet share a target. The layouts are fixed sizes, and the
+>   harness asserts no puzzle box, grid or page overflows at 12@4, 5@2 (Mixed),
+>   3@1 and 4@4, and that the printed PDF has the expected page count.
+>   Options saved in `mmtTotalTrailSheet.v1`.
+> * Share link `#t1.n.T.cells`, progress `mmtTotalTrailSave.v1`. Verified: 150
+>   generated boards re-counted with an independent evaluator + Playwright UI checks.
+>
 > **NEW (2026-09-19, session — being pushed): ORDER UP.** `games/order-up.html`,
 > a logic puzzle after a printed "put 1–16 in a 4x4 so every row and column hits
 > the target" sheet, renamed and rebuilt from scratch (nothing copied). Homepage
