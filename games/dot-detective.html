@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Dot Detective v1 (2026-09-20): find the shape hidden in a dot grid / find the triangle with a given area; printable worksheets -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Dot Detective | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --red:#ef4444; --amber:#f59e0b; --btn:#eef2f7; --btnHover:#e5ebf3; --grid:#b7c7dc;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --c:84px;
+    }
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:14px 24px;display:grid;grid-template-columns:minmax(240px,1fr) auto minmax(460px,1fr);align-items:center;gap:18px;box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:12px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:8px 12px;margin-left:-12px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .mmtTopbar .btn-primary{background:white;color:var(--blue2);border-color:white;}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.18);}
+    input[type="text"],input[type="number"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;}
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .menu-card{padding:28px;display:grid;gap:22px;min-height:620px;place-items:center;position:relative;}
+    h1,h2,h3,p{margin-top:0;}
+    .mode-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.35rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;}
+    .menu-panel{border-radius:26px;background:#f8fafc;border:1px solid var(--border);padding:20px;display:grid;gap:16px;}
+    .menu-center-panel{width:min(980px,100%);background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(15,23,42,.12);padding:28px;border:1px solid #dbe3ef;}
+    .menu-intro{display:grid;gap:6px;}
+    .menu-intro p{color:#475569;font-weight:750;line-height:1.45;margin:0;}
+    .setup-modal-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 36px));max-height:calc(100vh - 48px);overflow:auto;display:none;z-index:95;background:white;box-shadow:0 34px 90px rgba(15,23,42,.25);padding:28px;}
+    .setup-modal-panel.open{display:grid;}
+    .setup-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .setup-modal-head h2{margin-bottom:0;}
+    .level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:6px;padding:16px;border-radius:18px;align-content:start;}
+    .level-icon{white-space:nowrap;line-height:1;width:44px;height:44px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;font-size:1.55rem;box-shadow:inset 0 -3px 0 rgba(15,23,42,.06);}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn strong{font-size:1rem;}
+    .level-btn span{font-size:.78rem;color:var(--muted);font-weight:850;line-height:1.3;}
+    .form-note{font-size:.9rem;color:var(--muted);font-weight:750;line-height:1.4;margin:0;}
+
+    .game-card{display:grid;padding:18px;gap:16px;}
+    .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:stretch;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:64px;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.35rem;box-shadow:inset 0 -4px 0 rgba(15,23,42,.08);flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.08rem;line-height:1.1;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.92rem;margin-top:4px;font-weight:750;}
+    .status-subtitle.good{color:#166534;} .status-subtitle.warn{color:#9a3412;}
+    .toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;font-size:.9rem;border:1px solid #c7d2fe;white-space:nowrap;}
+    .game-area{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start;}
+    .board-col{display:grid;gap:14px;justify-items:center;min-width:0;}
+    .side-panel{display:grid;gap:14px;}
+    .panel-section{border-radius:22px;padding:16px;background:#f8fafc;border:1px solid var(--border);}
+    .panel-section h2{font-size:1.05rem;margin-bottom:10px;font-weight:950;letter-spacing:-.02em;}
+    .hidden{display:none!important;}
+    /* race mode */
+
+    .board-col{display:grid;gap:12px;justify-items:center;min-width:0;}
+
+    .bodmas b{min-width:64px;font-size:.9rem;letter-spacing:0;}
+
+
+    /* ---------- worksheet creator ----------
+       Controls in three bands like the other MMT creators; the preview is the
+       real A4 page in millimetres, shrunk to the screen with zoom. */
+    .ws-card{padding:18px;display:grid;gap:16px;}
+    .ws-controls{display:grid;gap:12px;}
+    .ws-band{border-radius:20px;padding:14px 16px;background:#f8fafc;border:1px solid var(--border);}
+    .ws-band-title{font-weight:950;color:#1e3a8a;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+    .ws-fields{display:grid;grid-template-columns:minmax(220px,1.2fr) minmax(130px,.5fr) minmax(330px,1.6fr);gap:12px;align-items:end;}
+    .ws-fields label{display:grid;gap:6px;}
+    .ws-perwrap{display:grid;gap:6px;}
+    .ws-lbl{color:#334155;font-weight:850;font-size:.92rem;}
+    .ws-lbl small{color:var(--muted);font-weight:750;}
+    .ws-per{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .ws-per button{display:grid;justify-items:center;gap:3px;padding:8px 6px;background:white;border:2px solid var(--border);color:#334155;font-size:.86rem;}
+    .ws-per button small{color:var(--muted);font-weight:800;font-size:.72rem;}
+    .ws-per button.on{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .pg{width:24px;height:32px;border:2px solid currentColor;border-radius:3px;display:grid;gap:2px;padding:2px;opacity:.8;}
+    .pg i{background:currentColor;opacity:.35;border-radius:1px;}
+    .pg.p2{grid-template-rows:1fr 1fr;} .pg.p4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+    .ws-toggles{display:flex;flex-wrap:wrap;gap:8px 18px;}
+    .ws-toggles label{display:flex;align-items:center;gap:8px;font-weight:850;}
+    .ws-toggles input{width:20px;height:20px;accent-color:var(--blue);}
+    .ws-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .ws-summary{color:var(--muted);font-weight:800;font-size:.9rem;}
+    .ws-out{--wsZoom:1;display:grid;justify-items:center;gap:18px;padding:18px 0;background:#e2e8f0;border-radius:20px;min-height:200px;overflow:hidden;}
+    .ws-empty{align-self:center;color:#475569;font-weight:800;padding:40px;}
+    .ws-page{zoom:var(--wsZoom);width:210mm;height:297mm;padding:12mm;box-sizing:border-box;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.18);display:flex;flex-direction:column;gap:3mm;overflow:hidden;color:#0f172a;font-family:var(--uiFont);}
+    .ws-head{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;border-bottom:.6mm solid #1e3a8a;padding-bottom:2mm;}
+    .ws-brand{font-size:8pt;font-weight:900;color:#2563eb;letter-spacing:.06em;text-transform:uppercase;}
+    .ws-head h1{margin:0;font-size:20pt;letter-spacing:-.03em;line-height:1.1;}
+    .ws-keytag{font-size:11pt;background:#dcfce7;color:#166534;border-radius:2mm;padding:.5mm 2.5mm;vertical-align:middle;}
+    .ws-name{display:flex;gap:6mm;font-size:10pt;font-weight:800;color:#334155;}
+    .ws-name span{border-bottom:.3mm solid #64748b;min-width:38mm;padding-bottom:4mm;}
+    .ws-name span:last-child{min-width:26mm;}
+    .ws-slim{display:flex;justify-content:space-between;font-size:8.5pt;font-weight:900;color:#475569;border-bottom:.4mm solid #cbd5e1;padding-bottom:1.5mm;}
+    .ws-rules{font-size:8.6pt;line-height:1.38;color:#1e293b;}
+    .ws-note{margin-top:1.5mm;padding:1.2mm 2.5mm;border-radius:2mm;background:#f5f3ff;border:.3mm solid #ddd6fe;}
+    .ws-tip{margin-top:1mm;color:#475569;}
+    .ws-grid{flex:1;min-height:0;display:grid;gap:4mm;}
+    .per1 .ws-grid{grid-template-rows:1fr;}
+    .per2 .ws-grid{grid-template-rows:1fr 1fr;}
+    .per4 .ws-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+    .ws-q{min-height:0;overflow:hidden;border:.35mm solid #cbd5e1;border-radius:3mm;padding:3mm 4mm;display:flex;flex-direction:column;gap:2.5mm;break-inside:avoid;}
+    .ws-qhead{display:flex;align-items:center;gap:2.5mm;font-size:10pt;flex-wrap:wrap;}
+    .per4 .ws-qhead{font-size:8.6pt;gap:1.8mm;}
+    .ws-qn{display:inline-grid;place-items:center;min-width:6.5mm;height:6.5mm;border-radius:50%;background:#1e3a8a;color:#fff;font-weight:900;font-size:9pt;}
+    .ws-lv{font-weight:900;color:#475569;font-size:.85em;border:.3mm solid #cbd5e1;border-radius:3mm;padding:.2mm 2mm;}
+    .ws-qbody{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:3mm;}
+    .ws-q.side .ws-qbody{flex-direction:row;align-items:stretch;}
+    .ws-board{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+    .ws-board svg{display:block;}
+    .ws-rec{flex:1;min-height:0;align-self:stretch;display:flex;flex-direction:column;justify-content:space-evenly;gap:1mm;}
+    .ws-line{border-bottom:.3mm solid #94a3b8;min-height:5mm;flex:1;max-height:14mm;display:flex;align-items:flex-end;padding-bottom:.8mm;}
+    .ws-line span{font-size:8pt;font-weight:900;color:#64748b;}
+    .ws-rec.key{justify-content:flex-start;gap:1.6mm;}
+    .ws-ans{display:flex;align-items:flex-start;gap:2mm;font-size:9pt;line-height:1.35;}
+    .per4 .ws-ans{font-size:7.6pt;}
+    .ws-ans .sw{flex:0 0 auto;width:9mm;height:3mm;margin-top:1mm;}
+    .ws-foot{font-size:7.5pt;color:#64748b;text-align:center;font-weight:700;}
+    @media(max-width:1080px){ .ws-fields,.dd-fields{grid-template-columns:1fr 1fr;} .ws-perwrap{grid-column:1/-1;} }
+    @media print{
+      @page{size:A4;margin:0;}
+      html,body{background:#fff!important;}
+      body>*:not(main){display:none!important;}
+      main.layout{width:auto!important;margin:0!important;}
+      main.layout>section:not(#sheetPage){display:none!important;}
+      #sheetPage{display:block!important;padding:0!important;border:0!important;box-shadow:none!important;background:none!important;border-radius:0!important;}
+      .ws-controls{display:none!important;}
+      .ws-out{display:block!important;padding:0!important;background:none!important;border-radius:0!important;}
+      .ws-page{zoom:1!important;box-shadow:none!important;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .ws-page:last-child{break-after:auto;page-break-after:auto;}
+    }
+
+
+    /* ---------- Dot Detective board ---------- */
+    .board-col{display:grid;gap:10px;justify-items:center;min-width:0;}
+    .dd-wrap{padding:14px;border-radius:24px;background:linear-gradient(180deg,#ffffff,#f9fafb);border:1px solid var(--border);max-width:100%;touch-action:manipulation;}
+    .dd-board{display:block;max-width:100%;height:auto;user-select:none;-webkit-user-select:none;}
+    .dd-dot{cursor:pointer;outline:none;}
+    .dd-dot:focus-visible circle:first-child{fill:rgba(37,99,235,.18);}
+    .dd-dot:hover circle:last-child{fill:#2563eb;}
+    .dd-hint{font-size:.88rem;font-weight:800;color:var(--muted);text-align:center;}
+    .dd-goal{font-size:2rem;min-width:74px;}
+    .dd-goal-name{font-size:1.3rem;font-weight:950;letter-spacing:-.02em;color:var(--ink);margin-bottom:3px;}
+    .dd-goal-def{font-size:.92rem;}
+    .dd-count{margin-top:12px;font-weight:900;color:#4c1d95;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:8px 12px;text-align:center;}
+    .working .wl{font-family:var(--uiFont);font-weight:800;font-size:.98rem;padding:6px 10px;}
+    .working .wl.latest{background:#f0fdf4;border-color:#bbf7d0;}
+    /* worksheet (Dot Detective) */
+    .dd-fields{grid-template-columns:minmax(180px,.9fr) minmax(200px,1fr) minmax(110px,.5fr) minmax(330px,1.6fr);}
+    .pg.p6{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;}
+    .dd-per2 .ws-grid{grid-template-rows:1fr 1fr;}
+    .dd-per4 .ws-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+    .dd-per6 .ws-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;}
+    .dd-qbody{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:2mm;}
+    .dd-name{font-size:13pt;font-weight:900;text-align:center;}
+    .dd-per6 .dd-name{font-size:11pt;}
+    .dd-def{font-size:8.4pt;color:#475569;text-align:center;line-height:1.35;max-width:120mm;}
+    .dd-work{align-self:stretch;flex:1;min-height:8mm;border:.3mm dashed #94a3b8;border-radius:2mm;padding:1mm 2mm;}
+    .dd-work span{font-size:7.5pt;font-weight:900;color:#64748b;}
+    .ws-rules>div+div{margin-top:1mm;}
+    .side-panel .bodmas b{letter-spacing:0;font-size:.82rem;min-width:66px;padding:0 8px;}
+
+    .target-card{display:flex;align-items:center;gap:14px;}
+    .target-num{flex:0 0 auto;min-width:74px;height:74px;padding:0 10px;border-radius:22px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:white;display:grid;place-items:center;font-size:2.3rem;font-weight:950;letter-spacing:-.04em;box-shadow:0 12px 26px rgba(124,58,237,.25);}
+    .target-text{font-weight:850;color:#334155;line-height:1.35;}
+    .bodmas{display:grid;gap:8px;margin:0;padding:0;list-style:none;}
+    .bodmas li{display:flex;gap:10px;align-items:center;padding:9px 11px;border-radius:14px;background:white;border:1px solid var(--border);font-weight:850;color:#334155;font-size:.92rem;line-height:1.3;}
+    .bodmas b{flex:0 0 auto;display:grid;place-items:center;min-width:60px;height:32px;font-size:1.2rem;letter-spacing:.12em;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;}
+    .bodmas .md b{background:#f5f3ff;color:#6d28d9;}
+    .progress-bar{height:13px;border-radius:999px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1;margin-top:8px;}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),#a3e635);border-radius:999px;transition:width .25s ease;}
+    .progress-top{display:flex;justify-content:space-between;gap:8px;font-weight:950;color:#334155;}
+    .working{display:grid;gap:6px;font-family:var(--mathFont);font-size:1.28rem;color:var(--ink);}
+    .working .wl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:white;border:1px solid var(--border);}
+    .working .wl:first-child{background:#eef6ff;border-color:#bfdbfe;}
+    .working .eq{color:#94a3b8;font-family:var(--uiFont);font-weight:900;}
+    .working .nw{font-weight:700;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:0 5px;}
+    .working .fr{display:inline-flex;flex-direction:column;align-items:center;font-size:.8em;line-height:1;}
+    .working .fr span:first-child{border-bottom:1.5px solid currentColor;padding:0 2px 1px;}
+    .working-empty{color:var(--muted);font-weight:750;font-size:.92rem;line-height:1.4;margin:0;}
+
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .row-actions button{flex:1 1 auto;}
+    .share-box{display:grid;gap:8px;}
+    .share-box input{font-size:.8rem;font-weight:700;color:#475569;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(640px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .rules-list{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:800;line-height:1.4;color:#334155;}
+    .rules-list .ex{font-family:var(--mathFont);font-size:1.12rem;color:var(--ink);white-space:nowrap;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);margin-top:10px;}
+    .toggle-row .tr-text{display:grid;gap:2px;}
+    .toggle-row .tr-text span{font-size:.84rem;color:var(--muted);font-weight:750;}
+    .toggle-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--blue);}
+    .radio-set{display:grid;gap:8px;margin-top:10px;}
+    .radio-set label{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;}
+    .radio-set label span{display:grid;gap:2px;}
+    .radio-set label small{color:var(--muted);font-weight:750;}
+    .radio-set input{margin-top:3px;accent-color:var(--blue);}
+    .end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .end-big{font-size:1.05rem;font-weight:800;color:#334155;line-height:1.45;margin:8px 0 0;}
+    .brand-footer{width:min(1340px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:210;background:#0f172a;color:white;padding:11px 16px;border-radius:14px;font-weight:850;box-shadow:0 14px 34px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+    .toast.show{opacity:1;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 900ms linear forwards;border-radius:3px;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .shake{animation:shake .32s ease;}
+    @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{width:min(1500px,calc(100vw - 36px));margin:12px auto 8px;}
+      .game-card{padding:14px 18px;gap:12px;}
+      .brand-footer{width:min(1500px,calc(100vw - 36px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:auto 1fr;}
+      .mmtTopTitle{text-align:left;}
+      .actions{grid-column:1/-1;justify-content:center;}
+      .game-area{grid-template-columns:1fr;}
+      .side-panel{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+      .level-grid{grid-template-columns:repeat(2,1fr);}
+    }
+/* ==== MMT PHONE LAYOUT (added 2026-09-19) — do not edit above this line ==== */
+@media(max-width:700px){
+  .mmtTopbar{position:relative;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 8px;padding:7px 10px;min-height:0;}
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{grid-column:2;justify-self:start;text-align:left;min-width:0;font-size:1.1rem;line-height:1.14;}
+  .actions{grid-column:1/-1;margin:0;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;}
+  .actions .btn,.actions button{padding:9px 12px;font-size:13px;line-height:1.15;border-radius:11px;white-space:nowrap;min-width:0;min-height:38px;}
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;}
+  .layout,.layout>*,.card{min-width:0;}
+  .layout{width:calc(100vw - 16px);margin:8px auto;}
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+  input,select{font-size:16px!important;}
+
+  .menu-card{padding:12px;min-height:0;}
+  .menu-center-panel{padding:16px;}
+  .setup-modal-panel{padding:16px;max-height:calc(100dvh - 20px);}
+  .level-grid{grid-template-columns:1fr;}
+  .game-card{padding:10px;gap:10px;}
+  .status-strip{grid-template-columns:1fr;}
+  .turn-card{min-height:0;padding:9px 12px;border-radius:16px;}
+  .status-icon{width:30px;height:30px;font-size:1.1rem;}
+  .status-title{font-size:.98rem;}
+  .status-subtitle{font-size:.84rem;}
+  .toolbar{justify-content:center;gap:6px;}
+  .toolbar button{padding:9px 12px;font-size:13px;min-height:38px;}
+  .toolbar .chip{padding:6px 10px;font-size:.8rem;}
+  .side-panel{grid-template-columns:1fr;}
+  .ws-card{padding:10px;}
+  .ws-fields,.dd-fields{grid-template-columns:1fr;}
+  .ws-per button{font-size:.78rem;}
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+</style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Dot Detective</div>
+    <div class="actions">
+      <button class="btn" id="sheetBtn" type="button" title="Make a printable worksheet of these puzzles">🖨 Worksheet</button>
+      <button class="btn" id="rulesBtn" type="button">How to play</button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎ Settings</button>
+      <button class="btn hidden" id="backToMenuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card menu-card" id="menuPage">
+      <div class="menu-panel menu-center-panel">
+        <div class="menu-intro">
+          <h2 style="margin:0">Dot Detective</h2>
+          <p>A grid of dots, and somewhere among them a shape is hiding. Only one set of dots works — find it. Every puzzle has exactly one answer.</p>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card" id="shapeModeBtn" type="button">
+            <span class="mode-icon">🔷</span>
+            <strong>Find the Shape</strong>
+            <span>Pick the dots that are the corners of a square, rectangle, rhombus, kite, parallelogram or special triangle.</span>
+          </button>
+          <button class="mode-card" id="triModeBtn" type="button">
+            <span class="mode-icon">📐</span>
+            <strong>Find the Triangle</strong>
+            <span>Pick three dots that make a triangle with exactly the area you are given.</span>
+          </button>
+          <button class="mode-card" id="sheetModeBtn" type="button">
+            <span class="mode-icon">🖨</span>
+            <strong>Printable worksheet</strong>
+            <span>Up to 12 puzzles on A4, two, four or six to a page, with an answer key.</span>
+          </button>
+        </div>
+      </div>
+      <div class="menu-panel setup-modal-panel" id="levelPanel" role="dialog" aria-modal="true" aria-labelledby="levelTitle">
+        <div class="setup-modal-head"><h2 id="levelTitle">Choose a level</h2><button class="btn-soft" id="levelBackBtn" type="button">Back</button></div>
+        <p class="form-note" id="levelNote"></p>
+        <div class="level-grid" id="levelGrid"></div>
+        <button class="btn-primary" id="startBtn" type="button">Start</button>
+      </div>
+      <div class="modal-backdrop" id="setupBackdrop" aria-hidden="true"></div>
+    </section>
+
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">🔍</div>
+          <div>
+            <div class="status-title" id="statusTitle">Find the shape.</div>
+            <div class="status-subtitle" id="messageBox" aria-live="polite">Tap the dots you think are its corners.</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span class="chip" id="levelChip">—</span>
+          <span class="chip" id="solvedChip">✓ <strong id="solvedCount">0</strong> solved</span>
+          <button class="btn-soft" id="clearBtn" type="button">Clear</button>
+          <button class="btn-soft" id="answerBtn" type="button">Show answer</button>
+          <button class="btn-soft" id="shareBtn" type="button">Share</button>
+          <button class="btn-primary" id="newBtn" type="button">New puzzle</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="board-col" id="boardCol">
+          <div class="dd-wrap" id="wrap"><svg id="board" class="dd-board" role="group" aria-label="Dot grid"></svg></div>
+          <div class="dd-hint" id="hint"></div>
+        </div>
+        <aside class="side-panel">
+          <section class="panel-section">
+            <div class="target-card">
+              <div class="target-num dd-goal" id="goalIcon">🔷</div>
+              <div>
+                <div class="dd-goal-name" id="goalName">—</div>
+                <div class="target-text dd-goal-def" id="goalDef"></div>
+              </div>
+            </div>
+            <div class="dd-count" id="selCount"></div>
+          </section>
+          <section class="panel-section hidden" id="boxSection">
+            <h2>The box method</h2>
+            <div class="working" id="boxWork"></div>
+            <button class="btn-soft" id="boxBtn" type="button" style="margin-top:8px;width:100%">Show the box on my triangle</button>
+          </section>
+          <section class="panel-section" id="toolsSection">
+            <h2 id="toolsTitle">Things to check</h2>
+            <ul class="bodmas" id="toolsList"></ul>
+          </section>
+          <section class="panel-section hidden" id="shareSection">
+            <h2>Share this puzzle</h2>
+            <div class="share-box">
+              <input id="shareInput" type="text" readonly aria-label="Puzzle link" />
+              <button class="btn-soft" id="copyLinkBtn" type="button">Copy link</button>
+              <p class="form-note">Anyone who opens the link gets this exact puzzle. Nothing is saved online.</p>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============================================================ WORKSHEET -->
+    <section class="card ws-card hidden" id="sheetPage">
+      <div class="ws-controls">
+        <div class="ws-band">
+          <div class="ws-band-title">The paper</div>
+          <div class="ws-fields dd-fields">
+            <label>Puzzles
+              <select id="wsKind">
+                <option value="shape">🔷 Find the Shape</option>
+                <option value="tri">📐 Find the Triangle</option>
+                <option value="both">Both — taking turns</option>
+              </select>
+            </label>
+            <label>Level
+              <select id="wsLevel">
+                <option value="sweet">🍬 Sweet</option>
+                <option value="mild">🍃 Mild</option>
+                <option value="medium">🌶️ Medium</option>
+                <option value="spicy">🔥 Spicy</option>
+                <option value="extra">🌋 Extra Spicy</option>
+                <option value="mixed">🎢 Mixed — a ladder, Sweet to Extra Spicy</option>
+              </select>
+            </label>
+            <label>How many (1–12)
+              <input id="wsCount" type="number" min="1" max="12" step="1" inputmode="numeric" />
+            </label>
+            <div class="ws-perwrap">
+              <span class="ws-lbl">Puzzles per page <small>— fewer means bigger grids</small></span>
+              <div class="ws-per" id="wsPer" role="group" aria-label="Puzzles per page">
+                <button type="button" data-per="2"><span class="pg p2"><i></i><i></i></span>2 per page<small>Biggest</small></button>
+                <button type="button" data-per="4"><span class="pg p4"><i></i><i></i><i></i><i></i></span>4 per page<small>Large</small></button>
+                <button type="button" data-per="6"><span class="pg p6"><i></i><i></i><i></i><i></i><i></i><i></i></span>6 per page<small>Compact</small></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ws-band">
+          <div class="ws-band-title">Options</div>
+          <div class="ws-toggles">
+            <label><input type="checkbox" id="wsDef" /> Definition under each shape name</label>
+            <label><input type="checkbox" id="wsWork" /> Working space for area puzzles</label>
+            <label><input type="checkbox" id="wsKey" /> Answer key</label>
+            <label><input type="checkbox" id="wsName" /> Name and date</label>
+          </div>
+        </div>
+        <div class="ws-actions">
+          <button class="btn-primary" id="wsGenBtn" type="button">Generate worksheet</button>
+          <button class="btn-green" id="wsPrintBtn" type="button" disabled>🖨 Print</button>
+          <span class="ws-summary" id="wsSummary" aria-live="polite">Every puzzle is checked against every possible choice of dots, so each has exactly one answer.</span>
+        </div>
+      </div>
+      <div class="ws-out" id="wsOut"></div>
+    </section>
+  </main>
+
+  <footer class="brand-footer"><span>Dot Detective · <a href="https://www.millsmathstools.au">Mills Maths Tools</a></span></footer>
+
+  <div class="modal-backdrop" id="rulesModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header"><h2 id="rulesTitle">How to play</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <ul class="rules-list">
+        <li><b>Find the Shape.</b> Some points on the grid are marked with dots. Exactly one set of them are the corners of the shape named. Tap them — the order does not matter.</li>
+        <li>Shapes can be tilted. A square does not have to sit flat: count across and up along each side to check the sides are equal and the corners are right angles.</li>
+        <li>Names mean what the definitions say. A square is also a rectangle, a rhombus and a parallelogram, so a “rectangle” puzzle never has a square hidden in it as well — there is only ever one answer.</li>
+        <li><b>Find the Triangle.</b> Choose three dots that make a triangle with exactly the area given. Each grid square is 1 square unit.</li>
+        <li>For a sloping triangle, draw the box around it, then take away the right-angled triangles in the corners. That is the box method, and the game will show it to you.</li>
+        <li>Tap a dot again to take it back. Keyboard: Tab to a dot, Enter or Space to choose it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header"><h2 id="settingsTitle">Settings</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <label class="toggle-row"><span class="tr-text"><strong>Show the definition</strong><span>What the shape has to have, beside its name.</span></span><input type="checkbox" id="defToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Say what a wrong choice makes</strong><span>“Those four dots make a rectangle, not a square.” / “That triangle's area is 4.”</span></span><input type="checkbox" id="tellToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Mark equal sides and right angles</strong><span>After a check, tick marks show equal sides and small squares show right angles.</span></span><input type="checkbox" id="marksToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Box method help</strong><span>In Find the Triangle, a button draws the box around a chosen triangle and works out its area.</span></span><input type="checkbox" id="boxToggle" /></label>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="answerModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerTitle">
+      <div class="modal-header"><h2 id="answerTitle">Show the answer?</h2></div>
+      <p class="end-big">This shows the dots and ends this puzzle.</p>
+      <div class="end-actions"><button class="btn-red" id="answerYes" type="button">Show the answer</button><button class="btn-soft" data-close type="button">Keep looking</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+<script>
+/* ===================================================================
+   DOT DETECTIVE — engine. No DOM.
+   Two puzzles on a grid of lattice points (x across, y down, integers):
+   * FIND THE SHAPE — some points are marked; exactly one set of them are the
+     vertices of the named shape.
+   * FIND THE TRIANGLE — exactly one choice of three marked points makes a
+     triangle with the given area.
+   Everything is exact integer arithmetic: squared lengths, dot and cross
+   products. Areas are kept DOUBLED (so ½ never needs a float).
+
+   Shape names are INCLUSIVE, the way the syllabus defines them: a square IS a
+   rectangle, a rhombus and a parallelogram. So a "rectangle" puzzle must have
+   no other rectangle among its dots — squares included — or it would have two
+   answers. The one that is there is always a plain one (a rectangle that is
+   not a square), so the answer matches the name a student expects.
+   =================================================================== */
+var DD = (function(){
+  'use strict';
+  var rnd=Math.random;
+  function setRandom(f){ rnd=f; }
+  function ri(a,b){ return a+Math.floor(rnd()*(b-a+1)); }
+  function pick(a){ return a[Math.floor(rnd()*a.length)]; }
+  function shuffle(a){ for (var i=a.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+  function sub(a,b){ return {x:a.x-b.x, y:a.y-b.y}; }
+  function cross(u,v){ return u.x*v.y-u.y*v.x; }
+  function dot(u,v){ return u.x*v.x+u.y*v.y; }
+  function len2(u){ return u.x*u.x+u.y*u.y; }
+  function key(p){ return p.x+','+p.y; }
+
+  /* doubled area of a triangle */
+  function area2(a,b,c){ return Math.abs(cross(sub(b,a),sub(c,a))); }
+
+  /* ---------------- classification ---------------- */
+  function classifyTri(a,b,c){
+    if (area2(a,b,c)===0) return 'line';
+    var s=[len2(sub(a,b)),len2(sub(b,c)),len2(sub(c,a))].sort(function(x,y){return x-y;});
+    var right = s[0]+s[1]===s[2], iso = s[0]===s[1]||s[1]===s[2];
+    if (right && iso) return 'isoRight';
+    if (right) return 'right';
+    if (iso) return 'isosceles';
+    return 'scalene';
+  }
+  /* Order four points round their centre; null if they are not a convex quadrilateral. */
+  function convexOrder(pts){
+    var cx=0, cy=0; pts.forEach(function(p){ cx+=p.x; cy+=p.y; }); cx/=4; cy/=4;
+    var o=pts.slice().sort(function(a,b){ return Math.atan2(a.y-cy,a.x-cx)-Math.atan2(b.y-cy,b.x-cx); });
+    var sign=0;
+    for (var i=0;i<4;i++){
+      var c=cross(sub(o[(i+1)%4],o[i]), sub(o[(i+2)%4],o[(i+1)%4]));
+      if (c===0) return null;
+      if (sign===0) sign=c>0?1:-1; else if ((c>0?1:-1)!==sign) return null;
+    }
+    return o;
+  }
+  function classifyQuad(pts){
+    for (var i=0;i<4;i++) for (var j=i+1;j<4;j++) for (var k=j+1;k<4;k++) if (area2(pts[i],pts[j],pts[k])===0) return {cls:'line'};
+    var o=convexOrder(pts); if (!o) return {cls:'concave'};
+    var s=[sub(o[1],o[0]),sub(o[2],o[1]),sub(o[3],o[2]),sub(o[0],o[3])], L=s.map(len2);
+    var par1=cross(s[0],s[2])===0, par2=cross(s[1],s[3])===0;
+    var cls;
+    if (par1&&par2){
+      var rightA=dot(s[0],s[1])===0, eq=L[0]===L[1];
+      cls = rightA&&eq ? 'square' : rightA ? 'rectangle' : eq ? 'rhombus' : 'parallelogram';
+    } else if ((L[0]===L[1]&&L[2]===L[3])||(L[1]===L[2]&&L[3]===L[0])) cls='kite';
+    else if (par1||par2) cls='trapezium';
+    else cls='quadrilateral';
+    return {cls:cls, order:o};
+  }
+
+  /* ---------------- shape types ---------------- */
+  var TYPES={
+    square:        {k:4, name:'Square',                 isa:['square'],
+                    def:'4 equal sides and 4 right angles.'},
+    rectangle:     {k:4, name:'Rectangle',              isa:['rectangle','square'],
+                    def:'4 right angles. Opposite sides are equal.'},
+    rhombus:       {k:4, name:'Rhombus',                isa:['rhombus','square'],
+                    def:'4 equal sides. Opposite sides are parallel.'},
+    parallelogram: {k:4, name:'Parallelogram',          isa:['parallelogram','rectangle','rhombus','square'],
+                    def:'Both pairs of opposite sides are parallel.'},
+    kite:          {k:4, name:'Kite',                   isa:['kite','rhombus','square'],
+                    def:'Two pairs of equal sides, each pair next to each other.'},
+    trapezium:     {k:4, name:'Trapezium',              isa:['trapezium','parallelogram','rectangle','rhombus','square'],
+                    def:'At least one pair of parallel sides.'},
+    isoRight:      {k:3, name:'Isosceles right triangle', isa:['isoRight'],
+                    def:'A right angle, and the two sides that make it are equal.'},
+    right:         {k:3, name:'Right-angled triangle',  isa:['right','isoRight'],
+                    def:'One angle is a right angle.'},
+    isosceles:     {k:3, name:'Isosceles triangle',     isa:['isosceles','isoRight'],
+                    def:'Two sides are equal.'}
+  };
+  var CLS_NAME={square:'a square', rectangle:'a rectangle', rhombus:'a rhombus', parallelogram:'a parallelogram', kite:'a kite',
+    trapezium:'a trapezium', quadrilateral:'a quadrilateral with no special name', concave:'a concave (arrowhead) shape',
+    isoRight:'an isosceles right triangle', right:'a right-angled triangle', isosceles:'an isosceles triangle', scalene:'a scalene triangle', line:'no shape — some of the points are in a straight line'};
+  function classify(pts){ return pts.length===3 ? {cls:classifyTri(pts[0],pts[1],pts[2])} : classifyQuad(pts); }
+  function isType(t,pts){ return TYPES[t].isa.indexOf(classify(pts).cls)>=0; }
+
+  function combos(n,k){ var out=[], c=[]; (function rec(s){ if (c.length===k){ out.push(c.slice()); return; } for (var i=s;i<n;i++){ c.push(i); rec(i+1); c.pop(); } })(0); return out; }
+  function shapeAnswers(p){
+    var T=TYPES[p.type]; return combos(p.dots.length,T.k).filter(function(ix){ return isType(p.type, ix.map(function(i){return p.dots[i];})); });
+  }
+  function triAnswers(p){
+    return combos(p.dots.length,3).filter(function(ix){ return area2(p.dots[ix[0]],p.dots[ix[1]],p.dots[ix[2]])===p.area2; });
+  }
+  function answers(p){ return p.kind==='shape' ? shapeAnswers(p) : triAnswers(p); }
+  /* Axis-aligned: every side horizontal or vertical (triangles: the two legs). */
+  function axisAligned(pts){
+    var o = pts.length===4 ? (convexOrder(pts)||pts) : pts, n=o.length, ax=0;
+    for (var i=0;i<n;i++){ var d=sub(o[(i+1)%n],o[i]); if (d.x===0||d.y===0) ax++; }
+    return pts.length===4 ? ax===4 : ax>=2;
+  }
+
+  /* ---------------- levels ---------------- */
+  var SHAPE_LEVELS={
+    sweet:  {w:4,h:4, dots:6,  types:['square','rectangle','isoRight'], axis:true},
+    mild:   {w:5,h:5, dots:8,  types:['square','rectangle','isoRight','parallelogram','isosceles'], axis:false, tiltMax:0.5},
+    medium: {w:6,h:5, dots:10, types:['square','rectangle','parallelogram','isoRight','isosceles','rhombus'], axis:false},
+    spicy:  {w:6,h:6, dots:12, types:['square','rectangle','parallelogram','rhombus','kite','isoRight','right','isosceles'], axis:false, tiltMin:0.4},
+    extra:  {w:7,h:7, dots:14, types:['square','rectangle','parallelogram','rhombus','kite','isoRight','right','isosceles'], axis:false, tiltMin:0.7}
+  };
+  var TRI_LEVELS={
+    sweet:  {w:4,h:4, dots:5, halves:false, needAxis:true,  a:[2,8]},
+    mild:   {w:4,h:4, dots:6, halves:false, needAxis:true,  a:[2,8]},
+    medium: {w:5,h:5, dots:7, halves:false, needAxis:false, a:[4,16]},
+    spicy:  {w:5,h:5, dots:8, halves:true,  needAxis:false, a:[3,16]},
+    extra:  {w:6,h:6, dots:9, halves:true,  needAxis:false, tilted:true, a:[5,24]}
+  };
+
+  /* Trapezium is a name the game uses for FEEDBACK only ("those four make a
+     trapezium"). As a target it is never unique: almost any handful of dots
+     holds a pair of parallel sides somewhere. */
+  var TYPE_DOTS={parallelogram:-3, trapezium:-3, isoRight:-3, right:-5, isosceles:-5};
+  function minDots(L,type){ return Math.max(5, L.dots+(TYPE_DOTS[type]||0)); }
+  function allPoints(w,h){ var o=[]; for (var y=0;y<h;y++) for (var x=0;x<w;x++) o.push({x:x,y:y}); return o; }
+
+  /* A plain example of the target somewhere on the grid, found by drawing
+     random point sets and keeping one whose MOST SPECIFIC name is the target. */
+  function placeTarget(L,type){
+    var pts=allPoints(L.w,L.h), k=TYPES[type].k;
+    for (var t=0;t<40000;t++){
+      var s=[]; var used={};
+      while (s.length<k){ var p=pick(pts); if (!used[key(p)]){ used[key(p)]=1; s.push(p); } }
+      if (classify(s).cls!==type) continue;
+      var ax=axisAligned(s);
+      if (L.axis && !ax) continue;
+      if (L.tiltMin!=null && ax && rnd()<L.tiltMin) continue;       // harder levels mostly tilt
+      if (L.tiltMax!=null && !ax && rnd()>L.tiltMax) continue;
+      return s;
+    }
+    return null;
+  }
+  /* The type is chosen FIRST and kept: the inclusive types (trapezium,
+     parallelogram, isosceles) are much harder to make unique than a square, and
+     retrying with a fresh random type would quietly turn every sheet into squares
+     and rectangles. */
+  function genShape(level,forceType){
+    var L=SHAPE_LEVELS[level]||SHAPE_LEVELS.medium;
+    var type=forceType||pick(L.types);
+    for (var attempt=0;attempt<400;attempt++){
+      var tgt=placeTarget(L,type); if (!tgt) continue;
+      var dots=tgt.slice(), taken={}; dots.forEach(function(p){ taken[key(p)]=1; });
+      var p={kind:'shape', level:level, w:L.w, h:L.h, type:type, dots:dots};
+      var pool=shuffle(allPoints(L.w,L.h).filter(function(q){ return !taken[key(q)]; }));
+      // Distractors: added one at a time, each kept only if the answer stays unique.
+      for (var i=0;i<pool.length && p.dots.length<L.dots;i++){
+        var q=pool[i]; p.dots.push(q);
+        if (shapeAnswers(p).length!==1) p.dots.pop();
+      }
+      // How many dots a board can hold depends on the shape: squares are rare
+      // among random dots, isosceles triangles are everywhere. So each type has
+      // its own minimum instead of one number for the level.
+      if (p.dots.length<Math.min(L.dots, minDots(L,type))) continue;
+      // Near misses make a puzzle: require at least one other named special shape among the dots.
+      var near=combos(p.dots.length,TYPES[type].k).filter(function(ix){ var c=classify(ix.map(function(i){return p.dots[i];})).cls; return ['square','rectangle','rhombus','parallelogram','kite','trapezium','isoRight','right','isosceles'].indexOf(c)>=0 && TYPES[type].isa.indexOf(c)<0; }).length;
+      if (near<1) continue;
+      p.dots=shuffle(p.dots);
+      p.answer=shapeAnswers(p)[0];
+      return p;
+    }
+    throw new Error('Could not build a shape puzzle');
+  }
+  function genTri(level){
+    var L=TRI_LEVELS[level]||TRI_LEVELS.medium;
+    for (var attempt=0;attempt<400;attempt++){
+      var dots=shuffle(allPoints(L.w,L.h)).slice(0,L.dots);
+      var p={kind:'tri', level:level, w:L.w, h:L.h, dots:dots};
+      var by={};
+      combos(dots.length,3).forEach(function(ix){ var a=area2(dots[ix[0]],dots[ix[1]],dots[ix[2]]); if (a) (by[a]=by[a]||[]).push(ix); });
+      var good=Object.keys(by).map(Number).filter(function(a2){
+        if (by[a2].length!==1) return false;
+        if (!L.halves && a2%2) return false;
+        if (a2<L.a[0]*2) return false;
+        if (a2>L.a[1]*2) return false;
+        var t=by[a2][0].map(function(i){return dots[i];});
+        var axSides=0; for (var i=0;i<3;i++){ var d=sub(t[(i+1)%3],t[i]); if (d.x===0||d.y===0) axSides++; }
+        if (L.needAxis && axSides<1) return false;
+        if (L.tilted && axSides>0) return false;
+        // several other triangles within 1 square unit, so it is not guessable by size alone
+        var close=Object.keys(by).map(Number).filter(function(b){ return b!==a2 && Math.abs(b-a2)<=2; }).length;
+        return close>=1;
+      });
+      if (L.halves){ var odd=good.filter(function(a){return a%2;}); if (odd.length && rnd()<0.6) good=odd; }
+      if (!good.length) continue;
+      p.area2=pick(good); p.answer=by[p.area2][0];
+      return p;
+    }
+    throw new Error('Could not build a triangle puzzle');
+  }
+  function generate(kind,level,type){ return kind==='shape' ? genShape(level,type) : genTri(level); }
+  function fmtArea(a2){ return a2%2 ? (a2===1?'½':(a2-1)/2+'½') : String(a2/2); }
+
+  /* The box method for a triangle: the enclosing rectangle minus the right
+     triangles (and any rectangle) left in its corners. Returns the pieces. */
+  function boxMethod(t){
+    var xs=t.map(function(p){return p.x;}), ys=t.map(function(p){return p.y;});
+    var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs), y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+    var box2=2*(x1-x0)*(y1-y0), pieces=[];
+    for (var i=0;i<3;i++){
+      var a=t[i], b=t[(i+1)%3], dx=Math.abs(a.x-b.x), dy=Math.abs(a.y-b.y);
+      if (dx && dy) pieces.push({a:a, b:b, corner:null, area2:dx*dy});
+    }
+    // a corner rectangle can be left over when one vertex is not on the box edge — only possible when all three sides slope
+    var used=pieces.reduce(function(s,p){return s+p.area2;},0);
+    var rest=box2-used-area2(t[0],t[1],t[2]);
+    return {x0:x0,y0:y0,x1:x1,y1:y1, box2:box2, pieces:pieces, rest2:rest};
+  }
+
+  /* ---------------- sharing ---------------- */
+  var TYPE_IDS=Object.keys(TYPES);
+  function encode(p){
+    var d=p.dots.map(function(q){ return q.x.toString(36)+q.y.toString(36); }).join('');
+    return (p.kind==='shape' ? 's1.'+p.w+p.h+'.'+TYPE_IDS.indexOf(p.type) : 'a1.'+p.w+p.h+'.'+p.area2)+'.'+d;
+  }
+  function decode(s){
+    var m=/^([sa])1\.(\d)(\d)\.(\d+)\.([0-9a-z]+)$/.exec(s||''); if (!m) return null;
+    var w=+m[2], h=+m[3], dots=[], str=m[5]; if (str.length%2) return null;
+    for (var i=0;i<str.length;i+=2){ var x=parseInt(str[i],36), y=parseInt(str[i+1],36); if (!(x<w&&y<h)) return null; dots.push({x:x,y:y}); }
+    var p={w:w,h:h,dots:dots,level:'custom'};
+    if (m[1]==='s'){ p.kind='shape'; p.type=TYPE_IDS[+m[4]]; if (!p.type) return null; }
+    else { p.kind='tri'; p.area2=+m[4]; }
+    var a=answers(p); if (a.length!==1) return null; p.answer=a[0];
+    return p;
+  }
+
+  return {TYPES:TYPES, CLS_NAME:CLS_NAME, classify:classify, isType:isType, area2:area2, answers:answers, generate:generate,
+          fmtArea:fmtArea, boxMethod:boxMethod, convexOrder:convexOrder, encode:encode, decode:decode, setRandom:setRandom,
+          SHAPE_LEVELS:SHAPE_LEVELS, TRI_LEVELS:TRI_LEVELS, len2:len2, sub:sub, dot:dot, axisAligned:axisAligned};
+})();
+
+</script>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var SET_KEY='mmtDotDetectiveSettings.v1';
+var U=100, M=44;                       // grid spacing and margin, in SVG units
+var LEVEL_UI={
+  shape:[
+    {id:'sweet',  icon:'🍬', name:'Sweet',       desc:'4 × 4 dots · squares, rectangles, right triangles · sides flat'},
+    {id:'mild',   icon:'🍃', name:'Mild',        desc:'5 × 5 · adds parallelograms and isosceles triangles · some tilted'},
+    {id:'medium', icon:'🌶️', name:'Medium',      desc:'6 × 5 · adds the rhombus · often tilted'},
+    {id:'spicy',  icon:'🔥', name:'Spicy',       desc:'6 × 6 · adds kites and right-angled triangles · mostly tilted'},
+    {id:'extra',  icon:'🌋', name:'Extra Spicy', desc:'7 × 7 · up to 14 dots · almost always tilted'}
+  ],
+  tri:[
+    {id:'sweet',  icon:'🍬', name:'Sweet',       desc:'4 × 4 dots · 5 dots · a flat side to use as the base'},
+    {id:'mild',   icon:'🍃', name:'Mild',        desc:'4 × 4 · 6 dots · a flat side to use as the base'},
+    {id:'medium', icon:'🌶️', name:'Medium',      desc:'5 × 5 · 7 dots · any triangle, whole-number areas'},
+    {id:'spicy',  icon:'🔥', name:'Spicy',       desc:'5 × 5 · 8 dots · areas can be halves'},
+    {id:'extra',  icon:'🌋', name:'Extra Spicy', desc:'6 × 6 · 9 dots · no flat sides — use the box method'}
+  ]
+};
+var ICON={square:'◻️', rectangle:'▭', rhombus:'◇', parallelogram:'▱', kite:'🪁', isoRight:'◺', right:'◺', isosceles:'△'};
+var SET={def:true, tell:true, marks:true, box:true};
+try{ Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)||'{}')); }catch(e){}
+function saveSet(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SET)); }catch(e){} }
+
+/* ---------------- state ----------------
+   S.p     the puzzle {kind, w, h, dots, type | area2, answer}
+   S.sel   indices of the dots chosen, in the order they were tapped
+   S.state 'play' | 'wrong' (a full set was checked and failed) | 'solved' | 'shown' */
+var S={kind:'shape', level:'medium', p:null, sel:[], state:'play', solved:0, box:false};
+try{ S.solved=+sessionStorage.getItem('mmtDD.solved')||0; }catch(e){}
+
+function need(){ return S.p.kind==='shape' ? DD.TYPES[S.p.type].k : 3; }
+function selPts(){ return S.sel.map(function(i){ return S.p.dots[i]; }); }
+function X(p){ return M+p.x*U; } function Y(p){ return M+p.y*U; }
+function fmtA(a2){ return DD.fmtArea(a2); }
+
+/* ---------------- fitting ---------------- */
+function fitBoard(){
+  if (!S.p) return;
+  var W=(S.p.w-1)*U+2*M, H=(S.p.h-1)*U+2*M, phone=window.innerWidth<=700;
+  var avW=$('boardCol').clientWidth-34;
+  var top=$('wrap').getBoundingClientRect().top+window.scrollY;
+  var avH=phone?9999:window.innerHeight-top-document.querySelector('.brand-footer').offsetHeight-$('hint').offsetHeight-100;
+  var s=Math.min(avW/W, avH/H, 1.25); s=Math.max(s, phone?0.4:0.5);
+  var b=$('board'); b.setAttribute('width',Math.round(W*s)); b.setAttribute('height',Math.round(H*s));
+}
+
+/* ---------------- drawing ----------------
+   Grid lines are drawn the way the paper version is: solid inside, dashed
+   round the edge, with the marked points as dots on the crossings. */
+function orderForDraw(pts){
+  if (pts.length===4){ var o=DD.convexOrder(pts); if (o) return o; }
+  return pts;
+}
+function marksSVG(pts){
+  // equal sides → tick marks; right angles → small squares
+  var n=pts.length, s='', L=[], groups={};
+  for (var i=0;i<n;i++){ var a=pts[i], b=pts[(i+1)%n]; var l=DD.len2(DD.sub(b,a)); L.push(l); (groups[l]=groups[l]||[]).push(i); }
+  var tickN=0;
+  Object.keys(groups).sort(function(a,b){return a-b;}).forEach(function(l){
+    if (groups[l].length<2) return; tickN++;
+    groups[l].forEach(function(i){
+      var a=pts[i], b=pts[(i+1)%n], mx=(X(a)+X(b))/2, my=(Y(a)+Y(b))/2, dx=X(b)-X(a), dy=Y(b)-Y(a), len=Math.hypot(dx,dy), ux=dx/len, uy=dy/len;
+      for (var t=0;t<tickN;t++){
+        var o=(t-(tickN-1)/2)*9;
+        var cx=mx+ux*o, cy=my+uy*o;
+        s+='<line x1="'+(cx-uy*11)+'" y1="'+(cy+ux*11)+'" x2="'+(cx+uy*11)+'" y2="'+(cy-ux*11)+'" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round"/>';
+      }
+    });
+  });
+  for (var j=0;j<n;j++){
+    var P=pts[j], A=pts[(j+n-1)%n], B=pts[(j+1)%n], u=DD.sub(A,P), v=DD.sub(B,P);
+    if (DD.dot(u,v)!==0) continue;
+    var lu=Math.hypot(u.x,u.y), lv=Math.hypot(v.x,v.y), k=18;
+    var p1={x:X(P)+u.x/lu*k, y:Y(P)+u.y/lu*k}, p3={x:X(P)+v.x/lv*k, y:Y(P)+v.y/lv*k}, p2={x:p1.x+v.x/lv*k, y:p1.y+v.y/lv*k};
+    s+='<polyline points="'+p1.x+','+p1.y+' '+p2.x+','+p2.y+' '+p3.x+','+p3.y+'" fill="none" stroke="#0f172a" stroke-width="3"/>';
+  }
+  return s;
+}
+function boxSVG(t){
+  var bm=DD.boxMethod(t), s='';
+  var x0=M+bm.x0*U, y0=M+bm.y0*U, x1=M+bm.x1*U, y1=M+bm.y1*U;
+  s+='<rect x="'+x0+'" y="'+y0+'" width="'+(x1-x0)+'" height="'+(y1-y0)+'" fill="none" stroke="#2563eb" stroke-width="4" stroke-dasharray="12 8"/>';
+  bm.pieces.forEach(function(pc){
+    var c1={x:pc.a.x,y:pc.b.y}, c2={x:pc.b.x,y:pc.a.y}, third=t.filter(function(q){ return q!==pc.a && q!==pc.b; })[0];
+    function side(q){ return Math.sign((pc.b.x-pc.a.x)*(q.y-pc.a.y)-(pc.b.y-pc.a.y)*(q.x-pc.a.x)); }
+    var corner = side(c1)!==side(third) ? c1 : c2;
+    s+='<polygon points="'+X(pc.a)+','+Y(pc.a)+' '+X(pc.b)+','+Y(pc.b)+' '+X(corner)+','+Y(corner)+'" fill="rgba(37,99,235,.13)" stroke="#2563eb" stroke-width="2"/>';
+    var cx=(X(pc.a)+X(pc.b)+X(corner))/3, cy=(Y(pc.a)+Y(pc.b)+Y(corner))/3;
+    s+='<text x="'+cx+'" y="'+cy+'" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="900" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="6">'+fmtA(pc.area2)+'</text>';
+  });
+  return s;
+}
+function draw(){
+  var p=S.p, b=$('board'), W=(p.w-1)*U+2*M, H=(p.h-1)*U+2*M, s='';
+  b.setAttribute('viewBox','0 0 '+W+' '+H);
+  // grid
+  for (var x=0;x<p.w;x++){ var edge=x===0||x===p.w-1; s+='<line x1="'+(M+x*U)+'" y1="'+M+'" x2="'+(M+x*U)+'" y2="'+(M+(p.h-1)*U)+'" stroke="'+(edge?'#94a3b8':'#cbd5e1')+'" stroke-width="'+(edge?3:2.5)+'"'+(edge?' stroke-dasharray="9 8"':'')+'/>'; }
+  for (var y=0;y<p.h;y++){ var e2=y===0||y===p.h-1; s+='<line x1="'+M+'" y1="'+(M+y*U)+'" x2="'+(M+(p.w-1)*U)+'" y2="'+(M+y*U)+'" stroke="'+(e2?'#94a3b8':'#cbd5e1')+'" stroke-width="'+(e2?3:2.5)+'"'+(e2?' stroke-dasharray="9 8"':'')+'/>'; }
+  // shape
+  var pts=orderForDraw(selPts()), done=S.state==='solved'||S.state==='shown';
+  if (S.state==='shown') pts=orderForDraw(p.answer.map(function(i){return p.dots[i];}));
+  if (pts.length>=2){
+    var col = S.state==='solved' ? '#16a34a' : S.state==='shown' ? '#f59e0b' : S.state==='wrong' ? '#ef4444' : '#7c3aed';
+    var fill = pts.length>=3 ? (S.state==='solved'?'rgba(22,163,74,.16)':S.state==='shown'?'rgba(245,158,11,.16)':S.state==='wrong'?'rgba(239,68,68,.10)':'rgba(124,58,237,.10)') : 'none';
+    var full = pts.length===need();
+    s+='<'+(full||pts.length>=3?'polygon':'polyline')+' points="'+pts.map(function(q){return X(q)+','+Y(q);}).join(' ')+'" fill="'+(full?fill:'none')+'" stroke="'+col+'" stroke-width="6" stroke-linejoin="round"'+(full?'':' stroke-dasharray="14 10"')+'/>';
+    if (full && SET.marks && S.state!=='play') s+=marksSVG(pts);
+  }
+  if (S.box && p.kind==='tri' && (S.sel.length===3 || S.state==='shown')) s+=boxSVG(S.state==='shown' ? p.answer.map(function(i){return p.dots[i];}) : selPts());
+  // dots
+  p.dots.forEach(function(d,i){
+    var on=S.sel.indexOf(i)>=0 || (S.state==='shown' && p.answer.indexOf(i)>=0);
+    s+='<g class="dd-dot'+(on?' on':'')+'" data-i="'+i+'" tabindex="'+(done?-1:0)+'" role="button" aria-pressed="'+on+'" aria-label="Dot at '+(d.x+1)+' across, '+(d.y+1)+' down">'+
+       '<circle cx="'+X(d)+'" cy="'+Y(d)+'" r="40" fill="transparent"/>'+
+       (on?'<circle cx="'+X(d)+'" cy="'+Y(d)+'" r="25" fill="#fde68a" stroke="#d97706" stroke-width="5"/>':'')+
+       '<circle cx="'+X(d)+'" cy="'+Y(d)+'" r="14" fill="#0f172a"/></g>';
+  });
+  b.innerHTML=s;
+}
+
+/* ---------------- side panel ---------------- */
+function paint(){
+  if (!S.p) return;
+  var p=S.p, k=need();
+  if (p.kind==='shape'){
+    var T=DD.TYPES[p.type];
+    $('goalIcon').textContent=ICON[p.type]||'🔷';
+    $('goalName').textContent=T.name;
+    $('goalDef').textContent=T.def; $('goalDef').classList.toggle('hidden',!SET.def);
+    $('toolsTitle').textContent='Things to check';
+    $('toolsList').innerHTML= k===4
+      ? '<li><b>Sides</b><span>Count across and up each side. Same counts = same length, even tilted.</span></li><li class="md"><b>Corners</b><span>Across 2, up 1 is square to across 1, down 2: the numbers swap.</span></li>'
+      : '<li><b>Sides</b><span>Count across and up each side. Same counts = same length.</span></li><li class="md"><b>Right angle</b><span>Across 2, up 1 is square to across 1, down 2: the numbers swap.</span></li>';
+  } else {
+    $('goalIcon').textContent=fmtA(p.area2);
+    $('goalName').textContent='A triangle with area '+fmtA(p.area2);
+    $('goalDef').textContent='Each grid square is 1 square unit. Find the three dots.'; $('goalDef').classList.toggle('hidden',!SET.def);
+    $('toolsTitle').textContent='Working out an area';
+    $('toolsList').innerHTML='<li><b>½ b h</b><span>Flat side? Area = ½ × base × height.</span></li><li class="md"><b>Box</b><span>Sloping? Box it, take away the corners.</span></li>';
+  }
+  $('selCount').textContent = S.state==='solved' ? 'Solved!' : S.state==='shown' ? 'Here is the answer.' : S.sel.length+' of '+k+' dots chosen';
+  $('solvedCount').textContent=S.solved;
+  var showBox = p.kind==='tri' && SET.box;
+  $('boxSection').classList.toggle('hidden', !showBox);
+  $('toolsSection').classList.toggle('hidden', showBox);
+  if (showBox) paintBox();
+  $('clearBtn').disabled = !S.sel.length || S.state==='solved' || S.state==='shown';
+  $('answerBtn').disabled = S.state==='solved' || S.state==='shown';
+  $('hint').textContent = S.state==='solved'||S.state==='shown' ? 'Press New puzzle for another.' : 'Tap a dot to choose it. Tap it again to take it back.';
+  draw();
+}
+function paintBox(){
+  var t = S.state==='shown' ? S.p.answer.map(function(i){return S.p.dots[i];}) : (S.sel.length===3 ? selPts() : null);
+  var btn=$('boxBtn'), box=$('boxWork');
+  btn.disabled=!t; btn.textContent = S.box ? 'Hide the box' : 'Show the box on my triangle';
+  if (!t){ box.innerHTML='<ul class="bodmas"><li><b>½ b h</b><span>Flat side? Area = ½ × base × height.</span></li><li class="md"><b>Box</b><span>Sloping? Box it, take away the corners. Choose three dots and this can show you.</span></li></ul>'; return; }
+  if (!S.box){ box.innerHTML='<p class="working-empty">Try it yourself first — then press the button to check.</p>'; return; }
+  var bm=DD.boxMethod(t), w=bm.x1-bm.x0, h=bm.y1-bm.y0, a2=DD.area2(t[0],t[1],t[2]);
+  var parts=bm.pieces.map(function(pc){ return fmtA(pc.area2); });
+  if (bm.rest2>0) parts.push(fmtA(bm.rest2)+' (corner rectangle)');
+  var h2='<div class="wl">Box: '+w+' × '+h+' = <span class="nw">'+(w*h)+'</span></div>';
+  if (parts.length) h2+='<div class="wl">Take away: '+parts.join(', ')+'</div>';
+  h2+='<div class="wl latest">Triangle = <span class="nw">'+fmtA(a2)+'</span></div>';
+  box.innerHTML=h2;
+}
+
+/* ---------------- messages ---------------- */
+function say(title,msg,kind,icon){
+  if (title!=null) $('statusTitle').textContent=title;
+  var m=$('messageBox'); m.textContent=msg||''; m.className='status-subtitle'+(kind?' '+kind:'');
+  if (icon) $('statusIcon').textContent=icon;
+}
+var toastT=0;
+function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){e.classList.remove('show');},1800); }
+function intro(){
+  if (S.p.kind==='shape') say('Find the '+DD.TYPES[S.p.type].name.toLowerCase()+'.','Tap the '+need()+' dots that are its corners.',null,'🔍');
+  else say('Find a triangle with area '+fmtA(S.p.area2)+'.','Tap the three dots that are its corners.',null,'🔍');
+}
+
+/* ---------------- choosing dots ---------------- */
+function toggle(i){
+  if (S.state==='solved'||S.state==='shown') return;
+  if (S.state==='wrong') S.state='play';
+  var at=S.sel.indexOf(i);
+  if (at>=0) S.sel.splice(at,1);
+  else { if (S.sel.length>=need()) S.sel.shift(); S.sel.push(i); }
+  if (S.sel.length===need()) check(); else { intro(); paint(); }
+}
+function check(){
+  var p=S.p, pts=selPts(), ok, wrongWhy='';
+  if (p.kind==='shape'){
+    ok=DD.isType(p.type,pts);
+    if (!ok){
+      var c=DD.classify(pts).cls, nm=DD.TYPES[p.type].name.toLowerCase();
+      wrongWhy = SET.tell ? (c==='line' ? 'Some of those dots are in a straight line, so they do not make a shape.' : 'Those '+pts.length+' dots make '+DD.CLS_NAME[c]+', not '+(/^[aeiou]/.test(nm)?'an ':'a ')+nm+'.') : 'That is not the '+nm+'. Take a dot back and try another.';
+    }
+  } else {
+    var a2=DD.area2(pts[0],pts[1],pts[2]); ok=a2===p.area2;
+    if (!ok) wrongWhy = a2===0 ? 'Those three dots are in a straight line — that is not a triangle.' : SET.tell ? 'That triangle has an area of '+fmtA(a2)+' square units — you need '+fmtA(p.area2)+'.' : 'That triangle does not have an area of '+fmtA(p.area2)+'.';
+  }
+  if (ok){
+    S.state='solved'; S.solved++; try{ sessionStorage.setItem('mmtDD.solved',S.solved); }catch(e){}
+    say('Solved!', p.kind==='shape' ? 'Those are the corners of the '+DD.TYPES[p.type].name.toLowerCase()+'.' : 'That triangle has an area of '+fmtA(p.area2)+' square units.','good','🎉');
+    burst();
+  } else {
+    S.state='wrong';
+    say('Not this one.', wrongWhy+' Tap a dot to swap it.','warn','🤔');
+  }
+  paint();
+}
+function clearSel(){ if (S.state==='solved'||S.state==='shown') return; S.sel=[]; S.state='play'; S.box=false; intro(); paint(); }
+function showAnswer(){ closeModals(); S.state='shown'; S.sel=[]; paint(); say('Here is the answer.', S.p.kind==='shape'?'The orange dots are the corners of the '+DD.TYPES[S.p.type].name.toLowerCase()+'.':'The orange triangle has an area of '+fmtA(S.p.area2)+'.',null,'💡'); }
+
+/* ---------------- pages ---------------- */
+function showPage(w){
+  $('menuPage').classList.toggle('hidden',w!=='menu'); $('gamePage').classList.toggle('hidden',w!=='game'); $('sheetPage').classList.toggle('hidden',w!=='sheet');
+  $('backToMenuBtn').classList.toggle('hidden',w==='menu'); $('sheetBtn').classList.toggle('hidden',w==='sheet');
+}
+window.__DDshowPage=showPage;
+function startPuzzle(p){
+  S.p=p; S.kind=p.kind; S.sel=[]; S.state='play'; S.box=false;
+  var lv=(LEVEL_UI[p.kind].find(function(l){return l.id===p.level;})||{name:'Shared',icon:'🔗'});
+  $('levelChip').textContent=(p.kind==='shape'?'Shape':'Triangle')+' · '+lv.name;
+  $('shareSection').classList.add('hidden');
+  showPage('game'); fitBoard(); paint(); intro();
+  requestAnimationFrame(function(){ fitBoard(); });
+}
+function newPuzzle(){ startPuzzle(DD.generate(S.kind,S.level)); }
+function toMenu(){ showPage('menu'); closeSetup(); if (location.hash) history.replaceState(null,'',location.pathname+location.search); }
+
+/* ---------------- levels ---------------- */
+function openSetup(kind){
+  S.kind=kind; buildLevels();
+  $('levelTitle').textContent= kind==='shape' ? 'Find the Shape — choose a level' : 'Find the Triangle — choose a level';
+  $('levelNote').textContent= kind==='shape' ? 'Harder levels have more dots, more kinds of shape, and shapes that are tilted.' : 'Harder levels have more dots, half square units, and triangles with no flat side.';
+  $('levelPanel').classList.add('open'); $('setupBackdrop').classList.add('open');
+}
+function closeSetup(){ $('levelPanel').classList.remove('open'); $('setupBackdrop').classList.remove('open'); }
+function buildLevels(){
+  var g=$('levelGrid'); g.innerHTML='';
+  LEVEL_UI[S.kind].forEach(function(l){
+    var b=document.createElement('button'); b.type='button'; b.className='level-btn'+(l.id===S.level?' selected':''); b.dataset.level=l.id;
+    b.innerHTML='<div class="level-icon">'+l.icon+'</div><strong>'+l.name+'</strong><span>'+l.desc+'</span>';
+    b.addEventListener('click',function(){ S.level=l.id; buildLevels(); });
+    b.addEventListener('dblclick',function(){ S.level=l.id; closeSetup(); newPuzzle(); });
+    g.appendChild(b);
+  });
+}
+
+/* ---------------- sharing ---------------- */
+function showShare(){ $('shareInput').value=location.origin+location.pathname+'#'+DD.encode(S.p); $('shareSection').classList.remove('hidden'); }
+function copyLink(){ var v=$('shareInput').value; (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(v):Promise.reject()).then(function(){toast('Link copied');},function(){ $('shareInput').select(); try{document.execCommand('copy');}catch(e){} toast('Link copied'); }); }
+function loadFromHash(){
+  var h=decodeURIComponent((location.hash||'').slice(1)); if (!h) return false;
+  var p=DD.decode(h); if (!p){ toast('That puzzle link is not valid'); return false; }
+  startPuzzle(p); showShare(); return true;
+}
+
+/* ---------------- modals ---------------- */
+function openModal(id){ $(id).classList.add('open'); }
+function closeModals(){ document.querySelectorAll('.modal-backdrop.open').forEach(function(m){ if (m.id!=='setupBackdrop') m.classList.remove('open'); }); }
+document.querySelectorAll('.modal-backdrop').forEach(function(m){ if (m.id==='setupBackdrop') return; m.addEventListener('click',function(e){ if (e.target===m || e.target.closest('[data-close]')) m.classList.remove('open'); }); });
+function burst(){ var cols=['#2563eb','#7c3aed','#6cbc4a','#f59e0b','#ef4444']; for (var i=0;i<28;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=(30+Math.random()*40)+'vw'; c.style.background=cols[i%5]; c.style.animationDuration=(700+Math.random()*600)+'ms'; document.body.appendChild(c); setTimeout(function(x){return function(){x.remove();};}(c),1600); } }
+
+/* ---------------- wiring ---------------- */
+$('shapeModeBtn').addEventListener('click',function(){ openSetup('shape'); });
+$('triModeBtn').addEventListener('click',function(){ openSetup('tri'); });
+$('levelBackBtn').addEventListener('click',closeSetup);
+$('setupBackdrop').addEventListener('click',closeSetup);
+$('startBtn').addEventListener('click',function(){ closeSetup(); newPuzzle(); });
+$('backToMenuBtn').addEventListener('click',toMenu);
+$('rulesBtn').addEventListener('click',function(){ openModal('rulesModal'); });
+$('settingsBtn').addEventListener('click',function(){ $('defToggle').checked=SET.def; $('tellToggle').checked=SET.tell; $('marksToggle').checked=SET.marks; $('boxToggle').checked=SET.box; openModal('settingsModal'); });
+[['defToggle','def'],['tellToggle','tell'],['marksToggle','marks'],['boxToggle','box']].forEach(function(x){ $(x[0]).addEventListener('change',function(e){ SET[x[1]]=e.target.checked; saveSet(); if (x[1]==='box' && !SET.box) S.box=false; paint(); }); });
+$('clearBtn').addEventListener('click',clearSel);
+$('answerBtn').addEventListener('click',function(){ openModal('answerModal'); });
+$('answerYes').addEventListener('click',showAnswer);
+$('newBtn').addEventListener('click',function(){ if (S.p && S.p.level==='custom'){ toMenu(); openSetup(S.kind); } else newPuzzle(); });
+$('shareBtn').addEventListener('click',function(){ showShare(); copyLink(); });
+$('copyLinkBtn').addEventListener('click',copyLink);
+$('boxBtn').addEventListener('click',function(){ S.box=!S.box; paint(); });
+$('board').addEventListener('click',function(e){ var g=e.target.closest('.dd-dot'); if (g) toggle(+g.dataset.i); });
+$('board').addEventListener('keydown',function(e){ if (e.key!=='Enter' && e.key!==' ') return; var g=e.target.closest('.dd-dot'); if (!g) return; e.preventDefault(); var i=+g.dataset.i; toggle(i); var n=document.querySelector('.dd-dot[data-i="'+i+'"]'); if (n) n.focus(); });
+document.addEventListener('keydown',function(e){ if (e.key==='Escape' && !$('gamePage').classList.contains('hidden') && !document.querySelector('.modal-backdrop.open')) clearSel(); });
+var rz=0; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(fitBoard,120); });
+window.addEventListener('hashchange',function(){ if (location.hash.length>1) loadFromHash(); });
+
+window.__DD__={S:S, toggle:toggle, DD:DD, paint:paint};
+if (!loadFromHash()) showPage('menu');
+})();
+
+</script>
+<script>
+/* ===================================================================
+   DOT DETECTIVE — WORKSHEET CREATOR
+   Same engine as the game, so every printed puzzle has exactly one answer.
+   Puzzles per page (2 / 4 / 6) is a SIZE control; each size is a fixed layout
+   in millimetres, and the grids are SVG so they print crisp.
+   =================================================================== */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var LV=[{id:'sweet',icon:'🍬',name:'Sweet'},{id:'mild',icon:'🍃',name:'Mild'},{id:'medium',icon:'🌶️',name:'Medium'},{id:'spicy',icon:'🔥',name:'Spicy'},{id:'extra',icon:'🌋',name:'Extra Spicy'}];
+function lvInfo(id){ return LV.find(function(l){return l.id===id;})||LV[2]; }
+var WS_KEY='mmtDotDetectiveSheet.v1';
+var O={kind:'shape', level:'medium', count:6, per:4, def:true, work:true, key:true, name:true};
+try{ Object.assign(O, JSON.parse(localStorage.getItem(WS_KEY)||'{}')); }catch(e){}
+function saveO(){ try{ localStorage.setItem(WS_KEY, JSON.stringify(O)); }catch(e){} }
+var PUZ=[], BUSY=false;
+/* grid size in mm for the LONGER side of the dot grid */
+var LAYOUT={2:{grid:78}, 4:{grid:72}, 6:{grid:48}};
+
+function gridSVG(p, mm, key){
+  var U=100, M=30, W=(p.w-1)*U+2*M, H=(p.h-1)*U+2*M, big=Math.max(W,H);
+  var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" style="width:'+(mm*W/big)+'mm;height:'+(mm*H/big)+'mm">';
+  for (var x=0;x<p.w;x++){ var e=x===0||x===p.w-1; s+='<line x1="'+(M+x*U)+'" y1="'+M+'" x2="'+(M+x*U)+'" y2="'+(M+(p.h-1)*U)+'" stroke="'+(e?'#64748b':'#94a3b8')+'" stroke-width="3"'+(e?' stroke-dasharray="10 9"':'')+'/>'; }
+  for (var y=0;y<p.h;y++){ var e2=y===0||y===p.h-1; s+='<line x1="'+M+'" y1="'+(M+y*U)+'" x2="'+(M+(p.w-1)*U)+'" y2="'+(M+y*U)+'" stroke="'+(e2?'#64748b':'#94a3b8')+'" stroke-width="3"'+(e2?' stroke-dasharray="10 9"':'')+'/>'; }
+  if (key){
+    var pts=p.answer.map(function(i){return p.dots[i];}); if (pts.length===4) pts=DD.convexOrder(pts)||pts;
+    s+='<polygon points="'+pts.map(function(q){return (M+q.x*U)+','+(M+q.y*U);}).join(' ')+'" fill="rgba(22,163,74,.15)" stroke="#15803d" stroke-width="9" stroke-linejoin="round"/>';
+  }
+  p.dots.forEach(function(d,i){
+    if (key && p.answer.indexOf(i)>=0) s+='<circle cx="'+(M+d.x*U)+'" cy="'+(M+d.y*U)+'" r="26" fill="#fff" stroke="#15803d" stroke-width="7"/>';
+    s+='<circle cx="'+(M+d.x*U)+'" cy="'+(M+d.y*U)+'" r="15" fill="#0f172a"/>';
+  });
+  return s+'</svg>';
+}
+function title(p){ return p.kind==='shape' ? DD.TYPES[p.type].name : 'Area = '+DD.fmtArea(p.area2); }
+function block(p, idx, key){
+  var lay=LAYOUT[O.per], info=lvInfo(p.level);
+  var h='<div class="ws-q dd-q"><div class="ws-qhead"><span class="ws-qn">'+(idx+1)+'</span><span class="ws-lv">'+info.icon+' '+info.name+'</span></div>';
+  h+='<div class="dd-qbody"><div class="ws-board">'+gridSVG(p, lay.grid, key)+'</div>';
+  h+='<div class="dd-name">'+title(p)+'</div>';
+  if (O.def && p.kind==='shape') h+='<div class="dd-def">'+DD.TYPES[p.type].def+'</div>';
+  if (p.kind==='tri' && !O.def) {}
+  if (key){
+    if (p.kind==='tri'){
+      var t=p.answer.map(function(i){return p.dots[i];}), bm=DD.boxMethod(t);
+      h+='<div class="dd-def">Box '+(bm.x1-bm.x0)+' × '+(bm.y1-bm.y0)+' = '+((bm.x1-bm.x0)*(bm.y1-bm.y0))+(bm.pieces.length?', take away '+bm.pieces.map(function(pc){return DD.fmtArea(pc.area2);}).concat(bm.rest2>0?[DD.fmtArea(bm.rest2)]:[]).join(', '):'')+' → '+DD.fmtArea(p.area2)+'</div>';
+    }
+  } else if (O.work && p.kind==='tri') h+='<div class="dd-work"><span>Working</span></div>';
+  return h+'</div></div>';
+}
+function sheetHead(first,key,pageNo,pages){
+  if (!first) return '<div class="ws-slim"><span>Dot Detective'+(key?' — answers':'')+'</span><span>Page '+pageNo+' of '+pages+'</span></div>';
+  var h='<div class="ws-head"><div><div class="ws-brand">Mills Maths Tools</div><h1>Dot Detective'+(key?' <span class="ws-keytag">Answers</span>':'')+'</h1></div>';
+  if (O.name && !key) h+='<div class="ws-name"><span>Name</span><span>Date</span></div>';
+  h+='</div>';
+  var kinds={}; PUZ.forEach(function(p){ kinds[p.kind]=1; });
+  if (!key){
+    h+='<div class="ws-rules">';
+    if (kinds.shape) h+='<div><b>Find the shape.</b> Circle the dots that are the corners of the shape named under each grid, and join them. Shapes can be tilted. There is exactly one answer.</div>';
+    if (kinds.tri) h+='<div><b>Find the triangle.</b> Circle three dots that make a triangle with the area given. Each grid square is 1 square unit. For sloping sides, draw a box around the triangle and take away the corner triangles.</div>';
+    h+='</div>';
+  } else h+='<div class="ws-rules">Each puzzle has exactly one answer, shown in green.</div>';
+  return h;
+}
+function pages(key){
+  var per=O.per, out=[], total=Math.ceil(PUZ.length/per);
+  for (var pg=0;pg<total;pg++){
+    var h='<section class="ws-page dd-per'+per+'">'+sheetHead(pg===0,key,pg+1,total)+'<div class="ws-grid">';
+    for (var j=pg*per;j<Math.min(PUZ.length,(pg+1)*per);j++) h+=block(PUZ[j],j,key);
+    h+='</div><div class="ws-foot">Dot Detective · millsmathstools.au · '+(key?'Answers · ':'')+'Page '+(pg+1)+' of '+total+'</div></section>';
+    out.push(h);
+  }
+  return out.join('');
+}
+function render(){
+  var out=$('wsOut');
+  if (!PUZ.length){ out.innerHTML='<div class="ws-empty">Choose your options, then press <b>Generate worksheet</b>.</div>'; $('wsPrintBtn').disabled=true; fitPreview(); return; }
+  out.innerHTML=pages(false)+(O.key?pages(true):'');
+  $('wsPrintBtn').disabled=false;
+  var sheets=Math.ceil(PUZ.length/O.per)*(O.key?2:1);
+  $('wsSummary').textContent=PUZ.length+(PUZ.length===1?' puzzle':' puzzles')+' · '+O.per+' per page · '+sheets+(sheets===1?' page':' pages')+(O.key?' including the answer key':'');
+  fitPreview();
+}
+function fitPreview(){ var w=$('wsOut').clientWidth, px=210*96/25.4; $('wsOut').style.setProperty('--wsZoom', Math.min(1,(w-8)/px).toFixed(3)); }
+function levelFor(i,n){ if (O.level!=='mixed') return O.level; return LV[Math.min(4,Math.floor(i*5/n))].id; }
+function kindFor(i){ return O.kind==='both' ? (i%2?'tri':'shape') : O.kind; }
+/* A sheet should not be five squares. Shape types are dealt from a shuffled
+   deck of the level's types, so a sheet shows a spread of them. */
+function generate(){
+  if (BUSY) return;
+  var n=Math.max(1,Math.min(12,parseInt($('wsCount').value,10)||1)); O.count=n; $('wsCount').value=n; saveO();
+  BUSY=true; $('wsGenBtn').disabled=true; $('wsPrintBtn').disabled=true;
+  var list=[], i=0, decks={};
+  function nextType(level){
+    var d=decks[level]; if (!d||!d.length){ d=decks[level]=DD.SHAPE_LEVELS[level].types.slice().sort(function(){return Math.random()-.5;}); }
+    return d.pop();
+  }
+  (function next(){
+    $('wsSummary').textContent='Making puzzle '+(i+1)+' of '+n+'…';
+    setTimeout(function(){
+      var kind=kindFor(i), lv=levelFor(i,n), p, tries=0;
+      do { p = kind==='shape' ? DD.generate('shape',lv,nextType(lv)) : DD.generate('tri',lv); tries++; }
+      while (tries<5 && kind==='tri' && list.some(function(q){ return q.kind==='tri' && q.area2===p.area2; }));
+      list.push(p); i++;
+      if (i<n) next(); else { PUZ=list; BUSY=false; $('wsGenBtn').disabled=false; render(); }
+    },12);
+  })();
+}
+function sync(){
+  $('wsKind').value=O.kind; $('wsLevel').value=O.level; $('wsCount').value=O.count;
+  document.querySelectorAll('#wsPer button').forEach(function(b){ var on=+b.dataset.per===O.per; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); });
+  $('wsDef').checked=O.def; $('wsWork').checked=O.work; $('wsKey').checked=O.key; $('wsName').checked=O.name;
+}
+function open(){ window.__DDshowPage('sheet'); sync(); render(); window.scrollTo(0,0); }
+$('sheetBtn').addEventListener('click',open);
+$('sheetModeBtn').addEventListener('click',open);
+$('wsGenBtn').addEventListener('click',generate);
+$('wsPrintBtn').addEventListener('click',function(){ window.print(); });
+$('wsKind').addEventListener('change',function(e){ O.kind=e.target.value; saveO(); });
+$('wsLevel').addEventListener('change',function(e){ O.level=e.target.value; saveO(); });
+$('wsCount').addEventListener('change',function(e){ var v=Math.max(1,Math.min(12,parseInt(e.target.value,10)||1)); e.target.value=v; O.count=v; saveO(); });
+document.querySelectorAll('#wsPer button').forEach(function(b){ b.addEventListener('click',function(){ O.per=+b.dataset.per; saveO(); sync(); render(); }); });
+[['wsDef','def'],['wsWork','work'],['wsKey','key'],['wsName','name']].forEach(function(x){ $(x[0]).addEventListener('change',function(e){ O[x[1]]=e.target.checked; saveO(); render(); }); });
+var rz=0; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(fitPreview,120); });
+window.__WS__={O:O, get puzzles(){ return PUZ; }};
+})();
+
+</script>
+</body>
+</html>

@@ -48,6 +48,37 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-20, session — being pushed): DOT DETECTIVE.**
+> `games/dot-detective.html`, after two printed Japanese dot-grid puzzles,
+> renamed and rebuilt (nothing copied). Card in the **Puzzles** group; Games
+> 17 -> 18. Self-contained, no Firebase, English only. Two modes on one page:
+> * **FIND THE SHAPE** — marked lattice points hide exactly one set that are the
+>   corners of the named shape (square, rectangle, rhombus, parallelogram, kite,
+>   isosceles right / right-angled / isosceles triangle). **Names are INCLUSIVE,
+>   as the syllabus defines them**: a "rectangle" board has no square on it either,
+>   and the answer is always a PLAIN one (a rectangle that is not a square).
+>   Uniqueness is proved by testing every k-subset of the dots with exact integer
+>   vectors (squared lengths, dot and cross products — no floats).
+> * **TRAPEZIUM IS FEEDBACK-ONLY, NEVER A TARGET**: almost any handful of dots holds
+>   a parallel pair somewhere, so it could never be unique. Triangle targets get
+>   fewer dots than quadrilaterals (`TYPE_DOTS`) for the same reason. The type is
+>   picked FIRST and kept while retrying — re-picking on failure silently made
+>   every board a square or rectangle.
+> * **FIND THE TRIANGLE** — exactly one triple of dots has the given area (kept
+>   DOUBLED as an integer so halves are exact). Sweet/Mild always have a flat side;
+>   Extra Spicy never does, so it needs the box method.
+> * **Wrong answers teach**: a wrong set is named ("those four make a rectangle,
+>   not a square"; "that triangle's area is 4"), and after a check equal sides get
+>   tick marks and right angles get squares. A **box method** button draws the
+>   enclosing rectangle, shades and labels the corner triangles, and works the
+>   area out. All four are Settings toggles, on by default.
+> * **WORKSHEET CREATOR** (🖨 Worksheet): Shape / Triangle / Both, level or Mixed,
+>   1–12 puzzles, **2 / 4 / 6 per page as a size control** (grid 78 / 72 / 48 mm),
+>   definitions, a working box for area puzzles, answer key (dots ringed, shape
+>   shaded; area keys show the box working). Shape types on a sheet are dealt
+>   from a shuffled deck so a sheet is not all squares. Same mm/zoom/print
+>   approach as Total Trail; harness asserts no overflow at 12@6, 8@4, 5@2, 6@6.
+>
 > **NEW (2026-09-20, session — being pushed): TOTAL TRAIL.**
 > `games/total-trail.html` (briefly built as "Equation Trail", which used the
 > order of operations — replaced the same day, teacher decision). After a
