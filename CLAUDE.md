@@ -70,6 +70,10 @@
 >   part into any glowing box (all mirror), then the answers; "Show me" skips a
 >   stuck step. Quiz: 15 questions, first check scores, a wrong answer shows the
 >   right one. Old full-screen button dropped (the layout fills the screen).
+> * **THE WRITTEN WORKING IS OFF BY DEFAULT** (teacher decision 2026-09-21), like
+>   every other optional layer on this site: the plainest board is the one a
+>   teacher gets without asking, and with the side card off the bars take the
+>   whole width. Settings &rsaquo; Written working brings it back.
 > * **THE AMOUNT IN THE QUESTION IS A FULL PALE CHIP, NOT A HIGHLIGHTER STRIPE**
 >   (teacher feedback 2026-09-21): a `linear-gradient(transparent 62%, …)` underline
 >   covers only the bottom of the text and reads as distracting. It is now the same
