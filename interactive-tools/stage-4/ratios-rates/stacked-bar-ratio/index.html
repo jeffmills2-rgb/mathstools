@@ -193,7 +193,11 @@
       padding:16px 22px 14px; text-align:center;
     }
     .qText{ font-size:clamp(1.3rem,2.5vw,2.05rem); font-weight:800; line-height:1.35; letter-spacing:-.015em; color:var(--ink); }
-    .qText .amt{ font-weight:950; white-space:nowrap; color:var(--ink); background:linear-gradient(transparent 62%,rgba(250,204,21,.45) 62%); padding:0 .08em; }
+    .qText .amt{
+      font-weight:950; white-space:nowrap; color:var(--ink);
+      background:#fef9c3; border:1px solid rgba(202,138,4,.35); border-radius:9px;
+      padding:.02em .26em; box-decoration-break:clone; -webkit-box-decoration-break:clone;
+    }
     .qText .nL{ color:var(--blue-dark); }
     .qText .nR{ color:var(--red); }
     .ratio{ font-family:var(--mathFont); font-weight:700; white-space:nowrap; font-size:1.12em; }
@@ -241,7 +245,7 @@
 
     .box{
       border:3px solid; border-radius:10px; display:flex; align-items:center; justify-content:center;
-      font-family:var(--mathFont); font-weight:700; font-size:clamp(1.15rem,2.3vw,1.95rem); line-height:1;
+      font-family:var(--mathFont); font-weight:700; font-size:var(--boxFs,clamp(1.15rem,2.3vw,1.95rem)); line-height:1;
       min-width:0; overflow:hidden; position:relative;
       transition:box-shadow .2s ease, opacity .2s ease, transform .15s ease;
     }
@@ -295,6 +299,13 @@
     .grow{ animation:growIn .38s cubic-bezier(.34,1.3,.5,1) backwards; }
     @keyframes popIn{ 0%{ transform:scale(.4); opacity:0;} 60%{ transform:scale(1.14);} 100%{ transform:scale(1); opacity:1;} }
     @keyframes growIn{ 0%{ transform:scaleX(.2); opacity:0;} 100%{ transform:none; opacity:1;} }
+
+    .box input:focus-visible{ box-shadow:inset 0 0 0 3px rgba(37,99,235,.35); border-radius:6px; }
+    .seg:focus-visible,.typeChip:focus-visible,.stepBtn:focus-visible,.nextBtn:focus-visible,.ghostBtn:focus-visible{ outline:3px solid rgba(37,99,235,.45); outline-offset:2px; }
+    @media (prefers-reduced-motion:reduce){
+      .pop,.grow,.wkRow.pop,.ansStrip.pop,.veilCard,.inWrap.bad{ animation:none !important; }
+      *{ transition-duration:.01ms !important; }
+    }
 
     .modelNote{ margin-top:12px; text-align:center; font-size:.8rem; font-weight:750; color:var(--line-soft); }
 
@@ -416,7 +427,6 @@
       .mmtBrandText{ display:none; }
       .btn{ padding:10px 13px; font-size:14px; }
       .layout{ padding:16px 14px 24px; }
-      .stp .t{ display:none; }
     }
     @media (max-width:960px){
       .layout{ grid-template-columns:minmax(0,1fr); }
@@ -427,6 +437,7 @@
       .mmtBrand{ margin-left:0; } .topActions{ justify-self:center; justify-content:center; }
       .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
       .settingsMenu.open{ min-width:min(350px,calc(100vw - 24px)); }
+      .stp .t{ display:none; }   /* the step names go before the step numbers do */
       .layout{ padding:14px 12px 24px; }
     }
     @media (max-width:640px){
@@ -446,9 +457,20 @@
       .gapBr.known .gLab{ align-self:flex-start; }
       .barCard{ padding:14px 10px 12px; }
       .rowLab .pts{ display:none; }
-      .box{ border-width:2px; border-radius:7px; font-size:clamp(.72rem,3.3vw,1.15rem); }
+      .box{ border-width:2px; border-radius:7px; }
       .tot,.brLab{ font-size:1rem; padding:5px 7px; }
       .seg{ padding:8px 12px; }
+    }
+    /* A 1024x768 projector with a Type 3 bracket row, or Practice with its
+       answer row, is the tightest case: the controls must stay above the fold. */
+    @media (max-height:800px){
+      :root{ --boxH:clamp(42px,7vh,68px); }
+      .barCard{ padding:12px 16px 10px; }
+      .ansStrip{ margin-top:10px; padding:9px 12px; font-size:clamp(1rem,1.5vw,1.2rem); }
+      .qCard{ padding:10px 16px 9px; }
+      .qText{ font-size:clamp(1.2rem,2.1vw,1.7rem); }
+      .gapBr .gLab,.brLab{ font-size:1.05rem; padding:5px 9px; }
+      .model{ row-gap:6px; }
     }
     @media (max-height:840px){
       .qCard{ padding:12px 18px 11px; }
@@ -457,7 +479,14 @@
       .layout{ padding:14px 20px 18px; }
       .ctrlCard{ padding:10px 14px; }
       .barCard{ padding:14px 18px 12px; }
-      .modelNote{ display:none; }
+      .box input:focus-visible{ box-shadow:inset 0 0 0 3px rgba(37,99,235,.35); border-radius:6px; }
+    .seg:focus-visible,.typeChip:focus-visible,.stepBtn:focus-visible,.nextBtn:focus-visible,.ghostBtn:focus-visible{ outline:3px solid rgba(37,99,235,.45); outline-offset:2px; }
+    @media (prefers-reduced-motion:reduce){
+      .pop,.grow,.wkRow.pop,.ansStrip.pop,.veilCard,.inWrap.bad{ animation:none !important; }
+      *{ transition-duration:.01ms !important; }
+    }
+
+    .modelNote{ display:none; }
     }
     @media print{ .mmtTopbar,.ctrlCard,.promptBar,.modeRow{ display:none; } }
   </style>
@@ -516,7 +545,7 @@
             <div class="settingsRule" role="separator"></div>
             <div class="settingsHead">On screen</div>
             <label class="sw"><input type="checkbox" id="givenToggle" checked><span class="track"></span><span>Put the given amount on the model</span></label>
-            <label class="sw"><input type="checkbox" id="workToggle" checked><span class="track"></span><span>Written working</span></label>
+            <label class="sw"><input type="checkbox" id="workToggle"><span class="track"></span><span>Written working</span></label>
             <label class="sw"><input type="checkbox" id="checkToggle" checked><span class="track"></span><span>Check the answer</span></label>
             <p class="settingsNote">Turn the first one off to have the class decide where the amount in the question belongs: on the whole, on one bar, or on the gap between them.</p>
           </nav>
@@ -530,7 +559,7 @@
             <span class="toolLink is-disabled" aria-disabled="true">Student Quiz<small>Not built yet</small></span>
           </nav>
         </div>
-        <button class="btn btn-primary" id="newBtn" type="button">New question</button>
+        <button class="btn btn-primary" id="newBtn" type="button" title="New question (N)">New question</button>
       </div>
     </header>
 
@@ -564,12 +593,12 @@
           <div class="barCard">
             <div id="modelHost"></div>
             <div class="ansStrip" id="ansStrip" hidden></div>
-            <div class="modelNote">Every box is one equal part. The number in a box is what one part is worth.</div>
+            <div class="modelNote" id="modelNote" hidden>Every box is one equal part. The number in a box is what one part is worth.</div>
           </div>
 
           <div class="ctrlCard">
-            <button class="stepBtn" id="backBtn" type="button">&#9664; Back</button>
-            <button class="nextBtn" id="nextBtn" type="button">Draw the model &#9654;</button>
+            <button class="stepBtn" id="backBtn" type="button" title="Back one step (left arrow)">&#9664; Back</button>
+            <button class="nextBtn" id="nextBtn" type="button" title="Next step (Enter or right arrow)">Draw the model &#9654;</button>
             <div class="stepper" id="stepper" aria-hidden="true">
               <span class="stp" data-s="1"><span class="d">1</span><span class="t">Model</span></span><span class="stpLine"></span>
               <span class="stp" data-s="2"><span class="d">2</span><span class="t">One part</span></span><span class="stpLine"></span>
@@ -668,7 +697,7 @@
 
   const S = {
     mode:"demo", type:"type1", maxPart:8, unitMode:"mixed",
-    showGiven:true, showWork:true, showCheck:true,
+    showGiven:true, showWork:false, showCheck:true,
     p:null, stage:0, anim:false, lastKey:"",
     quiz:null, quizTimer:0
   };
@@ -837,9 +866,13 @@
     });
 
     // the given amount, placed on the part of the model it measures
-    if(S.showGiven && p.type === "type1"){
+    // The brace around both bars is the Type 1 total. Types 2 and 3 do NOT get
+    // one at the answer: with ten boxes on a 1024px projector the extra column
+    // squeezes the bars, and the answer line underneath states the total anyway.
+    const braceAt = p.type === "type1" ? (S.showGiven ? 1 : 3) : 99;
+    if(st >= braceAt){
       const br = document.createElement("div");
-      br.className = "brace" + (anim(1) ? " pop" : "");
+      br.className = "brace" + (anim(braceAt) ? " pop" : "");
       br.style.gridColumn = String(n + 3);
       br.innerHTML = `<span class="bk"></span><span class="brLab"><span class="cap">total</span>${fmtS(p.total)}</span>`;
       g.appendChild(br);
@@ -865,7 +898,21 @@
 
     host.innerHTML = "";
     host.appendChild(g);
+    fitBoxText(g);
   }
+
+  /* A box holds at most two digits plus a short unit, so the type is sized from
+     the box's own measured width rather than a guessed breakpoint — 13 parts on
+     a 1024px projector is a real classroom. */
+  function fitBoxText(g){
+    const b = g.querySelector(".box");
+    if(!b) return;
+    const w = b.getBoundingClientRect().width;
+    if(!w) return;
+    const px = Math.max(9, Math.min(31, w * 0.46));
+    g.style.setProperty("--boxFs", px.toFixed(1) + "px");
+  }
+  addEventListener("resize", () => { const g = document.querySelector("#modelHost .model"); if(g) fitBoxText(g); });
 
   /* -------------------------------------------------------- the working */
   function workLines(p){
@@ -1027,6 +1074,7 @@
     $("qText").innerHTML = questionHTML(p);
     $("qAsk").textContent = askText(p);
     renderModel();
+    $("modelNote").hidden = S.stage === 0;
     renderWorking();
     renderAnswer();
     renderControls();
@@ -1315,7 +1363,8 @@
 
   /* -------------------------------------------------------------- start */
   // Test hook: the harness reads state through this; nothing on the page uses it.
-  window.__SBR__ = { S, makeProblem, workLines, answerFields, setMode, newQuestion, next, back };
+  window.__SBR__ = { S, makeProblem, workLines, answerFields, setMode, newQuestion, next, back, render };
+  $("layout").classList.toggle("noSide", !S.showWork);
   newQuestion();
   paintTypeUI();
 })();
