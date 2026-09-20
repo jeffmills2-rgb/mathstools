@@ -1,2141 +1,1323 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stacked Bar Model – Ratio</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stacked Bar Model — Ratio | Mills Maths Tools</title>
+
   <style>
-    :root {
-      --bg:#f5f7fb;
+    :root{
+      --bg:#f8fafc;
       --card:#ffffff;
-      --border:#e5e7eb;
-      --text:#111827;
-      --muted:#6b7280;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
       --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --blue-soft:#eff6ff;
       --red:#dc2626;
-      --purple:#a855f7;
-      --accent:#22c55e;
-      --green:#16a34a;
-      --error:#ef4444;
+      --red-dark:#991b1b;
+      --red-soft:#fef2f2;
+      --green:#22c55e;
+      --green-dark:#15803d;
+      --purple:#7c3aed;
+      --purple-dark:#5b21b6;
       --orange:#f97316;
-      --orange-deep:#ea580c;
-      --orange-soft:#fff7ed;
-      --quiz-pink:#ec4899;
-      --quiz-pink-deep:#db2777;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
     }
-    *{box-sizing:border-box;}
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
     body{
       margin:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg);
-      color:var(--text);
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
     }
-    body.fullscreen-active{
-      overflow:hidden;
-    }
-    .wrap{
-      max-width:1100px;
-      margin:32px auto;
-      padding:0 16px;
-    }
-    .card{
-      position:relative;
-      background:var(--card);
-      border-radius:18px;
-      border:1px solid var(--border);
-      box-shadow:0 10px 30px rgba(15,23,42,0.08);
-      padding:28px 26px 24px;
-    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
 
-    /* FULLSCREEN STATE -------------------------------------------------- */
-    .card.fullscreen{
-      position:fixed;
-      inset:12px;
-      max-width:none;
-      margin:0;
-      z-index:1000;
-      padding:28px 32px 24px;
-    }
-    .card.fullscreen .mode-column,
-    .card.fullscreen .type-column{
-      display:none;
-    }
-    .card.fullscreen .layout{
-      justify-content:center;
-    }
-    .card.fullscreen .main-column{
-      max-width:1200px;
-      margin:0 auto;
-    }
+    .app{ min-height:100dvh; display:flex; flex-direction:column; min-width:0; }
 
-    .layout{
-      display:flex;
-      gap:32px;
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
     }
-    .mode-column{
-      display:flex;
-      flex-direction:column;
-      gap:18px;
+    .mmtBrand{
+      display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px;
+      margin-left:-12px; font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
     }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4); }
+    .mmtBrandLogo{
+      width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08); flex:0 0 auto;
+    }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{
+      font-weight:850; font-size:clamp(1.05rem,1.9vw,1.5rem); letter-spacing:-.04em;
+      text-align:center; color:white; white-space:nowrap;
+    }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
 
-    /* type-column sits to the right of mode-column */
-    .type-column{
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      padding-left:8px;
-      padding-right:8px;
-    }
-    .type-column-inner{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      height:auto;
-      justify-content:flex-start;
-    }
-
-    .main-column{
-      flex:1;
-      min-width:0;
-    }
-
-    h1{
-      margin:0 0 18px;
-      font-size:26px;
-      text-align:left;
-    }
-
-    /* MODE BAR (banner + fullscreen button) ----------------------------- */
-    .mode-bar{
-      position:absolute;
-      top:18px;
-      right:22px;
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-
-    .mode-banner{
-      font-size:18px;
-      padding:6px 18px;
-      border-radius:999px;
-      max-width:260px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      border:1px solid transparent;
-      color:#fff;
-      text-align:center;
-    }
-    .mode-banner.demo{
-      background:linear-gradient(145deg,#2563eb,#1d4ed8);
-    }
-    .mode-banner.practice{
-      background:linear-gradient(145deg,#fb923c,#f97316);
-    }
-    .mode-banner.quiz{
-      background:linear-gradient(145deg,#ec4899,#db2777);
-    }
-
-    /* FULLSCREEN TOGGLE BUTTON ----------------------------------------- */
-    .fullscreen-btn{
-      border:none;
-      border-radius:999px;
-      padding:8px 20px;
-      font-size:14px;
-      font-weight:600;
-      background:var(--accent);
-      color:#ffffff;
-      cursor:pointer;
-      box-shadow:0 8px 20px rgba(34,197,94,0.4);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition:
-        transform 0.12s ease,
-        box-shadow 0.12s ease,
-        background-color 0.12s ease;
-    }
-    .fullscreen-btn:hover{
-      background:#16a34a;
-      transform:translateY(-1px);
-      box-shadow:0 10px 24px rgba(34,197,94,0.55);
-    }
-    .card.fullscreen .fullscreen-btn{
-      /* keep same style in fullscreen */
-    }
-
-    /* Left side big mode buttons --------------------------------------- */
-    .side-mode-btn{
-      width:130px;
-      height:120px;
-      border-radius:40px;
-      border:none;
-      cursor:pointer;
-      font-size:20px;
-      font-weight:700;
-      color:#fff;
-      box-shadow:0 18px 40px rgba(15,23,42,0.20);
-      opacity:0.35;
-      transition:
-        opacity 0.15s ease,
-        transform 0.12s ease,
-        box-shadow 0.12s ease;
-    }
-    .side-mode-demo{
-      background:linear-gradient(145deg,#2563eb,#1d4ed8);
-    }
-    .side-mode-practice{
-      background:linear-gradient(145deg,#fb923c,#f97316);
-    }
-    .side-mode-quiz{
-      background:linear-gradient(145deg,#ec4899,#db2777);
-    }
-    .side-mode-btn.active{
-      opacity:1;
-      transform:translateY(-2px);
-      box-shadow:0 22px 45px rgba(15,23,42,0.28);
-    }
-    .side-mode-btn:hover{
-      opacity:0.8;
-    }
-
-    /* Type selector buttons -------------------------------------------- */
-    .type-selector{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      margin-top:20px;
-    }
-    .type-btn{
-      width:220px;
-      border-radius:18px;
-      border:1px solid #e5e7eb;
-      background:#ffffff;
-      cursor:pointer;
-      padding:8px 14px;
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      justify-content:center;
-      box-shadow:0 4px 10px rgba(15,23,42,0.05);
-      transition:
-        background 0.15s ease,
-        box-shadow 0.15s ease,
-        transform 0.12s ease,
-        border-color 0.15s ease;
-      text-align:left;
-    }
-    .type-main{
-      font-weight:700;
-      font-size:14px;
-      margin-bottom:2px;
-    }
-    .type-sub{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.25;
-    }
-    .type-btn.active{
-      background:#020617;
-      border-color:#020617;
-      color:#f9fafb;
-      box-shadow:0 10px 24px rgba(15,23,42,0.45);
-      transform:translateY(-1px);
-    }
-    .type-btn.active .type-sub{
-      color:#e5e7eb;
-    }
-
-    .question{
-      text-align:center;
-      font-size:40px;
-      margin-bottom:12px;
-      line-height:1.4;
-    }
-    .card.fullscreen .question{
-      font-size:44px;
-    }
-    .question-amount{
-      font-weight:700;
-      white-space:nowrap;
-    }
-    .question-ratio{
-      font-weight:700;
-      white-space:nowrap;
-    }
-    .ratio-left{ color:var(--blue); }
-    .ratio-right{ color:var(--red); }
-
-    .question-tools{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin-bottom:14px;
-      gap:16px;
-      width:100%;
-    }
-    .progress{
-      display:flex;
-      justify-content:center;
-      gap:22px;
-      font-size:12px;
-      color:var(--muted);
-    }
-    .step{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:3px;
-    }
-    .step-circle{
-      width:22px;
-      height:22px;
-      border-radius:999px;
-      border:2px solid #d1d5db;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
-      font-weight:600;
-      background:#ffffff;
-      transition:border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.15s ease;
-    }
-    .step-label{
-      white-space:nowrap;
-    }
-    .step.active .step-circle{
-      border-color:var(--accent);
-      background:#dcfce7;
-      color:#166534;
-      transform:scale(1.05);
-    }
-    .step.completed .step-circle{
-      background:var(--accent);
-      border-color:var(--accent);
-      color:#ffffff;
-    }
-
-    .controls{
-      display:flex;
-      justify-content:center;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-bottom:22px;
-      align-items:center;
-    }
     .btn{
-      border-radius:999px;
-      padding:9px 18px;
-      border:1px solid #d1d5db;
-      background:#ffffff;
-      cursor:pointer;
-      font-size:14px;
-      font-weight:500;
-      color:#111827;
-      box-shadow:0 2px 6px rgba(15,23,42,0.06);
+      appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px;
+      cursor:pointer; transition:.18s ease; user-select:none;
     }
-    .btn.primary{
-      background:var(--accent);
-      border-color:#16a34a;
-      color:#ffffff;
-      box-shadow:0 4px 12px rgba(34,197,94,0.45);
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover,.toolLink:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+    .toolLink.is-disabled{ color:var(--line-soft); cursor:not-allowed; }
+    .toolLink.is-disabled::after{ content:'\2022'; color:var(--line-soft); font-size:.9rem; }
+    .toolLink.is-disabled:hover{ background:transparent; color:var(--line-soft); }
+    .toolLink.is-disabled small{ color:var(--line-soft); }
+
+    .settingsMenu.open{ gap:11px; padding:15px 18px; min-width:350px; max-height:min(78vh,680px); overflow:auto; }
+    .settingsHead{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .settingsNote{ margin:0; font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.4; }
+    .settingsRule{ height:1px; background:var(--border); margin:1px 0; }
+
+    /* The three question types are the main thing a teacher chooses, so they
+       are cards with a sentence each, not a bare select. */
+    .typeList{ display:grid; gap:6px; }
+    .typeOpt{
+      appearance:none; text-align:left; cursor:pointer; background:#fff;
+      border:1.5px solid var(--border); border-radius:12px; padding:9px 12px;
+      display:grid; grid-template-columns:auto 1fr; column-gap:11px; align-items:center; transition:.15s ease;
     }
-    .btn.primary:hover:not([disabled]){
-      background:#16a34a;
+    .typeOpt:hover{ border-color:var(--line-soft); background:#f8fafc; }
+    .typeOpt:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(37,99,235,.18); }
+    .typeOpt .tNum{
+      grid-row:1 / 3; width:32px; height:32px; border-radius:10px; display:grid; place-items:center;
+      background:#eef2f7; color:var(--line); font-weight:1000; font-size:.95rem;
     }
-    .btn[disabled]{
-      opacity:0.45;
-      cursor:not-allowed;
-      box-shadow:none;
+    .typeOpt .tName{ font-weight:900; font-size:.92rem; color:var(--ink); }
+    .typeOpt .tEg{ font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.35; }
+    .typeOpt[aria-checked="true"]{ border-color:var(--blue); background:#eef2ff; box-shadow:0 6px 16px rgba(37,99,235,.14); }
+    .typeOpt[aria-checked="true"] .tNum{ background:var(--blue); color:#fff; }
+
+    .selRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .selRow > span{ font-weight:900; font-size:.92rem; color:var(--ink); white-space:nowrap; }
+    .selRow select{
+      appearance:none; border:1.5px solid var(--border);
+      padding:8px 11px; border-radius:11px; font-weight:850; font-size:.88rem; color:var(--line);
+      background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
+      background-size:11px; padding-right:30px; cursor:pointer; min-width:172px;
+    }
+    .selRow select:hover{ border-color:var(--line-soft); }
+    .selRow select:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+
+    .sw{ display:inline-flex; align-items:center; gap:11px; cursor:pointer; user-select:none; font-weight:850; color:var(--line); font-size:.93rem; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:50px; height:29px; border-radius:999px; background:#cbd5e1; transition:.18s ease; flex:0 0 auto; box-shadow:inset 0 1px 3px rgba(15,23,42,.18); }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(15,23,42,.3); transition:.18s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(21px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.28); }
+
+    /* ---------- layout ---------- */
+    .layout{
+      flex:1; width:min(1420px,100%); margin:0 auto; padding:18px 22px 28px;
+      display:grid; grid-template-columns:minmax(0,1fr) clamp(262px,23vw,330px); gap:clamp(12px,1.6vw,20px);
+      align-items:start; min-width:0;
+    }
+    .layout.noSide{ grid-template-columns:minmax(0,1fr); }
+    .layout.noSide .side{ display:none; }
+    .stage{ display:flex; flex-direction:column; gap:13px; min-width:0; }
+    .side{ display:flex; flex-direction:column; gap:14px; position:sticky; top:16px; }
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      box-shadow:var(--shadow); padding:14px 17px;
     }
 
-    .btn.back-btn{
-      padding:8px 10px;
-      min-width:32px;
-      font-size:14px;
-      font-weight:700;
+    /* ---------- mode row ---------- */
+    .modeRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .segWrap{ display:inline-flex; background:#eef2f7; border:1px solid var(--border); border-radius:14px; padding:4px; gap:4px; }
+    .seg{
+      appearance:none; border:0; background:transparent; color:var(--muted);
+      font-weight:900; font-size:.92rem; padding:9px 18px; border-radius:11px; cursor:pointer; white-space:nowrap;
+      transition:.16s ease;
+    }
+    .seg:hover:not(.on){ color:var(--line); }
+    .seg.on{ background:#fff; color:var(--blue-dark); box-shadow:0 4px 12px rgba(15,23,42,.12); }
+    .seg:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(37,99,235,.3); }
+    .modeRight{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .typeChip{
+      appearance:none; cursor:pointer; border:1.5px solid rgba(37,99,235,.24); background:rgba(37,99,235,.08);
+      color:var(--blue-dark); font-weight:900; font-size:.84rem; padding:7px 13px; border-radius:999px; white-space:nowrap;
+      transition:.15s ease;
+    }
+    .typeChip:hover{ background:rgba(37,99,235,.14); }
+    .typeChip .muted{ color:var(--muted); font-weight:750; }
+    .outcomeTag{
+      font-size:.66rem; letter-spacing:.1em; font-weight:950; text-transform:uppercase;
+      color:var(--purple-dark); background:rgba(124,58,237,.11); border:1px solid rgba(124,58,237,.24);
+      padding:5px 9px; border-radius:999px; white-space:nowrap;
     }
 
-    .model-area{
-      margin-top:6px;
-      min-height:160px;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      position:relative;
+    /* ---------- question card ---------- */
+    .qCard{
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:16px 22px 14px; text-align:center;
     }
-    .card.fullscreen .model-area{
-      min-height:220px;
-    }
-    .model-area::before{
-      content:"";
-      position:absolute;
-      inset:0 24px;
-      border-radius:18px;
-      background-image:
-        radial-gradient(circle at 0 0, rgba(148,163,184,0.18) 0, transparent 55%),
-        radial-gradient(circle at 100% 100%, rgba(148,163,184,0.12) 0, transparent 55%);
-      opacity:0.4;
-      pointer-events:none;
-      z-index:0;
-    }
+    .qText{ font-size:clamp(1.3rem,2.5vw,2.05rem); font-weight:800; line-height:1.35; letter-spacing:-.015em; color:var(--ink); }
+    .qText .amt{ font-weight:950; white-space:nowrap; color:var(--ink); background:linear-gradient(transparent 62%,rgba(250,204,21,.45) 62%); padding:0 .08em; }
+    .qText .nL{ color:var(--blue-dark); }
+    .qText .nR{ color:var(--red); }
+    .ratio{ font-family:var(--mathFont); font-weight:700; white-space:nowrap; font-size:1.12em; }
+    .ratio .rL{ color:var(--blue-dark); }
+    .ratio .rR{ color:var(--red); }
+    .ratio .rC{ color:var(--line); padding:0 .18em; }
+    .qAsk{ margin-top:6px; font-size:clamp(.95rem,1.4vw,1.12rem); font-weight:800; color:var(--muted); }
 
-    .bars{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      width:100%;
-      max-width:1000px;
-      margin:0 auto;
-      padding:12px 16px;
-      background:#ffffff;
-      border-radius:18px;
-      box-shadow:0 4px 14px rgba(15,23,42,0.10);
-      opacity:0;
-      transform:translateY(10px) scale(0.97);
-      position:relative;
-      z-index:1;
+    /* ---------- prompt ---------- */
+    .promptBar{
+      display:flex; align-items:center; gap:12px; padding:11px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line); font-size:1rem; line-height:1.35;
+      min-height:50px;
     }
-    @keyframes barReveal{
-      0% {
-        opacity:0;
-        transform:translateY(12px) scale(0.97);
-        box-shadow:0 18px 40px rgba(15,23,42,0.25);
-      }
-      60% {
-        opacity:1;
-        transform:translateY(0) scale(1.02);
-        box-shadow:0 10px 26px rgba(15,23,42,0.16);
-      }
-      100% {
-        opacity:1;
-        transform:translateY(0) scale(1);
-        box-shadow:0 8px 20px rgba(15,23,42,0.12);
-      }
-    }
-    .bars.show{
-      animation:barReveal 0.35s ease-out forwards;
-    }
+    .promptBar .pIco{ font-size:1.3rem; line-height:1; flex:0 0 auto; }
+    .promptBar.is-done{ background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(37,99,235,.08)); border-color:rgba(21,128,61,.28); color:var(--green-dark); }
+    .promptBar.is-warn{ background:linear-gradient(135deg,rgba(220,38,38,.10),rgba(249,115,22,.07)); border-color:rgba(220,38,38,.26); color:#991b1b; }
 
-    .bar-row{
-      display:flex;
-      height:60px;
-      gap:6px;
-      position:relative;
+    /* ---------- the model ---------- */
+    .barCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow); padding:18px 20px 16px; }
+    .modelEmpty{
+      min-height:calc(var(--boxH) * 2 + 40px); display:grid; place-items:center; text-align:center;
+      color:var(--line-soft); font-weight:800; font-size:.98rem; border:2px dashed var(--border); border-radius:16px;
     }
+    :root{ --boxH:clamp(52px,8.6vh,86px); }
 
-    .segment{
-      flex:1;
-      border:2px solid;
-      border-radius:12px;
-      background:#ffffff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:20px;
-      transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        transform 0.1s ease,
-        opacity 0.2s ease;
+    /* One grid for both bars, so a box in the top bar and a box in the bottom
+       bar are the SAME width by construction — "equal parts" is a property of
+       the layout, not something the drawing has to get right. */
+    .model{
+      display:grid; column-gap:8px; row-gap:8px; align-items:stretch;
+      grid-template-columns:minmax(78px,auto) repeat(var(--n),minmax(0,1fr)) minmax(82px,auto) auto;
+      grid-template-rows:auto var(--boxH) var(--boxH) auto;
     }
+    .rowLab{
+      display:flex; flex-direction:column; justify-content:center; align-items:flex-end; text-align:right;
+      padding-right:4px; line-height:1.15; min-width:0;
+    }
+    .rowLab .who{ font-weight:950; font-size:clamp(.95rem,1.4vw,1.15rem); }
+    .rowLab .pts{ font-size:.76rem; font-weight:800; color:var(--muted); white-space:nowrap; }
+    .rowLab .big{ font-family:var(--mathFont); font-weight:700; font-size:clamp(1.6rem,2.8vw,2.2rem); line-height:1; }
+    .rowLab.L .who,.rowLab.L .big{ color:var(--blue-dark); }
+    .rowLab.R .who,.rowLab.R .big{ color:var(--red); }
 
-    .top-row .segment{
-      border-color:#3b82f6;
-      background:#eff6ff;
-      color:#1d4ed8;
+    .box{
+      border:3px solid; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-family:var(--mathFont); font-weight:700; font-size:clamp(1.15rem,2.3vw,1.95rem); line-height:1;
+      min-width:0; overflow:hidden; position:relative;
+      transition:box-shadow .2s ease, opacity .2s ease, transform .15s ease;
     }
-    .top-row .segment[data-active="true"]{
-      box-shadow:0 3px 8px rgba(37,99,235,0.18);
+    .box.L{ border-color:var(--blue); background:var(--blue-soft); color:var(--blue-dark); }
+    .box.R{ border-color:var(--red); background:var(--red-soft); color:var(--red-dark); }
+    .box.gap{ border-style:dashed; border-color:var(--purple); background:rgba(124,58,237,.07); color:var(--purple-dark); }
+    .box.hot{ box-shadow:0 0 0 4px rgba(250,204,21,.55), 0 6px 16px rgba(15,23,42,.10); }
+    .box.dim{ opacity:.42; }
+    .box.ok{ box-shadow:0 0 0 4px rgba(34,197,94,.55); }
+    .box.bad{ box-shadow:0 0 0 4px rgba(220,38,38,.5); }
+    .box.tap{ transform:translateY(-2px); box-shadow:0 0 0 4px rgba(56,189,248,.65); }
+    .box input{
+      width:100%; height:100%; border:0; background:transparent; text-align:center; outline:none;
+      font:inherit; color:inherit; padding:0 2px; -moz-appearance:textfield;
     }
+    .box input::-webkit-outer-spin-button,.box input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .box input::placeholder{ color:currentColor; opacity:.35; }
 
-    .bottom-row .segment{
-      border-color:#ef4444;
-      background:#fef2f2;
-      color:#b91c1c;
+    .rowTot{ display:flex; align-items:center; justify-content:flex-start; padding-left:6px; min-width:0; }
+    .tot{
+      font-family:var(--mathFont); font-weight:700; font-size:clamp(1.1rem,1.9vw,1.6rem); line-height:1;
+      padding:7px 11px; border-radius:12px; white-space:nowrap; border:2px solid transparent;
     }
-    .bottom-row .segment[data-active="true"]{
-      box-shadow:0 3px 8px rgba(239,68,68,0.18);
-    }
+    .tot.L{ color:var(--blue-dark); background:var(--blue-soft); border-color:rgba(37,99,235,.28); }
+    .tot.R{ color:var(--red-dark); background:var(--red-soft); border-color:rgba(220,38,38,.26); }
+    .tot.unk{ color:var(--line-soft); background:#f8fafc; border:2px dashed var(--border); }
+    .tot.given{ position:relative; box-shadow:0 0 0 3px rgba(250,204,21,.45); }
+    .tot .cap{ display:block; font-family:var(--uiFont); font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; font-weight:950; opacity:.75; margin-bottom:3px; }
 
-    .segment.gap-cell{
-      border-color:var(--purple);
-      background:#f5f3ff;
-      color:#7e22ce;
-    }
-    .segment.gap-cell[data-active-gap="true"]{
-      box-shadow:0 3px 8px rgba(168,85,247,0.22);
-    }
+    /* The given amount sits on the model, beside the part of it that it
+       measures: the whole (Type 1), one bar (Type 2) or the gap (Type 3). */
+    .brace{ grid-row:2 / 4; display:flex; align-items:center; gap:10px; padding-left:2px; }
+    .brace .bk{ width:14px; align-self:stretch; margin:6px 0; border:3px solid var(--line); border-left:none; border-radius:0 12px 12px 0; position:relative; }
+    .brace .bk::after{ content:""; position:absolute; right:-10px; top:50%; width:9px; height:3px; margin-top:-1.5px; background:var(--line); }
+    .brLab{ font-family:var(--mathFont); font-weight:700; font-size:clamp(1.15rem,2vw,1.7rem); line-height:1.05; white-space:nowrap;
+      padding:7px 11px; border-radius:12px; background:#fefce8; border:2px solid rgba(202,138,4,.35); color:var(--ink); }
+    .brLab .cap{ display:block; font-family:var(--uiFont); font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; font-weight:950; color:#854d0e; margin-bottom:3px; }
 
-    .segment.filler{
-      border-color:transparent !important;
-      background:transparent !important;
-      color:transparent !important;
-      box-shadow:none !important;
-    }
+    .gapBr{ display:flex; flex-direction:column; align-items:stretch; gap:4px; }
+    .gapBr .bk{ height:13px; border:3px solid var(--purple); position:relative; }
+    .gapBr.below .bk{ border-top:none; border-radius:0 0 12px 12px; }
+    .gapBr.above .bk{ border-bottom:none; border-radius:12px 12px 0 0; }
+    .gapBr .gLab{ align-self:center; font-family:var(--mathFont); font-weight:700; font-size:clamp(1.05rem,1.8vw,1.5rem); line-height:1; white-space:nowrap;
+      padding:6px 11px; border-radius:11px; background:#faf5ff; border:2px solid rgba(124,58,237,.3); color:var(--purple-dark); }
+    .gapBr.known.L .bk{ border-color:var(--blue); }
+    .gapBr.known.R .bk{ border-color:var(--red); }
+    .gapBr.known .gLab{ background:#fefce8; border-color:rgba(202,138,4,.35); color:var(--ink); }
+    .gapBr .gLab .cap{ font-family:var(--uiFont); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; font-weight:950; margin-left:6px; opacity:.8; }
 
-    .segment.practice-dim{ opacity:0.32; }
-    .segment.practice-target{
-      box-shadow:0 0 0 3px rgba(34,197,94,0.75);
-    }
+    .pop{ animation:popIn .42s cubic-bezier(.34,1.5,.5,1) backwards; }
+    .grow{ animation:growIn .38s cubic-bezier(.34,1.3,.5,1) backwards; }
+    @keyframes popIn{ 0%{ transform:scale(.4); opacity:0;} 60%{ transform:scale(1.14);} 100%{ transform:scale(1); opacity:1;} }
+    @keyframes growIn{ 0%{ transform:scaleX(.2); opacity:0;} 100%{ transform:none; opacity:1;} }
 
-    .segment[data-active="true"]:hover,
-    .segment[data-active-gap="true"]:hover{
-      box-shadow:0 0 0 2px rgba(15,23,42,0.08);
-      transform:translateY(-1px);
-    }
-    .top-row .segment[data-active="true"]:hover{ background:#dbeafe; }
-    .bottom-row .segment[data-active="true"]:hover{ background:#fee2e2; }
-    .segment.gap-cell[data-active-gap="true"]:hover{ background:#ede9fe; }
+    .modelNote{ margin-top:12px; text-align:center; font-size:.8rem; font-weight:750; color:var(--line-soft); }
 
-    .segment.touched{
-      box-shadow:0 0 0 3px rgba(56,189,248,0.8);
-      transform:translateY(-1px);
+    /* ---------- answer strip (inside the bar card) ---------- */
+    .ansStrip{
+      margin-top:14px; padding:12px 14px; border-radius:16px; text-align:center;
+      border:1px solid rgba(21,128,61,.28); background:linear-gradient(140deg,#f0fdf4,#ffffff 70%);
+      font-size:clamp(1.05rem,1.7vw,1.35rem); font-weight:850; color:var(--ink); line-height:1.4;
     }
+    .ansStrip .v{ font-family:var(--mathFont); font-weight:700; white-space:nowrap; font-size:1.12em; }
+    .ansStrip .v.L{ color:var(--blue-dark); } .ansStrip .v.R{ color:var(--red); } .ansStrip .v.T{ color:var(--green-dark); }
+    .ansStrip.is-work{ border-color:rgba(37,99,235,.22); background:linear-gradient(140deg,#eff6ff,#ffffff 70%); }
+    .ansStrip.pop{ animation:popIn .45s cubic-bezier(.34,1.4,.5,1); }
 
-    @keyframes popPart{
-      0%   { transform:scale(0.8); opacity:0; }
-      60%  { transform:scale(1.08); opacity:1; }
-      100% { transform:scale(1);    opacity:1; }
+    .fields{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 22px; margin-top:4px; }
+    .field{ display:inline-flex; align-items:center; gap:8px; font-weight:900; font-size:1rem; }
+    .field .fl{ white-space:nowrap; }
+    .field .fl.L{ color:var(--blue-dark); } .field .fl.R{ color:var(--red); } .field .fl.T{ color:var(--green-dark); }
+    .inWrap{ display:inline-flex; align-items:center; border:2px solid var(--border); border-radius:12px; background:#fff; overflow:hidden; transition:.15s ease; }
+    .inWrap:focus-within{ border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.15); }
+    .inWrap .adorn{ padding:0 4px 0 10px; color:var(--muted); font-weight:900; font-family:var(--mathFont); font-size:1.15rem; }
+    .inWrap .adorn.suf{ padding:0 10px 0 4px; font-family:var(--uiFont); font-size:.9rem; }
+    .inWrap input{
+      width:5.2ch; border:0; outline:none; background:transparent; text-align:center; padding:8px 6px;
+      font-family:var(--mathFont); font-weight:700; font-size:1.35rem; color:var(--ink); -moz-appearance:textfield;
     }
-    .segment.pop{
-      animation:popPart 0.25s ease-out;
-    }
+    .inWrap input::-webkit-outer-spin-button,.inWrap input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .inWrap.ok{ border-color:var(--green); background:#f0fdf4; }
+    .inWrap.bad{ border-color:var(--red); background:#fef2f2; animation:shake .34s; }
+    @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
 
-    .segment.correct{
-      box-shadow:0 0 0 3px rgba(34,197,94,0.9) !important;
-      opacity:1;
+    /* ---------- controls ---------- */
+    .ctrlCard{
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:11px;
     }
-    .segment.incorrect{
-      box-shadow:0 0 0 3px rgba(248,113,113,0.95) !important;
-      opacity:1;
+    .stepBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:12px 18px; border-radius:15px; font-weight:950; font-size:1rem; cursor:pointer; transition:.16s ease;
     }
+    .stepBtn:hover:not(:disabled){ border-color:var(--blue); background:#eef2ff; color:var(--blue-dark); transform:translateY(-1px); }
+    .stepBtn:disabled{ opacity:.38; cursor:not-allowed; transform:none; }
+    .nextBtn{
+      appearance:none; border:none; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      padding:13px 26px; border-radius:16px; font-weight:950; font-size:1.06rem; cursor:pointer;
+      box-shadow:0 10px 24px rgba(37,99,235,.30); transition:.18s ease; white-space:nowrap;
+    }
+    .nextBtn:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 14px 30px rgba(37,99,235,.38); }
+    .nextBtn:disabled{ opacity:.42; cursor:not-allowed; transform:none; box-shadow:none; }
+    .ghostBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--muted);
+      padding:9px 13px; border-radius:12px; font-weight:900; font-size:.85rem; cursor:pointer; transition:.15s ease;
+    }
+    .ghostBtn:hover:not(:disabled){ border-color:var(--line-soft); color:var(--line); }
+    .ghostBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .spacer{ flex:1 1 auto; }
+    .stepper{ display:flex; align-items:center; gap:6px; }
+    .stp{ display:flex; align-items:center; gap:6px; font-size:.8rem; font-weight:900; color:var(--line-soft); }
+    .stp .d{ width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:.72rem;
+      background:#fff; border:2px solid #cbd5e1; color:var(--line-soft); transition:.18s ease; }
+    .stp.on{ color:var(--blue-dark); } .stp.on .d{ border-color:var(--blue); background:#eef2ff; color:var(--blue-dark); transform:scale(1.08); }
+    .stp.fin{ color:var(--green-dark); } .stp.fin .d{ border-color:var(--green-dark); background:var(--green); color:#fff; }
+    .stpLine{ width:18px; height:2px; background:#e2e8f0; border-radius:2px; }
 
-    .answer-area{
-      margin-top:24px;
-      text-align:center;
-      min-height:40px;
-      font-size:20px;
-      transition:box-shadow 0.3s ease, background 0.3s ease;
+    /* ---------- side: the written working ---------- */
+    .wkTitle{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .wkRows{ margin-top:10px; display:grid; gap:7px; }
+    .wkRow{
+      padding:7px 10px; border-radius:11px; background:#f8fafc; border:1px solid var(--border);
+      font-family:var(--mathFont); font-size:1.18rem; font-weight:700; color:var(--line); line-height:1.3;
     }
-    .answer-text{
-      font-size:22px;
-      font-weight:600;
+    .wkRow .lab{ display:block; font-family:var(--uiFont); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:950; color:var(--muted); margin-bottom:2px; }
+    .wkRow .L{ color:var(--blue-dark); } .wkRow .R{ color:var(--red); } .wkRow .P{ color:var(--purple-dark); } .wkRow .G{ color:var(--green-dark); }
+    .wkRow.key{ border-color:rgba(250,204,21,.6); background:#fefce8; }
+    .wkRow.ph{ color:var(--line-soft); border-style:dashed; background:#fff; }
+    .wkRow.pop{ animation:popIn .4s cubic-bezier(.34,1.5,.5,1); }
+    .wkEmpty{ margin-top:9px; font-size:.84rem; font-weight:750; color:var(--line-soft); line-height:1.45; }
+    .checkBlock{
+      margin-top:10px; padding:9px 12px 8px; border-radius:14px;
+      border:1px solid rgba(21,128,61,.28); background:linear-gradient(140deg,#f0fdf4,#ffffff 66%);
     }
-    .answer-left{
-      color:var(--blue);
-      font-weight:700;
-    }
-    .answer-right{
-      color:var(--red);
-      font-weight:700;
-    }
+    .checkHead{ font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--green-dark); margin-bottom:5px; }
+    .checkLine{ font-family:var(--mathFont); font-size:1.18rem; font-weight:700; color:var(--ink); text-align:center; line-height:1.45; }
 
-    .answer-input{
-      width:90px;
-      padding:6px 8px;
-      border-radius:10px;
-      border:2px solid #d1d5db;
-      font-size:18px;
-      text-align:center;
-      margin:0 10px 12px;
+    /* ---------- quiz ---------- */
+    .quizCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow); padding:18px 22px 20px; }
+    .quizTop{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .quizCount{ font-weight:950; color:var(--line); font-size:1rem; }
+    .quizCount .sc{ color:var(--green-dark); margin-left:10px; }
+    .pips{ display:flex; gap:5px; flex-wrap:wrap; }
+    .pip{ width:13px; height:13px; border-radius:50%; background:#e2e8f0; border:2px solid #e2e8f0; }
+    .pip.ok{ background:var(--green); border-color:var(--green-dark); }
+    .pip.bad{ background:#fca5a5; border-color:var(--red); }
+    .pip.cur{ border-color:var(--blue); box-shadow:0 0 0 2px rgba(37,99,235,.25); }
+    .quizQ{ text-align:center; padding:6px 0 2px; }
+    .quizAsk{
+      margin:14px auto 0; text-align:center; font-weight:900; font-size:clamp(1.05rem,1.7vw,1.3rem); color:var(--line);
     }
-    .answer-input.correct{
-      border-color:var(--green);
-      background:#dcfce7;
-    }
-    .answer-input.incorrect{
-      border-color:var(--error);
-      background:#fee2e2;
-    }
+    .quizFields{ margin-top:14px; }
+    .quizFields .field{ font-size:1.1rem; }
+    .quizMsg{ min-height:26px; margin-top:12px; text-align:center; font-weight:900; font-size:1rem; }
+    .quizMsg.ok{ color:var(--green-dark); } .quizMsg.bad{ color:#b91c1c; }
+    .quizBtns{ display:flex; justify-content:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
 
-    @keyframes answerGlow{
-      0%   { box-shadow:0 0 0 0 rgba(250,204,21,0.0); background:transparent; }
-      40%  { box-shadow:0 0 20px 4px rgba(250,204,21,0.6); background:#fef9c3; }
-      100% { box-shadow:0 0 0 0 rgba(250,204,21,0.0); background:transparent; }
+    .veil{ position:fixed; inset:0; z-index:300; display:grid; place-items:center; padding:20px; background:rgba(15,23,42,.55); }
+    .veilCard{
+      background:#fff; border-radius:24px; padding:26px 30px 22px; width:min(440px,100%); text-align:center;
+      box-shadow:0 30px 70px rgba(15,23,42,.45); animation:popIn .4s cubic-bezier(.34,1.3,.5,1);
     }
-    .answer-glow{
-      animation:answerGlow 1.1s ease-out;
-    }
+    .veilTitle{ font-size:1.6rem; font-weight:950; letter-spacing:-.03em; }
+    .veilScore{ margin-top:6px; font-family:var(--mathFont); font-size:2.6rem; font-weight:700; color:var(--blue-dark); }
+    .veilType{ margin-top:2px; font-size:.82rem; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+    .veilMsg{ margin:12px 0 18px; font-weight:750; color:var(--line); line-height:1.45; }
+    .veilBtns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 
-    .footer-note{
-      margin-top:14px;
-      text-align:center;
-      font-size:12px;
-      color:var(--muted);
+    /* ---------- responsive ---------- */
+    @media (max-width:1180px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr) auto; padding:12px 16px; gap:12px; }
+      .mmtBrandText{ display:none; }
+      .btn{ padding:10px 13px; font-size:14px; }
+      .layout{ padding:16px 14px 24px; }
+      .stp .t{ display:none; }
     }
-
-    .part-input{
-      width:80%;
-      border:none;
-      background:transparent;
-      text-align:center;
-      font-size:inherit;
-      font-weight:inherit;
-      color:inherit;
-      outline:none;
+    @media (max-width:960px){
+      .layout{ grid-template-columns:minmax(0,1fr); }
+      .side{ position:static; }
     }
-
-    .quiz-meta{
-      text-align:center;
-      font-size:16px;
-      color:var(--muted);
-      margin-bottom:6px;
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:1fr; justify-items:center; padding:12px 14px; }
+      .mmtBrand{ margin-left:0; } .topActions{ justify-self:center; justify-content:center; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .settingsMenu.open{ min-width:min(350px,calc(100vw - 24px)); }
+      .layout{ padding:14px 12px 24px; }
     }
-    .quiz-prompt{
-      margin-top:8px;
-      font-size:26px;
-      text-align:center;
+    @media (max-width:640px){
+      /* A phone cannot hold ten boxes AND a totals column, so the totals go
+         (the answer strip and the working still carry them) and the Type 1
+         total becomes a bracket under both bars. */
+      :root{ --boxH:46px; }
+      .model{ column-gap:5px; grid-template-columns:minmax(48px,auto) repeat(var(--n),minmax(0,1fr)); }
+      .rowTot{ display:none; }
+      .brace{ grid-row:4 !important; grid-column:2 / -1 !important; flex-direction:column; align-items:stretch; gap:6px; padding:0; }
+      .brace .bk{ width:auto; height:12px; margin:0; border:3px solid var(--line); border-top:none; border-radius:0 0 10px 10px; }
+      .brace .bk::after{ right:auto; left:50%; top:auto; bottom:-9px; width:3px; height:7px; margin:0 0 0 -1.5px; }
+      .brLab{ align-self:center; }
+      .gapBr .gLab{ font-size:1rem; padding:4px 7px; }
+      .gapBr .gLab .cap{ display:none; }
+      .gapBr .gLab{ align-self:flex-end; }   /* the gap is always the right-hand end of the short bar */
+      .gapBr.known .gLab{ align-self:flex-start; }
+      .barCard{ padding:14px 10px 12px; }
+      .rowLab .pts{ display:none; }
+      .box{ border-width:2px; border-radius:7px; font-size:clamp(.72rem,3.3vw,1.15rem); }
+      .tot,.brLab{ font-size:1rem; padding:5px 7px; }
+      .seg{ padding:8px 12px; }
     }
-    .quiz-error{
-      margin-top:10px;
-      font-size:18px;
-      color:var(--error);
+    @media (max-height:840px){
+      .qCard{ padding:12px 18px 11px; }
+      .promptBar{ min-height:44px; padding:8px 14px; font-size:.95rem; }
+      .stage{ gap:11px; }
+      .layout{ padding:14px 20px 18px; }
+      .ctrlCard{ padding:10px 14px; }
+      .barCard{ padding:14px 18px 12px; }
+      .modelNote{ display:none; }
     }
-
-    .quiz-controls{
-      display:none;
-      justify-content:center;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:16px;
-    }
-    .quiz-active .quiz-controls{
-      display:flex;
-    }
-
-    .btn:focus-visible{
-      outline:3px solid #2563eb;
-      outline-offset:2px;
-    }
-    .part-input:focus-visible,
-    .answer-input:focus-visible{
-      outline:2px solid #2563eb;
-      outline-offset:2px;
-    }
-
-    /* Hide various UI in quiz mode ------------------------------------ */
-    .quiz-active .controls,
-    .quiz-active .model-area,
-    .quiz-active .footer-note,
-    .quiz-active .question-tools{
-      display:none;
-    }
-
-    .quiz-overlay{
-      position:fixed;
-      inset:0;
-      background:rgba(15,23,42,0.58);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:999;
-    }
-    .quiz-overlay.show{ display:flex; }
-    .quiz-overlay-card{
-      background:#ffffff;
-      border-radius:24px;
-      padding:26px 32px 24px;
-      max-width:420px;
-      width:90%;
-      text-align:center;
-      box-shadow:0 24px 60px rgba(15,23,42,0.5);
-    }
-    .quiz-overlay-title{
-      font-size:26px;
-      margin-bottom:8px;
-    }
-    .quiz-overlay-score{
-      font-size:22px;
-      margin-bottom:8px;
-    }
-    .quiz-overlay-msg{
-      font-size:18px;
-      color:var(--muted);
-      margin-bottom:18px;
-    }
-
-    /* EXTRA SPACE: move model panel down ONLY in normal mode ---------- */
-    .card:not(.fullscreen) .model-area{
-      margin-top:40px;
-    }
-
-    @media (max-width:1000px){
-      .layout{
-        flex-direction:column;
-      }
-      .mode-column{
-        flex-direction:row;
-        justify-content:flex-start;
-        gap:18px;
-      }
-      .type-column{
-        margin-top:18px;
-      }
-      .type-column-inner{
-        height:auto;
-        gap:10px;
-      }
-      .side-mode-btn{
-        width:110px;
-        height:80px;
-        border-radius:28px;
-        font-size:18px;
-      }
-      .question{
-        font-size:32px;
-      }
-    }
-
-    @media (max-width:600px){
-      h1{font-size:22px;}
-      .question{font-size:28px;}
-      .segment{font-size:18px;}
-      .answer-text{font-size:20px;}
-
-      .mode-bar{
-        position:static;
-        margin:6px auto 4px;
-        justify-content:center;
-      }
-
-      .layout{
-        gap:18px;
-      }
-    }
+    @media print{ .mmtTopbar,.ctrlCard,.promptBar,.modeRow{ display:none; } }
   </style>
 
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" id="cardRoot">
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Stacked Bar Model &mdash; Ratio</div>
+      <div class="topActions">
+        <div class="menuWrap">
+          <button class="btn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false">Settings &#9662;</button>
+          <nav class="dropMenu settingsMenu" id="settingsMenu" aria-label="Settings">
+            <div class="settingsHead">Question type</div>
+            <div class="typeList" id="typeList" role="radiogroup" aria-label="Question type">
+              <button class="typeOpt" type="button" role="radio" data-type="type1" aria-checked="true">
+                <span class="tNum">1</span><span class="tName">Share a total</span>
+                <span class="tEg">Share $140 in the ratio 3 : 4.</span>
+              </button>
+              <button class="typeOpt" type="button" role="radio" data-type="type2" aria-checked="false">
+                <span class="tNum">2</span><span class="tName">One share is known</span>
+                <span class="tEg">&hellip;in the ratio 3 : 4, and Jane pays $60.</span>
+              </button>
+              <button class="typeOpt" type="button" role="radio" data-type="type3" aria-checked="false">
+                <span class="tNum">3</span><span class="tName">The difference is known</span>
+                <span class="tEg">&hellip;in the ratio 3 : 4, and Bob pays $20 more.</span>
+              </button>
+              <button class="typeOpt" type="button" role="radio" data-type="mixed" aria-checked="false">
+                <span class="tNum">&#8645;</span><span class="tName">Mixed</span>
+                <span class="tEg">Types 1, 2 and 3 dealt at random.</span>
+              </button>
+            </div>
+            <p class="settingsNote" id="quizTypeNote" hidden>Changing the type starts a new quiz.</p>
 
-      <div class="mode-bar">
-        <div id="modeBanner" class="mode-banner demo">
-          Demo Mode Activated
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">The numbers</div>
+            <label class="selRow"><span>Ratio numbers</span>
+              <select id="partsSel" aria-label="Largest number in the ratio">
+                <option value="5">Up to 5</option>
+                <option value="8" selected>Up to 8</option>
+                <option value="10">Up to 10</option>
+              </select>
+            </label>
+            <label class="selRow"><span>Contexts</span>
+              <select id="unitSel" aria-label="Contexts">
+                <option value="mixed" selected>Money, mass, length&hellip;</option>
+                <option value="money">Money only</option>
+              </select>
+            </label>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">On screen</div>
+            <label class="sw"><input type="checkbox" id="givenToggle" checked><span class="track"></span><span>Put the given amount on the model</span></label>
+            <label class="sw"><input type="checkbox" id="workToggle" checked><span class="track"></span><span>Written working</span></label>
+            <label class="sw"><input type="checkbox" id="checkToggle" checked><span class="track"></span><span>Check the answer</span></label>
+            <p class="settingsNote">Turn the first one off to have the class decide where the amount in the question belongs: on the whole, on one bar, or on the gap between them.</p>
+          </nav>
         </div>
-        <button id="fullscreenBtn" class="fullscreen-btn" type="button" title="Enter full screen" aria-label="Enter full screen">
-          Full screen
-        </button>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-4/ratios-rates/divide-a-ratio/">Ratio Splitter<small>Divide a quantity in a ratio, parts shown live</small></a>
+            <a class="toolLink" href="/interactive-tools/stage-3/number/ratio-table-division/">Division with a Ratio Table<small>Scaling rows of a ratio table to the target</small></a>
+            <span class="toolLink is-disabled" aria-disabled="true">Worksheet Creator<small>Not built yet</small></span>
+            <span class="toolLink is-disabled" aria-disabled="true">Student Quiz<small>Not built yet</small></span>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="newBtn" type="button">New question</button>
       </div>
+    </header>
 
-      <h1>Stacked Bar Model – Ratio</h1>
+    <main class="layout" id="layout">
+      <section class="stage">
 
-      <div class="layout">
-        <!-- Left column: big mode buttons -->
-        <div class="mode-column">
-          <button id="sideDemoBtn" class="side-mode-btn side-mode-demo active" type="button">Demo</button>
-          <button id="sidePracticeBtn" class="side-mode-btn side-mode-practice" type="button">Practice</button>
-          <button id="sideQuizBtn" class="side-mode-btn side-mode-quiz" type="button">Quiz</button>
+        <div class="modeRow">
+          <div class="segWrap" role="tablist" aria-label="Mode">
+            <button class="seg on" type="button" role="tab" data-mode="demo" aria-selected="true">Demo</button>
+            <button class="seg" type="button" role="tab" data-mode="practice" aria-selected="false">Practice</button>
+            <button class="seg" type="button" role="tab" data-mode="quiz" aria-selected="false">Quiz</button>
+          </div>
+          <div class="modeRight">
+            <button class="typeChip" id="typeChip" type="button" title="Change the question type in Settings">Type 1 &middot; Share a total</button>
+            <span class="outcomeTag">MA4-RAT-C-01</span>
+          </div>
         </div>
 
-        <!-- Type selector column -->
-        <div class="type-column">
-          <div class="type-column-inner">
-            <div class="type-selector">
-              <button class="type-btn active" data-mode="type1">
-                <div class="type-main">Type 1</div>
-                <div class="type-sub">Share a total<br>in a ratio</div>
-              </button>
-              <button class="type-btn" data-mode="type2">
-                <div class="type-main">Type 2</div>
-                <div class="type-sub">One person's share<br>is known</div>
-              </button>
-              <button class="type-btn" data-mode="type3">
-                <div class="type-main">Type 3</div>
-                <div class="type-sub">Difference between<br>two shares</div>
-              </button>
-              <button class="type-btn" data-mode="mixed">
-                <div class="type-main">Mixed</div>
-                <div class="type-sub">Automatically mixes<br>Types 1–3</div>
-              </button>
+        <!-- Demo and Practice -->
+        <div id="teachView" class="stage">
+          <div class="qCard">
+            <div class="qText" id="qText" aria-live="polite"></div>
+            <div class="qAsk" id="qAsk"></div>
+          </div>
+
+          <div class="promptBar" id="promptBar">
+            <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+            <span id="promptText"></span>
+          </div>
+
+          <div class="barCard">
+            <div id="modelHost"></div>
+            <div class="ansStrip" id="ansStrip" hidden></div>
+            <div class="modelNote">Every box is one equal part. The number in a box is what one part is worth.</div>
+          </div>
+
+          <div class="ctrlCard">
+            <button class="stepBtn" id="backBtn" type="button">&#9664; Back</button>
+            <button class="nextBtn" id="nextBtn" type="button">Draw the model &#9654;</button>
+            <div class="stepper" id="stepper" aria-hidden="true">
+              <span class="stp" data-s="1"><span class="d">1</span><span class="t">Model</span></span><span class="stpLine"></span>
+              <span class="stp" data-s="2"><span class="d">2</span><span class="t">One part</span></span><span class="stpLine"></span>
+              <span class="stp" data-s="3"><span class="d">3</span><span class="t">Answer</span></span>
+            </div>
+            <span class="spacer"></span>
+            <button class="ghostBtn" id="showMeBtn" type="button" hidden>Show me</button>
+            <button class="ghostBtn" id="resetBtn" type="button" disabled>Start again</button>
+          </div>
+        </div>
+
+        <!-- Quiz -->
+        <div id="quizView" hidden>
+          <div class="quizCard">
+            <div class="quizTop">
+              <div class="quizCount" id="quizCount"></div>
+              <div class="pips" id="pips" aria-hidden="true"></div>
+            </div>
+            <div class="quizQ"><div class="qText" id="quizQText" aria-live="polite"></div></div>
+            <div class="quizAsk" id="quizAsk"></div>
+            <div class="quizFields fields" id="quizFields"></div>
+            <div class="quizMsg" id="quizMsg" aria-live="polite"></div>
+            <div class="quizBtns">
+              <button class="stepBtn" id="quizPrev" type="button">&#9664; Previous</button>
+              <button class="nextBtn" id="quizCheck" type="button">Check answer</button>
+              <button class="stepBtn" id="quizNext" type="button">Next &#9654;</button>
             </div>
           </div>
         </div>
+      </section>
 
-        <!-- Main column: all content -->
-        <div class="main-column">
-
-          <div id="quizMeta" class="quiz-meta" aria-live="polite" hidden></div>
-
-          <div id="question" class="question" aria-live="polite"></div>
-
-          <!-- Progress row -->
-          <div class="question-tools">
-            <div class="progress">
-              <div class="step" data-step="1">
-                <div class="step-circle">1</div>
-                <div class="step-label">Model</div>
-              </div>
-              <div class="step" data-step="2">
-                <div class="step-circle">2</div>
-                <div class="step-label">Divide</div>
-              </div>
-              <div class="step" data-step="3">
-                <div class="step-circle">3</div>
-                <div class="step-label">Answer</div>
-              </div>
-            </div>
-          </div>
-
-          <div id="quizPrompt" class="quiz-prompt" hidden></div>
-
-          <div class="controls">
-            <button id="backBtn" class="btn back-btn" aria-label="Step back" title="Step back one stage" disabled>&larr;</button>
-            <button id="mainActionBtn" class="btn primary">Show model</button>
-            <button id="newProblemBtn" class="btn">New problem</button>
-            <button id="resetBtn" class="btn">Reset</button>
-          </div>
-
-          <div id="modelArea" class="model-area">
-            <div id="bars" class="bars" hidden></div>
-          </div>
-
-          <div id="answerArea" class="answer-area" aria-live="polite"></div>
-          <div id="quizError" class="quiz-error" aria-live="polite"></div>
-
-          <!-- Quiz-only controls -->
-          <div id="quizControls" class="quiz-controls" hidden>
-            <button id="quizCheckBtn" class="btn primary">Check answer</button>
-            <button id="quizPrevBtn" class="btn">Previous question</button>
-            <button id="quizNextBtn" class="btn">Next question</button>
-          </div>
-
-          <div class="footer-note">
-            Each box is <em>one equal part</em>. The number inside each box is the value of one part.
+      <aside class="side" id="side">
+        <div class="card">
+          <div class="wkTitle">The working</div>
+          <div class="wkRows" id="wkRows"></div>
+          <div class="wkEmpty" id="wkEmpty">Each step is written here as the model is built: how many parts, what they are worth together, then what one part is worth.</div>
+          <div class="checkBlock" id="checkBlock" hidden>
+            <div class="checkHead">Check it</div>
+            <div class="checkLine" id="checkLine"></div>
           </div>
         </div>
-      </div>
-    </div>
+      </aside>
+    </main>
   </div>
 
-  <!-- Quiz result overlay -->
-  <div id="quizOverlay" class="quiz-overlay" role="dialog" aria-modal="true" aria-labelledby="quizOverlayTitle" aria-describedby="quizOverlayMsg">
-    <div class="quiz-overlay-card">
-      <div id="quizOverlayTitle" class="quiz-overlay-title">Well done!</div>
-      <div id="quizOverlayScore" class="quiz-overlay-score"></div>
-      <div id="quizOverlayMsg" class="quiz-overlay-msg"></div>
-      <button id="quizOverlayClose" class="btn primary">Close</button>
+  <div class="veil" id="resultVeil" hidden role="dialog" aria-modal="true" aria-labelledby="veilTitle">
+    <div class="veilCard">
+      <div class="veilTitle" id="veilTitle">Well done!</div>
+      <div class="veilScore" id="veilScore"></div>
+      <div class="veilType" id="veilType"></div>
+      <p class="veilMsg" id="veilMsg"></p>
+      <div class="veilBtns">
+        <button class="nextBtn" id="veilAgain" type="button">New quiz</button>
+        <button class="stepBtn" id="veilDemo" type="button">Back to Demo</button>
+      </div>
     </div>
   </div>
 
 <script>
 (function(){
-  // Sounds --------------------------------------------------------------
-   // Sounds --------------------------------------------------------------
-  // Sound removed: keep function so the rest of the program is unchanged.
-  function playSound(name){
-    // no-op
-  }
+  "use strict";
+  const $ = id => document.getElementById(id);
 
-
-  // Unit formats --------------------------------------------------------
-  const UNIT_FORMATS = {
-    money:      {prefix:'$', suffix:'', label:'amount'},
-    grams:      {prefix:'', suffix:' g', label:'grams'},
-    metres:     {prefix:'', suffix:' m', label:'metres'},
-    centimetres:{prefix:'', suffix:' cm', label:'centimetres'},
-    minutes:    {prefix:'', suffix:' minutes', label:'minutes'},
-    litres:     {prefix:'', suffix:' L', label:'litres'}
+  /* ------------------------------------------------------------- the data */
+  const UNITS = {
+    money:      { pre:"$", suf:"",         inPre:"$", inSuf:"" },
+    grams:      { pre:"",  suf:" g",       inPre:"",  inSuf:"g" },
+    metres:     { pre:"",  suf:" m",       inPre:"",  inSuf:"m" },
+    centimetres:{ pre:"",  suf:" cm",      inPre:"",  inSuf:"cm" },
+    minutes:    { pre:"",  suf:" minutes", inPre:"",  inSuf:"min" },
+    litres:     { pre:"",  suf:" L",       inPre:"",  inSuf:"L" }
   };
-  const TYPE1_UNIT_KEYS = ['money','grams','metres','centimetres','minutes','litres'];
-  let currentUnitKey = 'money';
-
-  function fmt(n){
-    const u = UNIT_FORMATS[currentUnitKey] || UNIT_FORMATS.money;
-    return u.prefix + n.toLocaleString('en-AU') + u.suffix;
-  }
-
-  // State ---------------------------------------------------------------
-  let mode = "type1";
-  let activeType = "type1";
-
-  let amount = 140;
-  let leftParts = 3;
-  let rightParts = 4;
-  let valuePerPart = 20;
-  let leftTotal = 0;
-  let rightTotal = 0;
-
-  let leftName = "Jane";
-  let rightName = "Bob";
-  let contextNoun = "rent";
-  let contextVerb = "pays";
-
-  let knownSide = null;
-  let knownAmount = 0;
-
-  let diffParts = 0;
-  let diffAmount = 0;
-  let biggerSide = null;
-  let smallerSide = null;
-  let isMoreForm = true;
-
-  let mainStage = "showModel";
-  let practiceMode = false;
-
-  // Quiz state
-  let quizMode = false;
-  let quizQuestions = [];
-  let quizIndex = 0;
-  let quizScore = 0;
-  let quizFromMode = "type1";
-
-  const questionEl      = document.getElementById('question');
-  const mainActionBtn   = document.getElementById('mainActionBtn');
-  const newProblemBtn   = document.getElementById('newProblemBtn');
-  const resetBtn        = document.getElementById('resetBtn');
-  const barsEl          = document.getElementById('bars');
-  const answerArea      = document.getElementById('answerArea');
-  const modeBanner      = document.getElementById('modeBanner');
-  const backBtn         = document.getElementById('backBtn');
-  const stepEls         = document.querySelectorAll('.step');
-  const typeButtons     = document.querySelectorAll('.type-btn');
-
-  const quizMetaEl      = document.getElementById('quizMeta');
-  const quizPromptEl    = document.getElementById('quizPrompt');
-  const quizErrorEl     = document.getElementById('quizError');
-  const quizControlsEl  = document.getElementById('quizControls');
-  const quizCheckBtn    = document.getElementById('quizCheckBtn');
-  const quizPrevBtn     = document.getElementById('quizPrevBtn');
-  const quizNextBtn     = document.getElementById('quizNextBtn');
-
-  const quizOverlay     = document.getElementById('quizOverlay');
-  const quizOverlayTitle= document.getElementById('quizOverlayTitle');
-  const quizOverlayScore= document.getElementById('quizOverlayScore');
-  const quizOverlayMsg  = document.getElementById('quizOverlayMsg');
-  const quizOverlayClose= document.getElementById('quizOverlayClose');
-
-  const sideDemoBtn     = document.getElementById('sideDemoBtn');
-  const sidePracticeBtn = document.getElementById('sidePracticeBtn');
-  const sideQuizBtn     = document.getElementById('sideQuizBtn');
-
-  const fullscreenBtn   = document.getElementById('fullscreenBtn');
-  const cardRoot        = document.getElementById('cardRoot');
-  let isFullscreen      = false;
-
-  const namePairs = [
-    ["Jane","Bob"],
-    ["Amira","Liam"],
-    ["Mia","Noah"],
-    ["Zoe","Ethan"],
-    ["Ava","Lucas"],
-    ["Chloe","Max"],
-    ["Sofia","Jack"],
-    ["Isla","Henry"]
+  const TYPE1_UNITS = ["money","grams","metres","centimetres","minutes","litres"];
+  const NAMES = [["Jane","Bob"],["Amira","Liam"],["Mia","Noah"],["Zoe","Ethan"],["Ava","Lucas"],["Chloe","Max"],["Sofia","Jack"],["Isla","Henry"]];
+  const CTX2 = [
+    {noun:"rent",verb:"pays",unit:"money"},{noun:"grocery bill",verb:"pays",unit:"money"},
+    {noun:"phone bill",verb:"pays",unit:"money"},{noun:"travel costs",verb:"pays",unit:"money"},
+    {noun:"pocket money",verb:"gets",unit:"money"},{noun:"prize money",verb:"gets",unit:"money"},
+    {noun:"trail mix",verb:"gets",unit:"grams"},{noun:"flour",verb:"gets",unit:"grams"},
+    {noun:"rope",verb:"gets",unit:"metres"},{noun:"ribbon",verb:"gets",unit:"centimetres"},
+    {noun:"water",verb:"gets",unit:"litres"},{noun:"screen time",verb:"gets",unit:"minutes"}
   ];
-
-  // Contexts now include a unit key so questions vary beyond money.
-  const type2Contexts = [
-    {noun:"rent",             verb:"pays",     unit:"money"},
-    {noun:"grocery bill",     verb:"pays",     unit:"money"},
-    {noun:"phone bill",       verb:"pays",     unit:"money"},
-    {noun:"travel costs",     verb:"pays",     unit:"money"},
-    {noun:"pocket money",     verb:"gets",     unit:"money"},
-    {noun:"charity donation", verb:"donates",  unit:"money"},
-    {noun:"trail mix",        verb:"gets",     unit:"grams"},
-    {noun:"flour",            verb:"gets",     unit:"grams"},
-    {noun:"rope",             verb:"gets",     unit:"metres"},
-    {noun:"ribbon",           verb:"gets",     unit:"centimetres"},
-    {noun:"water",            verb:"gets",     unit:"litres"},
-    {noun:"screen time",      verb:"gets",     unit:"minutes"}
+  const CTX3 = [
+    {noun:"rent",verb:"pays",unit:"money"},{noun:"phone bill",verb:"pays",unit:"money"},
+    {noun:"electricity bill",verb:"pays",unit:"money"},{noun:"holiday costs",verb:"pays",unit:"money"},
+    {noun:"pet costs",verb:"pays",unit:"money"},{noun:"sports fees",verb:"pays",unit:"money"},
+    {noun:"trail mix",verb:"gets",unit:"grams"},{noun:"rope",verb:"gets",unit:"metres"},
+    {noun:"screen time",verb:"gets",unit:"minutes"},{noun:"water",verb:"gets",unit:"litres"}
   ];
+  const TYPES = {
+    type1:{ n:"1", name:"Share a total" },
+    type2:{ n:"2", name:"One share is known" },
+    type3:{ n:"3", name:"The difference is known" },
+    mixed:{ n:"Mixed", name:"Types 1–3" }
+  };
 
-  const type3Contexts = [
-    {noun:"rent",            verb:"pays",  unit:"money"},
-    {noun:"phone bill",      verb:"pays",  unit:"money"},
-    {noun:"electricity bill",verb:"pays",  unit:"money"},
-    {noun:"holiday costs",   verb:"pays",  unit:"money"},
-    {noun:"pet costs",       verb:"pays",  unit:"money"},
-    {noun:"sports fees",     verb:"pays",  unit:"money"},
-    {noun:"trail mix",       verb:"gets",  unit:"grams"},
-    {noun:"rope",            verb:"gets",  unit:"metres"},
-    {noun:"screen time",     verb:"gets",  unit:"minutes"},
-    {noun:"water",           verb:"gets",  unit:"litres"}
-  ];
+  const S = {
+    mode:"demo", type:"type1", maxPart:8, unitMode:"mixed",
+    showGiven:true, showWork:true, showCheck:true,
+    p:null, stage:0, anim:false, lastKey:"",
+    quiz:null, quizTimer:0
+  };
 
-  function randInt(min, max){
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  /* ------------------------------------------------------------- helpers */
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice = arr => arr[randInt(0,arr.length-1)];
+  const gcd = (a,b) => b ? gcd(b, a%b) : a;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  function fmt(n, unit){
+    const u = UNITS[unit || (S.p && S.p.unit) || "money"];
+    return u.pre + Number(n).toLocaleString("en-AU") + u.suf;
   }
-  function choice(arr){
-    return arr[randInt(0, arr.length - 1)];
+  // On the model itself space is tight, so units are written short (min, not minutes).
+  function fmtS(n){
+    const u = UNITS[(S.p && S.p.unit) || "money"];
+    return (u.inPre || "") + Number(n).toLocaleString("en-AU") + (u.inSuf ? " " + u.inSuf : "");
+  }
+  const partsWord = k => k === 1 ? "1 part" : k + " parts";
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  /* --------------------------------------------------------- the problem */
+  /* A problem is a plain object. Everything on screen — the question, the
+     bars, the working, the answer, a quiz item — is read off it, so nothing
+     can disagree with anything else. */
+  function makeProblem(type){
+    const p = { type };
+    if(type === "type1"){
+      p.unit = S.unitMode === "money" ? "money" : choice(TYPE1_UNITS);
+    } else {
+      const pool = (type === "type2" ? CTX2 : CTX3).filter(c => S.unitMode !== "money" || c.unit === "money");
+      const c = choice(pool);
+      [p.leftName, p.rightName] = choice(NAMES);
+      p.noun = c.noun; p.verb = c.verb; p.unit = c.unit;
+    }
+    // Ratios are in simplest form and never 1 : 1 (a picture of nothing to
+    // share); totals stay between 40 and 400 so the arithmetic is mental.
+    for(let tries = 0; tries < 400; tries++){
+      const L = randInt(1,S.maxPart), R = randInt(1,S.maxPart);
+      if(L === R || gcd(L,R) !== 1) continue;
+      const per = randInt(2,20), total = (L+R)*per;
+      if(total < 40 || total > 400) continue;
+      const key = type + L + ":" + R + ":" + per;
+      if(key === S.lastKey) continue;
+      S.lastKey = key;
+      Object.assign(p, { L, R, per, lt:L*per, rt:R*per, total });
+      break;
+    }
+    if(type === "type2"){
+      p.known = Math.random() < .5 ? "L" : "R";
+      p.knownAmt = p.known === "L" ? p.lt : p.rt;
+    }
+    if(type === "type3"){
+      p.big = p.L > p.R ? "L" : "R";
+      p.small = p.big === "L" ? "R" : "L";
+      p.d = Math.abs(p.L - p.R);
+      p.diff = p.d * p.per;
+      p.more = Math.random() < .5;
+    }
+    return p;
+  }
+  const nameOf = (p, s) => s === "L" ? p.leftName : p.rightName;
+  const partsOf = (p, s) => s === "L" ? p.L : p.R;
+  const amtOf = (p, s) => s === "L" ? p.lt : p.rt;
+  const other = s => s === "L" ? "R" : "L";
+  const nm = (p, s) => `<span class="n${s}">${esc(nameOf(p,s))}</span>`;
+
+  function ratioHTML(p){
+    return `<span class="ratio"><span class="rL">${p.L}</span><span class="rC">:</span><span class="rR">${p.R}</span></span>`;
+  }
+  function questionHTML(p){
+    const r = ratioHTML(p);
+    if(p.type === "type1") return `Share <span class="amt">${fmt(p.total,p.unit)}</span> in the ratio ${r}.`;
+    const head = `${nm(p,"L")} and ${nm(p,"R")} share the ${esc(p.noun)} in the ratio ${r}`;
+    if(p.type === "type2") return `${head}, and ${nm(p,p.known)} ${p.verb} <span class="amt">${fmt(p.knownAmt,p.unit)}</span>.`;
+    return p.more
+      ? `${head}, and ${nm(p,p.big)} ${p.verb} <span class="amt">${fmt(p.diff,p.unit)}</span> more than ${nm(p,p.small)}.`
+      : `${head}, and ${nm(p,p.small)} ${p.verb} <span class="amt">${fmt(p.diff,p.unit)}</span> less than ${nm(p,p.big)}.`;
+  }
+  function askText(p){
+    const verb = p.verb === "pays" ? "pay" : "get";
+    if(p.type === "type1") return "How much is each share?";
+    if(p.type === "type2") return `How much does ${nameOf(p,other(p.known))} ${verb}, and what is the total?`;
+    return `How much does each person ${verb}, and what is the total?`;
   }
 
-  function setModeBanner(text, variant){
-    modeBanner.textContent = text;
-    modeBanner.classList.remove('demo','practice','quiz');
-    if(variant) modeBanner.classList.add(variant);
+  /* ---------------------------------------------------------- the model */
+  /* Stages: 0 the question alone · 1 the model, with the given amount on it
+     · 2 one part found · 3 the answer. A box's value, a total, a working line
+     — each is "shown from stage k", and render() draws whatever k <= stage.
+     Back is stage-- and a repaint. Things that arrive AT the current stage
+     pop, but only when the stage was reached going forwards. */
+  function boxShownAt(p, s, isGap){
+    if(p.type === "type1") return 2;
+    if(p.type === "type2") return s === p.known ? 2 : 3;
+    return isGap ? 2 : 3;
+  }
+  function isHot(p, s, isGap){           // the boxes the given amount is spread over
+    if(p.type === "type1") return !isGap;
+    if(p.type === "type2") return s === p.known && !isGap;
+    return isGap;
   }
 
-  function updateProgress(currentStep){
-    stepEls.forEach(step=>{
-      const stepNum = Number(step.dataset.step);
-      step.classList.remove('active','completed');
-      if(stepNum < currentStep){
-        step.classList.add('completed');
-      }else if(stepNum === currentStep){
-        step.classList.add('active');
+  function renderModel(){
+    const host = $("modelHost"), p = S.p, st = S.stage;
+    if(st === 0){
+      host.innerHTML = `<div class="modelEmpty"><span>Press <b>${S.mode === "practice" ? "Draw the model" : "Next"}</b> to draw one bar for each share.</span></div>`;
+      return;
+    }
+    const n = Math.max(p.L, p.R);
+    const g = document.createElement("div");
+    g.className = "model"; g.style.setProperty("--n", n);
+    const anim = k => S.anim && k === st;
+    const practice = S.mode === "practice";
+
+    ["L","R"].forEach((s, ri) => {
+      const row = ri + 2, parts = partsOf(p,s);
+      // row label
+      const lab = document.createElement("div");
+      lab.className = "rowLab " + s;
+      lab.style.gridColumn = "1"; lab.style.gridRow = String(row);
+      lab.innerHTML = p.type === "type1"
+        ? `<span class="big">${parts}</span><span class="pts">${parts === 1 ? "part" : "parts"}</span>`
+        : `<span class="who">${esc(nameOf(p,s))}</span><span class="pts">${partsWord(parts)}</span>`;
+      g.appendChild(lab);
+
+      // boxes: the share's own parts, then (Type 3, shorter bar only) the gap
+      const gapTo = (p.type === "type3" && s === p.small) ? n : parts;
+      for(let i = 0; i < gapTo; i++){
+        const isGap = i >= parts;
+        const b = document.createElement("div");
+        b.className = "box " + (isGap ? "gap" : s);
+        b.style.gridColumn = String(i + 2); b.style.gridRow = String(row);
+        b.dataset.side = s; if(isGap) b.dataset.gap = "1";
+        if(anim(1)) { b.classList.add("grow"); b.style.animationDelay = (ri*120 + i*45) + "ms"; }
+        const shownAt = boxShownAt(p, s, isGap);
+        const hot = isHot(p, s, isGap);
+
+        if(practice && st === 1){
+          if(hot){
+            b.classList.add("hot");
+            const inp = document.createElement("input");
+            inp.type = "number"; inp.inputMode = "numeric"; inp.placeholder = "?";
+            inp.setAttribute("aria-label","What is one part worth?");
+            b.appendChild(inp);
+          } else b.classList.add("dim");
+        } else if(practice ? st >= 2 : st >= shownAt){
+          const v = document.createElement("span");
+          v.textContent = p.per;
+          if(practice ? anim(2) : anim(shownAt)){ v.className = "pop"; v.style.animationDelay = (i*55) + "ms"; }
+          b.appendChild(v);
+          if(!practice && st === 2 && hot) b.classList.add("hot");
+        }
+        g.appendChild(b);
       }
-    });
-  }
 
-  function updateBackButton(){
-    if(practiceMode || quizMode){
-      backBtn.disabled = true;
-    } else {
-      backBtn.disabled = (mainStage === "showModel");
-    }
-  }
-
-  function updateModeButtons(){
-    sideDemoBtn.classList.remove('active');
-    sidePracticeBtn.classList.remove('active');
-    sideQuizBtn.classList.remove('active');
-
-    if(quizMode){
-      sideQuizBtn.classList.add('active');
-    } else if(practiceMode){
-      sidePracticeBtn.classList.add('active');
-    } else {
-      sideDemoBtn.classList.add('active');
-    }
-  }
-
-  function setMainStage(stage){
-    mainStage = stage;
-    if(!practiceMode){
-      if(stage === "showModel"){
-        mainActionBtn.textContent = "Show model";
-        mainActionBtn.disabled = false;
-        mainActionBtn.classList.add("primary");
-        updateProgress(1);
-      } else if(stage === "divide"){
-        mainActionBtn.textContent = "Divide";
-        mainActionBtn.disabled = false;
-        mainActionBtn.classList.add("primary");
-        updateProgress(2);
-      } else if(stage === "showAnswer"){
-        mainActionBtn.textContent = "Show answer";
-        mainActionBtn.disabled = false;
-        mainActionBtn.classList.add("primary");
-        updateProgress(3);
-      } else if(stage === "done"){
-        mainActionBtn.textContent = "Show answer";
-        mainActionBtn.disabled = true;
-        mainActionBtn.classList.remove("primary");
-        updateProgress(3);
-      }
-    } else {
-      if(stage === "showModel"){
-        mainActionBtn.textContent = "Show model";
-        mainActionBtn.disabled = false;
-        mainActionBtn.classList.add("primary");
-        updateProgress(1);
-      } else if(stage === "enterPerPart"){
-        mainActionBtn.textContent = "Enter";
-        mainActionBtn.disabled = false;
-        mainActionBtn.classList.add("primary");
-        updateProgress(2);
-      } else if(stage === "enterTotals"){
-        mainActionBtn.textContent = "Enter answer";
-        mainActionBtn.disabled = false;
-        mainActionBtn.classList.add("primary");
-        updateProgress(3);
-      } else if(stage === "done"){
-        mainActionBtn.textContent = "Enter answer";
-        mainActionBtn.disabled = true;
-        mainActionBtn.classList.remove("primary");
-        updateProgress(3);
-      }
-    }
-    updateBackButton();
-  }
-
-  // Problem generators --------------------------------------------------
-  function generateType1(){
-    currentUnitKey = choice(TYPE1_UNIT_KEYS);
-
-    do{
-      leftParts  = randInt(1,8);
-      rightParts = randInt(1,8);
-      valuePerPart = randInt(2,20);
-      leftTotal  = leftParts  * valuePerPart;
-      rightTotal = rightParts * valuePerPart;
-      amount     = leftTotal + rightTotal;
-    } while(amount < 40 || amount > 400);
-
-    const ratioHTML =
-      `<span class="question-ratio"><span class="ratio-left">${leftParts}</span>` +
-      ` : <span class="ratio-right">${rightParts}</span></span>`;
-
-    questionEl.innerHTML =
-      `Share <span class="question-amount">${fmt(amount)}</span> in the ratio ${ratioHTML}.`;
-  }
-
-  function generateType2(){
-    [leftName, rightName] = choice(namePairs);
-    const ctx = choice(type2Contexts);
-    contextNoun = ctx.noun;
-    contextVerb = ctx.verb;
-    currentUnitKey = ctx.unit || 'money';
-
-    do{
-      leftParts  = randInt(1,8);
-      rightParts = randInt(1,8);
-      valuePerPart = randInt(2,20);
-      leftTotal  = leftParts  * valuePerPart;
-      rightTotal = rightParts * valuePerPart;
-      amount     = leftTotal + rightTotal;
-    } while(amount < 40 || amount > 400);
-
-    knownSide = Math.random() < 0.5 ? "left" : "right";
-    knownAmount = (knownSide === "left") ? leftTotal : rightTotal;
-    const knownName = (knownSide === "left") ? leftName : rightName;
-
-    const ratioHTML =
-      `<span class="question-ratio"><span class="ratio-left">${leftParts}</span>` +
-      ` : <span class="ratio-right">${rightParts}</span></span>`;
-
-    questionEl.innerHTML =
-      `${leftName} and ${rightName} share ${contextNoun} in the ratio ${ratioHTML} ` +
-      `and ${knownName} ${contextVerb} ` +
-      `<span class="question-amount">${fmt(knownAmount)}</span>.`;
-  }
-
-  function generateType3(){
-    [leftName, rightName] = choice(namePairs);
-    const ctx = choice(type3Contexts);
-    contextNoun = ctx.noun;
-    contextVerb = ctx.verb;
-    currentUnitKey = ctx.unit || 'money';
-
-    do{
-      do{
-        leftParts  = randInt(1,8);
-        rightParts = randInt(1,8);
-      }while(leftParts === rightParts);
-
-      valuePerPart = randInt(2,20);
-      leftTotal  = leftParts  * valuePerPart;
-      rightTotal = rightParts * valuePerPart;
-      amount     = leftTotal + rightTotal;
-    } while(amount < 40 || amount > 400);
-
-    diffParts = Math.abs(leftParts - rightParts);
-    diffAmount = diffParts * valuePerPart;
-
-    if(leftTotal > rightTotal){
-      biggerSide = "left";
-      smallerSide = "right";
-    } else {
-      biggerSide = "right";
-      smallerSide = "left";
-    }
-
-    const biggerName  = (biggerSide === "left")  ? leftName  : rightName;
-    const smallerName = (smallerSide === "left") ? leftName  : rightName;
-
-    const ratioHTML =
-      `<span class="question-ratio"><span class="ratio-left">${leftParts}</span>` +
-      ` : <span class="ratio-right">${rightParts}</span></span>`;
-
-    isMoreForm = Math.random() < 0.5;
-
-    let sentence;
-    if(isMoreForm){
-      sentence =
-        `${biggerName} ${contextVerb} <span class="question-amount">${fmt(diffAmount)}</span> more than ${smallerName}`;
-    } else {
-      sentence =
-        `${smallerName} ${contextVerb} <span class="question-amount">${fmt(diffAmount)}</span> less than ${biggerName}`;
-    }
-
-    questionEl.innerHTML =
-      `${leftName} and ${rightName} share ${contextNoun} in the ratio ${ratioHTML} ` +
-      `and ${sentence}.`;
-  }
-
-  function generateProblem(){
-    if(mode === "mixed"){
-      const t = randInt(1,3);
-      activeType = "type" + t;
-    } else {
-      activeType = mode;
-    }
-
-    if(activeType === "type1") generateType1();
-    else if(activeType === "type2") generateType2();
-    else generateType3();
-
-    resetCurrentProblemView();
-  }
-
-  // Rendering / reset ---------------------------------------------------
-  function resetCurrentProblemView(){
-    barsEl.classList.remove('show');
-    barsEl.innerHTML = '';
-    barsEl.hidden = true;
-    answerArea.innerHTML = '';
-    quizErrorEl.textContent = '';
-    setMainStage("showModel");
-  }
-
-  function buildModel(){
-    barsEl.classList.remove('show');
-    barsEl.innerHTML = '';
-
-    const maxParts = Math.max(leftParts, rightParts);
-    const biggerParts  = maxParts;
-
-    const topRow = document.createElement('div');
-    topRow.className = 'bar-row top-row';
-    const leftIsSmaller = (activeType === "type3" && smallerSide === "left");
-
-    for(let i=0;i<maxParts;i++){
-      const seg = document.createElement('div');
-      seg.className = 'segment';
-
-      if(activeType === "type3" && leftIsSmaller){
-        if(i < leftParts){
-          seg.dataset.active = 'true';
-          seg.dataset.owner = 'left';
-          seg.title = `${leftName}'s part`;
-        } else if(i < biggerParts){
-          seg.classList.add('gap-cell');
-          seg.dataset.activeGap = 'true';
-          seg.dataset.owner = 'gap';
-          seg.title = "Difference in parts";
-        } else {
-          seg.classList.add('filler');
-          seg.dataset.owner = 'left-gap';
-        }
-      } else {
-        if(i < leftParts){
-          seg.dataset.active = 'true';
-          seg.dataset.owner = 'left';
-          seg.title = (activeType === "type2" || activeType === "type3")
-            ? `${leftName}'s part`
-            : "1 part of the ratio (left side)";
-        } else {
-          seg.classList.add('filler');
-          seg.dataset.owner = 'left-gap';
-        }
-      }
-      topRow.appendChild(seg);
-    }
-
-    const bottomRow = document.createElement('div');
-    bottomRow.className = 'bar-row bottom-row';
-    const rightIsSmaller = (activeType === "type3" && smallerSide === "right");
-
-    for(let i=0;i<maxParts;i++){
-      const seg = document.createElement('div');
-      seg.className = 'segment';
-
-      if(activeType === "type3" && rightIsSmaller){
-        if(i < rightParts){
-          seg.dataset.active = 'true';
-          seg.dataset.owner = 'right';
-          seg.title = `${rightName}'s part`;
-        } else if(i < biggerParts){
-          seg.classList.add('gap-cell');
-          seg.dataset.activeGap = 'true';
-          seg.dataset.owner = 'gap';
-          seg.title = "Difference in parts";
-        } else {
-          seg.classList.add('filler');
-        }
-      } else {
-        if(i < rightParts){
-          seg.dataset.active = 'true';
-          seg.dataset.owner = 'right';
-          seg.title = (activeType === "type2" || activeType === "type3")
-            ? `${rightName}'s part`
-            : "1 part of the ratio (right side)";
-        } else {
-          seg.classList.add('filler');
-        }
-      }
-      bottomRow.appendChild(seg);
-    }
-
-    barsEl.appendChild(topRow);
-    barsEl.appendChild(bottomRow);
-
-    barsEl.hidden = false;
-    requestAnimationFrame(()=> {
-      barsEl.classList.add('show');
-    });
-  }
-
-  function divideIntoParts(){
-    const perPart = valuePerPart;
-    const segments = Array.from(barsEl.querySelectorAll('.segment'));
-    let activeIndex = 0;
-
-    if(activeType === "type1"){
-      segments.forEach(seg=>{
-        if(seg.dataset.active === 'true' || seg.dataset.activeGap === 'true'){
-          const delay = activeIndex * 60;
-          setTimeout(()=>{
-            seg.textContent = perPart;
-            seg.classList.add('pop');
-            seg.title = `1 part = ${fmt(perPart)}`;
-            seg.addEventListener('animationend', ()=> seg.classList.remove('pop'), {once:true});
-          }, delay);
-          activeIndex++;
-        } else if(!seg.classList.contains('filler')){
-          seg.textContent = '';
-        }
-      });
-    } else if(activeType === "type2"){
-      segments.forEach(seg=>{
-        const owner = seg.dataset.owner;
-        if(seg.dataset.active === 'true' && owner === knownSide){
-          const delay = activeIndex * 60;
-          setTimeout(()=>{
-            seg.textContent = perPart;
-            seg.classList.add('pop');
-            seg.title = `1 part = ${fmt(perPart)}`;
-            seg.addEventListener('animationend', ()=> seg.classList.remove('pop'), {once:true});
-          }, delay);
-          activeIndex++;
-        } else if(!seg.classList.contains('filler')){
-          seg.textContent = '';
-        }
-      });
-    } else if(activeType === "type3"){
-      segments.forEach(seg=>{
-        if(seg.dataset.activeGap === 'true'){
-          const delay = activeIndex * 60;
-          setTimeout(()=>{
-            seg.textContent = perPart;
-            seg.classList.add('pop');
-            seg.title = `Difference part = ${fmt(perPart)}`;
-            seg.addEventListener('animationend', ()=> seg.classList.remove('pop'), {once:true});
-          }, delay);
-          activeIndex++;
-        } else if(!seg.classList.contains('filler')){
-          seg.textContent = '';
-        }
-      });
-    }
-
-    if(navigator.vibrate){
-      navigator.vibrate(40);
-    }
-  }
-
-  function showAnswerDemo(){
-    const perPart = valuePerPart;
-    const segments = Array.from(barsEl.querySelectorAll('.segment'));
-
-    if(activeType === "type2"){
-      const unknownSide = (knownSide === "left") ? "right" : "left";
-      segments.forEach(seg=>{
-        if(seg.dataset.active === 'true' && seg.dataset.owner === unknownSide){
-          if(!seg.textContent){
-            seg.textContent = perPart;
-            seg.classList.add('pop');
-            seg.title = `1 part = ${fmt(perPart)}`;
-            seg.addEventListener('animationend', ()=> seg.classList.remove('pop'), {once:true});
-          }
-        }
-      });
-    } else if(activeType === "type3"){
-      segments.forEach(seg=>{
-        if(seg.dataset.active === 'true'){
-          if(!seg.textContent){
-            seg.textContent = perPart;
-            seg.classList.add('pop');
-            seg.title = `1 part = ${fmt(perPart)}`;
-            seg.addEventListener('animationend', ()=> seg.classList.remove('pop'), {once:true});
-          }
-        }
-      });
-    }
-
-    let html;
-    if(activeType === "type1"){
-      html =
-        `<div class="answer-text">Answer is ` +
-        `<span class="answer-left">${fmt(leftTotal)}</span>` +
-        ` : ` +
-        `<span class="answer-right">${fmt(rightTotal)}</span>` +
-        `</div>`;
-    } else if(activeType === "type2"){
-      const unknownSide = (knownSide === "left") ? "right" : "left";
-      const unknownName = (unknownSide === "left") ? leftName : rightName;
-      const unknownAmount = (unknownSide === "left") ? leftTotal : rightTotal;
-      const total = leftTotal + rightTotal;
-
-      html =
-        `<div class="answer-text">${unknownName} ${contextVerb} ` +
-        `<span class="answer-left">${fmt(unknownAmount)}</span>` +
-        ` and the total is <span class="answer-right">${fmt(total)}</span>.</div>`;
-    } else {
-      const total = leftTotal + rightTotal;
-      html =
-        `<div class="answer-text">${leftName} ${contextVerb} ` +
-        `<span class="answer-left">${fmt(leftTotal)}</span>, ` +
-        `${rightName} ${contextVerb} ` +
-        `<span class="answer-right">${fmt(rightTotal)}</span>` +
-        ` and the total is ${fmt(total)}.</div>`;
-    }
-
-    answerArea.innerHTML = html;
-
-    answerArea.classList.remove('answer-glow');
-    void answerArea.offsetWidth;
-    answerArea.classList.add('answer-glow');
-    setTimeout(()=> answerArea.classList.remove('answer-glow'), 1200);
-  }
-
-  // Practice helpers ----------------------------------------------------
-  function makeInputInSegment(seg){
-    seg.textContent = "";
-    const input = document.createElement('input');
-    input.type = "number";
-    input.inputMode = "numeric";
-    input.className = "part-input";
-    seg.appendChild(input);
-    return input;
-  }
-
-  function getPerPartTargets(){
-    const segments = Array.from(barsEl.querySelectorAll('.segment'));
-    if(activeType === "type1"){
-      return segments.filter(seg => seg.dataset.active === 'true' || seg.dataset.activeGap === 'true');
-    }
-    if(activeType === "type2"){
-      return segments.filter(seg => seg.dataset.active === 'true' && seg.dataset.owner === knownSide);
-    }
-    return segments.filter(seg => seg.dataset.activeGap === 'true');
-  }
-
-  function clearSegmentMarks(){
-    barsEl.querySelectorAll('.segment').forEach(seg=>{
-      seg.classList.remove('practice-dim','practice-target','correct','incorrect','touched');
-    });
-  }
-
-  function onPerPartInputChange(e){
-    const value = e.target.value;
-
-    const inputs = barsEl.querySelectorAll('.part-input');
-    inputs.forEach(inp => {
-      if(inp !== e.target){
-        inp.value = value;
-      }
+      // right-hand total for this bar
+      const tc = document.createElement("div");
+      tc.className = "rowTot"; tc.style.gridColumn = String(n + 2); tc.style.gridRow = String(row);
+      let tot = "";
+      if(st >= 3) tot = `<span class="tot ${s}${anim(3) ? " pop" : ""}">${fmtS(amtOf(p,s))}</span>`;
+      else if(p.type === "type2" && s === p.known) tot = "";   // its bracket carries it
+      else if(p.type !== "type1") tot = `<span class="tot unk">?</span>`;
+      tc.innerHTML = tot;
+      g.appendChild(tc);
     });
 
-    const dimSegs = barsEl.querySelectorAll('.segment.practice-dim');
-    dimSegs.forEach(seg => {
-      seg.textContent = value ? value : "";
-    });
+    // the given amount, placed on the part of the model it measures
+    if(S.showGiven && p.type === "type1"){
+      const br = document.createElement("div");
+      br.className = "brace" + (anim(1) ? " pop" : "");
+      br.style.gridColumn = String(n + 3);
+      br.innerHTML = `<span class="bk"></span><span class="brLab"><span class="cap">total</span>${fmtS(p.total)}</span>`;
+      g.appendChild(br);
+    }
+    // Type 2: a bracket over the known bar. Type 3: a bracket over the gap.
+    // Top bar's bracket goes above it, bottom bar's below, so it never sits
+    // between the two bars.
+    if(S.showGiven && (p.type === "type2" || p.type === "type3")){
+      const t2 = p.type === "type2";
+      const side = t2 ? p.known : p.small;
+      const from = t2 ? 0 : partsOf(p, p.small), to = t2 ? partsOf(p, p.known) : n;
+      const above = side === "L";
+      const br = document.createElement("div");
+      br.className = "gapBr " + (above ? "above" : "below") + (t2 ? " known " + side : "") + (anim(1) ? " pop" : "");
+      br.style.gridColumn = (from + 2) + " / " + (to + 2);
+      br.style.gridRow = above ? "1" : "4";
+      const lab = t2
+        ? `<span class="gLab">${fmtS(p.knownAmt)}<span class="cap">given</span></span>`
+        : `<span class="gLab">${fmtS(p.diff)}<span class="cap">difference</span></span>`;
+      br.innerHTML = above ? lab + `<span class="bk"></span>` : `<span class="bk"></span>` + lab;
+      g.appendChild(br);
+    }
+
+    host.innerHTML = "";
+    host.appendChild(g);
   }
 
-  function setupPracticePerPartInputs(){
-    const targets = getPerPartTargets();
-    const targetSet = new Set(targets);
-    const allSegs = Array.from(barsEl.querySelectorAll('.segment'));
-
-    allSegs.forEach(seg=>{
-      seg.classList.remove('practice-dim','practice-target','correct','incorrect');
-      seg.textContent = "";
-
-      if(targetSet.has(seg)){
-        seg.classList.add('practice-target');
-        const input = makeInputInSegment(seg);
-        input.addEventListener('input', onPerPartInputChange);
-      } else if((seg.dataset.active === 'true' || seg.dataset.activeGap === 'true') && !seg.classList.contains('filler')){
-        seg.classList.add('practice-dim');
-        seg.textContent = "";
-      }
-    });
-
-    answerArea.innerHTML =
-      `<div class="answer-text" style="font-size:18px;">
-        Practice: enter the value of any highlighted box, then press <strong>Enter</strong>.
-      </div>`;
-  }
-
-  function checkPracticePerPart(){
-    const perPart = valuePerPart;
-    const targets = getPerPartTargets();
-    if(targets.length === 0) return;
-
-    let allCorrect = true;
-    targets.forEach(seg=>{
-      const input = seg.querySelector('input');
-      const v = Number(input.value);
-      if(v === perPart){
-        seg.classList.add('correct');
-        seg.classList.remove('incorrect');
-      } else {
-        seg.classList.add('incorrect');
-        seg.classList.remove('correct');
-        allCorrect = false;
-      }
-    });
-
-    if(allCorrect){
-      playSound('correct');
-
-      const segments = Array.from(barsEl.querySelectorAll('.segment'));
-      segments.forEach(seg=>{
-        const input = seg.querySelector('input');
-        if(input){
-          seg.removeChild(input);
-        }
-        if(seg.dataset.active === 'true' || seg.dataset.activeGap === 'true'){
-          seg.textContent = perPart;
-        } else if(!seg.classList.contains('filler')){
-          seg.textContent = '';
-        }
-        seg.classList.remove('practice-dim','practice-target','correct','incorrect');
-      });
-
-      answerArea.innerHTML =
-        `<div class="answer-text" style="font-size:18px;">
-           Great! Now complete the answer boxes below, then press <strong>Enter answer</strong>.
-         </div>`;
-      setMainStage("enterTotals");
-      setupPracticeTotalsInputs();
+  /* -------------------------------------------------------- the working */
+  function workLines(p){
+    const u = x => fmt(x);
+    const lines = [];
+    if(p.type === "type1"){
+      lines.push({ at:1, html:`<span class="L">${p.L}</span> + <span class="R">${p.R}</span> = ${p.L+p.R} parts` });
+      lines.push({ at:1, html:`${p.L+p.R} parts = ${u(p.total)}`, key:true });
+      lines.push({ at:2, html:`1 part = ${u(p.total)} ÷ ${p.L+p.R} = <span class="G">${u(p.per)}</span>`, ph:"1 part = ?" });
+      lines.push({ at:3, lab:"first share",  html:`<span class="L">${p.L}</span> × ${u(p.per)} = <span class="L">${u(p.lt)}</span>` });
+      lines.push({ at:3, lab:"second share", html:`<span class="R">${p.R}</span> × ${u(p.per)} = <span class="R">${u(p.rt)}</span>` });
+    } else if(p.type === "type2"){
+      const k = p.known, o = other(k);
+      lines.push({ at:1, lab:nameOf(p,k), html:`<span class="${k}">${partsWord(partsOf(p,k))}</span> = ${u(p.knownAmt)}`, key:true });
+      if(partsOf(p,k) > 1) lines.push({ at:2, html:`1 part = ${u(p.knownAmt)} ÷ ${partsOf(p,k)} = <span class="G">${u(p.per)}</span>`, ph:"1 part = ?" });
+      lines.push({ at:3, lab:nameOf(p,o), html:`<span class="${o}">${partsOf(p,o)}</span> × ${u(p.per)} = <span class="${o}">${u(amtOf(p,o))}</span>` });
+      lines.push({ at:3, lab:"total", html:`${u(p.lt)} + ${u(p.rt)} = <span class="G">${u(p.total)}</span>` });
     } else {
-      playSound('error');
-      answerArea.innerHTML =
-        `<div class="answer-text" style="font-size:18px; color:var(--error);">
-           Check your part values and try again.
-         </div>`;
+      const b = p.big, s = p.small;
+      lines.push({ at:1, lab:"difference", html:`<span class="${b}">${partsOf(p,b)}</span> − <span class="${s}">${partsOf(p,s)}</span> = <span class="P">${partsWord(p.d)}</span>` });
+      lines.push({ at:1, html:`<span class="P">${partsWord(p.d)}</span> = ${u(p.diff)}`, key:true });
+      if(p.d > 1) lines.push({ at:2, html:`1 part = ${u(p.diff)} ÷ ${p.d} = <span class="G">${u(p.per)}</span>`, ph:"1 part = ?" });
+      lines.push({ at:3, lab:p.leftName,  html:`<span class="L">${p.L}</span> × ${u(p.per)} = <span class="L">${u(p.lt)}</span>` });
+      lines.push({ at:3, lab:p.rightName, html:`<span class="R">${p.R}</span> × ${u(p.per)} = <span class="R">${u(p.rt)}</span>` });
+      lines.push({ at:3, lab:"total", html:`${u(p.lt)} + ${u(p.rt)} = <span class="G">${u(p.total)}</span>` });
     }
+    return lines;
+  }
+  function checkHTML(p){
+    const u = x => fmt(x);
+    if(p.type === "type1") return `${u(p.lt)} + ${u(p.rt)} = ${u(p.total)} ✓`;
+    if(p.type === "type2") return `${p.L+p.R} × ${u(p.per)} = ${u(p.total)} ✓`;
+    return `${u(amtOf(p,p.big))} − ${u(amtOf(p,p.small))} = ${u(p.diff)} ✓`;
+  }
+  function renderWorking(){
+    const p = S.p, st = S.stage, rows = $("wkRows");
+    rows.innerHTML = "";
+    let any = false;
+    workLines(p).forEach(l => {
+      let html = null, cls = "wkRow";
+      if(l.at <= st) html = l.html;
+      else if(l.ph && l.at === st + 1 && st >= 1) { html = l.ph; cls += " ph"; }
+      if(html == null) return;
+      any = true;
+      if(l.key && S.showGiven) cls += " key";
+      if(S.anim && l.at === st) cls += " pop";
+      const d = document.createElement("div");
+      d.className = cls;
+      d.innerHTML = (l.lab ? `<span class="lab">${esc(l.lab)}</span>` : "") + html;
+      rows.appendChild(d);
+    });
+    $("wkEmpty").hidden = any;
+    $("checkBlock").hidden = !(S.showCheck && st >= 3);
+    if(st >= 3) $("checkLine").innerHTML = checkHTML(p);
   }
 
-  function setupPracticeTotalsInputs(){
-    let html = "";
-
-    if(activeType === "type1"){
-      html =
-        `<div style="font-size:18px;">
-          Enter the two amounts in the ratio
-          <span class="ratio-left">${leftParts}</span> :
-          <span class="ratio-right">${rightParts}</span>.<br/><br/>
-          Left: <input id="ansLeft" class="answer-input" type="number" />
-          Right: <input id="ansRight" class="answer-input" type="number" />
-        </div>`;
-    } else if(activeType === "type2"){
-      const unknownSide = (knownSide === "left") ? "right" : "left";
-      const unknownName = (unknownSide === "left") ? leftName : rightName;
-      html =
-        `<div style="font-size:18px;">
-          Enter <strong>${unknownName}</strong>'s share and the total amount.<br/><br/>
-          ${unknownName}: <input id="ansUnknown" class="answer-input" type="number" />
-          Total: <input id="ansTotal" class="answer-input" type="number" />
-        </div>`;
-    } else {
-      html =
-        `<div style="font-size:18px;">
-          Enter how much each person ${contextVerb} and the total amount.<br/><br/>
-          ${leftName}: <input id="ansLeft" class="answer-input" type="number" /><br/><br/>
-          ${rightName}: <input id="ansRight" class="answer-input" type="number" /><br/><br/>
-          Total: <input id="ansTotal" class="answer-input" type="number" />
-        </div>`;
+  /* ------------------------------------------------------------ answer */
+  function answerSentence(p){
+    const v = (x, c) => `<span class="v ${c}">${fmt(x)}</span>`;
+    if(p.type === "type1") return `The two shares are ${v(p.lt,"L")} and ${v(p.rt,"R")}.`;
+    if(p.type === "type2"){
+      const o = other(p.known);
+      return `${esc(nameOf(p,o))} ${p.verb} ${v(amtOf(p,o),o)}, and the total is ${v(p.total,"T")}.`;
     }
-    answerArea.innerHTML = html;
+    return `${esc(p.leftName)} ${p.verb} ${v(p.lt,"L")}, ${esc(p.rightName)} ${p.verb} ${v(p.rt,"R")}, and the total is ${v(p.total,"T")}.`;
+  }
+  /* The answer fields a problem asks for. Shared by Practice and the Quiz. */
+  function answerFields(p){
+    if(p.type === "type1") return [
+      { id:"a", lab:`${p.L} parts`.replace(/^1 parts/,"1 part"), cls:"L", val:p.lt },
+      { id:"b", lab:`${p.R} parts`.replace(/^1 parts/,"1 part"), cls:"R", val:p.rt }
+    ];
+    if(p.type === "type2"){
+      const o = other(p.known);
+      return [ { id:"a", lab:nameOf(p,o), cls:o, val:amtOf(p,o) }, { id:"t", lab:"Total", cls:"T", val:p.total } ];
+    }
+    return [
+      { id:"a", lab:p.leftName, cls:"L", val:p.lt },
+      { id:"b", lab:p.rightName, cls:"R", val:p.rt },
+      { id:"t", lab:"Total", cls:"T", val:p.total }
+    ];
+  }
+  function fieldHTML(f, unit, prefix){
+    const U = UNITS[unit];
+    return `<label class="field"><span class="fl ${f.cls}">${esc(f.lab)}</span>` +
+      `<span class="inWrap" data-f="${f.id}">` +
+      (U.inPre ? `<span class="adorn">${U.inPre}</span>` : "") +
+      `<input id="${prefix}${f.id}" type="number" inputmode="numeric" autocomplete="off">` +
+      (U.inSuf ? `<span class="adorn suf">${U.inSuf}</span>` : "") +
+      `</span></label>`;
+  }
+  function renderAnswer(){
+    const p = S.p, st = S.stage, el = $("ansStrip");
+    el.className = "ansStrip";
+    if(S.mode === "practice" && st === 2){
+      el.hidden = false; el.classList.add("is-work");
+      el.innerHTML = `<div class="fields">` + answerFields(p).map(f => fieldHTML(f, p.unit, "pa_")).join("") + `</div>`;
+      return;
+    }
+    if(st >= 3){
+      el.hidden = false;
+      if(S.anim) el.classList.add("pop");
+      el.innerHTML = answerSentence(p);
+      return;
+    }
+    el.hidden = true; el.innerHTML = "";
   }
 
-  function fillAllPartsForVisual(){
-    const perPart = valuePerPart;
-    barsEl.querySelectorAll('.segment').forEach(seg=>{
-      if(seg.dataset.active === 'true' || seg.dataset.activeGap === 'true'){
-        seg.textContent = perPart;
-      }
+  /* ------------------------------------------------------------ prompts */
+  function promptFor(){
+    const p = S.p, st = S.stage, pr = S.mode === "practice";
+    const k = p.type === "type2" ? p.known : null;
+    if(st === 0) return pr ? "Read the question, then draw the model." : "Read the question. What is being shared, and what do we already know?";
+    if(st === 1){
+      if(pr) return "What is one part worth? Type it into a glowing box.";
+      if(p.type === "type1") return `${p.L} parts and ${p.R} parts make ${p.L+p.R} equal parts, and all of them together are ${fmt(p.total)}.`;
+      if(p.type === "type2") return `${nameOf(p,k)}'s ${partsWord(partsOf(p,k))} ${partsOf(p,k) === 1 ? "is" : "are"} ${fmt(p.knownAmt)}. Every box is the same size.`;
+      return `${nameOf(p,p.big)} has ${p.d} more ${p.d === 1 ? "box" : "boxes"} than ${nameOf(p,p.small)} — ${p.d === 1 ? "that box is" : "those boxes are"} the ${fmt(p.diff)} difference.`;
+    }
+    if(st === 2){
+      if(pr) return "Every box is " + fmt(p.per) + ". Now work out the answer and type it in below.";
+      if(p.type === "type1") return `${fmt(p.total)} shared between ${p.L+p.R} boxes is ${fmt(p.per)} in each.`;
+      if(p.type === "type2") return partsOf(p,k) === 1 ? `One box is ${fmt(p.per)}, so every box is ${fmt(p.per)}.` : `${fmt(p.knownAmt)} ÷ ${partsOf(p,k)} = ${fmt(p.per)} in each box — and every box is the same.`;
+      return p.d === 1 ? `The difference is one box, so one box is ${fmt(p.per)}.` : `${fmt(p.diff)} ÷ ${p.d} = ${fmt(p.per)} in each box — and every box is the same.`;
+    }
+    return pr ? "Correct — every part checks out." : `Every box is ${fmt(p.per)}. Count the boxes in each bar.`;
+  }
+
+  /* ---------------------------------------------------------- controls */
+  const NEXT_LABEL = {
+    demo:     ["Draw the model", "Find one part", "Show the answer", "Done"],
+    practice: ["Draw the model", "Check one part", "Check answer", "Done"]
+  };
+  function renderControls(){
+    const st = S.stage, pr = S.mode === "practice";
+    const nb = $("nextBtn");
+    nb.innerHTML = NEXT_LABEL[S.mode][st] + (st < 3 ? " &#9654;" : "");
+    nb.disabled = st >= 3;
+    $("backBtn").disabled = pr || st === 0;
+    $("backBtn").hidden = pr;
+    $("resetBtn").disabled = st === 0;
+    $("showMeBtn").hidden = !(pr && (st === 1 || st === 2));
+    document.querySelectorAll(".stp").forEach(e => {
+      const k = +e.dataset.s;
+      e.classList.toggle("fin", k < st || (k === 3 && st === 3));
+      e.classList.toggle("on", k === st && st < 3);
     });
   }
+  function setPrompt(text, kind){
+    const bar = $("promptBar");
+    bar.classList.toggle("is-done", kind === "done");
+    bar.classList.toggle("is-warn", kind === "warn");
+    $("promptIco").innerHTML = kind === "done" ? "&#9989;" : kind === "warn" ? "&#9888;&#65039;" : "&#128173;";
+    $("promptText").textContent = text;
+  }
 
-  function checkPracticeTotals(){
-    const total = leftTotal + rightTotal;
-    let ok = true;
+  function render(){
+    const p = S.p;
+    $("qText").innerHTML = questionHTML(p);
+    $("qAsk").textContent = askText(p);
+    renderModel();
+    renderWorking();
+    renderAnswer();
+    renderControls();
+    setPrompt(promptFor(), S.stage >= 3 ? "done" : null);
+    S.anim = false;
+  }
 
-    function mark(input, correctVal){
-      const v = Number(input.value);
-      if(v === correctVal){
-        input.classList.add('correct');
-        input.classList.remove('incorrect');
-      } else {
-        input.classList.add('incorrect');
-        input.classList.remove('correct');
-        ok = false;
-      }
+  /* ---------------------------------------------------------- stepping */
+  function next(){
+    if(S.stage >= 3) return;
+    if(S.mode === "practice"){
+      if(S.stage === 1) return checkOnePart();
+      if(S.stage === 2) return checkAnswers();
     }
+    S.stage++; S.anim = true; render();
+    if(S.mode === "practice" && S.stage === 1) focusFirst("#modelHost input");
+  }
+  function back(){
+    if(S.mode !== "demo" || S.stage === 0) return;
+    S.stage--; render();
+  }
+  function restart(){ S.stage = 0; render(); }
+  function focusFirst(sel){ const el = document.querySelector(sel); if(el) el.focus(); }
 
-    if(activeType === "type1"){
-      const leftInput = document.getElementById('ansLeft');
-      const rightInput = document.getElementById('ansRight');
-      if(!leftInput || !rightInput) return;
-      mark(leftInput, leftTotal);
-      mark(rightInput, rightTotal);
-    } else if(activeType === "type2"){
-      const unknownSide = (knownSide === "left") ? "right" : "left";
-      const unknownAmount = (unknownSide === "left") ? leftTotal : rightTotal;
-      const unknownInput = document.getElementById('ansUnknown');
-      const totalInput   = document.getElementById('ansTotal');
-      if(!unknownInput || !totalInput) return;
-      mark(unknownInput, unknownAmount);
-      mark(totalInput, total);
-    } else {
-      const leftInput  = document.getElementById('ansLeft');
-      const rightInput = document.getElementById('ansRight');
-      const totalInput = document.getElementById('ansTotal');
-      if(!leftInput || !rightInput || !totalInput) return;
-      mark(leftInput, leftTotal);
-      mark(rightInput, rightTotal);
-      mark(totalInput, total);
-    }
-
+  function checkOnePart(){
+    const inputs = [...$("modelHost").querySelectorAll("input")];
+    const raw = inputs.map(i => i.value).find(v => v !== "") || "";
+    if(raw === ""){ setPrompt("Type what one part is worth into a glowing box first.", "warn"); focusFirst("#modelHost input"); return; }
+    const ok = Number(raw) === S.p.per;
+    inputs.forEach(i => { i.value = raw; const b = i.parentElement; b.classList.toggle("ok", ok); b.classList.toggle("bad", !ok); });
     if(ok){
-      playSound('correct');
-      fillAllPartsForVisual();
-
-      let html;
-      if(activeType === "type1"){
-        html =
-          `<div class="answer-text">Answer is ` +
-          `<span class="answer-left">${fmt(leftTotal)}</span>` +
-          ` : ` +
-          `<span class="answer-right">${fmt(rightTotal)}</span>` +
-          ` &mdash; well done!</div>`;
-      } else if(activeType === "type2"){
-        const unknownSide = (knownSide === "left") ? "right" : "left";
-        const unknownName = (unknownSide === "left") ? leftName : rightName;
-        const unknownAmount = (unknownSide === "left") ? leftTotal : rightTotal;
-        const totalVal = leftTotal + rightTotal;
-        html =
-          `<div class="answer-text">${unknownName} ${contextVerb} ` +
-          `<span class="answer-left">${fmt(unknownAmount)}</span> and the total is ` +
-          `<span class="answer-right">${fmt(totalVal)}</span>. Nice work!</div>`;
-      } else {
-        const tot = leftTotal + rightTotal;
-        html =
-          `<div class="answer-text">${leftName} ${contextVerb} ` +
-          `<span class="answer-left">${fmt(leftTotal)}</span>, ` +
-          `${rightName} ${contextVerb} ` +
-          `<span class="answer-right">${fmt(rightTotal)}</span>` +
-          ` and the total is ${fmt(tot)}. Well done!</div>`;
-      }
-      answerArea.innerHTML = html;
-
-      answerArea.classList.remove('answer-glow');
-      void answerArea.offsetWidth;
-      answerArea.classList.add('answer-glow');
-      setTimeout(()=> answerArea.classList.remove('answer-glow'), 1200);
-
-      setMainStage("done");
+      setTimeout(() => { S.stage = 2; S.anim = true; render(); focusFirst("#ansStrip input"); }, 420);
     } else {
-      playSound('error');
-      const msg =
-        `<div class="answer-text" style="font-size:18px; color:var(--error);">
-           Some of the answers are not quite right yet. Check your totals and try again.
-         </div>`;
-      answerArea.innerHTML = msg;
+      setPrompt(`Not ${raw}. ${hintOnePart()}`, "warn");
     }
   }
+  function hintOnePart(){
+    const p = S.p;
+    if(p.type === "type1") return `How many boxes are there altogether, and what are they worth together?`;
+    if(p.type === "type2") return `Which bar is the ${fmt(p.knownAmt)}? How many boxes are in it?`;
+    return `The ${fmt(p.diff)} is the dashed ${p.d === 1 ? "box" : "boxes"} only.`;
+  }
+  function checkAnswers(){
+    const p = S.p;
+    let allOk = true, anyEmpty = false;
+    answerFields(p).forEach(f => {
+      const inp = $("pa_" + f.id), wrap = inp.parentElement;
+      if(inp.value === "") anyEmpty = true;
+      const ok = Number(inp.value) === f.val && inp.value !== "";
+      wrap.classList.remove("bad"); void wrap.offsetWidth;
+      wrap.classList.toggle("ok", ok); wrap.classList.toggle("bad", !ok);
+      if(!ok) allOk = false;
+    });
+    if(allOk){ setTimeout(() => { S.stage = 3; S.anim = true; render(); }, 420); return; }
+    setPrompt(anyEmpty ? "Fill in every box, then check." : "Not all of those are right yet. Count the boxes in each bar and multiply by one part.", "warn");
+  }
+  // Practice escape hatch: fills in the step the student is stuck on.
+  function showMe(){
+    if(S.mode !== "practice") return;
+    if(S.stage === 1){ S.stage = 2; S.anim = true; render(); focusFirst("#ansStrip input"); }
+    else if(S.stage === 2){ S.stage = 3; S.anim = true; render(); }
+  }
 
-  // Quiz helpers --------------------------------------------------------
-  function getQuizTypeFromMode(){
-    if(quizFromMode === "mixed"){
-      const t = randInt(1,3);
-      return "type" + t;
+  /* -------------------------------------------------------------- quiz */
+  const QUIZ_N = 15;
+  function pickType(){ return S.type === "mixed" ? "type" + randInt(1,3) : S.type; }
+
+  function makeQuizItem(){
+    const p = makeProblem(pickType());
+    let fields, ask;
+    const verb = p.verb === "pays" ? "pay" : "get";
+    if(p.type === "type1"){ fields = answerFields(p); ask = "How much is each share?"; }
+    else {
+      const opts = p.type === "type2" ? ["total", other(p.known)] : ["total","L","R"];
+      const pick = choice(opts);
+      if(pick === "total"){ fields = [{ id:"t", lab:"Total", cls:"T", val:p.total }]; ask = "What is the total?"; }
+      else { fields = [{ id:"a", lab:nameOf(p,pick), cls:pick, val:amtOf(p,pick) }]; ask = `How much does ${nameOf(p,pick)} ${verb}?`; }
     }
-    return quizFromMode;
+    return { p, fields, ask, user:{}, done:false, ok:false };
   }
-
-  function buildQuizQuestionObject(){
-    const qType = getQuizTypeFromMode();
-    activeType = qType;
-
-    if(qType === "type1") generateType1();
-    else if(qType === "type2") generateType2();
-    else generateType3();
-
-    const total = leftTotal + rightTotal;
-
-    let layout, prompt, correct = {}, which;
-
-    if(qType === "type1"){
-      layout = "two";
-      prompt = "Enter the two amounts in the ratio.";
-      correct.left = leftTotal;
-      correct.right = rightTotal;
-    } else if(qType === "type2"){
-      which = Math.random() < 0.5 ? "total" : "other";
-      if(which === "total"){
-        layout = "total";
-        prompt = "What is the total amount?";
-        correct.total = total;
-      } else {
-        const unknownSide = (knownSide === "left") ? "right" : "left";
-        const unknownName = (unknownSide === "left") ? leftName : rightName;
-        layout = "one";
-        prompt = `How much does ${unknownName} ${contextVerb}?`;
-        correct.one = (unknownSide === "left") ? leftTotal : rightTotal;
-      }
-    } else {
-      const pick = ["total","left","right"][randInt(0,2)];
-      if(pick === "total"){
-        layout = "total";
-        prompt = "What is the total amount?";
-        correct.total = total;
-      } else if(pick === "left"){
-        layout = "one";
-        prompt = `How much does ${leftName} ${contextVerb}?`;
-        correct.one = leftTotal;
-      } else {
-        layout = "one";
-        prompt = `How much does ${rightName} ${contextVerb}?`;
-        correct.one = rightTotal;
-      }
+  function startQuiz(){
+    clearTimeout(S.quizTimer);
+    S.quiz = { items:[makeQuizItem()], i:0 };
+    renderQuiz();
+  }
+  function quizScore(){ return S.quiz.items.filter(q => q.ok).length; }
+  function renderQuiz(){
+    const Q = S.quiz, q = Q.items[Q.i];
+    $("quizCount").innerHTML = `Question ${Q.i+1} of ${QUIZ_N}<span class="sc">Score ${quizScore()}</span>`;
+    let pips = "";
+    for(let k = 0; k < QUIZ_N; k++){
+      const it = Q.items[k];
+      pips += `<span class="pip${it && it.done ? (it.ok ? " ok" : " bad") : ""}${k === Q.i ? " cur" : ""}"></span>`;
     }
-
-    return {
-      type:qType,
-      questionHTML: questionEl.innerHTML,
-      prompt,
-      layout,
-      correct,
-      user:{},
-      scored:false,
-      wasCorrect:false
-    };
-  }
-
-  function renderQuizQuestion(){
-    const q = quizQuestions[quizIndex];
-
-    questionEl.innerHTML = q.questionHTML;
-    quizPromptEl.textContent = q.prompt;
-    quizPromptEl.hidden = false;
-
-    quizErrorEl.textContent = "";
-    quizMetaEl.hidden = false;
-    quizMetaEl.textContent = `Question ${quizIndex+1} of 15 · Score: ${quizScore}`;
-
-    let html = "";
-
-    if(q.layout === "two"){
-      html =
-        `<div style="font-size:22px; margin-top:18px;">
-           <label style="margin-right:12px;">
-             Left:
-             <input id="quizLeft" class="answer-input" type="number" />
-           </label>
-           <label style="margin-left:12px;">
-             Right:
-             <input id="quizRight" class="answer-input" type="number" />
-           </label>
-         </div>`;
-    } else if(q.layout === "total"){
-      html =
-        `<div style="font-size:22px; margin-top:18px;">
-           Total amount:
-           <input id="quizTotal" class="answer-input" type="number" />
-         </div>`;
-    } else {
-      html =
-        `<div style="font-size:22px; margin-top:18px;">
-           Amount:
-           <input id="quizOne" class="answer-input" type="number" />
-         </div>`;
+    $("pips").innerHTML = pips;
+    $("quizQText").innerHTML = questionHTML(q.p);
+    $("quizAsk").textContent = q.ask;
+    $("quizFields").innerHTML = q.fields.map(f => fieldHTML(f, q.p.unit, "qa_")).join("");
+    q.fields.forEach(f => {
+      const inp = $("qa_" + f.id);
+      if(q.user[f.id] != null) inp.value = q.user[f.id];
+      if(q.done){ inp.parentElement.classList.toggle("ok", Number(inp.value) === f.val && inp.value !== ""); inp.parentElement.classList.toggle("bad", !(Number(inp.value) === f.val && inp.value !== "")); }
+    });
+    const msg = $("quizMsg");
+    msg.className = "quizMsg"; msg.textContent = "";
+    if(q.done){
+      msg.classList.add(q.ok ? "ok" : "bad");
+      msg.textContent = q.ok ? "Correct!" : "Not this time — " + q.fields.map(f => `${f.lab}: ${fmt(f.val,q.p.unit)}`).join(", ") + ".";
     }
-
-    answerArea.innerHTML = html;
-
-    quizPrevBtn.disabled = (quizIndex === 0);
-    quizNextBtn.disabled = (quizIndex >= quizQuestions.length - 1);
-
-    const firstInput = answerArea.querySelector('input');
-    if(firstInput) firstInput.focus();
+    $("quizCheck").disabled = q.done;
+    $("quizPrev").disabled = Q.i === 0;
+    $("quizNext").innerHTML = Q.i >= QUIZ_N - 1 ? "Results &#9654;" : (q.done ? "Next &#9654;" : "Skip &#9654;");
+    if(!q.done) focusFirst("#quizFields input");
   }
-
-  function enterQuizMode(){
-    quizMode = true;
-    document.body.classList.add('quiz-active');
-    setModeBanner("Quiz Mode Activated","quiz");
-    quizFromMode = mode;
-    quizQuestions = [];
-    quizIndex = 0;
-    quizScore = 0;
-
-    quizControlsEl.hidden = false;
-    quizPromptEl.hidden = false;
-
-    resetCurrentProblemView();
-
-    const firstQ = buildQuizQuestionObject();
-    quizQuestions.push(firstQ);
-    renderQuizQuestion();
-    updateModeButtons();
-  }
-
-  function exitQuizMode(){
-    quizMode = false;
-    document.body.classList.remove('quiz-active');
-    if(practiceMode){
-      setModeBanner("Practice Mode Activated","practice");
-    }else{
-      setModeBanner("Demo Mode Activated","demo");
+  /* Only the first check scores. A wrong answer shows the right one — a quiz
+     that lets you retry until it goes green would make the score meaningless. */
+  function checkQuiz(){
+    const Q = S.quiz, q = Q.items[Q.i];
+    if(q.done) return;
+    const vals = q.fields.map(f => $("qa_" + f.id).value);
+    if(vals.some(v => v === "")){
+      const msg = $("quizMsg"); msg.className = "quizMsg bad"; msg.textContent = "Fill in every box first.";
+      return;
     }
-    quizMetaEl.hidden = true;
-    quizPromptEl.hidden = true;
-    quizControlsEl.hidden = true;
-    quizErrorEl.textContent = "";
-    answerArea.innerHTML = "";
-    generateProblem();
-    updateModeButtons();
+    q.fields.forEach((f, k) => { q.user[f.id] = vals[k]; });
+    q.ok = q.fields.every((f, k) => Number(vals[k]) === f.val);
+    q.done = true;
+    renderQuiz();
+    if(q.ok){
+      clearTimeout(S.quizTimer);
+      S.quizTimer = setTimeout(quizNext, 900);
+    } else $("quizNext").focus();
   }
-
-  function scoreMessage(score){
-    if (score === 15) {
-      return "Perfect score – you really understand these problems.";
-    } else if (score >= 11) {
-      return "Awesome work – just a couple to polish.";
-    } else if (score >= 6) {
-      return "Nice effort – keep practising these questions.";
-    } else {
-      return "This set was challenging. Let’s practise a bit more and try again.";
+  function quizNext(){
+    clearTimeout(S.quizTimer);
+    const Q = S.quiz, q = Q.items[Q.i];
+    if(Q.i >= QUIZ_N - 1){
+      if(!q.done){ q.done = true; q.ok = false; }
+      return showResults();
     }
+    if(!q.done){ q.done = true; q.ok = false; }   // skipping settles it
+    Q.i++;
+    if(Q.i >= Q.items.length) Q.items.push(makeQuizItem());
+    renderQuiz();
+  }
+  function quizPrev(){ clearTimeout(S.quizTimer); if(S.quiz.i > 0){ S.quiz.i--; renderQuiz(); } }
+  function showResults(){
+    const sc = quizScore();
+    $("veilTitle").textContent = sc === QUIZ_N ? "Outstanding!" : sc >= 11 ? "Great job!" : sc >= 6 ? "Nice effort!" : "Keep going!";
+    $("veilScore").textContent = sc + " / " + QUIZ_N;
+    $("veilType").textContent = typeLabel();
+    $("veilMsg").textContent = sc === QUIZ_N ? "A perfect score — you really understand these problems."
+      : sc >= 11 ? "Awesome work — just a couple to polish."
+      : sc >= 6 ? "Keep practising these — try Practice mode with the model to help."
+      : "These were tricky. Go back to Practice and build the model first, then try again.";
+    $("resultVeil").hidden = false;
+    $("veilAgain").focus();
   }
 
-function showQuizOverlay(){
-  // If we're in full screen, exit so the certificate is visible on the page
-  if (isFullscreen) {
-    exitFullscreen();
+  /* ------------------------------------------------------------- modes */
+  function typeLabel(){
+    const t = TYPES[S.type];
+    return S.type === "mixed" ? "Mixed · Types 1–3" : "Type " + t.n + " · " + t.name;
+  }
+  function paintTypeUI(){
+    document.querySelectorAll(".typeOpt").forEach(b => b.setAttribute("aria-checked", String(b.dataset.type === S.type)));
+    let chip = typeLabel();
+    if(S.type === "mixed" && S.mode !== "quiz" && S.p) chip += ` <span class="muted">(this one: Type ${S.p.type.slice(4)})</span>`;
+    $("typeChip").innerHTML = chip;
+    $("quizTypeNote").hidden = S.mode !== "quiz";
+  }
+  function setMode(m){
+    clearTimeout(S.quizTimer);
+    S.mode = m;
+    document.querySelectorAll(".seg").forEach(b => {
+      const on = b.dataset.mode === m;
+      b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on));
+    });
+    const quiz = m === "quiz";
+    $("teachView").hidden = quiz;
+    $("quizView").hidden = !quiz;
+    $("layout").classList.toggle("noSide", quiz || !S.showWork);
+    $("newBtn").textContent = quiz ? "New quiz" : "New question";
+    if(quiz) startQuiz(); else newQuestion();
+    paintTypeUI();
+  }
+  function newQuestion(){
+    if(S.mode === "quiz"){ startQuiz(); return; }
+    S.p = makeProblem(pickType());
+    S.stage = 0; S.anim = false;
+    render(); paintTypeUI();
   }
 
-  let title;
-  if (quizScore === 15) {
-    title = "Outstanding!";
-  } else if (quizScore >= 11) {
-    title = "Great job!";
-  } else if (quizScore >= 6) {
-    title = "Nice effort!";
-  } else {
-    title = "Keep going!";
+  /* ------------------------------------------------------------- menus */
+  function closeMenus(){
+    ["settingsMenu","toolsMenu"].forEach(id => {
+      $(id).classList.remove("open");
+      $(id === "settingsMenu" ? "settingsBtn" : "toolsBtn").setAttribute("aria-expanded","false");
+    });
   }
-
-  quizOverlayTitle.textContent = title;
-  quizOverlayScore.textContent = `Score: ${quizScore} / 15 (${mode.toUpperCase()})`;
-  quizOverlayMsg.textContent = scoreMessage(quizScore);
-  quizOverlay.classList.add('show');
-}
-
-
-  function closeQuizOverlay(){
-    quizOverlay.classList.remove('show');
+  function openMenu(btnId, menuId){
+    closeMenus();
+    $(menuId).classList.add("open"); $(btnId).setAttribute("aria-expanded","true");
   }
-
-  function checkQuizAnswer(){
-    const q = quizQuestions[quizIndex];
-    if(!q) return;
-
-    let correct = true;
-
-    function val(id){
-      const el = document.getElementById(id);
-      return el ? Number(el.value) : NaN;
-    }
-
-    if(q.layout === "two"){
-      const leftVal  = val('quizLeft');
-      const rightVal = val('quizRight');
-      q.user.left = leftVal;
-      q.user.right = rightVal;
-
-      const leftInput  = document.getElementById('quizLeft');
-      const rightInput = document.getElementById('quizRight');
-
-      if(leftVal === q.correct.left){
-        leftInput.classList.add('correct');
-        leftInput.classList.remove('incorrect');
-      } else {
-        leftInput.classList.add('incorrect');
-        leftInput.classList.remove('correct');
-        correct = false;
-      }
-      if(rightVal === q.correct.right){
-        rightInput.classList.add('correct');
-        rightInput.classList.remove('incorrect');
-      } else {
-        rightInput.classList.add('incorrect');
-        rightInput.classList.remove('correct');
-        correct = false;
-      }
-    } else if(q.layout === "total"){
-      const totalVal = val('quizTotal');
-      q.user.total = totalVal;
-      const totalInput = document.getElementById('quizTotal');
-
-      if(totalVal === q.correct.total){
-        totalInput.classList.add('correct');
-        totalInput.classList.remove('incorrect');
-      } else {
-        totalInput.classList.add('incorrect');
-        totalInput.classList.remove('correct');
-        correct = false;
-      }
-    } else {
-      const oneVal = val('quizOne');
-      q.user.one = oneVal;
-      const oneInput = document.getElementById('quizOne');
-
-      if(oneVal === q.correct.one){
-        oneInput.classList.add('correct');
-        oneInput.classList.remove('incorrect');
-      } else {
-        oneInput.classList.add('incorrect');
-        oneInput.classList.remove('correct');
-        correct = false;
-      }
-    }
-
-    quizErrorEl.textContent = "";
-    if(correct){
-      playSound('correct');
-      if(!q.scored){
-        q.scored = true;
-        q.wasCorrect = true;
-        quizScore++;
-      }
-    } else {
-      playSound('error');
-      if(!q.scored){
-        q.scored = true;
-        q.wasCorrect = false;
-      }
-      quizErrorEl.textContent = "Not quite right yet – check your working and try again.";
-    }
-
-    quizMetaEl.textContent = `Question ${quizIndex+1} of 15 · Score: ${quizScore}`;
-
-    setTimeout(()=>{
-      if(quizIndex === 14){
-        showQuizOverlay();
-      } else {
-        gotoQuizNext();
-      }
-    }, 900);
+  function toggleMenu(btnId, menuId){
+    $(btnId).addEventListener("click", e => {
+      e.stopPropagation();
+      const wasOpen = $(menuId).classList.contains("open");
+      closeMenus();
+      if(!wasOpen) openMenu(btnId, menuId);
+    });
   }
+  toggleMenu("settingsBtn","settingsMenu");
+  toggleMenu("toolsBtn","toolsMenu");
+  document.addEventListener("click", closeMenus);
+  $("settingsMenu").addEventListener("click", e => e.stopPropagation());
+  $("toolsMenu").addEventListener("click", e => e.stopPropagation());
+  $("typeChip").addEventListener("click", e => { e.stopPropagation(); openMenu("settingsBtn","settingsMenu"); });
 
-  function gotoQuizNext(){
-    if(quizIndex >= 14) return;
+  /* ---------------------------------------------------------- settings */
+  document.querySelectorAll(".typeOpt").forEach(b => b.addEventListener("click", () => {
+    if(S.type === b.dataset.type) return;
+    S.type = b.dataset.type;
+    newQuestion(); paintTypeUI();
+  }));
+  $("partsSel").addEventListener("change", e => { S.maxPart = +e.target.value; newQuestion(); });
+  $("unitSel").addEventListener("change", e => { S.unitMode = e.target.value; newQuestion(); });
+  $("givenToggle").addEventListener("change", e => { S.showGiven = e.target.checked; if(S.mode !== "quiz") render(); });
+  $("workToggle").addEventListener("change", e => {
+    S.showWork = e.target.checked;
+    $("layout").classList.toggle("noSide", S.mode === "quiz" || !S.showWork);
+  });
+  $("checkToggle").addEventListener("change", e => { S.showCheck = e.target.checked; if(S.mode !== "quiz") renderWorking(); });
 
-    quizIndex++;
-    if(quizIndex < quizQuestions.length){
-      renderQuizQuestion();
-    } else {
-      const q = buildQuizQuestionObject();
-      quizQuestions.push(q);
-      renderQuizQuestion();
-    }
-  }
+  /* ------------------------------------------------------------- wires */
+  document.querySelectorAll(".seg").forEach(b => b.addEventListener("click", () => { if(S.mode !== b.dataset.mode) setMode(b.dataset.mode); }));
+  $("nextBtn").addEventListener("click", next);
+  $("backBtn").addEventListener("click", back);
+  $("resetBtn").addEventListener("click", restart);
+  $("showMeBtn").addEventListener("click", showMe);
+  $("newBtn").addEventListener("click", newQuestion);
+  $("quizCheck").addEventListener("click", checkQuiz);
+  $("quizNext").addEventListener("click", quizNext);
+  $("quizPrev").addEventListener("click", quizPrev);
+  $("veilAgain").addEventListener("click", () => { $("resultVeil").hidden = true; startQuiz(); });
+  $("veilDemo").addEventListener("click", () => { $("resultVeil").hidden = true; setMode("demo"); });
 
-  function gotoQuizPrev(){
-    if(quizIndex === 0) return;
-    quizIndex--;
-    renderQuizQuestion();
-  }
-
-  // Event wiring --------------------------------------------------------
-  typeButtons.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      playSound('type');
-      typeButtons.forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      mode = btn.dataset.mode;
-      if(!quizMode){
-        generateProblem();
-      } else {
-        // In quiz mode: restart quiz for new type
-        quizFromMode = mode;
-        quizQuestions = [];
-        quizIndex = 0;
-        quizScore = 0;
-        const firstQ = buildQuizQuestionObject();
-        quizQuestions.push(firstQ);
-        renderQuizQuestion();
-      }
+  // Typing in any glowing box writes the same number into all of them:
+  // one part is one value, wherever it is written.
+  $("modelHost").addEventListener("input", e => {
+    if(e.target.tagName !== "INPUT") return;
+    $("modelHost").querySelectorAll("input").forEach(i => {
+      if(i !== e.target) i.value = e.target.value;
+      i.parentElement.classList.remove("ok","bad");
     });
   });
-
-  mainActionBtn.addEventListener('click', ()=>{
-    if(!practiceMode &&
-       (mainStage === "showModel" || mainStage === "divide" || mainStage === "showAnswer")){
-      playSound('select');
-    }
-
-    if(!practiceMode){
-      if(mainStage === "showModel"){
-        buildModel();
-        setMainStage("divide");
-      } else if(mainStage === "divide"){
-        divideIntoParts();
-        setMainStage("showAnswer");
-      } else if(mainStage === "showAnswer"){
-        showAnswerDemo();
-        setMainStage("done");
-      }
-    } else {
-      if(mainStage === "showModel"){
-        buildModel();
-        clearSegmentMarks();
-        setupPracticePerPartInputs();
-        setMainStage("enterPerPart");
-      } else if(mainStage === "enterPerPart"){
-        checkPracticePerPart();
-      } else if(mainStage === "enterTotals"){
-        checkPracticeTotals();
-      }
-    }
+  // Tapping a box marks it — handy for counting boxes aloud with a class.
+  $("modelHost").addEventListener("click", e => {
+    const b = e.target.closest(".box");
+    if(b && e.target.tagName !== "INPUT") b.classList.toggle("tap");
   });
 
-  backBtn.addEventListener('click', ()=>{
-    if(practiceMode || quizMode) return;
-    playSound('select');
-
-    if(mainStage === "divide"){
-      resetCurrentProblemView();
-    } else if(mainStage === "showAnswer"){
-      buildModel();
-      answerArea.innerHTML = '';
-      setMainStage("divide");
-    } else if(mainStage === "done"){
-      answerArea.innerHTML = '';
-      setMainStage("showAnswer");
-    }
-  });
-
-  newProblemBtn.addEventListener('click', ()=>{
-    playSound('reset');
-    generateProblem();
-  });
-
-  resetBtn.addEventListener('click', ()=>{
-    playSound('reset');
-    resetCurrentProblemView();
-  });
-
-  sideDemoBtn.addEventListener('click', ()=>{
-    playSound('demo');
-    if(quizMode) exitQuizMode();
-    practiceMode = false;
-    setModeBanner("Demo Mode Activated","demo");
-    generateProblem();
-    updateModeButtons();
-  });
-
-  sidePracticeBtn.addEventListener('click', ()=>{
-    playSound('demo');
-    if(quizMode) exitQuizMode();
-    practiceMode = true;
-    setModeBanner("Practice Mode Activated","practice");
-    generateProblem();
-    updateModeButtons();
-  });
-
-  sideQuizBtn.addEventListener('click', ()=>{
-    playSound('demo');
-    if(!quizMode){
-      enterQuizMode();
-    } else {
-      exitQuizMode();
-    }
-  });
-
-  barsEl.addEventListener('click', (e)=>{
-    const seg = e.target.closest('.segment');
-    if(!seg || seg.classList.contains('filler')) return;
-    if(seg.dataset.active === 'true' || seg.dataset.activeGap === 'true'){
-      seg.classList.toggle('touched');
-    }
-  });
-
-  quizCheckBtn.addEventListener('click', ()=>{
-    if(!quizMode) return;
-    checkQuizAnswer();
-  });
-
-  quizNextBtn.addEventListener('click', ()=>{
-    if(!quizMode) return;
-    gotoQuizNext();
-  });
-
-  quizPrevBtn.addEventListener('click', ()=>{
-    if(!quizMode) return;
-    gotoQuizPrev();
-  });
-
-  quizOverlayClose.addEventListener('click', ()=>{
-    closeQuizOverlay();
-    exitQuizMode();
-  });
-
-  quizOverlay.addEventListener('click', (e)=>{
-    if(e.target === quizOverlay){
-      closeQuizOverlay();
-      exitQuizMode();
-    }
-  });
-
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter'){
-      if(quizMode){
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ closeMenus(); return; }
+    if(!$("resultVeil").hidden) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "SELECT") return;
+    if(e.target.closest && e.target.closest(".dropMenu")) return;
+    if(S.mode === "quiz"){
+      if(e.key === "Enter" && tag !== "BUTTON"){
         e.preventDefault();
-        checkQuizAnswer();
-      } else if(!mainActionBtn.disabled){
-        e.preventDefault();
-        mainActionBtn.click();
+        const q = S.quiz.items[S.quiz.i];
+        if(q.done) quizNext(); else checkQuiz();
       }
+      return;
     }
-    if(e.key === 'Escape' && isFullscreen){
-      e.preventDefault();
-      exitFullscreen();
+    if(e.key === "Enter"){
+      if(tag === "BUTTON" || tag === "A") return;    // a focused button does its own thing
+      e.preventDefault(); next(); return;
     }
+    if(tag === "INPUT") return;
+    if(e.key === "ArrowRight"){ e.preventDefault(); next(); }
+    else if(e.key === "ArrowLeft"){ e.preventDefault(); back(); }
+    else if(e.key === "n" || e.key === "N"){ e.preventDefault(); newQuestion(); }
   });
 
-  // Fullscreen toggle ---------------------------------------------------
-  function enterFullscreen(){
-    isFullscreen = true;
-    cardRoot.classList.add('fullscreen');
-    document.body.classList.add('fullscreen-active');
-    fullscreenBtn.textContent = 'Exit full screen';
-    fullscreenBtn.title = 'Exit full screen (Esc to exit)';
-  }
-
-  function exitFullscreen(){
-    isFullscreen = false;
-    cardRoot.classList.remove('fullscreen');
-    document.body.classList.remove('fullscreen-active');
-    fullscreenBtn.textContent = 'Full screen';
-    fullscreenBtn.title = 'Enter full screen';
-  }
-
-  fullscreenBtn.addEventListener('click', ()=>{
-    if(isFullscreen){
-      exitFullscreen();
-    } else {
-      enterFullscreen();
-    }
-  });
-
-  // Init ---------------------------------------------------------------
-  generateProblem();
-  updateModeButtons();
-  setModeBanner("Demo Mode Activated","demo");
+  /* -------------------------------------------------------------- start */
+  // Test hook: the harness reads state through this; nothing on the page uses it.
+  window.__SBR__ = { S, makeProblem, workLines, answerFields, setMode, newQuestion, next, back };
+  newQuestion();
+  paintTypeUI();
 })();
 </script>
 </body>

@@ -48,6 +48,32 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-20, session — being pushed): STACKED BAR MODEL — RATIO,
+> RESTYLED.** `interactive-tools/stage-4/ratios-rates/stacked-bar-ratio/index.html`
+> (an early tool) rebuilt on the `.mmtTopbar` shell, same URL, under
+> **MA4-RAT-C-01**. Self-contained, no Firebase.
+> * **THE THREE TYPES MOVED INTO SETTINGS** (teacher request) as radio cards —
+>   Share a total / One share is known / The difference is known / Mixed — with
+>   a chip beside the mode switch that opens Settings. Demo / Practice / Quiz is
+>   a segmented control. Also in Settings: ratio numbers up to 5/8/10, money-only
+>   contexts, and toggles for the given amount on the model, the working, the check.
+> * **ONE GRID FOR BOTH BARS** so a box in each bar is the same width by
+>   construction. **The given amount sits on the part of the model it measures**:
+>   a brace over both bars (Type 1), a bracket over the known bar (Type 2), a
+>   bracket over the dashed gap boxes (Type 3). Top bar's bracket above, bottom
+>   bar's below. On a phone the totals column goes and the Type 1 brace turns
+>   into a bracket under the bars.
+> * **Stages 0–3 (question, model, one part, answer) and everything is drawn from
+>   `S.stage`**; Back is `stage--`. A side card writes the working line by line
+>   (parts, parts = amount, 1 part = ÷, then ×, then a check).
+> * Ratios are simplest form and never 1 : 1; totals 40–400. Practice: type one
+>   part into any glowing box (all mirror), then the answers; "Show me" skips a
+>   stuck step. Quiz: 15 questions, first check scores, a wrong answer shows the
+>   right one. Old full-screen button dropped (the layout fills the screen).
+> * Verified in Playwright: 9000 generated problems, every stage of every type
+>   (box counts, what is filled, answer never early), practice and quiz flows,
+>   and no overflow at 390/1024/1280/1366/1920 over 540 questions.
+>
 > **NEW (2026-09-20, session — being pushed): DOT DETECTIVE.**
 > `games/dot-detective.html`, after two printed Japanese dot-grid puzzles,
 > renamed and rebuilt (nothing copied). Card in the **Puzzles** group; Games
@@ -543,6 +569,33 @@
 >   tap-the-grid placement path already existed (`setupFleetSvg` has a `click`
 >   handler as well as HTML5 drag), so touch placement works — HTML5 `dragstart`
 >   alone would not have.
+>
+> **NEW (2026-09-21, session — being pushed): THE SEARCH BOX MOVED UP.**
+> Teacher feedback: the homepage search existed but was buried three screens
+> down inside the Browse card and read as part of the furniture. There is now a
+> **find band** (`.findbar`, `id="findbar"`) between the hero and "Featured this
+> term": kicker, the heading *"Know what you want? Search below to find it!"*, a
+> line of explanation, the search field, and a row of **"Try:" chips**
+> (`.find-chip`, `data-q`) that fill the box and run the search.
+> * **THE INPUT WAS MOVED, NOT COPIED.** There is still exactly ONE
+>   `#resourceSearch` on the page, so there is no second input to keep in sync
+>   and every existing handler (`enterSearch`, `applyFilters`, `showHome`,
+>   `backBtn`) works untouched. The `.browse-search` wrapper and its CSS are
+>   gone; the `.filter-select:focus` rule that shared its selector was kept.
+> * **TYPING HIDES THE FEATURED STRIP** (`enterSearch()` already did this), so
+>   the results land directly under the band — which is the whole reason the
+>   band sits ABOVE the featured strip rather than below it.
+> * The hero's "Search all resources" button now points at `#findbar` and puts
+>   the caret in the box after the smooth scroll, instead of resetting Browse.
+>   The Browse heading was reworded to describe what is left there (tabs, stage
+>   and topic filters).
+> * **The MMT Screen launcher is unaffected** — it reads `a.resource-card` and
+>   `.nav-links a[href]`, and neither changed.
+> * Verified in Playwright at 1440x900, 1366x768 and 390x780 (47 checks): one
+>   input, the band above the featured strip and Browse, no horizontal overflow,
+>   typing filtering to sensible counts with results below the band, the chips,
+>   Reset clearing the box, the hero button focusing it, and category browse
+>   still working.
 >
 > **NEW (2026-09-17, session — being pushed): ONE-ROW SITE NAV.** The homepage
 > banner had grown to 13 links over two rows. It is now ONE row: **Browse ▾** (a

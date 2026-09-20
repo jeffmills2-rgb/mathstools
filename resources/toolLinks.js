@@ -1214,8 +1214,8 @@ window.MMT_TOOL_LINKS = {
       title: "Stacked Bar Model — Ratio",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-4/ratios-rates/stacked-bar-ratio/",
-      note: "Stacked bar model for comparing ratios and scaling them up.",
-      tags: ["ratio", "bar model", "proportion", "scaling", "visual"]
+      note: "Two bars, one box per part: share a total, find the rest from one known share, or work from the difference. Demo, Practice and a 15-question Quiz, with the written working beside the model.",
+      tags: ["ratio", "bar model", "stacked bar", "dividing a ratio", "sharing in a ratio", "difference", "proportion", "visual", "quiz"]
     }
       ,
     {
