@@ -67,11 +67,21 @@
 >   "off by" distances stay integers until display (`fmtScaled`, `fmtRatio`).
 >   State is plain JSON because online stores it as one string (Firestore
 >   cannot hold the boards, which are arrays of arrays).
-> * **THE RULES AS WRITTEN, PLUS ONE READING:** the "first turn must go on your
->   own board" rule applies to each player's first go **in every round**
->   (`mustOwn`). Players whose own board is full keep taking turns (they can
->   only be nasty). The round ends when every square on every board is full;
->   the starting seat rotates each round.
+> * **THE RULES — KEEP OR PASS (teacher decisions 2026-09-21 and -22).** Roll,
+>   then EITHER keep it (write it in an empty square of your OWN board) OR
+>   **pass it** to another player, who **must take it** and chooses which of
+>   their own empty squares it goes in. Taking is not a turn; play moves on
+>   from the roller. Nobody ever writes on another person's board. You may
+>   pass on ANY roll — the first build's "first go each round must be kept"
+>   rule was removed on 2026-09-22 (`mustOwn()` is kept only as an
+>   always-false stub). A full board can only pass. Engine phases:
+>   `roll → place → (take) → roll`; `NG.actor(st)` is whoever must act (the
+>   taker during `take`), and every UI/online check uses it, never `st.turn`.
+>   A passed digit's cell has `by` = the passer, so it shows red. The very
+>   first build let players write straight onto an opponent's board — that was
+>   replaced the same day. The "Pass and play" mode is now **"Play on one
+>   screen"**, because "pass" is a move. Against the computer the human seat is
+>   `mySeat` 0, so the page says "You rolled… your board".
 > * **SETTINGS (teacher choices 2026-09-21):** die 0–9 or 1–6; 3–6 squares;
 >   0–2 of them after the decimal point (the point is DRAWN between the ones
 >   and tenths columns, never typed); rounds 1–8; goal **largest**,
@@ -80,9 +90,12 @@
 >   always the same distance from the mean — online the mean is over the
 >   WHOLE ROOM, so tables of 2 are fine). Display prefs: place names as words
 >   / numbers (1000, 100…) / automatic / off; "say what each digit is worth"
->   (narration "2 in Ben's thousands = 2000. Nasty!" and a hover tip); dumped
->   digits in red (each cell stores `by`, the seat that wrote it); fast CPUs.
-> * **THE COMPUTER PLAYS FROM AN EXACT DP.** `dpTable` values a board's empty
+>   (narration "Ben had to take Ava's 2 and put it in the ones = 2" and a hover
+>   tip); passed digits in red (each cell stores `by`, the seat that wrote it); fast CPUs.
+> * **THE COMPUTER PLAYS FROM AN EXACT DP** (retuned for the pass rule: a pass
+>   is scored by assuming the taker puts the digit in their least-bad square;
+>   the junk-in-your-top-square planning (`QTAB`) no longer helps and is set to
+>   1 = off; Medium's noise is 0.3 of the top place value). `dpTable` values a board's empty
 >   squares by the best expected fill over the die's faces (≤ 2^6 states), so a
 >   6 goes in the hundreds of an empty four-square board, not the thousands.
 >   **Spicy mixes in a chance (`QTAB`) that an opponent dumps junk in your top
