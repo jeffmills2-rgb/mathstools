@@ -11,7 +11,7 @@ rules_version = '2';
 // Reference copy of the LIVE rules. Deploy by pasting the whole file into
 // Firebase Console -> project mmt-firebase-games -> Firestore -> Rules -> Publish.
 //
-// Last reviewed: 2026-07-29 — full audit of every page in the site that talks
+// Last reviewed: 2026-09-21 (nastyGameRooms added). Previous full audit 2026-07-29 — full audit of every page in the site that talks
 // to this project. Every game below was traced from its firebaseConfig through
 // to the exact doc() path it reads and writes.
 //
@@ -24,6 +24,7 @@ rules_version = '2';
 //   games/chess.html                   games/chess/rooms/{code}                  OK (2026-09-19)
 //   games/checkers.html                games/checkers/rooms/{code}               OK (2026-09-19)
 //   games/cartesian-connect-4.html     games/cartesianConnect4/rooms/{code}      OK
+//   games/nasty-game.html              nastyGameRooms/{code} (+ members, tables) ADDED 2026-09-21
 //   games/closest-to-100.html          closestTo100Games/{code}                  OK
 //   games/greedy-pig.html              greedyPigGames/{code}                     OK
 //   games/battleships.html             coordinateBattleshipsGames/{code}         OK
@@ -39,6 +40,10 @@ rules_version = '2';
 //
 // CHANGED IN THIS REVISION
 // ----------------------------------------------------------------------------
+//   + nastyGameRooms    — 2026-09-21, for The Nasty Game's online class mode.
+//                         MUST BE PUBLISHED before that mode works: without it
+//                         every create is denied (the page says so, and the
+//                         computer and pass-and-play modes are unaffected).
 //   + mathMemoryGames   — Maths Memory's online mode was being denied. Nothing
 //                         in the previous ruleset matched its collection.
 //   + squareChainRooms  — new, for Number Sum Chain.
@@ -150,11 +155,34 @@ service cloud.firestore {
       // Presence + live cursor. You may only write your own member document.
       match /members/{uid} {
         allow get, list: if signedIn();
+        // A member doc carries the room's hostUid (checked here, once, at join)
+        // so the host can delete members WITHOUT a get() per document.
         allow create, update: if signedIn()
           && request.auth.uid == uid
-          && request.resource.data.keys().hasOnly(['name','colour','cx','cy','at'])
-          && (!('name' in request.resource.data) || request.resource.data.name.size() <= 14);
-        allow delete: if signedIn() && request.auth.uid == uid;
+          && roomData().status == 'lobby'
+          && request.resource.data.hostUid == roomData().hostUid
+          && request.resource.data.keys().hasOnly(['name', 'joinedAtMs', 'expireAt', 'hostUid'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() >= 1
+          && request.resource.data.name.size() <= 24;
+        allow delete: if signedIn()
+          && (request.auth.uid == uid || resource.data.hostUid == request.auth.uid);
+      }
+
+      // Tables carry hostUid too. Only the room's host can have written a
+      // table that the room's seating points at; a stray table anyone else
+      // makes is ignored by every client (they read seatTable, not a list).
+      match /tables/{tid} {
+        allow get, list: if signedIn();
+        allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+        allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+        allow update: if signedIn()
+          && (request.auth.uid in resource.data.uids || resource.data.hostUid == request.auth.uid)
+          && request.resource.data.hostUid == resource.data.hostUid
+          && request.resource.data.uids == resource.data.uids
+          && request.resource.data.gen == resource.data.gen
+          && request.resource.data.g is string
+          && request.resource.data.g.size() < 60000;
       }
     }
 

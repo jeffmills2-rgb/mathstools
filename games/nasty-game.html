@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- The Nasty Game v1 (2026-09-21): a place value dice game. Build the biggest (or smallest, or most average) number — and wreck everyone else's. -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>The Nasty Game | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --red:#ef4444; --amber:#f59e0b; --btn:#eef2f7; --btnHover:#e5ebf3;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --cell:60px;
+    }
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:14px 24px;display:grid;grid-template-columns:minmax(240px,1fr) auto minmax(460px,1fr);align-items:center;gap:18px;box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:12px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:8px 12px;margin-left:-12px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    button,select,input,textarea{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.24);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .mmtTopbar .btn,.mmtTopbar .btn-soft{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn:hover,.mmtTopbar .btn-soft:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    .btn-red{background:var(--red);color:white;border-color:var(--red);}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);box-shadow:0 10px 24px rgba(124,58,237,.18);}
+    input[type="text"],input[type="number"],select,textarea{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;}
+    textarea{resize:vertical;min-height:90px;font-weight:700;line-height:1.4;}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .menu-card{padding:28px;display:grid;gap:22px;min-height:620px;place-items:center;position:relative;}
+    h1,h2,h3,p{margin-top:0;}
+    .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .mode-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon desc";gap:3px 16px;text-align:left;padding:18px 20px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);box-shadow:0 18px 36px rgba(37,99,235,.14);}
+    .mode-card .mode-icon{grid-area:icon;width:58px;height:58px;border-radius:18px;background:#eef2ff;display:grid;place-items:center;font-size:2rem;}
+    .mode-card strong{grid-area:title;font-size:1.3rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span:last-child{grid-area:desc;color:var(--muted);font-size:.95rem;font-weight:750;line-height:1.35;}
+    .mode-card.wide{grid-column:1/-1;}
+    .menu-panel{border-radius:26px;background:#f8fafc;border:1px solid var(--border);padding:20px;display:grid;gap:16px;}
+    .menu-center-panel{width:min(1000px,100%);background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(15,23,42,.12);padding:28px;border:1px solid #dbe3ef;}
+    .menu-intro{display:grid;gap:8px;}
+    .menu-intro p{color:#475569;font-weight:750;line-height:1.45;margin:0;}
+    .menu-hero{display:flex;gap:18px;align-items:center;}
+    .menu-hero .demo{display:flex;gap:6px;flex:0 0 auto;}
+    .menu-hero .demo span{width:44px;height:52px;border-radius:12px;border:2px solid #cbd5e1;background:#fff;display:grid;place-items:center;font-weight:950;font-size:1.6rem;}
+    .menu-hero .demo span.bad{color:#b91c1c;background:#fef2f2;border-color:#fecaca;}
+    .setup-modal-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1000px,calc(100vw - 36px));max-height:calc(100dvh - 48px);overflow:auto;display:none;z-index:95;background:white;box-shadow:0 34px 90px rgba(15,23,42,.25);padding:26px;}
+    .setup-modal-panel.open{display:grid;}
+    .setup-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .setup-modal-head h2{margin-bottom:0;}
+    .setup-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+    .setup-block{display:grid;gap:10px;border:1px solid var(--border);background:#f8fafc;border-radius:20px;padding:16px;}
+    .setup-block h3{margin:0;font-size:1.05rem;font-weight:950;letter-spacing:-.02em;}
+    .field{display:grid;gap:6px;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .level-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:4px;padding:11px;border-radius:16px;align-content:start;}
+    .level-icon{width:36px;height:36px;border-radius:12px;background:#eef2ff;display:grid;place-items:center;font-size:1.25rem;}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn strong{font-size:.95rem;}
+    .level-btn span{font-size:.74rem;color:var(--muted);font-weight:850;line-height:1.25;}
+    .form-note{font-size:.88rem;color:var(--muted);font-weight:750;line-height:1.4;margin:0;}
+    .form-msg{font-weight:850;font-size:.92rem;min-height:1.2em;margin:0;color:#334155;}
+    .form-msg.error{color:#b91c1c;} .form-msg.warn{color:#9a3412;} .form-msg.good{color:#166534;}
+    .seg{display:flex;flex-wrap:wrap;gap:4px;background:#e2e8f0;padding:4px;border-radius:14px;}
+    .seg button{flex:1 1 auto;padding:8px 10px;border-radius:11px;background:transparent;color:#334155;font-size:14px;}
+    .seg button.on{background:white;color:var(--blue2);box-shadow:0 3px 8px rgba(15,23,42,.1);}
+    .goal-set{display:grid;gap:6px;}
+    .goal-set label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:14px;background:white;border:1px solid var(--border);cursor:pointer;}
+    .goal-set label:has(input:checked){border-color:#a78bfa;background:#f5f3ff;}
+    .goal-set label span{display:grid;gap:1px;}
+    .goal-set label small{color:var(--muted);font-weight:750;font-size:.8rem;}
+    .goal-set input{margin-top:3px;accent-color:var(--purple);}
+    .preview-board{display:flex;justify-content:center;gap:4px;align-items:flex-end;padding:10px;border-radius:16px;background:white;border:1px dashed #cbd5e1;flex-wrap:nowrap;overflow:hidden;}
+    .preview-board .pc{display:grid;gap:4px;justify-items:center;width:58px;}
+    .preview-board .pc i{font-style:normal;font-size:.58rem;font-weight:900;color:#64748b;text-align:center;line-height:1.05;min-height:2.1em;display:grid;align-items:end;}
+    .preview-board .pc b{width:44px;height:48px;border-radius:10px;border:2px dashed #cbd5e1;display:block;}
+    .preview-board .pt{width:10px;height:48px;display:grid;align-items:end;justify-items:center;font-weight:950;font-size:1.8rem;line-height:.7;}
+
+    .game-card{display:grid;padding:16px;gap:14px;}
+    .status-strip{display:grid;grid-template-columns:minmax(260px,1fr) auto auto;gap:14px;align-items:stretch;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-height:64px;min-width:0;}
+    .status-icon{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--pc,#eef2ff);color:white;font-size:1.2rem;font-weight:950;box-shadow:inset 0 -4px 0 rgba(15,23,42,.12);flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.12rem;line-height:1.15;letter-spacing:-.02em;}
+    .status-subtitle{color:#475569;font-size:.95rem;margin-top:4px;font-weight:750;line-height:1.35;}
+    .status-subtitle b{color:var(--ink);}
+    .status-subtitle .nastyTag{color:#b91c1c;font-weight:950;}
+    .die-card{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);}
+    .die{width:64px;height:64px;border-radius:16px;background:linear-gradient(160deg,#ffffff,#eef2f7);border:2px solid #cbd5e1;display:grid;place-items:center;font-size:2.4rem;font-weight:950;color:#0f172a;box-shadow:0 6px 0 #cbd5e1,0 10px 18px rgba(15,23,42,.14);font-variant-numeric:tabular-nums;position:relative;}
+    .die.blank{color:#cbd5e1;}
+    .die.live{border-color:var(--amber);box-shadow:0 6px 0 #f59e0b,0 0 0 5px rgba(245,158,11,.22);}
+    .die.rolling{animation:tumble .5s ease;}
+    @keyframes tumble{0%{transform:rotate(0) scale(1)}30%{transform:rotate(-24deg) scale(1.1)}60%{transform:rotate(18deg) scale(.95)}100%{transform:rotate(0) scale(1)}}
+    .pips{display:grid;grid-template-columns:repeat(3,12px);grid-template-rows:repeat(3,12px);gap:4px;}
+    .pips i{width:12px;height:12px;border-radius:50%;background:transparent;}
+    .pips i.on{background:#0f172a;}
+    .toolbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:950;font-size:.88rem;border:1px solid #c7d2fe;white-space:nowrap;}
+    .chip.goal{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;}
+    .game-area{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start;}
+    .side-panel{display:grid;gap:14px;min-width:0;}
+    .panel-section{border-radius:22px;padding:14px;background:#f8fafc;border:1px solid var(--border);min-width:0;}
+    .panel-section h2{font-size:1.02rem;margin-bottom:8px;font-weight:950;letter-spacing:-.02em;display:flex;justify-content:space-between;gap:8px;align-items:center;}
+    .panel-section h2 small{font-weight:850;color:var(--muted);font-size:.78rem;}
+    .hidden{display:none!important;}
+
+    /* ---------------------------------------------------------------- boards
+       One card per player. --cell is set by fitBoards() from the real space
+       available, so two players get big boards and thirty get small ones
+       without anybody's board spilling off the screen. */
+    .boards{display:grid;gap:12px;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));align-content:start;}
+    .pboard{--pc:#2563eb;position:relative;border-radius:calc(var(--cell)*.28 + 6px);border:2px solid var(--border);background:#fff;padding:calc(var(--cell)*.14 + 4px) calc(var(--cell)*.18 + 4px);display:grid;gap:calc(var(--cell)*.08 + 2px);min-width:0;transition:border-color .2s ease,box-shadow .2s ease;}
+    .pboard.turn{border-color:var(--amber);box-shadow:0 0 0 4px rgba(245,158,11,.22);}
+    .pboard.me{background:linear-gradient(180deg,#f8fbff,#fff);}
+    .pboard.target-ok{border-color:#93c5fd;}
+    .pboard.winner{border-color:#86efac;box-shadow:0 0 0 4px rgba(34,197,94,.18);}
+    .pb-head{display:flex;align-items:center;gap:8px;min-width:0;font-weight:950;font-size:calc(var(--cell)*.2 + 7px);line-height:1.1;}
+    .pb-dot{width:calc(var(--cell)*.16 + 6px);height:calc(var(--cell)*.16 + 6px);border-radius:50%;background:var(--pc);flex:0 0 auto;}
+    .pb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+    .pb-tag{flex:0 0 auto;font-size:.72em;font-weight:900;padding:1px 7px;border-radius:999px;background:#eef2ff;color:#3730a3;}
+    .pb-tag.cpu{background:#f1f5f9;color:#475569;}
+    .pb-tag.first{background:#fef3c7;color:#92400e;}
+    .pb-total{margin-left:auto;flex:0 0 auto;color:#475569;font-size:.86em;font-variant-numeric:tabular-nums;}
+    .pb-row{display:flex;justify-content:center;align-items:flex-end;gap:calc(var(--cell)*.1 + 1px);}
+    .pb-col{display:grid;gap:calc(var(--cell)*.06);justify-items:center;width:var(--cell);}
+    .pb-lab{font-size:min(calc(var(--cell)*.15 + 3px),calc(var(--cell)/5.7));font-weight:900;color:#64748b;text-align:center;line-height:1.05;min-height:2.15em;display:grid;align-items:end;letter-spacing:-.01em;}
+    .pb-lab.num{min-height:1.1em;font-variant-numeric:tabular-nums;}
+    .pb-cell{position:relative;width:var(--cell);height:calc(var(--cell)*1.12);border-radius:calc(var(--cell)*.18);border:2px dashed #cbd5e1;background:#fff;font-size:calc(var(--cell)*.66);font-weight:950;padding:0;display:grid;place-items:center;color:var(--ink);cursor:default;font-variant-numeric:tabular-nums;line-height:1;}
+    .pb-cell:hover{transform:none;}
+    .pb-cell.filled{border-style:solid;border-color:#cbd5e1;background:linear-gradient(180deg,#fff,#f8fafc);}
+    .pb-cell.dumped{color:#b91c1c;background:linear-gradient(180deg,#fff5f5,#fee2e2);border-color:#fecaca;}
+    .pb-cell.target{cursor:pointer;border-color:#60a5fa;background:#eff6ff;}
+    .pb-cell.target:hover,.pb-cell.target:focus-visible{border-style:solid;border-color:var(--amber);background:#fffbeb;box-shadow:0 0 0 4px rgba(245,158,11,.25);}
+    .pb-cell.target .ghost{opacity:0;color:#b45309;transition:opacity .12s ease;}
+    .pb-cell.target:hover .ghost,.pb-cell.target:focus-visible .ghost{opacity:.55;}
+    .pb-cell.last{animation:land .45s ease;box-shadow:0 0 0 4px rgba(124,58,237,.25);}
+    @keyframes land{0%{transform:scale(1.25)}60%{transform:scale(.94)}100%{transform:scale(1)}}
+    .pb-point{width:calc(var(--cell)*.2 + 2px);height:calc(var(--cell)*1.12);display:grid;align-items:end;justify-items:center;}
+    .pb-point i{width:calc(var(--cell)*.14 + 3px);height:calc(var(--cell)*.14 + 3px);border-radius:50%;background:#0f172a;margin-bottom:calc(var(--cell)*.1);}
+    .pb-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:1.2em;font-size:calc(var(--cell)*.16 + 6px);font-weight:850;color:#64748b;}
+    .pb-value{font-weight:950;color:var(--ink);font-variant-numeric:tabular-nums;}
+    .pb-nasty{color:#b91c1c;}
+    .boards.compact .pb-foot{display:none;}
+    .worth-tip{position:fixed;z-index:120;pointer-events:none;transform:translate(-50%,calc(-100% - 10px));background:#0f172a;color:white;font-weight:900;font-size:.9rem;padding:6px 10px;border-radius:10px;white-space:nowrap;box-shadow:0 10px 24px rgba(15,23,42,.25);}
+    .worth-tip::after{content:"";position:absolute;left:50%;top:100%;border:6px solid transparent;border-top-color:#0f172a;transform:translateX(-50%);}
+    .fly{position:fixed;z-index:130;pointer-events:none;display:grid;place-items:center;font-weight:950;border-radius:14px;background:#fef3c7;border:2px solid var(--amber);color:#92400e;box-shadow:0 16px 30px rgba(15,23,42,.25);transition:transform .42s cubic-bezier(.3,.7,.3,1),opacity .2s ease;}
+
+    .score-wrap{max-height:min(52vh,560px);overflow:auto;border-radius:14px;border:1px solid var(--border);background:white;}
+    table.scores{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;}
+    table.scores th,table.scores td{padding:6px 7px;text-align:right;border-bottom:1px solid #eef2f7;white-space:nowrap;}
+    table.scores th{position:sticky;top:0;background:#f1f5f9;color:#475569;font-weight:900;font-size:.78rem;z-index:1;}
+    table.scores td.nm,table.scores th.nm{text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+    table.scores td.nm i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+    table.scores td.tot{font-weight:950;color:var(--ink);}
+    table.scores tr.lead td{background:#f0fdf4;}
+    table.scores tr.me td{background:#eff6ff;}
+    table.scores tr.me td:first-child{box-shadow:inset 3px 0 0 var(--blue);}
+    .mean-line{margin:8px 0 0;font-weight:850;color:#334155;font-size:.9rem;}
+    .rules-mini{margin:0;padding-left:1.1rem;color:#334155;font-weight:750;font-size:.9rem;line-height:1.45;display:grid;gap:4px;}
+
+    /* ---------------------------------------------------------------- online */
+    .lobby-card{padding:22px;display:grid;gap:18px;}
+    .lobby-top{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;}
+    .room-code{display:grid;gap:4px;justify-items:center;padding:16px 26px;border-radius:24px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:white;box-shadow:0 14px 30px rgba(124,58,237,.25);}
+    .room-code small{font-weight:850;opacity:.85;letter-spacing:.08em;text-transform:uppercase;font-size:.72rem;}
+    .room-code strong{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:.14em;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;}
+    .join-help{font-weight:800;color:#334155;line-height:1.5;margin:0;}
+    .join-help code{background:#eef2ff;border-radius:8px;padding:2px 7px;color:#3730a3;font-weight:900;}
+    .lobby-cols{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:start;}
+    .member-list{display:flex;flex-wrap:wrap;gap:8px;}
+    .member{display:inline-flex;align-items:center;gap:6px;padding:7px 8px 7px 12px;border-radius:999px;background:white;border:1px solid var(--border);font-weight:900;}
+    .member.me{border-color:#93c5fd;background:#eff6ff;}
+    .member button{padding:2px 8px;border-radius:999px;font-size:.8rem;background:#fee2e2;color:#991b1b;}
+    .member.solo{padding-right:12px;}
+    .table-plan{font-weight:850;color:#334155;margin:0;}
+    .tables-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+    .table-card{border-radius:20px;border:1px solid var(--border);background:#f8fafc;padding:10px;display:grid;gap:8px;--cell:22px;}
+    .table-card h3{margin:0;font-size:.95rem;font-weight:950;display:flex;justify-content:space-between;gap:8px;}
+    .table-card h3 small{color:var(--muted);font-weight:850;}
+    .table-card .boards{grid-template-columns:1fr;gap:6px;}
+    .table-card .pboard{padding:5px 8px;}
+    .class-lb{counter-reset:none;}
+    .big-lb table.scores{font-size:1rem;}
+    .big-lb .score-wrap{max-height:none;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.36);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(660px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:28px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;}
+    .modal h2{margin-bottom:0;font-size:1.45rem;}
+    .rules-list{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none;}
+    .rules-list li{padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);font-weight:800;line-height:1.45;color:#334155;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid var(--border);margin-top:10px;}
+    .toggle-row .tr-text{display:grid;gap:2px;}
+    .toggle-row .tr-text span{font-size:.84rem;color:var(--muted);font-weight:750;}
+    .toggle-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--blue);flex:0 0 auto;}
+    .radio-set{display:grid;gap:8px;margin-top:10px;}
+    .radio-set label{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;}
+    .radio-set label span{display:grid;gap:2px;}
+    .radio-set label small{color:var(--muted);font-weight:750;}
+    .radio-set input{margin-top:3px;accent-color:var(--blue);}
+    .end-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .end-big{font-size:1.05rem;font-weight:800;color:#334155;line-height:1.45;margin:8px 0 0;}
+    .podium{display:grid;gap:8px;margin-top:12px;}
+    .podium .pr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);font-weight:900;}
+    .podium .pr.win{background:#f0fdf4;border-color:#86efac;}
+    .podium .pr .rk{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e2e8f0;flex:0 0 auto;font-size:.95rem;}
+    .podium .pr.win .rk{background:#22c55e;color:white;}
+    .podium .pr .v{margin-left:auto;font-variant-numeric:tabular-nums;}
+    .podium .pr .sub{color:var(--muted);font-weight:800;font-size:.85rem;}
+    .award{margin-top:12px;padding:12px 14px;border-radius:16px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-weight:900;}
+    .brand-footer{width:min(1340px,calc(100vw - 48px));margin:0 auto 18px;display:flex;align-items:center;justify-content:center;min-height:38px;font-size:13px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:16px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:210;background:#0f172a;color:white;padding:11px 16px;border-radius:14px;font-weight:850;box-shadow:0 14px 34px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:opacity .2s ease;max-width:calc(100vw - 30px);}
+    .toast.show{opacity:1;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 1100ms linear forwards;border-radius:3px;pointer-events:none;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .nasty-burst{position:fixed;z-index:131;pointer-events:none;font-weight:950;color:#b91c1c;font-size:1.3rem;transform:translate(-50%,-50%);animation:burst .9s ease forwards;text-shadow:0 2px 0 white,0 0 8px white;}
+    @keyframes burst{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}25%{opacity:1;transform:translate(-50%,-90%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-160%) scale(1)}}
+    @media (prefers-reduced-motion:reduce){
+      .die.rolling,.pb-cell.last,.nasty-burst,.confetti{animation:none!important;}
+      .fly{transition:none!important;}
+    }
+
+    @media (min-width:1081px){
+      .mmtTopbar{padding:8px 18px;min-height:64px;grid-template-columns:minmax(190px,1fr) auto minmax(430px,1fr);gap:14px;}
+      .mmtBrand{gap:9px;padding:5px 9px;margin-left:-9px;}
+      .mmtBrandLogo{width:36px;height:36px;}
+      .mmtBrandText strong{font-size:1.05rem;}
+      .mmtBrandText span{font-size:.72rem;}
+      .mmtTopTitle{font-size:clamp(1.1rem,1.7vw,1.45rem);}
+      .actions{gap:8px;}
+      .actions button{padding:9px 13px;font-size:14px;border-radius:13px;}
+      .layout{width:min(1500px,calc(100vw - 36px));margin:12px auto 8px;}
+      .game-card{padding:12px 16px;gap:12px;}
+      .brand-footer{width:min(1500px,calc(100vw - 36px));min-height:30px;margin:0 auto 8px;font-size:12px;border-radius:14px;}
+    }
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:auto 1fr;}
+      .mmtTopTitle{text-align:left;}
+      .actions{grid-column:1/-1;justify-content:center;}
+      .game-area{grid-template-columns:1fr;}
+      .side-panel{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+      .status-strip{grid-template-columns:1fr auto;}
+      .status-strip .toolbar{grid-column:1/-1;justify-content:center;}
+      .setup-cols,.lobby-cols{grid-template-columns:1fr;}
+      .level-grid{grid-template-columns:repeat(2,1fr);}
+    }
+/* ==== MMT PHONE LAYOUT (added 2026-09-21) — do not edit above this line ==== */
+@media(max-width:700px){
+  .mmtTopbar{position:relative;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 8px;padding:7px 10px;min-height:0;}
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{grid-column:2;justify-self:start;text-align:left;min-width:0;font-size:1.1rem;line-height:1.14;}
+  .actions{grid-column:1/-1;margin:0;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;}
+  .actions .btn,.actions button{padding:9px 12px;font-size:13px;line-height:1.15;border-radius:11px;white-space:nowrap;min-width:0;min-height:38px;}
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;}
+  .layout,.layout>*,.card{min-width:0;}
+  .layout{width:calc(100vw - 16px);margin:8px auto;}
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+  input,select,textarea{font-size:16px!important;}
+
+  /* The Nasty Game on a phone: the die sits beside the status, the boards
+     take the width, the scores follow underneath. */
+  .menu-card{padding:12px;min-height:0;}
+  .menu-center-panel{padding:16px;}
+  .menu-hero{flex-direction:column;align-items:flex-start;}
+  .mode-grid{grid-template-columns:1fr;}
+  .setup-modal-panel{padding:14px;max-height:calc(100dvh - 20px);width:calc(100vw - 16px);}
+  .field-row{grid-template-columns:1fr;}
+  .game-card{padding:8px;gap:8px;}
+  .status-strip{grid-template-columns:minmax(0,1fr) auto;gap:8px;}
+  .turn-card{min-height:0;padding:8px 10px;border-radius:16px;gap:8px;}
+  .status-icon{width:30px;height:30px;font-size:.95rem;}
+  .status-title{font-size:.98rem;}
+  .status-subtitle{font-size:.84rem;}
+  .die-card{padding:6px 8px;gap:8px;border-radius:16px;flex-direction:column;}
+  .die{width:52px;height:52px;font-size:1.9rem;border-radius:13px;}
+  .die-card button{padding:8px 12px;font-size:13px;min-height:38px;}
+  .toolbar{justify-content:center;gap:6px;}
+  .toolbar button{padding:9px 12px;font-size:13px;min-height:38px;}
+  .toolbar .chip{padding:6px 10px;font-size:.78rem;}
+  .side-panel{grid-template-columns:1fr;}
+  .lobby-card{padding:12px;}
+  .lobby-top{grid-template-columns:1fr;}
+  .tables-grid{grid-template-columns:1fr;}
+  .worth-tip{display:none;}
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">The Nasty Game</div>
+    <div class="actions">
+      <button class="btn" id="rulesBtn" type="button">How to play</button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎ Settings</button>
+      <button class="btn hidden" id="backToMenuBtn" type="button">Back to menu</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============================================================ MENU -->
+    <section class="card menu-card" id="menuPage">
+      <div class="menu-panel menu-center-panel">
+        <div class="menu-hero">
+          <div class="demo" aria-hidden="true"><span>9</span><span class="bad">0</span><span>7</span><span class="bad">1</span></div>
+          <div class="menu-intro">
+            <h2 style="margin:0">The Nasty Game</h2>
+            <p>Roll the die and write the digit in one of your place value squares to build the biggest number you can. Roll a bad one? Write it on somebody else’s board instead — a 0 in their thousands is very nasty indeed.</p>
+          </div>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card wide hidden" id="continueBtn" type="button">
+            <span class="mode-icon">▶️</span>
+            <strong>Continue game</strong>
+            <span id="continueDesc">—</span>
+          </button>
+          <button class="mode-card wide hidden" id="rejoinBtn" type="button">
+            <span class="mode-icon">🔁</span>
+            <strong>Rejoin your room</strong>
+            <span id="rejoinDesc">—</span>
+          </button>
+          <button class="mode-card" id="cpuModeBtn" type="button">
+            <span class="mode-icon">🤖</span>
+            <strong>Play the computer</strong>
+            <span>You against one to five computer players, from Sweet to Spicy.</span>
+          </button>
+          <button class="mode-card" id="passModeBtn" type="button">
+            <span class="mode-icon">🤝</span>
+            <strong>Pass and play</strong>
+            <span>2 to 30 players on one screen — perfect on the board with the whole class.</span>
+          </button>
+          <button class="mode-card wide" id="onlineModeBtn" type="button">
+            <span class="mode-icon">🌐</span>
+            <strong>Play online as a class</strong>
+            <span>Up to 30 players on their own devices with one room code. Everyone is put at a table of 2 to 4, and a class leaderboard ranks the whole room.</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Local setup (computer / pass and play) -->
+      <div class="menu-panel setup-modal-panel" id="setupPanel" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+        <div class="setup-modal-head"><h2 id="setupTitle">Set up the game</h2><button class="btn-soft" id="setupBackBtn" type="button">Back</button></div>
+        <div class="setup-cols">
+          <div class="setup-block" id="playersBlock">
+            <h3>Players</h3>
+            <div id="cpuPlayers" class="hidden" style="display:grid;gap:10px">
+              <div class="field"><label for="cpuYourName">Your name</label><input id="cpuYourName" type="text" maxlength="24" placeholder="You" autocomplete="off" /></div>
+              <div class="field"><label>Computer players</label><div class="seg" id="cpuCountSeg"></div></div>
+              <div class="field"><label>How nasty is the computer?</label><div class="level-grid" id="levelGrid"></div></div>
+            </div>
+            <div id="passPlayers" class="hidden" style="display:grid;gap:10px">
+              <div class="field-row">
+                <div class="field"><label for="passCount">Number of players (2–30)</label><input id="passCount" type="number" min="2" max="30" value="2" inputmode="numeric" /></div>
+                <div class="field"><label for="passCpu">Add computer players</label>
+                  <select id="passCpu"><option value="0">None</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+              </div>
+              <div class="field hidden" id="passCpuLevelField"><label for="passCpuLevel">Computer level</label>
+                <select id="passCpuLevel"><option value="sweet">🍬 Sweet</option><option value="mild">🍃 Mild</option><option value="medium" selected>🌶️ Medium</option><option value="spicy">🔥 Spicy</option></select></div>
+              <div class="field"><label for="passNames">Names, one per line (optional)</label><textarea id="passNames" rows="4" placeholder="Ava&#10;Ben&#10;Chloe"></textarea></div>
+              <p class="form-note">Leave a line blank and that player is called “Player 3”. With a big group, split the class into teams and give each team one board.</p>
+            </div>
+          </div>
+          <div class="setup-block" id="rulesHome">
+            <h3>The game</h3>
+            <div id="rulesForm" style="display:grid;gap:10px">
+              <div class="field"><label>Die</label><div class="seg" id="dieSeg"><button type="button" data-v="09">0 to 9</button><button type="button" data-v="16">1 to 6</button></div></div>
+              <div class="field-row">
+                <div class="field"><label for="placesSel">Squares on a board</label><select id="placesSel"><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+                <div class="field"><label for="decimalsSel">After the decimal point</label><select id="decimalsSel"><option value="0">None (whole numbers)</option><option value="1">1 (tenths)</option><option value="2">2 (hundredths)</option></select></div>
+              </div>
+              <div class="preview-board" id="previewBoard" aria-hidden="true"></div>
+              <div class="field"><label>Who wins?</label>
+                <div class="goal-set" id="goalSet">
+                  <label><input type="radio" name="goal" value="largest" /><span><strong>Largest total</strong><small>Build big numbers. Dump low digits on everyone else.</small></span></label>
+                  <label><input type="radio" name="goal" value="smallest" /><span><strong>Smallest total</strong><small>Build small numbers. Now the 9s are the nasty ones.</small></span></label>
+                  <label><input type="radio" name="goal" value="average" /><span><strong>Closest to the average</strong><small>The winner’s total is nearest the mean of everyone’s totals.</small></span></label>
+                </div>
+              </div>
+              <div class="field"><label for="roundsSel">Rounds</label><select id="roundsSel"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+            </div>
+          </div>
+        </div>
+        <p class="form-msg" id="setupMsg" aria-live="polite"></p>
+        <button class="btn-primary" id="startBtn" type="button">Start the game</button>
+      </div>
+
+      <!-- Online: create or join -->
+      <div class="menu-panel setup-modal-panel" id="onlinePanel" role="dialog" aria-modal="true" aria-labelledby="onlineTitle" style="width:min(760px,calc(100vw - 36px))">
+        <div class="setup-modal-head"><h2 id="onlineTitle">Play online as a class</h2><button class="btn-soft" id="onlineBackBtn" type="button">Back</button></div>
+        <div class="field"><label for="onlineName">Your first name</label><input id="onlineName" type="text" maxlength="24" placeholder="First name only" autocomplete="off" /></div>
+        <div class="setup-cols">
+          <div class="setup-block">
+            <h3>Join a room</h3>
+            <div class="field"><label for="roomCodeInput">Room code</label><input id="roomCodeInput" type="text" maxlength="5" placeholder="e.g. K7Q2M" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.14em;font-size:1.2rem" /></div>
+            <button class="btn-primary" id="joinBtn" type="button">Join</button>
+          </div>
+          <div class="setup-block">
+            <h3>Teacher: start a room</h3>
+            <p class="form-note">You get a code to put on the board. Everyone who joins is split into tables of 2 to 4, and your screen shows the class leaderboard.</p>
+            <label class="toggle-row" style="margin:0"><span class="tr-text"><strong>I’m playing as well</strong><span>Leave off to run the room from the front.</span></span><input type="checkbox" id="hostPlaysToggle" /></label>
+            <button class="btn-purple" id="createRoomBtn" type="button">Create a room</button>
+          </div>
+        </div>
+        <p class="form-msg" id="onlineMsg" aria-live="polite"></p>
+        <p class="form-note">Names are first names only. Nothing is saved except the game itself, and a room is gone once the class leaves it.</p>
+      </div>
+      <div class="modal-backdrop" id="setupBackdrop" aria-hidden="true"></div>
+    </section>
+
+    <!-- ============================================================ LOBBY -->
+    <section class="card lobby-card hidden" id="lobbyPage">
+      <div class="lobby-top">
+        <div class="room-code"><small>Room code</small><strong id="lobbyCode">—</strong></div>
+        <div style="display:grid;gap:8px">
+          <h2 style="margin:0" id="lobbyTitle">Waiting for players</h2>
+          <p class="join-help" id="joinHelp">Open <code>millsmathstools.au</code> → Games → The Nasty Game → <b>Play online as a class</b>, and type the code.</p>
+          <p class="form-msg" id="lobbyMsg" aria-live="polite"></p>
+        </div>
+      </div>
+      <div class="lobby-cols">
+        <div class="setup-block">
+          <h3 id="memberHead">Players</h3>
+          <div class="member-list" id="memberList"></div>
+          <p class="form-note" id="memberNote"></p>
+        </div>
+        <div class="setup-block" id="lobbyRulesHost">
+          <h3>The game</h3>
+          <div id="lobbyRulesSlot"></div>
+          <div class="field" id="tableSizeField"><label>Players at each table</label><div class="seg" id="tableSizeSeg"><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button><button type="button" data-v="4">4</button></div></div>
+          <p class="table-plan" id="tablePlan"></p>
+          <button class="btn-green" id="startOnlineBtn" type="button">Deal the tables and start</button>
+        </div>
+        <div class="setup-block hidden" id="lobbyRulesGuest">
+          <h3>The game</h3>
+          <p class="end-big" id="guestRules" style="margin:0"></p>
+          <p class="form-note">Your teacher starts the game. You will be put at a table with 1 to 3 others.</p>
+        </div>
+      </div>
+      <div class="end-actions" style="margin:0"><button class="btn-soft" id="leaveLobbyBtn" type="button">Leave the room</button></div>
+    </section>
+
+    <!-- ============================================================ GAME -->
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">🎲</div>
+          <div style="min-width:0">
+            <div class="status-title" id="statusTitle">—</div>
+            <div class="status-subtitle" id="messageBox" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="die-card">
+          <div class="die blank" id="die" aria-live="polite" aria-label="Die">?</div>
+          <button class="btn-primary" id="rollBtn" type="button">Roll</button>
+        </div>
+        <div class="toolbar">
+          <span class="chip" id="roundChip">Round 1 of 4</span>
+          <span class="chip goal" id="goalChip">Largest wins</span>
+          <button class="btn-soft hidden" id="undoBtn" type="button" title="Take back the last placement">↶ Undo</button>
+          <button class="btn-soft hidden" id="takeoverBtn" type="button">Play their turn</button>
+          <button class="btn-soft hidden" id="classViewBtn" type="button">Class view</button>
+          <button class="btn-green hidden" id="nextRoundBtn" type="button">Next round</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="boards" id="boards" aria-label="Everyone's boards"></div>
+        <aside class="side-panel">
+          <section class="panel-section">
+            <h2><span id="scoresTitle">Scores</span><small id="scoresSub"></small></h2>
+            <div class="score-wrap"><table class="scores" id="scoreTable"></table></div>
+            <p class="mean-line hidden" id="meanLine"></p>
+          </section>
+          <section class="panel-section hidden" id="classSection">
+            <h2><span>Class leaderboard</span><small id="classSub"></small></h2>
+            <div class="score-wrap"><table class="scores" id="classTable"></table></div>
+            <p class="mean-line hidden" id="classMean"></p>
+          </section>
+          <section class="panel-section" id="quickRules">
+            <h2>Remember</h2>
+            <ol class="rules-mini">
+              <li>Roll, then write the digit in <b>one empty square</b>.</li>
+              <li>Your <b>first go each round</b> goes on your own board.</li>
+              <li>After that, any empty square on anyone’s board.</li>
+              <li id="goalRule">Biggest total after every round wins.</li>
+            </ol>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============================================================ CLASS VIEW (online host) -->
+    <section class="card lobby-card hidden" id="classPage">
+      <div class="lobby-top">
+        <div class="room-code"><small>Room code</small><strong id="classCode">—</strong></div>
+        <div style="display:grid;gap:8px">
+          <h2 style="margin:0" id="classTitle">Class leaderboard</h2>
+          <p class="join-help" id="classInfo"></p>
+          <div class="end-actions" style="margin:0">
+            <button class="btn-soft hidden" id="myTableBtn" type="button">My table</button>
+            <button class="btn-soft" id="toLobbyBtn" type="button">Back to the lobby</button>
+            <button class="btn-soft" id="closeRoomBtn" type="button">Close the room</button>
+          </div>
+        </div>
+      </div>
+      <div class="lobby-cols" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)">
+        <div class="setup-block big-lb">
+          <h3>Leaderboard</h3>
+          <div class="score-wrap"><table class="scores" id="bigClassTable"></table></div>
+          <p class="mean-line hidden" id="bigClassMean"></p>
+        </div>
+        <div class="setup-block">
+          <h3>Tables</h3>
+          <div class="tables-grid" id="tablesGrid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="brand-footer"><span>The Nasty Game · <a href="https://www.millsmathstools.au">Mills Maths Tools</a></span></footer>
+
+  <!-- ============================================================ MODALS -->
+  <div class="modal-backdrop" id="rulesModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-header"><h2 id="rulesTitle">How to play</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <ul class="rules-list">
+        <li>Everyone has a board of empty place value squares — thousands, hundreds, tens and ones to start with.</li>
+        <li>On your turn, roll the die and write the digit in <b>one</b> empty square. Once a digit is written it stays.</li>
+        <li><b>Your first go in each round goes on your own board.</b> After that you choose: keep the digit for yourself, or write it in an empty square on somebody else’s board.</li>
+        <li>That is the nasty part. Roll a 1? Put it in the leader’s thousands. Roll a 9? Keep it for your own. But everyone else can do the same to you.</li>
+        <li>When every square on every board is full, the round ends and each board’s number is that player’s score. Digits other players wrote on your board are shown in red.</li>
+        <li>After the last round the scores are added up. Depending on the settings the <b>largest</b> total wins, the <b>smallest</b>, or the one <b>closest to the average</b> of everyone’s totals.</li>
+        <li>Online, the class is split into tables of 2 to 4 that each play the game, and the leaderboard ranks the whole room. If someone stops playing, anyone at their table can let the computer take their turn.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header"><h2 id="settingsTitle">Settings</h2><button class="btn-soft" data-close type="button">Close</button></div>
+      <div style="font-weight:950;color:#334155;margin-top:6px">Place names above the squares</div>
+      <div class="radio-set" id="labelSet">
+        <label><input type="radio" name="lab" value="auto" /><span><strong>Automatic</strong><small>Words on big boards, numbers (1000, 100, 10, 1) on small ones.</small></span></label>
+        <label><input type="radio" name="lab" value="words" /><span><strong>Words</strong><small>Thousands, Hundreds, Tens, Ones.</small></span></label>
+        <label><input type="radio" name="lab" value="numbers" /><span><strong>Numbers</strong><small>1000, 100, 10, 1 — what one of that place is worth.</small></span></label>
+        <label><input type="radio" name="lab" value="off" /><span><strong>None</strong><small>Students work out the places themselves.</small></span></label>
+      </div>
+      <label class="toggle-row"><span class="tr-text"><strong>Say what each digit is worth</strong><span>“7 in the hundreds = 700” as digits are placed, and on the square you are pointing at.</span></span><input type="checkbox" id="worthToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Show dumped digits in red</strong><span>Digits somebody else wrote on your board.</span></span><input type="checkbox" id="redToggle" /></label>
+      <label class="toggle-row"><span class="tr-text"><strong>Fast computer players</strong><span>Shorter pauses while the computer takes its turn.</span></span><input type="checkbox" id="fastToggle" /></label>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="roundModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="roundTitle">
+      <div class="modal-header"><h2 id="roundTitle">Round 1 results</h2></div>
+      <p class="end-big" id="roundText"></p>
+      <div class="podium" id="roundList"></div>
+      <div class="end-actions">
+        <button class="btn-primary" id="roundNextBtn" type="button">Next round</button>
+        <button class="btn-soft" data-close type="button">Look at the boards</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="overModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+      <div class="modal-header"><h2 id="overTitle">Game over</h2></div>
+      <p class="end-big" id="overText"></p>
+      <div class="podium" id="overList"></div>
+      <div class="award hidden" id="overAward"></div>
+      <div class="end-actions" id="overActions">
+        <button class="btn-primary" id="againBtn" type="button">Play again</button>
+        <button class="btn-soft" id="overMenuBtn" type="button">Menu</button>
+        <button class="btn-soft" data-close type="button">Look at the boards</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="leaveModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leaveTitle">
+      <div class="modal-header"><h2 id="leaveTitle">Leave this game?</h2></div>
+      <p class="end-big" id="leaveText">Your game is saved on this device, and you can carry on from the menu.</p>
+      <div class="end-actions"><button class="btn-red" id="leaveYes" type="button">Leave</button><button class="btn-soft" data-close type="button">Stay</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="worth-tip hidden" id="worthTip"></div>
+<script>
+/* ==========================================================================
+   THE NASTY GAME — ENGINE (no DOM; loads in Node for the test harness)
+   --------------------------------------------------------------------------
+   A board is an array of cells, left to right, biggest place first. A cell is
+   null (empty) or {d, by}: the digit and the SEAT that wrote it there, so the
+   board can show which digits were dumped on you by somebody else.
+
+   ALL ARITHMETIC IS ON WHOLE NUMBERS. A board's value is its digits read as a
+   whole number ("7305"); with decimal places that is the value SCALED by
+   10^decimals (73.05 is held as 7305). Totals, means and distances are all
+   worked on those integers and only divided for display, so no total is ever
+   0.30000000000000004.
+
+   The state is plain JSON (no Maps, no class instances) because the online
+   mode stores it as one string field in Firestore, which cannot hold nested
+   arrays.
+   ========================================================================== */
+var NG = (function () {
+  'use strict';
+
+  var PLACE = {
+    '5': ['Hundred thousands', '100\u202f000'],
+    '4': ['Ten thousands', '10\u202f000'],
+    '3': ['Thousands', '1000'],
+    '2': ['Hundreds', '100'],
+    '1': ['Tens', '10'],
+    '0': ['Ones', '1'],
+    '-1': ['Tenths', '0.1'],
+    '-2': ['Hundredths', '0.01']
+  };
+  var GOALS = ['largest', 'smallest', 'average'];
+  var LEVELS = ['sweet', 'mild', 'medium', 'spicy'];
+  var MAX_PLAYERS = 30;
+
+  function clampInt(v, lo, hi, dflt) {
+    v = parseInt(v, 10);
+    if (!isFinite(v)) return dflt;
+    return Math.max(lo, Math.min(hi, v));
+  }
+
+  /* Settings: die '09' | '16', places 3–6 (squares on a board), decimals 0–2
+     (how many of those squares sit after the point), goal, rounds 1–8.
+     There must always be at least one square before the point. */
+  function normSettings(s) {
+    s = s || {};
+    var places = clampInt(s.places, 3, 6, 4);
+    var decimals = clampInt(s.decimals, 0, 2, 0);
+    if (decimals > places - 1) decimals = places - 1;
+    return {
+      die: s.die === '16' ? '16' : '09',
+      places: places,
+      decimals: decimals,
+      goal: GOALS.indexOf(s.goal) >= 0 ? s.goal : 'largest',
+      rounds: clampInt(s.rounds, 1, 8, 4)
+    };
+  }
+
+  /* The power of ten each square stands for, left to right. */
+  function exps(s) {
+    var whole = s.places - s.decimals, out = [];
+    for (var i = 0; i < s.places; i++) out.push(whole - 1 - i);
+    return out;
+  }
+  function placeName(e) { return PLACE[String(e)][0]; }
+  function placeShort(e) { return PLACE[String(e)][1]; }
+  function faces(s) { return s.die === '16' ? [1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; }
+
+  function emptyBoard(s) { var b = []; for (var i = 0; i < s.places; i++) b.push(null); return b; }
+  function boardValue(b) { var v = 0; for (var i = 0; i < b.length; i++) v = v * 10 + (b[i] ? b[i].d : 0); return v; }
+  function boardFull(b) { for (var i = 0; i < b.length; i++) if (!b[i]) return false; return true; }
+  function boardEmpty(b) { for (var i = 0; i < b.length; i++) if (b[i]) return false; return true; }
+  function hasSpace(b) { return !boardFull(b); }
+
+  /* ---- formatting (display only) ------------------------------------------
+     NSW convention: a space between groups of three only once a number has
+     five or more digits before the point (7305, but 12 480). */
+  function groupInt(str) {
+    if (str.length < 5) return str;
+    var out = '';
+    while (str.length > 3) { out = ' ' + str.slice(-3) + out; str = str.slice(0, -3); }
+    return str + out;
+  }
+  function fmtScaled(v, dec) {
+    var neg = v < 0; if (neg) v = -v;
+    var s = String(v);
+    if (dec > 0) {
+      while (s.length <= dec) s = '0' + s;
+      s = groupInt(s.slice(0, -dec)) + '.' + s.slice(-dec);
+    } else s = groupInt(s);
+    return (neg ? '−' : '') + s;
+  }
+  /* A fraction num/den of scaled units, shown to dec+2 places, with ≈ when it
+     does not terminate there. Used for the mean. */
+  function fmtRatio(num, den, dec) {
+    var extra = 2, p = Math.pow(10, extra);
+    var q = num * p / den;
+    var r = Math.round(q);
+    var exact = (num * p) % den === 0;
+    var s = fmtScaled(r, dec + extra);
+    // trim trailing zeros beyond the board's own decimals
+    if (s.indexOf('.') >= 0) {
+      var keep = dec;
+      var parts = s.split('.');
+      var frac = parts[1];
+      while (frac.length > keep && frac.charAt(frac.length - 1) === '0') frac = frac.slice(0, -1);
+      s = frac.length ? parts[0] + '.' + frac : parts[0];
+    }
+    return (exact ? '' : '≈ ') + s;
+  }
+  /* "7 in the hundreds place is worth 700" — the value of one digit where it sits. */
+  function worth(d, e) {
+    if (e >= 0) return groupInt(String(d * Math.pow(10, e)));
+    if (d === 0) return '0';
+    var s = String(d); while (s.length < -e) s = '0' + s;
+    return '0.' + s;
+  }
+
+  /* ---- a game --------------------------------------------------------------- */
+  function newGame(players, settings) {
+    var s = normSettings(settings);
+    var n = players.length;
+    if (n < 2 || n > MAX_PLAYERS) throw new Error('The Nasty Game needs 2 to 30 players.');
+    var st = {
+      v: 1, s: s, n: n,
+      players: players.map(function (p, i) {
+        return { name: String(p.name || ('Player ' + (i + 1))).slice(0, 24), kind: p.kind === 'cpu' ? 'cpu' : 'human', level: LEVELS.indexOf(p.level) >= 0 ? p.level : 'medium', id: p.id || null };
+      }),
+      round: 1, starter: 0, turn: 0, phase: 'roll', die: null,
+      boards: [], first: [], totals: [], rounds: [], nasty: [],
+      last: null, seq: 0
+    };
+    for (var i = 0; i < n; i++) { st.boards.push(emptyBoard(s)); st.first.push(false); st.totals.push(0); st.nasty.push(0); }
+    return st;
+  }
+  function clone(st) { return JSON.parse(JSON.stringify(st)); }
+
+  /* THE FIRST-TURN RULE: in every round, a player's first placement goes on
+     their OWN board. After that they may write on anyone's empty square. */
+  function mustOwn(st, p) {
+    if (p == null) p = st.turn;
+    return !st.first[p] && hasSpace(st.boards[p]);
+  }
+  function legalMoves(st) {
+    if (st.phase !== 'place') return [];
+    var out = [], me = st.turn, own = mustOwn(st, me);
+    for (var b = 0; b < st.n; b++) {
+      if (own && b !== me) continue;
+      for (var i = 0; i < st.s.places; i++) if (!st.boards[b][i]) out.push({ b: b, i: i });
+    }
+    return out;
+  }
+  function isLegal(st, b, i) {
+    if (st.phase !== 'place') return false;
+    if (b < 0 || b >= st.n || i < 0 || i >= st.s.places) return false;
+    if (st.boards[b][i]) return false;
+    if (mustOwn(st) && b !== st.turn) return false;
+    return true;
+  }
+  function roll(st, rng) {
+    if (st.phase !== 'roll') throw new Error('Not time to roll.');
+    var f = faces(st.s);
+    st.die = f[Math.floor((rng || Math.random)() * f.length) % f.length];
+    st.phase = 'place';
+    st.seq++;
+    return st.die;
+  }
+  function allFull(st) { for (var b = 0; b < st.n; b++) if (!boardFull(st.boards[b])) return false; return true; }
+
+  function place(st, b, i) {
+    if (!isLegal(st, b, i)) throw new Error('That square cannot be used.');
+    var me = st.turn;
+    st.boards[b][i] = { d: st.die, by: me };
+    st.first[me] = true;
+    if (b !== me) st.nasty[me]++;
+    st.last = { by: me, b: b, i: i, d: st.die, round: st.round };
+    st.die = null;
+    st.seq++;
+    if (allFull(st)) {
+      var vals = st.boards.map(boardValue);
+      st.rounds.push(vals);
+      for (var k = 0; k < st.n; k++) st.totals[k] += vals[k];
+      st.phase = st.round >= st.s.rounds ? 'over' : 'roundEnd';
+    } else {
+      st.turn = (me + 1) % st.n;
+      st.phase = 'roll';
+    }
+    return st;
+  }
+  function nextRound(st) {
+    if (st.phase !== 'roundEnd') throw new Error('The round is not over.');
+    st.round++;
+    for (var b = 0; b < st.n; b++) { st.boards[b] = emptyBoard(st.s); st.first[b] = false; }
+    st.starter = (st.starter + 1) % st.n;
+    st.turn = st.starter;
+    st.phase = 'roll';
+    st.die = null;
+    st.last = null;
+    st.seq++;
+    return st;
+  }
+
+  /* ---- standings ---------------------------------------------------------------
+     key is what is SORTED ON (smaller is better), all integers:
+       largest   -total
+       smallest  total
+       average   |n·total − sum|, i.e. n × distance from the mean — the same
+                 order as the distance itself, without dividing. */
+  function standings(totals, goal) {
+    var n = totals.length, sum = 0;
+    for (var i = 0; i < n; i++) sum += totals[i];
+    var rows = totals.map(function (t, i) {
+      var key = goal === 'smallest' ? t : goal === 'average' ? Math.abs(n * t - sum) : -t;
+      return { i: i, total: t, key: key };
+    });
+    rows.sort(function (a, b) { return a.key - b.key || a.i - b.i; });
+    var rank = 0;
+    rows.forEach(function (r, k) { if (k === 0 || r.key !== rows[k - 1].key) rank = k + 1; r.rank = rank; });
+    return { rows: rows, sum: sum, n: n, winners: rows.filter(function (r) { return r.rank === 1; }).map(function (r) { return r.i; }) };
+  }
+
+  /* ==========================================================================
+     THE COMPUTER
+     --------------------------------------------------------------------------
+     What a board is likely to END UP as is worked out exactly. If its owner
+     filled the rest alone, choosing each square as the digits came, the best
+     they could expect is a small dynamic programme over the set of empty
+     squares (at most 2^6 = 64 sets):
+        V(S) = mean over faces d of  best over p in S of  w_p·d + V(S − p)
+     'best' is max when aiming high, min when aiming low. That one table is
+     what tells a 6 to go in the hundreds rather than the thousands of a
+     four-square board: it knows how often a 7, 8 or 9 is still to come.
+     In "closest to the average" nobody knows yet whether high or low is
+     wanted, so an empty square is simply valued at the mean face.
+     ========================================================================== */
+  var dpCache = {};
+  function dpTable(s, dir, q) {
+    if (q == null) q = 1;
+    var key = s.places + '|' + s.die + '|' + dir + '|' + q;
+    if (dpCache[key]) return dpCache[key];
+    var P = s.places, f = faces(s), w = [];
+    // what an opponent dumps: the worst third of the faces for this goal
+    var sorted = f.slice().sort(function (a, b) { return dir > 0 ? a - b : b - a; });
+    var junk = sorted.slice(0, Math.max(1, Math.round(f.length / 3)));
+    for (var i = 0; i < P; i++) w.push(Math.pow(10, P - 1 - i));
+    var V = new Array(1 << P);
+    V[0] = 0;
+    for (var m = 1; m < (1 << P); m++) {
+      var tot = 0;
+      for (var k = 0; k < f.length; k++) {
+        var d = f[k], best = null;
+        for (var p = 0; p < P; p++) if (m & (1 << p)) {
+          var v = w[p] * d + V[m & ~(1 << p)];
+          if (best === null || (dir > 0 ? v > best : v < best)) best = v;
+        }
+        tot += best;
+      }
+      var own = tot / f.length;
+      if (q < 1) {
+        // an opponent drops junk into the most valuable empty square (the leftmost)
+        var top = 0; while (!(m & (1 << top))) top++;
+        var jt = 0;
+        for (var j = 0; j < junk.length; j++) jt += w[top] * junk[j] + V[m & ~(1 << top)];
+        V[m] = q * own + (1 - q) * jt / junk.length;
+      } else V[m] = own;
+    }
+    dpCache[key] = { V: V, w: w };
+    return dpCache[key];
+  }
+  function meanFace(s) { var f = faces(s), t = 0; for (var i = 0; i < f.length; i++) t += f[i]; return t / f.length; }
+  function expected(s, board, q) {
+    var P = s.places, filled = 0, m2 = 0;   // m2: bit j set = square j (left to right) is empty
+    for (var i = 0; i < P; i++) { filled = filled * 10 + (board[i] ? board[i].d : 0); if (!board[i]) m2 |= 1 << i; }
+    if (s.goal === 'average') {
+      var t = dpTable(s, 1), mf = meanFace(s), add = 0;
+      for (var q = 0; q < P; q++) if (!board[q]) add += t.w[q] * mf;
+      return filled + add;
+    }
+    var tab = dpTable(s, s.goal === 'smallest' ? -1 : 1, q);
+    return filled + tab.V[m2];
+  }
+
+  /* How good a position is for seat `me`, looking at every player's expected
+     FINAL total (what they have banked plus what their board will likely be). */
+  function utility(s, me, finals) {
+    var n = finals.length, others = [], sumO = 0;
+    for (var i = 0; i < n; i++) if (i !== me) { others.push(finals[i]); sumO += finals[i]; }
+    var meanO = sumO / others.length;
+    if (s.goal === 'average') {
+      var all = sumO + finals[me], mean = all / n, bestO = Infinity;
+      for (var k = 0; k < others.length; k++) bestO = Math.min(bestO, Math.abs(others[k] - mean));
+      return bestO - Math.abs(finals[me] - mean);
+    }
+    if (s.goal === 'smallest') {
+      var mn = Infinity; for (var a = 0; a < others.length; a++) mn = Math.min(mn, others[a]);
+      return (0.65 * mn + 0.35 * meanO) - finals[me];
+    }
+    var mx = -Infinity; for (var c = 0; c < others.length; c++) mx = Math.max(mx, others[c]);
+    return finals[me] - (0.65 * mx + 0.35 * meanO);
+  }
+
+  /* How often a square on a board is filled by its OWNER rather than dumped
+     on by someone else. Spicy plans with it, which is what makes it fill its
+     own high places promptly instead of waiting for a 9 that an opponent's 0
+     will beat it to. Tuned by self-play (more players, more dumping). */
+  var QTAB = { two: 0.7, few: 0.6, many: 0.5 };
+  function NG_Q(n) { return n <= 2 ? QTAB.two : n <= 4 ? QTAB.few : QTAB.many; }
+  function gauss(rng) { var u = 0, v = 0; while (!u) u = rng(); while (!v) v = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* Choose a move for the player whose turn it is. Levels:
+       sweet   any empty square, three times in four on its own board
+       mild    only ever its own board, placed well; never nasty
+       medium  looks at everyone, but its judgement is noisy
+       spicy   looks at everyone, and targets whoever is in front */
+  function aiMove(st, level, rng) {
+    rng = rng || Math.random;
+    var moves = legalMoves(st);
+    if (!moves.length) return null;
+    var me = st.turn, s = st.s;
+    if (level === 'sweet') {
+      var own = moves.filter(function (m) { return m.b === me; });
+      var pool = own.length && rng() < 0.75 ? own : moves;
+      return pool[Math.floor(rng() * pool.length)];
+    }
+    var cand = moves;
+    if (level === 'mild') {
+      var own2 = moves.filter(function (m) { return m.b === me; });
+      if (own2.length) cand = own2;
+    }
+    var q = level === 'spicy' ? NG_Q(st.n) : level === 'medium' ? 0.85 : 1;
+    var base = st.boards.map(function (b, i) { return st.totals[i] + expected(s, b, q); });
+    var w0 = Math.pow(10, s.places - 1);
+    var scored = cand.map(function (m) {
+      var b = st.boards[m.b].slice();
+      b[m.i] = { d: st.die, by: me };
+      var finals = base.slice();
+      finals[m.b] = st.totals[m.b] + expected(s, b, q);
+      var u = utility(s, me, finals);
+      if (level === 'medium') u += gauss(rng) * 0.15 * w0;
+      return { m: m, u: u };
+    });
+    var best = -Infinity;
+    scored.forEach(function (x) { if (x.u > best) best = x.u; });
+    var eps = 1e-9 * Math.max(1, Math.abs(best));
+    var top = scored.filter(function (x) { return x.u >= best - eps; });
+    return top[Math.floor(rng() * top.length)].m;
+  }
+
+  /* One whole turn for a computer (or for someone who has walked away online). */
+  function autoTurn(st, level, rng) {
+    if (st.phase === 'roll') roll(st, rng);
+    var m = aiMove(st, level, rng);
+    if (m) place(st, m.b, m.i);
+    return m;
+  }
+
+  return {
+    PLACE: PLACE, GOALS: GOALS, LEVELS: LEVELS, MAX_PLAYERS: MAX_PLAYERS,
+    normSettings: normSettings, exps: exps, placeName: placeName, placeShort: placeShort, faces: faces,
+    emptyBoard: emptyBoard, boardValue: boardValue, boardFull: boardFull, boardEmpty: boardEmpty,
+    fmtScaled: fmtScaled, fmtRatio: fmtRatio, worth: worth, groupInt: groupInt,
+    newGame: newGame, clone: clone, mustOwn: mustOwn, legalMoves: legalMoves, isLegal: isLegal,
+    roll: roll, place: place, nextRound: nextRound, allFull: allFull, standings: standings,
+    expected: expected, QTAB: QTAB, dpTable: dpTable, aiMove: aiMove, autoTurn: autoTurn
+  };
+})();
+if (typeof module !== 'undefined') module.exports = NG;
+</script>
+<script type="module">
+/* ============================================================ THE NASTY GAME — APP
+   One page, three ways to play, ONE renderer. Whatever is driving the game —
+   this device (computer / pass and play) or a Firestore table (online) — hands
+   the renderer a state from the engine and says which seats this device may
+   move for. Nothing in the drawing code knows which mode it is in.
+
+   Firebase is imported DYNAMICALLY and only when someone opens the online
+   mode, so the computer and pass-and-play modes work on a network that blocks
+   gstatic.com, or with no network at all.
+   ============================================================================ */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SAVE_KEY = 'mmtNastySave.v1', SET_KEY = 'mmtNastySettings.v1', PREF_KEY = 'mmtNastyPrefs.v1', NAME_KEY = 'mmtNastyName.v1', ONLINE_KEY = 'mmtNastyOnline.v1';
+const COLOURS = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#db2777', '#65a30d', '#4f46e5', '#ca8a04', '#0d9488', '#be123c'];
+const colourOf = i => COLOURS[i % COLOURS.length];
+const LEVELS = [
+  { id: 'sweet', icon: '🍬', name: 'Sweet', tip: 'Puts digits almost anywhere.' },
+  { id: 'mild', icon: '🍃', name: 'Mild', tip: 'Builds its own number. Never nasty.' },
+  { id: 'medium', icon: '🌶️', name: 'Medium', tip: 'Nasty when it notices.' },
+  { id: 'spicy', icon: '🔥', name: 'Spicy', tip: 'Plays the odds and goes after the leader.' }
+];
+const GOAL_TEXT = {
+  largest: { chip: 'Largest total wins', rule: 'Biggest total after the last round wins.' },
+  smallest: { chip: 'Smallest total wins', rule: 'Smallest total after the last round wins.' },
+  average: { chip: 'Closest to the average wins', rule: 'The total closest to the mean of everyone’s totals wins.' }
+};
+
+let toastTimer = null;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600); }
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd && bd.id !== 'setupBackdrop') closeModal(bd.id); });
+  bd.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(bd.id)));
+});
+
+/* ------------------------------------------------------------ preferences */
+const prefs = Object.assign({ labels: 'auto', worth: true, red: true, fast: false }, store.get(PREF_KEY, {}));
+function savePrefs() { store.set(PREF_KEY, prefs); }
+document.querySelectorAll('#labelSet input').forEach(r => { r.checked = r.value === prefs.labels; r.addEventListener('change', () => { prefs.labels = r.value; savePrefs(); render(); }); });
+[['worthToggle', 'worth'], ['redToggle', 'red'], ['fastToggle', 'fast']].forEach(([id, k]) => {
+  $(id).checked = !!prefs[k];
+  $(id).addEventListener('change', () => { prefs[k] = $(id).checked; savePrefs(); render(); });
+});
+$('rulesBtn').addEventListener('click', () => openModal('rulesModal'));
+$('settingsBtn').addEventListener('click', () => openModal('settingsModal'));
+
+/* ------------------------------------------------------------ game settings form
+   ONE form, moved between the local setup panel and the online lobby, so there
+   is only one set of controls to keep right. */
+let GS = NG.normSettings(store.get(SET_KEY, {}));
+let tableSize = store.get(SET_KEY, {}).tableSize || 3;
+const formHooks = [];
+function paintForm() {
+  document.querySelectorAll('#dieSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === GS.die));
+  $('placesSel').value = String(GS.places);
+  [...$('decimalsSel').options].forEach(o => { o.disabled = +o.value > GS.places - 1; });
+  $('decimalsSel').value = String(GS.decimals);
+  document.querySelectorAll('#goalSet input').forEach(r => { r.checked = r.value === GS.goal; });
+  $('roundsSel').value = String(GS.rounds);
+  document.querySelectorAll('#tableSizeSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === tableSize));
+  // the preview IS a board: this is what everyone will be filling in
+  const ex = NG.exps(GS);
+  $('previewBoard').innerHTML = ex.map((e, k) => (e === -1 ? '<div class="pt">.</div>' : '') +
+    `<div class="pc"><i>${NG.placeName(e)}</i><b></b></div>`).join('');
+}
+function formChanged() {
+  GS = NG.normSettings({
+    die: document.querySelector('#dieSeg button.on')?.dataset.v,
+    places: $('placesSel').value, decimals: $('decimalsSel').value,
+    goal: document.querySelector('#goalSet input:checked')?.value, rounds: $('roundsSel').value
+  });
+  store.set(SET_KEY, Object.assign({}, GS, { tableSize }));
+  paintForm();
+  formHooks.forEach(f => f());
+}
+document.querySelectorAll('#dieSeg button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#dieSeg button').forEach(x => x.classList.toggle('on', x === b)); formChanged(); }));
+['placesSel', 'decimalsSel', 'roundsSel'].forEach(id => $(id).addEventListener('change', formChanged));
+document.querySelectorAll('#goalSet input').forEach(r => r.addEventListener('change', formChanged));
+document.querySelectorAll('#tableSizeSeg button').forEach(b => b.addEventListener('click', () => { tableSize = +b.dataset.v; formChanged(); }));
+paintForm();
+function describeSettings(s) {
+  const ex = NG.exps(s);
+  const places = ex.map(e => NG.placeName(e).toLowerCase());
+  return `${s.places} squares (${places[0]} to ${places[places.length - 1]}), a ${s.die === '16' ? '1 to 6' : '0 to 9'} die, ${s.rounds} round${s.rounds > 1 ? 's' : ''}. ${GOAL_TEXT[s.goal].chip}.`;
+}
+
+/* ============================================================ THE CONTROLLER
+   C is whatever is running the game now:
+     C.st            the engine state
+     C.canAct()      may THIS device move for the seat whose turn it is?
+     C.mySeat        the seat that is "me" (online), or null
+     C.roll(), C.place(b,i), C.nextRound()
+   ============================================================================ */
+let C = null;
+let narr = '';                // what just happened, in words
+let busy = false;             // an animation is running
+let pendingRoll = null;       // die value being animated (so the face does not jump early)
+
+function playerName(st, i) { return st.players[i].name; }
+function isMe(i) { return C && C.mySeat === i; }
+function whoseName(i) { return isMe(i) ? 'your' : `${playerName(C.st, i)}’s`; }
+
+function narrate(st, last) {
+  if (!last) return '';
+  const e = NG.exps(st.s)[last.i];
+  const place = NG.placeName(e).toLowerCase();
+  const who = isMe(last.by) ? 'You' : esc(playerName(st, last.by));
+  const worth = prefs.worth ? ` <b>= ${NG.worth(last.d, e)}</b>` : '';
+  if (last.b === last.by) return `${who} put <b>${last.d}</b> in the ${place}${isMe(last.by) ? ' on your board' : ''}${worth}.`;
+  const target = isMe(last.b) ? 'your' : esc(playerName(st, last.b)) + '’s';
+  return `${who} put <b>${last.d}</b> in ${target} ${place}${worth}. <span class="nastyTag">Nasty!</span>`;
+}
+
+/* ------------------------------------------------------------ page switching */
+function showPage(id) {
+  ['menuPage', 'lobbyPage', 'gamePage', 'classPage'].forEach(p => $(p).classList.toggle('hidden', p !== id));
+  $('backToMenuBtn').classList.toggle('hidden', id === 'menuPage');
+  if (id === 'menuPage') paintMenu();
+  window.scrollTo(0, 0);
+}
+$('backToMenuBtn').addEventListener('click', () => {
+  if (ON.active) { $('leaveText').textContent = ON.isHost ? 'This closes nothing — the room keeps going and you can rejoin it from the menu.' : 'You can rejoin this room from the menu with the same device.'; }
+  else if (C && C.st && C.st.phase !== 'over') $('leaveText').textContent = 'Your game is saved on this device, and you can carry on from the menu.';
+  else { goMenu(); return; }
+  openModal('leaveModal');
+});
+$('leaveYes').addEventListener('click', () => { closeModal('leaveModal'); if (ON.active) detachOnline(false); goMenu(); });
+function goMenu() { stopLocalTimers(); C = null; ['roundModal', 'overModal'].forEach(closeModal); showPage('menuPage'); }
+
+/* ============================================================ RENDER */
+function fitBoards() {
+  const st = C.st, host = $('boards');
+  const n = st.n, P = st.s.places, dec = st.s.decimals > 0;
+  const W = host.clientWidth || 800;
+  const top = host.getBoundingClientRect().top + window.scrollY;
+  const availH = Math.max(280, window.innerHeight - (top - window.scrollY) - 22);
+  const labRows = prefs.labels === 'off' ? 0 : 0.55;
+  let best = null;
+  for (let c = 1; c <= Math.min(n, 10); c++) {
+    const colW = (W - 12 * (c - 1)) / c;
+    const cellW = (colW - 16) / (P + 0.1 * (P - 1) + (dec ? 0.22 : 0) + 0.44);
+    const rows = Math.ceil(n / c);
+    const cellH = ((availH - 12 * (rows - 1)) / rows - 22) / (1.12 + 0.44 + labRows + 0.6);
+    const cell = Math.min(cellW, cellH, 86);
+    if (cellW < 26) continue;
+    if (!best || cell > best.cell + 0.5) best = { c, cell, cellW };
+  }
+  if (!best) best = { c: 1, cell: 30, cellW: 30 };
+  // Thirty boards cannot all fit a projector at a readable size. Below 30px,
+  // stop shrinking and let the page scroll instead.
+  if (best.cell < 30) {
+    let c2 = 1;
+    for (let c = 1; c <= Math.min(n, 10); c++) { const colW = (W - 12 * (c - 1)) / c; const cw = (colW - 16) / (P + 0.1 * (P - 1) + (dec ? 0.22 : 0) + 0.44); if (cw >= 34) c2 = c; }
+    const colW = (W - 12 * (c2 - 1)) / c2;
+    best = { c: c2, cell: Math.min(44, (colW - 16) / (P + 0.1 * (P - 1) + (dec ? 0.22 : 0) + 0.44)) };
+  }
+  host.style.setProperty('--cols', best.c);
+  host.style.setProperty('--cell', Math.floor(best.cell) + 'px');
+  host.classList.toggle('compact', best.cell < 34);
+  return best.cell;
+}
+
+function labelMode(cell) {
+  if (prefs.labels === 'auto') return cell >= 58 ? 'words' : 'numbers';
+  return prefs.labels;
+}
+
+function boardEl(st, b, opt) {
+  const ex = NG.exps(st.s), board = st.boards[b];
+  const d = document.createElement('div');
+  d.className = 'pboard';
+  d.style.setProperty('--pc', colourOf(b));
+  if (opt.turn) d.classList.add('turn');
+  if (opt.me) d.classList.add('me');
+  if (opt.winner) d.classList.add('winner');
+  const p = st.players[b];
+  const tags = [];
+  if (opt.me) tags.push('<span class="pb-tag">You</span>');
+  if (p.kind === 'cpu') tags.push(`<span class="pb-tag cpu">${LEVELS.find(l => l.id === p.level)?.icon || '🤖'} CPU</span>`);
+  if (opt.turn && st.phase !== 'roundEnd' && st.phase !== 'over' && NG.mustOwn(st, b)) tags.push('<span class="pb-tag first">1st go</span>');
+  const total = st.rounds.length ? NG.fmtScaled(st.totals[b], st.s.decimals) : '';
+  let html = `<div class="pb-head"><span class="pb-dot"></span><span class="pb-name">${esc(p.name)}</span>${tags.join('')}<span class="pb-total">${total ? 'Total ' + total : ''}</span></div>`;
+  html += '<div class="pb-row">';
+  ex.forEach((e, i) => {
+    if (e === -1) html += `<div class="pb-col" style="width:auto">${opt.labs !== 'off' ? `<div class="pb-lab ${opt.labs === 'numbers' ? 'num' : ''}">&nbsp;</div>` : ''}<div class="pb-point"><i></i></div></div>`;
+    const c = board[i];
+    const lab = opt.labs === 'off' ? '' : `<div class="pb-lab ${opt.labs === 'numbers' ? 'num' : ''}">${opt.labs === 'numbers' ? NG.placeShort(e) : NG.placeName(e)}</div>`;
+    let cls = 'pb-cell', inner = '';
+    if (c) {
+      cls += ' filled';
+      if (prefs.red && c.by !== b) cls += ' dumped';
+      if (st.last && st.last.b === b && st.last.i === i && opt.fresh) cls += ' last';
+      inner = String(c.d);
+    } else if (opt.targets && opt.targets.has(b + ':' + i)) {
+      cls += ' target';
+      inner = `<span class="ghost">${st.die}</span>`;
+    }
+    const name = `${p.name}, ${NG.placeName(e)}: ${c ? c.d + (c.by !== b ? ' (written by ' + st.players[c.by].name + ')' : '') : 'empty'}`;
+    const tag = opt.targets && opt.targets.has(b + ':' + i) ? 'button' : 'div';
+    html += `<div class="pb-col">${lab}<${tag} class="${cls}" data-b="${b}" data-i="${i}" data-e="${e}" ${tag === 'button' ? 'type="button"' : 'role="img"'} aria-label="${esc(name)}">${inner}</${tag}></div>`;
+  });
+  html += '</div>';
+  if (!opt.mini) {
+    const full = NG.boardFull(board);
+    const val = full ? `<span class="pb-value">${NG.fmtScaled(NG.boardValue(board), st.s.decimals)}</span>` : '<span></span>';
+    const nasty = st.nasty[b] ? `<span class="pb-nasty">😈 ${st.nasty[b]}</span>` : '<span></span>';
+    html += `<div class="pb-foot">${val}${nasty}</div>`;
+  }
+  d.innerHTML = html;
+  return d;
+}
+
+function scoreTableHTML(st, opts = {}) {
+  const n = st.n, R = st.rounds.length, dec = st.s.decimals;
+  const sd = NG.standings(st.totals, st.s.goal);
+  const order = R ? sd.rows : st.players.map((_, i) => ({ i, rank: '', total: 0 }));
+  const avg = st.s.goal === 'average' && R;
+  let h = `<thead><tr><th>#</th><th class="nm">Player</th>`;
+  for (let r = 0; r < R; r++) h += `<th>R${r + 1}</th>`;
+  h += `<th>Total</th>${avg ? '<th title="How far from the mean">Off by</th>' : ''}</tr></thead><tbody>`;
+  order.forEach(row => {
+    const i = row.i;
+    const cls = [R && row.rank === 1 ? 'lead' : '', isMe(i) ? 'me' : ''].join(' ');
+    h += `<tr class="${cls}"><td>${R ? row.rank : ''}</td><td class="nm"><i style="background:${colourOf(i)}"></i>${esc(st.players[i].name)}</td>`;
+    for (let r = 0; r < R; r++) h += `<td>${NG.fmtScaled(st.rounds[r][i], dec)}</td>`;
+    h += `<td class="tot">${R ? NG.fmtScaled(st.totals[i], dec) : '—'}</td>`;
+    if (avg) h += `<td>${NG.fmtRatio(Math.abs(n * st.totals[i] - sd.sum), n, dec)}</td>`;
+    h += '</tr>';
+  });
+  return h + '</tbody>';
+}
+function meanText(st) {
+  const sd = NG.standings(st.totals, st.s.goal);
+  return `Mean of the totals: <b>${NG.fmtRatio(sd.sum, sd.n, st.s.decimals)}</b> (${NG.fmtScaled(sd.sum, st.s.decimals)} ÷ ${sd.n})`;
+}
+
+let lastRenderedSeq = -1;
+function render() {
+  if (!C || !C.st) return;
+  const st = C.st;
+  const cur = st.turn, curP = st.players[cur];
+  const act = C.canAct() && !busy;
+  // --- status
+  const icon = $('statusIcon');
+  icon.style.setProperty('--pc', colourOf(cur));
+  icon.style.background = st.phase === 'roundEnd' || st.phase === 'over' ? '#eef2ff' : colourOf(cur);
+  let title = '', sub = '';
+  if (st.phase === 'over') {
+    const sd = NG.standings(st.totals, st.s.goal);
+    title = 'Game over';
+    sub = `${sd.winners.map(i => isMe(i) ? 'You' : esc(playerName(st, i))).join(' and ')} ${sd.winners.length > 1 ? 'share the win' : (sd.winners.length === 1 && isMe(sd.winners[0]) ? 'win' : 'wins')}!`;
+    icon.textContent = '🏆';
+  } else if (st.phase === 'roundEnd') {
+    title = `Round ${st.round} is over`;
+    sub = 'Every square is full. Each board’s number is added to that player’s total.';
+    icon.textContent = '✓';
+  } else {
+    icon.textContent = (curP.name || '?').trim().charAt(0).toUpperCase() || '?';
+    const mine = isMe(cur) || (C.mySeat == null && curP.kind === 'human');
+    const name = isMe(cur) ? 'Your' : esc(curP.name) + '’s';
+    if (st.phase === 'roll') {
+      title = `${name} turn`;
+      const prompt = curP.kind === 'cpu' ? 'The computer is rolling…' : (C.canAct() ? (isMe(cur) || C.mySeat == null ? 'Roll the die.' : '') : `Waiting for ${esc(curP.name)} to roll.`);
+      sub = (narr ? narr + ' ' : '') + prompt;
+    } else {
+      const d = pendingRoll != null ? '…' : st.die;
+      title = `${isMe(cur) ? 'You' : esc(curP.name)} rolled ${d}`;
+      if (curP.kind === 'cpu') sub = 'The computer is choosing a square…';
+      else if (NG.mustOwn(st)) sub = `First go this round: it goes on ${whoseName(cur)} own board. Pick a square.`;
+      else sub = act || C.mySeat == null ? 'Keep it on your own board, or write it on somebody else’s.' : `Waiting for ${esc(curP.name)} to choose a square.`;
+      if (!mine && C.mySeat != null) sub = `Waiting for ${esc(curP.name)} to choose a square.`;
+    }
+  }
+  $('statusTitle').innerHTML = title;
+  $('messageBox').innerHTML = sub;
+  // --- die
+  const die = $('die');
+  const face = pendingRoll != null ? pendingRoll : st.phase === 'place' ? st.die : null;
+  paintDie(die, face, st.s.die);
+  die.classList.toggle('live', st.phase === 'place' && pendingRoll == null);
+  const rollBtn = $('rollBtn');
+  rollBtn.disabled = !(st.phase === 'roll' && act && curP.kind === 'human');
+  rollBtn.textContent = st.phase === 'place' ? 'Rolled' : 'Roll';
+  // --- chips + rules
+  $('roundChip').textContent = `Round ${st.round} of ${st.s.rounds}`;
+  $('goalChip').textContent = GOAL_TEXT[st.s.goal].chip;
+  $('goalRule').textContent = GOAL_TEXT[st.s.goal].rule;
+  $('nextRoundBtn').classList.toggle('hidden', !(st.phase === 'roundEnd' && C.canNext()));
+  $('nextRoundBtn').textContent = `Start round ${st.round + 1}`;
+  $('undoBtn').classList.toggle('hidden', !(C.canUndo && C.canUndo()));
+  // --- boards
+  const host = $('boards');
+  const cell = fitBoards();
+  const labs = labelMode(cell);
+  const targets = new Set();
+  if (st.phase === 'place' && act && pendingRoll == null && curP.kind === 'human') NG.legalMoves(st).forEach(m => targets.add(m.b + ':' + m.i));
+  const winners = st.phase === 'over' ? new Set(NG.standings(st.totals, st.s.goal).winners) : new Set();
+  // the landing bounce plays once, for the move that has just happened
+  const landKey = st.last ? `${st.last.round}:${st.last.b}:${st.last.i}` : '';
+  const fresh = landKey !== lastRenderedSeq;
+  lastRenderedSeq = landKey;
+  const frag = document.createDocumentFragment();
+  // Online, your own board comes first; everyone else keeps their seat order.
+  const order = st.players.map((_, i) => i);
+  if (C.mySeat != null) { order.splice(order.indexOf(C.mySeat), 1); order.unshift(C.mySeat); }
+  order.forEach(b => frag.appendChild(boardEl(st, b, {
+    turn: b === cur && st.phase !== 'roundEnd' && st.phase !== 'over', me: isMe(b), labs, targets, fresh, winner: winners.has(b)
+  })));
+  host.replaceChildren(frag);
+  // --- scores
+  $('scoreTable').innerHTML = scoreTableHTML(st);
+  $('scoresTitle').textContent = C.mySeat != null ? 'Your table' : 'Scores';
+  $('scoresSub').textContent = st.rounds.length ? `after ${st.rounds.length} round${st.rounds.length > 1 ? 's' : ''}` : 'no rounds yet';
+  $('meanLine').classList.toggle('hidden', !(st.s.goal === 'average' && st.rounds.length));
+  if (st.s.goal === 'average' && st.rounds.length) $('meanLine').innerHTML = meanText(st);
+  if (C.afterRender) C.afterRender();
+}
+
+function paintDie(el, v, kind) {
+  el.classList.toggle('blank', v == null);
+  el.setAttribute('aria-label', v == null ? 'Die, not rolled' : 'Die shows ' + v);
+  if (v == null) { el.textContent = '?'; return; }
+  if (kind === '16') {
+    const P = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] }[v] || [];
+    el.innerHTML = '<div class="pips">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(k => `<i class="${P.includes(k) ? 'on' : ''}"></i>`).join('') + '</div>';
+  } else el.textContent = String(v);
+}
+
+async function animateRoll(final, kind) {
+  const die = $('die');
+  if (reduceMotion()) { pendingRoll = null; return; }
+  const faces = kind === '16' ? [1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  die.classList.remove('rolling'); void die.offsetWidth; die.classList.add('rolling');
+  for (let k = 0; k < 8; k++) { paintDie(die, faces[Math.floor(Math.random() * faces.length)], kind); await sleep(55); }
+  paintDie(die, final, kind);
+  pendingRoll = null;
+}
+
+/* The digit leaves the die and lands in its square. */
+async function flyDigit(d, b, i) {
+  const cellEl = document.querySelector(`#boards [data-b="${b}"][data-i="${i}"]`);
+  const dieEl = $('die');
+  if (!cellEl || reduceMotion()) return;
+  const a = dieEl.getBoundingClientRect(), z = cellEl.getBoundingClientRect();
+  if (!z.width) return;
+  const f = document.createElement('div');
+  f.className = 'fly';
+  f.textContent = d;
+  f.style.left = z.left + 'px'; f.style.top = z.top + 'px'; f.style.width = z.width + 'px'; f.style.height = z.height + 'px';
+  f.style.fontSize = (z.width * 0.62) + 'px';
+  f.style.transform = `translate(${a.left + a.width / 2 - (z.left + z.width / 2)}px,${a.top + a.height / 2 - (z.top + z.height / 2)}px) scale(${Math.min(1.4, a.width / z.width)})`;
+  document.body.appendChild(f);
+  void f.offsetWidth;
+  f.style.transform = 'translate(0,0) scale(1)';
+  await sleep(440);
+  f.remove();
+}
+function nastyBurst(b, i) {
+  if (reduceMotion()) return;
+  const cellEl = document.querySelector(`#boards [data-b="${b}"][data-i="${i}"]`);
+  if (!cellEl) return;
+  const r = cellEl.getBoundingClientRect();
+  const s = document.createElement('div');
+  s.className = 'nasty-burst'; s.textContent = 'Nasty! 😈';
+  s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = r.top + 'px';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 950);
+}
+function confetti() {
+  if (reduceMotion()) return;
+  for (let k = 0; k < 60; k++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = COLOURS[k % COLOURS.length];
+    c.style.animationDelay = (Math.random() * 400) + 'ms';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 1700);
+  }
+}
+
+/* The worth tip: point at an empty square and it says what the digit would be worth there. */
+const tip = $('worthTip');
+$('boards').addEventListener('pointerover', e => {
+  const cell = e.target.closest('.pb-cell.target');
+  if (!cell || !prefs.worth || !C || !C.st || C.st.die == null) { tip.classList.add('hidden'); return; }
+  const ex = +cell.dataset.e, r = cell.getBoundingClientRect();
+  tip.textContent = `${C.st.die} in the ${NG.placeName(ex).toLowerCase()} = ${NG.worth(C.st.die, ex)}`;
+  tip.style.left = (r.left + r.width / 2) + 'px'; tip.style.top = r.top + 'px';
+  tip.classList.remove('hidden');
+});
+$('boards').addEventListener('pointerout', e => { if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('.pb-cell.target')) tip.classList.add('hidden'); });
+$('boards').addEventListener('click', e => {
+  const cell = e.target.closest('.pb-cell.target');
+  if (!cell || busy) return;
+  tip.classList.add('hidden');
+  C.place(+cell.dataset.b, +cell.dataset.i);
+});
+$('rollBtn').addEventListener('click', () => { if (C && !busy) C.roll(); });
+$('nextRoundBtn').addEventListener('click', () => { if (C) C.nextRound(); });
+$('roundNextBtn').addEventListener('click', () => { closeModal('roundModal'); if (C) C.nextRound(); });
+$('undoBtn').addEventListener('click', () => { if (C && C.undo) C.undo(); });
+document.addEventListener('keydown', e => {
+  if (!C || $('gamePage').classList.contains('hidden')) return;
+  if (document.querySelector('.modal-backdrop.open')) return;
+  if (e.target.matches('input,textarea,select')) return;
+  if ((e.key === ' ' || e.key === 'Enter') && !e.target.closest('button') && !$('rollBtn').disabled) { e.preventDefault(); C.roll(); }
+});
+let resizeT = null;
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { render(); if (ON.active && ON.isHost) renderClassPage(); }, 120); });
+
+/* ------------------------------------------------------------ round + game end */
+function roundResultsHTML(st, idx) {
+  const vals = st.rounds[idx], dec = st.s.decimals;
+  const sd = NG.standings(st.totals, st.s.goal);
+  const rows = sd.rows.slice(0, 8);
+  let h = rows.map(r => `<div class="pr ${r.rank === 1 ? 'win' : ''}"><span class="rk">${r.rank}</span><span>${esc(st.players[r.i].name)}${isMe(r.i) ? ' (you)' : ''}<br><span class="sub">This round ${NG.fmtScaled(vals[r.i], dec)}</span></span><span class="v">${NG.fmtScaled(r.total, dec)}</span></div>`).join('');
+  if (sd.rows.length > rows.length) h += `<p class="form-note">…and ${sd.rows.length - rows.length} more in the score table.</p>`;
+  return h;
+}
+function showRoundModal() {
+  const st = C.st, idx = st.rounds.length - 1;
+  $('roundTitle').textContent = `Round ${idx + 1} results`;
+  const vals = st.rounds[idx];
+  let best = 0; vals.forEach((v, i) => { if (st.s.goal === 'smallest' ? v < vals[best] : v > vals[best]) best = i; });
+  $('roundText').innerHTML = st.s.goal === 'average'
+    ? `Totals so far, closest to the mean first. ${meanText(st)}.`
+    : `${st.s.goal === 'smallest' ? 'Smallest' : 'Biggest'} number this round: <b>${NG.fmtScaled(vals[best], st.s.decimals)}</b> by ${esc(st.players[best].name)}. Totals so far:`;
+  $('roundList').innerHTML = roundResultsHTML(st, idx);
+  $('roundNextBtn').textContent = `Start round ${st.round + 1}`;
+  $('roundNextBtn').classList.toggle('hidden', !C.canNext());
+  openModal('roundModal');
+}
+function showOverModal() {
+  const st = C.st, sd = NG.standings(st.totals, st.s.goal), dec = st.s.decimals;
+  const names = sd.winners.map(i => isMe(i) ? 'You' : esc(st.players[i].name));
+  $('overTitle').textContent = sd.winners.length > 1 ? 'A shared win!' : 'Game over';
+  let why = st.s.goal === 'average' ? `closest to the mean, ${NG.fmtRatio(sd.sum, sd.n, dec)}` : st.s.goal === 'smallest' ? 'the smallest total' : 'the largest total';
+  $('overText').innerHTML = `<b>${names.join(' and ')}</b> ${sd.winners.length > 1 || (sd.winners.length === 1 && isMe(sd.winners[0])) ? 'have' : 'has'} ${why}.`;
+  $('overList').innerHTML = sd.rows.slice(0, 8).map(r => `<div class="pr ${r.rank === 1 ? 'win' : ''}"><span class="rk">${r.rank}</span><span>${esc(st.players[r.i].name)}${isMe(r.i) ? ' (you)' : ''}${st.s.goal === 'average' ? `<br><span class="sub">off by ${NG.fmtRatio(Math.abs(sd.n * r.total - sd.sum), sd.n, dec)}</span>` : ''}</span><span class="v">${NG.fmtScaled(r.total, dec)}</span></div>`).join('')
+    + (sd.rows.length > 8 ? `<p class="form-note">…and ${sd.rows.length - 8} more in the score table.</p>` : '');
+  const mx = Math.max(...st.nasty);
+  if (mx > 0) {
+    const who = st.players.map((p, i) => st.nasty[i] === mx ? (isMe(i) ? 'You' : esc(p.name)) : null).filter(Boolean);
+    $('overAward').innerHTML = `😈 Nastiest player: <b>${who.join(' and ')}</b> — ${mx} digit${mx > 1 ? 's' : ''} written on other people’s boards.`;
+    $('overAward').classList.remove('hidden');
+  } else $('overAward').classList.add('hidden');
+  $('againBtn').classList.toggle('hidden', !C.canAgain);
+  if (C.kind === 'online') $('overText').innerHTML += ' <br><span class="form-note">Your table has finished. The class results appear when every table is done.</span>';
+  openModal('overModal');
+  const humanWon = sd.winners.some(i => C.mySeat != null ? i === C.mySeat : st.players[i].kind === 'human');
+  if (humanWon) confetti();
+}
+$('againBtn').addEventListener('click', () => { closeModal('overModal'); if (C && C.again) C.again(); });
+$('overMenuBtn').addEventListener('click', () => { closeModal('overModal'); if (ON.active) detachOnline(false); goMenu(); });
+
+/* ============================================================ LOCAL GAMES
+   Computer and pass-and-play. Saved after every move, so a closed lid or a
+   projector blink loses nothing. */
+let localTimers = [];
+function stopLocalTimers() { localTimers.forEach(clearTimeout); localTimers = []; }
+function later(fn, ms) { const t = setTimeout(fn, ms); localTimers.push(t); return t; }
+
+function makeLocal(st, mode) {
+  const L = {
+    kind: 'local', mode, st, mySeat: null, undoSnap: null, canAgain: true,
+    canAct() { const p = this.st.players[this.st.turn]; return p.kind === 'human' && (this.st.phase === 'roll' || this.st.phase === 'place'); },
+    canNext() { return true; },
+    save() { store.set(SAVE_KEY, { mode: this.mode, st: this.st, savedAt: Date.now() }); },
+    async roll() {
+      const st = this.st;
+      if (busy || st.phase !== 'roll' || st.players[st.turn].kind !== 'human') return;
+      this.undoSnap = null;
+      busy = true;
+      const d = NG.roll(st);
+      pendingRoll = d; render();
+      await animateRoll(d, st.s.die);
+      busy = false; narr = '';
+      this.save(); render();
+    },
+    async place(b, i) {
+      const st = this.st;
+      if (busy || !NG.isLegal(st, b, i)) return;
+      this.undoSnap = { st: NG.clone(st), narr };
+      await this.doPlace(b, i);
+    },
+    async doPlace(b, i) {
+      const st = this.st;
+      busy = true;
+      await flyDigit(st.die, b, i);
+      const by = st.turn;
+      NG.place(st, b, i);
+      narr = narrate(st, st.last);
+      busy = false;
+      this.save(); render();
+      if (b !== by) nastyBurst(b, i);
+      this.after();
+    },
+    after() {
+      const st = this.st;
+      if (st.phase === 'roundEnd') { later(() => showRoundModal(), 650); return; }
+      if (st.phase === 'over') { store.del(SAVE_KEY); later(() => showOverModal(), 700); return; }
+      if (st.players[st.turn].kind === 'cpu') this.cpu();
+    },
+    cpu() {
+      const st = this.st, fast = prefs.fast;
+      later(async () => {
+        if (C !== this || st.phase !== 'roll') return;
+        busy = true;
+        this.undoSnap = null;
+        const d = NG.roll(st);
+        pendingRoll = d; render();
+        await animateRoll(d, st.s.die);
+        render();
+        await sleep(fast ? 250 : 750);
+        if (C !== this) { busy = false; return; }
+        const m = NG.aiMove(st, st.players[st.turn].level);
+        busy = false;
+        this.undoSnap = null;
+        await this.doPlace(m.b, m.i);
+      }, fast ? 250 : 700);
+    },
+    nextRound() {
+      if (this.st.phase !== 'roundEnd') return;
+      closeModal('roundModal');
+      this.undoSnap = null;
+      NG.nextRound(this.st); narr = '';
+      this.save(); render(); this.after();
+    },
+    undo() {
+      if (!this.undoSnap || busy) return;
+      stopLocalTimers();
+      closeModal('roundModal'); closeModal('overModal');
+      this.st = this.undoSnap.st; narr = this.undoSnap.narr; this.undoSnap = null;
+      this.save(); render();
+      toast('Taken back — choose again.');
+    },
+    again() {
+      const st = this.st;
+      const nst = NG.newGame(st.players, st.s);
+      // whoever went second last time goes first now
+      nst.starter = nst.turn = 1 % nst.n;
+      startLocal(nst, this.mode);
+    }
+  };
+  // Undo is only for a slip of the finger: the last HUMAN placement, until the next roll.
+  L.canUndo = function () { return !!this.undoSnap && !busy && this.st.phase !== 'place' && this.st.phase !== 'over'; };
+  return L;
+}
+function startLocal(st, mode) {
+  stopLocalTimers();
+  ['roundModal', 'overModal'].forEach(closeModal);
+  narr = ''; busy = false; pendingRoll = null; lastRenderedSeq = -1;
+  C = makeLocal(st, mode);
+  C.save();
+  $('classSection').classList.add('hidden');
+  $('classViewBtn').classList.add('hidden');
+  $('takeoverBtn').classList.add('hidden');
+  showPage('gamePage');
+  render();
+  if (st.phase === 'roundEnd') later(() => showRoundModal(), 300);
+  else if (st.phase === 'over') later(() => showOverModal(), 300);
+  else if (st.players[st.turn].kind === 'cpu') C.cpu();
+}
+
+/* ------------------------------------------------------------ menu + local setup */
+let setupMode = 'cpu', cpuCount = 1, cpuLevel = 'medium';
+function paintMenu() {
+  const s = store.get(SAVE_KEY, null);
+  const okSave = s && s.st && s.st.phase !== 'over';
+  $('continueBtn').classList.toggle('hidden', !okSave);
+  if (okSave) $('continueDesc').textContent = `Round ${s.st.round} of ${s.st.s.rounds} · ${s.st.players.map(p => p.name).slice(0, 5).join(', ')}${s.st.n > 5 ? ` and ${s.st.n - 5} more` : ''}`;
+  const o = store.get(ONLINE_KEY, null);
+  $('rejoinBtn').classList.toggle('hidden', !(o && o.code));
+  if (o && o.code) $('rejoinDesc').textContent = `Room ${o.code} as ${o.name}${o.host ? ' (you started it)' : ''}`;
+}
+$('continueBtn').addEventListener('click', () => { const s = store.get(SAVE_KEY, null); if (s && s.st) startLocal(s.st, s.mode); });
+function openSetup(mode) {
+  setupMode = mode;
+  $('setupTitle').textContent = mode === 'cpu' ? 'Play the computer' : 'Pass and play';
+  $('cpuPlayers').classList.toggle('hidden', mode !== 'cpu');
+  $('passPlayers').classList.toggle('hidden', mode !== 'pass');
+  $('rulesHome').appendChild($('rulesForm'));
+  $('setupMsg').textContent = '';
+  $('setupPanel').classList.add('open'); $('setupBackdrop').classList.add('open');
+  validateSetup();
+}
+function closeSetups() { ['setupPanel', 'onlinePanel'].forEach(id => $(id).classList.remove('open')); $('setupBackdrop').classList.remove('open'); }
+$('cpuModeBtn').addEventListener('click', () => openSetup('cpu'));
+$('passModeBtn').addEventListener('click', () => openSetup('pass'));
+$('setupBackBtn').addEventListener('click', closeSetups);
+$('setupBackdrop').addEventListener('click', closeSetups);
+$('cpuYourName').value = store.get(NAME_KEY, '');
+$('cpuCountSeg').innerHTML = [1, 2, 3, 4, 5].map(k => `<button type="button" data-v="${k}">${k}</button>`).join('');
+$('cpuCountSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { cpuCount = +b.dataset.v; paintCpu(); validateSetup(); }));
+$('levelGrid').innerHTML = LEVELS.map(l => `<button type="button" class="level-btn" data-v="${l.id}"><span class="level-icon">${l.icon}</span><strong>${l.name}</strong><span>${l.tip}</span></button>`).join('');
+$('levelGrid').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { cpuLevel = b.dataset.v; paintCpu(); }));
+function paintCpu() {
+  $('cpuCountSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === cpuCount));
+  $('levelGrid').querySelectorAll('button').forEach(b => b.classList.toggle('selected', b.dataset.v === cpuLevel));
+}
+paintCpu();
+['passCount', 'passCpu', 'passNames'].forEach(id => $(id).addEventListener('input', validateSetup));
+$('passCpu').addEventListener('change', () => { $('passCpuLevelField').classList.toggle('hidden', $('passCpu').value === '0'); validateSetup(); });
+formHooks.push(validateSetup);
+
+function setupPlayers() {
+  if (setupMode === 'cpu') {
+    const me = ($('cpuYourName').value || '').trim() || 'You';
+    const bots = ['Digit', 'Nibbles', 'Zero', 'Tenpin', 'Decimus'];
+    const arr = [{ name: me, kind: 'human' }];
+    for (let k = 0; k < cpuCount; k++) arr.push({ name: bots[k], kind: 'cpu', level: cpuLevel });
+    return arr;
+  }
+  const n = Math.max(0, Math.min(30, parseInt($('passCount').value, 10) || 0));
+  const names = $('passNames').value.split('\n').map(s => s.trim());
+  const arr = [];
+  for (let k = 0; k < n; k++) arr.push({ name: names[k] || `Player ${k + 1}`, kind: 'human' });
+  const bots = ['Digit', 'Nibbles', 'Zero', 'Tenpin', 'Decimus'];
+  for (let k = 0; k < +$('passCpu').value; k++) arr.push({ name: bots[k] + ' (CPU)', kind: 'cpu', level: $('passCpuLevel').value });
+  return arr;
+}
+function validateSetup() {
+  if (!$('setupPanel').classList.contains('open')) return true;
+  const ps = setupPlayers();
+  let msg = '', cls = '';
+  if (ps.length < 2) { msg = 'The game needs at least 2 players.'; cls = 'error'; }
+  else if (ps.length > 30) { msg = `That is ${ps.length} players — the most is 30.`; cls = 'error'; }
+  else if (GS.goal === 'average' && ps.length < 3) { msg = 'Closest to the average needs at least 3 players — with 2, both are always the same distance from the mean.'; cls = 'error'; }
+  else if (setupMode === 'pass' && ps.length > 12) { msg = `${ps.length} players: each round is ${ps.length * GS.places} turns. Teams sharing a board keep it moving.`; cls = 'warn'; }
+  $('setupMsg').textContent = msg; $('setupMsg').className = 'form-msg ' + cls;
+  $('startBtn').disabled = cls === 'error';
+  return cls !== 'error';
+}
+$('startBtn').addEventListener('click', () => {
+  if (!validateSetup()) return;
+  if (setupMode === 'cpu') store.set(NAME_KEY, ($('cpuYourName').value || '').trim());
+  closeSetups();
+  startLocal(NG.newGame(setupPlayers(), GS), setupMode);
+});
+
+/* ============================================================ ONLINE
+   ROOMS live at nastyGameRooms/{CODE} on mmt-firebase-games, with two
+   subcollections:
+     members/{uid}   { name, joinedAtMs }       — the lobby; each player writes their OWN
+     tables/{tid}    { gen, uids, names, g, lastMoveAtMs, seq }
+                     g is the engine state as a JSON string (Firestore cannot
+                     hold the boards, which are arrays of arrays)
+   The room doc carries the settings, the seating (seatTable: uid → table id),
+   and the class leaderboard (scores: uid → {name,total,rounds,done,tid,nasty}).
+
+   WHY TABLES ARE SEPARATE DOCUMENTS: every move is a transaction, and one
+   document shared by 30 players would be 30 people fighting over it. A table
+   is 2 to 4 people, so a transaction there almost never has to retry. The
+   leaderboard is written with field-path updates (scores.<uid>), which
+   Firestore merges without a transaction, only when a ROUND ends.
+   The rules for all of this are the nastyGameRooms block in
+   firestore.games.rules.
+   ============================================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY",
+  authDomain: "mmt-firebase-games.firebaseapp.com",
+  projectId: "mmt-firebase-games",
+  storageBucket: "mmt-firebase-games.firebasestorage.app",
+  messagingSenderId: "980506958719",
+  appId: "1:980506958719:web:729e491108918e92ba584a"
+};
+const FB_VER = '10.12.2';
+const ROOMS = 'nastyGameRooms';
+const IDLE_MS = 45000;
+let fbPromise = null;
+function loadFirebase() {
+  if (fbPromise) return fbPromise;
+  fbPromise = (async () => {
+    const base = `https://www.gstatic.com/firebasejs/${FB_VER}`;
+    const [appMod, authMod, fs] = await Promise.all([
+      import(`${base}/firebase-app.js`), import(`${base}/firebase-auth.js`), import(`${base}/firebase-firestore.js`)
+    ]);
+    const app = appMod.initializeApp(firebaseConfig);
+    const auth = authMod.getAuth(app);
+    const db = fs.getFirestore(app);
+    const cred = await authMod.signInAnonymously(auth);
+    return { uid: cred.user.uid, db, fs };
+  })();
+  fbPromise.catch(() => { fbPromise = null; });
+  return fbPromise;
+}
+function fbError(err) {
+  const code = err?.code || '';
+  const extra = {
+    'auth/operation-not-allowed': 'Anonymous sign-in is not switched on for this Firebase project.',
+    'auth/network-request-failed': 'The browser or school network may be blocking Firebase.',
+    'permission-denied': 'The Firestore rules need the nastyGameRooms block from firestore.games.rules.',
+    'unavailable': 'Firebase may be unavailable or blocked by the network.'
+  }[code];
+  return 'Could not reach the game server.' + (extra ? ` (${code}: ${extra})` : ' Check the connection and try again.');
+}
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function newCode() { let s = ''; for (let k = 0; k < 5; k++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return s; }
+function cleanCode(v) { return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5); }
+
+const ON = { active: false, fb: null, uid: null, code: null, isHost: false, room: null, members: [], tables: {}, myTid: null, tableRef: null, tableDoc: null, st: null, unsub: {}, view: null, joined: false, finalShown: false, lastRoundModal: -1, queue: Promise.resolve(), idleTimer: null, autoNextTimer: null };
+
+function setOnlineMsg(t, cls = '') { $('onlineMsg').textContent = t; $('onlineMsg').className = 'form-msg ' + cls; }
+$('onlineModeBtn').addEventListener('click', () => {
+  $('onlineName').value = store.get(NAME_KEY, '');
+  setOnlineMsg('');
+  $('onlinePanel').classList.add('open'); $('setupBackdrop').classList.add('open');
+  loadFirebase().catch(err => setOnlineMsg(fbError(err), 'error'));
+});
+$('onlineBackBtn').addEventListener('click', closeSetups);
+/* Every document carries expireAt, so a Firestore TTL policy can sweep old
+   rooms away (rooms are throwaway; nobody needs last term's). */
+const expiry = fb => fb.fs.Timestamp.fromMillis(Date.now() + 3 * 86400000);
+// hostUid is copied onto members and tables so the rules can let the host
+// remove them WITHOUT a get() of the room per document (a 30-player close is
+// one batch of 30+ deletes, and rules cap how many get()s a batch may make).
+function memberDoc(fb, name, hostUid) { return { name: String(name).slice(0, 24), joinedAtMs: Date.now(), expireAt: expiry(fb), hostUid }; }
+function onlineName() { return ($('onlineName').value || '').trim().slice(0, 24); }
+
+$('createRoomBtn').addEventListener('click', async () => {
+  const name = onlineName() || 'Teacher';
+  const plays = $('hostPlaysToggle').checked;
+  if (plays && !onlineName()) { setOnlineMsg('Type your first name first.', 'warn'); return; }
+  setOnlineMsg('Creating the room…');
+  try {
+    const fb = await loadFirebase();
+    const { doc, getDoc, setDoc, Timestamp } = fb.fs;
+    let code = newCode();
+    for (let k = 0; k < 6; k++) { const s = await getDoc(doc(fb.db, ROOMS, code)); if (!s.exists()) break; code = newCode(); }
+    const now = Date.now();
+    await setDoc(doc(fb.db, ROOMS, code), {
+      roomCode: code, hostUid: fb.uid, hostName: name, hostPlays: plays, status: 'lobby',
+      settings: Object.assign({}, GS, { tableSize }), gen: 0, tableIds: [], seatTable: {}, scores: {},
+      createdAtMs: now, updatedAtMs: now, expireAt: Timestamp.fromMillis(now + 3 * 86400000)
+    });
+    if (plays) await setDoc(doc(fb.db, ROOMS, code, 'members', fb.uid), memberDoc(fb, name, fb.uid));
+    store.set(NAME_KEY, onlineName());
+    store.set(ONLINE_KEY, { code, name, host: true });
+    closeSetups();
+    attachRoom(code);
+  } catch (err) { console.error(err); setOnlineMsg(fbError(err), 'error'); }
+});
+$('joinBtn').addEventListener('click', joinRoom);
+$('roomCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+async function joinRoom() {
+  const code = cleanCode($('roomCodeInput').value), name = onlineName();
+  if (!name) { setOnlineMsg('Type your first name.', 'warn'); return; }
+  if (code.length !== 5) { setOnlineMsg('A room code has 5 letters and numbers.', 'warn'); return; }
+  setOnlineMsg('Joining…');
+  try {
+    const fb = await loadFirebase();
+    const { doc, getDoc, setDoc } = fb.fs;
+    const snap = await getDoc(doc(fb.db, ROOMS, code));
+    if (!snap.exists()) { setOnlineMsg('There is no room with that code. Check it with your teacher.', 'error'); return; }
+    const room = snap.data();
+    const seated = room.seatTable && room.seatTable[fb.uid];
+    if (room.status !== 'lobby' && !seated) { setOnlineMsg('That game has already started. Ask your teacher to go back to the lobby so you can join.', 'error'); return; }
+    if (room.status === 'lobby') await setDoc(doc(fb.db, ROOMS, code, 'members', fb.uid), memberDoc(fb, name, room.hostUid));
+    store.set(NAME_KEY, name);
+    store.set(ONLINE_KEY, { code, name, host: room.hostUid === fb.uid });
+    closeSetups();
+    attachRoom(code);
+  } catch (err) { console.error(err); setOnlineMsg(fbError(err), 'error'); }
+}
+$('rejoinBtn').addEventListener('click', async () => {
+  const o = store.get(ONLINE_KEY, null);
+  if (!o) return;
+  try {
+    const fb = await loadFirebase();
+    const snap = await fb.fs.getDoc(fb.fs.doc(fb.db, ROOMS, o.code));
+    if (!snap.exists()) { store.del(ONLINE_KEY); paintMenu(); toast('That room has been closed.'); return; }
+    const room = snap.data();
+    if (room.status === 'lobby' && room.hostUid !== fb.uid) await fb.fs.setDoc(fb.fs.doc(fb.db, ROOMS, o.code, 'members', fb.uid), memberDoc(fb, o.name, room.hostUid));
+    attachRoom(o.code);
+  } catch (err) { console.error(err); toast(fbError(err)); }
+});
+
+async function attachRoom(code) {
+  const fb = await loadFirebase();
+  const { doc, collection, onSnapshot } = fb.fs;
+  detachOnline(true);
+  stopLocalTimers();
+  Object.assign(ON, { active: true, fb, uid: fb.uid, code, room: null, members: [], tables: {}, myTid: null, tableRef: null, st: null, joined: false, finalShown: false, lastRoundModal: -1, view: null });
+  ON.roomRef = doc(fb.db, ROOMS, code);
+  ON.unsub.room = onSnapshot(ON.roomRef, snap => {
+    if (!snap.exists()) { toast('The room has been closed.'); store.del(ONLINE_KEY); detachOnline(false); goMenu(); return; }
+    ON.room = snap.data();
+    handleRoom();
+  }, err => { console.error(err); toast(fbError(err)); });
+  ON.unsub.members = onSnapshot(collection(fb.db, ROOMS, code, 'members'), qs => {
+    const arr = [];
+    qs.forEach(d => arr.push(Object.assign({ uid: d.id }, d.data())));
+    arr.sort((a, b) => (a.joinedAtMs || 0) - (b.joinedAtMs || 0));
+    ON.members = arr;
+    if (arr.some(m => m.uid === ON.uid)) ON.joined = true;
+    else if (ON.joined && ON.room && ON.room.status === 'lobby' && !ON.isHost) {
+      toast('You were taken out of the room.'); store.del(ONLINE_KEY); detachOnline(false); goMenu(); return;
+    }
+    if (ON.room && ON.room.status === 'lobby') renderLobby();
+  });
+}
+function detachOnline(keepStore) {
+  Object.values(ON.unsub).forEach(u => { try { u && u(); } catch {} });
+  ON.unsub = {};
+  clearInterval(ON.idleTimer); clearTimeout(ON.autoNextTimer);
+  if (!keepStore && ON.active && ON.room && ON.room.status === 'lobby' && ON.fb && !ON.isHost) {
+    ON.fb.fs.deleteDoc(ON.fb.fs.doc(ON.fb.db, ROOMS, ON.code, 'members', ON.uid)).catch(() => {});
+    store.del(ONLINE_KEY);
+  }
+  ON.active = keepStore ? ON.active : false;
+  if (!keepStore) { $('classSection').classList.add('hidden'); }
+}
+
+function handleRoom() {
+  const room = ON.room;
+  ON.isHost = room.hostUid === ON.uid;
+  const o = store.get(ONLINE_KEY, {});
+  if (o.code !== ON.code || o.host !== ON.isHost) store.set(ONLINE_KEY, { code: ON.code, name: o.name || store.get(NAME_KEY, '') || 'Player', host: ON.isHost });
+  if (ON.isHost && !ON.unsub.tables) {
+    const { collection, onSnapshot } = ON.fb.fs;
+    ON.unsub.tables = onSnapshot(collection(ON.fb.db, ROOMS, ON.code, 'tables'), qs => {
+      const t = {};
+      qs.forEach(d => { const v = d.data(); try { t[d.id] = Object.assign({ id: d.id }, v, { st: JSON.parse(v.g) }); } catch {} });
+      ON.tables = t;
+      if (ON.room && ON.room.status !== 'lobby') { renderClassPage(); maybeFinishRoom(); }
+    });
+  }
+  if (room.status === 'lobby') {
+    ON.view = 'lobby';
+    if (ON.unsub.table) { ON.unsub.table(); ON.unsub.table = null; }
+    ON.myTid = null; ON.st = null; C = null; ON.finalShown = false;
+    ['roundModal', 'overModal'].forEach(closeModal);
+    showPage('lobbyPage');
+    renderLobby();
+    return;
+  }
+  const tid = room.seatTable && room.seatTable[ON.uid];
+  if (tid && tid !== ON.myTid) attachTable(tid);
+  if (!tid && !ON.isHost) {
+    showPage('lobbyPage'); renderLobby();
+    $('lobbyMsg').textContent = 'The game started without you. Ask your teacher to go back to the lobby, then you will be dealt in.'; $('lobbyMsg').className = 'form-msg warn';
+    return;
+  }
+  if (ON.isHost && !tid) { if (ON.view !== 'class') { ON.view = 'class'; showPage('classPage'); } renderClassPage(); }
+  else if (ON.isHost) renderClassPage();
+  renderClassBoard();
+  maybeFinishRoom();
+  maybeFinalClass();
+}
+
+/* ------------------------------------------------------------ lobby */
+function dealSizes(N, size) {
+  if (N < 2) return [];
+  const t = Math.ceil(N / size), base = Math.floor(N / t), extra = N % t;
+  const out = [];
+  for (let k = 0; k < t; k++) out.push(base + (k < extra ? 1 : 0));
+  return out;
+}
+function renderLobby() {
+  if (!ON.room) return;
+  const room = ON.room, host = ON.isHost;
+  $('lobbyCode').textContent = ON.code;
+  $('lobbyTitle').textContent = host ? 'Waiting for the class to join' : 'You’re in! Waiting for your teacher to start';
+  $('lobbyMsg').textContent = '';
+  const url = location.origin + location.pathname;
+  $('joinHelp').innerHTML = `Open <code>${esc(url.replace(/^https?:\/\//, ''))}</code> → <b>Play online as a class</b>, and type the code.`;
+  const ms = ON.members;
+  $('memberHead').textContent = `Players (${ms.length})`;
+  $('memberList').innerHTML = ms.map(m => `<span class="member ${m.uid === ON.uid ? 'me' : ''} ${host && m.uid !== ON.uid ? '' : 'solo'}">${esc(m.name)}${host && m.uid !== ON.uid ? ` <button type="button" data-kick="${esc(m.uid)}" aria-label="Remove ${esc(m.name)}">✕</button>` : ''}</span>`).join('') || '<span class="form-note">Nobody yet.</span>';
+  $('memberNote').textContent = ms.length > 30 ? 'More than 30 players — the game takes the first 30 to join.' : host ? (room.hostPlays ? 'You are playing too.' : 'You are running the room and are not at a table.') : '';
+  $('lobbyRulesHost').classList.toggle('hidden', !host);
+  $('lobbyRulesGuest').classList.toggle('hidden', host);
+  const s = NG.normSettings(room.settings);
+  if (host) {
+    if ($('lobbyRulesSlot').firstChild !== $('rulesForm')) {
+      GS = s; tableSize = room.settings.tableSize || 3; paintForm();
+      $('lobbyRulesSlot').appendChild($('rulesForm'));
+    }
+    const N = Math.min(30, ms.length);
+    const sizes = dealSizes(N, tableSize);
+    let plan = N < 2 ? 'At least 2 players need to join before you can start.' : `${N} players → ${sizes.length} table${sizes.length > 1 ? 's' : ''} (${summariseSizes(sizes)}).`;
+    if (N >= 2 && s.goal === 'average') plan += ' The average is taken over the WHOLE room, so the winner is closest to the class mean.';
+    $('tablePlan').textContent = plan;
+    $('startOnlineBtn').disabled = N < 2;
+  } else {
+    $('guestRules').textContent = describeSettings(s);
+  }
+}
+function summariseSizes(sizes) {
+  const c = {}; sizes.forEach(x => c[x] = (c[x] || 0) + 1);
+  return Object.keys(c).sort((a, b) => b - a).map(k => `${c[k]} of ${k}`).join(', ');
+}
+$('memberList').addEventListener('click', e => {
+  const b = e.target.closest('[data-kick]');
+  if (!b || !ON.isHost) return;
+  ON.fb.fs.deleteDoc(ON.fb.fs.doc(ON.fb.db, ROOMS, ON.code, 'members', b.dataset.kick)).catch(err => toast(fbError(err)));
+});
+let settingsPush = null;
+formHooks.push(() => {
+  if (!ON.active || !ON.isHost || !ON.room || ON.room.status !== 'lobby') return;
+  renderLobby();
+  clearTimeout(settingsPush);
+  settingsPush = setTimeout(() => {
+    ON.fb.fs.updateDoc(ON.roomRef, { settings: Object.assign({}, GS, { tableSize }), updatedAtMs: Date.now() }).catch(err => toast(fbError(err)));
+  }, 250);
+});
+$('leaveLobbyBtn').addEventListener('click', () => {
+  if (ON.isHost) { $('leaveText').textContent = 'The room stays open, and you can come back to it from the menu. To end it for everyone, start the game and use “Close the room”.'; openModal('leaveModal'); return; }
+  detachOnline(false); goMenu();
+});
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+$('startOnlineBtn').addEventListener('click', startOnline);
+async function startOnline() {
+  if (!ON.isHost) return;
+  const s = NG.normSettings(GS);
+  const people = shuffle(ON.members.slice(0, 30).map(m => ({ uid: m.uid, name: m.name })));
+  if (people.length < 2) { toast('At least 2 players are needed.'); return; }
+  const sizes = dealSizes(people.length, tableSize);
+  const { doc, writeBatch } = ON.fb.fs;
+  const gen = (ON.room.gen || 0) + 1;
+  const batch = writeBatch(ON.fb.db);
+  Object.keys(ON.tables).forEach(id => batch.delete(doc(ON.fb.db, ROOMS, ON.code, 'tables', id)));
+  const seatTable = {}, scores = {}, tableIds = [];
+  let k = 0;
+  sizes.forEach((sz, t) => {
+    const group = people.slice(k, k + sz); k += sz;
+    const tid = `g${gen}t${t + 1}`;
+    tableIds.push(tid);
+    const st = NG.newGame(group.map(p => ({ name: p.name, id: p.uid, kind: 'human' })), s);
+    group.forEach(p => { seatTable[p.uid] = tid; scores[p.uid] = { name: p.name, total: 0, rounds: 0, done: false, tid, nasty: 0 }; });
+    batch.set(doc(ON.fb.db, ROOMS, ON.code, 'tables', tid), { gen, hostUid: ON.uid, uids: group.map(p => p.uid), names: group.map(p => p.name), g: JSON.stringify(st), seq: st.seq, lastMoveAtMs: Date.now(), expireAt: expiry(ON.fb) });
+  });
+  batch.update(ON.roomRef, { status: 'playing', gen, settings: Object.assign({}, s, { tableSize }), tableIds, seatTable, scores, startedAtMs: Date.now(), updatedAtMs: Date.now() });
+  try { await batch.commit(); } catch (err) { console.error(err); toast(fbError(err)); }
+}
+
+/* ------------------------------------------------------------ a table */
+function attachTable(tid) {
+  const { doc, onSnapshot } = ON.fb.fs;
+  if (ON.unsub.table) ON.unsub.table();
+  ON.myTid = tid;
+  ON.tableRef = doc(ON.fb.db, ROOMS, ON.code, 'tables', tid);
+  ON.st = null; lastRenderedSeq = -1; narr = ''; ON.lastRoundModal = -1;
+  C = makeOnline();
+  ON.view = 'game';
+  showPage('gamePage');
+  $('classSection').classList.remove('hidden');
+  $('classViewBtn').classList.toggle('hidden', !ON.isHost);
+  ON.unsub.table = onSnapshot(ON.tableRef, snap => {
+    if (!snap.exists()) return;
+    const v = snap.data();
+    let st; try { st = JSON.parse(v.g); } catch { return; }
+    ON.tableDoc = v;
+    ON.queue = ON.queue.then(() => absorb(st)).catch(e => console.error(e));
+  });
+  clearInterval(ON.idleTimer);
+  ON.idleTimer = setInterval(paintTakeover, 1000);
+}
+/* A new table state arrives. Play the change (roll tumble, digit flying) and
+   THEN show it, so everyone at the table sees the same move happen. */
+async function absorb(st) {
+  const prev = ON.st;
+  if (prev && st.seq <= prev.seq) return;
+  if (prev && C) {
+    if (prev.phase === 'roll' && st.phase === 'place' && st.round === prev.round) {
+      pendingRoll = st.die; C.st = st; ON.st = st; render();
+      await animateRoll(st.die, st.s.die);
+    } else if (st.last && (!prev.last || st.last.round !== prev.last.round || st.last.b !== prev.last.b || st.last.i !== prev.last.i) && prev.phase === 'place') {
+      await flyDigit(st.last.d, st.last.b, st.last.i);
+      narr = narrate(st, st.last);
+      ON.st = st; C.st = st; render();
+      if (st.last.b !== st.last.by) nastyBurst(st.last.b, st.last.i);
+      afterOnline();
+      return;
+    }
+  }
+  if (!prev && st.last) narr = narrate(st, st.last);
+  ON.st = st; if (C) C.st = st;
+  render();
+  afterOnline();
+}
+function afterOnline() {
+  const st = ON.st;
+  clearTimeout(ON.autoNextTimer);
+  if (st.phase === 'roundEnd' && ON.lastRoundModal !== st.round) {
+    ON.lastRoundModal = st.round;
+    setTimeout(() => { if (C && C.st && C.st.phase === 'roundEnd') showRoundModal(); }, 600);
+    // Nobody pressed Next? The table moves on by itself so a class never stalls.
+    ON.autoNextTimer = setTimeout(() => { if (C && C.st && C.st.phase === 'roundEnd') C.nextRound(); }, 15000);
+  }
+  if (st.phase !== 'roundEnd') closeModal('roundModal');
+  if (st.phase === 'over' && ON.lastRoundModal !== 'over') {
+    ON.lastRoundModal = 'over';
+    closeModal('roundModal');
+    setTimeout(() => { if (!allDone()) showOverModal(); }, 700);
+  }
+  paintTakeover();
+}
+function mySeatIn(st) { return st ? st.players.findIndex(p => p.id === ON.uid) : -1; }
+function makeOnline() {
+  return {
+    kind: 'online', get st() { return ON.st; }, set st(v) { ON.st = v; }, canAgain: false,
+    get mySeat() { const i = mySeatIn(ON.st); return i < 0 ? null : i; },
+    canAct() { const st = ON.st; return !!st && (st.phase === 'roll' || st.phase === 'place') && st.players[st.turn].id === ON.uid; },
+    canNext() { return mySeatIn(ON.st) >= 0; },
+    roll() { tableTx((st) => { if (st.phase !== 'roll' || st.players[st.turn].id !== ON.uid) return false; NG.roll(st); return true; }); },
+    place(b, i) {
+      const st = ON.st;
+      if (!st || !NG.isLegal(st, b, i) || st.players[st.turn].id !== ON.uid) return;
+      busy = true; render(); // lock the squares until the move is back from the server
+      tableTx(s => { if (s.phase !== 'place' || s.players[s.turn].id !== ON.uid || !NG.isLegal(s, b, i)) return false; NG.place(s, b, i); return true; })
+        .finally(() => { busy = false; render(); });
+    },
+    nextRound() { closeModal('roundModal'); tableTx(s => { if (s.phase !== 'roundEnd') return false; NG.nextRound(s); return true; }); }
+  };
+}
+/* Every change to a table is a transaction that re-reads the table, checks the
+   move is still legal against THAT state, and writes the whole state back. Two
+   people pressing at once cannot both win: the loser's check fails on retry. */
+async function tableTx(fn) {
+  const { runTransaction } = ON.fb.fs;
+  let wrote = null;
+  try {
+    await runTransaction(ON.fb.db, async tx => {
+      const snap = await tx.get(ON.tableRef);
+      if (!snap.exists()) throw new Error('gone');
+      const st = JSON.parse(snap.data().g);
+      const before = st.phase;
+      if (fn(st) === false) { wrote = null; return; }
+      tx.update(ON.tableRef, { g: JSON.stringify(st), seq: st.seq, lastMoveAtMs: Date.now(), expireAt: expiry(ON.fb) });
+      wrote = { st, before };
+    });
+  } catch (err) { if (err.message !== 'gone') { console.error(err); toast(fbError(err)); } return; }
+  if (wrote && wrote.before === 'place' && (wrote.st.phase === 'roundEnd' || wrote.st.phase === 'over')) pushScores(wrote.st);
+}
+/* The leaderboard: a round has ended at this table, so write every player's
+   total at this table into the room. Field paths merge; no transaction needed. */
+function pushScores(st) {
+  const upd = { updatedAtMs: Date.now() };
+  st.players.forEach((p, i) => {
+    upd[`scores.${p.id}`] = { name: p.name, total: st.totals[i], rounds: st.rounds.length, done: st.phase === 'over', tid: ON.myTid, nasty: st.nasty[i] };
+  });
+  ON.fb.fs.updateDoc(ON.roomRef, upd).catch(err => { console.error(err); setTimeout(() => pushScores(st), 2000); });
+}
+function paintTakeover() {
+  const btn = $('takeoverBtn');
+  const st = ON.st, meta = ON.tableDoc;
+  if (!ON.active || !st || !meta || (st.phase !== 'roll' && st.phase !== 'place') || mySeatIn(st) < 0 || st.players[st.turn].id === ON.uid) { btn.classList.add('hidden'); return; }
+  const idle = Date.now() - (meta.lastMoveAtMs || 0);
+  if (idle < IDLE_MS) { btn.classList.add('hidden'); return; }
+  btn.textContent = `Play ${st.players[st.turn].name}’s turn for them`;
+  btn.classList.remove('hidden');
+}
+/* Somebody has walked away. Anyone at their table may let the computer (Mild:
+   it only ever builds that player's own number) take that ONE turn. */
+$('takeoverBtn').addEventListener('click', () => {
+  const seq = ON.st && ON.st.seq;
+  $('takeoverBtn').classList.add('hidden');
+  tableTx(s => {
+    if (s.seq !== seq) return false;
+    if (s.phase !== 'roll' && s.phase !== 'place') return false;
+    NG.autoTurn(s, 'mild');
+    return true;
+  });
+});
+$('classViewBtn').addEventListener('click', () => { ON.view = 'class'; showPage('classPage'); $('myTableBtn').classList.remove('hidden'); renderClassPage(); });
+$('myTableBtn').addEventListener('click', () => { ON.view = 'game'; showPage('gamePage'); render(); });
+
+/* ------------------------------------------------------------ the class leaderboard */
+function classRows() {
+  const room = ON.room;
+  if (!room || !room.scores) return null;
+  const uids = Object.keys(room.scores);
+  const totals = uids.map(u => room.scores[u].total || 0);
+  const s = NG.normSettings(room.settings);
+  const sd = NG.standings(totals, s.goal);
+  return { uids, totals, sd, s };
+}
+function classTableHTML(big) {
+  const cr = classRows(); if (!cr) return '';
+  const { uids, sd, s } = cr, sc = ON.room.scores, dec = s.decimals, avg = s.goal === 'average';
+  const tn = id => { const k = (ON.room.tableIds || []).indexOf(id); return k < 0 ? '' : 'T' + (k + 1); };
+  let h = `<thead><tr><th>#</th><th class="nm">Player</th><th>Table</th><th>Rounds</th><th>Total</th>${avg ? '<th>Off by</th>' : ''}</tr></thead><tbody>`;
+  const any = uids.some(u => sc[u].rounds > 0);
+  sd.rows.forEach(r => {
+    const u = uids[r.i], p = sc[u];
+    h += `<tr class="${r.rank === 1 && any ? 'lead' : ''} ${u === ON.uid ? 'me' : ''}"><td>${any ? r.rank : ''}</td><td class="nm">${esc(p.name)}</td><td>${tn(p.tid)}</td><td>${p.rounds}${p.done ? ' ✓' : ''}</td><td class="tot">${NG.fmtScaled(p.total || 0, dec)}</td>${avg ? `<td>${NG.fmtRatio(Math.abs(sd.n * (p.total || 0) - sd.sum), sd.n, dec)}</td>` : ''}</tr>`;
+  });
+  return h + '</tbody>';
+}
+function renderClassBoard() {
+  const cr = classRows(); if (!cr) return;
+  $('classTable').innerHTML = classTableHTML(false);
+  const done = cr.uids.filter(u => ON.room.scores[u].done).length;
+  $('classSub').textContent = `${done} of ${cr.uids.length} finished`;
+  const avg = cr.s.goal === 'average';
+  $('classMean').classList.toggle('hidden', !avg);
+  if (avg) $('classMean').innerHTML = `Class mean: <b>${NG.fmtRatio(cr.sd.sum, cr.sd.n, cr.s.decimals)}</b>`;
+}
+function renderClassPage() {
+  if (!ON.room || !ON.isHost || $('classPage').classList.contains('hidden')) return;
+  const cr = classRows();
+  $('classCode').textContent = ON.code;
+  $('myTableBtn').classList.toggle('hidden', !(ON.room.seatTable && ON.room.seatTable[ON.uid]));
+  $('bigClassTable').innerHTML = classTableHTML(true);
+  if (cr) {
+    const done = cr.uids.filter(u => ON.room.scores[u].done).length;
+    $('classTitle').textContent = allDone() ? 'Final results' : 'Class leaderboard';
+    $('classInfo').textContent = `${cr.uids.length} players at ${(ON.room.tableIds || []).length} tables · ${done} finished · ${describeSettings(cr.s)}`;
+    const avg = cr.s.goal === 'average';
+    $('bigClassMean').classList.toggle('hidden', !avg);
+    if (avg) $('bigClassMean').innerHTML = `Class mean of the totals: <b>${NG.fmtRatio(cr.sd.sum, cr.sd.n, cr.s.decimals)}</b>`;
+  }
+  const grid = $('tablesGrid');
+  const ids = ON.room.tableIds || [];
+  grid.replaceChildren(...ids.map((id, k) => {
+    const t = ON.tables[id];
+    const card = document.createElement('div');
+    card.className = 'table-card';
+    if (!t) { card.innerHTML = `<h3>Table ${k + 1}</h3><p class="form-note">Loading…</p>`; return card; }
+    const st = t.st;
+    const status = st.phase === 'over' ? 'finished' : st.phase === 'roundEnd' ? `round ${st.round} done` : `round ${st.round} · ${st.players[st.turn].name}’s turn`;
+    card.innerHTML = `<h3><span>Table ${k + 1}</span><small>${esc(status)}</small></h3>`;
+    const wrap = document.createElement('div'); wrap.className = 'boards compact';
+    st.players.forEach((_, b) => wrap.appendChild(boardEl(st, b, { turn: b === st.turn && st.phase !== 'over' && st.phase !== 'roundEnd', labs: 'off', targets: null, mini: true })));
+    card.appendChild(wrap);
+    return card;
+  }));
+}
+function allDone() {
+  const sc = ON.room && ON.room.scores; if (!sc) return false;
+  const u = Object.keys(sc); return u.length > 0 && u.every(k => sc[k].done);
+}
+function maybeFinishRoom() {
+  if (ON.isHost && ON.room.status === 'playing' && allDone()) ON.fb.fs.updateDoc(ON.roomRef, { status: 'finished', updatedAtMs: Date.now() }).catch(() => {});
+}
+function maybeFinalClass() {
+  if (!allDone() || ON.finalShown) return;
+  ON.finalShown = true;
+  const cr = classRows(); const { uids, sd, s } = cr, sc = ON.room.scores, dec = s.decimals;
+  const names = sd.winners.map(i => uids[i] === ON.uid ? 'You' : esc(sc[uids[i]].name));
+  closeModal('roundModal');
+  $('overTitle').textContent = 'Class results';
+  const why = s.goal === 'average' ? `closest to the class mean, ${NG.fmtRatio(sd.sum, sd.n, dec)}` : s.goal === 'smallest' ? 'the smallest total in the room' : 'the largest total in the room';
+  const mine = uids.indexOf(ON.uid);
+  $('overText').innerHTML = `<b>${names.join(' and ')}</b> ${sd.winners.length > 1 || names[0] === 'You' ? 'have' : 'has'} ${why}.` + (mine >= 0 ? ` You came <b>${ordinal(sd.rows.find(r => r.i === mine).rank)}</b> out of ${uids.length}.` : '');
+  $('overList').innerHTML = sd.rows.slice(0, 10).map(r => `<div class="pr ${r.rank === 1 ? 'win' : ''}"><span class="rk">${r.rank}</span><span>${esc(sc[uids[r.i]].name)}${uids[r.i] === ON.uid ? ' (you)' : ''}</span><span class="v">${NG.fmtScaled(r.total, dec)}</span></div>`).join('');
+  const mx = Math.max(...uids.map(u => sc[u].nasty || 0));
+  if (mx > 0) {
+    const who = uids.filter(u => (sc[u].nasty || 0) === mx).map(u => esc(sc[u].name));
+    $('overAward').innerHTML = `😈 Nastiest in the room: <b>${who.join(' and ')}</b> — ${mx} digit${mx > 1 ? 's' : ''} on other people’s boards.`;
+    $('overAward').classList.remove('hidden');
+  } else $('overAward').classList.add('hidden');
+  $('againBtn').classList.add('hidden');
+  openModal('overModal');
+  if (sd.winners.some(i => uids[i] === ON.uid)) confetti();
+  if (ON.isHost) renderClassPage();
+}
+function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+$('toLobbyBtn').addEventListener('click', async () => {
+  if (!ON.isHost) return;
+  const { doc, writeBatch } = ON.fb.fs;
+  const batch = writeBatch(ON.fb.db);
+  Object.keys(ON.tables).forEach(id => batch.delete(doc(ON.fb.db, ROOMS, ON.code, 'tables', id)));
+  batch.update(ON.roomRef, { status: 'lobby', tableIds: [], seatTable: {}, scores: {}, updatedAtMs: Date.now() });
+  try { await batch.commit(); } catch (err) { toast(fbError(err)); }
+});
+$('closeRoomBtn').addEventListener('click', async () => {
+  if (!ON.isHost) return;
+  const { doc, writeBatch } = ON.fb.fs;
+  const batch = writeBatch(ON.fb.db);
+  Object.keys(ON.tables).forEach(id => batch.delete(doc(ON.fb.db, ROOMS, ON.code, 'tables', id)));
+  ON.members.forEach(m => batch.delete(doc(ON.fb.db, ROOMS, ON.code, 'members', m.uid)));
+  batch.delete(ON.roomRef);
+  try { await batch.commit(); store.del(ONLINE_KEY); detachOnline(false); goMenu(); } catch (err) { toast(fbError(err)); }
+});
+
+/* ------------------------------------------------------------ boot */
+showPage('menuPage');
+window.__NASTY__ = { get C() { return C; }, ON, NG, prefs, get busy() { return busy; } };
+</script>
+</body>
+</html>

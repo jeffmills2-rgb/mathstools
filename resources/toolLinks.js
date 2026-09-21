@@ -440,6 +440,13 @@ window.MMT_TOOL_LINKS = {
       url: "/interactive-tools/stage-3/number/multiply-divide-by-ten/student-flash.html",
       note: "Self-paced student version of the flash cards.",
       tags: ["flash cards", "fluency", "independent practice"]
+    },
+    {
+      title: "The Nasty Game",
+      kind: "Game",
+      url: "/games/nasty-game.html",
+      note: "Roll a digit and place it in your own place value squares, or in an opponent's. Largest, smallest or closest-to-the-average totals win; 3–6 places, decimals, vs computer, pass and play, or online as a class.",
+      tags: ["game", "place value", "dice", "digits", "decimals", "multiplayer"]
     }
   ],
 

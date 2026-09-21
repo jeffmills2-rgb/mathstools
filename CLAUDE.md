@@ -48,6 +48,101 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-21, session — being pushed): THE NASTY GAME.**
+> `games/nasty-game.html`, a place value dice game (after the classic
+> classroom game): roll a digit, write it in one empty place value square on
+> your OWN board or — the nasty part — on somebody else's. Card in the
+> **Games related to mathematics** group (`#games`, 9 -> 10; Games stat tile
+> 18 -> 19), `data-stage="Stage 3"`, and a `kind: "Game"` row under
+> **MA3-RN-01** in `resources/toolLinks.js`. One self-contained file on the
+> `.mmtTopbar` shell with the MMT PHONE LAYOUT block. English only.
+> * **THREE MODES, ONE RENDERER.** Play the computer (you + 1–5 CPUs, Sweet /
+>   Mild / Medium / Spicy), Pass and play (2–30 on one screen, optional CPU
+>   seats), and **Play online as a class** (up to 30). Whatever drives the game
+>   hands `render()` an engine state plus `C.canAct()` / `C.mySeat`; the drawing
+>   code does not know which mode it is in.
+> * **ENGINE IS DOM-FREE** (first `<script>`, `var NG`; the harness `require`s
+>   it). **All arithmetic is integers**: a board's value is its digits read as
+>   a whole number, i.e. SCALED by 10^decimals, and totals, means and
+>   "off by" distances stay integers until display (`fmtScaled`, `fmtRatio`).
+>   State is plain JSON because online stores it as one string (Firestore
+>   cannot hold the boards, which are arrays of arrays).
+> * **THE RULES AS WRITTEN, PLUS ONE READING:** the "first turn must go on your
+>   own board" rule applies to each player's first go **in every round**
+>   (`mustOwn`). Players whose own board is full keep taking turns (they can
+>   only be nasty). The round ends when every square on every board is full;
+>   the starting seat rotates each round.
+> * **SETTINGS (teacher choices 2026-09-21):** die 0–9 or 1–6; 3–6 squares;
+>   0–2 of them after the decimal point (the point is DRAWN between the ones
+>   and tenths columns, never typed); rounds 1–8; goal **largest**,
+>   **smallest**, or **closest to the average** (winner's total nearest the
+>   mean of everyone's; needs 3+ players locally, because with two both are
+>   always the same distance from the mean — online the mean is over the
+>   WHOLE ROOM, so tables of 2 are fine). Display prefs: place names as words
+>   / numbers (1000, 100…) / automatic / off; "say what each digit is worth"
+>   (narration "2 in Ben's thousands = 2000. Nasty!" and a hover tip); dumped
+>   digits in red (each cell stores `by`, the seat that wrote it); fast CPUs.
+> * **THE COMPUTER PLAYS FROM AN EXACT DP.** `dpTable` values a board's empty
+>   squares by the best expected fill over the die's faces (≤ 2^6 states), so a
+>   6 goes in the hundreds of an empty four-square board, not the thousands.
+>   **Spicy mixes in a chance (`QTAB`) that an opponent dumps junk in your top
+>   empty square first**, which makes it fill its own high places promptly —
+>   that one change took it from level with Medium to clearly ahead. Utility is
+>   own expected final minus a blend of the leader and the field. Self-play
+>   (200 four-player games per pair, all three goals): Mild > Sweet, Medium >
+>   Mild, Spicy > Medium, Spicy > Mild. It is a dice game, so margins are
+>   modest by design.
+> * **ONLINE IS TABLES + A LEADERBOARD** (teacher decision 2026-09-21: strict
+>   turn-taking with 30 is 29 turns of waiting). The host (teacher) makes a
+>   room and gets a 5-character code; players join a lobby; the host picks the
+>   settings and a table size (2/3/4) and **deals**: shuffled, split into
+>   tables whose sizes differ by at most one (`dealSizes`). Each table plays
+>   the real rules; the host's screen is a class leaderboard plus a live mini
+>   view of every table. The host can play too ("I'm playing as well"), with
+>   a Class view / My table switch.
+> * **FIRESTORE: `nastyGameRooms/{CODE}` on `mmt-firebase-games`, with
+>   `members/{uid}` and `tables/{tid}` subcollections. THIS NEEDS A RULES
+>   PUBLISH** — the new block in `firestore.games.rules` (paste the whole file
+>   into the console). Until it is published, online fails with a message
+>   naming the rules; the other two modes do not touch Firebase at all
+>   (dynamic import, only when "Play online" is opened).
+>   - Tables are SEPARATE docs because every move is a transaction; one room
+>     doc shared by 30 would thrash. The leaderboard is `scores.<uid>`
+>     field-path updates written when a ROUND ends — the rules let any
+>     signed-in user change `scores`/`updatedAtMs` and nothing else.
+>   - Members and tables carry `hostUid`, so the rules let the host delete 30+
+>     docs in one batch with **no `get()` per document** (rules cap get()s
+>     per batch). A member is created only while the room is in the lobby, so
+>     nobody slips into a started game; a table is written only by its seated
+>     players (or the host) and its `uids`/`gen`/`hostUid` cannot change.
+>   - Every doc has `expireAt` (+3 days) — add TTL policies on `expireAt` for
+>     the `nastyGameRooms`, `members` and `tables` collection groups.
+>   - **The rules were NOT run against the emulator** (the emulator jar
+>     download is blocked from the session container). They were reviewed by
+>     hand against every write the page makes. Worth a quick live check: make
+>     a room, join from a second device, play a round, Back to lobby, Close.
+> * **SOMEONE WALKS AWAY:** after 45 s idle on a human's turn, anyone at the
+>   table sees "Play X's turn for them" — the Mild computer plays ONE turn
+>   (it only ever builds that player's own number). A finished round moves on
+>   by itself after 15 s if nobody presses Next. Every table write is a
+>   transaction that re-checks turn/phase/`seq`, so double presses cannot both
+>   land.
+> * Local games save to `mmtNastySave.v1` (Continue on the menu); an Undo takes
+>   back the last HUMAN placement until the next roll (local only). Online
+>   rejoin via `mmtNastyOnline.v1` (same device = same anonymous uid).
+> * **Verified**: engine harness (243k checks: 600 random games at every
+>   setting — every square filled once per round, the first-go rule, the
+>   starter rotating, totals, winners re-derived for all three goals — plus
+>   the CPU ladder), 89 UI checks (vs computer through to game over, undo,
+>   worth tip, continue restoring the exact game, decimals, average refusing
+>   2, 30 players with no horizontal overflow at 1920 and 1366, 2/4/6 players
+>   with six squares at 1366/1280/1024/390/360 — boards and labels inside
+>   their cards, cells ≥ 26px — settings and prefs saved), and 48 + 50 online
+>   checks with a stubbed Firestore across eight pages (join, kick, late join
+>   refused, dealing, idle takeover, a whole class game to class results,
+>   leaderboard totals matching every table, back to lobby, close; and again
+>   with the host playing). Harnesses in the session scratch.
+>
 > **NEW (2026-09-21, session — being pushed): STACKED BAR MODEL — RATIO —
 > STUDENT QUIZ.** `online-quizzes/stage-4/ratios-rates/stacked-bar-ratio.html`,
 > registered as `stacked-bar-ratio-quiz` writing `tool: "stacked-bar-ratio-student-quiz"`,
