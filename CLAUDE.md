@@ -48,6 +48,112 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-21, session — being pushed): STACKED BAR MODEL — RATIO —
+> STUDENT QUIZ.** `online-quizzes/stage-4/ratios-rates/stacked-bar-ratio.html`,
+> registered as `stacked-bar-ratio-quiz` writing `tool: "stacked-bar-ratio-student-quiz"`,
+> masteryTopic `stacked-bar-ratio`, topic `ratios-rates` (the teacher portal's
+> `TOPIC_AREA_NAME` now maps that to a new **Ratios & Rates** group — without it
+> the quiz sat under "Other" in Set Dashboard Task). Listed under MA4-RAT-C-01;
+> the tool's Tools menu now has both rows live. **The family is complete.**
+> * **LEVELS ARE THE TEACHER'S (2026-09-21), 10 QUESTIONS:** Sweet = share a total
+>   only · Mild adds one share known · Medium mixes all three types · Spicy is all
+>   three with NO model. Types are dealt as evenly as the level allows, never three
+>   of a type in a row, never the same ratio twice running.
+> * **THE NUMBERS ARE BANDED BY THE TABLES, NOT BY SIZE** (teacher feedback
+>   2026-09-21). The division that finds one part has to be a fact the student
+>   knows, so everywhere except the end of Spicy BOTH the number of parts and
+>   what one part is worth stay inside the **12 × 12 tables** (`BANDS.tables12`);
+>   Spicy's **last three** questions use `tables15` — up to the 15s, with at
+>   least one of the two numbers past 12 so they are genuinely harder rather
+>   than quietly the same. The band comes from the question's POSITION on the
+>   paper, not from its type.
+> * **A SETTLED QUESTION SAYS WHICH OF THREE THINGS HAPPENED** (teacher feedback
+>   2026-09-21: a right answer that came second was being told, in red, to "see
+>   where it went wrong"). Correct first time → green, and **confetti**. Right in
+>   the end → an amber note naming the step that lost the mark ("one part was
+>   wrong on the first try… so this one does not score"). Moved on without
+>   answering → "You moved on without answering this one."
+> * **CONFETTI FOR WHAT WAS RIGHT FIRST TIME** — hand-rolled (the site loads
+>   nothing from a CDN), one rAF loop, removes itself, skipped entirely under
+>   `prefers-reduced-motion`. A **smaller burst (0.45)** when ONE PART is right
+>   first time, the **full burst** when the question scores. Neither fires for
+>   something fixed on the second go, or it would stop meaning anything.
+> * **A LEVEL WITH NO MODEL EMPTIES `#modelHost`, it does not just hide it.** A
+>   model left over from the level before is invisible but still in the DOM, and
+>   "hidden but present" is how an answer ends up somewhere it should not be —
+>   the leak sweep found the previous question's bars sitting inside Spicy.
+> * **WITH THE MODEL, A QUESTION IS TWO STEPS:** what one part is worth, typed
+>   into the glowing boxes (they mirror, as in the tool's Practice), THEN the
+>   answer fields appear. It scores only if **both** steps are right first time.
+>   A settled question stays workable; Next on an unanswered one settles it wrong.
+> * **The answer is never on screen before marking** — the bar totals stay "?"
+>   and the answer line appears only once settled. The boxes filling with one
+>   part is the METHOD, not the answer.
+> * **Shared sign-in and save:** one `<script src="/portal/shared/quizAuthUI.js">`,
+>   `#mmtAuthSlot`, `window.MMTSave()` on finish, no Firebase config in the page.
+>   **`earlySubmit.js` is an ES MODULE and is `import()`ed, then `register()`ed** —
+>   the multiply/divide-by-ten quiz loads it with a plain `<script>` tag, which
+>   stops at the `export` line and never defines `window.MMTSubmit`, and the
+>   division-grouping quiz imports it but never calls `register()`, so NEITHER of
+>   those shows a "Finish & submit" button. This one does; worth porting.
+> * **A delayed `focus()` is a bug in a quiz.** The first build focused the first
+>   box 30ms after painting, which pulled the cursor out of a box the student had
+>   already clicked and sent their typing into the wrong answer. It now focuses
+>   synchronously and never steals focus from a box already in use.
+> * types[]: `type1/type2/type3:s/t`, `onepart:s/t` at the model levels, `level:`,
+>   `model:on|off`. **No typed answer is ever in the payload** (asserted).
+> * **Verified** through Playwright over HTTP with the real shared files: 400
+>   papers (composition per level, no runs, exact arithmetic), every level played
+>   right through for 10/10 with the answer never on screen early, first-attempt
+>   scoring for EACH step, the number band of every question at every position,
+>   the confetti firing on a scoring answer and NOT on a late one, the amber
+>   "does not score" note, the full save payload, a partial early submit, skipping,
+>   and the fit at 1366×768, 1280×800, 1024×768, 1920×1080 and 390 wide.
+>   Harness in the session scratch: `qcheck.mjs`.
+>
+> **NEW (2026-09-21, session — being pushed): STACKED BAR MODEL — RATIO —
+> WORKSHEET CREATOR.** `worksheet-creators/stage-4/ratios-rates/stacked-bar-ratio.html`
+> (a new folder), listed under **MA4-RAT-C-01** beside the teaching tool, whose
+> "Tools ▾" menu is now ONE live row pointing at it — the two related-tool links
+> were removed on teacher request (2026-09-21) — with only Student Quiz greyed.
+> Same shell, bands, spice chips, measured A4 pagination and answer key as the
+> other creators; **no trilingual layer** (same deliberate omission as the
+> multiply/divide-by-ten creator — a clean addition whenever it is wanted).
+> * **FIVE SECTIONS, AND THE PICTURE COMES OFF LAST.** **A** share a total ·
+>   **B** one share known · **C** the difference known — the tool's three types
+>   with the bars drawn — then **D draw the bars yourself** (an empty box and
+>   nothing else) and **E use it** (words, no picture). D is the section that
+>   matters: a student who can draw the bars owns the model.
+> * **THE GIVEN AMOUNT IS BRACKETED ONTO THE PART OF THE MODEL IT MEASURES**, as
+>   on screen: a brace around both bars (A), a bracket over the known bar (B), a
+>   bracket over the dashed gap boxes (C). Top bar's bracket above it, bottom
+>   bar's below, so it never sits between the two bars.
+> * **A BOX IS AT LEAST 9mm ACROSS AND AT MOST 13mm**, and a question whose ratio
+>   needs more width than its column has is printed across **two or more columns**
+>   automatically (`spanFor`) — the alternative is a 9 : 7 ratio drawn at 5mm a
+>   box, which nobody can write a number inside. The model is one SVG per
+>   question in millimetres, so a box is a known size on paper.
+> * **NOTHING ON THE STUDENT HALF IS COLOURED** (these get photocopied) — the two
+>   bars are told apart by their labels. The key fills every box in green and
+>   gives the reasoning, not just the totals.
+> * **Defaults are bare: only the bars.** The one-part line, check line, thinking
+>   prompt and answer key all start off.
+> * **Two pagination traps, both fixed here:** a section that carries over prints
+>   a "continued" chip, and on a long heading that chip is what wraps the heading
+>   to a second line — so the packer measures the heading WITH it. And every
+>   `.section` carries a bottom margin including the last one on a page, so a new
+>   section costs heading + rows + that margin. The "write your own question"
+>   filler is removable when it will not fit; the thinking prompt never is (it
+>   gets a page of its own).
+> * **Verified** through Playwright: 2400 generated questions (simplest form,
+>   never 1 : 1, level ranges, every amount exact, the word problem's type
+>   matching its sentence), the drawn box counts against the printed ratio, the
+>   amount on the model being the one in the question, the key mirroring the
+>   worksheet question for question with every answer re-derived, no page over
+>   the print budget at three densities × five levels × three option sets, and
+>   ratios never wrapping across two lines. Harness in the session scratch:
+>   `wscheck.mjs`.
+>
 > **NEW (2026-09-20, session — being pushed): STACKED BAR MODEL — RATIO,
 > RESTYLED.** `interactive-tools/stage-4/ratios-rates/stacked-bar-ratio/index.html`
 > (an early tool) rebuilt on the `.mmtTopbar` shell, same URL, under

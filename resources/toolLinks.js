@@ -1216,6 +1216,20 @@ window.MMT_TOOL_LINKS = {
       url: "/interactive-tools/stage-4/ratios-rates/stacked-bar-ratio/",
       note: "Two bars, one box per part: share a total, find the rest from one known share, or work from the difference. Demo, Practice and a 15-question Quiz, with the written working beside the model.",
       tags: ["ratio", "bar model", "stacked bar", "dividing a ratio", "sharing in a ratio", "difference", "proportion", "visual", "quiz"]
+    },
+    {
+      title: "Stacked Bar Model \u2014 Ratio \u2014 Worksheet Creator",
+      kind: "Worksheet maker",
+      url: "/worksheet-creators/stage-4/ratios-rates/stacked-bar-ratio.html",
+      note: "The tool's three question types printed with the bars drawn and the given amount bracketed onto the part it measures, then a section where the student draws the bars themselves, then word problems with no picture at all. Optional one-part line, check line and an answer key that shows the reasoning.",
+      tags: ["worksheet generator", "printable", "ratio", "bar model", "tape diagram", "sharing in a ratio", "unitary method", "one part", "difference between shares", "draw your own", "answer key"]
+    },
+    {
+      title: "Stacked Bar Model \u2014 Ratio \u2014 Student Quiz",
+      kind: "Student quiz",
+      url: "/online-quizzes/stage-4/ratios-rates/stacked-bar-ratio.html",
+      note: "Ten questions that save to the teacher dashboard. Sweet to Medium keep the bar model and ask for what one part is worth before the answer; Spicy takes the model away.",
+      tags: ["student quiz", "ratio", "bar model", "sharing in a ratio", "one part", "difference between shares", "saves to dashboard"]
     }
       ,
     {

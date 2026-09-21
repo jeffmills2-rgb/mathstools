@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stacked Bar Model — Ratio — Student Quiz | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue-dark:#1d4ed8; --blue-soft:#eff6ff;
+      --red:#dc2626; --red-dark:#991b1b; --red-soft:#fef2f2;
+      --green:#22c55e; --green-dark:#15803d;
+      --purple:#7c3aed; --purple-dark:#5b21b6;
+      --line:#334155; --line-soft:#94a3b8;
+      --sweet:#16a34a; --mild:#d97706; --medium:#ea580c; --spicy:#b91c1c;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+      --boxH:clamp(50px,8.2vh,82px);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0; font-family:var(--uiFont); color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+    .app{ min-height:100dvh; display:flex; flex-direction:column; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(200px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px; box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{ display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px; margin-left:-12px; font-weight:900; }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); }
+    .mmtBrandLogo{ width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em; flex:0 0 auto; }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{ font-weight:850; font-size:clamp(1rem,1.7vw,1.38rem); letter-spacing:-.04em; text-align:center; color:white; white-space:nowrap; }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+    .btn{ appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover{ background:#eef2ff; color:#1d4ed8; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+    .lvlChip{ font-weight:1000; font-size:.82rem; padding:6px 13px; border-radius:999px; background:#fff; color:var(--ink); }
+    .lvlChip.sweet{ color:var(--sweet); } .lvlChip.mild{ color:var(--mild); }
+    .lvlChip.medium{ color:var(--medium); } .lvlChip.spicy{ color:var(--spicy); }
+
+    .progressWrap{ height:6px; background:rgba(15,23,42,.10); }
+    .progressFill{ height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--purple)); transition:width .3s ease; }
+
+    /* ---------- layout ---------- */
+    .layout{ flex:1; width:min(1180px,100%); margin:0 auto; padding:16px 20px 22px; display:flex; flex-direction:column; gap:12px; }
+
+    .qCard{ background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:14px 22px 12px; text-align:center; }
+    .qText{ font-size:clamp(1.2rem,2.3vw,1.9rem); font-weight:800; line-height:1.35; letter-spacing:-.015em; }
+    .qText .amt{ font-weight:950; white-space:nowrap; background:#fef9c3; border:1px solid rgba(202,138,4,.35);
+      border-radius:9px; padding:.02em .26em; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+    .qText .nL{ color:var(--blue-dark); } .qText .nR{ color:var(--red); }
+    .ratio{ font-family:var(--mathFont); font-weight:700; white-space:nowrap; font-size:1.12em; }
+    .ratio .rL{ color:var(--blue-dark); } .ratio .rR{ color:var(--red); } .ratio .rC{ color:var(--line); padding:0 .18em; }
+    .qAsk{ margin-top:5px; font-size:clamp(.95rem,1.4vw,1.1rem); font-weight:800; color:var(--muted); }
+    .qMeta{ display:flex; justify-content:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
+    .kindTag,.qCounter{ font-size:.72rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase;
+      padding:4px 10px; border-radius:999px; }
+    .kindTag{ color:var(--purple-dark); background:rgba(124,58,237,.10); border:1px solid rgba(124,58,237,.22); }
+    .qCounter{ color:var(--line); background:#f1f5f9; border:1px solid var(--border); }
+
+    .promptBar{ display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line); font-size:1rem; line-height:1.35; min-height:48px; }
+    .promptBar .pIco{ font-size:1.3rem; line-height:1; flex:0 0 auto; }
+    .promptBar.good{ background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(37,99,235,.08)); border-color:rgba(21,128,61,.28); color:var(--green-dark); }
+    .promptBar.note{ background:linear-gradient(135deg,rgba(250,204,21,.16),rgba(37,99,235,.06)); border-color:rgba(202,138,4,.34); color:#854d0e; }
+    .promptBar.bad{ background:linear-gradient(135deg,rgba(220,38,38,.10),rgba(249,115,22,.07)); border-color:rgba(220,38,38,.26); color:#991b1b; }
+
+    /* ---------- the model — the teaching tool's, so a box does the same thing here ---------- */
+    .barCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow); padding:16px 20px 14px; }
+    .model{
+      display:grid; column-gap:8px; row-gap:8px; align-items:stretch;
+      grid-template-columns:minmax(78px,auto) repeat(var(--n),minmax(0,1fr)) minmax(82px,auto) auto;
+      grid-template-rows:auto var(--boxH) var(--boxH) auto;
+    }
+    .rowLab{ display:flex; flex-direction:column; justify-content:center; align-items:flex-end; text-align:right; padding-right:4px; line-height:1.15; min-width:0; }
+    .rowLab .who{ font-weight:950; font-size:clamp(.95rem,1.4vw,1.15rem); }
+    .rowLab .pts{ font-size:.76rem; font-weight:800; color:var(--muted); white-space:nowrap; }
+    .rowLab .big{ font-family:var(--mathFont); font-weight:700; font-size:clamp(1.6rem,2.8vw,2.2rem); line-height:1; }
+    .rowLab.L .who,.rowLab.L .big{ color:var(--blue-dark); }
+    .rowLab.R .who,.rowLab.R .big{ color:var(--red); }
+    .box{ border:3px solid; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-family:var(--mathFont); font-weight:700; font-size:var(--boxFs,clamp(1.15rem,2.3vw,1.95rem)); line-height:1;
+      min-width:0; overflow:hidden; position:relative; transition:box-shadow .2s ease, opacity .2s ease; }
+    .box.L{ border-color:var(--blue); background:var(--blue-soft); color:var(--blue-dark); }
+    .box.R{ border-color:var(--red); background:var(--red-soft); color:var(--red-dark); }
+    .box.gap{ border-style:dashed; border-color:var(--purple); background:rgba(124,58,237,.07); color:var(--purple-dark); }
+    .box.hot{ box-shadow:0 0 0 4px rgba(250,204,21,.55), 0 6px 16px rgba(15,23,42,.10); }
+    .box.dim{ opacity:.42; }
+    .box.ok{ box-shadow:0 0 0 4px rgba(34,197,94,.55); }
+    .box.bad{ box-shadow:0 0 0 4px rgba(220,38,38,.5); }
+    .box input{ width:100%; height:100%; border:0; background:transparent; text-align:center; outline:none;
+      font:inherit; color:inherit; padding:0 2px; -moz-appearance:textfield; }
+    .box input::-webkit-outer-spin-button,.box input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .box input::placeholder{ color:currentColor; opacity:.35; }
+    .box input:focus-visible{ box-shadow:inset 0 0 0 3px rgba(37,99,235,.35); border-radius:6px; }
+    .rowTot{ display:flex; align-items:center; padding-left:6px; min-width:0; }
+    .tot{ font-family:var(--mathFont); font-weight:700; font-size:clamp(1.1rem,1.9vw,1.6rem); line-height:1;
+      padding:7px 11px; border-radius:12px; white-space:nowrap; border:2px solid transparent; }
+    .tot.L{ color:var(--blue-dark); background:var(--blue-soft); border-color:rgba(37,99,235,.28); }
+    .tot.R{ color:var(--red-dark); background:var(--red-soft); border-color:rgba(220,38,38,.26); }
+    .tot.unk{ color:var(--line-soft); background:#f8fafc; border:2px dashed var(--border); }
+    .brace{ grid-row:2 / 4; display:flex; align-items:center; gap:10px; padding-left:2px; }
+    .brace .bk{ width:14px; align-self:stretch; margin:6px 0; border:3px solid var(--line); border-left:none; border-radius:0 12px 12px 0; position:relative; }
+    .brace .bk::after{ content:""; position:absolute; right:-10px; top:50%; width:9px; height:3px; margin-top:-1.5px; background:var(--line); }
+    .brLab{ font-family:var(--mathFont); font-weight:700; font-size:clamp(1.15rem,2vw,1.7rem); line-height:1.05; white-space:nowrap;
+      padding:7px 11px; border-radius:12px; background:#fefce8; border:2px solid rgba(202,138,4,.35); color:var(--ink); }
+    .brLab .cap{ display:block; font-family:var(--uiFont); font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; font-weight:950; color:#854d0e; margin-bottom:3px; }
+    .gapBr{ display:flex; flex-direction:column; align-items:stretch; gap:4px; }
+    .gapBr .bk{ height:13px; border:3px solid var(--purple); position:relative; }
+    .gapBr.below .bk{ border-top:none; border-radius:0 0 12px 12px; }
+    .gapBr.above .bk{ border-bottom:none; border-radius:12px 12px 0 0; }
+    .gapBr.known.L .bk{ border-color:var(--blue); } .gapBr.known.R .bk{ border-color:var(--red); }
+    .gapBr .gLab{ align-self:center; font-family:var(--mathFont); font-weight:700; font-size:clamp(1.05rem,1.8vw,1.5rem); line-height:1; white-space:nowrap;
+      padding:6px 11px; border-radius:11px; background:#faf5ff; border:2px solid rgba(124,58,237,.3); color:var(--purple-dark); }
+    .gapBr.known .gLab{ background:#fefce8; border-color:rgba(202,138,4,.35); color:var(--ink); }
+    .gapBr .gLab .cap{ font-family:var(--uiFont); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; font-weight:950; margin-left:6px; opacity:.8; }
+    .pop{ animation:popIn .42s cubic-bezier(.34,1.5,.5,1) backwards; }
+    @keyframes popIn{ 0%{ transform:scale(.4); opacity:0;} 60%{ transform:scale(1.14);} 100%{ transform:scale(1); opacity:1;} }
+    @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
+
+    .confetti{ position:fixed; inset:0; pointer-events:none; z-index:300; overflow:hidden; }
+
+    .noTool{ background:var(--card); border:1.5px dashed var(--border); border-radius:18px; padding:14px 18px;
+      text-align:center; font-weight:850; color:var(--muted); line-height:1.45; }
+
+    /* ---------- answers ---------- */
+    .answerCard{ background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px 18px; }
+    .fields{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 20px; }
+    .field{ display:inline-flex; align-items:center; gap:8px; font-weight:900; font-size:1rem; }
+    .field .fl{ white-space:nowrap; }
+    .field .fl.L{ color:var(--blue-dark); } .field .fl.R{ color:var(--red); } .field .fl.T{ color:var(--green-dark); }
+    .inWrap{ display:inline-flex; align-items:center; border:2px solid var(--border); border-radius:12px; background:#fff; overflow:hidden; transition:.15s ease; }
+    .inWrap:focus-within{ border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.15); }
+    .inWrap .adorn{ padding:0 4px 0 10px; color:var(--muted); font-weight:900; font-family:var(--mathFont); font-size:1.15rem; }
+    .inWrap .adorn.suf{ padding:0 10px 0 4px; font-family:var(--uiFont); font-size:.9rem; }
+    .inWrap input{ width:5.4ch; border:0; outline:none; background:transparent; text-align:center; padding:8px 6px;
+      font-family:var(--mathFont); font-weight:700; font-size:1.35rem; color:var(--ink); -moz-appearance:textfield; }
+    .inWrap input::-webkit-outer-spin-button,.inWrap input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .inWrap.ok{ border-color:var(--green); background:#f0fdf4; }
+    .inWrap.bad{ border-color:var(--red); background:#fef2f2; animation:shake .34s; }
+    .checkBtn{ appearance:none; border:none; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      padding:12px 24px; border-radius:15px; font-weight:950; font-size:1.02rem; cursor:pointer; box-shadow:0 10px 24px rgba(37,99,235,.28); }
+    .checkBtn:disabled{ opacity:.42; cursor:not-allowed; box-shadow:none; }
+    .ansStrip{ width:100%; margin-top:2px; padding:10px 14px; border-radius:14px; text-align:center;
+      border:1px solid rgba(21,128,61,.28); background:linear-gradient(140deg,#f0fdf4,#ffffff 70%);
+      font-size:clamp(1rem,1.6vw,1.25rem); font-weight:850; line-height:1.4; }
+    .ansStrip .v{ font-family:var(--mathFont); font-weight:700; white-space:nowrap; font-size:1.1em; }
+    .ansStrip .v.L{ color:var(--blue-dark); } .ansStrip .v.R{ color:var(--red); } .ansStrip .v.T{ color:var(--green-dark); }
+
+    .navRow{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .navBtn{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 18px; border-radius:14px; font-weight:950; cursor:pointer; }
+    .navBtn:hover:not(:disabled){ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; }
+    .navBtn.next{ background:var(--blue); color:#fff; border-color:var(--blue); }
+    .navBtn.next:hover:not(:disabled){ background:var(--blue-dark); color:#fff; }
+    .navBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .spacer{ flex:1 1 auto; }
+
+    /* ---------- level chooser + certificate ---------- */
+    .modalBack{ position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; place-items:center; z-index:200; padding:14px; }
+    .modalBack.open{ display:grid; }
+    .modal{ width:min(640px,100%); max-height:calc(100dvh - 28px); overflow:auto; background:#fff;
+      border-radius:22px; box-shadow:0 30px 70px rgba(15,23,42,.35); padding:20px 22px; }
+    .modal h2{ margin:0 0 6px; font-size:1.6rem; letter-spacing:-.03em; }
+    .modal p.sub{ margin:0 0 14px; color:var(--muted); font-weight:800; font-size:.95rem; line-height:1.4; }
+    .lvlList{ display:grid; gap:10px; }
+    .lvlRow{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:4px 14px; align-items:center;
+      text-align:left; appearance:none; border:1.5px solid var(--border); background:#fff; border-radius:16px; padding:12px 16px; cursor:pointer; }
+    .lvlRow:hover{ border-color:#bfdbfe; background:#f8fbff; }
+    .lvlIco{ grid-column:1; grid-row:1/3; font-size:1.7rem; }
+    .lvlRow strong{ grid-column:2; grid-row:1; font-size:1.12rem; font-weight:1000; }
+    .lvlRow span.d{ grid-column:2; grid-row:2; color:var(--muted); font-weight:800; font-size:.88rem; line-height:1.35; }
+    .lvlRow .go{ grid-column:3; grid-row:1/3; font-weight:1000; color:var(--blue); font-size:1.3rem; }
+    .lvlRow.sweet strong{ color:var(--sweet); } .lvlRow.mild strong{ color:var(--mild); }
+    .lvlRow.medium strong{ color:var(--medium); } .lvlRow.spicy strong{ color:var(--spicy); }
+    .certBig{ font-size:2.6rem; font-weight:1000; text-align:center; color:var(--blue-dark); letter-spacing:-.03em; }
+    .certSub{ text-align:center; font-weight:850; color:var(--muted); font-size:.92rem; line-height:1.45; margin-top:8px; }
+    .certBreak{ margin-top:12px; font-weight:900; font-size:.95rem; line-height:1.7; text-align:center; }
+    .modalActions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; justify-content:center; }
+    .modalActions button{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 16px; border-radius:14px; font-weight:950; cursor:pointer; }
+    .modalActions button.primary{ background:var(--blue); color:#fff; border-color:var(--blue); }
+    .brandFoot{ text-align:center; font-size:.85rem; font-weight:850; color:var(--muted); padding:0 0 16px; }
+    .brandFoot a{ color:var(--blue); text-decoration:none; font-weight:1000; }
+
+    @media (prefers-reduced-motion:reduce){ .pop,.inWrap.bad{ animation:none !important; } }
+    @media (max-width:1180px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr) auto; padding:12px 16px; gap:12px; }
+      .mmtBrandText{ display:none; }
+      .btn{ padding:10px 13px; font-size:14px; }
+    }
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:1fr; justify-items:center; padding:12px 14px; }
+      .mmtBrand{ margin-left:0; } .topActions{ justify-self:center; justify-content:center; }
+      .mmtTopTitle{ white-space:normal; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .layout{ padding:12px 12px 20px; }
+    }
+    @media (max-width:640px){
+      :root{ --boxH:46px; }
+      .model{ column-gap:5px; grid-template-columns:minmax(48px,auto) repeat(var(--n),minmax(0,1fr)); }
+      .rowTot{ display:none; }
+      .brace{ grid-row:4 !important; grid-column:2 / -1 !important; flex-direction:column; align-items:stretch; gap:6px; padding:0; }
+      .brace .bk{ width:auto; height:12px; margin:0; border:3px solid var(--line); border-top:none; border-radius:0 0 10px 10px; }
+      .brace .bk::after{ right:auto; left:50%; top:auto; bottom:-9px; width:3px; height:7px; margin:0 0 0 -1.5px; }
+      .brLab{ align-self:center; }
+      .gapBr .gLab{ font-size:1rem; padding:4px 7px; align-self:flex-end; }
+      .gapBr.known .gLab{ align-self:flex-start; }
+      .gapBr .gLab .cap{ display:none; }
+      .barCard{ padding:12px 10px; }
+      .rowLab .pts{ display:none; }
+      .box{ border-width:2px; border-radius:7px; }
+    }
+    @media (max-height:800px){
+      :root{ --boxH:clamp(42px,7vh,66px); }
+      .qCard{ padding:10px 16px 9px; }
+      .qText{ font-size:clamp(1.1rem,2vw,1.6rem); }
+      .barCard{ padding:12px 16px 10px; }
+      .promptBar{ min-height:42px; padding:8px 13px; font-size:.94rem; }
+      .layout{ gap:10px; padding:12px 18px 16px; }
+      .model{ row-gap:6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Stacked Bar Model &mdash; Ratio &mdash; Student Quiz</div>
+      <div class="topActions">
+        <span id="mmtAuthSlot"></span>
+        <span class="lvlChip" id="levelChip" hidden>Sweet</span>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-4/ratios-rates/stacked-bar-ratio/">Teaching Tool<small>The whole-class board this quiz is built on</small></a>
+            <a class="toolLink" href="/worksheet-creators/stage-4/ratios-rates/stacked-bar-ratio.html">Worksheet Creator<small>Printable practice with an answer key</small></a>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="menuBtn" type="button">Change level</button>
+      </div>
+    </header>
+
+    <div class="progressWrap"><div class="progressFill" id="progressFill"></div></div>
+
+    <main class="layout" id="main">
+      <div class="qCard">
+        <div class="qText" id="qText" aria-live="polite"></div>
+        <div class="qAsk" id="qAsk"></div>
+        <div class="qMeta">
+          <span class="kindTag" id="kindTag">Share a total</span>
+          <span class="qCounter" id="qCounter">Question 1 / 10</span>
+        </div>
+      </div>
+
+      <div class="promptBar" id="promptBar">
+        <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+        <span id="promptText">Choose a level to begin.</span>
+      </div>
+
+      <div class="barCard" id="barCard"><div id="modelHost"></div></div>
+      <div class="noTool" id="noTool" hidden>
+        No bar model at this level &mdash; picture the bars yourself, or sketch them on paper:
+        one box for each part, every box the same.
+      </div>
+
+      <div class="answerCard" id="answerCard">
+        <div class="fields" id="fields"></div>
+        <button class="checkBtn" id="checkBtn" type="button">Check</button>
+        <div class="ansStrip" id="ansStrip" hidden></div>
+      </div>
+
+      <div class="navRow">
+        <button class="navBtn" id="prevBtn" type="button">&larr; Previous</button>
+        <button class="navBtn next" id="nextBtn" type="button">Next &rarr;</button>
+        <span class="spacer"></span>
+        <span id="mmtSubmitSlot"></span>
+      </div>
+    </main>
+
+    <div class="brandFoot">
+      This tool and more can be found at <a href="https://www.millsmathstools.au" target="_blank" rel="noopener">www.millsmathstools.au</a>
+    </div>
+  </div>
+
+  <!-- level chooser -->
+  <div class="modalBack" id="levelModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lvlTitle">
+      <h2 id="lvlTitle">Choose your level</h2>
+      <p class="sub">Ten questions. The level decides which kinds of question you meet and whether you
+        keep the bar model &mdash; at Spicy it is gone and the bars are in your head.</p>
+      <div class="lvlList" id="lvlList"></div>
+    </div>
+  </div>
+
+  <!-- certificate -->
+  <div class="modalBack" id="certModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="certTitle">
+      <h2 id="certTitle">Finished</h2>
+      <div class="certBig" id="certScore">0 / 10</div>
+      <div class="certSub" id="certSub"></div>
+      <div class="certBreak" id="certBreak"></div>
+      <div class="modalActions">
+        <button class="primary" id="againBtn" type="button">Try again</button>
+        <button id="changeLvlBtn" type="button">Change level</button>
+        <button id="copyBtn" type="button">Copy my result</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+
+  /* ==================================================================
+     STACKED BAR MODEL — RATIO — STUDENT QUIZ
+     -------------------------------------------------------------------
+     The teaching tool's model, copied, so a box does the same thing here
+     as it did on the board. The LEVEL decides two things, and they are
+     the teacher's (2026-09-21):
+
+       Sweet   share a total only · the bar model · type one part into
+               the boxes AND answer the question
+       Mild    + one share is known · same tool
+       Medium  all three types · same tool
+       Spicy   all three types · NO model
+
+     A question with the model has two steps: what one part is worth
+     (typed into the glowing boxes, which mirror each other exactly as in
+     the tool's Practice mode), then the answer. It scores only if BOTH
+     are right first time — only the first attempt scores, but a settled
+     question stays workable so a student can finish their own thinking.
+     ================================================================== */
+
+  const QUIZ_N = 10;
+  const LEVELS = {
+    sweet:  { name:"Sweet",  ico:"🍬", tool:true,  types:["type1"],
+              d:"Share a total in a ratio. The bars are drawn — fill in what one part is worth, then answer. Numbers stay inside the 12 × 12 tables." },
+    mild:   { name:"Mild",   ico:"🍃", tool:true,  types:["type1","type2"],
+              d:"Share a total, or one person's share is known. The bars are still drawn, and the numbers stay inside the 12 × 12 tables." },
+    medium: { name:"Medium", ico:"🌶️", tool:true,  types:["type1","type2","type3"],
+              d:"All three kinds, including when the difference is known. The bars are still drawn, and the numbers stay inside the 12 × 12 tables." },
+    spicy:  { name:"Spicy",  ico:"🔥", tool:false, types:["type1","type2","type3"],
+              d:"All three kinds with no bar model, and the last three questions go past the 12s, up to the 15 times tables." }
+  };
+  const ORDER = ["sweet","mild","medium","spicy"];
+  const TYPE_LABEL = { type1:"Share a total", type2:"One share is known", type3:"The difference is known" };
+
+  const UNITS = {
+    money:      { pre:"$", suf:"",         inPre:"$", inSuf:"" },
+    grams:      { pre:"",  suf:" g",       inPre:"",  inSuf:"g" },
+    metres:     { pre:"",  suf:" m",       inPre:"",  inSuf:"m" },
+    centimetres:{ pre:"",  suf:" cm",      inPre:"",  inSuf:"cm" },
+    minutes:    { pre:"",  suf:" minutes", inPre:"",  inSuf:"min" },
+    litres:     { pre:"",  suf:" L",       inPre:"",  inSuf:"L" }
+  };
+  const TYPE1_UNITS = ["money","grams","metres","centimetres","minutes","litres"];
+  const NAMES = [["Jane","Bob"],["Amira","Liam"],["Mia","Noah"],["Zoe","Ethan"],["Ava","Lucas"],["Chloe","Max"],["Sofia","Jack"],["Isla","Henry"]];
+  const CTX2 = [
+    {noun:"rent",verb:"pays",unit:"money"},{noun:"grocery bill",verb:"pays",unit:"money"},
+    {noun:"phone bill",verb:"pays",unit:"money"},{noun:"travel costs",verb:"pays",unit:"money"},
+    {noun:"pocket money",verb:"gets",unit:"money"},{noun:"prize money",verb:"gets",unit:"money"},
+    {noun:"trail mix",verb:"gets",unit:"grams"},{noun:"flour",verb:"gets",unit:"grams"},
+    {noun:"rope",verb:"gets",unit:"metres"},{noun:"ribbon",verb:"gets",unit:"centimetres"},
+    {noun:"water",verb:"gets",unit:"litres"},{noun:"screen time",verb:"gets",unit:"minutes"}
+  ];
+  const CTX3 = [
+    {noun:"rent",verb:"pays",unit:"money"},{noun:"phone bill",verb:"pays",unit:"money"},
+    {noun:"electricity bill",verb:"pays",unit:"money"},{noun:"holiday costs",verb:"pays",unit:"money"},
+    {noun:"pet costs",verb:"pays",unit:"money"},{noun:"sports fees",verb:"pays",unit:"money"},
+    {noun:"trail mix",verb:"gets",unit:"grams"},{noun:"rope",verb:"gets",unit:"metres"},
+    {noun:"screen time",verb:"gets",unit:"minutes"},{noun:"water",verb:"gets",unit:"litres"}
+  ];
+
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const choice = arr => arr[randInt(0,arr.length-1)];
+  const gcd = (a,b) => b ? gcd(b, a%b) : a;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const fmt = (n,u) => UNITS[u].pre + Number(n).toLocaleString("en-AU") + UNITS[u].suf;
+  const fmtS = (n,u) => (UNITS[u].inPre || "") + Number(n).toLocaleString("en-AU") + (UNITS[u].inSuf ? " " + UNITS[u].inSuf : "");
+  const partsWord = k => k === 1 ? "1 part" : k + " parts";
+  const other = s => s === "L" ? "R" : "L";
+
+  /* ------------------------------------------------------- the problems */
+  /* Same generator as the teaching tool: simplest form, never 1 : 1, totals
+     40–400 so the arithmetic is mental and every share is a whole number. */
+  /* The division that finds one part has to be a fact a student knows, so the
+     numbers are banded: everywhere but the end of Spicy, the number of parts
+     AND what one part is worth both stay inside the 12 × 12 tables. The last
+     three Spicy questions go up to the 15s, and at least one of the two numbers
+     is past 12 so they genuinely are harder. */
+  const BANDS = {
+    tables12: { maxPer:12, maxParts:12, beyond:false },
+    tables15: { maxPer:15, maxParts:15, beyond:true }
+  };
+  function makeProblem(type, bandKey){
+    const B = BANDS[bandKey] || BANDS.tables12;
+    const p = { type, band: bandKey || "tables12" };
+    if(type === "type1") p.unit = choice(TYPE1_UNITS);
+    else {
+      const c = choice(type === "type2" ? CTX2 : CTX3);
+      [p.leftName, p.rightName] = choice(NAMES);
+      p.noun = c.noun; p.verb = c.verb; p.unit = c.unit;
+    }
+    for(let t=0;t<600;t++){
+      const L = randInt(1,8), R = randInt(1,8);
+      if(L === R || gcd(L,R) !== 1) continue;
+      if(L + R > B.maxParts) continue;
+      const per = randInt(2,B.maxPer), total = (L+R)*per;
+      if(total < 24) continue;
+      if(B.beyond && per < 13 && L + R < 13) continue;
+      Object.assign(p, { L, R, per, lt:L*per, rt:R*per, total });
+      break;
+    }
+    if(type === "type2"){ p.known = Math.random() < .5 ? "L" : "R"; p.knownAmt = p.known === "L" ? p.lt : p.rt; }
+    if(type === "type3"){
+      p.big = p.L > p.R ? "L" : "R"; p.small = other(p.big);
+      p.d = Math.abs(p.L - p.R); p.diff = p.d * p.per; p.more = Math.random() < .5;
+    }
+    return p;
+  }
+  const nameOf = (p,s) => s === "L" ? p.leftName : p.rightName;
+  const partsOf = (p,s) => s === "L" ? p.L : p.R;
+  const amtOf = (p,s) => s === "L" ? p.lt : p.rt;
+  const nm = (p,s) => `<span class="n${s}">${esc(nameOf(p,s))}</span>`;
+  const ratioHTML = p => `<span class="ratio"><span class="rL">${p.L}</span><span class="rC">:</span><span class="rR">${p.R}</span></span>`;
+
+  function questionHTML(p){
+    const r = ratioHTML(p);
+    if(p.type === "type1") return `Share <span class="amt">${fmt(p.total,p.unit)}</span> in the ratio ${r}.`;
+    const head = `${nm(p,"L")} and ${nm(p,"R")} share the ${esc(p.noun)} in the ratio ${r}`;
+    if(p.type === "type2") return `${head}, and ${nm(p,p.known)} ${p.verb} <span class="amt">${fmt(p.knownAmt,p.unit)}</span>.`;
+    return p.more
+      ? `${head}, and ${nm(p,p.big)} ${p.verb} <span class="amt">${fmt(p.diff,p.unit)}</span> more than ${nm(p,p.small)}.`
+      : `${head}, and ${nm(p,p.small)} ${p.verb} <span class="amt">${fmt(p.diff,p.unit)}</span> less than ${nm(p,p.big)}.`;
+  }
+  function askText(p){
+    const verb = p.verb === "pays" ? "pay" : "get";
+    if(p.type === "type1") return "How much is each share?";
+    if(p.type === "type2") return `How much does ${nameOf(p,other(p.known))} ${verb}, and what is the total?`;
+    return `How much does each person ${verb}, and what is the total?`;
+  }
+  function answerFields(p){
+    if(p.type === "type1") return [
+      { id:"a", lab:partsWord(p.L), cls:"L", val:p.lt },
+      { id:"b", lab:partsWord(p.R), cls:"R", val:p.rt } ];
+    if(p.type === "type2"){ const o = other(p.known);
+      return [ { id:"a", lab:nameOf(p,o), cls:o, val:amtOf(p,o) }, { id:"t", lab:"Total", cls:"T", val:p.total } ]; }
+    return [ { id:"a", lab:p.leftName, cls:"L", val:p.lt }, { id:"b", lab:p.rightName, cls:"R", val:p.rt },
+             { id:"t", lab:"Total", cls:"T", val:p.total } ];
+  }
+  function answerSentence(p){
+    const v = (x,c) => `<span class="v ${c}">${fmt(x,p.unit)}</span>`;
+    if(p.type === "type1") return `One part is ${v(p.per,"T")}, so the two shares are ${v(p.lt,"L")} and ${v(p.rt,"R")}.`;
+    if(p.type === "type2"){ const o = other(p.known);
+      return `One part is ${v(p.per,"T")}. ${esc(nameOf(p,o))} ${p.verb} ${v(amtOf(p,o),o)}, and the total is ${v(p.total,"T")}.`; }
+    return `One part is ${v(p.per,"T")}. ${esc(p.leftName)} ${p.verb} ${v(p.lt,"L")}, ${esc(p.rightName)} ${p.verb} ${v(p.rt,"R")}, and the total is ${v(p.total,"T")}.`;
+  }
+
+  /* ------------------------------------------------------- the paper */
+  /* Ten questions whose TYPES are dealt as evenly as the level allows and then
+     spread so no type runs three in a row, and no ratio comes twice running —
+     two 2 : 3 questions back to back is one question asked twice. */
+  function buildPaper(levelKey){
+    const types = LEVELS[levelKey].types;
+    const deck = [];
+    for(let i=0;i<QUIZ_N;i++) deck.push(types[i % types.length]);
+    for(let i=deck.length-1;i>0;i--){ const j = randInt(0,i); [deck[i],deck[j]] = [deck[j],deck[i]]; }
+    // repair any run of three of the same type
+    for(let pass=0; pass<20; pass++){
+      let fixed = true;
+      for(let i=2;i<deck.length;i++){
+        if(deck[i] === deck[i-1] && deck[i] === deck[i-2]){
+          const j = deck.findIndex((t,k) => k !== i && t !== deck[i] && (k < i-2 || k > i));
+          if(j >= 0){ [deck[i],deck[j]] = [deck[j],deck[i]]; fixed = false; }
+        }
+      }
+      if(fixed) break;
+    }
+    const items = [], seen = new Set();
+    let prev = "";
+    deck.forEach((t, idx) => {
+      /* Spicy's last three questions are the only ones allowed past the 12s. */
+      const band = (levelKey === "spicy" && idx >= QUIZ_N - 3) ? "tables15" : "tables12";
+      let p = null;
+      for(let k=0;k<60;k++){
+        const cand = makeProblem(t, band), rat = cand.L + ":" + cand.R, id = t + rat + cand.per;
+        if(rat === prev || seen.has(id)) continue;
+        p = cand; break;
+      }
+      p = p || makeProblem(t, band);
+      prev = p.L + ":" + p.R; seen.add(t + prev + p.per);
+      items.push({ p, phase: LEVELS[levelKey].tool ? "part" : "answer",
+                   partFirst:null, answerFirst:null, settled:false, correct:false,
+                   partTries:0, answerTries:0 });
+    });
+    return items;
+  }
+
+  const S = { levelKey:null, items:[], i:0, anim:false };
+
+  /* ------------------------------------------------------- the model */
+  function renderModel(it){
+    const host = $("modelHost"), p = it.p;
+    const n = Math.max(p.L, p.R);
+    const g = document.createElement("div");
+    g.className = "model"; g.style.setProperty("--n", n);
+    const hot = (s, isGap) => p.type === "type1" ? !isGap : p.type === "type2" ? (s === p.known && !isGap) : isGap;
+    const filled = it.phase !== "part";
+    const done = it.settled;
+
+    ["L","R"].forEach((s, ri) => {
+      const row = ri + 2, parts = partsOf(p,s);
+      const lab = document.createElement("div");
+      lab.className = "rowLab " + s; lab.style.gridColumn = "1"; lab.style.gridRow = String(row);
+      lab.innerHTML = p.type === "type1"
+        ? `<span class="big">${parts}</span><span class="pts">${parts === 1 ? "part" : "parts"}</span>`
+        : `<span class="who">${esc(nameOf(p,s))}</span><span class="pts">${partsWord(parts)}</span>`;
+      g.appendChild(lab);
+      const upTo = (p.type === "type3" && s === p.small) ? n : parts;
+      for(let i=0;i<upTo;i++){
+        const isGap = i >= parts;
+        const b = document.createElement("div");
+        b.className = "box " + (isGap ? "gap" : s);
+        b.style.gridColumn = String(i + 2); b.style.gridRow = String(row);
+        if(!filled){
+          if(hot(s,isGap)){
+            b.classList.add("hot");
+            const inp = document.createElement("input");
+            inp.type = "number"; inp.inputMode = "numeric"; inp.placeholder = "?";
+            inp.setAttribute("aria-label","What is one part worth?");
+            if(it.partDraft != null) inp.value = it.partDraft;
+            b.appendChild(inp);
+          } else b.classList.add("dim");
+        } else {
+          const v = document.createElement("span");
+          v.textContent = p.per;
+          if(S.anim){ v.className = "pop"; v.style.animationDelay = (i*45) + "ms"; }
+          b.appendChild(v);
+        }
+        g.appendChild(b);
+      }
+      // A bar's total stays a "?" until the question is settled — it IS the answer.
+      const tc = document.createElement("div");
+      tc.className = "rowTot"; tc.style.gridColumn = String(n + 2); tc.style.gridRow = String(row);
+      if(done) tc.innerHTML = `<span class="tot ${s}">${fmtS(amtOf(p,s),p.unit)}</span>`;
+      else if(p.type === "type2" && s === p.known) tc.innerHTML = "";
+      else if(p.type !== "type1") tc.innerHTML = `<span class="tot unk">?</span>`;
+      g.appendChild(tc);
+    });
+
+    if(p.type === "type1"){
+      const br = document.createElement("div");
+      br.className = "brace"; br.style.gridColumn = String(n + 3);
+      br.innerHTML = `<span class="bk"></span><span class="brLab"><span class="cap">total</span>${fmtS(p.total,p.unit)}</span>`;
+      g.appendChild(br);
+    } else {
+      const t2 = p.type === "type2";
+      const side = t2 ? p.known : p.small;
+      const from = t2 ? 0 : partsOf(p,p.small), to = t2 ? partsOf(p,p.known) : n;
+      const above = side === "L";
+      const br = document.createElement("div");
+      br.className = "gapBr " + (above ? "above" : "below") + (t2 ? " known " + side : "");
+      br.style.gridColumn = (from + 2) + " / " + (to + 2);
+      br.style.gridRow = above ? "1" : "4";
+      const lab = t2
+        ? `<span class="gLab">${fmtS(p.knownAmt,p.unit)}<span class="cap">given</span></span>`
+        : `<span class="gLab">${fmtS(p.diff,p.unit)}<span class="cap">difference</span></span>`;
+      br.innerHTML = above ? lab + `<span class="bk"></span>` : `<span class="bk"></span>` + lab;
+      g.appendChild(br);
+    }
+    host.innerHTML = ""; host.appendChild(g);
+    fitBoxText(g);
+  }
+  function fitBoxText(g){
+    const b = g.querySelector(".box"); if(!b) return;
+    const w = b.getBoundingClientRect().width; if(!w) return;
+    g.style.setProperty("--boxFs", Math.max(9, Math.min(31, w*0.46)).toFixed(1) + "px");
+  }
+
+  /* ------------------------------------------------------- confetti */
+  /* Hand-rolled, because the site does not load anything from a CDN. Sixty
+     pieces, one animation frame loop, and nothing left in the DOM afterwards. */
+  const CONFETTI_COLOURS = ["#2563eb","#22c55e","#f59e0b","#ec4899","#7c3aed","#ef4444","#14b8a6"];
+  function confetti(scale){
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const host = document.createElement("div");
+    host.className = "confetti"; host.setAttribute("aria-hidden","true");
+    document.body.appendChild(host);
+    const W = innerWidth, H = innerHeight;
+    const bits = [];
+    const N = Math.max(12, Math.round(64 * (scale == null ? 1 : scale)));
+    for(let i=0;i<N;i++){
+      const el = document.createElement("i");
+      const size = 6 + Math.random()*7;
+      el.style.cssText = "position:absolute;top:0;left:0;width:" + size + "px;height:" + (size*0.6) + "px;"
+        + "background:" + CONFETTI_COLOURS[i % CONFETTI_COLOURS.length] + ";"
+        + "border-radius:" + (Math.random() < .3 ? "50%" : "2px") + ";will-change:transform,opacity;";
+      host.appendChild(el);
+      bits.push({ el, x:W*(0.15 + Math.random()*0.7), y:-20 - Math.random()*H*0.35,
+                  vx:(Math.random()-0.5)*2.2, vy:2.6 + Math.random()*3.4,
+                  rot:Math.random()*360, vr:(Math.random()-0.5)*18 });
+    }
+    const start = performance.now();
+    (function frame(now){
+      const t = now - start;
+      let live = false;
+      for(const b of bits){
+        b.x += b.vx; b.y += b.vy; b.vy += 0.06; b.rot += b.vr;
+        if(b.y < H + 40) live = true;
+        b.el.style.transform = "translate(" + b.x.toFixed(1) + "px," + b.y.toFixed(1) + "px) rotate(" + b.rot.toFixed(0) + "deg)";
+        b.el.style.opacity = t > 1500 ? String(Math.max(0, 1 - (t-1500)/700)) : "1";
+      }
+      if(live && t < 2400) requestAnimationFrame(frame);
+      else host.remove();
+    })(start);
+  }
+
+  /* ------------------------------------------------------- painting */
+  function setPrompt(text, kind){
+    $("promptBar").className = "promptBar" + (kind ? " " + kind : "");
+    $("promptIco").innerHTML = kind === "good" ? "&#9989;" : kind === "note" ? "&#128077;" : kind === "bad" ? "&#9888;&#65039;" : "&#128173;";
+    $("promptText").textContent = text;
+  }
+  function fieldHTML(f, unit){
+    const U = UNITS[unit];
+    return `<label class="field"><span class="fl ${f.cls}">${esc(f.lab)}</span><span class="inWrap" data-f="${f.id}">`
+      + (U.inPre ? `<span class="adorn">${U.inPre}</span>` : "")
+      + `<input id="qa_${f.id}" type="number" inputmode="numeric" autocomplete="off">`
+      + (U.inSuf ? `<span class="adorn suf">${U.inSuf}</span>` : "") + `</span></label>`;
+  }
+
+  function paint(){
+    const it = S.items[S.i], p = it.p, lv = LEVELS[S.levelKey];
+    $("qText").innerHTML = questionHTML(p);
+    $("qAsk").textContent = askText(p);
+    $("kindTag").textContent = TYPE_LABEL[p.type];
+    $("qCounter").textContent = `Question ${S.i+1} / ${QUIZ_N}`;
+    $("progressFill").style.width = (S.items.filter(x => x.settled).length / QUIZ_N * 100) + "%";
+
+    $("barCard").hidden = !lv.tool;
+    $("noTool").hidden = lv.tool;
+    /* At a level with no model the host is EMPTIED, not just hidden: a model
+       left in the DOM from the level before is invisible but still there, and
+       "hidden but present" is how an answer ends up somewhere it should not be. */
+    if(lv.tool) renderModel(it); else $("modelHost").innerHTML = "";
+
+    // the answer fields appear once one part is known (or straight away at Spicy)
+    const showFields = it.phase !== "part";
+    $("fields").innerHTML = showFields ? answerFields(p).map(f => fieldHTML(f, p.unit)).join("") : "";
+    if(showFields && it.answerDraft){
+      answerFields(p).forEach(f => {
+        const inp = $("qa_" + f.id); if(it.answerDraft[f.id] != null) inp.value = it.answerDraft[f.id];
+        if(it.answerMarked){ const ok = Number(inp.value) === f.val && inp.value !== "";
+          inp.parentElement.classList.toggle("ok", ok); inp.parentElement.classList.toggle("bad", !ok); }
+      });
+    }
+    $("checkBtn").hidden = it.settled;
+    $("checkBtn").textContent = it.phase === "part" ? "Check one part" : "Check answer";
+    const strip = $("ansStrip");
+    strip.hidden = !it.settled;
+    strip.innerHTML = it.settled ? answerSentence(p) : "";
+
+    $("prevBtn").disabled = S.i === 0;
+    $("nextBtn").innerHTML = S.i === QUIZ_N - 1 ? "Finish &rarr;" : "Next &rarr;";
+
+    if(it.settled){
+      /* Three different things can leave a question settled, and saying the
+         same thing for all three is what made a right-in-the-end answer look
+         like a wrong one. */
+      if(it.correct) setPrompt("Correct — first time, both steps.", "good");
+      else if(it.finalRight) setPrompt(lateWhy(it), "note");
+      else if(it.answerFirst === null) setPrompt("You moved on without answering this one. The answer is below.", "bad");
+      else setPrompt("The answer is below — read the boxes back to see where it went wrong.", "bad");
+    } else if(it.phase === "part"){
+      setPrompt(it.partTries ? "Not yet. " + hint(p) : "What is one part worth? Type it into a glowing box.", it.partTries ? "bad" : null);
+    } else {
+      setPrompt(it.answerTries
+        ? "Not quite — the mark for this one is gone, but finish it: count the boxes in each bar."
+        : lv.tool ? `Every box is ${fmt(p.per,p.unit)}. Now answer the question.` : "Work it out, then type your answer.",
+        it.answerTries ? "bad" : null);
+    }
+    S.anim = false;
+    /* Focus the first box straight away, and never later: a delayed focus
+       pulled the cursor out of a box the student had already clicked into
+       and sent their typing to the wrong answer. */
+    const first = document.querySelector(it.phase === "part" ? "#modelHost input" : "#fields input");
+    const busy = document.activeElement && document.activeElement.tagName === "INPUT"
+                 && (document.activeElement.closest("#fields") || document.activeElement.closest("#modelHost"));
+    if(first && !it.settled && !busy) first.focus({ preventScroll:true });
+  }
+  /* Right in the end, but the mark went on the first try — and say which try. */
+  function lateWhy(it){
+    if(it.partFirst === false && it.answerFirst === false)
+      return "Right in the end. The mark goes on the first attempt, and the first try at one part was not right either — so this one does not score.";
+    if(it.partFirst === false)
+      return "Right in the end — but one part was wrong on the first try, and the mark goes on the first attempt, so this one does not score.";
+    return "Right in the end — but the mark goes on the first attempt, so this one does not score.";
+  }
+  function hint(p){
+    if(p.type === "type1") return "How many boxes are there altogether, and what are they worth together?";
+    if(p.type === "type2") return `Which bar is the ${fmt(p.knownAmt,p.unit)}? How many boxes are in it?`;
+    return `The ${fmt(p.diff,p.unit)} is the dashed ${p.d === 1 ? "box" : "boxes"} only.`;
+  }
+
+  /* ------------------------------------------------------- marking */
+  function check(){
+    const it = S.items[S.i];
+    if(it.settled) return;
+    if(it.phase === "part") return checkPart(it);
+    return checkAnswer(it);
+  }
+  function checkPart(it){
+    const inputs = [...$("modelHost").querySelectorAll("input")];
+    const raw = inputs.map(i => i.value).find(v => v !== "") || "";
+    if(raw === ""){ setPrompt("Type what one part is worth into a glowing box first.", "bad"); return; }
+    const ok = Number(raw) === it.p.per;
+    it.partTries++;
+    if(it.partFirst === null) it.partFirst = ok;
+    inputs.forEach(i => { i.value = raw; i.parentElement.classList.toggle("ok", ok); i.parentElement.classList.toggle("bad", !ok); });
+    if(ok){
+      /* One part right first time is worth celebrating too — a smaller burst,
+         so finishing the whole question still feels bigger. */
+      if(it.partTries === 1) confetti(0.45);
+      setTimeout(() => { it.phase = "answer"; it.partDraft = null; S.anim = true; paint(); }, 380);
+    } else {
+      it.partDraft = raw;
+      setPrompt(`Not ${raw}. ` + hint(it.p), "bad");
+    }
+  }
+  function checkAnswer(it){
+    const fs = answerFields(it.p);
+    const vals = fs.map(f => $("qa_" + f.id).value);
+    if(vals.some(v => v === "")){ setPrompt("Fill in every box, then check.", "bad"); return; }
+    it.answerDraft = {}; fs.forEach((f,k) => { it.answerDraft[f.id] = vals[k]; });
+    it.answerMarked = true;
+    const allOk = fs.every((f,k) => Number(vals[k]) === f.val);
+    it.answerTries++;
+    if(it.answerFirst === null) it.answerFirst = allOk;
+    fs.forEach((f,k) => {
+      const w = $("qa_" + f.id).parentElement, ok = Number(vals[k]) === f.val;
+      w.classList.remove("bad"); void w.offsetWidth;
+      w.classList.toggle("ok", ok); w.classList.toggle("bad", !ok);
+    });
+    it.finalRight = allOk;
+    if(allOk) settle(it);
+    else setPrompt("Not quite — the mark for this one is gone, but finish it: count the boxes in each bar.", "bad");
+  }
+  /* Only the first attempt scores: both steps right, first time. */
+  function settle(it){
+    it.settled = true;
+    const tool = LEVELS[S.levelKey].tool;
+    it.correct = (tool ? it.partFirst === true : true) && it.answerFirst === true;
+    /* Confetti is for a question that SCORED, so it keeps meaning something. */
+    if(it.correct) confetti();
+    if(window.MMTSubmit && window.MMTSubmit.refresh) window.MMTSubmit.refresh();
+    paint();
+  }
+
+  function next(){
+    const it = S.items[S.i];
+    /* Moving on settles the question — it can be revisited, but not re-marked. */
+    if(!it.settled){
+      it.settled = true; it.correct = false;
+      if(it.phase === "part") it.phase = "answer";
+      if(window.MMTSubmit && window.MMTSubmit.refresh) window.MMTSubmit.refresh();
+    }
+    if(S.i < QUIZ_N - 1){ S.i++; paint(); }
+    else finish();
+  }
+
+  /* ------------------------------------------------------- finishing */
+  function scores(){
+    const partial = !!(window.MMTSubmit && window.MMTSubmit.isPartial && window.MMTSubmit.isPartial());
+    const counted = partial ? S.items.filter(x => x.settled) : S.items;
+    const by = { type1:{s:0,t:0}, type2:{s:0,t:0}, type3:{s:0,t:0} };
+    let score = 0, partOk = 0, partT = 0;
+    counted.forEach(it => {
+      by[it.p.type].t++;
+      if(it.correct){ score++; by[it.p.type].s++; }
+      if(it.partFirst !== null || LEVELS[S.levelKey].tool){ partT++; if(it.partFirst === true) partOk++; }
+    });
+    const total = partial && window.MMTSubmit.total ? window.MMTSubmit.total() : QUIZ_N;
+    return { score, total, by, partOk, partT };
+  }
+  function finish(){
+    const partial = !!(window.MMTSubmit && window.MMTSubmit.isPartial && window.MMTSubmit.isPartial());
+    if(!partial) S.items.forEach(it => { if(!it.settled){ it.settled = true; it.correct = false; } });
+    const s = scores(), lv = LEVELS[S.levelKey];
+    const pct = s.total ? Math.round(s.score / s.total * 100) : 0;
+    $("progressFill").style.width = "100%";
+    $("certScore").textContent = `${s.score} / ${s.total}`;
+    $("certSub").innerHTML = `Stacked Bar Model &mdash; Ratio &middot; ${lv.name} &middot; ${pct}%`
+      + (window.MMTAuth && window.MMTAuth.certTail ? "<br>" + window.MMTAuth.certTail() : "");
+    const lines = ["type1","type2","type3"].filter(k => s.by[k].t).map(k => `${TYPE_LABEL[k]}: ${s.by[k].s} / ${s.by[k].t}`);
+    if(lv.tool) lines.push(`One part right first time: ${s.partOk} / ${s.partT}`);
+    $("certBreak").innerHTML = lines.join("<br>");
+    $("certModal").classList.add("open");
+
+    /* No typed answer is ever in the payload — only marks and counts. */
+    if(window.MMTSave) window.MMTSave({
+      tool:"stacked-bar-ratio-student-quiz", topic:"ratios-rates",
+      level:lv.name, levelKey:S.levelKey,
+      score:s.score, total:s.total, percent:pct,
+      masteryTopic:"stacked-bar-ratio",
+      types: ["type1","type2","type3"].filter(k => s.by[k].t).map(k => k + ":" + s.by[k].s + "/" + s.by[k].t)
+        .concat(lv.tool ? ["onepart:" + s.partOk + "/" + s.partT] : [])
+        .concat(["level:" + S.levelKey, "model:" + (lv.tool ? "on" : "off")]),
+      certificateText:"Stacked Bar Model — Ratio — " + lv.name + ": " + s.score + "/" + s.total,
+      ...(window.MMTSubmit && window.MMTSubmit.fields ? window.MMTSubmit.fields() : {})
+    });
+  }
+
+  /* ------------------------------------------------------- levels */
+  function buildLevelList(){
+    $("lvlList").innerHTML = ORDER.map(k => {
+      const L = LEVELS[k];
+      return `<button class="lvlRow ${k}" type="button" data-k="${k}"><span class="lvlIco">${L.ico}</span>`
+        + `<strong>${L.name}</strong><span class="d">${esc(L.d)}</span><span class="go">&rsaquo;</span></button>`;
+    }).join("");
+    $("lvlList").querySelectorAll(".lvlRow").forEach(b => b.addEventListener("click", () => startLevel(b.dataset.k)));
+  }
+  function openLevels(){ $("certModal").classList.remove("open"); $("levelModal").classList.add("open"); }
+  function startLevel(k){
+    S.levelKey = k; S.items = buildPaper(k); S.i = 0;
+    $("levelModal").classList.remove("open"); $("certModal").classList.remove("open");
+    const chip = $("levelChip"); chip.hidden = false; chip.className = "lvlChip " + k; chip.textContent = LEVELS[k].name;
+    if(window.MMTSubmit && window.MMTSubmit.reset) window.MMTSubmit.reset();
+    paint();
+  }
+
+  /* ------------------------------------------------------- wiring */
+  $("checkBtn").addEventListener("click", check);
+  $("nextBtn").addEventListener("click", next);
+  $("prevBtn").addEventListener("click", () => { if(S.i > 0){ S.i--; paint(); } });
+  $("menuBtn").addEventListener("click", openLevels);
+  $("changeLvlBtn").addEventListener("click", openLevels);
+  $("againBtn").addEventListener("click", () => startLevel(S.levelKey));
+  $("copyBtn").addEventListener("click", async () => {
+    const s = scores();
+    const line = "🏆 Mills Maths Tools — Stacked Bar Model: Ratio Student Quiz\n"
+      + `${LEVELS[S.levelKey].name}: ${s.score}/${s.total}\n`
+      + (window.MMTAuth && window.MMTAuth.shareLine ? window.MMTAuth.shareLine() : "");
+    try{ await navigator.clipboard.writeText(line); $("copyBtn").textContent = "Copied"; }
+    catch(e){ $("copyBtn").textContent = "Could not copy"; }
+    setTimeout(() => { $("copyBtn").textContent = "Copy my result"; }, 1800);
+  });
+  // Typing in any glowing box writes the same number into all of them: one
+  // part is one value, wherever it is written — as in the tool's Practice.
+  $("modelHost").addEventListener("input", e => {
+    if(e.target.tagName !== "INPUT") return;
+    $("modelHost").querySelectorAll("input").forEach(i => {
+      if(i !== e.target) i.value = e.target.value;
+      i.parentElement.classList.remove("ok","bad");
+    });
+  });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ $("toolsMenu").classList.remove("open"); return; }
+    if($("levelModal").classList.contains("open") || $("certModal").classList.contains("open")) return;
+    if(e.key !== "Enter" || !S.items.length) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "BUTTON" || tag === "A") return;
+    e.preventDefault();
+    const it = S.items[S.i];
+    if(it.settled) next(); else check();
+  });
+  $("toolsBtn").addEventListener("click", e => {
+    e.stopPropagation();
+    const m = $("toolsMenu"), was = m.classList.contains("open");
+    m.classList.toggle("open", !was); $("toolsBtn").setAttribute("aria-expanded", String(!was));
+  });
+  document.addEventListener("click", () => { $("toolsMenu").classList.remove("open"); $("toolsBtn").setAttribute("aria-expanded","false"); });
+  let rt = null;
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const g = document.querySelector("#modelHost .model"); if(g) fitBoxText(g); }, 120); });
+
+  /* The shared early-submit button. It is an ES module, so it is imported —
+     a plain <script> tag would stop at its `export` line and never define
+     window.MMTSubmit. If it cannot be reached (offline, file://) the quiz
+     simply works without it. */
+  import("/portal/shared/earlySubmit.js").then(m => {
+    window.MMTSubmit = m.MMTSubmit;
+    m.MMTSubmit.register({
+      progress: () => ({ attempted:S.items.filter(x => x.settled).length,
+                         correct:S.items.filter(x => x.correct).length, quizLength:QUIZ_N }),
+      finish: () => finish()
+    });
+  }).catch(() => {});
+
+  buildLevelList();
+  openLevels();
+
+  /* a small surface for the automated checks; nothing in the page reads it */
+  window.__SBQ__ = { S, LEVELS, buildPaper, makeProblem, answerFields, startLevel, scores, finish, next, check, paint };
+})();
+</script>
+
+<!-- ===== MMT student-code login + secure save + sign-in banner ===== -->
+<!-- The overlay, the sign-in chip and window.MMTSave() live in one shared
+     file rather than a copy inside every quiz. -->
+<script src="/portal/shared/quizAuthUI.js"></script>
+
+</body>
+</html>

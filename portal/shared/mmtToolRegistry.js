@@ -202,6 +202,14 @@ export const MMT_TOOLS = Object.freeze([
     notes: "Seeing a coefficient × factor as equal groups (lead-in to like terms). Added secure student-code login + achievements save (2026-07). masteryTopic 'number-groups'. (Page <title> was a copy-paste of the like-terms quiz — content is the groups quiz.)",
   },
   {
+    toolId: "stacked-bar-ratio-quiz", title: "Stacked Bar Model — Ratio — Student Quiz", category: "Quiz",
+    enabled: true, resultCollection: "achievements", richCollection: null,
+    achievementToolName: "stacked-bar-ratio-student-quiz", topics: ["ratios-rates"], stage: "Stage 4",
+    launchUrl: "/online-quizzes/stage-4/ratios-rates/stacked-bar-ratio.html",
+    supportsAdventureAttempts: false, supportsSkillBreakdown: false,
+    notes: "Sweet/Mild/Medium/Spicy, 10 questions (teacher design 2026-09-21). Sweet = share a total only; Mild adds one share known; Medium mixes all three types (share a total, one share known, difference known); Spicy is all three with NO bar model. Sweet-Medium keep the teaching tool's model and ask for TWO steps: what one part is worth (typed into the glowing boxes, which mirror) and then the answer. A question scores only if BOTH steps are right first time. types[] carries per-type subtotals (type1/type2/type3:s/t), onepart:s/t at the model levels, level and model:on/off. No typed answer is ever in the payload. masteryTopic 'stacked-bar-ratio'. Pairs with the teaching tool and the worksheet creator, all under MA4-RAT-C-01.",
+  },
+  {
     toolId: "multiply-divide-by-ten-quiz", title: "Multiplying and Dividing by 10 — Student Quiz", category: "Quiz",
     enabled: true, resultCollection: "achievements", richCollection: null,
     achievementToolName: "multiply-divide-by-ten-student-quiz", topics: ["number"], stage: "Stage 3",

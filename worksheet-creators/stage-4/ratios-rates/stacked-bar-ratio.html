@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stacked Bar Model — Ratio — Worksheet Generator</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+
+      --blue:#2563eb;
+      --green:#16a34a;
+      --red:#dc2626;
+
+      --sweet1:#4ade80;  --sweet2:#16a34a;
+      --mild1:#facc15;   --mild2:#d97706;
+      --medium1:#fb923c; --medium2:#ea580c;
+      --spicy1:#f87171;  --spicy2:#b91c1c;
+
+      --footer-h:44px;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family:var(--uiFont); padding-bottom:var(--footer-h);
+    }
+
+    .wrap{ max-width:1280px; margin:14px auto 32px; padding:0 14px; }
+    .card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
+
+    .title{ margin:0 0 4px; font-size:28px; font-weight:1000; letter-spacing:.2px; }
+    .subtitle{ margin:0 0 14px; color:var(--muted); font-weight:850; font-size:15px; line-height:1.35; }
+    .subtitle a{ color:var(--blue); text-decoration:none; font-weight:1000; }
+
+    .controls{ display:grid; gap:10px; }
+    .band{
+      border:1px solid var(--border); border-radius:18px; padding:12px 14px;
+      background:linear-gradient(180deg,#ffffff,#f9fafb);
+    }
+    .bandHead{
+      font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+      font-weight:1000; color:var(--muted); margin:0 0 9px;
+    }
+    .bandGrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; align-items:end; }
+    .bandRow{ display:flex; gap:16px 22px; flex-wrap:wrap; align-items:center; }
+
+    label{ display:block; margin:0 0 7px; font-size:15px; font-weight:950; }
+    select, input[type="number"]{
+      border:2px solid #e5e7eb; border-radius:14px; padding:12px 13px;
+      font-size:15px; font-weight:900; width:100%; background:#fff; color:var(--ink);
+      font-family:inherit;
+    }
+    select:focus, input:focus{ outline:none; border-color:var(--blue); }
+
+    .sw{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; font-weight:900; font-size:14.5px; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:46px; height:27px; border-radius:999px; background:#cbd5e1; transition:.16s ease; flex:0 0 auto; }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 2px 5px rgba(0,0,0,.28); transition:.16s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(19px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.25); }
+
+    .secGrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(268px,1fr)); gap:10px; }
+    .secOpt{ border:1px solid var(--border); border-radius:14px; padding:10px 12px; background:#fff; }
+    .cntRow{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+    .cntRow label{ margin:0; font-size:13px; color:var(--muted); white-space:nowrap; }
+    .cntRow input{ width:78px; padding:8px 10px; }
+    .totalRow{ display:flex; align-items:center; gap:10px; margin-top:10px; font-weight:950; font-size:14px; }
+    .pill{ background:#eef2ff; color:#1d4ed8; border-radius:999px; padding:5px 12px; font-weight:1000; font-size:13px; }
+
+    .note{ margin:9px 0 0; font-size:12.6px; font-weight:800; color:var(--muted); line-height:1.5; }
+    .note b{ color:var(--ink); }
+    .note.warn{ color:#991b1b; font-size:14px; }
+
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:2px; }
+    button.primary, button.ghost, button.danger{
+      border-radius:14px; padding:13px 18px; font-size:15px; font-weight:1000; cursor:pointer;
+      border:2px solid transparent; font-family:inherit;
+    }
+    button.primary{ background:var(--blue); color:#fff; }
+    button.primary:hover{ background:#1d4ed8; }
+    button.ghost{ background:#fff; color:var(--ink); border-color:var(--border); }
+    button.ghost:hover{ border-color:#c7ccd4; }
+    button.danger{ background:#fff; color:var(--red); border-color:#fecaca; }
+    button.danger:hover{ background:#fef2f2; }
+
+    .outWrap{ margin-top:8px; }
+
+    /* =====================================================================
+       THE PAPER
+       ===================================================================== */
+    .page{
+      margin:14px auto 0; background:#fff; border:1px solid var(--border);
+      border-radius:18px; box-shadow:0 10px 26px rgba(15,23,42,.08); overflow:hidden;
+      width:210mm; max-width:100%; height:297mm;
+      display:flex; flex-direction:column;
+    }
+    .pageHeader{
+      padding:9px 13px 7px; border-bottom:2px solid #111827;
+      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+    }
+    .hdrTitle{ font-weight:1000; font-size:15px; line-height:1.1; }
+    .hdrSub{ color:var(--muted); font-weight:850; font-size:11px; margin-top:2px; white-space:nowrap; }
+    .nameDate{ display:flex; gap:8px; align-items:flex-end; }
+    .lineField{ display:flex; flex-direction:column; gap:3px; width:116px; }
+    .lineLabel{ font-size:10px; font-weight:950; color:var(--muted); }
+    .lineBox{ height:19px; border-bottom:1.6px solid #111827; }
+
+    .sheet{ padding:8px 13px 10px; flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
+
+    .section{ margin-bottom:9px; }
+    .secHead{
+      display:flex; align-items:baseline; gap:9px;
+      border-bottom:1.6px solid #111827; padding-bottom:3px; margin-bottom:7px;
+    }
+    .secLetter{
+      font-weight:1000; font-size:14px; letter-spacing:.02em;
+      background:#111827; color:#fff; border-radius:5px; padding:1px 7px; flex:0 0 auto;
+    }
+    .secText{ font-weight:900; font-size:13.2px; color:#111827; line-height:1.3; }
+    .secCont{ margin-left:auto; font-size:11px; font-weight:900; color:var(--muted); flex:0 0 auto; }
+
+    .qGrid{ display:grid; gap:8px 9px; grid-template-columns:repeat(var(--cols,2),1fr); }
+    .qCard{
+      border:1.2px solid #d7dce3; border-radius:10px; padding:6px 8px 7px;
+      display:flex; flex-direction:column; gap:5px;
+      break-inside:avoid; page-break-inside:avoid; background:#fff; min-width:0;
+    }
+    .qCard.span2{ grid-column:span 2; }
+    .qCard.span3{ grid-column:span 3; }
+    .qCard.span4{ grid-column:span 4; }
+    .qTop{ display:flex; align-items:flex-start; gap:7px; width:100%; }
+    .qNum{
+      width:20px; height:20px; border-radius:999px; color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:1000; flex:0 0 auto;
+    }
+    .qNum.sweet{ background:linear-gradient(180deg,var(--sweet1),var(--sweet2)); }
+    .qNum.mild{ background:linear-gradient(180deg,var(--mild1),var(--mild2)); }
+    .qNum.medium{ background:linear-gradient(180deg,var(--medium1),var(--medium2)); }
+    .qNum.spicy{ background:linear-gradient(180deg,var(--spicy1),var(--spicy2)); }
+
+    /* Nothing on the student half is coloured — these get photocopied. The two
+       bars are told apart by their labels, exactly as they would be on a
+       whiteboard in one pen. */
+    .qText{ font-size:12.6px; font-weight:900; line-height:1.34; }
+    .qText .r{ font-family:var(--mathFont); font-weight:1000; white-space:nowrap; }
+
+    .modelWrap{ width:100%; }
+    .modelWrap svg{ display:block; margin:1mm auto 0; height:auto; width:var(--mw,100%); max-width:100%; }
+    .mBox{ fill:none; stroke:#111827; stroke-width:.45; }
+    .mBox.gap{ stroke-dasharray:1.7 1.3; }
+    .mLine{ fill:none; stroke:#111827; stroke-width:.45; stroke-linejoin:round; stroke-linecap:round; }
+    .mLab{ font-family:var(--uiFont); font-weight:800; fill:#111827; }
+    .mAmt{ font-family:var(--mathFont); font-weight:1000; fill:#111827; }
+    .mKey{ fill:#15803d; }
+    .mKeyStroke{ stroke:#15803d; }
+
+    /* Room to draw the bars themselves. It GROWS to fill the card, because
+       cards in a row are as tall as the tallest and for a task that is entirely
+       about drawing, the space IS the question. */
+    .drawBox{ border:1.8px dashed #9aa3af; border-radius:14px; width:100%; background:#fff; flex:1 1 auto; }
+
+    .workBox{
+      border:1.4px dashed #9aa3af; border-radius:9px; padding:5px 8px 3px;
+      background:repeating-linear-gradient(180deg,transparent 0 15px,#e7eaef 15px 16px);
+    }
+    .workHead{ font-size:10.4px; font-weight:1000; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+
+    .onePart{
+      display:flex; align-items:baseline; gap:6px; font-family:var(--mathFont);
+      font-weight:1000; font-size:13.5px; white-space:nowrap;
+    }
+    .blank{ display:inline-block; min-width:46px; border-bottom:1.5px solid #111827; height:1em; }
+    .blank.sm{ min-width:32px; }
+    .blank.lg{ min-width:62px; }
+
+    .ansRow{
+      display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline;
+      font-size:12px; font-weight:950; border-top:1px dotted #c7ccd4; padding-top:4px;
+    }
+    .ansRow .slot{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; }
+    .qFill{ flex:1 1 auto; min-height:0; }
+    .qFoot{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:11.4px; font-weight:900; color:var(--muted); }
+    .qFoot .chk{ font-family:var(--mathFont); font-size:13px; color:#111827; font-weight:1000; white-space:nowrap; }
+
+    .prompt{
+      border:1.4px dashed #94a3b8; border-radius:9px; padding:6px 9px 7px;
+      margin-bottom:8px; break-inside:avoid;
+    }
+    .promptHead{ font-size:10.4px; font-weight:1000; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
+    .promptText{ font-size:12px; font-weight:850; line-height:1.35; }
+    .promptRules{ margin-top:5px; height:var(--ph,60px); background:repeating-linear-gradient(180deg,transparent 0 15px,#e7eaef 15px 16px); }
+    .designLine{
+      display:flex; align-items:baseline; gap:8px; margin:5px 0 2px; flex-wrap:wrap;
+      font-family:var(--mathFont); font-weight:1000; font-size:15px;
+    }
+
+    /* answer key */
+    .isKey .qCard{ border-color:#bbf7d0; background:#f7fdf9; }
+    .keyAns{ font-family:var(--mathFont); font-weight:1000; font-size:15px; color:#15803d; line-height:1.25; }
+    .keyWhy{ font-size:11px; font-weight:850; color:#374151; line-height:1.4; }
+    .keyWhy b{ color:#111827; }
+
+    .pageFooter{
+      padding:5px 13px 6px; border-top:1px solid rgba(229,231,235,.95);
+      display:flex; align-items:center; justify-content:space-between;
+      font-weight:900; color:var(--muted); font-size:10px;
+    }
+    .pageFooter a{ color:#2563eb; text-decoration:none; font-weight:1000; }
+
+    .measure{ position:absolute; left:-10000px; top:0; width:210mm; visibility:hidden; }
+
+    .mmtFooter{
+      position:fixed; left:0; right:0; bottom:0; height:var(--footer-h);
+      display:flex; align-items:center; justify-content:center; padding:0 12px;
+      background:rgba(255,255,255,.92); border-top:1px solid rgba(229,231,235,.95);
+      backdrop-filter:blur(8px); z-index:500; font-weight:900; color:#111827;
+      text-align:center; font-size:13px;
+    }
+    .mmtFooter a{ color:#2563eb; text-decoration:none; font-weight:950; }
+
+    @media print{
+      @page{ size:A4; margin:8mm 7mm; }
+      html, body{ width:210mm; height:auto; }
+      body{ background:#fff; padding-bottom:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+      .wrap{ max-width:none; margin:0; padding:0; }
+      .card{ box-shadow:none; border-radius:0; padding:0; }
+      .controls, .title, .subtitle, .mmtFooter{ display:none !important; }
+
+      .page{
+        margin:0; border:none; border-radius:0; box-shadow:none;
+        width:auto; height:281mm; page-break-after:always;
+      }
+      .page:last-child{ page-break-after:auto; }
+
+      .pageHeader{ padding:0 0 1.6mm; }
+      .sheet{ padding:2.4mm 0 0; }
+      .pageFooter{ padding:1.4mm 0 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">Stacked Bar Model &mdash; Ratio &mdash; Worksheet Generator</h1>
+      <p class="subtitle">Printable A4 worksheets from the <a href="/interactive-tools/stage-4/ratios-rates/stacked-bar-ratio/">Stacked Bar Model &mdash; Ratio</a> teaching tool. The bars are printed with one box per part and the amount from the question bracketed onto the part of the model it measures, so a student works on paper exactly as the class did on the board &mdash; and then draws the bars themselves.</p>
+
+      <div class="controls">
+        <div class="band">
+          <p class="bandHead">The paper</p>
+          <div class="bandGrid">
+            <div>
+              <label for="levelSel">Level</label>
+              <select id="levelSel">
+                <option value="sweet">Sweet &mdash; ratios to 4, small whole amounts</option>
+                <option value="mild">Mild &mdash; ratios to 6</option>
+                <option value="medium">Medium &mdash; ratios to 8, bigger amounts</option>
+                <option value="spicy">Spicy &mdash; ratios to 10, awkward numbers</option>
+                <option value="mixed" selected>Mixed &mdash; a ladder of all four</option>
+              </select>
+            </div>
+            <div>
+              <label for="densitySel">Question size</label>
+              <select id="densitySel">
+                <option value="roomy" selected>Large &mdash; two to a row, biggest bars</option>
+                <option value="normal">Medium &mdash; three to a row</option>
+                <option value="tight">Small &mdash; four to a row, no bars</option>
+              </select>
+            </div>
+            <div>
+              <label for="unitSel">Contexts</label>
+              <select id="unitSel">
+                <option value="mixed" selected>Money, mass, length, time&hellip;</option>
+                <option value="money">Money only</option>
+              </select>
+            </div>
+          </div>
+          <p class="note">A box a student can write in is about <b>10&nbsp;mm across</b>, so a question whose ratio needs more room than its column has is printed across <b>two or more columns</b> automatically. At <b>Small</b> no bars are drawn at all &mdash; that paper is fluency practice for a class that has left the picture behind.</p>
+        </div>
+
+        <div class="band">
+          <p class="bandHead">Sections &mdash; and how many of each</p>
+          <div class="secGrid">
+            <div class="secOpt">
+              <label class="sw"><input type="checkbox" id="kTotal" checked /><span class="track"></span><span>A &nbsp;Share a total</span></label>
+              <div class="cntRow"><label for="nTotal">How many</label><input id="nTotal" type="number" min="0" max="40" value="4" /></div>
+            </div>
+            <div class="secOpt">
+              <label class="sw"><input type="checkbox" id="kShare" checked /><span class="track"></span><span>B &nbsp;One share is known</span></label>
+              <div class="cntRow"><label for="nShare">How many</label><input id="nShare" type="number" min="0" max="40" value="3" /></div>
+            </div>
+            <div class="secOpt">
+              <label class="sw"><input type="checkbox" id="kDiff" checked /><span class="track"></span><span>C &nbsp;The difference is known</span></label>
+              <div class="cntRow"><label for="nDiff">How many</label><input id="nDiff" type="number" min="0" max="40" value="3" /></div>
+            </div>
+            <div class="secOpt">
+              <label class="sw"><input type="checkbox" id="kDraw" checked /><span class="track"></span><span>D &nbsp;Draw the bars yourself</span></label>
+              <div class="cntRow"><label for="nDraw">How many</label><input id="nDraw" type="number" min="0" max="40" value="2" /></div>
+            </div>
+            <div class="secOpt">
+              <label class="sw"><input type="checkbox" id="kWord" checked /><span class="track"></span><span>E &nbsp;Use it</span></label>
+              <div class="cntRow"><label for="nWord">How many</label><input id="nWord" type="number" min="0" max="20" value="2" /></div>
+            </div>
+          </div>
+          <div class="totalRow"><span>On the paper:</span><span class="pill" id="totalPill">0 questions</span></div>
+          <p class="note">The order is the teaching, and the picture comes off last. <b>A</b>, <b>B</b> and <b>C</b> are the tool's three question types with the bars already drawn &mdash; what changes is <i>where the amount in the question sits on the model</i>: around the whole thing, over one bar, or over the gap between them. <b>D</b> gives an empty space and asks the student to <b>draw the bars themselves</b>, which is the step that shows whether the model is theirs yet or still the page's. <b>E</b> asks for it in words, with no picture at all.</p>
+        </div>
+
+        <div class="band">
+          <p class="bandHead">Options</p>
+          <div class="bandRow">
+            <label class="sw"><input type="checkbox" id="barToggle" checked /><span class="track"></span><span>Draw the bars</span></label>
+            <label class="sw"><input type="checkbox" id="oneToggle" /><span class="track"></span><span>&ldquo;One part = ___&rdquo; line</span></label>
+            <label class="sw"><input type="checkbox" id="checkToggle" /><span class="track"></span><span>Check line</span></label>
+            <label class="sw"><input type="checkbox" id="promptToggle" /><span class="track"></span><span>Thinking prompt</span></label>
+            <label class="sw"><input type="checkbox" id="keyToggle" /><span class="track"></span><span>Answer key pages</span></label>
+          </div>
+          <p class="note">Everything but the bars is off to begin with, so the plainest paper is the default and each extra is a deliberate choice. The <b>one part</b> line puts the hinge of the whole method on the page &mdash; find what one box is worth and everything else is multiplication &mdash; and is worth turning on for a class that keeps jumping straight to an answer. The <b>check line</b> prints <b>5 &times; ___ = 75</b>, so an answer can be tested rather than believed. The <b>thinking prompt</b> is a misconception to argue with. The answer key shows <b>one part and the reasoning</b>, not just the totals, so it can be handed to a student.</p>
+        </div>
+
+        <div class="btnRow">
+          <button id="genBtn" class="primary">Generate worksheet</button>
+          <button id="printBtn" class="ghost">Print (Ctrl+P)</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+
+      <div id="out" class="outWrap"></div>
+    </div>
+  </div>
+
+  <div class="measure" id="measure" aria-hidden="true"></div>
+
+  <div class="mmtFooter">
+    This tool and more can be found at&nbsp;
+    <a href="https://www.millsmathstools.au">www.millsmathstools.au</a>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ==================================================================
+     STACKED BAR MODEL — RATIO — WORKSHEET GENERATOR
+     -------------------------------------------------------------------
+     The printable sibling of the teaching tool, and it keeps the tool's
+     one idea: ONE BOX PER PART, every box the same, and the amount in
+     the question drawn onto the part of the model it measures.
+
+       A  share a total          — a brace around both bars
+       B  one share is known     — a bracket over that bar
+       C  the difference is known— a bracket over the gap
+       D  draw the bars yourself — an empty space and nothing else
+       E  use it                 — words, no picture
+
+     Sections A–C are the same three question types the tool teaches, so
+     a student meets on paper exactly what they saw on the board. D is
+     the one that matters: a student who can draw the bars owns the
+     model; one who cannot has only been filling in someone else's.
+
+     Nothing on the student half is coloured — these get photocopied —
+     so the two bars are told apart by their labels, not by ink.
+     ================================================================== */
+
+  const SITE = "https://www.millsmathstools.au";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+  const randInt = (lo,hi) => lo + Math.floor(Math.random()*(hi-lo+1));
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+  const gcd = (a,b) => b ? gcd(b, a%b) : a;
+
+  /* ===================== units, names and contexts ===================== */
+  const UNITS = {
+    money:      { pre:"$", suf:"" },
+    grams:      { pre:"",  suf:" g" },
+    kilograms:  { pre:"",  suf:" kg" },
+    metres:     { pre:"",  suf:" m" },
+    centimetres:{ pre:"",  suf:" cm" },
+    minutes:    { pre:"",  suf:" min" },
+    litres:     { pre:"",  suf:" L" }
+  };
+  const fmt = (n,u) => UNITS[u].pre + Number(n).toLocaleString("en-AU") + UNITS[u].suf;
+
+  const NAMES = [
+    ["Jane","Bob"],["Amira","Liam"],["Mia","Noah"],["Zoe","Ethan"],["Ava","Lucas"],
+    ["Chloe","Max"],["Sofia","Jack"],["Isla","Henry"],["Priya","Tom"],["Leila","Sam"]
+  ];
+  /* Contexts for Sections B and C: two people sharing something. */
+  const SHARED = [
+    { noun:"rent",             verb:"pays",    unit:"money" },
+    { noun:"phone bill",       verb:"pays",    unit:"money" },
+    { noun:"cost of a present",verb:"pays",    unit:"money" },
+    { noun:"prize money",      verb:"gets",    unit:"money" },
+    { noun:"pocket money",     verb:"gets",    unit:"money" },
+    { noun:"sports fees",      verb:"pays",    unit:"money" },
+    { noun:"trail mix",        verb:"gets",    unit:"grams" },
+    { noun:"flour",            verb:"gets",    unit:"grams" },
+    { noun:"rope",             verb:"gets",    unit:"metres" },
+    { noun:"ribbon",           verb:"gets",    unit:"centimetres" },
+    { noun:"juice",            verb:"gets",    unit:"litres" },
+    { noun:"screen time",      verb:"gets",    unit:"minutes" }
+  ];
+  /* Section A shares a quantity, with no people in it. */
+  const QUANTITY = [
+    { thing:"AMT",           unit:"money" },
+    { thing:"AMT of flour",  unit:"grams" },
+    { thing:"AMT of rope",   unit:"metres" },
+    { thing:"AMT of ribbon", unit:"centimetres" },
+    { thing:"AMT of juice",  unit:"litres" },
+    { thing:"AMT",           unit:"money" }
+  ];
+
+  /* Section E word problems. Each one names the two quantities, so the answer
+     lines can be labelled with them, and each declares which TYPE it is —
+     the sentence and the model have to agree. */
+  const WORDS = [
+    { type:"type1", unit:"grams", a:"flour", b:"sugar",
+      text:"A biscuit mix uses flour and sugar in the ratio {L} : {R}. The mix weighs {T} altogether. How much of each is in it?" },
+    { type:"type1", unit:"money", a:"Maya", b:"Sam",
+      text:"Maya and Sam share a prize of {T} in the ratio {L} : {R}. How much does each of them get?" },
+    { type:"type1", unit:"centimetres", a:"the first piece", b:"the second piece",
+      text:"A ribbon {T} long is cut into two pieces in the ratio {L} : {R}. How long is each piece?" },
+    { type:"type1", unit:"minutes", a:"reading", b:"maths",
+      text:"{T} of homework is split between reading and maths in the ratio {L} : {R}. How long is spent on each?" },
+    { type:"type2", unit:"money", a:"Ava", b:"Ben",
+      text:"Ava and Ben share the cost of a present in the ratio {L} : {R}. Ava pays {K}. How much does Ben pay, and what does the present cost?" },
+    { type:"type2", unit:"grams", a:"nuts", b:"raisins",
+      text:"Nuts and raisins are mixed in the ratio {L} : {R}. There are {K} of nuts. How many grams of raisins are there, and how much mix is there altogether?" },
+    { type:"type2", unit:"litres", a:"cordial", b:"water",
+      text:"A drink mixes cordial and water in the ratio {L} : {R}. There is {K} of cordial. How much water is used, and how much drink is made?" },
+    { type:"type3", unit:"money", a:"Tia", b:"Jonah",
+      text:"Tia and Jonah share some money in the ratio {L} : {R}. Jonah gets {D} more than Tia. How much does each of them get?" },
+    { type:"type3", unit:"metres", a:"the shorter rope", b:"the longer rope",
+      text:"Two ropes are in the ratio {L} : {R}. The longer rope is {D} longer than the shorter one. How long is each rope?" },
+    { type:"type3", unit:"minutes", a:"Kai", b:"Mila",
+      text:"Kai and Mila share their screen time in the ratio {L} : {R}. Mila gets {D} more than Kai. How long does each of them get?" }
+  ];
+
+  const SECTIONS = {
+    total: { letter:"A", head:"Share a total. Write what one part is worth in every box, then the two shares." },
+    share: { letter:"B", head:"One share is known. Fill in the boxes, then find the other share and the total." },
+    diff:  { letter:"C", head:"The difference is known. The dashed boxes are the difference. Find each share and the total." },
+    draw:  { letter:"D", head:"Draw the bars yourself — one box for each part — then answer the question." },
+    word:  { letter:"E", head:"Use it. Show your working." }
+  };
+  const KINDS = ["total","share","diff","draw","word"];
+  const TOGGLE = { total:"kTotal", share:"kShare", diff:"kDiff", draw:"kDraw", word:"kWord" };
+  const COUNT  = { total:"nTotal", share:"nShare", diff:"nDiff", draw:"nDraw", word:"nWord" };
+  const DEFAULTS = { total:4, share:3, diff:3, draw:2, word:2 };
+
+  const LEVEL_LABEL = {
+    sweet:"Sweet", mild:"Mild", medium:"Medium", spicy:"Spicy", mixed:"Mixed — sweet to spicy"
+  };
+  const ORDER = ["sweet","mild","medium","spicy"];
+  /* maxPart is what makes a level hard on paper as much as the numbers do:
+     a 9 : 7 bar is sixteen boxes to count before any arithmetic starts. */
+  const LEVELS = {
+    sweet:  { maxPart:4,  per:[2,10], total:[20,120], moneyOnly:true },
+    mild:   { maxPart:6,  per:[2,12], total:[30,200], moneyOnly:false },
+    medium: { maxPart:8,  per:[2,20], total:[40,320], moneyOnly:false },
+    spicy:  { maxPart:10, per:[3,25], total:[60,500], moneyOnly:false }
+  };
+
+  /* ==================================================================
+     THE NUMBERS
+     Ratios are in simplest form and never 1 : 1 (a picture of nothing to
+     share), so every printed ratio is the one a student would be asked to
+     work with, and every amount divides exactly.
+     ================================================================== */
+  function makeRatio(level, opt){
+    const L = LEVELS[level];
+    for(let t=0;t<300;t++){
+      const a = randInt(1, L.maxPart), b = randInt(1, L.maxPart);
+      if(a === b || gcd(a,b) !== 1) continue;
+      if(opt && opt.minParts && a + b < opt.minParts) continue;
+      if(opt && opt.bigRight && b <= a) continue;
+      if(opt && opt.bigLeft && a <= b) continue;
+      const per = randInt(L.per[0], L.per[1]);
+      const total = (a+b)*per;
+      if(total < L.total[0] || total > L.total[1]) continue;
+      if(opt && opt.minDiffParts && Math.abs(a-b) < opt.minDiffParts) continue;
+      return { L:a, R:b, per, lt:a*per, rt:b*per, total };
+    }
+    return { L:2, R:3, per:15, lt:30, rt:45, total:75 };
+  }
+
+  function unitFor(level, type){
+    if($("unitSel").value === "money" || LEVELS[level].moneyOnly) return "money";
+    return null;   // let the context choose
+  }
+
+  function makeQ(kind, level){
+    const type = kind === "total" ? "type1"
+               : kind === "share" ? "type2"
+               : kind === "diff"  ? "type3"
+               : pick(["type1","type2","type3"]);
+    const moneyOnly = $("unitSel").value === "money" || LEVELS[level].moneyOnly;
+
+    if(kind === "word"){
+      const pool = WORDS.filter(w => !moneyOnly || w.unit === "money");
+      const w = pick(pool.length ? pool : WORDS.filter(x => x.unit === "money"));
+      const r = makeRatio(level, w.type === "type3" ? { bigRight:true } : null);
+      const q = Object.assign({ kind, level, type:w.type, unit:moneyOnly ? "money" : w.unit, word:w,
+                                labA:w.a, labB:w.b }, r);
+      return finish(q);
+    }
+
+    const r = makeRatio(level, null);
+    const q = Object.assign({ kind, level, type }, r);
+    if(type === "type1"){
+      const pool = moneyOnly ? QUANTITY.filter(c => c.unit === "money") : QUANTITY;
+      const c = pick(pool);
+      q.unit = c.unit; q.thing = c.thing;
+      q.labA = q.L + (q.L === 1 ? " part" : " parts");
+      q.labB = q.R + (q.R === 1 ? " part" : " parts");
+    } else {
+      const pool = moneyOnly ? SHARED.filter(c => c.unit === "money") : SHARED;
+      const c = pick(pool);
+      const nm = pick(NAMES);
+      q.unit = c.unit; q.noun = c.noun; q.verb = c.verb;
+      q.labA = nm[0]; q.labB = nm[1];
+    }
+    return finish(q);
+  }
+
+  /* Everything the page prints — the given amount, the labels, the answers —
+     is derived here once, so the question, the drawing and the key can never
+     disagree with each other. */
+  function finish(q){
+    if(q.type === "type2"){
+      q.known = (q.kind === "word") ? "L" : (Math.random() < .5 ? "L" : "R");
+      q.knownAmt = q.known === "L" ? q.lt : q.rt;
+    }
+    if(q.type === "type3"){
+      q.big = q.lt > q.rt ? "L" : "R";
+      q.small = q.big === "L" ? "R" : "L";
+      q.d = Math.abs(q.L - q.R);
+      q.diff = q.d * q.per;
+    }
+    q.given = q.type === "type1" ? q.total : q.type === "type2" ? q.knownAmt : q.diff;
+    q.givenParts = q.type === "type1" ? (q.L + q.R)
+                 : q.type === "type2" ? (q.known === "L" ? q.L : q.R)
+                 : q.d;
+    return q;
+  }
+
+  const labOf = (q,s) => s === "L" ? q.labA : q.labB;
+  const amtOf = (q,s) => s === "L" ? q.lt : q.rt;
+  const partsOf = (q,s) => s === "L" ? q.L : q.R;
+
+  /* ==================================================================
+     THE QUESTION, IN WORDS
+     ================================================================== */
+  function ratioText(q){ return '<span class="r">' + q.L + ' : ' + q.R + '</span>'; }
+
+  function questionHTML(q){
+    const r = ratioText(q);
+    if(q.kind === "word"){
+      return esc(q.word.text)
+        .replace("{L} : {R}", '<span class="r">' + q.L + ' : ' + q.R + '</span>')
+        .replace("{L}", q.L).replace("{R}", q.R)
+        .replace("{T}", '<span class="r">' + fmt(q.total,q.unit) + '</span>')
+        .replace("{K}", '<span class="r">' + fmt(q.knownAmt || 0,q.unit) + '</span>')
+        .replace("{D}", '<span class="r">' + fmt(q.diff || 0,q.unit) + '</span>');
+    }
+    if(q.type === "type1"){
+      const thing = q.thing.replace("AMT", fmt(q.total,q.unit));
+      return "Share " + '<span class="r">' + esc(thing) + '</span>' + " in the ratio " + r + ".";
+    }
+    const head = esc(q.labA) + " and " + esc(q.labB) + " share the " + esc(q.noun) + " in the ratio " + r;
+    if(q.type === "type2"){
+      return head + ", and " + esc(labOf(q,q.known)) + " " + q.verb + " "
+           + '<span class="r">' + fmt(q.knownAmt,q.unit) + '</span>' + ".";
+    }
+    return head + ", and " + esc(labOf(q,q.big)) + " " + q.verb + " "
+         + '<span class="r">' + fmt(q.diff,q.unit) + '</span>' + " more than " + esc(labOf(q,q.small)) + ".";
+  }
+
+  /* ==================================================================
+     THE MODEL, DRAWN
+     One SVG per question, in millimetres, so a box is a known size on
+     paper rather than whatever the column happens to leave.
+     ================================================================== */
+  const BOX_MIN = 9, BOX_MAX = 13, BOX_H = 9.5, GAPX = 1.1, ROWGAP = 2.2;
+  const STROKE = .45;
+
+  /* How wide a question needs to be, for a box the student can write in. */
+  function modelNeeds(q, boxW){
+    const n = Math.max(q.L, q.R);
+    return labelWidth(q) + n*boxW + (n-1)*GAPX + rightWidth(q, boxW);
+  }
+  function labelWidth(q){
+    const s = Math.max(String(q.labA).length, String(q.labB).length);
+    return Math.min(26, 6 + s*1.9);
+  }
+  function rightWidth(q, boxW){
+    /* Type 1's total is braced at the right of both bars; the other two put
+       their amount above or below the bars, so they need no right column. */
+    if(q.type !== "type1") return 2;
+    return 5 + String(fmt(q.total,q.unit)).length * 2.1;
+  }
+
+  function modelSVG(q, widthMM, key){
+    const n = Math.max(q.L, q.R);
+    const lab = labelWidth(q);
+    /* Fit the boxes to the room this card actually has, between the two
+       sizes a box may be. */
+    let boxW = (widthMM - lab - rightWidth(q, BOX_MAX) - (n-1)*GAPX) / n;
+    boxW = Math.max(BOX_MIN, Math.min(BOX_MAX, boxW));
+    const right = rightWidth(q, boxW);
+
+    const topBr = (q.type === "type2" && q.known === "L") || (q.type === "type3" && q.small === "L");
+    const botBr = (q.type === "type2" && q.known === "R") || (q.type === "type3" && q.small === "R");
+    const BRH = 7.6;                       /* bracket + its label */
+    const top = topBr ? BRH : 0.6;
+    const W = lab + n*boxW + (n-1)*GAPX + right;
+    const H = top + 2*BOX_H + ROWGAP + (botBr ? BRH : 0.6);
+
+    const x0 = lab;
+    const rowY = s => top + (s === "L" ? 0 : BOX_H + ROWGAP);
+    const bx = i => x0 + i*(boxW + GAPX);
+    let g = "";
+
+    ["L","R"].forEach(s => {
+      const y = rowY(s), parts = partsOf(q,s);
+      const upTo = (q.type === "type3" && s === q.small) ? n : parts;
+      g += '<text class="mLab" x="' + (lab - 2.4) + '" y="' + (y + BOX_H/2 + 1.3)
+         + '" text-anchor="end" font-size="3.5">' + esc(labOf(q,s)) + '</text>';
+      for(let i=0;i<upTo;i++){
+        const isGap = i >= parts;
+        g += '<rect class="mBox' + (isGap ? " gap" : "") + '" x="' + bx(i).toFixed(2) + '" y="' + y.toFixed(2)
+           + '" width="' + boxW.toFixed(2) + '" height="' + BOX_H + '" rx="1"/>';
+        if(key){
+          g += '<text class="mAmt mKey" x="' + (bx(i) + boxW/2).toFixed(2) + '" y="' + (y + BOX_H/2 + 1.6)
+             + '" text-anchor="middle" font-size="4.2">' + q.per + '</text>';
+        }
+      }
+    });
+
+    /* the amount from the question, on the part of the model it measures */
+    if(q.type === "type1"){
+      const bx0 = x0 + n*boxW + (n-1)*GAPX, y1 = top, y2 = top + 2*BOX_H + ROWGAP;
+      g += '<path class="mLine" d="M' + (bx0 + 2.6) + ' ' + y1 + ' H' + (bx0 + 0.9)
+         + ' V' + y2 + ' H' + (bx0 + 2.6) + '"/>'
+         + '<path class="mLine" d="M' + (bx0 + 0.9) + ' ' + ((y1+y2)/2) + ' H' + (bx0 + 2.9) + '"/>'
+         + '<text class="mAmt" x="' + (bx0 + 3.6) + '" y="' + ((y1+y2)/2 + 1.6) + '" font-size="4.3">'
+         + esc(fmt(q.total,q.unit)) + '</text>';
+    } else {
+      const side = q.type === "type2" ? q.known : q.small;
+      const from = q.type === "type2" ? 0 : partsOf(q,q.small);
+      const to   = q.type === "type2" ? partsOf(q,q.known) : n;
+      const xA = bx(from), xB = bx(to-1) + boxW;
+      const above = side === "L";
+      const yBar = above ? (top - 2.2) : (rowY("R") + BOX_H + 2.2);
+      const tick = above ? -1 : 1;
+      g += '<path class="mLine" d="M' + xA.toFixed(2) + ' ' + (yBar - tick*1.6).toFixed(2)
+         + ' V' + yBar.toFixed(2) + ' H' + xB.toFixed(2) + ' V' + (yBar - tick*1.6).toFixed(2) + '"/>'
+         + '<path class="mLine" d="M' + ((xA+xB)/2).toFixed(2) + ' ' + yBar.toFixed(2)
+         + ' V' + (yBar + tick*1.4).toFixed(2) + '"/>'
+         + '<text class="mAmt" x="' + ((xA+xB)/2).toFixed(2) + '" y="'
+         + (above ? (yBar + tick*1.4 - 0.9) : (yBar + tick*1.4 + 3.4)).toFixed(2)
+         + '" text-anchor="middle" font-size="4.3">' + esc(fmt(q.given,q.unit)) + '</text>';
+    }
+
+    return '<div class="modelWrap" style="--mw:' + W.toFixed(1) + 'mm">'
+         + '<svg viewBox="0 0 ' + W.toFixed(2) + ' ' + H.toFixed(2) + '" role="img" aria-label="bar model">'
+         + g + '</svg></div>';
+  }
+
+  /* ==================================================================
+     A QUESTION CARD
+     ================================================================== */
+  function answerSlots(q){
+    if(q.type === "type1") return [
+      { lab:q.labA }, { lab:q.labB }
+    ];
+    if(q.type === "type2") return [
+      { lab:labOf(q, q.known === "L" ? "R" : "L") }, { lab:"Total" }
+    ];
+    return [ { lab:q.labA }, { lab:q.labB }, { lab:"Total" } ];
+  }
+  function answerValues(q){
+    if(q.type === "type1") return [q.lt, q.rt];
+    if(q.type === "type2") return [q.known === "L" ? q.rt : q.lt, q.total];
+    return [q.lt, q.rt, q.total];
+  }
+
+  function ansRowHTML(q){
+    return '<div class="ansRow">' + answerSlots(q).map(s =>
+      '<span class="slot">' + esc(s.lab) + ' = <span class="blank"></span></span>').join("") + '</div>';
+  }
+  function onePartHTML(){
+    return '<div class="onePart"><span>One part =</span><span class="blank"></span></div>';
+  }
+  function checkHTML(q){
+    return '<div class="qFoot"><span>Check</span><span class="chk">'
+         + q.givenParts + ' &times; <span class="blank sm"></span> = ' + esc(fmt(q.given,q.unit))
+         + '</span></div>';
+  }
+
+  function cardHTML(q, idx, opts){
+    const bars = opts.bars && q.kind !== "draw" && q.kind !== "word";
+    let body = '<div class="qTop"><span class="qNum ' + q.level + '">' + idx + '</span>'
+             + '<span class="qText">' + questionHTML(q) + '</span></div>';
+
+    if(bars) body += modelSVG(q, opts.cardMM(q), false);
+    if(q.kind === "draw") body += '<div class="drawBox" style="min-height:' + drawHeight(q) + 'mm"></div>';
+    if(q.kind === "word" || (!bars && q.kind !== "draw")){
+      body += '<div class="workBox"><span class="workHead">Working</span><div style="height:'
+            + (q.kind === "word" ? 26 : 20) + 'mm"></div></div>';
+    }
+    if(opts.onePart) body += onePartHTML();
+    if(q.kind !== "draw") body += '<div class="qFill"></div>';
+    body += ansRowHTML(q);
+    if(opts.check) body += checkHTML(q);
+    return '<div class="qCard' + spanClass(q, opts) + '">' + body + '</div>';
+  }
+
+  /* The drawing space is at least as tall as the bars would have been, so a
+     9 : 7 question is never given less room to draw in than a 2 : 3 one. */
+  function drawHeight(q){ return 24; }
+
+  function keyCardHTML(q, idx, opts){
+    const vals = answerValues(q), slots = answerSlots(q);
+    const line = slots.map((s,i) => esc(s.lab) + " = " + fmt(vals[i], q.unit)).join(" · ");
+    const step = q.givenParts === 1
+      ? "one part = " + fmt(q.per,q.unit)
+      : fmt(q.given,q.unit) + " ÷ " + q.givenParts + " = " + fmt(q.per,q.unit);
+    const where = q.type === "type1"
+      ? q.L + " + " + q.R + " = " + (q.L+q.R) + " parts is the whole " + fmt(q.total,q.unit)
+      : q.type === "type2"
+        ? esc(labOf(q,q.known)) + "'s " + q.givenParts + (q.givenParts === 1 ? " part is " : " parts are ") + fmt(q.knownAmt,q.unit)
+        : Math.max(q.L,q.R) + " − " + Math.min(q.L,q.R) + " = " + q.d + (q.d === 1 ? " part is the " : " parts are the ") + fmt(q.diff,q.unit) + " difference";
+    const mult = esc(q.labA) + ": " + q.L + " × " + fmt(q.per,q.unit) + " = " + fmt(q.lt,q.unit)
+               + ", " + esc(q.labB) + ": " + q.R + " × " + fmt(q.per,q.unit) + " = " + fmt(q.rt,q.unit);
+    const check = fmt(q.lt,q.unit) + " + " + fmt(q.rt,q.unit) + " = " + fmt(q.total,q.unit);
+    return '<div class="qCard' + spanClass(q, opts) + '">'
+      + '<div class="qTop"><span class="qNum ' + q.level + '">' + idx + '</span>'
+      + '<span class="keyAns">One part = ' + esc(fmt(q.per,q.unit)) + '<br>' + line + '</span></div>'
+      + (opts.bars && q.kind !== "word" ? modelSVG(q, opts.cardMM(q), true) : "")
+      + '<div class="keyWhy">' + where + ', so ' + step + '. ' + mult + '. Check: ' + check + '.</div>'
+      + '</div>';
+  }
+
+  /* ==================================================================
+     HOW WIDE A CARD IS
+     A question is printed across as many columns as its bars need for a
+     box a student can write in — the alternative is a 9 : 7 ratio drawn
+     at 5mm a box, which nobody can write a number inside.
+     ================================================================== */
+  const A4_CONTENT_PX = (() => {
+    const p = document.createElement("div");
+    p.style.cssText = "position:absolute;left:-10000px;top:0;height:281mm;";
+    document.body.appendChild(p);
+    const h = p.getBoundingClientRect().height;
+    p.remove();
+    return h;
+  })();
+  const MM = (() => {
+    const p = document.createElement("div");
+    p.style.cssText = "position:absolute;left:-10000px;top:0;width:100mm;";
+    document.body.appendChild(p);
+    const w = p.getBoundingClientRect().width / 100;
+    p.remove();
+    return w;
+  })();
+  const SHEET_MM = 210 - 14 - 7;          /* page width − print margins − sheet padding */
+  const COLS = { roomy:2, normal:3, tight:4 };
+  const GUTTER_MM = 9 / MM;
+
+  function colWidthMM(cols, span){
+    const c = (SHEET_MM - (cols-1)*GUTTER_MM) / cols;
+    return c*span + (span-1)*GUTTER_MM - 5;   /* − card padding */
+  }
+  function spanFor(q, opts){
+    if(!opts.bars || q.kind === "draw" || q.kind === "word") return 1;
+    for(let s=1; s<=opts.cols; s++){
+      if(modelNeeds(q, BOX_MIN) <= colWidthMM(opts.cols, s)) return s;
+    }
+    return opts.cols;
+  }
+  function spanClass(q, opts){
+    const s = spanFor(q, opts);
+    return s > 1 ? " span" + s : "";
+  }
+
+  /* ==================================================================
+     BUILDING THE PAPER
+     ================================================================== */
+  function sectionCounts(){
+    const c = {};
+    KINDS.forEach(k => {
+      c[k] = $(TOGGLE[k]).checked ? Math.max(0, Math.min(40, parseInt($(COUNT[k]).value,10) || 0)) : 0;
+    });
+    return c;
+  }
+  const totalAsked = () => { const c = sectionCounts(); return KINDS.reduce((t,k)=>t+c[k],0); };
+
+  function buildQuestions(){
+    const level = $("levelSel").value;
+    const counts = sectionCounts();
+    const kinds = KINDS.filter(k => counts[k] > 0);
+    if(!kinds.length) return { error:"Turn on at least one section and give it a number of questions." };
+
+    const groups = [];
+    const seen = {};
+    kinds.forEach(k => {
+      const n = counts[k], qs = [];
+      let prevRatio = "";
+      for(let i=0;i<n;i++){
+        /* Every section climbs its OWN ladder, so three questions in a short
+           section still run sweet to spicy inside that section. */
+        const lv = (level === "mixed")
+          ? ORDER[Math.min(ORDER.length-1, Math.floor(i / Math.max(1, n/ORDER.length)))]
+          : level;
+        let q = null, spare = null;
+        for(let t=0;t<40;t++){
+          const cand = makeQ(k, lv);
+          const rat = cand.L + ":" + cand.R;
+          const id = k + "|" + rat + "|" + cand.per;
+          /* not the same question twice, and not the same RATIO twice running —
+             two 2 : 3 questions in a row is one question asked twice */
+          if(seen[id] || rat === prevRatio){ spare = spare || cand; continue; }
+          seen[id] = 1; q = cand; break;
+        }
+        q = q || spare;
+        if(q){ prevRatio = q.L + ":" + q.R; qs.push(q); }
+      }
+      groups.push({ kind:k, qs });
+    });
+    return { groups, level };
+  }
+
+  function measureRows(groups, opts, key){
+    const m = $("measure");
+    m.innerHTML = '<section class="page' + (key ? " isKey" : "") + '"><div class="sheet" id="mSheet"></div></section>';
+    const sheet = $("mSheet");
+    const out = [];
+    let n = 1;
+
+    groups.forEach(g => {
+      const head = document.createElement("div");
+      head.className = "secHead";
+      /* Measured WITH the "continued" chip: a section that carries onto the
+         next page prints one, and on a long heading that chip is what wraps it
+         to a second line — measuring without it put a row over the budget. */
+      head.innerHTML = '<span class="secLetter">' + SECTIONS[g.kind].letter + '</span>'
+                     + '<span class="secText">' + esc(SECTIONS[g.kind].head) + '</span>'
+                     + '<span class="secCont">continued</span>';
+      sheet.appendChild(head);
+      const headH = head.getBoundingClientRect().height + 7;
+
+      const rows = [];
+      const cards = g.qs.map(q => ({ q, n:n++ }));
+      let row = [], used = 0;
+      cards.forEach(c => {
+        const w = Math.min(spanFor(c.q, opts), opts.cols);
+        if(used + w > opts.cols){ rows.push(row); row = []; used = 0; }
+        row.push(c); used += w;
+      });
+      if(row.length) rows.push(row);
+
+      const heights = rows.map(r => {
+        const grid = document.createElement("div");
+        grid.className = "qGrid";
+        grid.style.setProperty("--cols", opts.cols);
+        grid.innerHTML = r.map(c => key ? keyCardHTML(c.q, c.n, opts) : cardHTML(c.q, c.n, opts)).join("");
+        sheet.appendChild(grid);
+        const h = grid.getBoundingClientRect().height;
+        grid.remove();
+        return h;
+      });
+      head.remove();
+      out.push({ kind:g.kind, headH, rows, heights });
+    });
+    m.innerHTML = "";
+    return out;
+  }
+
+  function layout(units, room){
+    const pages = [];
+    let cur = [], h = 0, kind = null;
+    const SECGAP = 9;
+    units.forEach(u => {
+      /* Every .section carries a margin-bottom, including the last one on the
+         page, so a new section costs its heading, its rows AND that margin. */
+      const cost = k => (k === u.kind) ? u.h : u.head + u.h + SECGAP;
+      if(cur.length && h + cost(kind) > room){ pages.push(cur); cur = []; h = 0; kind = null; }
+      h += cost(kind); cur.push(u); kind = u.kind;
+    });
+    if(cur.length) pages.push(cur);
+    return pages;
+  }
+
+  function paginate(blocks, room){
+    const units = [];
+    blocks.forEach(b => b.rows.forEach((r,i) =>
+      units.push({ kind:b.kind, head:b.headH, row:r, h:b.heights[i] })));
+    if(!units.length) return [];
+    const best = layout(units, room);
+    const seen = {};
+    return best.map(pageUnits => {
+      const page = [];
+      pageUnits.forEach(u => {
+        const last = page[page.length-1];
+        if(last && last.kind === u.kind){ last.rows.push(u.row); last.heights.push(u.h); }
+        else { page.push({ kind:u.kind, cont: !!seen[u.kind], rows:[u.row], heights:[u.h] }); seen[u.kind] = 1; }
+      });
+      return page;
+    });
+  }
+
+  function blocksHTML(page, opts, key){
+    return page.map(b =>
+      '<div class="section"><div class="secHead">'
+      + '<span class="secLetter">' + SECTIONS[b.kind].letter + '</span>'
+      + '<span class="secText">' + esc(SECTIONS[b.kind].head) + '</span>'
+      + (b.cont ? '<span class="secCont">continued</span>' : '')
+      + '</div>'
+      + b.rows.map(r => '<div class="qGrid" style="--cols:' + opts.cols + '">'
+          + r.map(c => key ? keyCardHTML(c.q, c.n, opts) : cardHTML(c.q, c.n, opts)).join("")
+          + '</div>').join("")
+      + '</div>'
+    ).join("");
+  }
+
+  /* Whatever a page leaves is not dead space: it is a question the student
+     writes for themselves, which is the same skill read backwards. */
+  function fillHTML(h){
+    return '<div class="prompt fillBox" style="margin-top:2px"><div class="promptHead">Write your own question</div>'
+      + '<div class="promptText">Write a ratio question of your own, draw the bars underneath it and answer it.</div>'
+      + '<div class="designLine"><span>Share</span><span class="blank lg"></span>'
+      +   '<span>in the ratio</span><span class="blank sm"></span><span>:</span><span class="blank sm"></span></div>'
+      + '<div class="promptRules" style="--ph:' + Math.min(300, Math.max(24, h - 34)) + 'px"></div></div>';
+  }
+
+  /* A misconception to argue with, which is the conversation this model is
+     for: a ratio is not a fraction of the other share, and a : b is not
+     "a out of b". */
+  const PROMPTS = [
+    "Sam says that in the ratio 2 : 3, the bigger share is 3 times the smaller. Sam is wrong. Draw the bars and explain what 2 : 3 really means.",
+    "Two amounts are shared in the ratio 1 : 4. Mia says the smaller share must be a quarter of the total. Is she right? Draw the bars and explain.",
+    "Ali shares $60 in the ratio 2 : 3 and gets $24 and $36. Bea shares $60 in the ratio 4 : 6 and gets exactly the same two amounts. Why?",
+    "Jo shares an amount in the ratio 3 : 5 and says the difference between the shares is 2. What is Jo forgetting? Use a bar model to explain."
+  ];
+  let PROMPT_I = 0;
+  function promptHTML(h){
+    const text = PROMPTS[PROMPT_I % PROMPTS.length];
+    return '<div class="prompt"><div class="promptHead">Think about it</div>'
+      + '<div class="promptText">' + esc(text) + '</div>'
+      + '<div class="promptRules" style="--ph:' + Math.min(240, Math.max(30, h)) + 'px"></div></div>';
+  }
+
+  function pageHTML(inner, meta, key, pageNo, total){
+    return '<section class="page' + (key ? " isKey" : "") + '">'
+      + '<div class="pageHeader">'
+      +   '<div><div class="hdrTitle">Stacked Bar Model &mdash; Ratio' + (key ? " &mdash; ANSWERS" : "") + '</div>'
+      +   '<div class="hdrSub">' + (key ? "Answer key &middot; " : "")
+      +     esc(LEVEL_LABEL[meta.level]) + ' &middot; MA4-RAT-C-01</div></div>'
+      +   (key ? "" : '<div class="nameDate">'
+      +     '<div class="lineField"><span class="lineLabel">Name</span><span class="lineBox"></span></div>'
+      +     '<div class="lineField"><span class="lineLabel">Date</span><span class="lineBox"></span></div>'
+      +   '</div>')
+      + '</div>'
+      + '<div class="sheet">' + inner + '</div>'
+      + '<div class="pageFooter"><span>Page ' + pageNo + ' of ' + total + '</span>'
+      +   '<span><a href="' + SITE + '">www.millsmathstools.au</a></span></div>'
+      + '</section>';
+  }
+
+  let LAST_ROOM = 0;
+
+  function generate(scroll){
+    const built = buildQuestions();
+    const out = $("out");
+    if(built.error){ out.innerHTML = '<p class="note warn">' + esc(built.error) + '</p>'; return; }
+
+    const density = $("densitySel").value;
+    const cols = COLS[density];
+    const opts = {
+      cols,
+      bars: $("barToggle").checked && density !== "tight",
+      onePart: $("oneToggle").checked,
+      check: $("checkToggle").checked
+    };
+    opts.cardMM = q => colWidthMM(cols, spanFor(q, opts));
+
+    const probe = document.createElement("div");
+    probe.className = "measure";
+    probe.innerHTML = pageHTML("", built, false, 1, 1);
+    document.body.appendChild(probe);
+    const chrome = probe.querySelector(".pageHeader").getBoundingClientRect().height
+                 + probe.querySelector(".pageFooter").getBoundingClientRect().height
+                 + 18;
+    probe.remove();
+    /* The page is 297mm on screen but only 281mm once print margins are taken,
+       so the packing is done against the PRINT budget. */
+    const room = A4_CONTENT_PX - chrome;
+    LAST_ROOM = room;
+
+    const wsBlocks = measureRows(built.groups, opts, false);
+    const pagesS = paginate(wsBlocks, room);
+
+    const key = $("keyToggle").checked;
+    let pagesK = [];
+    if(key) pagesK = paginate(measureRows(built.groups, opts, true), room);
+
+    const headOf = {};
+    wsBlocks.forEach(b => headOf[b.kind] = b.headH);
+    const spareOf = p => room - p.reduce((t,b) =>
+      t + headOf[b.kind] + b.heights.reduce((x,y)=>x+y,0) + 9, 0);
+
+    const wantPrompt = $("promptToggle").checked;
+    const lastSpare = pagesS.length ? spareOf(pagesS[pagesS.length-1]) : 0;
+    /* The panel's own chrome — heading, text, ruled area — is about 100px, so
+       it only goes on the last page when that page can really hold it;
+       otherwise it gets a page of its own rather than being squeezed over the
+       print budget or quietly dropped. */
+    const promptOnLast = wantPrompt && lastSpare >= 130;
+    const promptOwnPage = wantPrompt && !promptOnLast;
+    const totalPages = pagesS.length + pagesK.length + (promptOwnPage ? 1 : 0);
+
+    let html = "";
+    pagesS.forEach((p,i) => {
+      let inner = blocksHTML(p, opts, false);
+      const spare = spareOf(p);
+      if(promptOnLast && i === pagesS.length - 1) inner += promptHTML(spare - 72);
+      else if(spare > 155) inner += fillHTML(spare - 72);
+      html += pageHTML(inner, built, false, i+1, totalPages);
+    });
+    if(promptOwnPage) html += pageHTML(promptHTML(240), built, false, pagesS.length+1, totalPages);
+
+    const before = pagesS.length + (promptOwnPage ? 1 : 0);
+    pagesK.forEach((p,i) => { html += pageHTML(blocksHTML(p, opts, true), built, true, before+i+1, totalPages); });
+    out.innerHTML = html;
+
+    /* The filler is sized from the model, and the model can be a few pixels
+       out. Measure the real page and take those pixels back off the filler,
+       so it can never be what pushes a card past the print budget. */
+    out.querySelectorAll(".page").forEach(pg => {
+      const box = pg.querySelector(".promptRules");
+      if(!box) return;
+      /* Measure the BOX the rules sit in, not the rules: the dashed panel has
+         padding and a border under them, and trimming to the rules alone left
+         the panel itself a few millimetres past the print budget. */
+      const cont = box.closest(".prompt") || box;
+      const sheet = pg.querySelector(".sheet").getBoundingClientRect();
+      for(let t=0;t<6;t++){
+        const over = cont.getBoundingClientRect().bottom - (sheet.top + room);
+        if(over <= 0) break;
+        const h = parseFloat(getComputedStyle(box).height) || 0;
+        const next = Math.max(0, h - over - 2);
+        box.style.setProperty("--ph", next + "px");
+        if(next === 0) break;
+      }
+      /* A "write your own question" panel that still will not fit is noise, so
+         it goes. The thinking prompt is never dropped — it is given its own
+         page above instead. */
+      if(cont.classList.contains("fillBox")
+         && cont.getBoundingClientRect().bottom > sheet.top + room) cont.remove();
+    });
+
+    if(scroll && out.scrollIntoView) out.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+
+  /* ==================================================================
+     CONTROLS
+     ================================================================== */
+  function syncTotal(){ $("totalPill").textContent = totalAsked() + " questions"; }
+  KINDS.forEach(k => {
+    $(TOGGLE[k]).addEventListener("change", syncTotal);
+    $(COUNT[k]).addEventListener("input", syncTotal);
+  });
+  $("genBtn").addEventListener("click", () => { PROMPT_I++; generate(true); });
+  $("printBtn").addEventListener("click", () => window.print());
+  $("resetBtn").addEventListener("click", () => {
+    $("levelSel").value = "mixed";
+    $("densitySel").value = "roomy";
+    $("unitSel").value = "mixed";
+    KINDS.forEach(k => { $(TOGGLE[k]).checked = true; $(COUNT[k]).value = DEFAULTS[k]; });
+    $("barToggle").checked = true;
+    ["oneToggle","checkToggle","promptToggle","keyToggle"].forEach(id => $(id).checked = false);
+    syncTotal();
+    $("out").innerHTML = "";
+  });
+
+  syncTotal();
+  generate(false);
+
+  /* a small surface for the automated checks */
+  window.__SBRW__ = {
+    generate, buildQuestions, makeQ, makeRatio, modelNeeds, spanFor, colWidthMM,
+    answerValues, answerSlots, LEVELS, BOX_MIN, BOX_MAX,
+    room: () => LAST_ROOM
+  };
+})();
+</script>
+</body>
+</html>
