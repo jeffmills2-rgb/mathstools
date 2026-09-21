@@ -315,23 +315,57 @@
      take the width, the scores follow underneath. */
   .menu-card{padding:12px;min-height:0;}
   .menu-center-panel{padding:16px;}
-  .menu-hero{flex-direction:column;align-items:flex-start;}
-  .mode-grid{grid-template-columns:1fr;}
+  .menu-hero{flex-direction:column;align-items:flex-start;gap:12px;}
+  .menu-hero .demo span{width:36px;height:42px;font-size:1.3rem;border-radius:10px;}
+  .menu-intro p{font-size:.92rem;}
+  .mode-grid{grid-template-columns:1fr;gap:10px;}
+  .mode-card{padding:12px 14px;gap:2px 12px;border-radius:18px;}
+  .mode-card .mode-icon{width:44px;height:44px;font-size:1.5rem;border-radius:14px;}
+  .mode-card strong{font-size:1.1rem;}
+  .mode-card span:last-child{font-size:.86rem;}
+  /* the setup sheet scrolls; its Start button stays on screen */
+  .setup-block{padding:12px;}
+  .level-btn{padding:9px;}
+  #startBtn,#createRoomBtn,#joinBtn{min-height:48px;}
+  #setupPanel #startBtn{position:sticky;bottom:-14px;z-index:3;box-shadow:0 -14px 18px rgba(255,255,255,.95),0 10px 24px rgba(37,99,235,.25);}
   .setup-modal-panel{padding:14px;max-height:calc(100dvh - 20px);width:calc(100vw - 16px);}
   .field-row{grid-template-columns:1fr;}
   .game-card{padding:8px;gap:8px;}
-  .status-strip{grid-template-columns:minmax(0,1fr) auto;gap:8px;}
-  .turn-card{min-height:0;padding:8px 10px;border-radius:16px;gap:8px;}
+
+  /* THE DOCK: status + die + Roll, fixed to the bottom of the screen, in
+     thumb reach. fitDock() pads the page by its real height. */
+  #gamePage .status-strip{position:fixed;left:0;right:0;bottom:0;z-index:60;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;
+    background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--border);border-radius:20px 20px 0 0;
+    box-shadow:0 -12px 30px rgba(15,23,42,.16);padding:10px 12px calc(10px + env(safe-area-inset-bottom));}
+  .turn-card{min-height:0;padding:0;border:0;background:none;border-radius:0;gap:8px;}
   .status-icon{width:30px;height:30px;font-size:.95rem;}
-  .status-title{font-size:.98rem;}
-  .status-subtitle{font-size:.84rem;}
-  .die-card{padding:6px 8px;gap:8px;border-radius:16px;flex-direction:column;}
-  .die{width:52px;height:52px;font-size:1.9rem;border-radius:13px;}
-  .die-card button{padding:8px 12px;font-size:13px;min-height:38px;}
-  #rollBtn{font-size:1.05rem;padding:11px 16px;min-width:0;border-radius:14px;}
-  .toolbar{justify-content:center;gap:6px;}
-  .toolbar button{padding:9px 12px;font-size:13px;min-height:38px;}
-  .toolbar .chip{padding:6px 10px;font-size:.78rem;}
+  .status-title{font-size:1rem;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .status-subtitle{font-size:.82rem;line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .die-card{padding:0;gap:8px;border:0;background:none;border-radius:0;flex-direction:row;}
+  .die{width:50px;height:50px;font-size:1.8rem;border-radius:13px;box-shadow:0 4px 0 #cbd5e1;}
+  .die.live{box-shadow:0 4px 0 #f59e0b,0 0 0 4px rgba(245,158,11,.22);}
+  #rollBtn{font-size:1.1rem;padding:13px 16px;min-width:96px;border-radius:15px;min-height:52px;box-shadow:0 5px 0 #1e40af;}
+  .toolbar{justify-content:flex-start;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  .toolbar::-webkit-scrollbar{display:none;}
+  .toolbar button{padding:8px 12px;font-size:13px;min-height:38px;white-space:nowrap;}
+  .toolbar .chip{padding:5px 9px;font-size:.74rem;}
+  #quickRules{display:none;}
+  /* nothing to roll: the button steps aside so the status line has the room */
+  #rollBtn:disabled{display:none;}
+  .toolbar .chip.goal{display:none;}
+
+  /* HERO board: yours (or whoever must act), full width, big squares */
+  .boards.phone{gap:8px;}
+  .pboard.hero{padding:10px 10px 12px;}
+  .pboard.hero .pb-row{justify-content:space-between;gap:4px;}
+  /* ROW boards: name over small squares, pass button on the right */
+  .pboard.row{grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:3px;padding:7px 10px;align-items:center;border-radius:14px;}
+  .pboard.row .pb-head{grid-column:1;font-size:.86rem;}
+  .pboard.row .pb-row{grid-column:1;justify-content:flex-start;gap:3px;}
+  .pboard.row .pb-foot{display:none;}
+  .pboard.row .pb-cell{border-radius:8px;border-width:1.5px;}
+  .pboard.row .pass-btn{grid-column:2;grid-row:1 / span 2;align-self:center;min-height:46px;font-size:.9rem;padding:8px 12px;border-radius:14px;}
+  .pboard.row.passer,.pboard.row.can-pass{border-color:#fecaca;}
   .side-panel{grid-template-columns:1fr;}
   .lobby-card{padding:12px;}
   .lobby-top{grid-template-columns:1fr;}
@@ -1202,6 +1236,7 @@ function showPage(id) {
   $('backToMenuBtn').classList.toggle('hidden', id === 'menuPage');
   if (id === 'menuPage') paintMenu();
   window.scrollTo(0, 0);
+  if (typeof fitDock === 'function') fitDock();
 }
 $('backToMenuBtn').addEventListener('click', () => {
   if (ON.active) { $('leaveText').textContent = ON.isHost ? 'This closes nothing — the room keeps going and you can rejoin it from the menu.' : 'You can rejoin this room from the menu with the same device.'; }
@@ -1213,6 +1248,33 @@ $('leaveYes').addEventListener('click', () => { closeModal('leaveModal'); if (ON
 function goMenu() { stopLocalTimers(); C = null; ['roundModal', 'overModal'].forEach(closeModal); showPage('menuPage'); }
 
 /* ============================================================ RENDER */
+/* ---------------------------------------------------------------- PHONES
+   Below 700px the page is laid out for one thumb (teacher request 2026-09-22):
+     * the status, the die and the Roll button live in a DOCK fixed to the
+       bottom of the screen, so rolling never means scrolling back up;
+     * the HERO board — yours, or on a shared phone whoever has to act — runs
+       the full width with squares big enough to tap (up to 72px);
+     * every other board is a slim ROW (small squares, no place names) with
+       its own "😈 Pass" button on the right, so a whole table fits on one
+       screen and passing is one tap.
+   Everything else (engine, modes, online) is the same code as the desktop. */
+const PHONE_W = 700;
+function isPhone() { return window.innerWidth <= PHONE_W; }
+function heroSeat(st) {
+  if (C.mySeat != null) return C.mySeat;
+  return (st.phase === 'roll' || st.phase === 'place' || st.phase === 'take') ? NG.actor(st) : st.turn;
+}
+function phoneCells(st) {
+  const W = $('boards').clientWidth || (window.innerWidth - 16);
+  const P = st.s.places, dec = st.s.decimals > 0 ? 0.25 : 0;
+  // hero: full width less the card padding (~34px) and the gaps between squares
+  const hero = Math.floor(Math.max(34, Math.min(72, (W - 24 - (P - 1) * 4 - (dec ? 4 : 0)) / (P + (dec ? 0.2 : 0)))));
+  // row: the pass button (~92px) sits to the right of the squares
+  const row = Math.floor(Math.max(24, Math.min(40, (W - 24 - 100 - (P - 1) * 3) / (P + dec))));
+  return { hero, row };
+}
+let lastHero = null;
+
 function fitBoards() {
   const st = C.st, host = $('boards');
   const n = st.n, P = st.s.places, dec = st.s.decimals > 0;
@@ -1247,6 +1309,14 @@ function fitBoards() {
   return best.cell;
 }
 
+/* The dock covers the bottom of the page on a phone; pad the page by its real
+   height so nothing (the last board, the scores) hides underneath it. */
+function fitDock() {
+  const strip = document.querySelector('#gamePage .status-strip');
+  const on = isPhone() && !$('gamePage').classList.contains('hidden');
+  document.body.style.paddingBottom = on && strip ? (strip.getBoundingClientRect().height + 12) + 'px' : '';
+}
+
 function labelMode(cell) {
   if (prefs.labels === 'auto') return cell >= 58 ? 'words' : 'numbers';
   return prefs.labels;
@@ -1255,8 +1325,9 @@ function labelMode(cell) {
 function boardEl(st, b, opt) {
   const ex = NG.exps(st.s), board = st.boards[b];
   const d = document.createElement('div');
-  d.className = 'pboard';
+  d.className = 'pboard' + (opt.shape ? ' ' + opt.shape : '');
   d.dataset.seat = b;
+  if (opt.shape) d.style.setProperty('--cell', opt.cell + 'px');
   d.style.setProperty('--pc', colourOf(b));
   if (opt.turn) d.classList.add('turn');
   if (opt.passer) d.classList.add('passer');
@@ -1294,11 +1365,12 @@ function boardEl(st, b, opt) {
     const full = NG.boardFull(board);
     const val = full ? `<span class="pb-value">${NG.fmtScaled(NG.boardValue(board), st.s.decimals)}</span>` : '<span></span>';
     const nasty = st.nasty[b] ? `<span class="pb-nasty">😈 ${st.nasty[b]}</span>` : '<span></span>';
-    html += `<div class="pb-foot">${val}${nasty}</div>`;
+    if (full || st.nasty[b]) html += `<div class="pb-foot">${val}${nasty}</div>`;
   }
   if (opt.passable && opt.passable.has(b)) {
     const full = `Pass the ${st.die} to ${esc(p.name)}`;
-    html += `<button type="button" class="pass-btn" data-pass="${b}" title="${full}" aria-label="${full}">😈 ${opt.cell >= 50 ? full : `Pass the ${st.die} here`}</button>`;
+    const label = opt.shape === 'row' ? `Pass the ${st.die}` : opt.cell >= 50 ? full : `Pass the ${st.die} here`;
+    html += `<button type="button" class="pass-btn" data-pass="${b}" title="${full}" aria-label="${full}">😈 ${label}</button>`;
   }
   d.innerHTML = html;
   return d;
@@ -1363,12 +1435,14 @@ function render() {
       else if (!C.canAct()) sub = `Waiting for ${esc(curP.name)} to keep it or pass it on.`;
       else if (!NG.boardFull(st.boards[cur])) sub = `Keep it — pick a square on ${local ? esc(curP.name) + '’s' : 'your'} board — or <b>pass it</b> to another player and make them take it.`;
       else sub = `${local ? esc(curP.name) + '’s' : 'Your'} board is full, so pass it to another player.`;
+      if (isPhone() && C.canAct() && !NG.boardFull(st.boards[cur])) sub = 'Tap a square to keep it — or <b>😈 Pass</b> it on.';
     } else {
       // someone has been passed a digit and must take it
       title = `${nm(roller)} passed ${isMe(cur) ? 'you' : esc(curP.name)} a ${st.die}! 😈`;
       if (curP.kind === 'cpu') sub = `${esc(curP.name)} is choosing where it does the least damage…`;
       else if (!C.canAct()) sub = `Waiting for ${esc(curP.name)} to put it on their board.`;
       else sub = `${local ? esc(curP.name) + ', you' : 'You'} have to take it. Choose a square on your board.`;
+      if (isPhone() && C.canAct()) sub = `${local ? esc(curP.name) + ', you' : 'You'} have to take it — tap a square.`;
     }
   }
   $('statusTitle').innerHTML = title;
@@ -1390,8 +1464,20 @@ function render() {
   $('undoBtn').classList.toggle('hidden', !(C.canUndo && C.canUndo()));
   // --- boards
   const host = $('boards');
-  const cell = fitBoards();
-  const labs = labelMode(cell);
+  const phone = isPhone();
+  host.classList.toggle('phone', phone);
+  let cell, labs, pc = null;
+  if (phone) {
+    pc = phoneCells(st);
+    host.style.setProperty('--cols', 1);
+    host.style.removeProperty('--cell');
+    host.classList.remove('compact');
+    cell = pc.hero;
+    labs = prefs.labels === 'auto' ? (cell >= 58 ? 'words' : 'numbers') : prefs.labels;
+  } else {
+    cell = fitBoards();
+    labs = labelMode(cell);
+  }
   const targets = new Set(), passable = new Set();
   if ((st.phase === 'place' || st.phase === 'take') && act && pendingRoll == null && curP.kind === 'human')
     NG.legalMoves(st).forEach(m => { if (m.pass != null) passable.add(m.pass); else targets.add(m.b + ':' + m.i); });
@@ -1402,13 +1488,26 @@ function render() {
   lastRenderedSeq = landKey;
   const frag = document.createDocumentFragment();
   // Online, your own board comes first; everyone else keeps their seat order.
+  // On a phone the hero board (yours, or whoever must act) goes first.
   const order = st.players.map((_, i) => i);
-  if (C.mySeat != null) { order.splice(order.indexOf(C.mySeat), 1); order.unshift(C.mySeat); }
-  order.forEach(b => frag.appendChild(boardEl(st, b, {
-    turn: b === cur && st.phase !== 'roundEnd' && st.phase !== 'over', me: isMe(b), labs, targets, passable, fresh, winner: winners.has(b), cell,
-    passer: st.phase === 'take' && b === roller
-  })));
+  const first = phone ? heroSeat(st) : C.mySeat;
+  if (first != null) { order.splice(order.indexOf(first), 1); order.unshift(first); }
+  order.forEach(b => {
+    const shape = !phone ? null : b === first ? 'hero' : 'row';
+    frag.appendChild(boardEl(st, b, {
+      turn: b === cur && st.phase !== 'roundEnd' && st.phase !== 'over', me: isMe(b), labs: shape === 'row' ? 'off' : labs, targets, passable, fresh, winner: winners.has(b),
+      cell: shape === 'row' ? pc.row : cell, shape,
+      passer: st.phase === 'take' && b === roller
+    }));
+  });
   host.replaceChildren(frag);
+  // On a shared phone the hero changes hands: bring the new one into view.
+  if (phone && C.mySeat == null && lastHero !== null && lastHero !== first) {
+    const top = host.getBoundingClientRect().top + window.scrollY - 8;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: reduceMotion() ? 'auto' : 'smooth' });
+  }
+  lastHero = phone ? first : null;
+  fitDock();
   // --- scores
   $('scoreTable').innerHTML = scoreTableHTML(st);
   $('scoresTitle').textContent = C.kind === 'online' ? 'Your table' : 'Scores';

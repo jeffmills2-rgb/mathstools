@@ -82,6 +82,29 @@
 >   replaced the same day. The "Pass and play" mode is now **"Play on one
 >   screen"**, because "pass" is a move. Against the computer the human seat is
 >   `mySeat` 0, so the page says "You rolled… your board".
+> * **PHONE LAYOUT (teacher request 2026-09-22), below 700px:**
+>   - **A DOCK fixed to the bottom** holds the status, the die and the Roll
+>     button (thumb reach; rolling never means scrolling up). `fitDock()` pads
+>     the page by the dock's REAL height so nothing hides under it. A disabled
+>     Roll button is hidden on phones, and the goal chip moves out, so the
+>     status line gets the room; title and subtitle clamp to two lines, and
+>     phones get shorter prompts ("Tap a square to keep it — or 😈 Pass it on").
+>   - **The HERO board** — yours, or on a shared phone whoever must act
+>     (`heroSeat()`; the TAKER during a pass) — goes first, full width, squares
+>     sized from the real width (`phoneCells()`, up to 72px; 38px is the floor
+>     for six squares plus a point on a 320px iPhone SE). On a shared phone
+>     the page scrolls the new hero into view when it changes hands.
+>   - **Every other board is a slim ROW**: name over small squares, no place
+>     names, and a 46px-tall "😈 Pass the 3" button on the right.
+>   - The setup sheet's Start button is sticky; menu cards are compact; the
+>     Remember panel is hidden (How to play has it).
+>   - Checked with `phone2.mjs` on iPhone 13 / SE / Pixel 5 / Galaxy S9+
+>     emulation: dock on the bottom edge, no sideways scroll, hero squares
+>     tappable, pass buttons ≥ 44px, nothing under the dock, the hero following
+>     the actor and then the taker; plus the online suite at 390×844.
+>   - **Bridge gotcha:** `device_commit_files` twice reported "written" but left
+>     the OLD file on disk; the second call worked. After committing, check
+>     the size or grep for a new string before telling Jeff to push.
 > * **SETTINGS (teacher choices 2026-09-21):** die 0–9 or 1–6; 3–6 squares;
 >   0–2 of them after the decimal point (the point is DRAWN between the ones
 >   and tenths columns, never typed); rounds 1–8; goal **largest**,
