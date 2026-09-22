@@ -307,6 +307,19 @@
       *{ transition-duration:.01ms !important; }
     }
 
+    /* ---------- the flying numbers ---------- */
+    #flyLayer{ position:fixed; inset:0; pointer-events:none; z-index:250; }
+    .flyTok{
+      position:fixed; left:0; top:0; will-change:transform,opacity; white-space:nowrap;
+      font-family:var(--mathFont); font-weight:700; line-height:1; padding:.28em .42em; border-radius:12px;
+      border:2px solid transparent; box-shadow:0 10px 26px rgba(15,23,42,.18);
+    }
+    .flyTok.tok-given{ background:#fefce8; border-color:rgba(202,138,4,.5); color:var(--ink); }
+    .flyTok.tok-L{ background:var(--blue-soft); border-color:var(--blue); color:var(--blue-dark); }
+    .flyTok.tok-R{ background:var(--red-soft); border-color:var(--red); color:var(--red-dark); }
+    .flyTok.tok-gap{ background:#f5f3ff; border-color:var(--purple); color:var(--purple-dark); }
+    .flyTok.bare{ background:transparent; border-color:transparent; box-shadow:none; padding:0; }
+
     .modelNote{ margin-top:12px; text-align:center; font-size:.8rem; font-weight:750; color:var(--line-soft); }
 
     /* ---------- answer strip (inside the bar card) ---------- */
@@ -641,6 +654,8 @@
       </aside>
     </main>
   </div>
+
+  <div id="flyLayer" aria-hidden="true"></div>
 
   <div class="veil" id="resultVeil" hidden role="dialog" aria-modal="true" aria-labelledby="veilTitle">
     <div class="veilCard">
@@ -1048,7 +1063,7 @@
     const st = S.stage, pr = S.mode === "practice";
     const nb = $("nextBtn");
     nb.innerHTML = NEXT_LABEL[S.mode][st] + (st < 3 ? " &#9654;" : "");
-    nb.disabled = st >= 3;
+    nb.disabled = st >= 3 || S.busy;
     $("backBtn").disabled = pr || st === 0;
     $("backBtn").hidden = pr;
     $("resetBtn").disabled = st === 0;
@@ -1082,19 +1097,157 @@
 
   /* ---------------------------------------------------------- stepping */
   function next(){
-    if(S.stage >= 3) return;
+    if(S.stage >= 3 || S.busy) return;
     if(S.mode === "practice"){
       if(S.stage === 1) return checkOnePart();
       if(S.stage === 2) return checkAnswers();
+    }
+    if(S.mode === "demo" && animOK()){
+      if(S.stage === 1) return splitAnim();
+      if(S.stage === 2) return combineAnim();
     }
     S.stage++; S.anim = true; render();
     if(S.mode === "practice" && S.stage === 1) focusFirst("#modelHost input");
   }
   function back(){
     if(S.mode !== "demo" || S.stage === 0) return;
+    abortAnim();
     S.stage--; render();
   }
-  function restart(){ S.stage = 0; render(); }
+  function restart(){ abortAnim(); S.stage = 0; render(); }
+
+  /* ------------------------------------------------- the two animations */
+  /* ONE: finding one part. The amount from the question flies out of its label
+     to the middle of the screen, grows, and POPS into one copy of the one-part
+     value for every box it is spread over — so a class sees 63 become nine 7s
+     rather than nine 7s simply appearing. (Teacher design, 2026-09-22.)
+     TWO: the answer. Each bar's boxes fly together, pop into that bar's share,
+     and the share flies to its place at the end of the bar — blue first, then
+     red, about a second each. The same idea in reverse: 7 and 7 become 14.
+     Both are overlays on a board that render() has ALREADY drawn in its final
+     state, with the landing spots hidden until something lands on them — so
+     Back, a new question or a settings change can abort at any moment and the
+     board underneath is simply correct. */
+  const FLY = () => $("flyLayer");
+  let ANIM_ID = 0;
+  function animOK(){
+    if(S.noAnim) return false;
+    return !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  function abortAnim(){
+    ANIM_ID++;
+    if(S.busy){ S.busy = false; }
+    const f = FLY(); if(f) f.innerHTML = "";
+  }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const centre = el => { const r = el.getBoundingClientRect(); return { x:r.left + r.width/2, y:r.top + r.height/2 }; };
+  const tf = (x,y,sc) => "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-50%) scale(" + sc.toFixed(3) + ")";
+  function mk(text, cls, at, fontPx){
+    const t = document.createElement("div");
+    t.className = "flyTok " + cls; t.textContent = text;
+    if(fontPx) t.style.fontSize = fontPx + "px";
+    t._x = at.x; t._y = at.y; t._s = 1; t._o = 1;
+    t.style.transform = tf(at.x, at.y, 1);
+    FLY().appendChild(t);
+    return t;
+  }
+  function go(t, to, ms, easing){
+    const x = to.x ?? t._x, y = to.y ?? t._y, sc = to.s ?? t._s, o = to.o ?? t._o;
+    const a = t.animate(
+      [{ transform:tf(t._x,t._y,t._s), opacity:t._o }, { transform:tf(x,y,sc), opacity:o }],
+      { duration:ms, easing:easing || "cubic-bezier(.45,.05,.3,1)", fill:"forwards" });
+    t._x = x; t._y = y; t._s = sc; t._o = o;
+    return a.finished.catch(() => {});
+  }
+  function popIn(el){
+    if(!el) return;
+    el.style.visibility = "";
+    el.animate([{ transform:"scale(.5)" }, { transform:"scale(1.18)" }, { transform:"scale(1)" }],
+               { duration:300, easing:"cubic-bezier(.34,1.5,.5,1)" });
+  }
+  const fontOf = el => parseFloat(getComputedStyle(el).fontSize) || 28;
+  function busy(on){ S.busy = on; renderControls(); }
+
+  async function splitAnim(){
+    const id = ++ANIM_ID, p = S.p;
+    const alive = () => id === ANIM_ID;
+    S.stage = 2; S.anim = false; render();
+    busy(true);
+    // the amount, where it sits on the model — or in the question if the model does not show it
+    const src = document.querySelector("#modelHost .brLab, #modelHost .gapBr .gLab") || document.querySelector("#qText .amt");
+    const given = p.type === "type1" ? p.total : p.type === "type2" ? p.knownAmt : p.diff;
+    const targets = [...document.querySelectorAll("#modelHost .box.hot > span")];
+    targets.forEach(t => { t.style.visibility = "hidden"; });
+    if(!src || !targets.length){ targets.forEach(t => t.style.visibility = ""); busy(false); return; }
+
+    const boxFont = fontOf(targets[0]);
+    const tok = mk(fmtS(given), "tok-given", centre(src), fontOf(src));
+    const mid = { x:innerWidth/2, y:innerHeight/2 };
+    await go(tok, mid, 520);                                   if(!alive()) return;
+    /* grow to a set size on screen (about 64px type), not a set multiple —
+       on a short projector the label starts small and 2x of small is still small */
+    const grow = Math.max(2, Math.min(4.2, 64 / fontOf(src)));
+    await go(tok, { s:grow }, 380, "cubic-bezier(.2,.8,.3,1.2)"); if(!alive()) return;
+    await wait(120);                                           if(!alive()) return;
+
+    // the pop: the amount bursts, and one part per box comes out of it
+    go(tok, { s:grow * 1.35, o:0 }, 170, "ease-in").then(() => tok.remove());
+    const flights = targets.map((span, i) => {
+      const box = span.parentElement;
+      const cls = box.classList.contains("gap") ? "tok-gap" : box.classList.contains("L") ? "tok-L" : "tok-R";
+      const t = mk(String(p.per), cls + " bare", mid, boxFont);
+      t._s = .35; t.style.transform = tf(mid.x, mid.y, .35);
+      // a little outward burst first, so it reads as a pop, then off to its box
+      const ang = (i / targets.length) * Math.PI * 2, r = 46 + Math.random()*22;
+      return wait(i * 32)
+        .then(() => alive() && go(t, { x:mid.x + Math.cos(ang)*r, y:mid.y + Math.sin(ang)*r, s:1.25 }, 190, "ease-out"))
+        .then(() => alive() && go(t, { ...centre(span), s:1 }, 560))
+        .then(() => { t.remove(); if(alive()) popIn(span); });
+    });
+    await Promise.all(flights);
+    if(!alive()) return;
+    busy(false);
+  }
+
+  async function combineAnim(){
+    const id = ++ANIM_ID, p = S.p;
+    const alive = () => id === ANIM_ID;
+    S.stage = 3; S.anim = true; render();
+    busy(true);
+    const strip = $("ansStrip");
+    const tots = { L:document.querySelector("#modelHost .tot.L"), R:document.querySelector("#modelHost .tot.R") };
+    Object.values(tots).forEach(t => { if(t) t.style.visibility = "hidden"; });
+    strip.style.visibility = "hidden";
+    // Types 2 and 3 fill more boxes at this step; let them land first.
+    await wait(p.type === "type1" ? 160 : 520);               if(!alive()) return;
+
+    for(const side of ["L","R"]){
+      const spans = [...document.querySelectorAll("#modelHost .box." + side + " > span")];
+      const pill = tots[side];
+      if(!spans.length || !pill) continue;
+      const cls = side === "L" ? "tok-L" : "tok-R";
+      const f = fontOf(spans[0]);
+      const pts = spans.map(centre);
+      const meet = { x:pts.reduce((a,q) => a + q.x, 0)/pts.length, y:pts[0].y };
+      // the boxes' values fly together…
+      const toks = pts.map(q => mk(String(p.per), cls, q, f * 0.9));
+      await Promise.all(toks.map(t => go(t, { ...meet, s:1.15 }, 380)));
+      if(!alive()) return;
+      // …pop into the share…
+      toks.forEach(t => t.remove());
+      const share = side === "L" ? p.lt : p.rt;
+      const big = mk(fmtS(share), cls, meet, fontOf(pill));
+      big._s = .5; big.style.transform = tf(meet.x, meet.y, .5);
+      await go(big, { s:1.45 }, 130, "ease-out");              if(!alive()) return;
+      await go(big, { s:1.1 }, 90);                            if(!alive()) return;
+      // …and the share goes to its place at the end of the bar
+      await go(big, { ...centre(pill), s:1 }, 380);            if(!alive()) return;
+      big.remove(); popIn(pill);
+    }
+    strip.style.visibility = "";
+    strip.animate([{ opacity:0, transform:"translateY(6px)" }, { opacity:1, transform:"none" }], { duration:260, easing:"ease-out" });
+    busy(false);
+  }
   function focusFirst(sel){ const el = document.querySelector(sel); if(el) el.focus(); }
 
   function checkOnePart(){
@@ -1245,6 +1398,7 @@
     $("quizTypeNote").hidden = S.mode !== "quiz";
   }
   function setMode(m){
+    abortAnim();
     clearTimeout(S.quizTimer);
     S.mode = m;
     document.querySelectorAll(".seg").forEach(b => {
@@ -1260,6 +1414,7 @@
     paintTypeUI();
   }
   function newQuestion(){
+    abortAnim();
     if(S.mode === "quiz"){ startQuiz(); return; }
     S.p = makeProblem(pickType());
     S.stage = 0; S.anim = false;
@@ -1300,7 +1455,7 @@
   }));
   $("partsSel").addEventListener("change", e => { S.maxPart = +e.target.value; newQuestion(); });
   $("unitSel").addEventListener("change", e => { S.unitMode = e.target.value; newQuestion(); });
-  $("givenToggle").addEventListener("change", e => { S.showGiven = e.target.checked; if(S.mode !== "quiz") render(); });
+  $("givenToggle").addEventListener("change", e => { S.showGiven = e.target.checked; abortAnim(); if(S.mode !== "quiz") render(); });
   $("workToggle").addEventListener("change", e => {
     S.showWork = e.target.checked;
     $("layout").classList.toggle("noSide", S.mode === "quiz" || !S.showWork);
@@ -1361,7 +1516,7 @@
 
   /* -------------------------------------------------------------- start */
   // Test hook: the harness reads state through this; nothing on the page uses it.
-  window.__SBR__ = { S, makeProblem, workLines, answerFields, setMode, newQuestion, next, back, render };
+  window.__SBR__ = { S, makeProblem, workLines, answerFields, setMode, newQuestion, next, back, render, abortAnim };
   $("layout").classList.toggle("noSide", !S.showWork);
   newQuestion();
   paintTypeUI();

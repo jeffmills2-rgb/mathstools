@@ -324,6 +324,27 @@
 > * Types 2 and 3 get NO total brace at the answer: with ten boxes the extra
 >   column squeezes the bars, and the answer line already states the total.
 > * `prefers-reduced-motion` turns every animation off.
+> * **TWO ANIMATIONS IN DEMO MODE (teacher design, 2026-09-22).** *Find one
+>   part*: the given amount flies out of its label on the model to the middle of
+>   the screen, grows to about 64px type (a set SIZE, not a multiple — on a short
+>   projector the label starts small), and POPS into one copy of the one-part
+>   value per box it is spread over, which scatter into those boxes — so 63
+>   visibly becomes nine 7s. *Show the answer*: each bar's values gather (as
+>   chips, so they read over the numbers still in the boxes), pop into that bar's
+>   share, and the share flies to its pill at the end of the bar — blue, then
+>   red, about a second each; the answer line appears last.
+>   - **Both are OVERLAYS on a board `render()` has already drawn in its final
+>     state**, with only the landing spots hidden (`visibility:hidden`) until
+>     something lands. So `abortAnim()` — called by Back, Start again, New
+>     question, a mode change and the given-amount toggle — just clears the fly
+>     layer and redraws, and the board is simply correct. Every step checks
+>     `alive()` against `ANIM_ID` so an aborted run cannot reveal anything later.
+>   - `S.busy` locks Next and the keys while it plays. Off entirely under
+>     `prefers-reduced-motion`. Practice mode is unchanged (the student types the
+>     one part there). The harnesses set `S.noAnim = true`; `anim.mjs` drives the
+>     real animations (151 checks: what flies from where, the pop count and
+>     value, blue landing before red starts, ~2 s for the answer, clean aborts,
+>     keys locked, reduced motion).
 > * Verified in Playwright: 9000 generated problems, every stage of every type
 >   (box counts, what is filled, answer never early), practice and quiz flows,
 >   and no overflow at 390/1024/1280/1366/1920 over 540 questions.
