@@ -48,6 +48,37 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-23, session — being pushed): SHIKAKU + SUDOKU WORKSHEET
+> CREATORS.** `worksheet-creators/puzzles/shikaku.html` and
+> `worksheet-creators/puzzles/sudoku.html` (a new `puzzles/` folder), with two
+> cards under a new **Puzzles** subhead at the end of the homepage Worksheet
+> Creator group (pill 28 -> 32, which is the real card count). **The games were
+> NOT changed (teacher request)** — so, unlike Dot Detective and Total Trail,
+> the worksheet is a separate page, not a 🖨 button inside the game. Same shell,
+> A4-in-mm pages, zoomed preview, 1 / 2 / 4 / 6 per page as a SIZE control
+> (board widths in `LAYOUT`), answer key, name/date, rules box.
+> * **THE ENGINES ARE COPIED, NOT IMPORTED.** Sudoku: `SudokuEngine` byte for
+>   byte. Shikaku: the generator from `randInt` to `generatePuzzle`, with two
+>   edits to the COPY only — a `sweet` 5 × 5 row in `levelConfig`, and
+>   `level === 'mild'` widened to include sweet. Fix an engine in the game →
+>   re-copy it here.
+> * **SHIKAKU PUZZLES ARE PROVED UNIQUE BEFORE PRINTING.** The game's generator
+>   does not check uniqueness (fine on screen, where any valid tiling wins, but
+>   a printed key must be THE answer). `SK.countSolutions` is an exact-cover
+>   search (MRV over clues and empty cells); a non-unique puzzle has its clues
+>   re-placed with the game's own `chooseClueCell`, then regenerated. Checked
+>   against an independent cell-first solver. Median well under 0.1 s a puzzle.
+> * Sudoku key: givens black, found digits green; "Name the thinking each
+>   puzzle needs" (off by default, always on the key) lists the techniques the
+>   grader used, in the game's own names.
+> * Shikaku warns (does not refuse) when squares print under 6 mm (14 × 14 at
+>   4 or 6 a page). Sudoku's 6-a-page board is 54 mm so the technique line fits.
+> * **Verified** in Playwright: every level × every per-page setting with key,
+>   rules and name on (182 checks — no card, board or footer overflowing its A4
+>   page, page and puzzle counts, every Sudoku unique + logically solvable with
+>   a valid key, every Shikaku unique), print-to-PDF page counts, 390 px phone
+>   with no sideways scroll. Harnesses `ui.mjs`, `sk1.mjs` in the session scratch.
+>
 > **NEW (2026-09-21, session — being pushed): THE NASTY GAME.**
 > `games/nasty-game.html`, a place value dice game (after the classic
 > classroom game): roll a digit, write it in one empty place value square on

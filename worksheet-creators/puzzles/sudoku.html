@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Sudoku Worksheet Creator v1 (2026-09-23): printable Sudoku puzzles with an answer key.
+     The game (games/sudoku.html) is untouched; its engine is COPIED below, byte for byte. -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Sudoku Worksheet Creator | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --btn:#eef2f7; --btnHover:#e5ebf3;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+    .hidden{display:none!important;}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;padding:14px 24px;display:grid;grid-template-columns:minmax(240px,1fr) auto minmax(240px,1fr);align-items:center;gap:18px;box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:12px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:8px 12px;margin-left:-12px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:44px;height:44px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.18rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.78rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+    button,select,input{font:inherit;}
+    button,.btn{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+    button:hover,.btn:hover{transform:translateY(-1px);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible,.btn:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14);}
+    .mmtTopbar .btn{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;}
+    .mmtTopbar .btn:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .btn-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 10px 24px rgba(108,188,74,.22);}
+    .btn-green:hover{background:var(--green2);}
+    input[type="number"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;font-size:16px;}
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;}
+
+    .layout{width:min(1340px,calc(100vw - 48px));margin:24px auto 14px;}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;}
+    .ws-intro{display:flex;align-items:center;gap:16px;padding:4px 4px 0;}
+    .ws-intro-icon{flex:0 0 auto;width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#7c3aed,#2563eb);display:grid;place-items:center;font-size:1.8rem;box-shadow:0 12px 26px rgba(124,58,237,.25);}
+    .ws-intro h1{margin:0 0 2px;font-size:1.45rem;letter-spacing:-.03em;}
+    .ws-intro p{margin:0;color:#475569;font-weight:700;line-height:1.4;}
+
+    /* ---------- worksheet creator (same shell as Dot Detective's) ---------- */
+    .ws-card{padding:18px;display:grid;gap:16px;}
+    .ws-controls{display:grid;gap:12px;}
+    .ws-band{border-radius:20px;padding:14px 16px;background:#f8fafc;border:1px solid var(--border);}
+    .ws-band-title{font-weight:950;color:#1e3a8a;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+    .ws-fields{display:grid;grid-template-columns:minmax(220px,1.2fr) minmax(130px,.5fr) minmax(360px,1.8fr);gap:12px;align-items:end;}
+    .ws-fields label{display:grid;gap:6px;}
+    .ws-perwrap{display:grid;gap:6px;}
+    .ws-lbl{color:#334155;font-weight:850;font-size:.92rem;}
+    .ws-lbl small{color:var(--muted);font-weight:750;}
+    .ws-per{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+    .ws-per button{display:grid;justify-items:center;gap:3px;padding:8px 6px;background:white;border:2px solid var(--border);color:#334155;font-size:.86rem;}
+    .ws-per button small{color:var(--muted);font-weight:800;font-size:.72rem;}
+    .ws-per button.on{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .ws-toggles{display:flex;flex-wrap:wrap;gap:8px 18px;}
+    .ws-toggles label{display:flex;align-items:center;gap:8px;font-weight:850;}
+    .ws-toggles input{width:20px;height:20px;accent-color:var(--blue);}
+    .ws-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .ws-summary{color:var(--muted);font-weight:800;font-size:.9rem;}
+    .ws-warn{color:#b45309;}
+    .ws-out{--wsZoom:1;display:grid;justify-items:center;gap:18px;padding:18px 0;background:#e2e8f0;border-radius:20px;min-height:200px;overflow:hidden;}
+    .ws-empty{align-self:center;color:#475569;font-weight:800;padding:40px;}
+    .ws-page{zoom:var(--wsZoom);width:210mm;height:297mm;padding:12mm;box-sizing:border-box;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.18);display:flex;flex-direction:column;gap:3mm;overflow:hidden;color:#0f172a;font-family:var(--uiFont);}
+    .ws-head{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;border-bottom:.6mm solid #1e3a8a;padding-bottom:2mm;}
+    .ws-brand{font-size:8pt;font-weight:900;color:#2563eb;letter-spacing:.06em;text-transform:uppercase;}
+    .ws-head h1{margin:0;font-size:20pt;letter-spacing:-.03em;line-height:1.1;}
+    .ws-keytag{font-size:11pt;background:#dcfce7;color:#166534;border-radius:2mm;padding:.5mm 2.5mm;vertical-align:middle;}
+    .ws-name{display:flex;gap:6mm;font-size:10pt;font-weight:800;color:#334155;}
+    .ws-name span{border-bottom:.3mm solid #64748b;min-width:38mm;padding-bottom:4mm;}
+    .ws-name span:last-child{min-width:26mm;}
+    .ws-slim{display:flex;justify-content:space-between;font-size:8.5pt;font-weight:900;color:#475569;border-bottom:.4mm solid #cbd5e1;padding-bottom:1.5mm;}
+    .ws-rules{font-size:8.6pt;line-height:1.38;color:#1e293b;}
+    .ws-rules>div+div{margin-top:1mm;}
+    .ws-grid{flex:1;min-height:0;display:grid;gap:4mm;}
+    .per1 .ws-grid{grid-template-rows:1fr;}
+    .per2 .ws-grid{grid-template-rows:1fr 1fr;}
+    .per4 .ws-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+    .per6 .ws-grid{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;}
+    .ws-q{min-height:0;min-width:0;overflow:hidden;border:.35mm solid #cbd5e1;border-radius:3mm;padding:3mm 4mm;display:flex;flex-direction:column;gap:2mm;break-inside:avoid;}
+    .ws-qhead{display:flex;align-items:center;gap:2.5mm;font-size:10pt;flex-wrap:wrap;}
+    .per4 .ws-qhead,.per6 .ws-qhead{font-size:8.6pt;gap:1.8mm;}
+    .ws-qn{display:inline-grid;place-items:center;min-width:6.5mm;height:6.5mm;border-radius:50%;background:#1e3a8a;color:#fff;font-weight:900;font-size:9pt;}
+    .ws-lv{font-weight:900;color:#475569;font-size:.85em;border:.3mm solid #cbd5e1;border-radius:3mm;padding:.2mm 2mm;}
+    .ws-meta{font-weight:800;color:#64748b;font-size:.85em;}
+    .ws-qbody{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm;}
+    .ws-board svg{display:block;}
+    .ws-note{font-size:8pt;color:#475569;text-align:center;line-height:1.35;font-weight:700;}
+    .per6 .ws-note{font-size:7pt;line-height:1.25;}
+    .ws-foot{font-size:7.5pt;color:#64748b;text-align:center;font-weight:700;}
+    @media(max-width:1080px){ .ws-fields{grid-template-columns:1fr 1fr;} .ws-perwrap{grid-column:1/-1;} }
+    @media(max-width:700px){
+      .mmtTopbar{position:relative;grid-template-columns:1fr auto;padding:10px 14px;gap:10px;}
+      .mmtBrandText{display:none;}
+      .mmtTopTitle{font-size:1.1rem;text-align:left;justify-self:start;}
+      .actions{grid-column:1/-1;justify-content:flex-start;}
+      .actions .btn{padding:8px 12px;font-size:14px;min-height:38px;}
+      .layout{width:calc(100vw - 20px);margin:10px auto;}
+      .ws-card{padding:10px;}
+      .ws-fields{grid-template-columns:1fr;}
+      .ws-per{grid-template-columns:repeat(2,1fr);}
+    }
+    @media print{
+      @page{size:A4;margin:0;}
+      html,body{background:#fff!important;}
+      body>*:not(main){display:none!important;}
+      main.layout{width:auto!important;margin:0!important;}
+      #sheetPage{display:block!important;padding:0!important;border:0!important;box-shadow:none!important;background:none!important;border-radius:0!important;}
+      .ws-controls,.ws-intro{display:none!important;}
+      .ws-out{display:block!important;padding:0!important;background:none!important;border-radius:0!important;}
+      .ws-page{zoom:1!important;box-shadow:none!important;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .ws-page:last-child{break-after:auto;page-break-after:auto;}
+    }
+
+    /* ---------- Shikaku sheet ---------- */
+    .su-tip{margin-top:1mm;color:#475569;}
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Sudoku Worksheet</div>
+    <div class="actions">
+      <a class="btn" href="../../games/sudoku.html" target="_blank" rel="noopener">🔢 Play Sudoku</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card ws-card" id="sheetPage">
+      <div class="ws-intro">
+        <div class="ws-intro-icon" aria-hidden="true">🔢</div>
+        <div>
+          <h1>Sudoku — printable worksheet</h1>
+          <p>The same puzzles as the game: graded by the hardest thinking they need, not by how many numbers are missing. Every printed puzzle has exactly one answer and never needs guessing.</p>
+        </div>
+      </div>
+      <div class="ws-controls">
+        <div class="ws-band">
+          <div class="ws-band-title">The paper</div>
+          <div class="ws-fields">
+            <label>Level
+              <select id="wsLevel">
+                <option value="sweet">🍬 Sweet — 4 × 4</option>
+                <option value="mild">🍃 Mild — 6 × 6</option>
+                <option value="medium">🌶️ Medium — 9 × 9, singles</option>
+                <option value="spicy">🔥 Spicy — 9 × 9, pairs and pointing</option>
+                <option value="extra">🌋 Extra Spicy — 9 × 9, X-Wings</option>
+                <option value="mixed">🎲 Mixed — Sweet up to Extra Spicy</option>
+              </select>
+            </label>
+            <label>Puzzles
+              <input id="wsCount" type="number" min="1" max="12" step="1" inputmode="numeric" />
+            </label>
+            <div class="ws-perwrap">
+              <span class="ws-lbl">Puzzles per page <small>— fewer means bigger grids</small></span>
+              <div class="ws-per" id="wsPer" role="group" aria-label="Puzzles per page">
+                <button type="button" data-per="1">1<small>largest</small></button>
+                <button type="button" data-per="2">2<small>large</small></button>
+                <button type="button" data-per="4">4<small>medium</small></button>
+                <button type="button" data-per="6">6<small>small</small></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ws-band">
+          <div class="ws-band-title">Options</div>
+          <div class="ws-toggles">
+            <label><input type="checkbox" id="wsRules" /> How to play at the top</label>
+            <label><input type="checkbox" id="wsTech" /> Name the thinking each puzzle needs</label>
+            <label><input type="checkbox" id="wsKey" /> Answer key</label>
+            <label><input type="checkbox" id="wsName" /> Name and date</label>
+          </div>
+        </div>
+        <div class="ws-actions">
+          <button class="btn-primary" id="wsGenBtn" type="button">Generate worksheet</button>
+          <button class="btn-green" id="wsPrintBtn" type="button" disabled>🖨 Print</button>
+          <span class="ws-summary" id="wsSummary" aria-live="polite">Every puzzle is solved step by step the way a person would, so each has exactly one answer and needs no guessing.</span>
+        </div>
+      </div>
+      <div class="ws-out" id="wsOut"></div>
+    </section>
+  </main>
+
+<script>
+/* ===================================================================
+   SUDOKU ENGINE — copied unchanged from games/sudoku.html (the game is not
+   changed). If the engine is fixed there, re-copy it here.
+   =================================================================== */
+const SudokuEngine = (() => {
+  const geoCache = {};
+
+  function geometry(n, br, bc) {
+    const key = `${n}:${br}x${bc}`;
+    if (geoCache[key]) return geoCache[key];
+    const N = n * n;
+    const rowOf = new Array(N), colOf = new Array(N), boxOf = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const r = Math.floor(i / n), c = i % n;
+      rowOf[i] = r; colOf[i] = c;
+      boxOf[i] = Math.floor(r / br) * (n / bc) + Math.floor(c / bc);
+    }
+    const units = [];      // 0..n-1 rows, n..2n-1 cols, 2n..3n-1 boxes
+    const unitKind = [];
+    for (let u = 0; u < n; u++) { units.push([]); unitKind.push('row'); }
+    for (let u = 0; u < n; u++) { units.push([]); unitKind.push('col'); }
+    for (let u = 0; u < n; u++) { units.push([]); unitKind.push('box'); }
+    for (let i = 0; i < N; i++) {
+      units[rowOf[i]].push(i);
+      units[n + colOf[i]].push(i);
+      units[2 * n + boxOf[i]].push(i);
+    }
+    const peers = [];
+    for (let i = 0; i < N; i++) {
+      const s = new Set([...units[rowOf[i]], ...units[n + colOf[i]], ...units[2 * n + boxOf[i]]]);
+      s.delete(i);
+      peers.push([...s]);
+    }
+    const peerSet = peers.map(p => new Set(p));
+    const g = { n, br, bc, N, ALL: (1 << n) - 1, rowOf, colOf, boxOf, units, unitKind, peers, peerSet };
+    geoCache[key] = g;
+    return g;
+  }
+
+  const bit = d => 1 << (d - 1);
+  function popcount(m) { let c = 0; while (m) { m &= m - 1; c++; } return c; }
+  function digitsOf(m) { const out = []; let d = 1; while (m) { if (m & 1) out.push(d); m >>= 1; d++; } return out; }
+  function firstDigit(m) { let d = 1; while (!(m & 1)) { m >>= 1; d++; } return d; }
+
+  function shuffle(arr, rng) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function combos(arr, k, start = 0, pick = [], out = []) {
+    if (pick.length === k) { out.push(pick.slice()); return out; }
+    for (let i = start; i < arr.length; i++) { pick.push(arr[i]); combos(arr, k, i + 1, pick, out); pick.pop(); }
+    return out;
+  }
+
+  /* ---------------------------------------------------------- backtracking */
+  // Counts solutions up to `limit`. Used to fill random grids and to derive
+  // the solution from the givens (race rooms store only the givens).
+  function search(grid, geo, limit, rng) {
+    const { N, ALL, rowOf, colOf, boxOf, n } = geo;
+    const g = grid.slice();
+    const rowM = new Array(n).fill(0), colM = new Array(n).fill(0), boxM = new Array(n).fill(0);
+    for (let i = 0; i < N; i++) {
+      const d = g[i]; if (!d) continue;
+      const b = bit(d);
+      if ((rowM[rowOf[i]] | colM[colOf[i]] | boxM[boxOf[i]]) & b) return { count: 0, solution: null };
+      rowM[rowOf[i]] |= b; colM[colOf[i]] |= b; boxM[boxOf[i]] |= b;
+    }
+    let count = 0, solution = null;
+    function rec() {
+      let best = -1, bestMask = 0, bestN = 99;
+      for (let i = 0; i < N; i++) {
+        if (g[i]) continue;
+        const m = ALL & ~(rowM[rowOf[i]] | colM[colOf[i]] | boxM[boxOf[i]]);
+        const c = popcount(m);
+        if (c < bestN) { bestN = c; best = i; bestMask = m; if (c <= 1) break; }
+      }
+      if (best < 0) { count++; if (!solution) solution = g.slice(); return count >= limit; }
+      if (!bestMask) return false;
+      let ds = digitsOf(bestMask);
+      if (rng) ds = shuffle(ds, rng);
+      for (const d of ds) {
+        const b = bit(d);
+        g[best] = d; rowM[rowOf[best]] |= b; colM[colOf[best]] |= b; boxM[boxOf[best]] |= b;
+        if (rec()) return true;
+        g[best] = 0; rowM[rowOf[best]] &= ~b; colM[colOf[best]] &= ~b; boxM[boxOf[best]] &= ~b;
+      }
+      return false;
+    }
+    rec();
+    return { count, solution };
+  }
+  function randomFull(geo, rng) { return search(new Array(geo.N).fill(0), geo, 1, rng).solution; }
+  function solve(grid, geo) { const r = search(grid, geo, 2, null); return r.count === 1 ? r.solution : null; }
+  function countSolutions(grid, geo, limit = 2) { return search(grid, geo, limit, null).count; }
+
+  /* --------------------------------------------------------- logical state */
+  function makeState(grid, geo) {
+    const { N, ALL, peers } = geo;
+    const g = grid.slice();
+    const cand = new Array(N).fill(0);
+    for (let i = 0; i < N; i++) {
+      if (g[i]) continue;
+      let m = ALL;
+      for (const p of peers[i]) if (g[p]) m &= ~bit(g[p]);
+      cand[i] = m;
+    }
+    return { g, cand };
+  }
+  function place(st, geo, i, d) {
+    st.g[i] = d; st.cand[i] = 0;
+    const b = bit(d);
+    for (const p of geo.peers[i]) st.cand[p] &= ~b;
+  }
+
+  /* -------------------------------------------------------- the techniques */
+  // Each returns a STEP or null. A step is
+  //   { tech, tier, place:[cell,digit] }            — a digit goes in, or
+  //   { tech, tier, elim:[[cell,mask],...] }        — candidates come out
+  // plus the unit, digit and cells involved.
+  function nakedSingle(st, geo) {
+    for (let i = 0; i < geo.N; i++) {
+      if (!st.g[i] && popcount(st.cand[i]) === 1) return { tech: 'naked-single', tier: 1, place: [i, firstDigit(st.cand[i])], cells: [i] };
+    }
+    return null;
+  }
+  const UNIT_ORDER_CACHE = {};
+  function unitOrder(geo) {           // boxes first: that is where people look first
+    const k = geo.n;
+    if (!UNIT_ORDER_CACHE[k]) {
+      const o = []; for (let u = 2 * k; u < 3 * k; u++) o.push(u); for (let u = 0; u < 2 * k; u++) o.push(u);
+      UNIT_ORDER_CACHE[k] = o;
+    }
+    return UNIT_ORDER_CACHE[k];
+  }
+  function hiddenSingle(st, geo) {
+    for (const u of unitOrder(geo)) {
+      const cells = geo.units[u];
+      for (let d = 1; d <= geo.n; d++) {
+        const b = bit(d);
+        let pos = -1, cnt = 0, placed = false;
+        for (const i of cells) {
+          if (st.g[i] === d) { placed = true; break; }
+          if (st.cand[i] & b) { cnt++; pos = i; }
+        }
+        if (!placed && cnt === 1) return { tech: 'hidden-single', tier: 1, place: [pos, d], unit: u, digit: d, cells: [pos] };
+      }
+    }
+    return null;
+  }
+  function lockedCandidates(st, geo) {
+    const { n, units, rowOf, colOf, boxOf } = geo;
+    // Pointing: inside a box, d is confined to one row/col -> out of the rest of that line.
+    for (let bx = 0; bx < n; bx++) {
+      const cells = units[2 * n + bx];
+      for (let d = 1; d <= n; d++) {
+        const b = bit(d);
+        const pos = cells.filter(i => st.cand[i] & b);
+        if (pos.length < 2) continue;
+        for (const kind of ['row', 'col']) {
+          const of = kind === 'row' ? rowOf : colOf;
+          const line = of[pos[0]];
+          if (!pos.every(i => of[i] === line)) continue;
+          const lineCells = units[(kind === 'row' ? 0 : n) + line];
+          const elim = lineCells.filter(i => boxOf[i] !== bx && (st.cand[i] & b)).map(i => [i, b]);
+          if (elim.length) return { tech: 'pointing', tier: 2, elim, digit: d, unit: 2 * n + bx, cells: pos };
+        }
+      }
+    }
+    // Claiming: inside a row/col, d is confined to one box -> out of the rest of that box.
+    for (let u = 0; u < 2 * n; u++) {
+      const cells = units[u];
+      for (let d = 1; d <= n; d++) {
+        const b = bit(d);
+        const pos = cells.filter(i => st.cand[i] & b);
+        if (pos.length < 2) continue;
+        const bx = boxOf[pos[0]];
+        if (!pos.every(i => boxOf[i] === bx)) continue;
+        const uset = new Set(cells);
+        const elim = units[2 * n + bx].filter(i => !uset.has(i) && (st.cand[i] & b)).map(i => [i, b]);
+        if (elim.length) return { tech: 'claiming', tier: 2, elim, digit: d, unit: u, cells: pos };
+      }
+    }
+    return null;
+  }
+  function nakedSubset(st, geo, k) {
+    for (const u of unitOrder(geo)) {
+      const cells = geo.units[u];
+      const open = cells.filter(i => !st.g[i] && popcount(st.cand[i]) >= 2 && popcount(st.cand[i]) <= k);
+      if (open.length < k) continue;
+      for (const set of combos(open, k)) {
+        let m = 0; for (const i of set) m |= st.cand[i];
+        if (popcount(m) !== k) continue;
+        const inSet = new Set(set);
+        const elim = cells.filter(i => !inSet.has(i) && !st.g[i] && (st.cand[i] & m)).map(i => [i, st.cand[i] & m]);
+        if (elim.length) return { tech: k === 2 ? 'naked-pair' : 'naked-triple', tier: 2, elim, unit: u, cells: set, mask: m };
+      }
+    }
+    return null;
+  }
+  function hiddenSubset(st, geo, k) {
+    for (const u of unitOrder(geo)) {
+      const cells = geo.units[u];
+      const placed = new Set(cells.map(i => st.g[i]).filter(Boolean));
+      const digits = [];
+      const where = {};
+      for (let d = 1; d <= geo.n; d++) {
+        if (placed.has(d)) continue;
+        const pos = cells.filter(i => st.cand[i] & bit(d));
+        if (pos.length >= 1 && pos.length <= k) { digits.push(d); where[d] = pos; }
+      }
+      if (digits.length < k) continue;
+      for (const ds of combos(digits, k)) {
+        const cs = new Set(); let m = 0;
+        for (const d of ds) { m |= bit(d); for (const i of where[d]) cs.add(i); }
+        if (cs.size !== k) continue;
+        const elim = [...cs].filter(i => st.cand[i] & ~m).map(i => [i, st.cand[i] & ~m]);
+        if (elim.length) return { tech: k === 2 ? 'hidden-pair' : 'hidden-triple', tier: 2, elim, unit: u, cells: [...cs], mask: m };
+      }
+    }
+    return null;
+  }
+  function fish(st, geo, s) {
+    const { n, units } = geo;
+    for (let d = 1; d <= n; d++) {
+      const b = bit(d);
+      for (const baseIsRow of [true, false]) {
+        const baseOff = baseIsRow ? 0 : n, coverOff = baseIsRow ? n : 0;
+        const lines = [];
+        for (let l = 0; l < n; l++) {
+          const pos = units[baseOff + l].filter(i => st.cand[i] & b);
+          if (pos.length >= 2 && pos.length <= s) lines.push({ l, cover: pos.map(i => baseIsRow ? geo.colOf[i] : geo.rowOf[i]), pos });
+        }
+        if (lines.length < s) continue;
+        for (const set of combos(lines, s)) {
+          const cover = new Set(); set.forEach(x => x.cover.forEach(c => cover.add(c)));
+          if (cover.size !== s) continue;
+          const baseLines = new Set(set.map(x => x.l));
+          const elim = [];
+          for (const c of cover) for (const i of units[coverOff + c]) {
+            const line = baseIsRow ? geo.rowOf[i] : geo.colOf[i];
+            if (!baseLines.has(line) && (st.cand[i] & b)) elim.push([i, b]);
+          }
+          if (elim.length) return { tech: s === 2 ? 'x-wing' : 'swordfish', tier: 3, elim, digit: d, cells: set.flatMap(x => x.pos) };
+        }
+      }
+    }
+    return null;
+  }
+  function xyWing(st, geo) {
+    const { N, peers, peerSet } = geo;
+    for (let p = 0; p < N; p++) {
+      if (st.g[p] || popcount(st.cand[p]) !== 2) continue;
+      const [a, bb] = digitsOf(st.cand[p]);
+      const pincers = peers[p].filter(i => !st.g[i] && popcount(st.cand[i]) === 2);
+      for (const x of pincers) {
+        if (!(st.cand[x] & bit(a)) || (st.cand[x] & bit(bb))) continue;
+        const c = firstDigit(st.cand[x] & ~bit(a));
+        for (const y of pincers) {
+          if (y === x) continue;
+          if (st.cand[y] !== (bit(bb) | bit(c))) continue;
+          const elim = peers[x].filter(i => i !== p && i !== y && peerSet[y].has(i) && (st.cand[i] & bit(c))).map(i => [i, bit(c)]);
+          if (elim.length) return { tech: 'xy-wing', tier: 3, elim, digit: c, cells: [p, x, y] };
+        }
+      }
+    }
+    return null;
+  }
+  function xyzWing(st, geo) {
+    const { N, peers, peerSet } = geo;
+    for (let p = 0; p < N; p++) {
+      if (st.g[p] || popcount(st.cand[p]) !== 3) continue;
+      const pm = st.cand[p];
+      const pincers = peers[p].filter(i => !st.g[i] && popcount(st.cand[i]) === 2 && (st.cand[i] & ~pm) === 0);
+      for (const [x, y] of combos(pincers, 2)) {
+        if ((st.cand[x] | st.cand[y]) !== pm) continue;
+        const common = st.cand[x] & st.cand[y];
+        if (popcount(common) !== 1) continue;
+        const elim = peers[p].filter(i => i !== x && i !== y && peerSet[x].has(i) && peerSet[y].has(i) && (st.cand[i] & common)).map(i => [i, common]);
+        if (elim.length) return { tech: 'xyz-wing', tier: 3, elim, digit: firstDigit(common), cells: [p, x, y] };
+      }
+    }
+    return null;
+  }
+
+  const TECHNIQUES = [
+    [1, nakedSingle], [1, hiddenSingle],
+    [2, lockedCandidates], [2, (s, g) => nakedSubset(s, g, 2)], [2, (s, g) => hiddenSubset(s, g, 2)],
+    [2, (s, g) => nakedSubset(s, g, 3)], [2, (s, g) => hiddenSubset(s, g, 3)],
+    [3, (s, g) => fish(s, g, 2)], [3, xyWing], [3, xyzWing], [3, (s, g) => fish(s, g, 3)],
+  ];
+  function nextStep(st, geo, maxTier = 3) {
+    for (const [tier, fn] of TECHNIQUES) {
+      if (tier > maxTier) break;
+      const step = fn(st, geo);
+      if (step) return step;
+    }
+    return null;
+  }
+  function applyStep(st, geo, step) {
+    if (step.place) place(st, geo, step.place[0], step.place[1]);
+    else for (const [i, m] of step.elim) st.cand[i] &= ~m;
+  }
+  function logicalSolve(grid, geo, maxTier = 3) {
+    const st = makeState(grid, geo);
+    let usedTier = 0; const used = {};
+    for (let guard = 0; guard < 5000; guard++) {
+      let empty = 0, dead = false;
+      for (let i = 0; i < geo.N; i++) if (!st.g[i]) { empty++; if (!st.cand[i]) dead = true; }
+      if (!empty) return { solved: true, tier: usedTier, used, grid: st.g };
+      if (dead) break;
+      const step = nextStep(st, geo, maxTier);
+      if (!step) break;
+      usedTier = Math.max(usedTier, step.tier);
+      used[step.tech] = (used[step.tech] || 0) + 1;
+      applyStep(st, geo, step);
+    }
+    return { solved: false, tier: usedTier, used, grid: st.g };
+  }
+
+  /* ------------------------------------------------------------ the levels */
+  const LEVELS = {
+    sweet:  { n: 4, br: 2, bc: 2, tier: 1, minGivens: 6 },
+    mild:   { n: 6, br: 2, bc: 3, tier: 1, minGivens: 12 },
+    medium: { n: 9, br: 3, bc: 3, tier: 1, minGivens: 30 },
+    spicy:  { n: 9, br: 3, bc: 3, tier: 2, minGivens: 22 },
+    extra:  { n: 9, br: 3, bc: 3, tier: 3, minGivens: 20 },
+  };
+
+  function toStr(g) { return g.join(''); }
+  function fromStr(s) { return [...s].map(Number); }
+
+  function generate(level, rng = Math.random, maxAttempts = 400) {
+    const cfg = LEVELS[level] || LEVELS.medium;
+    const geo = geometry(cfg.n, cfg.br, cfg.bc);
+    const { N } = geo;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const full = randomFull(geo, rng);
+      const puz = full.slice();
+      let givens = N;
+      const order = shuffle([...Array(Math.ceil(N / 2)).keys()], rng);
+      for (const i of order) {
+        const j = N - 1 - i;
+        const drop = i === j ? 1 : 2;
+        if (givens - drop < cfg.minGivens) continue;
+        const a = puz[i], b = puz[j];
+        puz[i] = 0; puz[j] = 0;
+        if (logicalSolve(puz, geo, cfg.tier).solved) givens -= drop;
+        else { puz[i] = a; puz[j] = b; }
+      }
+      const grade = logicalSolve(puz, geo, 3);
+      if (!grade.solved || grade.tier !== cfg.tier) continue;
+      return { level, n: cfg.n, br: cfg.br, bc: cfg.bc, givens: toStr(puz), solution: toStr(full), tier: grade.tier, used: grade.used, clues: givens };
+    }
+    return null;
+  }
+
+  // A difficulty-preserving shuffle of a bank puzzle: relabel digits, shuffle
+  // rows inside bands and bands themselves, the same for columns, and (square
+  // boxes only) maybe transpose. Every one of these keeps the logic identical.
+  function transform(p, rng = Math.random) {
+    const { n, br, bc } = p;
+    const relabel = [0, ...shuffle([...Array(n)].map((_, k) => k + 1), rng)];
+    const bandsR = shuffle([...Array(n / br).keys()], rng);
+    const rows = bandsR.flatMap(bd => shuffle([...Array(br).keys()], rng).map(k => bd * br + k));
+    const bandsC = shuffle([...Array(n / bc).keys()], rng);
+    const cols = bandsC.flatMap(bd => shuffle([...Array(bc).keys()], rng).map(k => bd * bc + k));
+    const flip = br === bc && rng() < 0.5;
+    const map = s => {
+      const src = fromStr(s), out = new Array(n * n);
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+        const sr = flip ? cols[c] : rows[r], sc = flip ? rows[r] : cols[c];
+        out[r * n + c] = relabel[src[sr * n + sc]];
+      }
+      return toStr(out);
+    };
+    return { ...p, givens: map(p.givens), solution: map(p.solution) };
+  }
+
+  return { geometry, LEVELS, generate, transform, logicalSolve, solve, countSolutions, makeState, digitsOf, popcount, bit, fromStr, toStr };
+})();
+
+</script>
+<script>
+/* ===================================================================
+   SUDOKU — WORKSHEET CREATOR
+   Same shell and A4 machinery as the Dot Detective worksheet. Puzzles per
+   page (1 / 2 / 4 / 6) is a SIZE control: each is a fixed board size in
+   millimetres, and the boards are SVG so they print crisp. Levels are the
+   game's own: graded by the hardest technique a person needs.
+   =================================================================== */
+(function(){
+'use strict';
+var E=SudokuEngine;
+var $=function(id){return document.getElementById(id);};
+var LV=[{id:'sweet',icon:'🍬',name:'Sweet'},{id:'mild',icon:'🍃',name:'Mild'},{id:'medium',icon:'🌶️',name:'Medium'},{id:'spicy',icon:'🔥',name:'Spicy'},{id:'extra',icon:'🌋',name:'Extra Spicy'}];
+function lvInfo(id){ return LV.find(function(l){return l.id===id;})||LV[2]; }
+/* the game's names for its techniques, in the order a person meets them */
+var TECH_NAMES={
+  'naked-single':'Naked single','hidden-single':'Hidden single','pointing':'Pointing','claiming':'Claiming',
+  'naked-pair':'Naked pair','naked-triple':'Naked triple','hidden-pair':'Hidden pair','hidden-triple':'Hidden triple',
+  'x-wing':'X-Wing','swordfish':'Swordfish','xy-wing':'XY-Wing','xyz-wing':'XYZ-Wing'
+};
+var TECH_ORDER=Object.keys(TECH_NAMES);
+var WS_KEY='mmtSudokuSheet.v1';
+var O={level:'medium', count:4, per:4, rules:true, tech:false, key:true, name:true};
+try{ Object.assign(O, JSON.parse(localStorage.getItem(WS_KEY)||'{}')); }catch(e){}
+if ([1,2,4,6].indexOf(O.per)<0) O.per=4;
+function saveO(){ try{ localStorage.setItem(WS_KEY, JSON.stringify(O)); }catch(e){} }
+var PUZ=[], BUSY=false;
+/* board width in mm for each puzzles-per-page layout */
+var LAYOUT={1:160, 2:96, 4:80, 6:54};
+
+function boardSVG(p, mm, key){
+  var n=p.n, U=100, P=6, W=n*U+2*P, g=E.fromStr(p.givens), sol=E.fromStr(p.solution);
+  var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+W+'" style="width:'+mm+'mm;height:'+mm+'mm">';
+  for (var i=1;i<n;i++){
+    var rowBox=i%p.br===0, colBox=i%p.bc===0;
+    if (!rowBox) s+='<line x1="'+P+'" y1="'+(P+i*U)+'" x2="'+(P+n*U)+'" y2="'+(P+i*U)+'" stroke="#94a3b8" stroke-width="3"/>';
+    if (!colBox) s+='<line x1="'+(P+i*U)+'" y1="'+P+'" x2="'+(P+i*U)+'" y2="'+(P+n*U)+'" stroke="#94a3b8" stroke-width="3"/>';
+  }
+  for (var j=1;j<n;j++){
+    if (j%p.br===0) s+='<line x1="'+P+'" y1="'+(P+j*U)+'" x2="'+(P+n*U)+'" y2="'+(P+j*U)+'" stroke="#0f172a" stroke-width="8"/>';
+    if (j%p.bc===0) s+='<line x1="'+(P+j*U)+'" y1="'+P+'" x2="'+(P+j*U)+'" y2="'+(P+n*U)+'" stroke="#0f172a" stroke-width="8"/>';
+  }
+  s+='<rect x="'+P+'" y="'+P+'" width="'+(n*U)+'" height="'+(n*U)+'" fill="none" stroke="#0f172a" stroke-width="11"/>';
+  var font='font-family="system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif"';
+  for (var k=0;k<n*n;k++){
+    var d=g[k]||(key?sol[k]:0); if (!d) continue;
+    var x=P+(k%n+.5)*U, y=P+(Math.floor(k/n)+.5)*U;
+    s+='<text x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="central" '+font+(g[k]?' font-weight="800" fill="#0f172a"':' font-weight="600" fill="#15803d"')+' font-size="58">'+d+'</text>';
+  }
+  return s+'</svg>';
+}
+function techLine(p){
+  var used=TECH_ORDER.filter(function(t){ return p.used && p.used[t]; }).map(function(t){ return TECH_NAMES[t]; });
+  return used.length ? 'Thinking needed: '+used.join(', ') : '';
+}
+function block(p, idx, key){
+  var info=lvInfo(p.level);
+  var h='<div class="ws-q su-q"><div class="ws-qhead"><span class="ws-qn">'+(idx+1)+'</span><span class="ws-lv">'+info.icon+' '+info.name+'</span><span class="ws-meta">'+p.n+' × '+p.n+' · use 1 to '+p.n+'</span></div>';
+  h+='<div class="ws-qbody"><div class="ws-board">'+boardSVG(p, LAYOUT[O.per], key)+'</div>';
+  if (O.tech || key){ var t=techLine(p); if (t) h+='<div class="ws-note">'+t+'</div>'; }
+  return h+'</div></div>';
+}
+function sheetHead(first,key,pageNo,pages){
+  if (!first) return '<div class="ws-slim"><span>Sudoku'+(key?' — answers':'')+'</span><span>Page '+pageNo+' of '+pages+'</span></div>';
+  var h='<div class="ws-head"><div><div class="ws-brand">Mills Maths Tools</div><h1>Sudoku'+(key?' <span class="ws-keytag">Answers</span>':'')+'</h1></div>';
+  if (O.name && !key) h+='<div class="ws-name"><span>Name</span><span>Date</span></div>';
+  h+='</div>';
+  if (key) h+='<div class="ws-rules">Each puzzle has exactly one answer. The numbers that were given are in black; the ones students find are in green.</div>';
+  else if (O.rules){
+    var sizes={}; PUZ.forEach(function(p){ sizes[p.n]=1; });
+    var ns=Object.keys(sizes).map(Number).sort(function(a,b){return a-b;});
+    var range=ns.length===1 ? 'a number from 1 to '+ns[0] : 'a number from 1 up to the size of the grid ('+ns.join(', ')+')';
+    h+='<div class="ws-rules"><div><b>How to play.</b> Write '+range+' in every empty square so that every <b>row</b>, every <b>column</b> and every <b>box</b> (the thick outlines) has each number exactly once.</div>';
+    h+='<div class="su-tip"><b>Tip:</b> you never need to guess. Look for a square where only one number can go, or a number that can only go in one square of a row, column or box. Pencil small notes in the corners to keep track.</div></div>';
+  }
+  return h;
+}
+function pages(key){
+  var per=O.per, out=[], total=Math.ceil(PUZ.length/per);
+  for (var pg=0;pg<total;pg++){
+    var h='<section class="ws-page per'+per+'">'+sheetHead(pg===0,key,pg+1,total)+'<div class="ws-grid">';
+    for (var j=pg*per;j<Math.min(PUZ.length,(pg+1)*per);j++) h+=block(PUZ[j],j,key);
+    h+='</div><div class="ws-foot">Sudoku · millsmathstools.au · '+(key?'Answers · ':'')+'Page '+(pg+1)+' of '+total+'</div></section>';
+    out.push(h);
+  }
+  return out.join('');
+}
+function render(){
+  var out=$('wsOut');
+  if (!PUZ.length){ out.innerHTML='<div class="ws-empty">Choose your options, then press <b>Generate worksheet</b>.</div>'; $('wsPrintBtn').disabled=true; fitPreview(); return; }
+  out.innerHTML=pages(false)+(O.key?pages(true):'');
+  $('wsPrintBtn').disabled=false;
+  var sheets=Math.ceil(PUZ.length/O.per)*(O.key?2:1);
+  $('wsSummary').textContent=PUZ.length+(PUZ.length===1?' puzzle':' puzzles')+' · '+O.per+' per page · '+sheets+(sheets===1?' page':' pages')+(O.key?' including the answer key':'');
+  fitPreview();
+}
+function fitPreview(){ var w=$('wsOut').clientWidth, px=210*96/25.4; $('wsOut').style.setProperty('--wsZoom', Math.min(1,(w-8)/px).toFixed(3)); }
+function levelFor(i,n){ if (O.level!=='mixed') return O.level; return LV[Math.min(LV.length-1,Math.floor(i*LV.length/n))].id; }
+function generate(){
+  if (BUSY) return;
+  var n=Math.max(1,Math.min(12,parseInt($('wsCount').value,10)||1)); O.count=n; $('wsCount').value=n; saveO();
+  BUSY=true; $('wsGenBtn').disabled=true; $('wsPrintBtn').disabled=true;
+  var list=[], i=0;
+  (function next(){
+    $('wsSummary').textContent='Making and grading puzzle '+(i+1)+' of '+n+'…';
+    setTimeout(function(){
+      var lv=levelFor(i,n), p=null, tries=0;
+      /* no two puzzles on one sheet the same (a 4 x 4 bank is small) */
+      while (!p || (tries<20 && list.some(function(q){ return q.givens===p.givens; }))){ p=E.generate(lv); tries++; }
+      list.push(p); i++;
+      if (i<n) next(); else { PUZ=list; BUSY=false; $('wsGenBtn').disabled=false; render(); }
+    },12);
+  })();
+}
+function sync(){
+  $('wsLevel').value=O.level; $('wsCount').value=O.count;
+  document.querySelectorAll('#wsPer button').forEach(function(b){ var on=+b.dataset.per===O.per; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); });
+  $('wsRules').checked=O.rules; $('wsTech').checked=O.tech; $('wsKey').checked=O.key; $('wsName').checked=O.name;
+}
+$('wsGenBtn').addEventListener('click',generate);
+$('wsPrintBtn').addEventListener('click',function(){ window.print(); });
+$('wsLevel').addEventListener('change',function(e){ O.level=e.target.value; saveO(); });
+$('wsCount').addEventListener('change',function(e){ var v=Math.max(1,Math.min(12,parseInt(e.target.value,10)||1)); e.target.value=v; O.count=v; saveO(); });
+document.querySelectorAll('#wsPer button').forEach(function(b){ b.addEventListener('click',function(){ O.per=+b.dataset.per; saveO(); sync(); render(); }); });
+[['wsRules','rules'],['wsTech','tech'],['wsKey','key'],['wsName','name']].forEach(function(x){ $(x[0]).addEventListener('change',function(e){ O[x[1]]=e.target.checked; saveO(); render(); }); });
+var rz=0; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(fitPreview,120); });
+sync(); render();
+window.__WS__={O:O, get puzzles(){ return PUZ; }, generate:generate};
+})();
+</script>
+</body>
+</html>
