@@ -49,6 +49,31 @@ export function makeMultipleChoiceQuestion(question) {
 
   if (!isSuitableForMultipleChoice(question)) return null;
 
+  /*
+    A bank can hand over its own distractors without printing them on the
+    short-response version of the question. Word answers ("Categorical
+    (ordinal)", "Isosceles", "Non-convex") have no numeric neighbours for the
+    generic builders to invent, so the bank — which knows the misconception —
+    supplies them. Stage 4 data, geometry and probability banks use this.
+  */
+  if (Array.isArray(question.mcDistractors) && question.mcDistractors.length >= 3) {
+    const choices = shuffleUnique([correct, ...question.mcDistractors], correct).slice(0, 4);
+
+    if (choices.length >= 4) {
+      return {
+        ...question,
+        id: `${question.id}-mc-${Math.random().toString(36).slice(2, 8)}`,
+        prompt: cleanMultipleChoicePrompt(question.prompt),
+        kind: "multiple-choice",
+        marks: 1,
+        choices,
+        correctAnswer: correct,
+        space: "none",
+        tags: [...(question.tags || []), "multiple choice"]
+      };
+    }
+  }
+
   const existingChoices = Array.isArray(question.choices)
     ? question.choices.map(normaliseChoiceText).filter(Boolean)
     : [];

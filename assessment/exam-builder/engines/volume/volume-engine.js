@@ -408,7 +408,7 @@
 
   function renderUniformCrossSection(node, config) {
     const svg = makeSvg();
-    const { shape = "rectangle", crossArea = 24, length = 10, unit = "cm" } = config;
+    const { shape = "rectangle", crossArea = 24, length = 10, unit = "cm", showArea = true } = config;
     const x = 155, y = 118, dx = 195, dy = -50;
     let pts;
     if (shape === "triangle") pts = [[x, y + 175], [x + 180, y + 175], [x + 88, y + 45]];
@@ -436,10 +436,13 @@
     const minY = Math.min(...pts.map(p => p[1]));
     const maxY = Math.max(...pts.map(p => p[1]));
 
-    addText(svg, `${crossArea} ${unit}²`, minX + (maxX - minX) * 0.45, minY + (maxY - minY) * 0.57, { size: 22 });
-    addText(svg, "front area", minX + (maxX - minX) * 0.5, maxY + 36, { size: 16, weight: 700, fill: "#475569" });
+    if (showArea) {
+      addText(svg, `${crossArea} ${unit}²`, minX + (maxX - minX) * 0.45, minY + (maxY - minY) * 0.57, { size: 22 });
+      addText(svg, "front area", minX + (maxX - minX) * 0.5, maxY + 36, { size: 16, weight: 700, fill: "#475569" });
+    }
 
     // Keep the prism length outside the visible lower-right depth edge.
+    if (showArea === false && config.hideLength) { node.appendChild(svg); return; }
     const visibleDepthIndex = pts.reduce((best, point, index) => {
       const b = pts[best];
       if (point[0] > b[0] + 0.1) return index;
@@ -1309,6 +1312,43 @@
     node.appendChild(svg);
   }
 
+  /*
+    Unit cubes stacked on a grid (Stage 4 "volume by counting cubes").
+    `heights` is rows front-to-back of columns left-to-right; each entry is the
+    number of cubes in that stack. Oblique projection to the upper right, drawn
+    back row first, left to right, bottom up, so nearer cubes cover farther.
+  */
+  function renderCubeArray(node, config) {
+    const heights = Array.isArray(config.heights) && config.heights.length
+      ? config.heights
+      : [[2, 2, 2], [2, 2, 2]];
+    const rows = heights.length;
+    const cols = Math.max(...heights.map(r => r.length));
+    const maxH = Math.max(...heights.flat());
+    const s = Math.min(56, 300 / Math.max(cols + rows * 0.5, maxH + rows * 0.4));
+    const ox = s * 0.5;
+    const oy = -s * 0.36;
+    const W = Math.round(cols * s + rows * ox + 60);
+    const H = Math.round(maxH * s + rows * -oy + 60);
+    const svg = makeSvg(W, H, "Unit cube stack");
+    const baseX = 30;
+    const baseY = H - 30;
+    for (let r = rows - 1; r >= 0; r--) {
+      for (let c = 0; c < cols; c++) {
+        const h = heights[r][c] || 0;
+        for (let z = 0; z < h; z++) {
+          const x = baseX + c * s + r * ox;
+          const y = baseY - z * s + r * oy;
+          // front face, top face, right face
+          addPoly(svg, [[x, y], [x + s, y], [x + s, y - s], [x, y - s]], { fill: BLUE_FILL, stroke: INK, width: 2 });
+          addPoly(svg, [[x, y - s], [x + s, y - s], [x + s + ox, y - s + oy], [x + ox, y - s + oy]], { fill: BLUE_TOP, stroke: INK, width: 2 });
+          addPoly(svg, [[x + s, y], [x + s + ox, y + oy], [x + s + ox, y - s + oy], [x + s, y - s]], { fill: BLUE_SIDE, stroke: INK, width: 2 });
+        }
+      }
+    }
+    node.appendChild(svg);
+  }
+
   function render(node, config = {}) {
     clear(node);
     const type = config.diagramType || "rectangular-prism";
@@ -1324,6 +1364,7 @@
     if (type === "prism-cylinder-composite") return renderPrismCylinderComposite(node, config);
     if (type === "capacity-tank") return renderCapacityTank(node, config);
     if (type === "pool-path") return renderPoolPath(node, config);
+    if (type === "cube-array") return renderCubeArray(node, config);
 
     node.innerHTML = `<div class="diagram-placeholder">Volume diagram unavailable</div>`;
   }

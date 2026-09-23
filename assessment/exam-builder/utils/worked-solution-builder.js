@@ -178,7 +178,13 @@ function shouldIncludeDiagram(question) {
     "coordinate",
     "isosceles",
     "box-3d",
-    "3d"
+    "3d",
+    // Stage 4 banks added 2026-09
+    "volume",
+    "geometrical",
+    "data",
+    "probability",
+    "cube"
   ];
 
   return diagramHeavyKeywords.some(keyword =>

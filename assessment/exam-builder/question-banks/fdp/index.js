@@ -22,6 +22,11 @@ import {
   attachQuestionTranslations
 } from "../../utils/translation.js";
 
+import {
+  EXTRA_FDP_TYPES,
+  EXTRA_FDP_GENERATORS
+} from "./extra-types.js";
+
 const TOPIC = "Fractions, Decimals and Percentages";
 
 const TYPE_LIST = [
@@ -50,7 +55,10 @@ const TYPE_LIST = [
   { id: "proportion-double-line", label: "Percentage with a double number line" },
   { id: "error-spot-fdp", label: "Spot the error (reasoning)" },
   { id: "true-false-fdp", label: "True or false (reasoning)" },
-  { id: "multi-part-percentage", label: "Multi-part percentage problem" }
+  { id: "multi-part-percentage", label: "Multi-part percentage problem" },
+  // Added 2026-09 to complete MA4-FRC-C-01: recurring decimals, one quantity
+  // as a percentage of another, profit and loss.
+  ...EXTRA_FDP_TYPES
 ];
 
 const FRIENDLY_FDP = [
@@ -1101,7 +1109,8 @@ const GENERATORS = {
   "proportion-double-line": proportionDoubleLineQuestion,
   "error-spot-fdp": errorSpotFdpQuestion,
   "true-false-fdp": trueFalseFdpQuestion,
-  "multi-part-percentage": multiPartPercentageQuestion
+  "multi-part-percentage": multiPartPercentageQuestion,
+  ...EXTRA_FDP_GENERATORS
 };
 
 export function getFdpQuestionTypes() {

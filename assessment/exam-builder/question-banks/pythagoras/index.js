@@ -21,6 +21,11 @@ import {
   attachQuestionTranslations
 } from "../../utils/translation.js";
 
+import {
+  EXTRA_PYTHAGORAS_TYPES,
+  EXTRA_PYTHAGORAS_GENERATORS
+} from "./extra-types.js";
+
 const TOPIC = "Pythagoras Theorem";
 
 const TYPE_LIST = [
@@ -34,7 +39,9 @@ const TYPE_LIST = [
   { id: "pythagoras-3d", label: "Pythagoras in 3-D" },
   { id: "real-world", label: "Real-world problems" },
   { id: "multi-step", label: "Multi-step problems" },
-  { id: "error-spot-pythagoras", label: "Spot the error (reasoning)" }
+  { id: "error-spot-pythagoras", label: "Spot the error (reasoning)" },
+  // Added 2026-09 to complete the Stage 4 outcome.
+  ...EXTRA_PYTHAGORAS_TYPES
 ];
 
 const TRIPLES = [
@@ -765,7 +772,8 @@ const GENERATORS = {
   "pythagoras-3d": pythagoras3dQuestion,
   "real-world": realWorldQuestion,
   "multi-step": multiStepQuestion,
-  "error-spot-pythagoras": errorSpotPythagorasQuestion
+  "error-spot-pythagoras": errorSpotPythagorasQuestion,
+  ...EXTRA_PYTHAGORAS_GENERATORS
 };
 
 export function getPythagorasQuestionTypes() {

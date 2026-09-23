@@ -48,6 +48,45 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-24, session — being pushed): REVISION GENERATOR — STAGE 4
+> COMPLETE.** All 16 Stage 4 outcomes now have a topic in
+> `assessment/exam-builder/` (313 Stage 4 question types, up from 227). Read
+> `assessment/exam-builder/docs/stage-4-syllabus-reference.md` first — it has
+> the outcome map, what each topic covers, and the conventions.
+> * **Five new banks:** `volume/` (MA4-VOL, 17 types), `geometrical-figures/`
+>   (MA4-GEO, 18), `data-visualisation/` (MA4-DAT-C-01, 17), `data-analysis/`
+>   (MA4-DAT-C-02, 16), `probability/` (MA4-PRO, 16). Registered in `app.js`
+>   `TOPICS` (ids `volume`, `geometricalFigures`, `dataVisualisation`,
+>   `dataAnalysis`, `probability`).
+> * **Gaps filled in existing banks** via an `extra-types.js` beside each
+>   `index.js`, spread into its `TYPE_LIST` / `GENERATORS` (3-line edit):
+>   Angles +7 (naming, classifying, complementary/supplementary, reflex,
+>   naming parallel-line pairs, "are the lines parallel?", multi-step), FDP +3
+>   (recurring decimals with dot notation, quantity as a %, profit and loss),
+>   Indices +1 (HCF/LCM by prime factorisation), Pythagoras +1 (identify the
+>   hypotenuse / state the theorem).
+> * **Three new engines** (added to `index.html` and the renderer registry):
+>   `geometry-engine` (figures from named points — ticks, parallel arrows,
+>   arcs incl. reflex, right-angle marks), `statistics-engine` (column, bar,
+>   histogram/polygon, dot plot, stem-and-leaf incl. back-to-back, line,
+>   sector, divided bar, pictogram; `blank` for construct questions),
+>   `probability-engine` (spinner, bag of lettered counters, 0–1 scale,
+>   cards). `volume-engine` gained `cube-array` and `showArea: false`.
+> * **Shared code** for the new banks: `question-banks/_shared/`
+>   (`bank-helpers.js`, `figure-helpers.js` — builds polygons FROM their
+>   angles so figures match the numbers — and `data-helpers.js`).
+> * `utils/multiple-choice.js` honours a bank's `mcDistractors` array (word
+>   answers now convert to good MC without printing options on the short
+>   answer version).
+> * **Harnesses:** `node tools/stage4-{geometry,volume,data,probability,
+>   angles,gapfill}.mjs` re-measure every figure / recount every chart; plus
+>   `verify.mjs`, `stages.mjs`, `picker.mjs` (jsdom) all pass. Checked in a
+>   real browser across all four templates with worked solutions.
+> * Not done: AR/FA phrase tables for the five new topics (they use the
+>   generic fallback); symmetry and constructions deliberately left out of
+>   Geometrical Figures. `tools/stage3-additive.mjs` fails about 1 run in 40
+>   on the ORIGINAL code too — a pre-existing flaky check, not this change.
+>
 > **NEW (2026-09-23, session — being pushed): SHIKAKU + SUDOKU WORKSHEET
 > CREATORS.** `worksheet-creators/puzzles/shikaku.html` and
 > `worksheet-creators/puzzles/sudoku.html` (a new `puzzles/` folder), with two
@@ -3208,6 +3247,8 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
   C = 2πr comes from), an **area** follow-on, and letting the roll-out keep
   going for a **second turn** — the same fact told as distance travelled per
   turn.
+- **Revision Generator — Stage 4 is COMPLETE** (2026-09-24, all 16 outcomes; see
+  `assessment/exam-builder/docs/stage-4-syllabus-reference.md`).
 - **Revision Generator — Stage 3**: 6 of 8 topics built (Represents Numbers,
   Additive Relations, Multiplicative Relations, Fractions, 2D Space and Area,
   Geometric Measure). Each remaining topic needs a new diagram engine first:

@@ -84,6 +84,31 @@ import {
 } from "./question-banks/area/index.js";
 
 import {
+  generateVolumeQuestions,
+  getVolumeQuestionTypes
+} from "./question-banks/volume/index.js";
+
+import {
+  generateGeometricalFiguresQuestions,
+  getGeometricalFiguresQuestionTypes
+} from "./question-banks/geometrical-figures/index.js";
+
+import {
+  generateDataVisualisationQuestions,
+  getDataVisualisationQuestionTypes
+} from "./question-banks/data-visualisation/index.js";
+
+import {
+  generateDataAnalysisQuestions,
+  getDataAnalysisQuestionTypes
+} from "./question-banks/data-analysis/index.js";
+
+import {
+  generateProbabilityQuestions,
+  getProbabilityQuestionTypes
+} from "./question-banks/probability/index.js";
+
+import {
   generateTrigonometryAQuestions,
   getTrigonometryAQuestionTypes
 } from "./question-banks/stage-5/trigonometry-a/index.js";
@@ -236,7 +261,12 @@ const DEFAULT_TOPIC_COUNTS = {
   linearRelationships: 6,
   length: 6,
   area: 6,
+  volume: 6,
   angles: 4,
+  geometricalFigures: 6,
+  dataVisualisation: 6,
+  dataAnalysis: 6,
+  probability: 6,
   equations: 6,
   pythagoras: 4,
   algebraicTechniques: 6,
@@ -385,10 +415,22 @@ const TOPICS = {
     getTypes: getAreaQuestionTypes
   },
 
+  volume: {
+    label: "Volume",
+    generate: generateVolumeQuestions,
+    getTypes: getVolumeQuestionTypes
+  },
+
   angles: {
     label: "Angle Relationships",
     generate: generateAngleQuestions,
     getTypes: getAngleQuestionTypes
+  },
+
+  geometricalFigures: {
+    label: "Properties of Geometrical Figures",
+    generate: generateGeometricalFiguresQuestions,
+    getTypes: getGeometricalFiguresQuestionTypes
   },
 
   equations: {
@@ -407,6 +449,25 @@ const TOPICS = {
     label: "Algebraic Techniques",
     generate: generateAlgebraicTechniquesQuestions,
     getTypes: getAlgebraicTechniquesQuestionTypes
+  },
+
+  /* Statistics and Probability — added 2026-09, completing Stage 4. */
+  dataVisualisation: {
+    label: "Data Classification and Visualisation",
+    generate: generateDataVisualisationQuestions,
+    getTypes: getDataVisualisationQuestionTypes
+  },
+
+  dataAnalysis: {
+    label: "Data Analysis",
+    generate: generateDataAnalysisQuestions,
+    getTypes: getDataAnalysisQuestionTypes
+  },
+
+  probability: {
+    label: "Probability",
+    generate: generateProbabilityQuestions,
+    getTypes: getProbabilityQuestionTypes
   }
 };
 

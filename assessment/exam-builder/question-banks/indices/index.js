@@ -28,6 +28,11 @@ import {
   attachQuestionTranslations
 } from "../../utils/translation.js";
 
+import {
+  EXTRA_INDICES_TYPES,
+  EXTRA_INDICES_GENERATORS
+} from "./extra-types.js";
+
 const TOPIC = "Indices";
 
 const TYPE_LIST = [
@@ -54,7 +59,9 @@ const TYPE_LIST = [
   { id: "algebraic-power", label: "Index law: power of an algebraic term" },
   { id: "algebraic-mixed", label: "Mixed algebraic index laws" },
   { id: "error-spot-indices", label: "Spot the error (reasoning)" },
-  { id: "true-false-indices", label: "Index laws: true or false (reasoning)" }
+  { id: "true-false-indices", label: "Index laws: true or false (reasoning)" },
+  // Added 2026-09 to complete the Stage 4 outcome.
+  ...EXTRA_INDICES_TYPES
 ];
 
 const PRIME_NUMBERS = [2, 3, 5, 7, 11, 13];
@@ -799,7 +806,8 @@ const GENERATORS = {
   "algebraic-power": algebraicPowerQuestion,
   "algebraic-mixed": algebraicMixedQuestion,
   "error-spot-indices": errorSpotIndicesQuestion,
-  "true-false-indices": trueFalseIndicesQuestion
+  "true-false-indices": trueFalseIndicesQuestion,
+  ...EXTRA_INDICES_GENERATORS
 };
 
 export function getIndicesQuestionTypes() {

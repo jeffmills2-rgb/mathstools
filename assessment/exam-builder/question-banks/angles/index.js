@@ -18,6 +18,11 @@ import {
   attachQuestionTranslations
 } from "../../utils/translation.js";
 
+import {
+  EXTRA_ANGLE_TYPES,
+  EXTRA_ANGLE_GENERATORS
+} from "./extra-types.js";
+
 const TOPIC = "Angle Relationships";
 
 const TYPE_LIST = [
@@ -27,7 +32,10 @@ const TYPE_LIST = [
   { id: "vertically-opposite", label: "Vertically opposite angles" },
   { id: "parallel-lines", label: "Parallel lines" },
   { id: "equations-application", label: "Equations application" },
-  { id: "protractor", label: "Read an angle from a protractor" }
+  { id: "protractor", label: "Read an angle from a protractor" },
+  // The rest of MA4-ANG-C-01 (2026-09): naming, classifying, complementary
+  // and supplementary, reflex, naming pairs, parallel tests, multi-step.
+  ...EXTRA_ANGLE_TYPES
 ];
 
 function randInt(min, max) {
@@ -576,7 +584,8 @@ const GENERATORS = {
   "vertically-opposite": verticallyOppositeQuestion,
   "parallel-lines": parallelLinesQuestion,
   "equations-application": equationsApplicationQuestion,
-  "protractor": protractorQuestion
+  "protractor": protractorQuestion,
+  ...EXTRA_ANGLE_GENERATORS
 };
 
 export function getAngleQuestionTypes() {

@@ -347,6 +347,10 @@ function fullSolutionText(question) {
   const topic = String(question?.topic || "").toLowerCase();
 
   if (topic.includes("angle")) return "Calculates the correct angle and gives an appropriate reason";
+  if (topic.includes("geometrical")) return "Applies the correct property of triangles or quadrilaterals, with reasons, and gives the correct answer";
+  if (topic.includes("volume")) return "Uses an appropriate volume or capacity method with correct units";
+  if (topic.includes("data")) return "Reads or analyses the data correctly and gives the correct answer";
+  if (topic.includes("probability")) return "Identifies the favourable and total outcomes and gives the correct probability";
   if (topic.includes("pythagoras")) return "Uses Pythagoras' theorem correctly and calculates the required length";
   if (topic.includes("linear")) return "Uses the correct relationship, graph or table and provides the correct answer";
   if (topic.includes("ratio") || topic.includes("rates")) return "Uses an appropriate ratio or rate method and provides the correct answer";
@@ -366,6 +370,10 @@ function partialCreditText(question) {
   const topic = String(question?.topic || "").toLowerCase();
 
   if (topic.includes("angle")) return "Identifies an appropriate angle relationship or shows a valid calculation";
+  if (topic.includes("geometrical")) return "Identifies a relevant property or angle-sum fact, or shows a valid calculation";
+  if (topic.includes("volume")) return "Finds the cross-sectional area or shows a correct substitution";
+  if (topic.includes("data")) return "Shows a correct method, such as ordering the data or finding the total";
+  if (topic.includes("probability")) return "Identifies the sample space or the number of favourable outcomes";
   if (topic.includes("pythagoras")) return "Substitutes values into Pythagoras' theorem or shows a valid calculation";
   if (topic.includes("linear")) return "Shows an appropriate graphical, tabular or algebraic method";
   if (topic.includes("ratio") || topic.includes("rates")) return "Shows an appropriate ratio or rate method";
@@ -382,6 +390,10 @@ function limitedCreditText(question) {
   const topic = String(question?.topic || "").toLowerCase();
 
   if (topic.includes("angle")) return "Shows some relevant angle information";
+  if (topic.includes("geometrical")) return "Shows some relevant information about the figure";
+  if (topic.includes("volume")) return "Shows some relevant dimension or unit information";
+  if (topic.includes("data")) return "Shows some relevant reading of the data";
+  if (topic.includes("probability")) return "Shows some relevant outcome information";
   if (topic.includes("pythagoras")) return "Identifies relevant side lengths or the correct theorem";
   if (topic.includes("linear")) return "Shows some relevant table, graph or coordinate information";
   if (topic.includes("ratio") || topic.includes("rates")) return "Shows some relevant ratio or rate information";
