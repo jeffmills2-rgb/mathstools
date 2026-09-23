@@ -115,6 +115,11 @@ export default {
     let running = false;
     let lastTick = 0;
     let raf = null;
+    /* Presets STACK (teacher request 2026-09-23): the first press sets the
+       time, and each further preset press in a row adds to it — 10m, 10m,
+       5m is 25:00. Anything else (start, reset, +/−, a mode change) ends the
+       run of presses, so the next preset sets afresh. */
+    let stacking = false;
 
     el.innerHTML = `
       <div class="tm">
@@ -149,10 +154,14 @@ export default {
     PRESETS.forEach(min => {
       const b = document.createElement('button');
       b.className = 'chip'; b.type = 'button'; b.textContent = min + 'm';
+      b.title = `Set ${min} minutes — press again to add ${min} more`;
       b.addEventListener('click', () => {
         stop();
-        ctx.setState({ duration: min * 60 });
-        remaining = min * 60; elapsed = 0;
+        const next = stacking ? Math.min(5 * 3600, st.duration + min * 60) : min * 60;
+        stacking = true;
+        ctx.setState({ duration: next });
+        remaining = next; elapsed = 0;
+        root.classList.remove('done');
         paint();
       });
       presets.appendChild(b);
@@ -202,6 +211,7 @@ export default {
     }
 
     function start(){
+      stacking = false;
       if(st.mode === 'countdown' && remaining <= 0) remaining = st.duration;
       running = true;
       root.classList.remove('done');
@@ -220,6 +230,7 @@ export default {
 
     el.querySelector('.reset').addEventListener('click', () => {
       stop();
+      stacking = false;
       remaining = st.duration; elapsed = 0;
       root.classList.remove('done');
       paint();
@@ -227,6 +238,7 @@ export default {
 
     adjBtns.forEach(b => b.addEventListener('click', () => {
       const delta = Number(b.dataset.delta);
+      stacking = false;
       const next = Math.max(60, Math.min(5 * 3600, st.duration + delta));
       ctx.setState({ duration: next });
       if(!running){ remaining = next; root.classList.remove('done'); }
@@ -235,6 +247,7 @@ export default {
 
     modeBtns.forEach(b => b.addEventListener('click', () => {
       stop();
+      stacking = false;
       ctx.setState({ mode: b.dataset.mode });
       remaining = st.duration; elapsed = 0;
       root.classList.remove('done');

@@ -2680,6 +2680,13 @@
 >   one doesn't belong?" and "True or false:" are both the kind AND the start
 >   of the prompt, so `labelFor()` drops the label when the question already
 >   says it.
+> * **TIMER PRESETS STACK (2026-09-23, teacher request).** The first preset
+>   press SETS the time; each further preset press in a row ADDS to it (10m,
+>   10m, 5m = 25:00, capped at 5 h like +/−). Start, Reset, +/− or a mode change
+>   ends the run, so the next preset sets afresh. One `stacking` flag in
+>   `widgets/timer.js`. Test gotcha: the presets are `pointer-events:none`
+>   until the card is hovered, so a forced click lands on nothing — hover first
+>   or `dispatchEvent('click')`.
 > * **THE RANDOM GENERATOR SAVES SETTINGS, NEVER THE NUMBERS**
 >   (`widgets/maths-random.js`) — a reload gives back the generator you set up,
 >   ready to roll, not a stale answer the class has already done. Five modes
