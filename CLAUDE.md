@@ -52,9 +52,13 @@
 > CREATORS.** `worksheet-creators/puzzles/shikaku.html` and
 > `worksheet-creators/puzzles/sudoku.html` (a new `puzzles/` folder), with two
 > cards under a new **Puzzles** subhead at the end of the homepage Worksheet
-> Creator group (pill 28 -> 32, which is the real card count). **The games were
-> NOT changed (teacher request)** — so, unlike Dot Detective and Total Trail,
-> the worksheet is a separate page, not a 🖨 button inside the game. Same shell,
+> Creator group (pill 28 -> 32, which is the real card count). **The games'
+> PLAY is unchanged (teacher request)** — so, unlike Dot Detective and Total
+> Trail, the worksheet is a separate page. Each game only gained two ways OUT
+> to it (teacher request, same day): a "🖨 Worksheet" topbar button and a
+> "Printable worksheet" menu card, both plain `location.href` buttons. They
+> carry no `data-i18n` on purpose — a missing key would print the English twice
+> in AR/FA. Same shell,
 > A4-in-mm pages, zoomed preview, 1 / 2 / 4 / 6 per page as a SIZE control
 > (board widths in `LAYOUT`), answer key, name/date, rules box.
 > * **THE ENGINES ARE COPIED, NOT IMPORTED.** Sudoku: `SudokuEngine` byte for
