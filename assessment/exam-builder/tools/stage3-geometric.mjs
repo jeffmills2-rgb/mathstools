@@ -16,7 +16,7 @@ const by = id => ALL.filter(q => q.type === id);
 const num = s => Number(String(s).replace(/[^\d.]/g, ""));
 
 console.log("\nCOVERAGE");
-t("18 question types declared", TYPES.length === 18, `${TYPES.length}`);
+t("23 question types declared (18 + 5 visual)", TYPES.length === 23, `${TYPES.length}`);
 t("every declared type generates", TYPES.every(ty => by(ty.id).length > 0),
   TYPES.filter(ty => !by(ty.id).length).map(ty => ty.id).join(", ") || "all present");
 t("all three strands are represented",
@@ -274,7 +274,7 @@ t("every question has an answer", ALL.every(q => String(q.answer ?? "").length))
 t("every question has at least one mark", ALL.every(q => q.marks >= 1));
 t("diagrams name a real engine",
   ALL.filter(q => q.diagram).every(q =>
-    ["linear-engine", "angle-engine", "length-engine"].includes(q.diagram.engine)));
+    ["linear-engine", "angle-engine", "length-engine", "geometry-engine", "grid-engine"].includes(q.diagram.engine)));
 t("explanation questions get room to write",
   ALL.filter(q => /Explain/i.test(q.prompt) && !q.subparts)
     .every(q => resolveAnswerSpace(q).kind === "lines"));

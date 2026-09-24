@@ -23,6 +23,8 @@
     sector        a pie chart with each sector labelled
     divided-bar   one bar divided into parts of a whole
     pictogram     rows of symbols with a key (half symbols allowed)
+    grouped-column  side-by-side columns for two (or three) series per
+                  category: `series: [{ name, values }]`, with a key
 
   `blank: true` draws the frame, scale and labels with no data, for "construct
   the graph" questions. `yMin` above zero draws a truncated axis — used ONLY by
@@ -151,6 +153,40 @@ window.MMT_STATISTICS_ENGINE = (() => {
     });
     titleAndX(g, c, frame, W);
     return finish(target, g, W, H, "column graph");
+  }
+
+  /* Side-by-side columns: one group per category, one column per series. */
+  function groupedColumnChart(target, c) {
+    const cats = c.categories || [];
+    const series = c.series || [];
+    const k = Math.max(1, series.length);
+    const n = Math.max(1, cats.length);
+    const slot = Math.max(70, Math.min(110, 480 / n));
+    const frame = { x: 78, y: c.title ? 40 : 18, w: slot * n, h: 210 };
+    const keyW = 150;
+    const W = frame.x + frame.w + 30 + keyW;
+    const H = frame.y + frame.h + (c.xLabel ? 62 : 36);
+    const g = el("g");
+    const all = series.flatMap(s => s.values || []);
+    const Y = valueAxis(g, { ...c, values: all }, frame);
+    const colW = (slot * 0.76) / k;
+    cats.forEach((cat, i) => {
+      const x0 = frame.x + i * slot + slot * 0.12;
+      series.forEach((s, j) => {
+        const v = s.values?.[i];
+        if (!c.blank && Number.isFinite(v)) rect(g, x0 + j * colW, Y(v), colW, frame.y + frame.h - Y(v), { fill: PALETTE[j % PALETTE.length] });
+      });
+      text(g, cat, frame.x + i * slot + slot / 2, frame.y + frame.h + 16, { size: TEXT - 2 });
+    });
+    // key
+    const kx = frame.x + frame.w + 40;
+    series.forEach((s, j) => {
+      const ky = frame.y + 20 + j * 30;
+      rect(g, kx, ky - 9, 18, 18, { fill: PALETTE[j % PALETTE.length] });
+      text(g, s.name, kx + 26, ky, { anchor: "start", size: TEXT - 1 });
+    });
+    titleAndX(g, c, frame, W - keyW);
+    return finish(target, g, W, H, "side-by-side column graph");
   }
 
   function barChart(target, c) {
@@ -428,6 +464,7 @@ window.MMT_STATISTICS_ENGINE = (() => {
     const t = config.chartType || "column";
     if (t === "column") return columnChart(target, config);
     if (t === "bar") return barChart(target, config);
+    if (t === "grouped-column") return groupedColumnChart(target, config);
     if (t === "histogram") return histogram(target, config);
     if (t === "dot-plot") return dotPlot(target, config);
     if (t === "stem-leaf") return stemLeaf(target, config);

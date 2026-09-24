@@ -32,6 +32,11 @@ import {
 } from "../../../schemas/question.schema.js";
 
 import {
+  EXTRA_AR_TYPES,
+  EXTRA_AR_GENERATORS
+} from "./extra-types.js";
+
+import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
 
@@ -62,7 +67,8 @@ const TYPE_LIST = [
   { id: "onl-bridging-sub", label: "Number line: bridging to ten (subtraction)" },
   { id: "onl-counting-up", label: "Number line: counting up (subtraction)" },
   { id: "onl-constant-difference", label: "Number line: constant difference" },
-  { id: "onl-draw-your-own", label: "Number line: draw your own jumps" }
+  { id: "onl-draw-your-own", label: "Number line: draw your own jumps" },
+  ...EXTRA_AR_TYPES
 ];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -912,7 +918,8 @@ const GENERATORS = {
   "onl-bridging-sub": onlBridgingSubQuestion,
   "onl-counting-up": onlCountingUpQuestion,
   "onl-constant-difference": onlConstantDifferenceQuestion,
-  "onl-draw-your-own": onlDrawYourOwnQuestion
+  "onl-draw-your-own": onlDrawYourOwnQuestion,
+  ...EXTRA_AR_GENERATORS
 };
 
 export function getAdditiveRelationsQuestionTypes() {

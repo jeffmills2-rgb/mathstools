@@ -32,6 +32,11 @@ import {
 } from "../../../schemas/question.schema.js";
 
 import {
+  EXTRA_FRACTION_TYPES,
+  EXTRA_FRACTION_GENERATORS
+} from "./extra-types.js";
+
+import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
 
@@ -54,7 +59,8 @@ const TYPE_LIST = [
   { id: "build-to-whole", label: "Build up to the whole" },
   { id: "fraction-of-quantity", label: "Fraction of a quantity" },
   { id: "fraction-of-measure", label: "Fraction of a measurement" },
-  { id: "multi-part-fractions", label: "Multi-part fraction problem" }
+  { id: "multi-part-fractions", label: "Multi-part fraction problem" },
+  ...EXTRA_FRACTION_TYPES
 ];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -655,7 +661,8 @@ const GENERATORS = {
   "build-to-whole": buildToWholeQuestion,
   "fraction-of-quantity": fractionOfQuantityQuestion,
   "fraction-of-measure": fractionOfMeasureQuestion,
-  "multi-part-fractions": multiPartFractionsQuestion
+  "multi-part-fractions": multiPartFractionsQuestion,
+  ...EXTRA_FRACTION_GENERATORS
 };
 
 export function getStage3FractionsQuestionTypes() {

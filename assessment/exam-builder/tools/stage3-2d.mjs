@@ -13,7 +13,7 @@ const by = id => ALL.filter(q => q.type === id);
 const num = s => Number(String(s).replace(/[^\d.]/g, ""));
 
 console.log("\nCOVERAGE");
-t("16 question types declared", TYPES.length === 16, `${TYPES.length}`);
+t("24 question types declared (16 + 8 visual)", TYPES.length === 24, `${TYPES.length}`);
 t("every declared type generates", TYPES.every(ty => by(ty.id).length > 0),
   TYPES.filter(ty => !by(ty.id).length).map(ty => ty.id).join(", ") || "all present");
 
@@ -118,9 +118,10 @@ t("unit-choice questions offer the four named units",
 console.log("\nSHAPE FACTS");
 const symmetryFacts = { square: 4, rectangle: 2, "equilateral triangle": 3, "isosceles triangle": 1,
   rhombus: 2, "regular pentagon": 5, "regular hexagon": 6, kite: 1 };
+t("articles agree: \"an equilateral\", \"an isosceles\"", by("symmetry").every(q => !/ a [aeiou]/.test(q.prompt)));
 t("lines of symmetry are correct",
   by("symmetry").every(q => {
-    const shape = q.prompt.match(/does a (.+?) have/)[1];
+    const shape = q.prompt.match(/does an? (.+?) have/)[1];
     return symmetryFacts[shape] === Number(q.answer);
   }), `${by("symmetry").length} checked`);
 t("quadrilateral clues map to one shape only", (() => {
@@ -148,8 +149,8 @@ t("all three transformations appear",
 console.log("\nFITS THE PIPELINE");
 t("every question carries the topic", ALL.every(q => q.topic === "2D Space and Area"));
 t("every question has an answer", ALL.every(q => String(q.answer ?? "").length));
-t("diagram questions reference the area engine",
-  ALL.filter(q => q.diagram).every(q => q.diagram.engine === "area-engine"));
+t("diagram questions reference the area, geometry or grid engine",
+  ALL.filter(q => q.diagram).every(q => ["area-engine", "geometry-engine", "grid-engine"].includes(q.diagram.engine)));
 t("explanation questions get room to write",
   ALL.filter(q => /Explain/i.test(q.prompt) && !q.subparts)
     .every(q => resolveAnswerSpace(q).kind === "lines"));

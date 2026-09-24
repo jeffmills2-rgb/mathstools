@@ -40,6 +40,11 @@ import {
 } from "../../../schemas/question.schema.js";
 
 import {
+  EXTRA_GM_TYPES,
+  EXTRA_GM_GENERATORS
+} from "./extra-types.js";
+
+import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
 
@@ -63,7 +68,8 @@ const TYPE_LIST = [
   { id: "angles-straight-line", label: "Angles on a straight line" },
   { id: "angles-at-a-point", label: "Angles at a point" },
   { id: "read-protractor", label: "Read a protractor" },
-  { id: "multi-part-perimeter", label: "Multi-part measurement problem" }
+  { id: "multi-part-perimeter", label: "Multi-part measurement problem" },
+  ...EXTRA_GM_TYPES
 ];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -826,7 +832,8 @@ const GENERATORS = {
   "angles-straight-line": anglesStraightLineQuestion,
   "angles-at-a-point": anglesAtAPointQuestion,
   "read-protractor": readProtractorQuestion,
-  "multi-part-perimeter": multiPartPerimeterQuestion
+  "multi-part-perimeter": multiPartPerimeterQuestion,
+  ...EXTRA_GM_GENERATORS
 };
 
 export function getStage3GeometricMeasureQuestionTypes() {

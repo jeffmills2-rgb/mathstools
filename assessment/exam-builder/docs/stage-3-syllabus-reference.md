@@ -12,9 +12,9 @@ codes for build planning; question prompts written from it must be original.
 
 ## Agreed scope
 
-**In:** Number and Measurement.
-**Out for now:** Data A/B and Chance A/B — they need column-graph, dot-plot and
-chance-experiment engines that do not exist, for the least worksheet use.
+**In:** everything — Number, Measurement and Space, and (since 2026-09-25)
+Statistics and Probability. Data and Chance were deferred until the Stage 4
+work built the statistics and probability engines; they now reuse them.
 
 | Focus area | Outcomes | In scope |
 |---|---|---|
@@ -34,8 +34,8 @@ chance-experiment engines that do not exist, for the least worksheet use.
 | Three-dimensional spatial structure B | MA3-3DS-01, MA3-3DS-02 | ✅ |
 | Non-spatial measure A | MA3-NSM-01, MA3-NSM-02 | ✅ |
 | Non-spatial measure B | MA3-NSM-01, MA3-NSM-02 | ✅ |
-| Data A / B | MA3-DATA-01, MA3-DATA-02 | ❌ deferred |
-| Chance A / B | MA3-CHAN-01 | ❌ deferred |
+| Data A / B | MA3-DATA-01, MA3-DATA-02 | ✅ |
+| Chance A / B | MA3-CHAN-01 | ✅ |
 
 Every focus area also carries **MAO-WM-01** (Working mathematically), which is
 not a content outcome and needs no bank of its own.
@@ -64,6 +64,9 @@ not a content outcome and needs no bank of its own.
 | MA3-3DS-02 | selects and uses the appropriate unit and device to measure the capacities and volumes of objects |
 | MA3-NSM-01 | selects and uses the appropriate unit and device to measure the masses of objects |
 | MA3-NSM-02 | measures and compares duration, using 12- and 24-hour time and am and pm notation |
+| MA3-DATA-01 | constructs graphs using many-to-one scales |
+| MA3-DATA-02 | interprets data displays, including timelines and line graphs |
+| MA3-CHAN-01 | conducts chance experiments and quantifies the probability |
 
 ---
 
@@ -174,6 +177,26 @@ not a content outcome and needs no bank of its own.
 - Mass: convert between common metric units of mass
 - Time: problems involving duration, using 12- and 24-hour time
 
+### Data A — MA3-DATA-01/02
+- Collect categorical and discrete numerical data by observation or survey
+- Choose and use appropriate tables and graphs (many-to-one scales)
+- Describe and interpret different datasets in context
+
+### Data B — MA3-DATA-01/02
+- Interpret and compare a range of data displays (two-way tables, side-by-side
+  column graphs, dot plots, line graphs, timelines)
+- Interpret data presented in digital media and elsewhere
+
+### Chance A — MA3-CHAN-01
+- List outcomes of chance experiments involving equally likely outcomes and
+  represent probabilities (fractions, the 0–1 scale, benchmark decimals and
+  percentages)
+
+### Chance B — MA3-CHAN-01
+- Compare observed frequencies of outcomes with expected results
+- Create random generators and describe probabilities using fractions
+- Conduct chance experiments with both small and large numbers of trials
+
 ---
 
 ## Build notes
@@ -184,23 +207,28 @@ place-value tables (renderQuestionTable), angles and protractors (angle-engine),
 length and perimeter (length-engine), area (area-engine), Cartesian plane
 (linear-engine), volume (volume-engine).
 
-**Engines that do NOT exist and gate certain focus areas.**
-
 **Built for Stage 3.** `open-number-line-engine` — the additive strategies from
 the Coffs Harbour Mathematics Faculty workbook *Building Additive Strategies*:
 bridging to ten, the jump strategy, jumping over, counting up for subtraction,
 and constant difference, plus a blank line for the student to draw their own.
 Any label given as `null` renders as an empty box, so one diagram type covers
-worked examples, fill-the-gaps and do-it-yourself.
+worked examples, fill-the-gaps and do-it-yourself. `array-area-engine` — arrays,
+area models, factor rectangles.
 
-| Needed for | Missing engine |
-|---|---|
-| Non-spatial measure A/B — time | analog clock face |
-| Multiplicative relations A — products and factors | array / area model for multiplication |
-| Three-dimensional spatial structure A | nets of prisms and pyramids |
-| Geometric measure A — position | grid map (distinct from the number plane) — the bank ships without it; the point-vs-area distinction is currently asked in prose |
-| Data A/B (deferred) | column graph, dot plot |
-| Chance A/B (deferred) | spinner, chance experiment |
+**Built 2026-09-25 to finish Stage 3** (all registered in
+`renderers/question-renderer.js`, `index.html` and `_dev/preview.html`):
+
+| Engine | Draws | Used by |
+|---|---|---|
+| `measure-engine` | analogue clock (or a blank face to draw hands on), digital display, 270° dial scale, measuring jug, before/after jugs for displacement, time line (jumps with empty boxes; `note` for event names) | Mass and Time, 3D Space and Volume, Data |
+| `solids-engine` | prisms and pyramids (3–8 sides) in real 3D with hidden edges computed from face normals; cylinder, cone, sphere; nets (one, or several lettered); cube stack beside lettered view options | 3D Space and Volume |
+| `grid-engine` | square grid with shape and image (translation/reflection/rotation), dashed mirror line, centre dot; grid MAP with letters/numbers labelling the SPACES and icons | 2D Space and Area, Geometric Measure |
+| `bar-model-engine` | part–whole and comparison bar models, widths proportional, unknowns as empty boxes | Additive Relations |
+
+Reused from Stage 4: `statistics-engine` (gained `grouped-column` for
+side-by-side graphs), `probability-engine`, `geometry-engine`, `volume-engine`
+(`cube-array`, `rectangular-prism`), `fdp-engine` (`percentage-grid`,
+`equivalent-bars`, `fraction-of-set`), `integer-engine` (`thermometer`).
 
 ---
 
@@ -221,6 +249,8 @@ same shape as Stage 4, where "Integers" is one topic with 17 types.
 | 2D Space and Area | Two-dimensional spatial structure A + B | MA3-2DS-01/02/03 |
 | 3D Space and Volume | Three-dimensional spatial structure A + B | MA3-3DS-01/02 |
 | Mass and Time | Non-spatial measure A + B | MA3-NSM-01/02 |
+| Data | Data A + B | MA3-DATA-01/02 |
+| Chance | Chance A + B | MA3-CHAN-01 |
 
 ---
 
@@ -228,14 +258,27 @@ same shape as Stage 4, where "Integers" is one topic with 17 types.
 
 | Topic | Status |
 |---|---|
-| Represents Numbers | ✅ built — 15 question types, `question-banks/stage-3/represents-numbers/` |
-| Additive Relations | ✅ built — 22 question types, `question-banks/stage-3/additive-relations/`, including 7 open number line strategies |
-| Multiplicative Relations | ✅ built — 21 question types, `question-banks/stage-3/multiplicative-relations/`, on the new `array-area` engine |
-| Fractions | ✅ built — 17 question types, `question-banks/stage-3/fractions/` |
-| Geometric Measure | ✅ built — 18 question types, `question-banks/stage-3/geometric-measure/`, using the existing linear, angle and length engines |
-| 2D Space and Area | ✅ built — 16 question types, `question-banks/stage-3/two-d-space-area/` |
-| 3D Space and Volume | not started — needs the nets engine |
-| Mass and Time | not started — needs the clock engine |
+| Represents Numbers | ✅ 18 types (15 + 3 visual: hundred grid, benchmark grid, thermometer) |
+| Additive Relations | ✅ 27 types (22 incl. 7 open number line strategies + 5 bar model) |
+| Multiplicative Relations | ✅ 24 types (21 + prime/composite arrays, square numbers, missing factor pair) |
+| Fractions | ✅ 21 types (17 + compare/add with bars, mixed numerals from bars, fraction of a collection) |
+| Geometric Measure | ✅ 23 types (18 + classify/estimate a drawn angle, construct an angle, grid map read/give) |
+| 2D Space and Area | ✅ 24 types (16 + drawn triangles/quadrilaterals, symmetry, complete-symmetric, name/describe/draw transformations on a grid, composite area from a drawing) |
+| 3D Space and Volume | ✅ 20 types — `question-banks/stage-3/three-d-space-volume/` |
+| Mass and Time | ✅ 17 types — `question-banks/stage-3/mass-time/` |
+| Data | ✅ 16 types — `question-banks/stage-3/data/` |
+| Chance | ✅ 12 types — `question-banks/stage-3/chance/` |
+
+The visual gap-fill types live in each older bank's `extra-types.js` and are
+spread into its registry, so the original types are untouched.
+
+Harnesses: `tools/stage3.mjs`, `stage3-additive`, `-multiplicative`,
+`-fractions`, `-geometric`, `-2d`, `-numberline`, and new `stage3-three-d`,
+`stage3-mass-time`, `stage3-data-chance`, `stage3-visual-gaps`. The new ones
+re-derive answers from the diagram with independent methods — e.g. a second
+cube-folding algorithm (3D frames, not the bank's rolling cube), views
+projected from a voxel set, a shoelace area for composite shapes, and a
+transformation test that also tries diagonal reflections.
 
 ---
 
@@ -318,3 +361,25 @@ where it can, so the figure and the answer are checked against each other — an
 then asserts the scope boundary and the answer-space resolution. Run
 `tools/verify.mjs` afterwards for the schema, diagram-render and token-leak
 sweep across every bank.
+
+### Added with the last four banks (2026-09-25)
+
+- **An instrument is read, not described.** Scale needles, jug levels and
+  clock hands sit exactly on a drawn mark — never on a labelled one, so the
+  scale really has to be read — and the harness checks both.
+- **12-hour times carry am/pm; 24-hour times are four digits with a colon**
+  ("07:05", "16:35"). Durations never cross midnight.
+- **Hidden edges are computed, not listed.** The solids engine works out which
+  faces point at the viewer, so every prism and pyramid draws its dashed edges
+  correctly without a per-shape table.
+- **Cube stack questions never hide a cube** behind a taller one in front, so
+  the picture always determines the views.
+- **A grid transformation must be unambiguous**: an image offered as a
+  reflection is never also a translation or rotation of the original.
+- **Empty space has to be inked.** The renderer trims every diagram to its
+  ink, so a "construct" diagram reserves drawing room with invisible text.
+- **Many-to-one scales**: values sit on a gridline or exactly halfway between.
+- **Chance fractions** use the size of the sample space as the denominator and
+  are simplified only to a Stage 3 denominator. No P(not A) or "relative
+  frequency" (Stage 4).
+

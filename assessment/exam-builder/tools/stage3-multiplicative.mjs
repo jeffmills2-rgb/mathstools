@@ -21,7 +21,7 @@ const nums = s => (String(s).replace(/(\d) (?=\d{3}\b)/g, "$1").match(/-?\d+(\.\
 const cfg = q => q.diagram.config;
 
 console.log("\nCOVERAGE");
-t("21 question types declared", TYPES.length === 21, `${TYPES.length}`);
+t("24 question types declared (21 + 3 visual)", TYPES.length === 24, `${TYPES.length}`);
 t("every declared type generates", TYPES.every(ty => by(ty.id).length > 0),
   TYPES.filter(ty => !by(ty.id).length).map(ty => ty.id).join(", ") || "all present");
 t("all four ways in are present — build, read, reverse, see",

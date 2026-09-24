@@ -93,7 +93,7 @@ function q(spec) {
 }
 
 /* A triangle with angles a (first letter), b (second), c = 180 − a − b. */
-function buildTriangle(a, b, { letters = choice(TRIANGLE_LETTERS), size = 290, maxH = 200, rotateBy = 0 } = {}) {
+export function buildTriangle(a, b, { letters = choice(TRIANGLE_LETTERS), size = 290, maxH = 200, rotateBy = 0 } = {}) {
   const raw = triangleFromAngles(a, b, 10);
   const points = fitPoints(nameVertices(raw, letters), { size, maxH, rotateBy });
   return { points, letters, angles: { [letters[0]]: a, [letters[1]]: b, [letters[2]]: 180 - a - b } };
@@ -273,7 +273,7 @@ function angleClass(angles) {
 }
 
 /* Side lengths, proportional to the sines of the opposite angles, as whole numbers. */
-function sidesFor(angles, scale) {
+export function sidesFor(angles, scale) {
   const s = angles.map(a => Math.sin(a * Math.PI / 180));
   const k = scale / Math.max(...s);
   return s.map(v => Math.round(v * k));
@@ -498,7 +498,7 @@ function quadShape(kind) {
   return { raw: [[0, top], [half, 0], [0, -bottom], [-half, 0]], ticks: [[0, 1, 1], [3, 0, 1], [1, 2, 2], [2, 3, 2]], right: [] };
 }
 
-function quadFigure(kind, letters, { markings = true, rotateBy = 0, extra = {} } = {}) {
+export function quadFigure(kind, letters, { markings = true, rotateBy = 0, extra = {} } = {}) {
   const shape = quadShape(kind);
   const points = fitPoints(nameVertices(shape.raw, letters), { size: 280, rotateBy });
   const L = i => letters[i];

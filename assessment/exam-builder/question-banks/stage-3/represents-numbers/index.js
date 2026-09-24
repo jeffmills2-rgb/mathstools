@@ -33,6 +33,11 @@ import {
 } from "../../../schemas/question.schema.js";
 
 import {
+  EXTRA_RN_TYPES,
+  EXTRA_RN_GENERATORS
+} from "./extra-types.js";
+
+import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
 
@@ -53,7 +58,8 @@ const TYPE_LIST = [
   { id: "benchmark-equivalents", label: "Benchmark fractions, decimals and percentages" },
   { id: "percent-of-quantity", label: "Percentages of quantities" },
   { id: "percentage-discount", label: "Percentage discounts" },
-  { id: "multi-part-number", label: "Multi-part number problem" }
+  { id: "multi-part-number", label: "Multi-part number problem" },
+  ...EXTRA_RN_TYPES
 ];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -735,7 +741,8 @@ const GENERATORS = {
   "benchmark-equivalents": benchmarkEquivalentsQuestion,
   "percent-of-quantity": percentOfQuantityQuestion,
   "percentage-discount": percentageDiscountQuestion,
-  "multi-part-number": multiPartNumberQuestion
+  "multi-part-number": multiPartNumberQuestion,
+  ...EXTRA_RN_GENERATORS
 };
 
 export function getRepresentsNumbersQuestionTypes() {

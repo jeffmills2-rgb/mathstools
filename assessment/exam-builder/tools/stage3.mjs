@@ -14,7 +14,7 @@ const ALL = bank.generateRepresentsNumbersQuestions({ count: 3000 });
 const by = id => ALL.filter(q => q.type === id);
 
 console.log("\nCOVERAGE");
-t("15 question types declared", TYPES.length === 15, `${TYPES.length}`);
+t("18 question types declared (15 + 3 visual)", TYPES.length === 18, `${TYPES.length}`);
 t("every declared type generates", TYPES.every(ty => by(ty.id).length > 0),
   TYPES.filter(ty => !by(ty.id).length).map(ty => ty.id).join(", ") || "all present");
 t("type selection is respected", (() => {
@@ -108,7 +108,7 @@ t("every question has an answer", ALL.every(q => q.answer !== null && q.answer !
 t("every question has working, or is a multi-part whose parts do",
   ALL.every(q => Array.isArray(q.working) &&
     (q.working.length || (q.subparts || []).every(p => (p.working || []).length))));
-t("no raw fraction tokens leak into answers", !ALL.some(q => /\[\[/.test(String(q.answer)) && q.type !== "benchmark-equivalents"));
+t("no raw fraction tokens leak into answers", !ALL.some(q => /\[\[/.test(String(q.answer)) && !["benchmark-equivalents", "hundred-grid", "benchmark-grid"].includes(q.type)));
 t("diagram questions reference a real engine",
   ALL.filter(q => q.diagram).every(q => ["fdp-engine", "integer-engine"].includes(q.diagram.engine)));
 t("diagram-answered questions get no answer space",

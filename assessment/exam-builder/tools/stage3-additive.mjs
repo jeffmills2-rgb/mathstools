@@ -13,7 +13,7 @@ const by = id => ALL.filter(q => q.type === id);
 const num = s => Number(String(s).replace(/[^\d.-]/g, ""));
 
 console.log("\nCOVERAGE");
-t("22 question types declared", TYPES.length === 22, `${TYPES.length}`);
+t("27 question types declared (22 + 5 bar model)", TYPES.length === 27, `${TYPES.length}`);
 t("every declared type generates", TYPES.every(ty => by(ty.id).length > 0),
   TYPES.filter(ty => !by(ty.id).length).map(ty => ty.id).join(", ") || "all present");
 

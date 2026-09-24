@@ -34,6 +34,26 @@ import {
 } from "./question-banks/stage-3/multiplicative-relations/index.js";
 
 import {
+  generateStage3ThreeDQuestions,
+  getStage3ThreeDQuestionTypes
+} from "./question-banks/stage-3/three-d-space-volume/index.js";
+
+import {
+  generateStage3MassTimeQuestions,
+  getStage3MassTimeQuestionTypes
+} from "./question-banks/stage-3/mass-time/index.js";
+
+import {
+  generateStage3DataQuestions,
+  getStage3DataQuestionTypes
+} from "./question-banks/stage-3/data/index.js";
+
+import {
+  generateStage3ChanceQuestions,
+  getStage3ChanceQuestionTypes
+} from "./question-banks/stage-3/chance/index.js";
+
+import {
   generateIntegerQuestions,
   getIntegerQuestionTypes
 } from "./question-banks/integers/index.js";
@@ -281,7 +301,11 @@ const DEFAULT_TOPIC_COUNTS = {
   volumeA: 6,
   introductionToNetworks: 6,
   nonLinearRelationshipsA: 6,
-  nonLinearRelationshipsB: 6
+  nonLinearRelationshipsB: 6,
+  stage3ThreeDSpaceVolume: 6,
+  stage3MassTime: 6,
+  stage3Data: 6,
+  stage3Chance: 6
 };
 
 const DEFAULT_SCHOOL = "[School name]";
@@ -512,6 +536,30 @@ const STAGE3_TOPICS = {
     label: "Geometric Measure",
     generate: generateStage3GeometricMeasureQuestions,
     getTypes: getStage3GeometricMeasureQuestionTypes
+  },
+
+  stage3ThreeDSpaceVolume: {
+    label: "3D Space and Volume",
+    generate: generateStage3ThreeDQuestions,
+    getTypes: getStage3ThreeDQuestionTypes
+  },
+
+  stage3MassTime: {
+    label: "Mass and Time",
+    generate: generateStage3MassTimeQuestions,
+    getTypes: getStage3MassTimeQuestionTypes
+  },
+
+  stage3Data: {
+    label: "Data",
+    generate: generateStage3DataQuestions,
+    getTypes: getStage3DataQuestionTypes
+  },
+
+  stage3Chance: {
+    label: "Chance",
+    generate: generateStage3ChanceQuestions,
+    getTypes: getStage3ChanceQuestionTypes
   }
 };
 

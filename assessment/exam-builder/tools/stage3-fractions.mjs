@@ -21,7 +21,7 @@ const value = f => f.n / f.d;
 const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
 
 console.log("\nCOVERAGE");
-t("17 question types declared", TYPES.length === 17, `${TYPES.length}`);
+t("21 question types declared (17 + 4 visual)", TYPES.length === 21, `${TYPES.length}`);
 t("every declared type generates", TYPES.every(ty => by(ty.id).length > 0),
   TYPES.filter(ty => !by(ty.id).length).map(ty => ty.id).join(", ") || "all present");
 

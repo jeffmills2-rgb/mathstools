@@ -48,6 +48,34 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-25, session — being pushed): REVISION GENERATOR — STAGE 3
+> COMPLETE, WITH VISUALS.** `assessment/exam-builder/`. Four new Stage 3 banks
+> (`question-banks/stage-3/`): **3D Space and Volume** (20 types — name solids
+> from a picture, faces/edges/vertices, nets, which nets fold into a cube,
+> skeletal models, top/front/side views of cube stacks, capacity, reading a
+> jug, displacement, counting cubes, layers, V = lwh in cm³/m³), **Mass and
+> Time** (17 — dial scales, g/kg/t, analogue clocks read and drawn, 12/24-hour,
+> durations on a time line, timetables), **Data** (16 — many-to-one column
+> graphs, pictograms, dot plots, side-by-side columns, line graphs, two-way
+> tables, time lines, misleading media graphs, construct-a-graph on blank
+> axes) and **Chance** (12). Registered in `STAGE3_TOPICS` in `app.js`.
+> Four new engines: `engines/measure/` (clock, digital, dial scale, jugs, time
+> line), `engines/solids/` (3D prisms/pyramids with COMPUTED hidden edges,
+> nets, cube stacks + view options), `engines/grid/` (transformations,
+> mirror lines, grid MAPS), `engines/bar-model/`. `statistics-engine` gained
+> `grouped-column`. Visual gap-fill: each older Stage 3 bank has an
+> `extra-types.js` spread into its registry (+28 types: drawn shapes, grid
+> transformations, symmetry, composite area, drawn angles, construct an
+> angle, grid maps, hundred grids, thermometers, fraction bars, prime/composite
+> arrays, bar-model word problems). Fixed "a equilateral triangle".
+> `geometrical-figures/index.js` now EXPORTS `buildTriangle`, `quadFigure`,
+> `sidesFor` (reused by Stage 3). New harnesses `tools/stage3-three-d.mjs`,
+> `stage3-mass-time.mjs`, `stage3-data-chance.mjs`, `stage3-visual-gaps.mjs`
+> re-derive answers from the diagrams with independent methods; the older
+> Stage 3 harnesses were updated for the new type counts. Gotcha found: the
+> renderer trims every diagram to its INK (getBBox), so reserved empty space
+> (e.g. room to draw an angle) must be "inked" with invisible text.
+>
 > **NEW (2026-09-24, session — being pushed): REVISION GENERATOR — STAGE 4
 > COMPLETE.** All 16 Stage 4 outcomes now have a topic in
 > `assessment/exam-builder/` (313 Stage 4 question types, up from 227). Read
@@ -3249,13 +3277,9 @@ portal/PLACEMENT.md , portal/README.md   migration + structure notes
   turn.
 - **Revision Generator — Stage 4 is COMPLETE** (2026-09-24, all 16 outcomes; see
   `assessment/exam-builder/docs/stage-4-syllabus-reference.md`).
-- **Revision Generator — Stage 3**: 6 of 8 topics built (Represents Numbers,
-  Additive Relations, Multiplicative Relations, Fractions, 2D Space and Area,
-  Geometric Measure). Each remaining topic needs a new diagram engine first:
-  **3D Space and Volume** (nets) and **Mass and Time** (analog clock). Data and
-  Chance are deliberately deferred. Geometric Measure shipped WITHOUT its
-  optional grid-map engine — the syllabus's grid-reference-vs-coordinate
-  distinction is asked in prose for now; a grid-map engine would improve it.
+- **Revision Generator — Stage 3 is COMPLETE** (2026-09-25, all 10 topics incl.
+  Data and Chance; visual gap-fill types added to the 6 older banks; see
+  `assessment/exam-builder/docs/stage-3-syllabus-reference.md`).
   Scope, outcome mapping and the calibration conventions are in
   `assessment/exam-builder/docs/stage-3-syllabus-reference.md` — read it before
   writing a bank, and add the new conventions it records to any new one.

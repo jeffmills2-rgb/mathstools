@@ -39,6 +39,11 @@ import {
 } from "../../../schemas/question.schema.js";
 
 import {
+  EXTRA_TWO_D_TYPES,
+  EXTRA_TWO_D_GENERATORS
+} from "./extra-types.js";
+
+import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
 
@@ -60,7 +65,8 @@ const TYPE_LIST = [
   { id: "shape-properties", label: "Properties of a shape" },
   { id: "transformations", label: "Translation, reflection and rotation" },
   { id: "symmetry", label: "Lines of symmetry" },
-  { id: "multi-part-area", label: "Multi-part area problem" }
+  { id: "multi-part-area", label: "Multi-part area problem" },
+  ...EXTRA_TWO_D_TYPES
 ];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -596,9 +602,9 @@ function symmetryQuestion() {
     level: "mixed",
     type: "symmetry",
     marks: 1,
-    prompt: `How many lines of symmetry does a ${shape.name} have?`,
+    prompt: `How many lines of symmetry does ${/^[aeiou]/.test(shape.name) ? "an" : "a"} ${shape.name} have?`,
     answer: String(shape.lines),
-    working: [`A ${shape.name} can be folded onto itself in ${shape.lines} different ${shape.lines === 1 ? "way" : "ways"}.`],
+    working: [`${/^[aeiou]/.test(shape.name) ? "An" : "A"} ${shape.name} can be folded onto itself in ${shape.lines} different ${shape.lines === 1 ? "way" : "ways"}.`],
     space: SPACE_SIZES.SMALL,
     mcEligible: false,
     tags: ["stage3", "2D shapes", "symmetry"]
@@ -671,7 +677,8 @@ const GENERATORS = {
   "shape-properties": shapePropertiesQuestion,
   "transformations": transformationsQuestion,
   "symmetry": symmetryQuestion,
-  "multi-part-area": multiPartAreaQuestion
+  "multi-part-area": multiPartAreaQuestion,
+  ...EXTRA_TWO_D_GENERATORS
 };
 
 export function getStage3TwoDQuestionTypes() {

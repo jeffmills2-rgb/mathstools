@@ -43,6 +43,11 @@ import {
 } from "../../../schemas/question.schema.js";
 
 import {
+  EXTRA_MR_TYPES,
+  EXTRA_MR_GENERATORS
+} from "./extra-types.js";
+
+import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
 
@@ -69,7 +74,8 @@ const TYPE_LIST = [
   { id: "unknown-factor", label: "Find the unknown" },
   { id: "order-of-operations", label: "Brackets and order of operations" },
   { id: "divide-3-digit", label: "Divide a 3-digit number" },
-  { id: "multi-part-multiplicative", label: "Multi-part problem" }
+  { id: "multi-part-multiplicative", label: "Multi-part problem" },
+  ...EXTRA_MR_TYPES
 ];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -1034,7 +1040,8 @@ const GENERATORS = {
   "unknown-factor": unknownFactorQuestion,
   "order-of-operations": orderOfOperationsQuestion,
   "divide-3-digit": divideThreeDigitQuestion,
-  "multi-part-multiplicative": multiPartMultiplicativeQuestion
+  "multi-part-multiplicative": multiPartMultiplicativeQuestion,
+  ...EXTRA_MR_GENERATORS
 };
 
 export function getMultiplicativeRelationsQuestionTypes() {
