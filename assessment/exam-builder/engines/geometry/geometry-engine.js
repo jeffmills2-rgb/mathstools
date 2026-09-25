@@ -32,9 +32,14 @@
     angles     [{ at, from, to, label, right, arcs, radius, reflex }]
     sideLabels [{ from, to, text, flip }]     a label beside a side
     vertexLabels   true (default) | false | { A: false, ... }
+    localLabels    true → vertex and side labels push away from their own
+                   polygon's centre (for side-by-side similar figures)
     labelOffsets   { A: [dx, dy] }            nudge a vertex letter by hand
     dots       ["A", ...]                     points drawn as solid dots
     texts      [{ x, y, text, size, anchor }] free text
+    circles    [{ centre: "O", through: "A", fill }] a circle through a named
+               point (scale-free, so it survives fitPoints); drawn under the
+               polygons, and included in the viewBox
 
   An angle label given as `null` draws an empty box, the convention the other
   newer engines use for "fill this in".
@@ -225,6 +230,17 @@ window.MMT_GEOMETRY_ENGINE = (() => {
 
     const g = el("g");
 
+    // Circles (circle geometry) sit under everything.
+    const circleBounds = [];
+    (config.circles || []).forEach(spec => {
+      const c = P[spec.centre];
+      const t = P[spec.through];
+      if (!c || !t) return;
+      const r = Math.hypot(t[0] - c[0], t[1] - c[1]);
+      g.appendChild(el("circle", { cx: round(c[0]), cy: round(c[1]), r: round(r), fill: spec.fill || "none", stroke: INK, "stroke-width": 2.6 }));
+      circleBounds.push([c[0] - r, c[1] - r], [c[0] + r, c[1] + r]);
+    });
+
     // Fills first so every outline sits on top of every fill.
     (config.polygons || []).forEach(poly => {
       const pts = (poly.pts || []).map(k => P[k]).filter(Boolean);
@@ -273,6 +289,13 @@ window.MMT_GEOMETRY_ENGINE = (() => {
     (config.angles || []).forEach(spec => drawAngle(g, P, spec));
 
     const centre = config.centre ? P[config.centre] || config.centre : centroidOf(P);
+    // With several separate polygons (similar-figure pairs), each label
+    // pushes away from ITS OWN polygon's centre, not the whole figure's.
+    const polyCentres = config.centre ? [] : (config.polygons || []).filter(pg => config.localLabels).map(pg => {
+      const pts = (pg.pts || []).map(k => P[k]).filter(Boolean);
+      return { keys: pg.pts || [], c: pts.length ? mul(pts.reduce((a, b) => add(a, b), [0, 0]), 1 / pts.length) : centre };
+    });
+    const centreFor = (...keys) => { const hit = polyCentres.find(pc => keys.every(k => pc.keys.includes(k))); return hit ? hit.c : centre; };
 
     (config.sideLabels || []).forEach(spec => {
       const p = P[spec.from];
@@ -280,8 +303,9 @@ window.MMT_GEOMETRY_ENGINE = (() => {
       if (!p || !q) return;
       const mid = mul(add(p, q), 0.5);
       let n = unit(perp(sub(q, p)));
+      const cc = centreFor(spec.from, spec.to);
       // Push the label AWAY from the figure's centre, unless told otherwise.
-      if ((n[0] * (mid[0] - centre[0]) + n[1] * (mid[1] - centre[1]) < 0) !== Boolean(spec.flip)) n = mul(n, -1);
+      if ((n[0] * (mid[0] - cc[0]) + n[1] * (mid[1] - cc[1]) < 0) !== Boolean(spec.flip)) n = mul(n, -1);
       const pos = add(mid, mul(n, spec.offset || 22));
       txt(g, spec.text, pos[0], pos[1], { weight: 700, fill: ACCENT });
     });
@@ -300,7 +324,7 @@ window.MMT_GEOMETRY_ENGINE = (() => {
         let off;
         if (manual) off = manual;
         else {
-          const away = sub(p, centre);
+          const away = sub(p, centreFor(name));
           off = len(away) < 1 ? [0, -20] : mul(unit(away), 20);
         }
         txt(g, name, p[0] + off[0], p[1] + off[1], { weight: 700, italic: false });
@@ -315,6 +339,7 @@ window.MMT_GEOMETRY_ENGINE = (() => {
     const xs = [];
     const ys = [];
     Object.values(P).forEach(p => { xs.push(p[0]); ys.push(p[1]); });
+    circleBounds.forEach(p => { xs.push(p[0]); ys.push(p[1]); });
     (config.texts || []).forEach(t => { xs.push(t.x); ys.push(t.y); });
     const extendPad = Math.max(0, ...(config.lines || []).map(l => (l.extend ?? 30)));
     const pad = 44 + extendPad;

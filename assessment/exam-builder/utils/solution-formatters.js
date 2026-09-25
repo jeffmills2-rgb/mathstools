@@ -23,6 +23,7 @@ export function renderMathText(value) {
       /\[\[algfrac:([^:\]]+):([^:\]]+)\]\]/g,
       `<span class="math-frac"><span>$1</span><span>$2</span></span>`
     )
+    .replace(/\[\[sup:([^\]]+)\]\]/g, `<sup class="math-sup">$1</sup>`)
     .replace(/\r?\n/g, "<br>");
 }
 

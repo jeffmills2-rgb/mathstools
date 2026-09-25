@@ -13,6 +13,7 @@ import {
   createQuestion,
   SPACE_SIZES
 } from "../../../schemas/question.schema.js";
+import { EXTRA_ALG_A_TYPES, EXTRA_ALG_A_GENERATORS } from "./extra-types.js";
 
 const TOPIC = "Algebraic Techniques A";
 
@@ -30,6 +31,7 @@ const TYPE_LIST = [
   { id: "expand-binomial-area-model", label: "Expand binomial products using an area model" },
   { id: "mixed-expansion-simplification", label: "Mixed expansion and simplification" }
 ];
+TYPE_LIST.push(...EXTRA_ALG_A_TYPES);
 
 const VARIABLES = ["x", "a", "b", "m", "n", "p", "q", "r", "t", "w", "y", "z"];
 
@@ -576,6 +578,7 @@ const GENERATORS = {
   "expand-binomial-area-model": expandBinomialAreaModelQuestion,
   "mixed-expansion-simplification": mixedExpansionSimplificationQuestion
 };
+Object.assign(GENERATORS, EXTRA_ALG_A_GENERATORS);
 
 export function getAlgebraicTechniquesAQuestionTypes() {
   return TYPE_LIST.map(type => ({ ...type }));
@@ -585,7 +588,7 @@ export function generateAlgebraicTechniquesAQuestions({
   count = 6,
   allowedTypes = []
 } = {}) {
-  const safeTypes = allowedTypes.filter(type => GENERATORS[type]);
+  const safeTypes = (allowedTypes || []).filter(type => GENERATORS[type]);
   const plan = makeBalancedPlan(safeTypes, count);
 
   return plan.map(type => (GENERATORS[type] || GENERATORS["expand-single-brackets"])());

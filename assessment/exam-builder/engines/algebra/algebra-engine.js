@@ -273,9 +273,39 @@
     node.appendChild(svg);
   }
 
+  /*
+    A general area model (Stage 5 factorising and expanding): column and row
+    labels along the top and left, a product in each cell. Any label or cell
+    given as null draws an empty box. Widths are equal — the model shows
+    STRUCTURE, not size.
+      cols: ["2x", "3"], rows: ["x", "−1"], cells: [["2x²", "3x"], ["−2x", "−3"]]
+  */
+  function renderAreaGrid(node, config = {}) {
+    clear(node);
+    const cols = config.cols || ["x", "a"];
+    const rows = config.rows || ["x", "b"];
+    const cells = config.cells || [];
+    const cw = 140; const ch = 80;
+    const x0 = 90; const y0 = 60;
+    const W = x0 + cols.length * cw + 20;
+    const H = y0 + rows.length * ch + 20;
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "area model" });
+    const box = (cx, cy, w = 70, h = 36) => addRect(svg, cx - w / 2, cy - h / 2, w, h, { fill: "#fff", width: 2, rx: 4 });
+    rows.forEach((r, i) => cols.forEach((c, j) => {
+      addRect(svg, x0 + j * cw, y0 + i * ch, cw, ch, { fill: (i + j) % 2 ? "#eff6ff" : "#dbeafe", width: 3 });
+      const v = cells[i] ? cells[i][j] : null;
+      const cx = x0 + j * cw + cw / 2; const cy = y0 + i * ch + ch / 2;
+      if (v === null || v === undefined) box(cx, cy); else addText(svg, v, cx, cy, { size: 24 });
+    }));
+    cols.forEach((c, j) => { const cx = x0 + j * cw + cw / 2; if (c === null) box(cx, y0 - 28, 64, 34); else addText(svg, c, cx, y0 - 28, { size: 24 }); });
+    rows.forEach((r, i) => { const cy = y0 + i * ch + ch / 2; if (r === null) box(x0 - 42, cy, 64, 34); else addText(svg, r, x0 - 42, cy, { size: 24 }); });
+    node.appendChild(svg);
+  }
+
   function render(node, config = {}) {
     const type = config.diagramType;
     if (type === "binomial-area-model") return renderBinomialAreaModel(node, config);
+    if (type === "area-grid") return renderAreaGrid(node, config);
     if (type === "algebra-tiles") return renderAlgebraTiles(node, config);
     if (type === "expand-area-model") return renderExpandAreaModel(node, config);
     if (type === "perimeter-figure") return renderPerimeterFigure(node, config);

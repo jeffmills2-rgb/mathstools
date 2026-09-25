@@ -17,6 +17,7 @@ import {
 import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
+import { EXTRA_VOL_A_TYPES, EXTRA_VOL_A_GENERATORS } from "./extra-types.js";
 
 const TOPIC = "Volume A";
 
@@ -32,6 +33,7 @@ const TYPE_LIST = [
   { id: "composite-prisms-cylinders", label: "Composite prisms and cylinders" },
   { id: "practical-capacity", label: "Worded volume and capacity problems" }
 ];
+TYPE_LIST.push(...EXTRA_VOL_A_TYPES);
 
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -602,6 +604,7 @@ const GENERATORS = {
   "composite-prisms-cylinders": compositePrismsCylindersQuestion,
   "practical-capacity": practicalCapacityQuestion
 };
+Object.assign(GENERATORS, EXTRA_VOL_A_GENERATORS);
 
 export function getVolumeAQuestionTypes() {
   return TYPE_LIST;

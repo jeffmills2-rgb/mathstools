@@ -48,6 +48,38 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-25, session — being pushed): REVISION GENERATOR — STAGE 5
+> COMPLETE.** `assessment/exam-builder/`. All 41 Stage 5 outcomes now have a
+> bank in `question-banks/stage-5/`, registered in `STAGE5_TOPICS` (app.js) in
+> syllabus order — 528 Stage 5 question types. Read
+> `assessment/exam-builder/docs/stage-5-syllabus-reference.md` first (coverage
+> table with type counts, content per focus area, engine notes). 29 NEW banks:
+> Algebraic Techniques B/C, Indices A/B/C (C = surds + fractional indices),
+> Equations B/C, Linear Relationships A/B/C, Non-linear C, Variation and Rates
+> of Change A/B, Polynomials, Logarithms, Functions and Other Graphs, Numbers
+> of Any Magnitude, Trigonometry D, Area and Surface Area B, Volume B,
+> Geometrical Figures A/B/C, Circle Geometry, Data Analysis A/B/C, Probability
+> A/B. Gap-fill `extra-types.js` on Algebraic Techniques A, Trigonometry A,
+> Volume A, Introduction to Networks (Networks has only NET-P-01 — no separate
+> "networks and paths" outcome). ENGINES: new `engines/plane/plane-engine.js`
+> (`MMT_PLANE_ENGINE`) is the ONE number plane for all Stage 5 graphs — curves
+> line/quadratic/poly/exp/log/hyperbola/circle/sin/cos/tan, regions, points,
+> segments, `polylines`, and `diagramType: "options"` (A–D cards, `columns: 2`
+> for a 2×2 grid); geometry `circles` + `localLabels`; solids `measured`
+> (pyramid, cone, cylinder, sphere, hemisphere, composites); statistics
+> `box-plot` (+ guides when blank) and `scatter`; probability `tree` + `venn`
+> (2/3 sets); algebra `area-grid`; markup token `[[sup:…]]`. Shared helpers:
+> `question-banks/_shared/algebra-helpers.js` (mono/poly/joinTerms, exact
+> rationals `Q`, surds, `fromRoots`). HARNESS: `node tools/stage5.mjs` (every
+> bank × type × 60: leak lint + independent re-derivations — polynomial
+> remainders, cubic roots, probabilities in [0,1], circle angles, lines
+> through points). Gotchas: the renderer trims every viewBox to its ink, so a
+> blank "draw here" diagram needs faint guides (box plot) or axes to keep its
+> size; the network engine draws at a fixed 720×420 frame (not trimmed), so
+> spread its nodes across that frame. Open items: network-engine labels print
+> small; algebraic-techniques-a/equations-a/fin-a/trig-b/trig-c generators
+> crash if `allowedTypes` is `null` (the app always passes an array).
+>
 > **NEW (2026-09-25, session — being pushed): REVISION GENERATOR — STAGE 3
 > COMPLETE, WITH VISUALS.** `assessment/exam-builder/`. Four new Stage 3 banks
 > (`question-banks/stage-3/`): **3D Space and Volume** (20 types — name solids
@@ -3013,14 +3045,15 @@ assessment/exam-builder/
 assessment/exam-builder/           THE REVISION GENERATOR (homepage calls it that)
   app.js                           UI + the STAGES registry (stage3/4/5) + generation
   question-banks/<topic>/          Stage 4 · stage-5/<topic>/ · stage-3/<topic>/
-  engines/<name>/                  18 SVG diagram engines, one file each
+  engines/<name>/                  SVG diagram engines, one file each (plane = all Stage 5 graphs)
   renderers/                       question-renderer (one question) + exam-renderer (the paper)
   templates/<name>/                hsc-style (base) · class-test · revision-package ·
                                    worksheet · textbook-template
   utils/answer-space-rules.js      what answer space a question gets, and why
   docs/stage-3-syllabus-reference.md  Stage 3 scope, outcomes, calibration rules
+  docs/stage-5-syllabus-reference.md  Stage 5: 41 outcomes, coverage, engine notes
   tools/verify.mjs                 all banks: schema, diagrams, token leaks
-  tools/stages.mjs · stage3*.mjs · picker.mjs   targeted harnesses (see the header block)
+  tools/stages.mjs · stage3*.mjs · stage4*.mjs · stage5.mjs · picker.mjs   targeted harnesses (see the header block)
   layout-check.html                renders real questions in-browser and measures them
 game-platforms/mills-maths-adventure/   the BUILT Adventure (index.html + assets/)
 dashboards/                        OLD dashboards → now redirect stubs to /portal/*

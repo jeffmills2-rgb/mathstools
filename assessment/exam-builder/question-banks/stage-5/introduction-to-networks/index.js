@@ -18,6 +18,7 @@ import {
 import {
   attachQuestionTranslations
 } from "../../../utils/translation.js";
+import { EXTRA_NET_TYPES, EXTRA_NET_GENERATORS } from "./extra-types.js";
 
 const TOPIC = "Introduction to Networks";
 
@@ -32,6 +33,7 @@ const TYPE_LIST = [
   { id: "eulerian-trails-circuits", label: "Eulerian trails and circuits" },
   { id: "konigsberg-bridges", label: "Königsberg bridges problem" }
 ];
+TYPE_LIST.push(...EXTRA_NET_TYPES);
 
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -505,6 +507,7 @@ const GENERATORS = {
   "eulerian-trails-circuits": eulerianTrailsCircuitsQuestion,
   "konigsberg-bridges": konigsbergBridgesQuestion
 };
+Object.assign(GENERATORS, EXTRA_NET_GENERATORS);
 
 export function getIntroductionToNetworksQuestionTypes() {
   return TYPE_LIST;

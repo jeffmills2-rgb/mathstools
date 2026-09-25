@@ -13,6 +13,7 @@ import {
   createQuestion,
   SPACE_SIZES
 } from "../../../schemas/question.schema.js";
+import { EXTRA_TRIG_A_TYPES, EXTRA_TRIG_A_GENERATORS } from "./extra-types.js";
 
 const TOPIC = "Trigonometry A";
 
@@ -28,6 +29,7 @@ const TYPE_LIST = [
   { id: "practical-problems", label: "Practical right-triangle problems" },
   { id: "mixed-trigonometry", label: "Mixed trigonometry problems" }
 ];
+TYPE_LIST.push(...EXTRA_TRIG_A_TYPES);
 
 const ROTATIONS = [0, 90, 180, 270, 18, -18, 162, -162, 72, -72];
 const UNKNOWN_VARIABLES = ["x", "y", "z", "m", "n", "p", "q", "r", "s", "t", "u", "v", "w"];
@@ -942,6 +944,7 @@ const GENERATORS = {
   "practical-problems": practicalProblemsQuestion,
   "mixed-trigonometry": mixedTrigonometryQuestion
 };
+Object.assign(GENERATORS, EXTRA_TRIG_A_GENERATORS);
 
 export function getTrigonometryAQuestionTypes() {
   return TYPE_LIST.slice();

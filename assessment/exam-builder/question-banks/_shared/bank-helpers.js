@@ -106,8 +106,8 @@ export function makeQuestion(topic, spec) {
     ...rest
   });
   if (Array.isArray(mcDistractors)) {
-    q.mcDistractors = [...new Set(mcDistractors.map(String))]
-      .filter(d => d !== String(q.answer));
+    q.mcDistractors = [...new Set(mcDistractors.filter(d => d !== null && d !== undefined).map(String))]
+      .filter(d => d.trim() !== "" && d !== String(q.answer));
   }
   return q;
 }

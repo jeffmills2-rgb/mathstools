@@ -189,6 +189,151 @@ import {
   getIntroductionToNetworksQuestionTypes
 } from "./question-banks/stage-5/introduction-to-networks/index.js";
 
+import {
+  generateAlgebraicTechniquesBQuestions,
+  getAlgebraicTechniquesBQuestionTypes
+} from "./question-banks/stage-5/algebraic-techniques-b/index.js";
+
+import {
+  generateAlgebraicTechniquesCQuestions,
+  getAlgebraicTechniquesCQuestionTypes
+} from "./question-banks/stage-5/algebraic-techniques-c/index.js";
+
+import {
+  generateIndicesAQuestions,
+  getIndicesAQuestionTypes
+} from "./question-banks/stage-5/indices-a/index.js";
+
+import {
+  generateIndicesBQuestions,
+  getIndicesBQuestionTypes
+} from "./question-banks/stage-5/indices-b/index.js";
+
+import {
+  generateIndicesCQuestions,
+  getIndicesCQuestionTypes
+} from "./question-banks/stage-5/indices-c/index.js";
+
+import {
+  generateEquationsBQuestions,
+  getEquationsBQuestionTypes
+} from "./question-banks/stage-5/equations-b/index.js";
+
+import {
+  generateEquationsCQuestions,
+  getEquationsCQuestionTypes
+} from "./question-banks/stage-5/equations-c/index.js";
+
+import {
+  generateLinearRelationshipsAQuestions,
+  getLinearRelationshipsAQuestionTypes
+} from "./question-banks/stage-5/linear-relationships-a/index.js";
+
+import {
+  generateLinearRelationshipsBQuestions,
+  getLinearRelationshipsBQuestionTypes
+} from "./question-banks/stage-5/linear-relationships-b/index.js";
+
+import {
+  generateLinearRelationshipsCQuestions,
+  getLinearRelationshipsCQuestionTypes
+} from "./question-banks/stage-5/linear-relationships-c/index.js";
+
+import {
+  generateNonLinearRelationshipsCQuestions,
+  getNonLinearRelationshipsCQuestionTypes
+} from "./question-banks/stage-5/non-linear-relationships-c/index.js";
+
+import {
+  generateVariationAQuestions,
+  getVariationAQuestionTypes
+} from "./question-banks/stage-5/variation-a/index.js";
+
+import {
+  generateVariationBQuestions,
+  getVariationBQuestionTypes
+} from "./question-banks/stage-5/variation-b/index.js";
+
+import {
+  generatePolynomialsQuestions,
+  getPolynomialsQuestionTypes
+} from "./question-banks/stage-5/polynomials/index.js";
+
+import {
+  generateLogarithmsQuestions,
+  getLogarithmsQuestionTypes
+} from "./question-banks/stage-5/logarithms/index.js";
+
+import {
+  generateFunctionsGraphsQuestions,
+  getFunctionsGraphsQuestionTypes
+} from "./question-banks/stage-5/functions-graphs/index.js";
+
+import {
+  generateNumbersOfAnyMagnitudeQuestions,
+  getNumbersOfAnyMagnitudeQuestionTypes
+} from "./question-banks/stage-5/numbers-of-any-magnitude/index.js";
+
+import {
+  generateTrigonometryDQuestions,
+  getTrigonometryDQuestionTypes
+} from "./question-banks/stage-5/trigonometry-d/index.js";
+
+import {
+  generateAreaAndSurfaceAreaBQuestions,
+  getAreaAndSurfaceAreaBQuestionTypes
+} from "./question-banks/stage-5/area-and-surface-area-b/index.js";
+
+import {
+  generateVolumeBQuestions,
+  getVolumeBQuestionTypes
+} from "./question-banks/stage-5/volume-b/index.js";
+
+import {
+  generateGeometricalFiguresAQuestions,
+  getGeometricalFiguresAQuestionTypes
+} from "./question-banks/stage-5/geometrical-figures-a/index.js";
+
+import {
+  generateGeometricalFiguresBQuestions,
+  getGeometricalFiguresBQuestionTypes
+} from "./question-banks/stage-5/geometrical-figures-b/index.js";
+
+import {
+  generateGeometricalFiguresCQuestions,
+  getGeometricalFiguresCQuestionTypes
+} from "./question-banks/stage-5/geometrical-figures-c/index.js";
+
+import {
+  generateCircleGeometryQuestions,
+  getCircleGeometryQuestionTypes
+} from "./question-banks/stage-5/circle-geometry/index.js";
+
+import {
+  generateDataAnalysisAQuestions,
+  getDataAnalysisAQuestionTypes
+} from "./question-banks/stage-5/data-analysis-a/index.js";
+
+import {
+  generateDataAnalysisBQuestions,
+  getDataAnalysisBQuestionTypes
+} from "./question-banks/stage-5/data-analysis-b/index.js";
+
+import {
+  generateDataAnalysisCQuestions,
+  getDataAnalysisCQuestionTypes
+} from "./question-banks/stage-5/data-analysis-c/index.js";
+
+import {
+  generateProbabilityAQuestions,
+  getProbabilityAQuestionTypes
+} from "./question-banks/stage-5/probability-a/index.js";
+
+import {
+  generateProbabilityBQuestions,
+  getProbabilityBQuestionTypes
+} from "./question-banks/stage-5/probability-b/index.js";
+
 
 import {
   createExam,
@@ -302,6 +447,35 @@ const DEFAULT_TOPIC_COUNTS = {
   introductionToNetworks: 6,
   nonLinearRelationshipsA: 6,
   nonLinearRelationshipsB: 6,
+  algebraicTechniquesB: 6,
+  algebraicTechniquesC: 6,
+  indicesA: 6,
+  indicesB: 6,
+  indicesC: 6,
+  equationsB: 6,
+  equationsC: 6,
+  linearRelationshipsA: 6,
+  linearRelationshipsB: 6,
+  linearRelationshipsC: 6,
+  nonLinearRelationshipsC: 6,
+  variationA: 6,
+  variationB: 6,
+  polynomials: 6,
+  logarithms: 6,
+  functionsGraphs: 6,
+  numbersOfAnyMagnitude: 6,
+  trigonometryD: 6,
+  areaSurfaceAreaB: 6,
+  volumeB: 6,
+  geometricalFiguresA: 6,
+  geometricalFiguresB: 6,
+  geometricalFiguresC: 6,
+  circleGeometry: 6,
+  dataAnalysisA: 6,
+  dataAnalysisB: 6,
+  dataAnalysisC: 6,
+  probabilityA: 6,
+  probabilityB: 6,
   stage3ThreeDSpaceVolume: 6,
   stage3MassTime: 6,
   stage3Data: 6,
@@ -564,24 +738,6 @@ const STAGE3_TOPICS = {
 };
 
 const STAGE5_TOPICS = {
-  trigonometryA: {
-    label: "Trigonometry A",
-    generate: generateTrigonometryAQuestions,
-    getTypes: getTrigonometryAQuestionTypes
-  },
-
-  trigonometryB: {
-    label: "Trigonometry B",
-    generate: generateTrigonometryBQuestions,
-    getTypes: getTrigonometryBQuestionTypes
-  },
-
-  trigonometryC: {
-    label: "Trigonometry C",
-    generate: generateTrigonometryCQuestions,
-    getTypes: getTrigonometryCQuestionTypes
-  },
-
   financialMathematicsA: {
     label: "Financial Mathematics A",
     generate: generateFinancialMathematicsAQuestions,
@@ -600,28 +756,70 @@ const STAGE5_TOPICS = {
     getTypes: getAlgebraicTechniquesAQuestionTypes
   },
 
+  algebraicTechniquesB: {
+    label: "Algebraic Techniques B",
+    generate: generateAlgebraicTechniquesBQuestions,
+    getTypes: getAlgebraicTechniquesBQuestionTypes
+  },
+
+  algebraicTechniquesC: {
+    label: "Algebraic Techniques C",
+    generate: generateAlgebraicTechniquesCQuestions,
+    getTypes: getAlgebraicTechniquesCQuestionTypes
+  },
+
+  indicesA: {
+    label: "Indices A",
+    generate: generateIndicesAQuestions,
+    getTypes: getIndicesAQuestionTypes
+  },
+
+  indicesB: {
+    label: "Indices B",
+    generate: generateIndicesBQuestions,
+    getTypes: getIndicesBQuestionTypes
+  },
+
+  indicesC: {
+    label: "Indices C (Surds and Fractional Indices)",
+    generate: generateIndicesCQuestions,
+    getTypes: getIndicesCQuestionTypes
+  },
+
   equationsA: {
     label: "Equations A",
     generate: generateEquationsAQuestions,
     getTypes: getEquationsAQuestionTypes
   },
 
-  areaSurfaceAreaA: {
-    label: "Area and Surface Area A",
-    generate: generateAreaSurfaceAreaAQuestions,
-    getTypes: getAreaSurfaceAreaAQuestionTypes
+  equationsB: {
+    label: "Equations B",
+    generate: generateEquationsBQuestions,
+    getTypes: getEquationsBQuestionTypes
   },
 
-  volumeA: {
-    label: "Volume A",
-    generate: generateVolumeAQuestions,
-    getTypes: getVolumeAQuestionTypes
+  equationsC: {
+    label: "Equations C",
+    generate: generateEquationsCQuestions,
+    getTypes: getEquationsCQuestionTypes
   },
 
-  introductionToNetworks: {
-    label: "Introduction to Networks",
-    generate: generateIntroductionToNetworksQuestions,
-    getTypes: getIntroductionToNetworksQuestionTypes
+  linearRelationshipsA: {
+    label: "Linear Relationships A",
+    generate: generateLinearRelationshipsAQuestions,
+    getTypes: getLinearRelationshipsAQuestionTypes
+  },
+
+  linearRelationshipsB: {
+    label: "Linear Relationships B",
+    generate: generateLinearRelationshipsBQuestions,
+    getTypes: getLinearRelationshipsBQuestionTypes
+  },
+
+  linearRelationshipsC: {
+    label: "Linear Relationships C",
+    generate: generateLinearRelationshipsCQuestions,
+    getTypes: getLinearRelationshipsCQuestionTypes
   },
 
   nonLinearRelationshipsA: {
@@ -634,6 +832,156 @@ const STAGE5_TOPICS = {
     label: "Non-Linear Relationships B",
     generate: generateNonLinearRelationshipsBQuestions,
     getTypes: getNonLinearRelationshipsBQuestionTypes
+  },
+
+  nonLinearRelationshipsC: {
+    label: "Non-Linear Relationships C",
+    generate: generateNonLinearRelationshipsCQuestions,
+    getTypes: getNonLinearRelationshipsCQuestionTypes
+  },
+
+  variationA: {
+    label: "Variation and Rates of Change A",
+    generate: generateVariationAQuestions,
+    getTypes: getVariationAQuestionTypes
+  },
+
+  variationB: {
+    label: "Variation and Rates of Change B",
+    generate: generateVariationBQuestions,
+    getTypes: getVariationBQuestionTypes
+  },
+
+  polynomials: {
+    label: "Polynomials",
+    generate: generatePolynomialsQuestions,
+    getTypes: getPolynomialsQuestionTypes
+  },
+
+  logarithms: {
+    label: "Logarithms",
+    generate: generateLogarithmsQuestions,
+    getTypes: getLogarithmsQuestionTypes
+  },
+
+  functionsGraphs: {
+    label: "Functions and Other Graphs",
+    generate: generateFunctionsGraphsQuestions,
+    getTypes: getFunctionsGraphsQuestionTypes
+  },
+
+  numbersOfAnyMagnitude: {
+    label: "Numbers of Any Magnitude",
+    generate: generateNumbersOfAnyMagnitudeQuestions,
+    getTypes: getNumbersOfAnyMagnitudeQuestionTypes
+  },
+
+  trigonometryA: {
+    label: "Trigonometry A",
+    generate: generateTrigonometryAQuestions,
+    getTypes: getTrigonometryAQuestionTypes
+  },
+
+  trigonometryB: {
+    label: "Trigonometry B",
+    generate: generateTrigonometryBQuestions,
+    getTypes: getTrigonometryBQuestionTypes
+  },
+
+  trigonometryC: {
+    label: "Trigonometry C",
+    generate: generateTrigonometryCQuestions,
+    getTypes: getTrigonometryCQuestionTypes
+  },
+
+  trigonometryD: {
+    label: "Trigonometry D",
+    generate: generateTrigonometryDQuestions,
+    getTypes: getTrigonometryDQuestionTypes
+  },
+
+  areaSurfaceAreaA: {
+    label: "Area and Surface Area A",
+    generate: generateAreaSurfaceAreaAQuestions,
+    getTypes: getAreaSurfaceAreaAQuestionTypes
+  },
+
+  areaSurfaceAreaB: {
+    label: "Area and Surface Area B",
+    generate: generateAreaAndSurfaceAreaBQuestions,
+    getTypes: getAreaAndSurfaceAreaBQuestionTypes
+  },
+
+  volumeA: {
+    label: "Volume A",
+    generate: generateVolumeAQuestions,
+    getTypes: getVolumeAQuestionTypes
+  },
+
+  volumeB: {
+    label: "Volume B",
+    generate: generateVolumeBQuestions,
+    getTypes: getVolumeBQuestionTypes
+  },
+
+  geometricalFiguresA: {
+    label: "Properties of Geometrical Figures A",
+    generate: generateGeometricalFiguresAQuestions,
+    getTypes: getGeometricalFiguresAQuestionTypes
+  },
+
+  geometricalFiguresB: {
+    label: "Properties of Geometrical Figures B",
+    generate: generateGeometricalFiguresBQuestions,
+    getTypes: getGeometricalFiguresBQuestionTypes
+  },
+
+  geometricalFiguresC: {
+    label: "Properties of Geometrical Figures C",
+    generate: generateGeometricalFiguresCQuestions,
+    getTypes: getGeometricalFiguresCQuestionTypes
+  },
+
+  circleGeometry: {
+    label: "Circle Geometry",
+    generate: generateCircleGeometryQuestions,
+    getTypes: getCircleGeometryQuestionTypes
+  },
+
+  introductionToNetworks: {
+    label: "Introduction to Networks",
+    generate: generateIntroductionToNetworksQuestions,
+    getTypes: getIntroductionToNetworksQuestionTypes
+  },
+
+  dataAnalysisA: {
+    label: "Data Analysis A",
+    generate: generateDataAnalysisAQuestions,
+    getTypes: getDataAnalysisAQuestionTypes
+  },
+
+  dataAnalysisB: {
+    label: "Data Analysis B",
+    generate: generateDataAnalysisBQuestions,
+    getTypes: getDataAnalysisBQuestionTypes
+  },
+
+  dataAnalysisC: {
+    label: "Data Analysis C",
+    generate: generateDataAnalysisCQuestions,
+    getTypes: getDataAnalysisCQuestionTypes
+  },
+
+  probabilityA: {
+    label: "Probability A",
+    generate: generateProbabilityAQuestions,
+    getTypes: getProbabilityAQuestionTypes
+  },
+
+  probabilityB: {
+    label: "Probability B",
+    generate: generateProbabilityBQuestions,
+    getTypes: getProbabilityBQuestionTypes
   }
 };
 

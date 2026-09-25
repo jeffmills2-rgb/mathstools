@@ -314,7 +314,8 @@ function isRenderableChoice(text) {
 
   const stripped = value
     .replace(/\[\[frac:-?\d+:-?\d+\]\]/g, "")
-    .replace(/\[\[algfrac:[^:\]]+:[^:\]]+\]\]/g, "");
+    .replace(/\[\[algfrac:[^:\]]+:[^:\]]+\]\]/g, "")
+    .replace(/\[\[sup:[^\]]+\]\]/g, "");
 
   return !stripped.includes("[[");
 }

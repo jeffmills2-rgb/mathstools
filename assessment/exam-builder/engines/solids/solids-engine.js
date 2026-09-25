@@ -22,6 +22,11 @@
               `label`; or `nets: [{ label, faces }]` for several side by side.
     stack-views  a stack of unit cubes (`heights[row][col]`, row 0 at the
               front) beside lettered view options, with a FRONT arrow
+    measured  Stage 5 solids with labelled dimensions: `kind` pyramid (base
+              square|rectangle), cone, cylinder, sphere, hemisphere,
+              cone-cylinder, hemisphere-cylinder, cone-hemisphere,
+              pyramid-prism; `dims` (numbers, for proportions) and `labels`
+              (strings; null draws an empty box): h, r, l, slant, a, b, ch, ph, d
     views     `options` [{ label, cells: [[col,row],…] }] — small grids
               lettered A, B, C … for "which is the top/front/side view?"
 
@@ -117,6 +122,7 @@ window.MMT_SOLIDS_ENGINE = (() => {
     const list = [...edges.values()];
     list.filter(e => !e.faces.some(fi => vis[fi])).forEach(e => seg(g, S[e.a], S[e.b], true));
     list.filter(e => e.faces.some(fi => vis[fi])).forEach(e => seg(g, S[e.a], S[e.b], false));
+    return v3 => { const p = project(v3); return [ox + p[0] * k, oy + p[1] * k]; };
   }
 
   function prism(g, n, rect, tall) {
@@ -293,12 +299,140 @@ window.MMT_SOLIDS_ENGINE = (() => {
     return svg;
   }
 
+  /* ── measured solids (Stage 5 surface area and volume) ───────────────── */
+  const DIM = "#1d4ed8";
+  function dimLabel(g, v, x, y, o = {}) {
+    if (v === undefined) return;
+    if (v === null) {
+      g.appendChild(el("rect", { x: r1(x - 26), y: r1(y - 14), width: 52, height: 28, rx: 3, fill: "#fff", stroke: INK, "stroke-width": 1.6 }));
+      return;
+    }
+    const t = el("text", { x: r1(x), y: r1(y), "font-family": FONT, "font-size": o.size || TEXT, "text-anchor": o.anchor || "middle", "dominant-baseline": "middle", "font-weight": 700, fill: DIM, stroke: "#fff", "stroke-width": 4, "paint-order": "stroke" });
+    t.textContent = String(v);
+    g.appendChild(t);
+  }
+  function dash(g, a, b, colour = DIM) {
+    g.appendChild(el("line", { x1: r1(a[0]), y1: r1(a[1]), x2: r1(b[0]), y2: r1(b[1]), stroke: colour, "stroke-width": 1.8, "stroke-dasharray": "6 5" }));
+  }
+  function rightMark(g, at, u, v, s = 10) {
+    const p1 = [at[0] + u[0] * s, at[1] + u[1] * s];
+    const p2 = [p1[0] + v[0] * s, p1[1] + v[1] * s];
+    const p3 = [at[0] + v[0] * s, at[1] + v[1] * s];
+    g.appendChild(el("polyline", { points: P([p1, p2, p3]), fill: "none", stroke: DIM, "stroke-width": 1.5 }));
+  }
+  const clampR = (x, a, b) => Math.max(a, Math.min(b, x));
+
+  /* Cone / cylinder / sphere pieces drawn in 2D with an elliptical base.
+     All positions returned so composites can stack them. */
+  function coneAt(g, cx, baseY, R, Hh, lab) {
+    const ry = R * 0.3;
+    g.appendChild(el("path", { d: `M ${cx - R} ${baseY} L ${cx} ${baseY - Hh} L ${cx + R} ${baseY} A ${R} ${ry} 0 0 1 ${cx - R} ${baseY}`, fill: SIDE, stroke: INK, "stroke-width": 2.4 }));
+    g.appendChild(el("path", { d: `M ${cx - R} ${baseY} A ${R} ${ry} 0 0 1 ${cx + R} ${baseY}`, fill: "none", stroke: INK, "stroke-width": 1.4, "stroke-dasharray": "6 5" }));
+    if (lab.h !== undefined) { dash(g, [cx, baseY], [cx, baseY - Hh]); rightMark(g, [cx, baseY], [1, 0], [0, -1]); dimLabel(g, lab.h, cx - 18, baseY - Hh * 0.45, { anchor: "end" }); }
+    if (lab.r !== undefined) { dash(g, [cx, baseY], [cx + R, baseY]); dimLabel(g, lab.r, cx + R / 2, baseY + 18); }
+    if (lab.l !== undefined) dimLabel(g, lab.l, cx + R / 2 + 16, baseY - Hh / 2 - 6, { anchor: "start" });
+  }
+  function cylinderAt(g, cx, baseY, R, Hh, lab, topOpen = false) {
+    const ry = R * 0.3;
+    const topY = baseY - Hh;
+    g.appendChild(el("path", { d: `M ${cx - R} ${topY} L ${cx - R} ${baseY} A ${R} ${ry} 0 0 0 ${cx + R} ${baseY} L ${cx + R} ${topY}`, fill: SIDE, stroke: INK, "stroke-width": 2.4 }));
+    g.appendChild(el("path", { d: `M ${cx - R} ${baseY} A ${R} ${ry} 0 0 1 ${cx + R} ${baseY}`, fill: "none", stroke: INK, "stroke-width": 1.4, "stroke-dasharray": "6 5" }));
+    if (!topOpen) g.appendChild(el("ellipse", { cx, cy: topY, rx: R, ry, fill: TOPF, stroke: INK, "stroke-width": 2.4 }));
+    else g.appendChild(el("path", { d: `M ${cx - R} ${topY} A ${R} ${ry} 0 0 0 ${cx + R} ${topY}`, fill: "none", stroke: INK, "stroke-width": 2.4 }));
+    if (lab.ch !== undefined) dimLabel(g, lab.ch, cx + R + 12, baseY - Hh / 2, { anchor: "start" });
+    if (lab.cr !== undefined) { dash(g, [cx, baseY], [cx + R, baseY]); dimLabel(g, lab.cr, cx + R / 2, baseY + 18); }
+  }
+  function hemiAt(g, cx, baseY, R, lab, up = true) {
+    const ry = R * 0.3;
+    const sweep = up ? 1 : 0;
+    g.appendChild(el("path", { d: `M ${cx - R} ${baseY} A ${R} ${R} 0 0 ${sweep} ${cx + R} ${baseY} A ${R} ${ry} 0 0 ${sweep ? 1 : 0} ${cx - R} ${baseY}`, fill: SIDE, stroke: INK, "stroke-width": 2.4 }));
+    g.appendChild(el("ellipse", { cx, cy: baseY, rx: R, ry, fill: up ? TOPF : "none", stroke: INK, "stroke-width": up ? 2.4 : 1.4, "stroke-dasharray": up ? null : "6 5" }));
+    if (lab.r !== undefined) { dash(g, [cx, baseY], [cx + R, baseY]); dimLabel(g, lab.r, cx + R / 2, baseY - 14); }
+  }
+
+  function measured(target, c) {
+    const g = el("g");
+    const lab = c.labels || {};
+    const d = c.dims || {};
+    const kind = c.kind || "cone";
+    let W = 340; let H = 320;
+    if (kind === "cone") {
+      const R = 90; const Hh = clampR((d.h || 2) / (d.r || 1), 0.8, 2.4) * R;
+      coneAt(g, 170, 40 + Hh, R, Hh, lab);
+      H = 40 + Hh + 50;
+    } else if (kind === "cylinder") {
+      const R = 80; const Hh = clampR((d.h || 2) / (d.r || 1), 0.6, 2.6) * R * 0.8;
+      cylinderAt(g, 160, 40 + Hh, R, Hh, { ch: lab.h, cr: lab.r });
+      H = 40 + Hh + 50;
+    } else if (kind === "sphere") {
+      const R = 110;
+      g.appendChild(el("circle", { cx: 170, cy: 150, r: R, fill: FACE, stroke: INK, "stroke-width": 2.6 }));
+      g.appendChild(el("path", { d: `M 60 150 A ${R} 32 0 0 0 280 150`, fill: "none", stroke: INK, "stroke-width": 1.6 }));
+      g.appendChild(el("path", { d: `M 60 150 A ${R} 32 0 0 1 280 150`, fill: "none", stroke: INK, "stroke-width": 1.2, "stroke-dasharray": "6 5" }));
+      g.appendChild(el("circle", { cx: 170, cy: 150, r: 3.5, fill: INK }));
+      if (lab.r !== undefined) { dash(g, [170, 150], [280, 150]); dimLabel(g, lab.r, 225, 130); }
+      if (lab.d !== undefined) { dash(g, [60, 150], [280, 150]); dimLabel(g, lab.d, 170, 130); }
+      H = 280;
+    } else if (kind === "hemisphere") {
+      hemiAt(g, 170, 170, 120, lab);
+      H = 230;
+    } else if (kind === "pyramid") {
+      const rect = c.base === "rectangle";
+      const hh = clampR((d.h || 1.5) / ((d.a || 1) / 2), 0.9, 3.2);
+      const ring = [[-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1]].map(p => [p[0] * (rect ? 1.5 : 1), 0, p[2]]);
+      const verts = [...ring, [0, hh, 0]];
+      const faces = [[0, 1, 2, 3], [0, 1, 4], [1, 2, 4], [2, 3, 4], [3, 0, 4]];
+      const pj = drawPoly3D(g, verts, faces);
+      const apex = pj([0, hh, 0]);
+      const foot = pj([0, 0, 0]);
+      // front edge = the base edge nearest the viewer: z = −1
+      const fm = pj([0, 0, -1]);
+      if (lab.h !== undefined) { dash(g, apex, foot); g.appendChild(el("circle", { cx: r1(foot[0]), cy: r1(foot[1]), r: 2.5, fill: DIM })); dimLabel(g, lab.h, foot[0] - 14, (apex[1] + foot[1]) / 2 + 20, { anchor: "end" }); }
+      if (lab.slant !== undefined) { dash(g, apex, fm, "#b91c1c"); dimLabel(g, lab.slant, (apex[0] + fm[0]) / 2 + 14, (apex[1] + fm[1]) / 2, { anchor: "start" }); }
+      if (lab.a !== undefined) { const p = pj([0, 0, -1]); const q = pj([rect ? 1.5 : 1, 0, 0]); dimLabel(g, lab.a, p[0], p[1] + 22); if (lab.b !== undefined) dimLabel(g, lab.b, q[0] + 30, q[1] + 10); }
+      if (lab.edge !== undefined) { const p = pj([1.5 * (rect ? 1 : 0.667), hh / 2, -0.5]); dimLabel(g, lab.edge, p[0] + 16, p[1], { anchor: "start" }); }
+      H = 320;
+    } else if (kind === "cone-cylinder" || kind === "hemisphere-cylinder") {
+      const R = 70;
+      const ch = clampR((d.ch || 2) / (d.r || 1), 0.6, 2.2) * R;
+      const baseY = kind === "cone-cylinder" ? 40 + clampR((d.h || 1.5) / (d.r || 1), 0.8, 2) * R + ch : 40 + R + ch;
+      cylinderAt(g, 170, baseY, R, ch, { ch: lab.ch, cr: lab.r }, true);
+      if (kind === "cone-cylinder") coneAt(g, 170, baseY - ch, R, baseY - ch - 40, { h: lab.h, l: lab.l });
+      else hemiAt(g, 170, baseY - ch, R, {});
+      H = baseY + 46;
+    } else if (kind === "cone-hemisphere") {
+      // an ice-cream cone: hemisphere on top of an inverted cone
+      const R = 80;
+      const Hh = clampR((d.h || 2) / (d.r || 1), 1, 3) * R;
+      const topY = 30 + R;
+      hemiAt(g, 170, topY, R, { r: lab.r });
+      g.appendChild(el("path", { d: `M ${170 - R} ${topY} L 170 ${topY + Hh} L ${170 + R} ${topY}`, fill: SIDE, stroke: INK, "stroke-width": 2.4 }));
+      if (lab.h !== undefined) { dash(g, [170, topY], [170, topY + Hh]); dimLabel(g, lab.h, 158, topY + Hh * 0.55, { anchor: "end" }); }
+      H = topY + Hh + 30;
+    } else if (kind === "pyramid-prism") {
+      const hh = clampR((d.h || 1) / ((d.a || 1) / 2), 0.7, 2.2);
+      const ph = clampR((d.ph || 1) / ((d.a || 1) / 2), 0.6, 2.2);
+      const ring = [[-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1]];
+      const top = ring.map(p => [p[0], ph, p[2]]);
+      const verts = [...ring, ...top, [0, ph + hh, 0]];
+      const faces = [[0, 1, 2, 3], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 8], [5, 6, 8], [6, 7, 8], [7, 4, 8]];
+      const pj = drawPoly3D(g, verts, faces);
+      const apex = pj([0, ph + hh, 0]); const foot = pj([0, ph, 0]);
+      if (lab.h !== undefined) { dash(g, apex, foot); dimLabel(g, lab.h, foot[0] - 12, (apex[1] + foot[1]) / 2 + 10, { anchor: "end" }); }
+      if (lab.a !== undefined) { const p = pj([0, 0, -1]); dimLabel(g, lab.a, p[0], p[1] + 22); }
+      if (lab.ph !== undefined) { const p = pj([1, ph / 2, -1]); dimLabel(g, lab.ph, p[0] + 14, p[1], { anchor: "start" }); }
+      H = 320;
+    }
+    return finish(target, g, W, H, "solid with measurements", {});
+  }
+
   function render(target, config = {}) {
     const t = config.diagramType || "solid";
     if (t === "solid") return solid(target, config);
     if (t === "net") return net(target, config);
     if (t === "views") return views(target, config);
     if (t === "stack-views") return stackViews(target, config);
+    if (t === "measured") return measured(target, config);
     if (target) target.innerHTML = `<div class="diagram-placeholder">Unknown solid diagram</div>`;
     return null;
   }

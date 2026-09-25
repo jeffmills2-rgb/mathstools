@@ -25,6 +25,13 @@
     pictogram     rows of symbols with a key (half symbols allowed)
     grouped-column  side-by-side columns for two (or three) series per
                   category: `series: [{ name, values }]`, with a key
+    box-plot      one or more horizontal box plots on a shared scale:
+                  `plots: [{ label, min, q1, median, q3, max, outliers }]`,
+                  `axisMin`, `axisMax`, `step`; `blank: true` draws the scale
+                  only (for "draw the box plot")
+    scatter       `points: [[x, y], …]` on a scaled plane (xMin, xMax, xStep,
+                  yMin, yMax, yStep), optional `fit: { from: [x, y], to: [x, y] }`
+                  drawn as a line of best fit
 
   `blank: true` draws the frame, scale and labels with no data, for "construct
   the graph" questions. `yMin` above zero draws a truncated axis — used ONLY by
@@ -187,6 +194,86 @@ window.MMT_STATISTICS_ENGINE = (() => {
     });
     titleAndX(g, c, frame, W - keyW);
     return finish(target, g, W, H, "side-by-side column graph");
+  }
+
+  /* Horizontal box plots on one shared scale (parallel box plots). */
+  function boxPlot(target, c) {
+    const plots = c.plots || [];
+    const lo = c.axisMin ?? 0;
+    const hi = c.axisMax ?? 100;
+    const step = c.step || niceStep(hi - lo, 10);
+    const labelW = plots.some(p => p.label) ? Math.max(60, ...plots.map(p => String(p.label || "").length * 8.5)) + 14 : 20;
+    const x0 = labelW + 10;
+    const W = 460;
+    const X = v => x0 + ((v - lo) / (hi - lo)) * W;
+    const rowH = 64;
+    const top = c.title ? 44 : 14;
+    const g = el("g");
+    plots.forEach((p, i) => {
+      const yc = top + i * rowH + rowH / 2;
+      if (p.label) text(g, p.label, labelW, yc, { anchor: "end", weight: 700, size: TEXT - 1 });
+      if (c.blank) {
+        // faint guides up from each tick so there is room (and a scale) to draw on
+        for (let v = lo; v <= hi + 1e-9; v += step) line(g, X(v), yc - rowH / 2 + 4, X(v), yc + rowH / 2, { stroke: GRID, width: 1 });
+        return;
+      }
+      const bh = 30;
+      // whiskers to the most extreme non-outlier values
+      line(g, X(p.min), yc, X(p.q1), yc, { width: 2 });
+      line(g, X(p.q3), yc, X(p.max), yc, { width: 2 });
+      line(g, X(p.min), yc - 10, X(p.min), yc + 10, { width: 2 });
+      line(g, X(p.max), yc - 10, X(p.max), yc + 10, { width: 2 });
+      rect(g, X(p.q1), yc - bh / 2, X(p.q3) - X(p.q1), bh, { fill: PALETTE[i % PALETTE.length], stroke: INK, width: 2 });
+      line(g, X(p.median), yc - bh / 2, X(p.median), yc + bh / 2, { width: 3 });
+      (p.outliers || []).forEach(o => {
+        g.appendChild(el("circle", { cx: r1(X(o)), cy: yc, r: 4.5, fill: "#fff", stroke: INK, "stroke-width": 1.8 }));
+      });
+    });
+    const axisY = top + plots.length * rowH + 6;
+    line(g, X(lo), axisY, X(hi), axisY, { width: 2 });
+    for (let v = lo; v <= hi + 1e-9; v += step) {
+      line(g, X(v), axisY, X(v), axisY + 6);
+      text(g, fmtTick(v), X(v), axisY + 18, { size: TEXT - 2 });
+    }
+    let H = axisY + 30;
+    if (c.xLabel) { text(g, c.xLabel, X((lo + hi) / 2), axisY + 42, { weight: 700, size: TEXT - 1 }); H += 20; }
+    if (c.title) text(g, c.title, X((lo + hi) / 2), 20, { weight: 700 });
+    return finish(target, g, x0 + W + 30, H, "box plot");
+  }
+
+  /* Scatter plot on a scaled plane, optional line of best fit. */
+  function scatter(target, c) {
+    const pts = c.points || [];
+    const xMin = c.xMin ?? 0; const xMax = c.xMax ?? 10; const yMin = c.yMin ?? 0; const yMax = c.yMax ?? 10;
+    const xStep = c.xStep || niceStep(xMax - xMin, 8);
+    const yStep = c.yStep || niceStep(yMax - yMin, 7);
+    const frame = { x: 78, y: c.title ? 40 : 18, w: 420, h: 260 };
+    const X = v => frame.x + ((v - xMin) / (xMax - xMin)) * frame.w;
+    const Y = v => frame.y + frame.h - ((v - yMin) / (yMax - yMin)) * frame.h;
+    const g = el("g");
+    for (let v = xMin; v <= xMax + 1e-9; v += xStep) {
+      line(g, X(v), frame.y, X(v), frame.y + frame.h, { stroke: GRID, width: 1 });
+      line(g, X(v), frame.y + frame.h, X(v), frame.y + frame.h + 6);
+      text(g, fmtTick(v), X(v), frame.y + frame.h + 18, { size: TEXT - 2 });
+    }
+    for (let v = yMin; v <= yMax + 1e-9; v += yStep) {
+      line(g, frame.x, Y(v), frame.x + frame.w, Y(v), { stroke: GRID, width: 1 });
+      line(g, frame.x - 6, Y(v), frame.x, Y(v));
+      text(g, fmtTick(v), frame.x - 10, Y(v), { anchor: "end", size: TEXT - 2 });
+    }
+    line(g, frame.x, frame.y - 6, frame.x, frame.y + frame.h, { width: 2.2 });
+    line(g, frame.x, frame.y + frame.h, frame.x + frame.w + 6, frame.y + frame.h, { width: 2.2 });
+    if (c.fit) {
+      const [a, b] = [c.fit.from, c.fit.to];
+      line(g, X(a[0]), Y(a[1]), X(b[0]), Y(b[1]), { stroke: "#b91c1c", width: 2.4 });
+    }
+    if (!c.blank) pts.forEach(([x, y]) => {
+      g.appendChild(el("circle", { cx: r1(X(x)), cy: r1(Y(y)), r: 4.2, fill: ACCENT, stroke: "#fff", "stroke-width": 1 }));
+    });
+    if (c.title) text(g, c.title, frame.x + frame.w / 2, 20, { weight: 700 });
+    if (c.xLabel) text(g, c.xLabel, frame.x + frame.w / 2, frame.y + frame.h + 42, { weight: 700, size: TEXT - 1 });
+    if (c.yLabel) text(g, c.yLabel, frame.x - 54, frame.y + frame.h / 2, { rotate: -90, weight: 700, size: TEXT - 1 });
+    return finish(target, g, frame.x + frame.w + 30, frame.y + frame.h + (c.xLabel ? 58 : 34), "scatter plot");
   }
 
   function barChart(target, c) {
@@ -465,6 +552,8 @@ window.MMT_STATISTICS_ENGINE = (() => {
     if (t === "column") return columnChart(target, config);
     if (t === "bar") return barChart(target, config);
     if (t === "grouped-column") return groupedColumnChart(target, config);
+    if (t === "box-plot") return boxPlot(target, config);
+    if (t === "scatter") return scatter(target, config);
     if (t === "histogram") return histogram(target, config);
     if (t === "dot-plot") return dotPlot(target, config);
     if (t === "stem-leaf") return stemLeaf(target, config);
