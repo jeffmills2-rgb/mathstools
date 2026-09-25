@@ -246,7 +246,7 @@ function faceShapesQuestion() {
 
 /* ── nets ────────────────────────────────────────────────── */
 
-const sq = (x, y, w = 1, h = 1) => ({ pts: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
+export const sq = (x, y, w = 1, h = 1) => ({ pts: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
 
 /* A regular n-gon standing on the edge (x0,y0)→(x0+a,y0), on the side
    given by dir (−1 = above in screen coordinates, +1 = below). */
@@ -308,7 +308,7 @@ function rectPrismNet() {
 
 const CUBE_NET = [[1, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2]].map(([x, y]) => sq(x, y));
 
-const NETS = [
+export const NETS = [
   { solid: "Cube", faces: () => CUBE_NET },
   { solid: "Rectangular prism", faces: rectPrismNet },
   { solid: "Triangular prism", faces: () => prismNet(3) },

@@ -48,7 +48,7 @@ window.MMT_MEASURE_ENGINE = (() => {
     return e;
   }
   function text(g, v, x, y, o = {}) {
-    const t = el("text", { x: r1(x), y: r1(y), "font-family": o.font || FONT, "font-size": o.size || TEXT, "text-anchor": o.anchor || "middle", "dominant-baseline": "middle", "font-weight": o.weight || 400, fill: o.fill || INK });
+    const t = el("text", { x: r1(x), y: r1(y), "font-family": o.font || FONT, "font-size": o.size || TEXT, "text-anchor": o.anchor || "middle", "dominant-baseline": "middle", "font-weight": o.weight || 400, fill: o.fill || INK, ...(o.halo ? { stroke: "#fff", "stroke-width": 5, "paint-order": "stroke", "stroke-linejoin": "round" } : {}) });
     t.textContent = String(v);
     g.appendChild(t);
   }
@@ -80,12 +80,6 @@ window.MMT_MEASURE_ENGINE = (() => {
       const r0 = major ? R - 14 : R - 7;
       line(g, cx + r0 * Math.sin(a), cy - r0 * Math.cos(a), cx + (R - 2) * Math.sin(a), cy - (R - 2) * Math.cos(a), { width: major ? 3 : 1.4 });
     }
-    if (c.numbers !== false) {
-      for (let h = 1; h <= 12; h++) {
-        const a = (h / 12) * Math.PI * 2;
-        text(g, c.roman ? ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][h - 1] : h, cx + (R - 34) * Math.sin(a), cy - (R - 34) * Math.cos(a) + 1, { size: 20, weight: 700 });
-      }
-    }
     if (c.hands !== false) {
       const m = Number(c.minutes) || 0;
       const h = (Number(c.hours) || 0) % 12;
@@ -93,6 +87,12 @@ window.MMT_MEASURE_ENGINE = (() => {
       const ma = (m / 60) * Math.PI * 2;
       g.appendChild(el("line", { x1: cx, y1: cy, x2: r1(cx + 58 * Math.sin(ha)), y2: r1(cy - 58 * Math.cos(ha)), stroke: INK, "stroke-width": 8, "stroke-linecap": "round" }));
       g.appendChild(el("line", { x1: cx, y1: cy, x2: r1(cx + 90 * Math.sin(ma)), y2: r1(cy - 90 * Math.cos(ma)), stroke: ACCENT, "stroke-width": 5, "stroke-linecap": "round" }));
+    }
+    if (c.numbers !== false) {
+      for (let h = 1; h <= 12; h++) {
+        const a = (h / 12) * Math.PI * 2;
+        text(g, c.roman ? ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][h - 1] : h, cx + (R - 34) * Math.sin(a), cy - (R - 34) * Math.cos(a) + 1, { size: 20, weight: 700, halo: true });
+      }
     }
     g.appendChild(el("circle", { cx, cy, r: 7, fill: INK }));
     let H = 260;
@@ -128,6 +128,7 @@ window.MMT_MEASURE_ENGINE = (() => {
     g.appendChild(el("rect", { x: 20, y: 18, width: 280, height: 290, rx: 30, fill: "#f1f5f9", stroke: INK, "stroke-width": 3 }));
     g.appendChild(el("circle", { cx, cy, r: R + 10, fill: "#fff", stroke: INK, "stroke-width": 3 }));
     const steps = Math.round(max / minor);
+    const labels = [];
     for (let i = 0; i <= steps; i++) {
       const v = i * minor;
       const a = ang(v);
@@ -135,13 +136,14 @@ window.MMT_MEASURE_ENGINE = (() => {
       const half = !isMajor && Math.abs((v * 2) / major - Math.round((v * 2) / major)) < 1e-9 && major / minor >= 4;
       const r0 = isMajor ? R - 18 : half ? R - 12 : R - 7;
       line(g, cx + r0 * Math.cos(a), cy + r0 * Math.sin(a), cx + R * Math.cos(a), cy + R * Math.sin(a), { width: isMajor ? 2.8 : 1.3 });
-      if (isMajor) text(g, fmt(v), cx + (R - 36) * Math.cos(a), cy + (R - 36) * Math.sin(a), { size: 18, weight: 700 });
+      if (isMajor) labels.push([fmt(v), cx + (R - (c.labelSize ? 30 + c.labelSize / 2 : 36)) * Math.cos(a), cy + (R - (c.labelSize ? 30 + c.labelSize / 2 : 36)) * Math.sin(a)]);
     }
     text(g, unit, cx, cy + 58, { size: 20, weight: 700, fill: "#475569" });
     if (Number.isFinite(c.value)) {
       const a = ang(c.value);
       g.appendChild(el("line", { x1: cx, y1: cy, x2: r1(cx + (R - 4) * Math.cos(a)), y2: r1(cy + (R - 4) * Math.sin(a)), stroke: RED, "stroke-width": 4, "stroke-linecap": "round" }));
     }
+    labels.forEach(([v, x, y]) => text(g, v, x, y, { size: c.labelSize || 18, weight: 700, halo: true }));
     g.appendChild(el("circle", { cx, cy, r: 8, fill: RED }));
     return finish(target, g, 320, 320, "scale");
   }

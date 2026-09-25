@@ -48,6 +48,33 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-25, session — being pushed): REVISION GENERATOR — STAGE 2
+> ADDED (Years 3–4), VISUAL-FIRST.** `assessment/exam-builder/`. 20 banks in
+> `question-banks/stage-2/`, registered in `STAGE2_TOPICS` (app.js, keys
+> `stage2<Name>`, default count 8) and listed FIRST in the picker via
+> `{ id: "stage2", selectionKey: "selectedStage2Topics" }`. Teaching order:
+> Part A of every focus area, then Part B (Place Value, Addition and
+> Subtraction, Multiplication and Division, Fractions, Position/Length/Angles,
+> 2D Shapes and Area, 3D Objects (+ Capacity/Volume in B), Mass and Time, Data,
+> Chance) — 232 types covering all 20 Stage 2 outcomes. Read
+> `assessment/exam-builder/docs/stage-2-syllabus-reference.md` first. Design
+> rules: every type draws a model; prompts ≤ 45 words; MC distractors where
+> sensible. Helpers: `question-banks/_shared/stage2-helpers.js`
+> (`makeStage2(topic, outcome)` tags `stage2` + outcome). NEW engine
+> `engines/manipulatives/manipulatives-engine.js` (`MMT_MANIPULATIVES_ENGINE`,
+> base text units 13): base-ten blocks, cards, PV charts, number lines, grids,
+> groups, arrays, shapes, compass, angle cards (`tester`, `plain`), tally
+> charts (`rows`), fraction walls/shapes, balance, `column-sum` (written
+> method with trade boxes), `ruler` (cm/mm, object need not start at 0).
+> Backwards-compatible extensions: grid-engine `north`, `path`, `countable`,
+> `shapes[].labelAt`; measure-engine clock numbers haloed over hands, scale
+> `labelSize`; probability chance scale `numbers: false`, `wordList`,
+> `wordSize`. Stage 3 now EXPORTS `makeMove` (two-d-space-area/extra-types.js)
+> and `NETS`, `sq` (three-d-space-volume) for reuse. Harness
+> `node tools/stage2.mjs` re-derives answers from the diagram configs;
+> `tools/stages.mjs` now expects 4 stages. A/B split is paraphrased — check
+> against the official NESA Stage 2 content document when available.
+>
 > **NEW (2026-09-25, session — being pushed): REVISION GENERATOR — STAGE 5
 > COMPLETE.** `assessment/exam-builder/`. All 41 Stage 5 outcomes now have a
 > bank in `question-banks/stage-5/`, registered in `STAGE5_TOPICS` (app.js) in

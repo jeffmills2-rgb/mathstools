@@ -4,6 +4,106 @@ import {
 } from "./question-banks/angles/index.js";
 
 import {
+  generatePlaceValueAQuestions as generateStage2PlaceValueAQuestions,
+  getPlaceValueAQuestionTypes as getStage2PlaceValueAQuestionTypes
+} from "./question-banks/stage-2/place-value-a/index.js";
+
+import {
+  generateAdditiveRelationsAQuestions as generateStage2AdditiveRelationsAQuestions,
+  getAdditiveRelationsAQuestionTypes as getStage2AdditiveRelationsAQuestionTypes
+} from "./question-banks/stage-2/additive-relations-a/index.js";
+
+import {
+  generateMultiplicativeRelationsAQuestions as generateStage2MultiplicativeRelationsAQuestions,
+  getMultiplicativeRelationsAQuestionTypes as getStage2MultiplicativeRelationsAQuestionTypes
+} from "./question-banks/stage-2/multiplicative-relations-a/index.js";
+
+import {
+  generateFractionsAQuestions as generateStage2FractionsAQuestions,
+  getFractionsAQuestionTypes as getStage2FractionsAQuestionTypes
+} from "./question-banks/stage-2/fractions-a/index.js";
+
+import {
+  generateGeometricMeasureAQuestions as generateStage2GeometricMeasureAQuestions,
+  getGeometricMeasureAQuestionTypes as getStage2GeometricMeasureAQuestionTypes
+} from "./question-banks/stage-2/geometric-measure-a/index.js";
+
+import {
+  generateTwoDSpaceAQuestions as generateStage2TwoDSpaceAQuestions,
+  getTwoDSpaceAQuestionTypes as getStage2TwoDSpaceAQuestionTypes
+} from "./question-banks/stage-2/two-d-space-a/index.js";
+
+import {
+  generateThreeDSpaceAQuestions as generateStage2ThreeDSpaceAQuestions,
+  getThreeDSpaceAQuestionTypes as getStage2ThreeDSpaceAQuestionTypes
+} from "./question-banks/stage-2/three-d-space-a/index.js";
+
+import {
+  generateMassTimeAQuestions as generateStage2MassTimeAQuestions,
+  getMassTimeAQuestionTypes as getStage2MassTimeAQuestionTypes
+} from "./question-banks/stage-2/mass-time-a/index.js";
+
+import {
+  generateDataAQuestions as generateStage2DataAQuestions,
+  getDataAQuestionTypes as getStage2DataAQuestionTypes
+} from "./question-banks/stage-2/data-a/index.js";
+
+import {
+  generateChanceAQuestions as generateStage2ChanceAQuestions,
+  getChanceAQuestionTypes as getStage2ChanceAQuestionTypes
+} from "./question-banks/stage-2/chance-a/index.js";
+
+import {
+  generatePlaceValueBQuestions as generateStage2PlaceValueBQuestions,
+  getPlaceValueBQuestionTypes as getStage2PlaceValueBQuestionTypes
+} from "./question-banks/stage-2/place-value-b/index.js";
+
+import {
+  generateAdditiveRelationsBQuestions as generateStage2AdditiveRelationsBQuestions,
+  getAdditiveRelationsBQuestionTypes as getStage2AdditiveRelationsBQuestionTypes
+} from "./question-banks/stage-2/additive-relations-b/index.js";
+
+import {
+  generateMultiplicativeRelationsBQuestions as generateStage2MultiplicativeRelationsBQuestions,
+  getMultiplicativeRelationsBQuestionTypes as getStage2MultiplicativeRelationsBQuestionTypes
+} from "./question-banks/stage-2/multiplicative-relations-b/index.js";
+
+import {
+  generateFractionsBQuestions as generateStage2FractionsBQuestions,
+  getFractionsBQuestionTypes as getStage2FractionsBQuestionTypes
+} from "./question-banks/stage-2/fractions-b/index.js";
+
+import {
+  generateGeometricMeasureBQuestions as generateStage2GeometricMeasureBQuestions,
+  getGeometricMeasureBQuestionTypes as getStage2GeometricMeasureBQuestionTypes
+} from "./question-banks/stage-2/geometric-measure-b/index.js";
+
+import {
+  generateTwoDSpaceBQuestions as generateStage2TwoDSpaceBQuestions,
+  getTwoDSpaceBQuestionTypes as getStage2TwoDSpaceBQuestionTypes
+} from "./question-banks/stage-2/two-d-space-b/index.js";
+
+import {
+  generateThreeDSpaceBQuestions as generateStage2ThreeDSpaceBQuestions,
+  getThreeDSpaceBQuestionTypes as getStage2ThreeDSpaceBQuestionTypes
+} from "./question-banks/stage-2/three-d-space-b/index.js";
+
+import {
+  generateMassTimeBQuestions as generateStage2MassTimeBQuestions,
+  getMassTimeBQuestionTypes as getStage2MassTimeBQuestionTypes
+} from "./question-banks/stage-2/mass-time-b/index.js";
+
+import {
+  generateDataBQuestions as generateStage2DataBQuestions,
+  getDataBQuestionTypes as getStage2DataBQuestionTypes
+} from "./question-banks/stage-2/data-b/index.js";
+
+import {
+  generateChanceBQuestions as generateStage2ChanceBQuestions,
+  getChanceBQuestionTypes as getStage2ChanceBQuestionTypes
+} from "./question-banks/stage-2/chance-b/index.js";
+
+import {
   generateRepresentsNumbersQuestions,
   getRepresentsNumbersQuestionTypes
 } from "./question-banks/stage-3/represents-numbers/index.js";
@@ -479,7 +579,27 @@ const DEFAULT_TOPIC_COUNTS = {
   stage3ThreeDSpaceVolume: 6,
   stage3MassTime: 6,
   stage3Data: 6,
-  stage3Chance: 6
+  stage3Chance: 6,
+  stage2PlaceValueA: 8,
+  stage2AdditiveRelationsA: 8,
+  stage2MultiplicativeRelationsA: 8,
+  stage2FractionsA: 8,
+  stage2GeometricMeasureA: 8,
+  stage2TwoDSpaceA: 8,
+  stage2ThreeDSpaceA: 8,
+  stage2MassTimeA: 8,
+  stage2DataA: 8,
+  stage2ChanceA: 8,
+  stage2PlaceValueB: 8,
+  stage2AdditiveRelationsB: 8,
+  stage2MultiplicativeRelationsB: 8,
+  stage2FractionsB: 8,
+  stage2GeometricMeasureB: 8,
+  stage2TwoDSpaceB: 8,
+  stage2ThreeDSpaceB: 8,
+  stage2MassTimeB: 8,
+  stage2DataB: 8,
+  stage2ChanceB: 8
 };
 
 const DEFAULT_SCHOOL = "[School name]";
@@ -986,6 +1106,135 @@ const STAGE5_TOPICS = {
 };
 
 /*
+  STAGE 2 (Years 3–4). Twenty topics in teaching order: Part A of every focus
+  area first, then Part B. Visual-first, low reading load; every type draws a
+  model (base-ten blocks, number lines, arrays, fraction strips, rulers,
+  clocks, scales, grids, graphs). Scope and sequence:
+  docs/stage-2-syllabus-reference.md.
+*/
+const STAGE2_TOPICS = {
+  stage2PlaceValueA: {
+    label: "Place Value A",
+    generate: generateStage2PlaceValueAQuestions,
+    getTypes: getStage2PlaceValueAQuestionTypes
+  },
+
+  stage2AdditiveRelationsA: {
+    label: "Addition and Subtraction A",
+    generate: generateStage2AdditiveRelationsAQuestions,
+    getTypes: getStage2AdditiveRelationsAQuestionTypes
+  },
+
+  stage2MultiplicativeRelationsA: {
+    label: "Multiplication and Division A",
+    generate: generateStage2MultiplicativeRelationsAQuestions,
+    getTypes: getStage2MultiplicativeRelationsAQuestionTypes
+  },
+
+  stage2FractionsA: {
+    label: "Fractions A",
+    generate: generateStage2FractionsAQuestions,
+    getTypes: getStage2FractionsAQuestionTypes
+  },
+
+  stage2GeometricMeasureA: {
+    label: "Position, Length and Angles A",
+    generate: generateStage2GeometricMeasureAQuestions,
+    getTypes: getStage2GeometricMeasureAQuestionTypes
+  },
+
+  stage2TwoDSpaceA: {
+    label: "2D Shapes and Area A",
+    generate: generateStage2TwoDSpaceAQuestions,
+    getTypes: getStage2TwoDSpaceAQuestionTypes
+  },
+
+  stage2ThreeDSpaceA: {
+    label: "3D Objects A",
+    generate: generateStage2ThreeDSpaceAQuestions,
+    getTypes: getStage2ThreeDSpaceAQuestionTypes
+  },
+
+  stage2MassTimeA: {
+    label: "Mass and Time A",
+    generate: generateStage2MassTimeAQuestions,
+    getTypes: getStage2MassTimeAQuestionTypes
+  },
+
+  stage2DataA: {
+    label: "Data A",
+    generate: generateStage2DataAQuestions,
+    getTypes: getStage2DataAQuestionTypes
+  },
+
+  stage2ChanceA: {
+    label: "Chance A",
+    generate: generateStage2ChanceAQuestions,
+    getTypes: getStage2ChanceAQuestionTypes
+  },
+
+  stage2PlaceValueB: {
+    label: "Place Value B",
+    generate: generateStage2PlaceValueBQuestions,
+    getTypes: getStage2PlaceValueBQuestionTypes
+  },
+
+  stage2AdditiveRelationsB: {
+    label: "Addition and Subtraction B",
+    generate: generateStage2AdditiveRelationsBQuestions,
+    getTypes: getStage2AdditiveRelationsBQuestionTypes
+  },
+
+  stage2MultiplicativeRelationsB: {
+    label: "Multiplication and Division B",
+    generate: generateStage2MultiplicativeRelationsBQuestions,
+    getTypes: getStage2MultiplicativeRelationsBQuestionTypes
+  },
+
+  stage2FractionsB: {
+    label: "Fractions B",
+    generate: generateStage2FractionsBQuestions,
+    getTypes: getStage2FractionsBQuestionTypes
+  },
+
+  stage2GeometricMeasureB: {
+    label: "Position, Length and Angles B",
+    generate: generateStage2GeometricMeasureBQuestions,
+    getTypes: getStage2GeometricMeasureBQuestionTypes
+  },
+
+  stage2TwoDSpaceB: {
+    label: "2D Shapes and Area B",
+    generate: generateStage2TwoDSpaceBQuestions,
+    getTypes: getStage2TwoDSpaceBQuestionTypes
+  },
+
+  stage2ThreeDSpaceB: {
+    label: "3D Objects, Capacity and Volume B",
+    generate: generateStage2ThreeDSpaceBQuestions,
+    getTypes: getStage2ThreeDSpaceBQuestionTypes
+  },
+
+  stage2MassTimeB: {
+    label: "Mass and Time B",
+    generate: generateStage2MassTimeBQuestions,
+    getTypes: getStage2MassTimeBQuestionTypes
+  },
+
+  stage2DataB: {
+    label: "Data B",
+    generate: generateStage2DataBQuestions,
+    getTypes: getStage2DataBQuestionTypes
+  },
+
+  stage2ChanceB: {
+    label: "Chance B",
+    generate: generateStage2ChanceBQuestions,
+    getTypes: getStage2ChanceBQuestionTypes
+  }
+};
+
+/*
   ══════════════════════════════════════════════════════════════════════
   STAGE REGISTRY
   ----------------------------------------------------------------------
@@ -1000,6 +1249,7 @@ const STAGE5_TOPICS = {
   ══════════════════════════════════════════════════════════════════════
 */
 const STAGES = [
+  { id: "stage2", label: "Stage 2", selectionKey: "selectedStage2Topics", topics: STAGE2_TOPICS },
   { id: "stage3", label: "Stage 3", selectionKey: "selectedStage3Topics", topics: STAGE3_TOPICS },
   { id: "stage4", label: "Stage 4", selectionKey: "selectedTopics", topics: TOPICS },
   { id: "stage5", label: "Stage 5", selectionKey: "selectedStage5Topics", topics: STAGE5_TOPICS }
@@ -1427,7 +1677,7 @@ function renderControlDashboard() {
     <section class="builder-dashboard workflow-dashboard" aria-label="Topic question generator controls">
       <div class="builder-dashboard-header workflow-dashboard-header">
         <div>
-          <div class="workflow-eyebrow">NSW Stage 4 &amp; 5 Mathematics</div>
+          <div class="workflow-eyebrow">NSW Stages 2–5 Mathematics</div>
           <h1>Maths Worksheet &amp; Assessment Builder</h1>
           <p>Pick a style, choose your syllabus topics, and generate worksheets, tests, revision or exams — with answers.</p>
         </div>

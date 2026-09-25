@@ -223,7 +223,7 @@ function placedShape(cols, rows, maxX, maxY) {
   return T.translate(s, ox, oy);
 }
 
-function makeMove(kind, cols, rows) {
+export function makeMove(kind, cols, rows) {
   for (let tries = 0; tries < 300; tries++) {
     const shape = placedShape(cols, rows, 3, rows - 4);
     let image; let mirror = null; let dot = null; let words;

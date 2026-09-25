@@ -15,7 +15,9 @@
               still works printed in black and white
     bag       counters in a bag, each marked with a letter (R, B, G…) and
               a key, for the same black-and-white reason
-    scale     a 0 to 1 probability scale with the chance words beneath and
+    scale     (Stage 2: `numbers: false` hides 0, ½, 1 and `wordList`
+              [[word, position], …] replaces the chance words)
+              a 0 to 1 probability scale with the chance words beneath and
               lettered arrows (A, B, C…) at given positions
     cards     a row of cards or letter tiles
     tree      a probability tree drawn left to right: `branches` is a nested
@@ -159,10 +161,11 @@ window.MMT_PROBABILITY_ENGINE = (() => {
     ticks.forEach(t => {
       const x = x0 + t * W;
       g.appendChild(el("line", { x1: r1(x), y1: y - 8, x2: r1(x), y2: y + 8, stroke: INK, "stroke-width": 2 }));
-      text(g, t === 0 ? "0" : t === 1 ? "1" : t === 0.5 ? "½" : String(t), x, y + 24, { size: TEXT - 2 });
+      if (c.numbers !== false) text(g, t === 0 ? "0" : t === 1 ? "1" : t === 0.5 ? "½" : String(t), x, y + 24, { size: TEXT - 2 });
     });
     if (c.words !== false) {
-      [["Impossible", 0], ["Even chance", 0.5], ["Certain", 1]].forEach(([wd, t]) => text(g, wd, x0 + t * W, y + 48, { size: TEXT - 4, fill: "#374151" }));
+      const wy = c.numbers === false ? y + 28 : y + 48;
+      (c.wordList || [["Impossible", 0], ["Even chance", 0.5], ["Certain", 1]]).forEach(([wd, t]) => text(g, wd, x0 + t * W, wy, { size: c.wordSize || TEXT - 4, fill: "#374151" }));
     }
     (c.markers || []).forEach(m => {
       const x = x0 + m.value * W;
@@ -170,7 +173,7 @@ window.MMT_PROBABILITY_ENGINE = (() => {
       g.appendChild(el("polygon", { points: `${r1(x)},${y - 6} ${r1(x - 6)},${y - 16} ${r1(x + 6)},${y - 16}`, fill: "#1d4ed8" }));
       text(g, m.label, x, y - 56, { weight: 700, fill: "#1d4ed8" });
     });
-    return finish(target, g, W + 80, y + 66, "probability scale");
+    return finish(target, g, W + 80, y + (c.numbers === false ? 46 : 66), "probability scale");
   }
 
   function cards(target, c) {
