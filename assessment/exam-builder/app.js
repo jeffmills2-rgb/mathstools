@@ -1966,6 +1966,7 @@ function renderControlDashboard() {
 
     ${renderActiveModal()}
   `;
+  afterControlsRender();
 }
 
 function renderWorkflowStep({
@@ -2212,17 +2213,276 @@ function renderWizardDetailsModal() {
   `;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   TOPIC PICKER (wizard step 3, and the per-stage picker)
+   ----------------------------------------------------------------------
+   One stage at a time (tabs), topics grouped by strand, and the A/B/C parts
+   of a focus area shown as chips on ONE card instead of separate cards.
+   Tapping a chip adds the topic with every question type and the default
+   count; ⚙ opens the existing configure dialog to fine-tune. A selection
+   panel on the right lists everything chosen across all stages, with a
+   count stepper, customise and remove. Search filters every stage at once
+   (topic names AND question-type names), without re-rendering.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const STAGE_YEARS = { stage1: "Years 1–2", stage2: "Years 3–4", stage3: "Years 5–6", stage4: "Years 7–8", stage5: "Years 9–10" };
+const STAGE_SHORT = { stage1: "S1", stage2: "S2", stage3: "S3", stage4: "S4", stage5: "S5" };
+const PICKER_STRANDS = [
+  { id: "number", label: "Number and algebra" },
+  { id: "measure", label: "Measurement and space" },
+  { id: "stats", label: "Statistics and probability" }
+];
+const FAMILY_NAME_OVERRIDES = { stage1WholeNumbers: "Whole numbers" };
+
+let pickerStageId = null;
+let pickerSearch = "";
+let pickerScrollTop = 0;
+
+function strandOf(label) {
+  const s = String(label).toLowerCase();
+  if (/data|chance|probability/.test(s)) return "stats";
+  if (/number|place value|adding|addition|subtraction|multiplic|equal groups|fraction|halves|integer|ratio|ind(ex|ices)|equation|algebra|linear|polynomial|logarithm|function|variation|financial|additive|magnitude/.test(s)) return "number";
+  return "measure";
+}
+
+/* Group a stage's topics into focus-area families: "Place Value A" and
+   "Place Value B" become one family with parts A and B. */
+function stageFamilies(stage) {
+  const families = new Map();
+  Object.entries(stage.topics).forEach(([topicId, topic]) => {
+    const m = String(topic.label).match(/^(.*?)\s+([A-D])(?:\s*\((.*)\))?$/);
+    const key = m ? topicId.replace(/[A-D]$/, "") : topicId;
+    if (!families.has(key)) families.set(key, { key, names: [], parts: [] });
+    const fam = families.get(key);
+    fam.names.push(m ? m[1] : topic.label);
+    fam.parts.push({ topicId, topic, part: m ? m[2] : null, note: m ? m[3] || "" : "" });
+  });
+  return [...families.values()].map(fam => {
+    fam.parts.sort((a, b) => String(a.part).localeCompare(String(b.part)));
+    fam.name = FAMILY_NAME_OVERRIDES[fam.key] || fam.names.slice().sort((a, b) => b.length - a.length)[0];
+    fam.strand = strandOf(fam.name);
+    return fam;
+  });
+}
+
+function pickerStages() {
+  return STAGES.filter(stage => Object.keys(stage.topics).length);
+}
+
+function pickerSelectedCount(stageId) {
+  return Object.keys(getWorkingTopicsForStage(stageId)).length;
+}
+
+function resolvePickerStage(onlyStageId) {
+  if (onlyStageId) return onlyStageId;
+  const ids = pickerStages().map(s => s.id);
+  if (pickerStageId && ids.includes(pickerStageId)) return pickerStageId;
+  let remembered = null;
+  try { remembered = window.localStorage?.getItem("mmt-picker-stage"); } catch { remembered = null; }
+  const withSelection = ids.find(id => pickerSelectedCount(id) > 0);
+  pickerStageId = withSelection || (ids.includes(remembered) ? remembered : null) || (ids.includes(DEFAULT_STAGE_ID) ? DEFAULT_STAGE_ID : ids[0]);
+  return pickerStageId;
+}
+
+function renderPickerPart(stageId, part, single) {
+  const config = getWorkingTopicsForStage(stageId)[part.topicId];
+  const selected = Boolean(config);
+  const typeTotal = getTopicTypes(part.topicId, stageId).length;
+  const label = single ? (selected ? "Added" : "Add") : part.part;
+  const title = `${part.topic.label} — ${typeTotal} question types${selected ? ` · ${config.count} question${Number(config.count) === 1 ? "" : "s"} selected` : ""}`;
+  return `
+    <span class="picker-part${selected ? " is-selected" : ""}" data-topic-id="${escapeHtml(part.topicId)}" data-topic-stage="${escapeHtml(stageId)}">
+      <button type="button" class="picker-part-toggle" data-control-action="toggle-topic" data-topic-id="${escapeHtml(part.topicId)}" data-topic-stage="${escapeHtml(stageId)}" aria-pressed="${selected}" title="${escapeHtml(title)}">
+        <span class="picker-part-check" aria-hidden="true">${selected ? "✓" : "+"}</span>
+        <span class="picker-part-label">${escapeHtml(label)}</span>
+        ${selected ? `<span class="picker-part-count">${escapeHtml(config.count)}</span>` : ""}
+      </button>
+${selected ? `
+      <button type="button" class="picker-part-config" data-control-action="open-topic-config" data-topic-id="${escapeHtml(part.topicId)}" data-topic-stage="${escapeHtml(stageId)}" aria-label="Choose question types for ${escapeHtml(part.topic.label)}" title="Choose question types">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h8M15 6h1M4 14h1M8 14h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="13.5" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="6.5" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>` : ""}
+    </span>`;
+}
+
+function renderPickerFamily(stage, fam) {
+  const single = fam.parts.length === 1 && !fam.parts[0].part;
+  const anySelected = fam.parts.some(p => getWorkingTopicsForStage(stage.id)[p.topicId]);
+  const typeCounts = fam.parts.map(p => getTopicTypes(p.topicId, stage.id));
+  const typeTotal = typeCounts.reduce((s, t) => s + t.length, 0);
+  const search = [fam.name, stage.label, STAGE_YEARS[stage.id] || "", ...fam.parts.map(p => `${p.topic.label} ${p.note}`), ...typeCounts.flat().map(t => t.label || t.id)].join(" ").toLowerCase();
+  const note = fam.parts.map(p => p.note).filter(Boolean).join(" · ");
+  return `
+    <article class="picker-topic${anySelected ? " has-selection" : ""}${single ? " is-single" : ""}" data-search="${escapeHtml(search)}">
+      <div class="picker-topic-head">
+        <strong>${escapeHtml(fam.name)}</strong>
+        <span>${typeTotal} question type${typeTotal === 1 ? "" : "s"}${fam.parts.length > 1 ? ` · ${fam.parts.length} parts` : ""}${note ? ` · ${escapeHtml(note)}` : ""}</span>
+      </div>
+      <div class="picker-parts">
+        ${single ? "" : `<span class="picker-parts-label">Part</span>`}
+        ${fam.parts.map(p => renderPickerPart(stage.id, p, single)).join("")}
+      </div>
+    </article>`;
+}
+
+function renderPickerStagePanel(stage, active) {
+  const families = stageFamilies(stage);
+  const hasParts = families.some(f => f.parts.length > 1);
+  return `
+    <section class="picker-stage-panel" data-stage-panel="${escapeHtml(stage.id)}" ${active ? "" : "hidden"}>
+      <h3 class="picker-panel-title">${escapeHtml(stage.label)} <span>${escapeHtml(STAGE_YEARS[stage.id] || "")}</span></h3>
+      ${hasParts ? `<p class="picker-panel-hint">Parts build in order: ${stage.id === "stage5" ? "A → B → C (C extends the path)" : "Part A first, then Part B"}. Tap a part to add it.</p>` : `<p class="picker-panel-hint">Tap a topic to add it.</p>`}
+      ${PICKER_STRANDS.map(strand => {
+        const list = families.filter(f => f.strand === strand.id);
+        if (!list.length) return "";
+        return `
+          <div class="picker-strand picker-strand-${strand.id}">
+            <h4><span class="picker-strand-dot" aria-hidden="true"></span>${escapeHtml(strand.label)}<span class="picker-strand-count">${list.length}</span></h4>
+            <div class="picker-topic-grid">${list.map(f => renderPickerFamily(stage, f)).join("")}</div>
+          </div>`;
+      }).join("")}
+    </section>`;
+}
+
+function renderPickerCart(stageIds) {
+  const items = stageIds.flatMap(stageId => {
+    const stage = getStage(stageId);
+    return Object.entries(getWorkingTopicsForStage(stageId))
+      .filter(([topicId]) => stage.topics[topicId])
+      .map(([topicId, config]) => ({ stage, topicId, topic: stage.topics[topicId], config }));
+  });
+  const questions = items.reduce((s, i) => s + Number(i.config.count || 0), 0);
+  const mc = Number(draftConfig.multipleChoiceCount || 0);
+  return `
+    <aside class="picker-cart" aria-label="Your selection">
+      <div class="picker-cart-head">
+        <h3>Your selection</h3>
+        ${items.length ? `<button type="button" class="picker-link" data-control-action="picker-clear-all">Clear all</button>` : ""}
+      </div>
+      <div class="wizard-topic-summary picker-totals">
+        <span><strong>${items.length}</strong> topic${items.length === 1 ? "" : "s"}</span>
+        <span><strong>${questions}</strong> question${questions === 1 ? "" : "s"}</span>
+        <span><strong>${mc}</strong> multiple choice</span>
+      </div>
+      ${items.length ? `
+        <ul class="picker-cart-list">
+          ${items.map(({ stage, topicId, topic, config }) => {
+            const types = Array.isArray(config.allowedTypes) ? config.allowedTypes.length : 0;
+            const all = getTopicTypes(topicId, stage.id).length;
+            return `
+              <li class="picker-cart-item">
+                <span class="picker-stage-pill picker-stage-pill-${escapeHtml(stage.id)}" title="${escapeHtml(stage.label)}">${escapeHtml(STAGE_SHORT[stage.id] || stage.label)}</span>
+                <strong class="picker-cart-name">${escapeHtml(topic.label)}</strong>
+                <button type="button" class="picker-remove" data-control-action="clear-topic-selection" data-topic-id="${escapeHtml(topicId)}" data-topic-stage="${escapeHtml(stage.id)}" aria-label="Remove ${escapeHtml(topic.label)}">×</button>
+                <button type="button" class="picker-link picker-cart-types" data-control-action="open-topic-config" data-topic-id="${escapeHtml(topicId)}" data-topic-stage="${escapeHtml(stage.id)}">${types === all ? "All" : `${types} of ${all}`} question types ›</button>
+                <span class="picker-stepper" aria-label="Number of questions">
+                  <button type="button" data-control-action="topic-count-step" data-step="-1" data-topic-id="${escapeHtml(topicId)}" data-topic-stage="${escapeHtml(stage.id)}" aria-label="Fewer questions" ${Number(config.count) <= 1 ? "disabled" : ""}>−</button>
+                  <output>${escapeHtml(config.count)}</output>
+                  <button type="button" data-control-action="topic-count-step" data-step="1" data-topic-id="${escapeHtml(topicId)}" data-topic-stage="${escapeHtml(stage.id)}" aria-label="More questions" ${Number(config.count) >= 80 ? "disabled" : ""}>+</button>
+                </span>
+              </li>`;
+          }).join("")}
+        </ul>` : `
+        <div class="picker-cart-empty">
+          <div class="picker-cart-empty-icon" aria-hidden="true">＋</div>
+          <p><strong>Nothing chosen yet.</strong></p>
+          <p>Tap a topic (or one of its parts) to add it with every question type. Then choose question types and how many questions here.</p>
+        </div>`}
+    </aside>`;
+}
+
+/* The whole picker body: tabs + search, stage panels, selection panel.
+   `onlyStageId` restricts it to one stage (the per-stage picker). */
+function renderTopicPicker(onlyStageId = null) {
+  const stages = onlyStageId ? [getStage(onlyStageId)] : pickerStages();
+  const activeId = resolvePickerStage(onlyStageId);
+  return `
+    <div class="topic-picker${pickerSearch.trim() ? " is-searching" : ""}">
+      <div class="picker-toolbar">
+        ${stages.length > 1 ? `
+          <div class="picker-tabs" role="tablist" aria-label="Stages">
+            ${stages.map(stage => {
+              const n = pickerSelectedCount(stage.id);
+              return `
+                <button type="button" role="tab" class="picker-tab${stage.id === activeId ? " is-active" : ""}" data-control-action="picker-stage" data-stage="${escapeHtml(stage.id)}" aria-selected="${stage.id === activeId}">
+                  <span class="picker-tab-name">${escapeHtml(stage.label)}${n ? `<span class="picker-tab-badge" aria-label="${n} selected">${n}</span>` : ""}</span>
+                  <span class="picker-tab-years">${escapeHtml(STAGE_YEARS[stage.id] || "")}</span>
+                </button>`;
+            }).join("")}
+          </div>` : ""}
+        <label class="picker-search">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" data-picker-search placeholder="${stages.length > 1 ? "Search every stage — e.g. fractions, clock, area" : "Search topics and question types"}" value="${escapeHtml(pickerSearch)}" aria-label="Search topics">
+        </label>
+      </div>
+      <div class="picker-body">
+        <div class="picker-main">
+          ${stages.map(stage => renderPickerStagePanel(stage, stage.id === activeId)).join("")}
+          <p class="picker-no-results" hidden>No topics match your search.</p>
+        </div>
+        ${renderPickerCart(stages.map(s => s.id))}
+      </div>
+    </div>`;
+}
+
+/* Search runs on the DOM so typing never re-renders (or loses focus). */
+function applyPickerSearch() {
+  const root = controlsRoot.querySelector(".topic-picker");
+  if (!root) return;
+  const q = pickerSearch.trim().toLowerCase();
+  const terms = q.split(/\s+/).filter(Boolean);
+  root.classList.toggle("is-searching", terms.length > 0);
+  let matches = 0;
+  const panels = [...root.querySelectorAll("[data-stage-panel]")];
+  const activeId = panels.length === 1 ? panels[0].dataset.stagePanel : resolvePickerStage();
+  panels.forEach(panel => {
+    let inPanel = 0;
+    panel.querySelectorAll(".picker-topic").forEach(card => {
+      const text = ` ${card.dataset.search}`;
+      const show = terms.every(t => text.includes(` ${t}`) || text.includes(`(${t}`) || text.includes(`-${t}`));
+      card.hidden = !show;
+      if (show) inPanel += 1;
+    });
+    panel.querySelectorAll(".picker-strand").forEach(strand => {
+      strand.hidden = !strand.querySelector(".picker-topic:not([hidden])");
+    });
+    panel.hidden = terms.length ? inPanel === 0 : panel.dataset.stagePanel !== activeId;
+    if (terms.length) matches += inPanel;
+  });
+  const empty = root.querySelector(".picker-no-results");
+  if (empty) empty.hidden = !(terms.length && matches === 0);
+}
+
+/* After every controls render: restore the picker's scroll and search. */
+function afterControlsRender() {
+  const main = controlsRoot.querySelector(".picker-main");
+  if (!main) return;
+  applyPickerSearch();
+  main.scrollTop = pickerScrollTop;
+  const tabs = controlsRoot.querySelector(".picker-tabs");
+  const active = tabs?.querySelector(".picker-tab.is-active");
+  if (tabs && active && tabs.scrollWidth > tabs.clientWidth) {
+    tabs.scrollLeft = Math.max(0, active.offsetLeft - (tabs.clientWidth - active.offsetWidth) / 2);
+  }
+}
+
+function addTopicWithDefaults(stageId, topicId) {
+  const working = ensureWorkingTopics(stageId);
+  working[topicId] = {
+    count: Number(DEFAULT_TOPIC_COUNTS[topicId] || 6),
+    allowedTypes: getTopicTypes(topicId, stageId).map(type => type.id)
+  };
+}
+
 function renderWizardTopicsModal() {
   const total = getWorkingQuestionTotal();
-  const selectedCount = getWorkingTopicCount();
 
   return `
     <div class="builder-modal-backdrop" role="presentation">
-      <section class="builder-modal builder-modal-wide wizard-modal" role="dialog" aria-modal="true" aria-labelledby="wizard-topics-title">
+      <section class="builder-modal builder-modal-wide wizard-modal topic-picker-modal" role="dialog" aria-modal="true" aria-labelledby="wizard-topics-title">
         <div class="builder-modal-header">
           <div>
             <h2 id="wizard-topics-title">Choose topics</h2>
-            <p>Tap a topic to pick its question types and how many. Mix stages freely.</p>
+            <p>Pick a stage, then tap the topics you want. Mix stages freely.</p>
           </div>
           <button type="button" class="builder-modal-close" data-control-action="close-modal" aria-label="Close">×</button>
         </div>
@@ -2231,18 +2491,7 @@ function renderWizardTopicsModal() {
 
         ${anyStageStatus() ? `<p class="stage4-status">${escapeHtml(anyStageStatus())}</p>` : ""}
 
-        <div class="wizard-topic-summary">
-          <span><strong>${selectedCount}</strong> topic${selectedCount === 1 ? "" : "s"}</span>
-          <span><strong>${total}</strong> question${total === 1 ? "" : "s"}</span>
-          <span><strong>${Number(draftConfig.multipleChoiceCount || 0)}</strong> multiple choice</span>
-        </div>
-
-        ${STAGES.filter(stage => Object.keys(stage.topics).length).map(stage => `
-          <h3 class="wizard-stage-heading">${escapeHtml(stage.label)}</h3>
-          <div class="stage-topic-card-grid" aria-label="${escapeHtml(stage.label)} topics">
-            ${Object.entries(stage.topics).map(([topicId, topic]) => renderTopicCard(topicId, topic, stage.id)).join("")}
-          </div>
-        `).join("")}
+        ${renderTopicPicker()}
 
         <div class="builder-modal-actions wizard-actions">
           <button type="button" class="builder-cancel" data-control-action="wizard-back-details">← Back</button>
@@ -2653,7 +2902,7 @@ function renderStageTopicsModal(stageId) {
 
   return `
     <div class="builder-modal-backdrop" role="presentation">
-      <section class="builder-modal builder-modal-wide stage4-modal" role="dialog" aria-modal="true" aria-labelledby="stage-topics-title">
+      <section class="builder-modal builder-modal-wide stage4-modal topic-picker-modal" role="dialog" aria-modal="true" aria-labelledby="stage-topics-title">
         <div class="builder-modal-header">
           <div>
             <h2 id="stage-topics-title">Select Topics (${escapeHtml(stage.label)})</h2>
@@ -2662,13 +2911,9 @@ function renderStageTopicsModal(stageId) {
           <button type="button" class="builder-modal-close" data-control-action="cancel-stage" data-stage="${escapeHtml(stage.id)}" aria-label="Close">×</button>
         </div>
 
-        ${renderStageSummary(stage.id)}
-
         ${status ? `<p class="stage4-status">${escapeHtml(status)}</p>` : ""}
 
-        <div class="stage-topic-card-grid" aria-label="${escapeHtml(stage.label)} topics">
-          ${Object.entries(stage.topics).map(([topicId, topic]) => renderTopicCard(topicId, topic, stage.id)).join("")}
-        </div>
+        ${renderTopicPicker(stage.id)}
 
         <div class="builder-modal-actions">
           <button type="button" class="builder-submit" data-control-action="submit-stage" data-stage="${escapeHtml(stage.id)}">Submit ${escapeHtml(stage.label)} topics</button>
@@ -3048,6 +3293,44 @@ controlsRoot.addEventListener("click", event => {
     return;
   }
 
+  if (action === "picker-stage") {
+    pickerStageId = button.dataset.stage;
+    pickerScrollTop = 0;
+    try { window.localStorage?.setItem("mmt-picker-stage", pickerStageId); } catch { /* storage unavailable */ }
+    renderControlDashboard();
+    return;
+  }
+
+  if (action === "toggle-topic") {
+    const stage = button.dataset.topicStage || DEFAULT_STAGE_ID;
+    const topicId = button.dataset.topicId;
+    const working = ensureWorkingTopics(stage);
+    if (working[topicId]) delete working[topicId];
+    else addTopicWithDefaults(stage, topicId);
+    setStageStatus(stage, "");
+    renderControlDashboard();
+    return;
+  }
+
+  if (action === "topic-count-step") {
+    const stage = button.dataset.topicStage || DEFAULT_STAGE_ID;
+    const config = ensureWorkingTopics(stage)[button.dataset.topicId];
+    if (config) config.count = Math.min(80, Math.max(1, Number(config.count || 0) + Number(button.dataset.step || 0)));
+    renderControlDashboard();
+    return;
+  }
+
+  if (action === "picker-clear-all") {
+    const only = controlsRoot.querySelectorAll("[data-stage-panel]");
+    const ids = [...only].map(panel => panel.dataset.stagePanel);
+    for (const id of ids) {
+      const working = ensureWorkingTopics(id);
+      Object.keys(working).forEach(key => { delete working[key]; });
+    }
+    renderControlDashboard();
+    return;
+  }
+
   if (action === "open-topic-config") {
     const stage = button.dataset.topicStage || DEFAULT_STAGE_ID;
 
@@ -3152,6 +3435,20 @@ controlsRoot.addEventListener("click", event => {
   }
 
 });
+
+controlsRoot.addEventListener("input", event => {
+  const input = event.target.closest?.("[data-picker-search]");
+  if (!input) return;
+  pickerSearch = input.value;
+  applyPickerSearch();
+  const main = controlsRoot.querySelector(".picker-main");
+  if (main) main.scrollTop = 0;
+  pickerScrollTop = 0;
+});
+
+controlsRoot.addEventListener("scroll", event => {
+  if (event.target?.classList?.contains("picker-main")) pickerScrollTop = event.target.scrollTop;
+}, true);
 
 controlsRoot.addEventListener("submit", event => {
   const form = event.target.closest("[data-builder-form]");

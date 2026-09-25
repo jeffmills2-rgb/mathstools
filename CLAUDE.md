@@ -48,6 +48,28 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-26, session — being pushed): REVISION GENERATOR — TOPIC PICKER REDESIGN.**
+> The wizard's "Choose topics" step (and the per-stage modal) now use one shared picker,
+> `renderTopicPicker(onlyStageId)` in `assessment/exam-builder/app.js`:
+> - stage TABS (S1–S5 with Years, a badge = topics chosen; last tab remembered in
+>   localStorage `mmt-picker-stage`) + a SEARCH box that searches every stage
+>   (topic names, parts, notes AND question-type labels; word-start match, DOM-only
+>   filtering in `applyPickerSearch()` — no re-render per keystroke);
+> - topics grouped by STRAND (Number & Algebra / Measurement & Space / Statistics &
+>   Probability via `strandOf()`); A/B/C parts collapse onto ONE card as chips
+>   (`stageFamilies()`; `FAMILY_NAME_OVERRIDES` for odd names);
+> - ONE TAP adds a part with every question type + `DEFAULT_TOPIC_COUNTS`
+>   (`toggle-topic`); tap again removes. The gear on a selected chip (or the
+>   "question types ›" link in the cart) opens the existing `open-topic-config` modal;
+> - right-hand "Your selection" cart: totals, per-topic stage pill, −/+ question
+>   stepper (`topic-count-step`, 1–80), remove ×, Clear all (`picker-clear-all`).
+>   Stacks to one column under 900px.
+> - Scroll position is kept across re-renders (`afterControlsRender()`).
+> CSS: TOPIC PICKER block at the end of `styles/screen.css` (selectors are
+> `.topic-picker .x` to beat `.builder-modal button`). The old `renderTopicCard` is
+> unused by the wizard. `tools/picker.mjs` rewritten for the new DOM (all 5 stages +
+> tabs/stepper/search checks) — needs jsdom.
+
 > **NEW (2026-09-26, session — being pushed): REVISION GENERATOR — STAGE 1
 > ADDED (Years 1–2), PICTURE-FIRST.** `assessment/exam-builder/`. 20 banks in
 > `question-banks/stage-1/`, registered in `STAGE1_TOPICS` (app.js, keys
