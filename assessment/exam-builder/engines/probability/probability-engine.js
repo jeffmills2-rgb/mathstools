@@ -152,7 +152,7 @@ window.MMT_PROBABILITY_ENGINE = (() => {
   }
 
   function scale(target, c) {
-    const x0 = 40;
+    const x0 = c.wordList ? 90 : 40; // room for long end words
     const W = 480;
     const y = 90;
     const g = el("g");
@@ -173,7 +173,7 @@ window.MMT_PROBABILITY_ENGINE = (() => {
       g.appendChild(el("polygon", { points: `${r1(x)},${y - 6} ${r1(x - 6)},${y - 16} ${r1(x + 6)},${y - 16}`, fill: "#1d4ed8" }));
       text(g, m.label, x, y - 56, { weight: 700, fill: "#1d4ed8" });
     });
-    return finish(target, g, W + 80, y + (c.numbers === false ? 46 : 66), "probability scale");
+    return finish(target, g, W + 2 * x0, y + (c.numbers === false ? 46 : 66), "probability scale");
   }
 
   function cards(target, c) {

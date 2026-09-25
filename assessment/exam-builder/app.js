@@ -4,6 +4,106 @@ import {
 } from "./question-banks/angles/index.js";
 
 import {
+  generateWholeNumbersAQuestions as generateStage1WholeNumbersAQuestions,
+  getWholeNumbersAQuestionTypes as getStage1WholeNumbersAQuestionTypes
+} from "./question-banks/stage-1/whole-numbers-a/index.js";
+
+import {
+  generateCombiningSeparatingAQuestions as generateStage1CombiningSeparatingAQuestions,
+  getCombiningSeparatingAQuestionTypes as getStage1CombiningSeparatingAQuestionTypes
+} from "./question-banks/stage-1/combining-separating-a/index.js";
+
+import {
+  generateFormingGroupsAQuestions as generateStage1FormingGroupsAQuestions,
+  getFormingGroupsAQuestionTypes as getStage1FormingGroupsAQuestionTypes
+} from "./question-banks/stage-1/forming-groups-a/index.js";
+
+import {
+  generateHalvesQuartersAQuestions as generateStage1HalvesQuartersAQuestions,
+  getHalvesQuartersAQuestionTypes as getStage1HalvesQuartersAQuestionTypes
+} from "./question-banks/stage-1/halves-quarters-a/index.js";
+
+import {
+  generatePositionLengthAQuestions as generateStage1PositionLengthAQuestions,
+  getPositionLengthAQuestionTypes as getStage1PositionLengthAQuestionTypes
+} from "./question-banks/stage-1/position-length-a/index.js";
+
+import {
+  generateTwoDSpaceAQuestions as generateStage1TwoDSpaceAQuestions,
+  getTwoDSpaceAQuestionTypes as getStage1TwoDSpaceAQuestionTypes
+} from "./question-banks/stage-1/two-d-space-a/index.js";
+
+import {
+  generateThreeDSpaceAQuestions as generateStage1ThreeDSpaceAQuestions,
+  getThreeDSpaceAQuestionTypes as getStage1ThreeDSpaceAQuestionTypes
+} from "./question-banks/stage-1/three-d-space-a/index.js";
+
+import {
+  generateMassTimeAQuestions as generateStage1MassTimeAQuestions,
+  getMassTimeAQuestionTypes as getStage1MassTimeAQuestionTypes
+} from "./question-banks/stage-1/mass-time-a/index.js";
+
+import {
+  generateDataAQuestions as generateStage1DataAQuestions,
+  getDataAQuestionTypes as getStage1DataAQuestionTypes
+} from "./question-banks/stage-1/data-a/index.js";
+
+import {
+  generateChanceAQuestions as generateStage1ChanceAQuestions,
+  getChanceAQuestionTypes as getStage1ChanceAQuestionTypes
+} from "./question-banks/stage-1/chance-a/index.js";
+
+import {
+  generateWholeNumbersBQuestions as generateStage1WholeNumbersBQuestions,
+  getWholeNumbersBQuestionTypes as getStage1WholeNumbersBQuestionTypes
+} from "./question-banks/stage-1/whole-numbers-b/index.js";
+
+import {
+  generateCombiningSeparatingBQuestions as generateStage1CombiningSeparatingBQuestions,
+  getCombiningSeparatingBQuestionTypes as getStage1CombiningSeparatingBQuestionTypes
+} from "./question-banks/stage-1/combining-separating-b/index.js";
+
+import {
+  generateFormingGroupsBQuestions as generateStage1FormingGroupsBQuestions,
+  getFormingGroupsBQuestionTypes as getStage1FormingGroupsBQuestionTypes
+} from "./question-banks/stage-1/forming-groups-b/index.js";
+
+import {
+  generateHalvesQuartersBQuestions as generateStage1HalvesQuartersBQuestions,
+  getHalvesQuartersBQuestionTypes as getStage1HalvesQuartersBQuestionTypes
+} from "./question-banks/stage-1/halves-quarters-b/index.js";
+
+import {
+  generatePositionLengthBQuestions as generateStage1PositionLengthBQuestions,
+  getPositionLengthBQuestionTypes as getStage1PositionLengthBQuestionTypes
+} from "./question-banks/stage-1/position-length-b/index.js";
+
+import {
+  generateTwoDSpaceBQuestions as generateStage1TwoDSpaceBQuestions,
+  getTwoDSpaceBQuestionTypes as getStage1TwoDSpaceBQuestionTypes
+} from "./question-banks/stage-1/two-d-space-b/index.js";
+
+import {
+  generateThreeDSpaceBQuestions as generateStage1ThreeDSpaceBQuestions,
+  getThreeDSpaceBQuestionTypes as getStage1ThreeDSpaceBQuestionTypes
+} from "./question-banks/stage-1/three-d-space-b/index.js";
+
+import {
+  generateMassTimeBQuestions as generateStage1MassTimeBQuestions,
+  getMassTimeBQuestionTypes as getStage1MassTimeBQuestionTypes
+} from "./question-banks/stage-1/mass-time-b/index.js";
+
+import {
+  generateDataBQuestions as generateStage1DataBQuestions,
+  getDataBQuestionTypes as getStage1DataBQuestionTypes
+} from "./question-banks/stage-1/data-b/index.js";
+
+import {
+  generateChanceBQuestions as generateStage1ChanceBQuestions,
+  getChanceBQuestionTypes as getStage1ChanceBQuestionTypes
+} from "./question-banks/stage-1/chance-b/index.js";
+
+import {
   generatePlaceValueAQuestions as generateStage2PlaceValueAQuestions,
   getPlaceValueAQuestionTypes as getStage2PlaceValueAQuestionTypes
 } from "./question-banks/stage-2/place-value-a/index.js";
@@ -599,7 +699,27 @@ const DEFAULT_TOPIC_COUNTS = {
   stage2ThreeDSpaceB: 8,
   stage2MassTimeB: 8,
   stage2DataB: 8,
-  stage2ChanceB: 8
+  stage2ChanceB: 8,
+  stage1WholeNumbersA: 8,
+  stage1CombiningSeparatingA: 8,
+  stage1FormingGroupsA: 8,
+  stage1HalvesQuartersA: 8,
+  stage1PositionLengthA: 8,
+  stage1TwoDSpaceA: 8,
+  stage1ThreeDSpaceA: 8,
+  stage1MassTimeA: 8,
+  stage1DataA: 8,
+  stage1ChanceA: 8,
+  stage1WholeNumbersB: 8,
+  stage1CombiningSeparatingB: 8,
+  stage1FormingGroupsB: 8,
+  stage1HalvesQuartersB: 8,
+  stage1PositionLengthB: 8,
+  stage1TwoDSpaceB: 8,
+  stage1ThreeDSpaceB: 8,
+  stage1MassTimeB: 8,
+  stage1DataB: 8,
+  stage1ChanceB: 8
 };
 
 const DEFAULT_SCHOOL = "[School name]";
@@ -1106,6 +1226,136 @@ const STAGE5_TOPICS = {
 };
 
 /*
+  STAGE 1 (Years 1–2). Twenty topics in teaching order: Part A of every focus
+  area first, then Part B. Picture-first with a very low reading load (prompts
+  of 25 words or fewer): ten-frames, dice, picture collections, hundred
+  charts, base-ten blocks, number lines, informal-unit lengths, balances,
+  clocks, calendars, picture graphs, spinners and bags. Scope and sequence:
+  docs/stage-1-syllabus-reference.md.
+*/
+const STAGE1_TOPICS = {
+  stage1WholeNumbersA: {
+    label: "Numbers to 120 A",
+    generate: generateStage1WholeNumbersAQuestions,
+    getTypes: getStage1WholeNumbersAQuestionTypes
+  },
+
+  stage1CombiningSeparatingA: {
+    label: "Adding and Taking Away A",
+    generate: generateStage1CombiningSeparatingAQuestions,
+    getTypes: getStage1CombiningSeparatingAQuestionTypes
+  },
+
+  stage1FormingGroupsA: {
+    label: "Equal Groups A",
+    generate: generateStage1FormingGroupsAQuestions,
+    getTypes: getStage1FormingGroupsAQuestionTypes
+  },
+
+  stage1HalvesQuartersA: {
+    label: "Halves and Quarters A",
+    generate: generateStage1HalvesQuartersAQuestions,
+    getTypes: getStage1HalvesQuartersAQuestionTypes
+  },
+
+  stage1PositionLengthA: {
+    label: "Position and Length A",
+    generate: generateStage1PositionLengthAQuestions,
+    getTypes: getStage1PositionLengthAQuestionTypes
+  },
+
+  stage1TwoDSpaceA: {
+    label: "2D Shapes and Area A",
+    generate: generateStage1TwoDSpaceAQuestions,
+    getTypes: getStage1TwoDSpaceAQuestionTypes
+  },
+
+  stage1ThreeDSpaceA: {
+    label: "3D Objects and Capacity A",
+    generate: generateStage1ThreeDSpaceAQuestions,
+    getTypes: getStage1ThreeDSpaceAQuestionTypes
+  },
+
+  stage1MassTimeA: {
+    label: "Mass and Time A",
+    generate: generateStage1MassTimeAQuestions,
+    getTypes: getStage1MassTimeAQuestionTypes
+  },
+
+  stage1DataA: {
+    label: "Data A",
+    generate: generateStage1DataAQuestions,
+    getTypes: getStage1DataAQuestionTypes
+  },
+
+  stage1ChanceA: {
+    label: "Chance A",
+    generate: generateStage1ChanceAQuestions,
+    getTypes: getStage1ChanceAQuestionTypes
+  },
+
+  stage1WholeNumbersB: {
+    label: "Numbers to 1000 B",
+    generate: generateStage1WholeNumbersBQuestions,
+    getTypes: getStage1WholeNumbersBQuestionTypes
+  },
+
+  stage1CombiningSeparatingB: {
+    label: "Adding and Taking Away B",
+    generate: generateStage1CombiningSeparatingBQuestions,
+    getTypes: getStage1CombiningSeparatingBQuestionTypes
+  },
+
+  stage1FormingGroupsB: {
+    label: "Equal Groups B",
+    generate: generateStage1FormingGroupsBQuestions,
+    getTypes: getStage1FormingGroupsBQuestionTypes
+  },
+
+  stage1HalvesQuartersB: {
+    label: "Halves, Quarters and Eighths B",
+    generate: generateStage1HalvesQuartersBQuestions,
+    getTypes: getStage1HalvesQuartersBQuestionTypes
+  },
+
+  stage1PositionLengthB: {
+    label: "Position and Length B",
+    generate: generateStage1PositionLengthBQuestions,
+    getTypes: getStage1PositionLengthBQuestionTypes
+  },
+
+  stage1TwoDSpaceB: {
+    label: "2D Shapes and Area B",
+    generate: generateStage1TwoDSpaceBQuestions,
+    getTypes: getStage1TwoDSpaceBQuestionTypes
+  },
+
+  stage1ThreeDSpaceB: {
+    label: "3D Objects and Capacity B",
+    generate: generateStage1ThreeDSpaceBQuestions,
+    getTypes: getStage1ThreeDSpaceBQuestionTypes
+  },
+
+  stage1MassTimeB: {
+    label: "Mass and Time B",
+    generate: generateStage1MassTimeBQuestions,
+    getTypes: getStage1MassTimeBQuestionTypes
+  },
+
+  stage1DataB: {
+    label: "Data B",
+    generate: generateStage1DataBQuestions,
+    getTypes: getStage1DataBQuestionTypes
+  },
+
+  stage1ChanceB: {
+    label: "Chance B",
+    generate: generateStage1ChanceBQuestions,
+    getTypes: getStage1ChanceBQuestionTypes
+  }
+};
+
+/*
   STAGE 2 (Years 3–4). Twenty topics in teaching order: Part A of every focus
   area first, then Part B. Visual-first, low reading load; every type draws a
   model (base-ten blocks, number lines, arrays, fraction strips, rulers,
@@ -1249,6 +1499,7 @@ const STAGE2_TOPICS = {
   ══════════════════════════════════════════════════════════════════════
 */
 const STAGES = [
+  { id: "stage1", label: "Stage 1", selectionKey: "selectedStage1Topics", topics: STAGE1_TOPICS },
   { id: "stage2", label: "Stage 2", selectionKey: "selectedStage2Topics", topics: STAGE2_TOPICS },
   { id: "stage3", label: "Stage 3", selectionKey: "selectedStage3Topics", topics: STAGE3_TOPICS },
   { id: "stage4", label: "Stage 4", selectionKey: "selectedTopics", topics: TOPICS },
@@ -1677,7 +1928,7 @@ function renderControlDashboard() {
     <section class="builder-dashboard workflow-dashboard" aria-label="Topic question generator controls">
       <div class="builder-dashboard-header workflow-dashboard-header">
         <div>
-          <div class="workflow-eyebrow">NSW Stages 2–5 Mathematics</div>
+          <div class="workflow-eyebrow">NSW Stages 1–5 Mathematics</div>
           <h1>Maths Worksheet &amp; Assessment Builder</h1>
           <p>Pick a style, choose your syllabus topics, and generate worksheets, tests, revision or exams — with answers.</p>
         </div>

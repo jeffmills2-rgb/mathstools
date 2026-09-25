@@ -1,4 +1,4 @@
-/* The plumbing must behave identically with any number of stages (now 4), and an empty
+/* The plumbing must behave identically with any number of stages (now 5), and an empty
    stage must be invisible rather than an empty heading. */
 import fs from "fs";
 import { fileURLToPath } from "node:url";
@@ -8,10 +8,12 @@ const src = fs.readFileSync(base + "/app.js", "utf8");
 let fail=0; const t=(l,ok,x="")=>{console.log((ok?"  ✓ ":"  ✗ ")+l+(x?` — ${x}`:"")); if(!ok)fail++;};
 
 console.log("\nREGISTRY");
-t("STAGES registry exists with four stages",
-  /const STAGES = \[/.test(src) && (src.match(/id: "stage[2345]"/g)||[]).length===4,
-  (src.match(/id: "stage[2345]"/g)||[]).join(" "));
-t("Stage 2 topic map declared, listed first", /const STAGE2_TOPICS = \{/.test(src) && src.indexOf('id: "stage2"') < src.indexOf('id: "stage3"'));
+t("STAGES registry exists with five stages",
+  /const STAGES = \[/.test(src) && (src.match(/id: "stage[12345]"/g)||[]).length===5,
+  (src.match(/id: "stage[12345]"/g)||[]).join(" "));
+t("Stage 1 topic map declared, listed first", /const STAGE1_TOPICS = \{/.test(src) && src.indexOf('id: "stage1"') < src.indexOf('id: "stage2"'));
+t("Stage 1 has twenty topics", (src.slice(src.indexOf("const STAGE1_TOPICS"), src.indexOf("};", src.indexOf("const STAGE1_TOPICS"))).match(/^  stage1\w+: \{/gm)||[]).length===20);
+t("Stage 2 topic map declared, before Stage 3", /const STAGE2_TOPICS = \{/.test(src) && src.indexOf('id: "stage2"') < src.indexOf('id: "stage3"'));
 t("Stage 2 has twenty topics", (src.slice(src.indexOf("const STAGE2_TOPICS"), src.indexOf("};", src.indexOf("const STAGE2_TOPICS"))).match(/^  stage2\w+: \{/gm)||[]).length===20);
 t("Stage 3 topic map declared", /const STAGE3_TOPICS = \{/.test(src));
 t("original selection keys preserved for saved drafts",

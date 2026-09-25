@@ -84,6 +84,7 @@ function roundNumberLineQuestion() {
 
 function roundToPlaceQuestion() {
   const p = choice([10, 100, 1000]); const n = randInt(1000, 99999);
+  if (n % p === 0) return roundToPlaceQuestion(); // already a multiple: nothing to round
   return q({ type: "round-to-place", marks: 1, prompt: `Round ${sp(n)} to the nearest ${sp(p)}.`, answer: sp(roundTo(n, p)), working: [`Look at the digit to the right of the ${p === 10 ? "tens" : p === 100 ? "hundreds" : "thousands"} place. 5 or more rounds up.`], space: SPACE_SIZES.SMALL, mcDistractors: [sp(Math.floor(n / p) * p), sp(Math.ceil(n / p) * p), sp(roundTo(n, p * 10))].filter(s => s !== sp(roundTo(n, p))), tags: ["rounding"] });
 }
 
@@ -107,6 +108,7 @@ function hundredthsGridQuestion() {
 
 function decimalPvQuestion() {
   const o = randInt(0, 9); const t = randInt(1, 9); const h = randInt(1, 9);
+  if (new Set([o, t, h]).size < 3) return decimalPvQuestion(); // distinct digits keep the choices distinct
   const n = `${o}.${t}${h}`;
   const ask = choice(["tenths", "hundredths", "value"]);
   if (ask === "value") {

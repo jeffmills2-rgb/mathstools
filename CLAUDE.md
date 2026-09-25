@@ -48,6 +48,26 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-26, session — being pushed): REVISION GENERATOR — STAGE 1
+> ADDED (Years 1–2), PICTURE-FIRST.** `assessment/exam-builder/`. 20 banks in
+> `question-banks/stage-1/`, registered in `STAGE1_TOPICS` (app.js, keys
+> `stage1<Name>`, default count 8), listed FIRST in the picker via
+> `{ id: "stage1", selectionKey: "selectedStage1Topics" }` — 5 stages now.
+> Sequence (A then B): Numbers (to 120 / to 1000), Adding and Taking Away,
+> Equal Groups, Halves–Quarters(–Eighths), Position and Length, 2D Shapes and
+> Area, 3D Objects and Capacity, Mass and Time, Data, Chance — 184 types
+> covering all 16 MA1 outcomes (fractions = MA1-GM-03; there is no Stage 1
+> RQF outcome). Read `assessment/exam-builder/docs/stage-1-syllabus-reference.md`.
+> Reading-load rules ENFORCED by `node tools/stage1.mjs`: prompts <= 25 words,
+> no word > 13 letters, short answers; harness also re-derives answers from
+> diagram configs. Helpers: `question-banks/_shared/stage1-helpers.js`
+> (`makeStage1`, `pic`, `tf`, `numOptions`). New manipulatives types:
+> `objects` (12 picture icons; `crossed`, `circle`, `items`, `labels`,
+> `rowLabels`, "" = empty slot), `ten-frame`, `dice`, `hundred-chart`
+> (window + blanks/shade), `unit-length` (cube/paperclip/hand/rod, per row),
+> `calendar`. probability chance scale gets side padding with `wordList`.
+> Also fixed two rare Stage 2 place-value-b edge cases (no-distractor MC).
+>
 > **NEW (2026-09-25, session — being pushed): REVISION GENERATOR — STAGE 2
 > ADDED (Years 3–4), VISUAL-FIRST.** `assessment/exam-builder/`. 20 banks in
 > `question-banks/stage-2/`, registered in `STAGE2_TOPICS` (app.js, keys

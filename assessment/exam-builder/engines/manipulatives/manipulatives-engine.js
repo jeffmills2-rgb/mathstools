@@ -52,6 +52,17 @@
                   or null (boxes), trades: true } a place-value grid for the
                   written method, with small trade boxes above each column
     base10 legend: true draws one of each block with its name and value
+
+  Stage 1 models:
+    objects       { count, item, perRow, crossed, circle, items, labels, rowLabels } picture
+                  collections (icons: apple star ball fish car cup flower heart
+                  block leaf bird pencil); `crossed` crosses out the last n
+    ten-frame     { count, count2, frames } counters in one or two ten-frames
+    dice          { values, labels } dot patterns 1–6
+    hundred-chart { from, to, cols, blanks, shade } number chart (blank cells)
+    unit-length   { rows: [{ object, units, label, unit }], unit: cube|paperclip|
+                  hand|rod } (a rod is 2 cubes long; `unit` may be set per row)
+    calendar      { month, startDay (0 = Mon), days, highlight, circle, blanks }
 */
 
 window.MMT_MANIPULATIVES_ENGINE = (() => {
@@ -592,9 +603,168 @@ window.MMT_MANIPULATIVES_ENGINE = (() => {
     return finish(target, g, 480, top + drop + 76, "pan balance");
   }
 
+
+  /* ══ STAGE 1 MODELS ════════════════════════════════════ */
+
+  /* Small picture icons for counting collections. Each is drawn centred on
+     (x, y) inside a box about s wide. Simple, bold and printable. */
+  const ICONS = ["apple", "star", "ball", "fish", "car", "cup", "flower", "heart", "block", "leaf", "bird", "pencil"];
+  function icon(g, kind, x, y, s = 36) {
+    if (!kind) return; // an empty slot keeps rows lined up
+    const k = s / 36;
+    const P = (d, fill, extra = {}) => g.appendChild(el("path", { d, fill, stroke: INK, "stroke-width": 1.6 / k, "stroke-linejoin": "round", transform: `translate(${r1(x)} ${r1(y)}) scale(${r1(k * 100) / 100})`, ...extra }));
+    if (kind === "apple") { P("M0 -9 C-10 -16 -18 -4 -15 6 C-12 16 -4 17 0 14 C4 17 12 16 15 6 C18 -4 10 -16 0 -9 Z", "#f87171"); P("M0 -9 C0 -13 2 -16 4 -17", "none"); P("M1 -12 C6 -17 11 -15 12 -13 C8 -10 4 -10 1 -12 Z", "#4ade80"); }
+    else if (kind === "star") P("M0 -16 L4.7 -5.5 L15.5 -5 L7 2 L9.8 13 L0 7 L-9.8 13 L-7 2 L-15.5 -5 L-4.7 -5.5 Z", "#facc15");
+    else if (kind === "ball") { P("M0 -15 A15 15 0 1 0 0.01 -15 Z", "#60a5fa"); P("M-15 0 Q0 -8 15 0 M-10 -11 Q0 0 -10 11", "none"); }
+    else if (kind === "fish") { P("M-15 0 C-8 -11 8 -11 12 0 C8 11 -8 11 -15 0 Z", "#fb923c"); P("M12 0 L19 -7 L19 7 Z", "#fb923c"); P("M-7 -2 A1.6 1.6 0 1 0 -6.9 -2", "#111"); }
+    else if (kind === "car") { P("M-17 4 L-17 -3 L-10 -4 L-6 -11 L7 -11 L11 -4 L17 -2 L17 4 Z", "#f87171"); P("M-9 4 A4 4 0 1 0 -8.9 4", "#374151"); P("M9 4 A4 4 0 1 0 9.1 4", "#374151"); }
+    else if (kind === "cup") { P("M-11 -12 L11 -12 L8 13 L-8 13 Z", "#c4b5fd"); P("M11 -6 C18 -6 18 5 9 5", "none"); }
+    else if (kind === "flower") { for (let i = 0; i < 5; i++) { const a = (i * 72 * Math.PI) / 180; P(`M${r1(Math.cos(a) * 8)} ${r1(Math.sin(a) * 8 - 3)} m-6 0 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0`, "#f9a8d4"); } P("M0 -3 m-4 0 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0", "#facc15"); P("M0 5 L0 16", "none"); }
+    else if (kind === "heart") P("M0 14 C-18 2 -16 -14 -6 -13 C-2 -13 0 -9 0 -7 C0 -9 2 -13 6 -13 C16 -14 18 2 0 14 Z", "#f472b6");
+    else if (kind === "block") { P("M-11 -7 L-4 -13 L13 -13 L6 -7 Z", "#fde68a"); P("M6 -7 L13 -13 L13 6 L6 12 Z", "#fcd34d"); P("M-11 -7 L6 -7 L6 12 L-11 12 Z", "#fef08a"); }
+    else if (kind === "leaf") { P("M-14 12 C-14 -6 0 -15 14 -14 C14 2 4 14 -14 12 Z", "#86efac"); P("M-14 12 L8 -8", "none"); }
+    else if (kind === "bird") { P("M-13 2 C-13 -9 3 -11 7 -3 L15 -5 L9 2 C9 10 -5 13 -13 2 Z", "#93c5fd"); P("M2 -4 A1.5 1.5 0 1 0 2.1 -4", "#111"); }
+    else if (kind === "pencil") { P("M-16 -4 L10 -4 L17 0 L10 4 L-16 4 Z", "#fcd34d"); P("M10 -4 L17 0 L10 4 Z", "#f5deb3"); }
+    else P("M-12 -12 h24 v24 h-24 z", "#e5e7eb");
+  }
+
+  /* objects: a collection of pictures. { count, item, perRow (5), crossed:
+     n (the last n get a cross — "take away"), circled: n, items: [..] for a
+     mixed row (then `labels` names each position) } */
+  function objects(target, c) {
+    const g = el("g");
+    const list = c.items || Array.from({ length: c.count || 0 }, () => c.item || "apple");
+    const n = list.length; const per = c.perRow || (c.items ? n : Math.min(5, n)) || 1; const S = 44; const gapExtra = c.items ? 18 : 0;
+    const labels = c.labels || null;
+    const rl = c.rowLabels || null; const off = rl ? 50 : 0; // row labels (A, B …) at the left
+    if (rl) rl.forEach((t, r) => text(g, t, 22, 30 + r * (S + (labels ? 30 : 6)), { size: 24, weight: 700 }));
+    list.forEach((it, i) => {
+      const col = i % per; const row = Math.floor(i / per);
+      const x = off + 30 + col * (S + gapExtra) + (per === 10 && col >= 5 ? 14 : 0); const y = 30 + row * (S + (labels ? 30 : 6));
+      icon(g, it, x, y, 36);
+      if (c.crossed && i >= n - c.crossed) { line(g, x - 16, y - 16, x + 16, y + 16, { width: 3.5, stroke: C.red }); line(g, x + 16, y - 16, x - 16, y + 16, { width: 3.5, stroke: C.red }); }
+      if (labels) labelOrBox(g, labels[i], x, y + 32, { size: 18, bw: 34, bh: 26 });
+    });
+    if (c.circle) c.circle.forEach(([from, to]) => { // [start index, end index] on one row
+      const x0 = 30 + (from % per) * (S + gapExtra) - 22; const x1 = 30 + (to % per) * (S + gapExtra) + 22; const y = 30 + Math.floor(from / per) * (S + 6);
+      rect(g, x0, y - 24, x1 - x0, 48, { rx: 22, stroke: C.accent, width: 2.4, dash: "6 4" });
+    });
+    const cols = Math.min(per, n); const rows = Math.ceil(n / per);
+    return finish(target, g, off + 30 + (cols - 1) * (S + gapExtra) + 30 + (per === 10 ? 14 : 0), 30 + (rows - 1) * (S + (labels ? 30 : 6)) + (labels ? 60 : 30), "pictures");
+  }
+
+  /* ten-frame: { count, count2 (a second colour, drawn after), frames } */
+  function tenFrame(target, c) {
+    const g = el("g");
+    const a = c.count || 0; const b = c.count2 || 0; const tot = a + b;
+    const frames = c.frames || Math.max(1, Math.ceil(tot / 10));
+    const S = 44; const fw = 5 * S; const gap = 26;
+    for (let f = 0; f < frames; f++) {
+      const x0 = 10 + f * (fw + gap); const y0 = 10;
+      rect(g, x0, y0, fw, 2 * S, { fill: "#fff", width: 3 });
+      for (let i = 1; i < 5; i++) line(g, x0 + i * S, y0, x0 + i * S, y0 + 2 * S, { width: 1.6 });
+      line(g, x0, y0 + S, x0 + fw, y0 + S, { width: 1.6 });
+      for (let k = 0; k < 10; k++) {
+        const idx = f * 10 + k; if (idx >= tot) break;
+        const cx = x0 + (k % 5) * S + S / 2; const cy = y0 + Math.floor(k / 5) * S + S / 2;
+        g.appendChild(el("circle", { cx: r1(cx), cy: r1(cy), r: 15, fill: idx < a ? "#f87171" : "#fde047", stroke: INK, "stroke-width": 1.6 }));
+      }
+    }
+    return finish(target, g, 20 + frames * fw + (frames - 1) * gap, 2 * S + 20, "ten-frame");
+  }
+
+  /* dice: { values: [3, 5, …], labels } standard dot patterns 1–6 */
+  const PIPS = { 1: [[1, 1]], 2: [[0, 0], [2, 2]], 3: [[0, 0], [1, 1], [2, 2]], 4: [[0, 0], [2, 0], [0, 2], [2, 2]], 5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]], 6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]] };
+  function dice(target, c) {
+    const g = el("g"); const vals = c.values || [1]; const S = 76; const gap = 24;
+    vals.forEach((v, i) => {
+      const x0 = 10 + i * (S + gap); const y0 = 10;
+      rect(g, x0, y0, S, S, { fill: "#fff", width: 3, rx: 12 });
+      (PIPS[v] || []).forEach(([cx, cy]) => g.appendChild(el("circle", { cx: r1(x0 + 16 + cx * 22), cy: r1(y0 + 16 + cy * 22), r: 7, fill: INK })));
+      if (c.labels) labelOrBox(g, c.labels[i], x0 + S / 2, y0 + S + 22, { size: 20, bw: 40, bh: 28 });
+    });
+    return finish(target, g, 20 + vals.length * S + (vals.length - 1) * gap, S + (c.labels ? 56 : 20), "dice");
+  }
+
+  /* hundred-chart: { from, to, cols (10), blanks: [n…] (empty box),
+     shade: [n…], rows: [firstRow, lastRow] to show part of the chart } */
+  function hundredChart(target, c) {
+    const g = el("g");
+    const from = c.from || 1; const to = c.to || 100; const cols = c.cols || 10; const S = 44;
+    const blanks = new Set(c.blanks || []); const shade = new Set(c.shade || []);
+    const n = to - from + 1; const rows = Math.ceil(n / cols);
+    for (let i = 0; i < n; i++) {
+      const v = from + i; const x = 10 + (i % cols) * S; const y = 10 + Math.floor(i / cols) * S;
+      rect(g, x, y, S, S, { fill: shade.has(v) ? "#bfdbfe" : blanks.has(v) ? "#fef9c3" : "#fff", width: 1.4 });
+      if (!blanks.has(v)) text(g, v, x + S / 2, y + S / 2 + 1, { size: v >= 100 ? 15 : 18, weight: 600 });
+    }
+    return finish(target, g, 20 + cols * S, 20 + rows * S, "number chart");
+  }
+
+  /* unit-length: an object measured with informal units laid end to end.
+     { rows: [{ object, units, label }], unit: "cube"|"paperclip"|"hand",
+       showUnits: true } — `units` may be fractional only in steps of 0.5 */
+  function unitLength(target, c) {
+    const g = el("g");
+    const rows = c.rows || [{ object: c.object || "pencil", units: c.units || 5 }];
+    const UW = { hand: 56, paperclip: 50, cube: 40, rod: 80 };
+    const unitOf = r => r.unit || c.unit || "cube";
+    const x0 = c.rows && rows.some(r => r.label) ? 60 : 16;
+    let y = 10;
+    rows.forEach(r => {
+      const U = UW[unitOf(r)] || 40; const unit = unitOf(r);
+      const L = r.units * U;
+      if (r.label) text(g, r.label, 28, y + 16, { size: 22, weight: 700 });
+      // object
+      const ob = r.object || "pencil"; const oh = 26;
+      if (ob === "pencil" || ob === "crayon") {
+        const body = ob === "pencil" ? "#fcd34d" : "#c4b5fd";
+        g.appendChild(el("polygon", { points: `${x0},${y + 3} ${x0 + L - 22},${y + 3} ${x0 + L},${y + 3 + oh / 2} ${x0 + L - 22},${y + 3 + oh} ${x0},${y + 3 + oh}`, fill: body, stroke: INK, "stroke-width": 2 }));
+      } else if (ob === "snake") {
+        rect(g, x0, y + 6, L, 20, { fill: "#86efac", width: 2, rx: 10 });
+        g.appendChild(el("circle", { cx: x0 + L - 8, cy: y + 13, r: 2.2, fill: INK }));
+      } else if (ob === "ribbon") rect(g, x0, y + 8, L, 16, { fill: "#f9a8d4", width: 2 });
+      else rect(g, x0, y + 4, L, 24, { fill: "#93c5fd", width: 2, rx: 4 });
+      line(g, x0, y + 34, x0, y + 36 + (c.showUnits === false ? 0 : 30), { dash: "3 3", width: 1.2, stroke: C.grey });
+      line(g, x0 + L, y + 34, x0 + L, y + 36 + (c.showUnits === false ? 0 : 30), { dash: "3 3", width: 1.2, stroke: C.grey });
+      y += 38;
+      if (c.showUnits !== false) {
+        const whole = Math.floor(r.units); const part = r.units - whole;
+        for (let i = 0; i < Math.ceil(r.units); i++) {
+          const x = x0 + i * U; const w = i < whole ? U : part * U;
+          if (unit === "paperclip") { rect(g, x + 2, y + 6, U - 4, 16, { fill: "none", stroke: "#475569", width: 2.2, rx: 8 }); rect(g, x + 8, y + 10, U - 16, 8, { fill: "none", stroke: "#475569", width: 1.6, rx: 4 }); }
+          else if (unit === "hand") { rect(g, x + 1, y, U - 2, 30, { fill: "#fed7aa", width: 1.6, rx: 12 }); }
+          else rect(g, x, y, w, 28, { fill: i % 2 ? "#a7f3d0" : "#fde68a", width: 1.6 });
+        }
+        y += 40;
+      }
+      y += 10;
+    });
+    const maxL = Math.max(...rows.map(r => r.units * (UW[unitOf(r)] || 40)));
+    return finish(target, g, x0 + maxL + 16, y, "measuring with units");
+  }
+
+  /* calendar: { month, startDay (0 = Monday), days, highlight: [d…],
+     circle: [d…], blanks: [d…] } */
+  function calendar(target, c) {
+    const g = el("g"); const S = 50; const H = 36; const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const start = c.startDay || 0; const days = c.days || 30; const hi = new Set(c.highlight || []); const circ = new Set(c.circle || []); const blanks = new Set(c.blanks || []);
+    rect(g, 10, 10, 7 * S, 40, { fill: "#1d4ed8", stroke: "#1d4ed8" });
+    text(g, c.month || "Month", 10 + 3.5 * S, 30, { size: 22, weight: 700, fill: "#fff" });
+    heads.forEach((h, i) => { rect(g, 10 + i * S, 50, S, H, { fill: "#dbeafe", width: 1.2 }); text(g, h, 10 + i * S + S / 2, 50 + H / 2, { size: 15 }); });
+    const rows = Math.ceil((start + days) / 7);
+    for (let k = 0; k < rows * 7; k++) {
+      const x = 10 + (k % 7) * S; const y = 50 + H + Math.floor(k / 7) * S; const d = k - start + 1;
+      rect(g, x, y, S, S, { fill: d >= 1 && d <= days && hi.has(d) ? "#fef08a" : "#fff", width: 1.2 });
+      if (d >= 1 && d <= days && !blanks.has(d)) text(g, d, x + S / 2, y + S / 2, { size: 18 });
+      if (circ.has(d)) g.appendChild(el("circle", { cx: x + S / 2, cy: y + S / 2, r: 18, fill: "none", stroke: C.red, "stroke-width": 2.6 }));
+    }
+    return finish(target, g, 20 + 7 * S, 60 + H + rows * S, "calendar");
+  }
+
   function render(target, config = {}) {
     const t = config.diagramType || "base10";
-    const map = { base10, cards, "pv-chart": pvChart, "number-line": numberLine, grid10, groups, array, shapes, compass, angles, tally, "fraction-strip": fractionStrip, "fraction-shape": fractionShape, balance, "column-sum": columnSum, ruler };
+    const map = { base10, cards, "pv-chart": pvChart, "number-line": numberLine, grid10, groups, array, shapes, compass, angles, tally, "fraction-strip": fractionStrip, "fraction-shape": fractionShape, balance, "column-sum": columnSum, ruler, objects, "ten-frame": tenFrame, dice, "hundred-chart": hundredChart, "unit-length": unitLength, calendar };
     const fn = map[t];
     if (!fn) { if (target) target.innerHTML = `<div class="diagram-placeholder">Unknown manipulative</div>`; return null; }
     return fn(target, config);
