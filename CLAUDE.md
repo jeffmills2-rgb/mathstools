@@ -48,6 +48,50 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-27, session — being pushed): CRACK THE EQUATION.**
+> `games/crack-the-equation.html`, an original equation-guessing puzzle (the
+> Nerdle/Wordle idea, renamed and rebuilt in MMT colours — nothing copied).
+> Card in the **Puzzles** group (5 -> 6; Games stat tile 19 -> 20). One
+> self-contained file on the `.mmtTopbar` shell with the MMT PHONE LAYOUT
+> block. English only. Three modes: **Today's equations** (one per level,
+> seeded from the local date so a whole class gets the same five), **Practice**
+> and **Race Mode**.
+> * **ENGINE IS DOM-FREE** (`<script id="ceEngine">`, `var CE`; the harness
+>   `require`s it). The left side is evaluated with EXACT fractions, so any true
+>   equation is accepted; answers are BUILT, not searched for — a ÷ always picks
+>   a divisor of its own term, so every step is whole. Clues are two-pass (greens
+>   first, then ambers from what is left), so repeats are honest.
+> * **LEVELS:** Sweet 6 tiles + − · Mild 7 tiles, one operation · Medium 8 tiles,
+>   one or two · Spicy 8 tiles, always ×/÷ mixed with +/− AND left-to-right would
+>   give a different answer · Extra Spicy 10 tiles, two or three. Below Extra no
+>   running total dips under zero; no ×1, ÷1 or lone 0 operands.
+> * **THE IMPROVEMENT OVER THE ORIGINAL: AN UNTRUE GUESS IS EXPLAINED, NOT JUST
+>   REFUSED.** `4+5*6=54` shows `4 + 5 × 6 → 4 + 30 → 34` and, when working left
+>   to right would have given their number, says that is the trap. It costs no
+>   row. Settings: explain (on), hard mode, colour-blind (orange/blue), timer.
+>   No hint button (consistent with Sudoku). The result card shows the working.
+> * **RACE MODE is on `mmt-firebase-games` at `equationRaceRooms/{CODE}` with a
+>   `players/{uid}` subcollection — NEEDS A RULES PUBLISH** (the new block in
+>   `firestore.games.rules`). Host writes the room; each player writes only their
+>   own doc, so 30 guessing at once never contend. The room holds a SEED, never
+>   the equation; a player doc holds the COLOURS of each guess, never the guess.
+>   Host can play or run a class view, picks fastest / fewest guesses, starts,
+>   ends, removes players, runs the next round, closes the room. Joining is
+>   refused mid-round. Countdown runs from when each client SAW the start, so
+>   clock skew costs nobody time. TTL on `expireAt` (3 days).
+> * **Gotchas found in testing:** closing a modal must blur anything focused
+>   inside it (a hidden switch kept the keyboard); tile type is sized from the
+>   MEASURED tile width, and on a projector the board is also capped by HEIGHT
+>   so board + keypad fit 1366x768 / 1280x720 / 1024x768.
+> * **Verified:** engine harness (77k checks: 1500 answers per level re-derived
+>   with an independent evaluator, every ÷ exact, Spicy never left-to-right safe,
+>   scoring vs a reference, validation messages), 144 UI checks (daily, restore,
+>   stats, hard mode, colour-blind, phones 320/360/390 and 1024–1920 with no
+>   sideways scroll and the keypad on screen) and 35 race checks with a stubbed
+>   Firestore enforcing the rules' key lists (join, late join refused, colours
+>   only, auto finish, next round, kick, close, class view). Harnesses in the
+>   session scratch.
+>
 > **NEW (2026-09-26, session — being pushed): REVISION GENERATOR — TOPIC PICKER REDESIGN.**
 > The wizard's "Choose topics" step (and the per-stage modal) now use one shared picker,
 > `renderTopicPicker(onlyStageId)` in `assessment/exam-builder/app.js`:

@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Crack the Equation v1 (2026-09-27): guess the hidden equation in six tries.
+     Five levels, today's puzzle for the whole class, practice, race mode. -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Crack the Equation | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --red:#ef4444; --amber:#f59e0b; --btn:#eef2f7; --btnHover:#e5ebf3;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      /* The three clue colours. Colour-blind mode swaps them (body.cb). */
+      --hit:#3f9b2b;  --hitInk:#ffffff;
+      --near:#f59e0b; --nearInk:#3b1d02;
+      --miss:#475569; --missInk:#ffffff;
+    }
+    body.cb{ --hit:#ea580c; --hitInk:#ffffff; --near:#2563eb; --nearInk:#ffffff; }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;
+      padding:8px 18px;min-height:64px;display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(300px,1fr);align-items:center;gap:14px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:9px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:5px 9px;margin-left:-9px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:36px;height:36px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.05rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.72rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.1rem,1.7vw,1.45rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.24);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;padding:9px 13px;font-size:14px;border-radius:13px;}
+    .mmtTopbar .btn:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .btn-green{background:var(--green2);color:white;border-color:var(--green2);}
+    .btn-red{background:#fff1f2;color:#b91c1c;border-color:#fecdd3;}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);}
+    input[type="text"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;}
+    input[type="text"]:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;display:grid;gap:6px;}
+
+    .layout{width:min(1400px,calc(100vw - 36px));margin:12px auto 8px;}
+    .card{background:rgba(255,255,255,.95);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);}
+    .hidden{display:none!important;}
+    h1,h2,h3,p{margin-top:0;}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;}
+
+    /* ------------------------------------------------------------ MENU */
+    .menu-card{padding:28px;display:grid;gap:18px;place-items:center;min-height:560px;}
+    .menu-inner{width:min(900px,100%);display:grid;gap:18px;}
+    .intro{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;}
+    .intro h1{font-size:clamp(1.8rem,3.4vw,2.8rem);letter-spacing:-.06em;margin:0 0 6px;line-height:1;}
+    .intro p{margin:0;color:#475569;font-weight:700;line-height:1.45;}
+    .demo-row{display:flex;gap:4px;}
+    .demo-row .tile{width:38px;height:38px;font-size:1.25rem;border-radius:9px;}
+    .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+    .mode-card{display:grid;align-content:start;gap:6px;text-align:left;padding:18px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);}
+    .mode-card .mode-icon{width:52px;height:52px;border-radius:16px;background:#eef2ff;display:grid;place-items:center;font-size:1.8rem;}
+    .mode-card strong{font-size:1.25rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span.desc{color:var(--muted);font-size:.92rem;font-weight:750;line-height:1.35;}
+    .today-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .today-chip{font-size:.78rem;font-weight:900;padding:4px 8px;border-radius:999px;background:#e2e8f0;color:#334155;}
+    .today-chip.won{background:#dcfce7;color:#166534;}
+    .today-chip.lost{background:#fee2e2;color:#991b1b;}
+
+    /* ----------------------------------------------------- MODAL SHELL */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.40);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(640px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:26px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;display:grid;gap:14px;}
+    .modal.wide{width:min(760px,100%);}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;}
+    .modal h2{margin:0;font-size:1.4rem;letter-spacing:-.03em;}
+    .form-note{font-size:.88rem;color:var(--muted);font-weight:750;line-height:1.4;margin:0;}
+    .level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:4px;padding:12px;border-radius:16px;align-content:start;position:relative;}
+    .level-btn .li{font-size:1.5rem;}
+    .level-btn strong{font-size:.98rem;}
+    .level-btn span{font-size:.74rem;color:var(--muted);font-weight:800;line-height:1.3;}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn .done-badge{position:absolute;top:8px;right:8px;font-size:.72rem;font-weight:950;border-radius:999px;padding:2px 7px;}
+    .done-badge.won{background:#dcfce7;color:#166534;}
+    .done-badge.lost{background:#fee2e2;color:#991b1b;}
+    .done-badge.going{background:#fef3c7;color:#92400e;}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+    .tabs{display:flex;gap:6px;background:#f1f5f9;border-radius:14px;padding:4px;}
+    .tabs button{flex:1;background:transparent;padding:9px;border-radius:11px;color:#334155;}
+    .tabs button.on{background:white;box-shadow:0 2px 8px rgba(15,23,42,.1);color:var(--blue2);}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .check-row{display:flex;align-items:center;gap:10px;font-weight:850;color:#334155;}
+    .check-row input{width:20px;height:20px;}
+    .rules-list{display:grid;gap:10px;margin:0;padding:0;list-style:none;}
+    .rules-list li{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);font-weight:800;line-height:1.4;color:#334155;}
+    .rules-list li .demo-row{margin-top:8px;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);}
+    .toggle-row b{display:block;font-weight:950;}
+    .toggle-row small{display:block;color:var(--muted);font-weight:750;margin-top:2px;line-height:1.3;}
+    .switch{position:relative;width:52px;height:30px;flex:0 0 auto;}
+    .switch input{opacity:0;width:100%;height:100%;margin:0;position:absolute;inset:0;cursor:pointer;z-index:2;}
+    .switch span{position:absolute;inset:0;border-radius:999px;background:#cbd5e1;transition:background .2s;}
+    .switch span::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:white;box-shadow:0 2px 6px rgba(15,23,42,.25);transition:transform .2s;}
+    .switch input:checked + span{background:var(--blue);}
+    .switch input:checked + span::after{transform:translateX(22px);}
+    .switch input:focus-visible + span{box-shadow:0 0 0 4px rgba(37,99,235,.24);}
+
+    /* ------------------------------------------------------------ GAME */
+    .game-card{padding:16px;display:grid;gap:12px;}
+    .status-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-width:0;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.3rem;flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.05rem;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.88rem;margin-top:2px;font-weight:750;}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:950;font-size:.9rem;}
+    .game-area{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start;}
+    .play-col{display:grid;gap:12px;justify-items:center;position:relative;}
+    .message{width:min(100%,var(--boardW));padding:12px 14px;border-radius:16px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-weight:850;min-height:48px;line-height:1.4;}
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .message.error{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+    .message .working{display:block;margin-top:6px;font-family:var(--mathFont);font-size:1.12rem;font-weight:700;color:inherit;}
+
+    /* The board. --n is the number of tiles in a row; --boardW is set from it. */
+    .board-wrap{position:relative;width:min(100%,var(--boardW));}
+    .board{display:grid;gap:7px;}
+    .row{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:7px;}
+    .tile{aspect-ratio:1/1;display:grid;place-items:center;border-radius:12px;border:2px solid var(--border);background:#f1f5f9;
+      font-weight:900;font-size:var(--tileFs,1.6rem);color:var(--ink);user-select:none;
+      font-variant-numeric:tabular-nums;line-height:1;}
+    .row.current .tile{background:white;border-color:#cbd5e1;cursor:pointer;}
+    .row.current .tile.filled{border-color:#64748b;}
+    .row.current .tile.cursor{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.22);}
+    .tile.op{font-family:var(--mathFont);font-size:calc(var(--tileFs,1.6rem) * 1.15);}
+    .legend .tile,.demo-row .tile{--tileFs:1.05rem;}
+    .answer-row .tile{--tileFs:1.35rem;}
+    .tile.g{background:var(--hit);border-color:var(--hit);color:var(--hitInk);}
+    .tile.y{background:var(--near);border-color:var(--near);color:var(--nearInk);}
+    .tile.b{background:var(--miss);border-color:var(--miss);color:var(--missInk);}
+    .tile.flip{animation:flip .5s ease both;}
+    @keyframes flip{0%{transform:rotateX(0)}45%{transform:rotateX(90deg)}55%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+    .row.shake{animation:shake .4s ease;}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+    .tile.pop{animation:pop .12s ease;}
+    @keyframes pop{50%{transform:scale(1.08)}}
+    .row.win .tile{animation:bounce .5s ease both;}
+    @keyframes bounce{40%{transform:translateY(-12px)}70%{transform:translateY(2px)}}
+    @media (prefers-reduced-motion: reduce){ .tile.flip,.row.shake,.tile.pop,.row.win .tile{animation:none!important;} }
+
+    .keyboard{width:min(100%,640px);display:grid;gap:8px;padding:10px;border-radius:20px;background:#e8eef6;}
+    .krow{display:grid;gap:7px;}
+    .krow.digits{grid-template-columns:repeat(10,1fr);}
+    .krow.ops{grid-template-columns:repeat(5,1fr) 2fr 1.4fr;}
+    .key{height:56px;padding:0;border-radius:12px;background:white;color:var(--ink);font-size:1.45rem;font-weight:900;border:1px solid #d7dfea;box-shadow:0 2px 0 #cbd5e1;}
+    .key.op{font-family:var(--mathFont);font-size:1.7rem;}
+    .key.wide{font-size:1.02rem;}
+    .key.enter{background:var(--blue);color:white;border-color:var(--blue);}
+    .key.g{background:var(--hit);color:var(--hitInk);border-color:var(--hit);box-shadow:none;}
+    .key.y{background:var(--near);color:var(--nearInk);border-color:var(--near);box-shadow:none;}
+    .key.b{background:var(--miss);color:var(--missInk);border-color:var(--miss);box-shadow:none;opacity:.85;}
+    .key:hover{transform:none;filter:brightness(.97);}
+
+    .overlay{position:absolute;inset:-6px;display:none;place-items:center;z-index:8;padding:14px;background:rgba(255,255,255,.86);backdrop-filter:blur(3px);border-radius:20px;}
+    .overlay.show{display:grid;}
+    .countdown{font-size:clamp(4rem,12vw,8rem);font-weight:950;color:#4c1d95;}
+    .lobby-card{width:min(460px,100%);background:white;border:1px solid #dbe3ef;border-radius:24px;box-shadow:0 30px 80px rgba(15,23,42,.18);padding:20px;display:grid;gap:12px;}
+    .lobby-card h3{margin:0;font-size:1.35rem;letter-spacing:-.03em;}
+    .big-code{font-family:var(--mathFont);font-size:2.4rem;font-weight:900;letter-spacing:.2em;color:#1e3a8a;text-align:center;background:#eef6ff;border:1px solid #bfdbfe;border-radius:16px;padding:8px;}
+
+    .side-panel{display:grid;gap:14px;}
+    .panel-section{border-radius:20px;padding:14px;background:#f8fafc;border:1px solid var(--border);display:grid;gap:10px;}
+    .panel-section h2{font-size:1.05rem;margin:0;font-weight:950;letter-spacing:-.02em;}
+    .legend{display:grid;gap:8px;}
+    .legend div{display:flex;align-items:center;gap:10px;font-weight:800;color:#334155;font-size:.92rem;line-height:1.3;}
+    .legend .tile{width:32px;height:32px;font-size:1rem;border-radius:8px;flex:0 0 auto;}
+    .mini-rules{margin:0;padding-left:18px;color:#334155;font-weight:750;font-size:.9rem;line-height:1.45;display:grid;gap:4px;}
+    .room-badge{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-weight:950;}
+    .room-code{letter-spacing:.14em;font-size:1.25rem;font-family:var(--mathFont);}
+    .standings{display:grid;gap:8px;}
+    .srow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:14px;background:white;border:1px solid var(--border);}
+    .srow.me{border-color:#a5b4fc;box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+    .srow .place{width:26px;height:26px;border-radius:50%;background:#e2e8f0;display:grid;place-items:center;font-weight:950;font-size:.85rem;}
+    .srow.solved .place{background:#dcfce7;color:#166534;}
+    .srow .who{min-width:0;}
+    .srow .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .srow .who small{color:var(--muted);font-weight:800;}
+    .mini{display:grid;gap:2px;}
+    .mini .mr{display:grid;grid-template-columns:repeat(var(--n),8px);gap:2px;}
+    .mini i{width:8px;height:8px;border-radius:2px;background:#e2e8f0;display:block;}
+    .mini i.g{background:var(--hit);} .mini i.y{background:var(--near);} .mini i.b{background:var(--miss);}
+    .kick{padding:2px 8px;font-size:.8rem;border-radius:8px;background:#fff1f2;color:#b91c1c;border:1px solid #fecdd3;}
+    .class-view{display:none;width:100%;}
+    .game-card.spectate .class-view{display:grid;gap:12px;}
+    .game-card.spectate .board-wrap,.game-card.spectate .keyboard{display:none;}
+    /* A host running the class view still needs the lobby card (code + Start). */
+    .game-card.spectate.in-lobby .board-wrap{display:block;min-height:440px;}
+    .game-card.spectate .board{visibility:hidden;}
+    .class-view .standings{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+    .class-view .mini .mr{grid-template-columns:repeat(var(--n),14px);}
+    .class-view .mini i{width:14px;height:14px;border-radius:3px;}
+
+    .answer-row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
+    .answer-row .tile{width:44px;height:44px;font-size:1.35rem;border-radius:10px;}
+    .end-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+    .stat-card{border-radius:14px;padding:10px;background:#f8fafc;border:1px solid var(--border);text-align:center;}
+    .stat-card strong{display:block;font-size:1.5rem;}
+    .stat-card span{display:block;color:#475569;font-weight:850;font-size:.8rem;}
+    .dist{display:grid;gap:5px;}
+    .dist div{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:center;font-weight:900;}
+    .dist .bar{height:22px;border-radius:6px;background:#cbd5e1;color:white;font-size:.82rem;display:flex;align-items:center;justify-content:flex-end;padding:0 7px;min-width:24px;}
+    .dist .bar.hl{background:var(--hit);}
+    .working-box{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);font-family:var(--mathFont);font-size:1.2rem;text-align:center;line-height:1.5;}
+    .share-box{width:100%;min-height:120px;border-radius:12px;border:1px solid var(--border);padding:10px;font-family:inherit;}
+
+    .brand-footer{width:min(1400px,calc(100vw - 36px));margin:0 auto 8px;display:flex;align-items:center;justify-content:center;min-height:30px;font-size:12px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:14px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 1100ms linear forwards;border-radius:3px;pointer-events:none;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      .game-area{grid-template-columns:1fr;}
+      .mode-grid{grid-template-columns:1fr;}
+      .level-grid{grid-template-columns:repeat(3,1fr);}
+    }
+    /* Tablets and 1024 projectors keep a ONE-row header, so the board gets the height. */
+    @media(max-width:1080px) and (min-width:701px){
+      .mmtTopbar{grid-template-columns:auto 1fr auto;justify-items:stretch;padding:8px 14px;}
+      .mmtBrand{justify-self:start;}
+      .mmtTopTitle{text-align:center;}
+    }
+
+/* ==== MMT PHONE LAYOUT (added 2026-09-27) — do not edit above this line ==== */
+@media(max-width:700px){
+  .mmtTopbar{position:relative;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px 8px;padding:7px 10px;min-height:0;}
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{grid-column:2;justify-self:start;text-align:left;min-width:0;font-size:1.1rem;line-height:1.14;}
+  /* Four icon buttons fit beside the title, so the header is ONE row. */
+  .actions{grid-column:3;margin:0;display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:5px;}
+  .actions .btn,.actions button{padding:8px 10px;font-size:15px;line-height:1.15;border-radius:11px;white-space:nowrap;min-width:40px;min-height:40px;}
+  .actions .lbl{display:none;}
+  .mmtTopTitle{font-size:1.02rem;white-space:normal;}
+  @media(max-width:359px){ .mmtTopTitle{font-size:.9rem;} .actions .btn,.actions button{min-width:36px;padding:8px 7px;} }
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;padding:16px;}
+  .layout,.layout>*,.card{min-width:0;}
+  input[type="text"],select{font-size:16px;}
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+  /* Crack the Equation on a phone: the board and the keypad are the game, so
+     they take the full width and the keypad is sticky at the thumb. */
+  .layout{width:calc(100vw - 16px);margin-top:8px;}
+  .menu-card{padding:16px;min-height:0;}
+  .intro{grid-template-columns:1fr;}
+  .level-grid{grid-template-columns:1fr 1fr;}
+  .two{grid-template-columns:1fr;}
+  .game-card{padding:8px;gap:8px;}
+  .status-strip{flex-wrap:nowrap;gap:8px;}
+  .turn-card{padding:8px 10px;border-radius:14px;flex:1 1 auto;}
+  .toolbar{flex-wrap:nowrap;flex:0 0 auto;}
+  .chip{padding:6px 9px;font-size:.82rem;}
+  .status-icon{display:none;}
+  .status-title{font-size:.95rem;}
+  .status-subtitle{font-size:.8rem;}
+  .toolbar button{padding:8px 11px;font-size:13px;min-height:38px;}
+  .board,.row{gap:5px;}
+  .tile{border-radius:8px;}
+  .message{padding:9px 11px;font-size:.9rem;min-height:0;}
+  .keyboard{position:sticky;bottom:0;z-index:6;width:calc(100% + 16px);margin:0 -8px;border-radius:16px 16px 0 0;padding:8px 4px calc(8px + env(safe-area-inset-bottom));gap:6px;box-shadow:0 -10px 24px rgba(15,23,42,.08);}
+  .krow{gap:3px;}
+  .key{height:50px;font-size:1.25rem;border-radius:10px;}
+  .key.op{font-size:1.45rem;}
+  .key.wide{font-size:.86rem;}
+  .end-stats{grid-template-columns:repeat(2,1fr);}
+  .answer-row .tile{width:34px;height:34px;font-size:1.05rem;}
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Crack the Equation</div>
+    <div class="actions">
+      <button class="btn" id="rulesBtn" type="button" aria-label="How to play" title="How to play">❓<span class="lbl"> How to play</span></button>
+      <button class="btn" id="statsBtn" type="button" aria-label="Statistics" title="Statistics">📊<span class="lbl"> Stats</span></button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎</button>
+      <button class="btn hidden" id="menuBtn" type="button" aria-label="Back to menu" title="Back to menu">☰<span class="lbl"> Menu</span></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- =========================================================== MENU -->
+    <section class="card menu-card" id="menuPage">
+      <div class="menu-inner">
+        <div class="intro">
+          <div class="demo-row" aria-hidden="true">
+            <div class="tile g">3</div><div class="tile b op">+</div><div class="tile y">4</div><div class="tile g op">=</div><div class="tile y">7</div>
+          </div>
+          <div>
+            <h1>Crack the Equation</h1>
+            <p>An equation is hiding behind the tiles. Every guess must be a TRUE equation, and the colours tell you which numbers and signs are in the right place. You have six guesses.</p>
+          </div>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card" id="dailyModeBtn" type="button">
+            <span class="mode-icon">📅</span>
+            <strong>Today's equations</strong>
+            <span class="desc">One equation at each level, the same for everyone today — so the whole class can compare.</span>
+            <span class="today-strip" id="todayStrip"></span>
+          </button>
+          <button class="mode-card" id="practiceModeBtn" type="button">
+            <span class="mode-icon">🎲</span>
+            <strong>Practice</strong>
+            <span class="desc" id="practiceDesc">A new equation every time, as many as you like.</span>
+          </button>
+          <button class="mode-card" id="raceModeBtn" type="button">
+            <span class="mode-icon">🏁</span>
+            <strong>Race Mode</strong>
+            <span class="desc">Up to 30 players crack the same equation. See everyone's colours — never their guesses.</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================== GAME -->
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">🧮</div>
+          <div>
+            <div class="status-title" id="statusTitle">—</div>
+            <div class="status-subtitle" id="statusSub">—</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span class="chip hidden" id="timerChip">⏱ <span id="timerText">0:00</span></span>
+          <button class="btn hidden" id="shareBtn" type="button">Share</button>
+          <button class="btn hidden" id="resultBtn" type="button">Result</button>
+          <button class="btn-primary hidden" id="newBtn" type="button">New equation</button>
+        </div>
+      </div>
+      <div class="game-area">
+        <div class="play-col" id="playCol">
+          <div class="message" id="message" role="status" aria-live="polite">—</div>
+          <div class="board-wrap" id="boardWrap">
+            <div class="board" id="board" aria-label="Guesses"></div>
+            <div class="overlay" id="countdownOverlay"><div class="countdown" id="countdownText">3</div></div>
+            <div class="overlay" id="lobbyOverlay"><div class="lobby-card" id="lobbyCard"></div></div>
+          </div>
+          <div class="class-view" id="classView"></div>
+          <div class="keyboard" id="keyboard" aria-label="Keypad">
+            <div class="krow digits" id="kDigits"></div>
+            <div class="krow ops" id="kOps"></div>
+          </div>
+        </div>
+        <aside class="side-panel">
+          <div class="panel-section hidden" id="racePanel">
+            <div class="room-badge"><span>Room <span class="room-code" id="roomCodeText">----</span></span><button class="btn" id="copyCodeBtn" type="button">Copy</button></div>
+            <div class="standings" id="standings"></div>
+            <div class="toolbar" id="hostTools"></div>
+            <button class="btn-red" id="leaveBtn" type="button">Leave room</button>
+          </div>
+          <div class="panel-section">
+            <h2>What the colours mean</h2>
+            <div class="legend">
+              <div><span class="tile g">5</span>Right symbol, right place.</div>
+              <div><span class="tile y">5</span>In the equation, but somewhere else.</div>
+              <div><span class="tile b">5</span>Not in the equation (or not that many times).</div>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h2>Every guess must be true</h2>
+            <ul class="mini-rules">
+              <li>One <b>=</b> sign, with just a number on the right.</li>
+              <li><b>×</b> and <b>÷</b> are done before <b>+</b> and <b>−</b>.</li>
+              <li>No leading zeros, no dividing by zero.</li>
+              <li>The answer on the right is a whole number.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="brand-footer"><span>Made for <a href="https://www.millsmathstools.au">Mills Maths Tools</a> · an original equation-guessing puzzle</span></footer>
+
+  <!-- ========================================================= MODALS -->
+  <div class="modal-backdrop" id="levelModal" role="dialog" aria-modal="true" aria-labelledby="levelTitle">
+    <div class="modal wide">
+      <div class="modal-header"><h2 id="levelTitle">Choose a level</h2><button class="btn" data-close="levelModal" type="button">Back</button></div>
+      <p class="form-note" id="levelNote">—</p>
+      <div class="level-grid" id="levelGrid"></div>
+      <div class="modal-actions"><button class="btn-primary" id="levelStartBtn" type="button">Start</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="raceModal" role="dialog" aria-modal="true" aria-labelledby="raceTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="raceTitle">Race Mode</h2><button class="btn" data-close="raceModal" type="button">Back</button></div>
+      <p class="form-note">Everyone gets the same hidden equation. You see each other's colours, never each other's guesses.</p>
+      <label>Your name<input id="raceName" type="text" maxlength="24" autocomplete="off" placeholder="First name" /></label>
+      <div class="tabs" role="tablist">
+        <button type="button" class="on" id="tabJoin" role="tab">Join a room</button>
+        <button type="button" id="tabCreate" role="tab">Create a room</button>
+      </div>
+      <div id="joinPane" class="two">
+        <label>Room code<input id="joinCode" type="text" maxlength="5" autocomplete="off" placeholder="e.g. K7QMX" style="text-transform:uppercase;letter-spacing:.14em" /></label>
+        <div style="display:grid;align-items:end"><button class="btn-primary" id="joinBtn" type="button">Join</button></div>
+      </div>
+      <div id="createPane" class="hidden" style="display:grid;gap:12px">
+        <div class="two">
+          <label>Level<select id="raceLevel"></select></label>
+          <label>Who wins?<select id="raceWinBy"><option value="fast">Fastest to crack it</option><option value="fewest">Fewest guesses (then fastest)</option></select></label>
+        </div>
+        <label class="check-row"><input type="checkbox" id="hostPlays" checked /> I'm playing too (untick to run it from the front as a class view)</label>
+        <div class="modal-actions"><button class="btn-primary" id="createBtn" type="button">Create room</button></div>
+      </div>
+      <div class="message" id="raceMsg">Join with the code on the board, or create a room.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="rulesTitle">How to play</h2><button class="btn" data-close="rulesModal" type="button">Close</button></div>
+      <ul class="rules-list">
+        <li>Guess the hidden equation in six tries. Each guess fills every tile and must be a <b>true</b> equation — so every guess is also a calculation.</li>
+        <li>After a guess the tiles change colour:
+          <div class="demo-row"><div class="tile g">1</div><div class="tile b">2</div><div class="tile y op">+</div><div class="tile b">4</div><div class="tile b op">×</div><div class="tile y">3</div><div class="tile g op">=</div><div class="tile b">2</div></div>
+          Green: right symbol, right place. Amber: in the equation but in a different place. Grey: not in the equation, or you have used it more times than it appears.</li>
+        <li><b>Order of operations counts.</b> 3 + 4 × 5 is 23, not 35, because × and ÷ are done first. If a guess is not true, the game shows you the working so you can see why.</li>
+        <li>The right of the = is only ever a number. Numbers never start with 0, and the hidden answer is always a whole number.</li>
+        <li>Numbers can be in either order: 3 + 4 = 7 and 4 + 3 = 7 are different guesses.</li>
+        <li>Levels: 🍬 Sweet 6 tiles, + and − · 🍃 Mild 7 tiles, one operation · 🌶️ Medium 8 tiles · 🔥 Spicy 8 tiles, always two operations where the order matters · 🌋 Extra Spicy 10 tiles.</li>
+        <li>Keyboard: type digits and + − * / (or x for ×) and =, Enter to guess, Backspace to delete, ← → to move. Click a tile to jump to it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="settingsTitle">Settings</h2><button class="btn" data-close="settingsModal" type="button">Close</button></div>
+      <div class="toggle-row"><div><b>Explain untrue guesses</b><small>Show the working when a guess is not a true equation — e.g. 3 + 4 × 5 → 3 + 20 → 23.</small></div><label class="switch"><input type="checkbox" id="setExplain" /><span></span></label></div>
+      <div class="toggle-row"><div><b>Hard mode</b><small>Every clue you have found must be used in your next guess.</small></div><label class="switch"><input type="checkbox" id="setHard" /><span></span></label></div>
+      <div class="toggle-row"><div><b>Colour-blind colours</b><small>Orange and blue instead of green and amber.</small></div><label class="switch"><input type="checkbox" id="setCB" /><span></span></label></div>
+      <div class="toggle-row"><div><b>Show a timer</b><small>Race Mode always times you.</small></div><label class="switch"><input type="checkbox" id="setTimer" /><span></span></label></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="statsTitle">Statistics</h2><button class="btn" data-close="statsModal" type="button">Close</button></div>
+      <div class="tabs" id="statsTabs"></div>
+      <div id="statsBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="endModal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="endTitle">—</h2><button class="btn" data-close="endModal" type="button">Close</button></div>
+      <p class="form-note" id="endSub">—</p>
+      <div class="answer-row" id="endAnswer"></div>
+      <div class="working-box" id="endWorking"></div>
+      <div id="endExtra"></div>
+      <textarea class="share-box hidden" id="shareFallback" readonly aria-label="Result to copy"></textarea>
+      <div class="modal-actions" id="endActions"></div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       ENGINE — DOM-free. The harness require()s this block on its own.
+       Everything is exact: numbers are whole, and the left side is worked
+       out with fractions so 4 ÷ 8 × 6 is exactly 3, never 2.9999.
+       ================================================================ -->
+  <script id="ceEngine">
+  var CE = (function () {
+    'use strict';
+    var SYMBOLS = '0123456789+-*/=';
+    var SHOW = { '*': '×', '/': '÷', '-': '−', '+': '+', '=': '=' };
+    function show(ch) { return SHOW[ch] || ch; }
+    function isOp(ch) { return ch === '+' || ch === '-' || ch === '*' || ch === '/'; }
+
+    var LEVELS = [
+      { id: 'sweet',  icon: '🍬',  name: 'Sweet',       len: 6,  ops: '+-',   k: [1, 1], blurb: '6 tiles · + and − · one step' },
+      { id: 'mild',   icon: '🍃',  name: 'Mild',        len: 7,  ops: '+-*/', k: [1, 1], blurb: '7 tiles · all four operations · one step' },
+      { id: 'medium', icon: '🌶️', name: 'Medium',      len: 8,  ops: '+-*/', k: [1, 2], blurb: '8 tiles · one or two steps' },
+      { id: 'spicy',  icon: '🔥',  name: 'Spicy',       len: 8,  ops: '+-*/', k: [2, 2], bodmas: true, blurb: '8 tiles · two steps where the order matters' },
+      { id: 'extra',  icon: '🌋',  name: 'Extra Spicy', len: 10, ops: '+-*/', k: [2, 3], blurb: '10 tiles · up to three steps' }
+    ];
+    function level(id) { for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return LEVELS[i]; return LEVELS[2]; }
+
+    /* ---------------------------------------------------- exact fractions */
+    function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a; }
+    function Q(n, d) { if (d === undefined) d = 1; if (d < 0) { n = -n; d = -d; } var g = gcd(n, d) || 1; return { n: n / g, d: d / g }; }
+    function qop(op, a, b) {
+      if (op === '+') return Q(a.n * b.d + b.n * a.d, a.d * b.d);
+      if (op === '-') return Q(a.n * b.d - b.n * a.d, a.d * b.d);
+      if (op === '*') return Q(a.n * b.n, a.d * b.d);
+      return Q(a.n * b.d, a.d * b.n);
+    }
+    function qstr(q) {
+      if (q.d === 1) return (q.n < 0 ? '−' : '') + Math.abs(q.n);
+      return (q.n < 0 ? '−' : '') + Math.abs(q.n) + '/' + q.d;
+    }
+    function qeq(a, b) { return a.n === b.n && a.d === b.d; }
+
+    /* --------------------------------------------------------- parsing */
+    // Split a left side into numbers and operators. null if it is not
+    // number (op number)*.
+    function parseSide(s) {
+      if (!/^\d+([+\-*/]\d+)*$/.test(s)) return null;
+      var nums = s.split(/[+\-*/]/);
+      var ops = s.replace(/\d+/g, '').split('');
+      return { nums: nums, ops: ops };
+    }
+    function exprStr(items) { // items: alternating number strings / ops
+      return items.map(function (x, i) { return i % 2 ? show(x) : x; }).join(' ');
+    }
+
+    /* Order of operations, one step at a time, for the working line.
+       Returns { value: Q, steps: [string], divZero: bool }. */
+    function evalSteps(nums, ops) {
+      var vals = nums.map(function (n) { return Q(parseInt(n, 10)); });
+      var o = ops.slice();
+      var steps = [exprStr(interleave(vals.map(qstr), o))];
+      var divZero = false;
+      function pass(set) {
+        var i = 0;
+        while (i < o.length) {
+          if (set.indexOf(o[i]) >= 0) {
+            if (o[i] === '/' && vals[i + 1].n === 0) { divZero = true; return false; }
+            vals.splice(i, 2, qop(o[i], vals[i], vals[i + 1]));
+            o.splice(i, 1);
+            steps.push(exprStr(interleave(vals.map(qstr), o)));
+          } else i++;
+        }
+        return true;
+      }
+      if (!pass('*/')) return { value: null, steps: steps, divZero: true };
+      pass('+-');
+      return { value: vals[0], steps: steps, divZero: divZero };
+    }
+    function interleave(a, b) { var out = []; for (var i = 0; i < a.length; i++) { out.push(a[i]); if (i < b.length) out.push(b[i]); } return out; }
+    // Straight left to right — the trap, used only to explain a guess.
+    function evalLTR(nums, ops) {
+      var v = Q(parseInt(nums[0], 10));
+      for (var i = 0; i < ops.length; i++) {
+        var b = Q(parseInt(nums[i + 1], 10));
+        if (ops[i] === '/' && b.n === 0) return null;
+        v = qop(ops[i], v, b);
+      }
+      return v;
+    }
+
+    /* ------------------------------------------------- is a guess allowed?
+       Returns { ok:true, lhs, rhs, value, steps } or { ok:false, code, msg,
+       steps?, ltr? }. The messages are written for a student. */
+    function check(g, len) {
+      if (typeof g !== 'string' || g.length !== len) return { ok: false, code: 'short', msg: 'Fill all ' + len + ' tiles first.' };
+      for (var i = 0; i < g.length; i++) if (SYMBOLS.indexOf(g[i]) < 0) return { ok: false, code: 'char', msg: 'Only digits, + − × ÷ and = can be used.' };
+      var eq = g.split('=');
+      if (eq.length !== 2) return { ok: false, code: 'equals', msg: eq.length < 2 ? 'An equation needs an = sign.' : 'Use exactly one = sign.' };
+      var lhs = eq[0], rhs = eq[1];
+      if (!rhs.length) return { ok: false, code: 'rhs', msg: 'Put the answer after the = sign.' };
+      if (!/^\d+$/.test(rhs)) return { ok: false, code: 'rhs', msg: 'The right of the = must be just a number — the answer. Put the calculation on the left.' };
+      if (!lhs.length) return { ok: false, code: 'lhs', msg: 'Put a calculation before the = sign.' };
+      var p = parseSide(lhs);
+      if (!p) {
+        if (isOp(lhs[0])) return { ok: false, code: 'lhs', msg: 'The calculation cannot start with a sign — every sign needs a number on each side.' };
+        if (isOp(lhs[lhs.length - 1])) return { ok: false, code: 'lhs', msg: 'A sign needs a number after it, before the =.' };
+        return { ok: false, code: 'lhs', msg: 'Two signs cannot sit next to each other.' };
+      }
+      if (!p.ops.length) return { ok: false, code: 'noop', msg: 'Use at least one + − × or ÷ on the left, like 3+4=7.' };
+      var all = p.nums.concat([rhs]);
+      for (var j = 0; j < all.length; j++) {
+        if (all[j].length > 1 && all[j][0] === '0') return { ok: false, code: 'zero', msg: 'No leading zeros — write ' + parseInt(all[j], 10) + ', not ' + all[j] + '.' };
+      }
+      var ev = evalSteps(p.nums, p.ops);
+      if (ev.divZero) return { ok: false, code: 'divzero', msg: 'You cannot divide by zero.' };
+      var target = Q(parseInt(rhs, 10));
+      if (!qeq(ev.value, target)) {
+        var ltr = evalLTR(p.nums, p.ops);
+        return {
+          ok: false, code: 'false', msg: 'That is not true.', steps: ev.steps, value: ev.value, rhs: rhs,
+          ltrTrap: !!(ltr && qeq(ltr, target) && p.ops.length > 1),
+          mixed: /[*\/]/.test(p.ops.join('')) && /[+\-]/.test(p.ops.join('')) && p.ops.length > 1
+        };
+      }
+      return { ok: true, lhs: lhs, rhs: rhs, value: ev.value, steps: ev.steps };
+    }
+
+    /* ------------------------------------------------------------ clues
+       Two passes so repeats are counted honestly: greens first, then
+       ambers from what is left, and anything extra is grey. */
+    function score(guess, answer) {
+      var n = answer.length, res = new Array(n), left = {};
+      for (var i = 0; i < n; i++) {
+        if (guess[i] === answer[i]) res[i] = 'g';
+        else left[answer[i]] = (left[answer[i]] || 0) + 1;
+      }
+      for (var k = 0; k < n; k++) {
+        if (res[k]) continue;
+        if (left[guess[k]] > 0) { res[k] = 'y'; left[guess[k]]--; }
+        else res[k] = 'b';
+      }
+      return res.join('');
+    }
+
+    /* Hard mode: greens must stay put and every amber/green symbol must be
+       used at least as often as the clues have proved. */
+    function hardModeProblem(guess, rows, marks) {
+      for (var r = 0; r < rows.length; r++) {
+        var need = {};
+        for (var i = 0; i < guess.length; i++) {
+          if (marks[r][i] === 'g' && guess[i] !== rows[r][i]) return 'Hard mode: tile ' + (i + 1) + ' must be ' + show(rows[r][i]) + '.';
+          if (marks[r][i] !== 'b') need[rows[r][i]] = (need[rows[r][i]] || 0) + 1;
+        }
+        for (var ch in need) {
+          var have = guess.split(ch).length - 1;
+          if (have < need[ch]) return 'Hard mode: your guess must use ' + show(ch) + (need[ch] > 1 ? ' ' + need[ch] + ' times' : '') + '.';
+        }
+      }
+      return '';
+    }
+
+    /* ------------------------------------------------------- the answers
+       Built number by number rather than searched for. A ÷ always divides
+       the term it belongs to exactly, so every step is a whole number. */
+    function rngFrom(seed) { // mulberry32
+      var a = seed >>> 0;
+      return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    }
+    function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+    function ri(rng, a, b) { return a + Math.floor(rng() * (b - a + 1)); }
+
+    function tryBuild(L, rng) {
+      var k = ri(rng, L.k[0], L.k[1]);
+      if (L.id === 'medium' && k === 1 && rng() < 0.35) k = 2; // medium leans to two steps
+      var ops = [];
+      for (var i = 0; i < k; i++) ops.push(L.ops[ri(rng, 0, L.ops.length - 1)]);
+      var md = ops.some(function (o) { return o === '*' || o === '/'; });
+      var as = ops.some(function (o) { return o === '+' || o === '-'; });
+      if (L.bodmas && !(md && as)) return null;
+      var maxMul = L.len >= 10 ? 15 : 12;
+      var nums = [], term = 0;
+      for (var j = 0; j <= k; j++) {
+        var prev = j ? ops[j - 1] : '+';
+        var n;
+        if (prev === '*') {
+          n = ri(rng, 2, maxMul); term *= n;
+        } else if (prev === '/') {
+          var ds = [];
+          for (var d = 2; d <= Math.min(term - 1, 20); d++) if (term % d === 0) ds.push(d);
+          if (!ds.length) return null;
+          n = ds[ri(rng, 0, ds.length - 1)]; term /= n;
+        } else {
+          var r = rng(), digits = r < 0.45 ? 1 : (L.len >= 10 && r > 0.9 ? 3 : 2);
+          var nextMD = ops[j] === '*' || ops[j] === '/';
+          if (nextMD && digits === 3) digits = 2;
+          n = digits === 1 ? ri(rng, nextMD ? 2 : 1, 9) : ri(rng, Math.pow(10, digits - 1), Math.pow(10, digits) - 1);
+          term = n;
+        }
+        nums.push(String(n));
+      }
+      var ev = evalSteps(nums, ops);
+      if (!ev.value || ev.value.d !== 1) return null;
+      var v = ev.value.n;
+      var lowLevel = L.id !== 'spicy' && L.id !== 'extra';
+      if (v < 0 || (lowLevel && v === 0)) return null;
+      // Below Extra Spicy the running total of the terms never dips under 0.
+      if (L.id !== 'extra') {
+        var terms = termValues(nums, ops), run = terms[0].v;
+        for (var t = 1; t < terms.length; t++) { run += terms[t].sign * terms[t].v; if (run < 0) return null; }
+      }
+      var s = interleave(nums, ops).join('') + '=' + v;
+      if (s.length !== L.len) return null;
+      if (L.bodmas) { var ltr = evalLTR(nums, ops); if (ltr && qeq(ltr, ev.value)) return null; }
+      return s;
+    }
+    function termValues(nums, ops) {
+      var out = [], cur = parseInt(nums[0], 10), sign = 1;
+      for (var i = 0; i < ops.length; i++) {
+        var b = parseInt(nums[i + 1], 10);
+        if (ops[i] === '*') cur *= b;
+        else if (ops[i] === '/') cur /= b;
+        else { out.push({ v: cur, sign: sign }); sign = ops[i] === '+' ? 1 : -1; cur = b; }
+      }
+      out.push({ v: cur, sign: sign });
+      return out;
+    }
+    function generate(levelId, rng) {
+      var L = level(levelId);
+      rng = rng || Math.random;
+      for (var i = 0; i < 200000; i++) { var s = tryBuild(L, rng); if (s) return s; }
+      throw new Error('Could not build an equation for ' + levelId);
+    }
+    function daily(levelId, dateKey) { return generate(levelId, rngFrom(hash('crack|' + dateKey + '|' + levelId))); }
+    function fromSeed(levelId, seed) { return generate(levelId, rngFrom(seed)); }
+    function working(eqn) {
+      var sides = eqn.split('='), p = parseSide(sides[0]);
+      return evalSteps(p.nums, p.ops).steps;
+    }
+    function pretty(eqn) { return eqn.replace(/[+\-*/=]/g, function (o) { return ' ' + show(o) + ' '; }); }
+
+    return {
+      LEVELS: LEVELS, level: level, show: show, isOp: isOp, check: check, score: score,
+      hardModeProblem: hardModeProblem, generate: generate, daily: daily, fromSeed: fromSeed,
+      rngFrom: rngFrom, hash: hash, working: working, pretty: pretty, qstr: qstr,
+      _evalSteps: evalSteps, _evalLTR: evalLTR, _parseSide: parseSide
+    };
+  })();
+  if (typeof module !== 'undefined') module.exports = CE;
+  </script>
+
+  <!-- ================================================================== APP -->
+  <script>
+  (function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var ROWS = 6;
+    var SAVE_KEY = 'mmtCrackSave.v1', STATS_KEY = 'mmtCrackStats.v1', SET_KEY = 'mmtCrackSettings.v1', RACE_KEY = 'mmtCrackRace.v1';
+    var store = {
+      get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+      set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+      del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+    };
+    function todayKey() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function fmtTime(ms) { var s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+    var settings = Object.assign({ explain: true, hard: false, cb: false, timer: false }, store.get(SET_KEY, {}));
+    function saveSettings() { store.set(SET_KEY, settings); }
+
+    /* ------------------------------------------------------------ state */
+    var G = null;      // the game on screen
+    var pick = { mode: 'daily', level: 'medium' };
+    var tick = null;
+
+    function newGameState(mode, levelId, answer, extra) {
+      return Object.assign({ mode: mode, level: levelId, len: answer.length, answer: answer, rows: [], marks: [],
+        cur: new Array(answer.length).fill(''), pos: 0, done: false, won: false, startMs: null, endMs: null }, extra || {});
+    }
+
+    /* --------------------------------------------------------- saving */
+    function saveGame() {
+      if (!G) return;
+      var sv = store.get(SAVE_KEY, {});
+      var rec = { level: G.level, answer: G.answer, rows: G.rows, done: G.done, won: G.won, startMs: G.startMs, endMs: G.endMs, cur: G.cur.join('|') };
+      if (G.mode === 'daily') {
+        var dk = G.dateKey;
+        sv.daily = sv.daily && sv.daily.date === dk ? sv.daily : { date: dk, levels: {} };
+        sv.daily.levels[G.level] = rec;
+      } else if (G.mode === 'practice') sv.practice = rec;
+      else if (G.mode === 'race' && R.code) store.set(RACE_KEY, Object.assign(store.get(RACE_KEY, {}), { rows: G.rows, gen: G.gen, code: R.code, won: G.won, done: G.done, cur: G.cur.join('|'), timeMs: G.timeMs || null }));
+      if (G.mode !== 'race') store.set(SAVE_KEY, sv);
+    }
+    function dailyRecord(levelId) {
+      var sv = store.get(SAVE_KEY, {});
+      if (!sv.daily || sv.daily.date !== todayKey()) return null;
+      return sv.daily.levels[levelId] || null;
+    }
+    function restoreInto(g, rec) {
+      g.rows = rec.rows || []; g.marks = g.rows.map(function (r) { return CE.score(r, g.answer); });
+      g.done = !!rec.done; g.won = !!rec.won; g.startMs = rec.startMs || null; g.endMs = rec.endMs || null;
+      if (rec.cur && !g.done) { var c = rec.cur.split('|'); if (c.length === g.len) g.cur = c; }
+      return g;
+    }
+
+    /* ---------------------------------------------------------- stats */
+    function recordStats(levelId, won, guesses) {
+      var st = store.get(STATS_KEY, {});
+      var s = st[levelId] || { played: 0, won: 0, streak: 0, best: 0, dist: [0, 0, 0, 0, 0, 0] };
+      s.played++;
+      if (won) { s.won++; s.streak++; s.best = Math.max(s.best, s.streak); s.dist[guesses - 1]++; }
+      else s.streak = 0;
+      st[levelId] = s; store.set(STATS_KEY, st);
+      return s;
+    }
+    function statsFor(levelId) { return (store.get(STATS_KEY, {})[levelId]) || { played: 0, won: 0, streak: 0, best: 0, dist: [0, 0, 0, 0, 0, 0] }; }
+    function statsHTML(levelId, highlight) {
+      var s = statsFor(levelId), max = Math.max.apply(null, s.dist.concat([1]));
+      var h = '<div class="end-stats">' +
+        '<div class="stat-card"><strong>' + s.played + '</strong><span>Played</span></div>' +
+        '<div class="stat-card"><strong>' + (s.played ? Math.round(100 * s.won / s.played) : 0) + '%</strong><span>Cracked</span></div>' +
+        '<div class="stat-card"><strong>' + s.streak + '</strong><span>Streak</span></div>' +
+        '<div class="stat-card"><strong>' + s.best + '</strong><span>Best streak</span></div></div>';
+      h += '<div class="dist" aria-label="Guesses needed">';
+      for (var i = 0; i < 6; i++) h += '<div><span>' + (i + 1) + '</span><span class="bar' + (highlight === i + 1 ? ' hl' : '') + '" style="width:' + Math.max(6, 100 * s.dist[i] / max) + '%">' + s.dist[i] + '</span></div>';
+      return h + '</div>';
+    }
+
+    /* ---------------------------------------------------------- pages */
+    function showMenu() {
+      stopTick();
+      $('menuPage').classList.remove('hidden'); $('gamePage').classList.add('hidden'); $('menuBtn').classList.add('hidden');
+      G = null; paintMenu();
+    }
+    function showGame() {
+      $('menuPage').classList.add('hidden'); $('gamePage').classList.remove('hidden'); $('menuBtn').classList.remove('hidden');
+    }
+    function paintMenu() {
+      var html = CE.LEVELS.map(function (L) {
+        var r = dailyRecord(L.id);
+        var cls = r && r.done ? (r.won ? 'won' : 'lost') : '';
+        var txt = r && r.done ? (r.won ? L.icon + ' ' + r.rows.length + '/6' : L.icon + ' X/6') : L.icon + ' ' + (r && r.rows.length ? '…' : '—');
+        return '<span class="today-chip ' + cls + '">' + txt + '</span>';
+      }).join('');
+      $('todayStrip').innerHTML = html;
+      var p = store.get(SAVE_KEY, {}).practice;
+      $('practiceDesc').textContent = p && !p.done && p.rows && p.rows.length ? 'Carry on with your ' + CE.level(p.level).name + ' equation, or start a new one.' : 'A new equation every time, as many as you like.';
+    }
+
+    function openModal(id) { $(id).classList.add('open'); }
+    // Closing a modal must also drop focus from anything inside it, or the
+    // keyboard stays pointed at a hidden switch and typing stops working.
+    function dropFocusIn(m) { var a = document.activeElement; if (a && m.contains(a)) a.blur(); }
+    function closeModal(id) { var m = $(id); dropFocusIn(m); m.classList.remove('open'); }
+    document.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', function () { closeModal(b.dataset.close); }); });
+    document.querySelectorAll('.modal-backdrop').forEach(function (m) { m.addEventListener('click', function (e) { if (e.target === m) { dropFocusIn(m); m.classList.remove('open'); } }); });
+
+    function openLevelPicker(mode) {
+      pick.mode = mode;
+      $('levelTitle').textContent = mode === 'daily' ? "Today's equations" : 'Practice';
+      $('levelNote').textContent = mode === 'daily'
+        ? 'Everyone who opens this today gets the same five equations, one at each level. Each can be played once.'
+        : 'A fresh equation each time. Spicy always mixes ×/÷ with +/− so the order of operations changes the answer.';
+      paintLevelGrid();
+      openModal('levelModal');
+    }
+    function paintLevelGrid() {
+      $('levelGrid').innerHTML = CE.LEVELS.map(function (L) {
+        var badge = '';
+        if (pick.mode === 'daily') {
+          var r = dailyRecord(L.id);
+          if (r && r.done) badge = '<em class="done-badge ' + (r.won ? 'won' : 'lost') + '">' + (r.won ? '✓ ' + r.rows.length + '/6' : 'X/6') + '</em>';
+          else if (r && r.rows.length) badge = '<em class="done-badge going">' + r.rows.length + '/6</em>';
+        }
+        return '<button type="button" class="level-btn' + (pick.level === L.id ? ' selected' : '') + '" data-level="' + L.id + '">' + badge +
+          '<span class="li">' + L.icon + '</span><strong>' + L.name + '</strong><span>' + L.blurb + '</span></button>';
+      }).join('');
+      $('levelGrid').querySelectorAll('.level-btn').forEach(function (b) {
+        b.addEventListener('click', function () { pick.level = b.dataset.level; paintLevelGrid(); });
+        b.addEventListener('dblclick', function () { pick.level = b.dataset.level; startPicked(); });
+      });
+      var r = pick.mode === 'daily' ? dailyRecord(pick.level) : null;
+      $('levelStartBtn').textContent = r && r.done ? 'See result' : (r && r.rows.length ? 'Continue' : 'Start');
+    }
+    function startPicked() { closeModal('levelModal'); if (pick.mode === 'daily') startDaily(pick.level); else startPractice(pick.level, false); }
+
+    function startDaily(levelId) {
+      var dk = todayKey();
+      G = newGameState('daily', levelId, CE.daily(levelId, dk), { dateKey: dk });
+      var rec = dailyRecord(levelId);
+      if (rec && rec.answer === G.answer) restoreInto(G, rec);
+      enterGame();
+    }
+    function startPractice(levelId, resume) {
+      var p = store.get(SAVE_KEY, {}).practice;
+      if (resume && p && !p.done && p.level === levelId) { G = restoreInto(newGameState('practice', levelId, p.answer), p); }
+      else {
+        var ans, last = p && p.answer;
+        do { ans = CE.generate(levelId); } while (ans === last);
+        G = newGameState('practice', levelId, ans);
+      }
+      enterGame();
+    }
+    function enterGame() {
+      closeAllModals();
+      $('gamePage').classList.remove('spectate', 'in-lobby');
+      $('racePanel').classList.add('hidden');
+      $('lobbyOverlay').classList.remove('show'); $('countdownOverlay').classList.remove('show');
+      showGame(); buildBoard(); buildKeyboard(); fitTiles(); paintAll();
+      if (G.mode !== 'race') {
+        if (G.done) { setMessage(G.won ? 'You cracked this one already. Here it is again.' : 'This one got away. The answer is on the Result card.', G.won ? 'success' : 'warn'); }
+        else setMessage('Type a true equation that fills all ' + G.len + ' tiles, then press Enter.');
+      }
+      startTick();
+      saveGame();
+    }
+    function closeAllModals() { document.querySelectorAll('.modal-backdrop.open').forEach(function (m) { dropFocusIn(m); m.classList.remove('open'); }); }
+
+    /* ---------------------------------------------------------- board */
+    function buildBoard() {
+      var n = G.len;
+      var bw = n >= 10 ? 640 : n >= 8 ? 560 : n === 7 ? 500 : 440;
+      document.documentElement.style.setProperty('--n', n);
+      document.documentElement.style.setProperty('--boardW', bw + 'px');
+      var h = '';
+      for (var r = 0; r < ROWS; r++) {
+        h += '<div class="row" data-row="' + r + '">';
+        for (var c = 0; c < n; c++) h += '<div class="tile" data-c="' + c + '" role="gridcell"></div>';
+        h += '</div>';
+      }
+      $('board').innerHTML = h;
+      $('board').querySelectorAll('.tile').forEach(function (t) {
+        t.addEventListener('click', function () {
+          var row = +t.parentNode.dataset.row;
+          if (!G || G.done || row !== G.rows.length) return;
+          G.pos = +t.dataset.c; paintCurrent();
+        });
+      });
+    }
+    /* Tile type is sized from the MEASURED tile width, not a breakpoint, so
+       ten tiles on a 320px phone and six on a projector both read well. */
+    function fitTiles() {
+      if (!G) return;
+      var wrap = $('boardWrap'), n = G.len, gap = innerWidth <= 700 ? 5 : 7;
+      // Width first, then HEIGHT: on a 1024 x 768 projector the board and the
+      // keypad must both be on screen, so a tile is never taller than the
+      // room left for six rows. (On a phone the keypad is sticky instead.)
+      wrap.style.width = '';
+      var w = wrap.clientWidth || 400;
+      var tile = (w - gap * (n - 1)) / n;
+      if (innerWidth > 700) {
+        var top = wrap.getBoundingClientRect().top + window.scrollY;
+        var kb = $('keyboard').offsetHeight || 150;
+        var room = innerHeight - top - kb - 42; // 12 gap + card padding + breathing room
+        var byH = (room - gap * (ROWS - 1)) / ROWS;
+        if (byH < tile) tile = Math.max(30, byH);
+        wrap.style.width = Math.round(tile * n + gap * (n - 1)) + 'px';
+        document.documentElement.style.setProperty('--boardW', Math.max(Math.round(tile * n + gap * (n - 1)), 420) + 'px');
+      }
+      document.documentElement.style.setProperty('--tileFs', Math.max(14, Math.min(40, tile * 0.5)).toFixed(1) + 'px');
+    }
+    window.addEventListener('resize', function () { fitTiles(); });
+    function paintAll() { paintRows(); paintCurrent(); paintKeys(); paintStatus(); }
+    function tileSet(t, ch, cls) {
+      t.textContent = ch ? CE.show(ch) : '';
+      t.className = 'tile' + (ch && CE.isOp(ch) || ch === '=' ? ' op' : '') + (cls ? ' ' + cls : '');
+      t.setAttribute('aria-label', ch ? (CE.show(ch) + (cls === 'g' ? ', right place' : cls === 'y' ? ', wrong place' : cls === 'b' ? ', not in it' : '')) : 'empty');
+    }
+    function paintRows() {
+      var rows = $('board').children;
+      for (var r = 0; r < ROWS; r++) {
+        var row = rows[r]; row.classList.remove('current');
+        for (var c = 0; c < G.len; c++) {
+          var t = row.children[c];
+          if (r < G.rows.length) tileSet(t, G.rows[r][c], G.marks[r][c]);
+          else if (r > G.rows.length || G.done) tileSet(t, '', '');
+        }
+      }
+    }
+    function paintCurrent() {
+      if (!G || G.done || G.rows.length >= ROWS) return;
+      var row = $('board').children[G.rows.length];
+      row.classList.add('current');
+      for (var c = 0; c < G.len; c++) {
+        var t = row.children[c];
+        tileSet(t, G.cur[c], (G.cur[c] ? 'filled' : '') + (c === G.pos ? ' cursor' : ''));
+      }
+    }
+    var KEY_RANK = { b: 1, y: 2, g: 3 };
+    function keyStates() {
+      var st = {};
+      G.rows.forEach(function (row, r) {
+        for (var i = 0; i < row.length; i++) { var m = G.marks[r][i], ch = row[i]; if (!st[ch] || KEY_RANK[m] > KEY_RANK[st[ch]]) st[ch] = m; }
+      });
+      return st;
+    }
+    function buildKeyboard() {
+      $('kDigits').innerHTML = '1234567890'.split('').map(function (d) { return '<button type="button" class="key" data-k="' + d + '">' + d + '</button>'; }).join('');
+      var ops = G.level === 'sweet' ? ['+', '-', '=', '', ''] : ['+', '-', '*', '/', '='];
+      $('kOps').innerHTML = ops.map(function (o) {
+        if (!o) return '<span></span>';
+        return '<button type="button" class="key op" data-k="' + o + '" aria-label="' + ({ '+': 'plus', '-': 'minus', '*': 'times', '/': 'divide', '=': 'equals' })[o] + '">' + CE.show(o) + '</button>';
+      }).join('') + '<button type="button" class="key wide enter" data-k="Enter">Enter</button><button type="button" class="key wide" data-k="Backspace" aria-label="Delete">⌫</button>';
+      $('keyboard').querySelectorAll('.key').forEach(function (k) {
+        k.addEventListener('click', function () { press(k.dataset.k); k.blur(); });
+      });
+    }
+    function paintKeys() {
+      var st = keyStates();
+      $('keyboard').querySelectorAll('.key').forEach(function (k) {
+        var ch = k.dataset.k; if (ch.length > 1) return;
+        k.classList.remove('g', 'y', 'b'); if (st[ch]) k.classList.add(st[ch]);
+      });
+    }
+    function paintStatus() {
+      var L = CE.level(G.level);
+      var modeTxt = G.mode === 'daily' ? "Today's " + L.name : G.mode === 'practice' ? 'Practice · ' + L.name : 'Race · ' + L.name;
+      $('statusIcon').textContent = L.icon;
+      $('statusTitle').textContent = modeTxt + ' · ' + G.len + ' tiles';
+      if (G.mode === 'race' && isHostSpectating()) { $('statusSub').textContent = 'Class view — you are running this race'; }
+      else $('statusSub').textContent = G.done ? (G.won ? 'Cracked in ' + G.rows.length + '!' : 'Out of guesses.') : 'Guess ' + (G.rows.length + 1) + ' of ' + ROWS;
+      $('newBtn').classList.toggle('hidden', G.mode !== 'practice');
+      $('newBtn').textContent = G.done ? 'Next equation' : 'New equation';
+      $('shareBtn').classList.toggle('hidden', !G.done || G.mode === 'race');
+      $('resultBtn').classList.toggle('hidden', !G.done);
+      $('timerChip').classList.toggle('hidden', !(settings.timer || G.mode === 'race'));
+    }
+
+    /* --------------------------------------------------------- timer */
+    function startTick() { stopTick(); tick = setInterval(paintTimer, 250); paintTimer(); }
+    function stopTick() { if (tick) clearInterval(tick); tick = null; }
+    function elapsed() {
+      if (!G) return 0;
+      if (G.mode === 'race') { if (!R.gateLocal) return 0; return (G.done && G.timeMs != null) ? G.timeMs : Date.now() - R.gateLocal; }
+      if (!G.startMs) return 0; return (G.endMs || Date.now()) - G.startMs;
+    }
+    function paintTimer() { if (G) $('timerText').textContent = fmtTime(elapsed()); if (G && G.mode === 'race') raceTick(); }
+
+    /* ---------------------------------------------------------- input */
+    function canType() {
+      if (!G || G.done) return false;
+      if (G.mode === 'race') return R.room && R.room.status === 'playing' && R.gateLocal && Date.now() >= R.gateLocal && R.inRace;
+      return true;
+    }
+    function press(k) {
+      if (!canType()) return;
+      if (!G.startMs && G.mode !== 'race') G.startMs = Date.now();
+      if (k === 'Enter') return submit();
+      if (k === 'Backspace') {
+        if (G.cur[G.pos]) G.cur[G.pos] = '';
+        else if (G.pos > 0) { G.pos--; G.cur[G.pos] = ''; }
+        paintCurrent(); saveGame(); return;
+      }
+      if (k === 'Delete') { G.cur[G.pos] = ''; paintCurrent(); return; }
+      if (k === 'ArrowLeft') { G.pos = Math.max(0, G.pos - 1); paintCurrent(); return; }
+      if (k === 'ArrowRight') { G.pos = Math.min(G.len - 1, G.pos + 1); paintCurrent(); return; }
+      if (k === 'Home') { G.pos = 0; paintCurrent(); return; }
+      if (k === 'End') { G.pos = G.len - 1; paintCurrent(); return; }
+      if (G.level === 'sweet' && (k === '*' || k === '/')) { setMessage('Sweet uses + and − only.', 'warn'); return; }
+      if ('0123456789+-*/='.indexOf(k) < 0) return;
+      G.cur[G.pos] = k;
+      var row = $('board').children[G.rows.length];
+      if (row) { var t = row.children[G.pos]; t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
+      if (G.pos < G.len - 1) G.pos++;
+      paintCurrent(); saveGame();
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'Escape' && document.querySelector('.modal-backdrop.open')) { closeAllModals(); return; }
+      var tg = e.target;
+      if (tg && (tg.tagName === 'INPUT' || tg.tagName === 'SELECT' || tg.tagName === 'TEXTAREA')) return;
+      if (document.querySelector('.modal-backdrop.open')) { if (e.key === 'Escape') closeAllModals(); return; }
+      var map = { 'x': '*', 'X': '*', '×': '*', '÷': '/', '−': '-', '–': '-' };
+      var k = map[e.key] || e.key;
+      var ok = '0123456789+-*/='.indexOf(k) >= 0 || ['Enter', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(k) >= 0;
+      if (!ok || !G) return;
+      if (tg && tg.tagName === 'BUTTON' && k === 'Enter') e.preventDefault();
+      e.preventDefault();
+      press(k);
+    });
+
+    function setMessage(html, kind) {
+      var m = $('message'); m.className = 'message' + (kind ? ' ' + kind : ''); m.innerHTML = html;
+    }
+    function shake() {
+      var row = $('board').children[G.rows.length]; if (!row) return;
+      row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake');
+    }
+    function explainFalse(chk) {
+      var said = esc(CE.pretty(G.cur.join('')));
+      if (!settings.explain) return 'That is not a true equation. Check your calculation.';
+      var lhs = chk.steps[0];
+      var working = chk.steps.join('  →  ');
+      var h = '<b>' + said + '</b> is not true. ' + (chk.mixed ? '× and ÷ are done before + and −: ' : '') +
+        '<span class="working">' + esc(working) + '</span>';
+      if (chk.value && chk.value.d !== 1) h += '<br>The left side is not a whole number, so no answer on the right can match it.';
+      else h += '<br>So the left side makes <b>' + esc(CE.qstr(chk.value)) + '</b>, not ' + esc(chk.rhs) + '.';
+      if (chk.ltrTrap) h += '<br>Working straight from left to right gives ' + esc(chk.rhs) + ' — that is the trap!';
+      return h;
+    }
+    function submit() {
+      var g = G.cur.join('');
+      if (g.length !== G.len || G.cur.some(function (c) { return !c; })) { setMessage('Fill all ' + G.len + ' tiles first.', 'warn'); shake(); return; }
+      var chk = CE.check(g, G.len);
+      if (!chk.ok) { setMessage(chk.code === 'false' ? explainFalse(chk) : esc(chk.msg), 'error'); shake(); return; }
+      if (settings.hard) { var hp = CE.hardModeProblem(g, G.rows, G.marks); if (hp) { setMessage(esc(hp), 'warn'); shake(); return; } }
+      var mk = CE.score(g, G.answer);
+      var r = G.rows.length;
+      G.rows.push(g); G.marks.push(mk);
+      G.cur = new Array(G.len).fill(''); G.pos = 0;
+      var won = g === G.answer;
+      if (won || G.rows.length >= ROWS) {
+        G.done = true; G.won = won; G.endMs = Date.now();
+        if (G.mode === 'race') G.timeMs = Date.now() - R.gateLocal;
+      }
+      animateRow(r, function () {
+        paintAll();
+        if (G.done) finish(); else setMessage(nudge(mk), '');
+      });
+      saveGame();
+      if (G.mode === 'race') raceReport();
+    }
+    function nudge(mk) {
+      var g = mk.split('g').length - 1, y = mk.split('y').length - 1;
+      var left = ROWS - G.rows.length;
+      return 'That is a true equation. ' + g + ' in the right place, ' + y + ' in the wrong place. ' + left + ' guess' + (left === 1 ? '' : 'es') + ' left.';
+    }
+    function animateRow(r, done) {
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var row = $('board').children[r]; row.classList.remove('current');
+      if (reduce || window.__ceFast) { done(); return; }
+      var tiles = row.children, n = tiles.length, step = Math.min(160, 900 / n);
+      for (var i = 0; i < n; i++) (function (i) {
+        var t = tiles[i];
+        tileSet(t, G.rows[r][i], '');
+        setTimeout(function () { t.classList.add('flip'); }, i * step);
+        setTimeout(function () { tileSet(t, G.rows[r][i], G.marks[r][i]); }, i * step + 250);
+      })(i);
+      setTimeout(done, (n - 1) * step + 520);
+    }
+    function finish() {
+      if (G.mode !== 'race' && !G.statsDone) {
+        G.statsDone = true;
+        // Daily and practice both count. A restored finished game does not.
+        recordStats(G.level, G.won, G.rows.length);
+      }
+      if (G.won) {
+        var row = $('board').children[G.rows.length - 1]; row.classList.add('win');
+        confetti();
+        setMessage('Cracked it in ' + G.rows.length + '! ' + praise(G.rows.length), 'success');
+      } else setMessage('Out of guesses. The equation was <b>' + esc(CE.pretty(G.answer)) + '</b>.', 'warn');
+      saveGame();
+      if (G.mode !== 'race') setTimeout(showResult, window.__ceFast ? 0 : 900);
+      else raceShowResultSoon();
+    }
+    function praise(n) { return ['Unbelievable!', 'Brilliant!', 'Excellent!', 'Great work!', 'Nice!', 'Phew — just in time!'][n - 1] || ''; }
+
+    /* ---------------------------------------------------------- result */
+    function answerTiles(eqn, allGreen) {
+      return eqn.split('').map(function (c) { return '<div class="tile ' + (allGreen ? 'g' : 'b') + (CE.isOp(c) || c === '=' ? ' op' : '') + '">' + esc(CE.show(c)) + '</div>'; }).join('');
+    }
+    function workingLine(eqn) {
+      var w = CE.working(eqn), rhs = eqn.split('=')[1];
+      if (w.length <= 2) return esc(CE.pretty(eqn));
+      return esc(w.join('  →  ')) + '<br><small style="font-family:var(--uiFont);font-size:.8rem;color:#64748b;font-weight:800">× and ÷ first, then + and −, left to right</small>';
+    }
+    function showResult() {
+      if (!G || !G.done) return;
+      var L = CE.level(G.level);
+      $('endTitle').textContent = G.won ? '🎉 Cracked in ' + G.rows.length + '/6' : 'So close!';
+      $('endSub').textContent = (G.mode === 'daily' ? "Today's " : '') + L.name + ' · ' + G.len + ' tiles' + (G.startMs && G.endMs ? ' · ' + fmtTime(G.endMs - G.startMs) : '');
+      $('endAnswer').innerHTML = answerTiles(G.answer, G.won);
+      $('endWorking').innerHTML = workingLine(G.answer);
+      $('endExtra').innerHTML = G.mode === 'race' ? '' : statsHTML(G.level, G.won ? G.rows.length : 0);
+      $('shareFallback').classList.add('hidden');
+      var acts = '';
+      if (G.mode !== 'race') acts += '<button class="btn" type="button" id="endShare">Share result</button>';
+      if (G.mode === 'practice') acts += '<button class="btn-primary" type="button" id="endNext">Next equation</button>';
+      if (G.mode === 'daily') {
+        var nxt = nextUnplayedDaily();
+        if (nxt) acts += '<button class="btn-primary" type="button" id="endNextDaily">Next: ' + nxt.icon + ' ' + nxt.name + '</button>';
+        acts += '<button class="btn" type="button" id="endPractice">Practise this level</button>';
+      }
+      acts += '<button class="btn" type="button" id="endMenu">Menu</button>';
+      $('endActions').innerHTML = acts;
+      bind('endShare', share); bind('endNext', function () { startPractice(G.level, false); });
+      bind('endPractice', function () { startPractice(G.level, false); });
+      bind('endNextDaily', function () { var n = nextUnplayedDaily(); if (n) startDaily(n.id); });
+      bind('endMenu', function () { closeModal('endModal'); showMenu(); });
+      openModal('endModal');
+    }
+    function bind(id, fn) { var b = $(id); if (b) b.addEventListener('click', fn); }
+    function nextUnplayedDaily() {
+      var i = CE.LEVELS.findIndex(function (L) { return L.id === G.level; });
+      for (var k = 1; k <= CE.LEVELS.length; k++) { var L = CE.LEVELS[(i + k) % CE.LEVELS.length]; var r = dailyRecord(L.id); if (!r || !r.done) return L; }
+      return null;
+    }
+    function shareText() {
+      var L = CE.level(G.level);
+      var sq = { g: settings.cb ? '🟧' : '🟩', y: settings.cb ? '🟦' : '🟨', b: '⬛' };
+      var head = 'Crack the Equation · ' + L.icon + ' ' + L.name + (G.mode === 'daily' ? ' · ' + G.dateKey : ' · practice') + ' · ' + (G.won ? G.rows.length : 'X') + '/6' + (settings.hard ? '*' : '');
+      return head + '\n' + G.marks.map(function (m) { return m.split('').map(function (c) { return sq[c]; }).join(''); }).join('\n') + '\nmillsmathstools.au';
+    }
+    function share() {
+      var txt = shareText();
+      var done = function () { setMessage('Result copied — paste it anywhere. It shows your colours, never the equation.', 'success'); };
+      var fall = function () { if (!$('endModal').classList.contains('open')) showResult(); var ta = $('shareFallback'); ta.value = txt; ta.classList.remove('hidden'); ta.select(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fall); else fall();
+    }
+    function confetti() {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var cols = ['#6cbc4a', '#2563eb', '#7c3aed', '#f59e0b', '#ef4444'];
+      for (var i = 0; i < 60; i++) {
+        var c = document.createElement('div'); c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw'; c.style.background = cols[i % cols.length];
+        c.style.animationDelay = Math.random() * 400 + 'ms'; c.style.animationDuration = 900 + Math.random() * 700 + 'ms';
+        document.body.appendChild(c); setTimeout(function (el) { el.remove(); }, 2200, c);
+      }
+    }
+
+    /* ---------------------------------------------------------- stats modal */
+    var statsLevel = 'medium';
+    function paintStatsModal() {
+      $('statsTabs').innerHTML = CE.LEVELS.map(function (L) { return '<button type="button" class="' + (L.id === statsLevel ? 'on' : '') + '" data-l="' + L.id + '" title="' + L.name + '">' + L.icon + '<span class="sr-only"> ' + L.name + '</span></button>'; }).join('');
+      $('statsTabs').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { statsLevel = b.dataset.l; paintStatsModal(); }); });
+      $('statsBody').innerHTML = '<p class="form-note" style="margin:10px 0">' + CE.level(statsLevel).name + ' — today\'s equations and practice together. Kept on this device only.</p>' + statsHTML(statsLevel, 0);
+    }
+
+    /* ---------------------------------------------------------- wiring */
+    $('dailyModeBtn').addEventListener('click', function () { openLevelPicker('daily'); });
+    $('practiceModeBtn').addEventListener('click', function () {
+      var p = store.get(SAVE_KEY, {}).practice;
+      if (p && !p.done && p.rows && p.rows.length) { pick.level = p.level; startPractice(p.level, true); return; }
+      openLevelPicker('practice');
+    });
+    $('levelStartBtn').addEventListener('click', startPicked);
+    $('newBtn').addEventListener('click', function () {
+      if (!G.done && G.rows.length && !confirm('Give up on this equation and start a new one?')) return;
+      if (!G.done && G.rows.length) recordStats(G.level, false, 0);
+      startPractice(G.level, false);
+    });
+    $('shareBtn').addEventListener('click', share);
+    $('resultBtn').addEventListener('click', function () { if (G.mode === 'race') raceResult(); else showResult(); });
+    $('menuBtn').addEventListener('click', function () { if (G && G.mode === 'race') { if (confirm('Leave the race room?')) raceLeave(); return; } showMenu(); });
+    $('rulesBtn').addEventListener('click', function () { openModal('rulesModal'); });
+    $('statsBtn').addEventListener('click', function () { statsLevel = G ? G.level : pick.level; paintStatsModal(); openModal('statsModal'); });
+    $('settingsBtn').addEventListener('click', function () { openModal('settingsModal'); });
+    [['setExplain', 'explain'], ['setHard', 'hard'], ['setCB', 'cb'], ['setTimer', 'timer']].forEach(function (p) {
+      var i = $(p[0]); i.checked = !!settings[p[1]];
+      i.addEventListener('change', function () {
+        if (p[1] === 'hard' && G && !G.done && G.rows.length && i.checked) { i.checked = false; setMessage('Hard mode can only be switched on before your first guess.', 'warn'); return; }
+        settings[p[1]] = i.checked; saveSettings(); applySettings();
+      });
+    });
+    function applySettings() { document.body.classList.toggle('cb', !!settings.cb); if (G) paintStatus(); }
+    applySettings();
+
+    /* ==================================================================
+       RACE MODE
+       Firebase is imported DYNAMICALLY, only when a race is opened, so
+       everything else works on a network that blocks gstatic.com.
+
+       Rooms:   equationRaceRooms/{CODE}               written by the host only
+       Players: equationRaceRooms/{CODE}/players/{uid} written by that player only
+       Each player writes their own doc, so 30 people guessing at once never
+       fight over one document. The room holds a SEED, never the equation;
+       every client builds the same equation from it. A player doc holds the
+       COLOURS of each guess ("gybbgybg"), never the guess itself, so nobody
+       can read a classmate's working off the standings.
+       Rules: the equationRaceRooms block in firestore.games.rules.
+       ================================================================== */
+    var firebaseConfig = {
+      apiKey: 'AIzaSyDKUozS6JOR_wwnZDvhPQVPI236uD3MtYY',
+      authDomain: 'mmt-firebase-games.firebaseapp.com',
+      projectId: 'mmt-firebase-games',
+      storageBucket: 'mmt-firebase-games.firebasestorage.app',
+      messagingSenderId: '980506958719',
+      appId: '1:980506958719:web:729e491108918e92ba584a'
+    };
+    var FB_VER = '10.12.2', ROOMS = 'equationRaceRooms', MAX_PLAYERS = 30, CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var R = { uid: null, code: null, room: null, players: {}, unsubs: [], gateLocal: null, gateFor: null, inRace: false, shownFor: null, hadDoc: false, leaving: false };
+    var fbP = null;
+    function loadFirebase() {
+      if (fbP) return fbP;
+      fbP = (async function () {
+        var base = 'https://www.gstatic.com/firebasejs/' + FB_VER;
+        var mods = await Promise.all([import(base + '/firebase-app.js'), import(base + '/firebase-auth.js'), import(base + '/firebase-firestore.js')]);
+        var app = mods[0].initializeApp(firebaseConfig, 'crack-the-equation');
+        var auth = mods[1].getAuth(app);
+        var cred = await mods[1].signInAnonymously(auth);
+        return { uid: cred.user.uid, db: mods[2].getFirestore(app), fs: mods[2] };
+      })();
+      fbP.catch(function () { fbP = null; });
+      return fbP;
+    }
+    function fbError(err) {
+      var code = (err && err.code) || '';
+      var extra = {
+        'permission-denied': 'Publish the equationRaceRooms block from firestore.games.rules in the Firebase console.',
+        'auth/operation-not-allowed': 'Anonymous sign-in is not enabled for this Firebase project.',
+        'auth/network-request-failed': 'The network may be blocking Firebase.',
+        'unavailable': 'Firebase may be unavailable or blocked by the network.'
+      }[code];
+      return 'Could not reach the race server.' + (extra ? ' (' + code + ': ' + extra + ')' : ' Check your connection and try again.');
+    }
+    function roomRef(fb, code) { return fb.fs.doc(fb.db, ROOMS, code); }
+    function playerRef(fb, code, uid) { return fb.fs.doc(fb.db, ROOMS, code, 'players', uid); }
+    function expireAt(fb) { return fb.fs.Timestamp.fromMillis(Date.now() + 3 * 86400000); }
+    function raceMsg(t, kind) { var m = $('raceMsg'); m.className = 'message' + (kind ? ' ' + kind : ''); m.textContent = t; }
+    function myName() { return ($('raceName').value || '').trim().slice(0, 24) || 'Player'; }
+    function isHost() { return R.room && R.room.hostUid === R.uid; }
+    function isHostSpectating() { return isHost() && R.room && !R.room.hostPlays; }
+
+    $('raceModeBtn').addEventListener('click', function () {
+      var saved = store.get(RACE_KEY, {});
+      if (saved.name) $('raceName').value = saved.name;
+      if (saved.code && !$('joinCode').value) $('joinCode').value = saved.code;
+      $('raceLevel').innerHTML = CE.LEVELS.map(function (L) { return '<option value="' + L.id + '"' + (L.id === 'medium' ? ' selected' : '') + '>' + L.icon + ' ' + L.name + ' — ' + L.blurb + '</option>'; }).join('');
+      raceMsg(saved.code ? 'Rejoin room ' + saved.code + ', or join a different one.' : 'Join with the code on the board, or create a room.');
+      openModal('raceModal');
+    });
+    function setTab(join) {
+      $('tabJoin').classList.toggle('on', join); $('tabCreate').classList.toggle('on', !join);
+      $('joinPane').classList.toggle('hidden', !join); $('createPane').classList.toggle('hidden', join);
+    }
+    $('tabJoin').addEventListener('click', function () { setTab(true); });
+    $('tabCreate').addEventListener('click', function () { setTab(false); });
+    $('joinCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') raceJoin(); });
+    $('joinBtn').addEventListener('click', raceJoin);
+    $('createBtn').addEventListener('click', raceCreate);
+    $('copyCodeBtn').addEventListener('click', function () { try { navigator.clipboard.writeText(R.code); } catch (e) {} setMessage('Room code ' + esc(R.code) + ' copied.', 'success'); });
+    $('leaveBtn').addEventListener('click', function () { if (confirm(isHost() ? 'Close this room for everyone?' : 'Leave the race room?')) raceLeave(); });
+
+    function freshPlayer(fb, gen) {
+      return { name: myName(), joinedAtMs: Date.now(), gen: gen || 0, rows: [], done: false, solved: false, timeMs: null, hostUid: R.room ? R.room.hostUid : R.uid, expireAt: expireAt(fb) };
+    }
+    async function raceCreate() {
+      raceMsg('Creating a room…');
+      try {
+        var fb = await loadFirebase(); R.uid = fb.uid;
+        var code = '';
+        for (var t = 0; t < 6; t++) {
+          code = ''; for (var i = 0; i < 5; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+          var snap = await fb.fs.getDoc(roomRef(fb, code));
+          if (!snap.exists()) break;
+        }
+        var hostPlays = $('hostPlays').checked;
+        var room = { hostUid: fb.uid, hostName: myName(), hostPlays: hostPlays, status: 'lobby', level: $('raceLevel').value, winBy: $('raceWinBy').value,
+          seed: 0, gen: 0, startGateAtMs: null, finishedAtMs: null, createdAtMs: Date.now(), updatedAtMs: Date.now(), expireAt: expireAt(fb) };
+        await fb.fs.setDoc(roomRef(fb, code), room);
+        R.room = room;
+        if (hostPlays) await fb.fs.setDoc(playerRef(fb, code, fb.uid), freshPlayer(fb, 0));
+        store.set(RACE_KEY, { code: code, name: myName() });
+        attach(fb, code);
+      } catch (err) { console.error(err); raceMsg(fbError(err), 'error'); }
+    }
+    async function raceJoin() {
+      var code = ($('joinCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+      if (code.length !== 5) { raceMsg('Room codes have 5 characters.', 'warn'); return; }
+      raceMsg('Joining ' + code + '…');
+      try {
+        var fb = await loadFirebase(); R.uid = fb.uid;
+        var snap = await fb.fs.getDoc(roomRef(fb, code));
+        if (!snap.exists()) { raceMsg('There is no room ' + code + '. Check the code.', 'error'); return; }
+        var room = snap.data(); R.room = room;
+        var mine = await fb.fs.getDoc(playerRef(fb, code, fb.uid));
+        if (mine.exists()) {
+          await fb.fs.updateDoc(playerRef(fb, code, fb.uid), { name: myName() });
+        } else {
+          if (room.status === 'playing') { raceMsg('That race has already started. You can join when the host starts the next round.', 'warn'); return; }
+          // Joining between rounds: gen 0 so the finished round does not list you as still playing.
+          if (room.hostUid !== fb.uid || room.hostPlays) await fb.fs.setDoc(playerRef(fb, code, fb.uid), freshPlayer(fb, room.status === 'lobby' ? room.gen : 0));
+        }
+        store.set(RACE_KEY, { code: code, name: myName() });
+        attach(fb, code);
+      } catch (err) { console.error(err); raceMsg(fbError(err), 'error'); }
+    }
+    function attach(fb, code) {
+      detach();
+      R.code = code; R.players = {}; R.hadDoc = false; R.leaving = false; R.shownFor = null; R.gateFor = null;
+      closeAllModals();
+      G = null;
+      R.unsubs.push(fb.fs.onSnapshot(roomRef(fb, code), function (snap) {
+        if (!snap.exists()) { if (!R.leaving) { raceEnd('The host has closed this room.'); } return; }
+        R.room = snap.data(); onRace();
+      }, function (err) { console.error(err); setMessage(esc(fbError(err)), 'error'); }));
+      R.unsubs.push(fb.fs.onSnapshot(fb.fs.collection(fb.db, ROOMS, code, 'players'), function (snap) {
+        var p = {}; snap.docs.forEach(function (d) { p[d.id] = d.data(); });
+        R.players = p;
+        if (p[R.uid]) R.hadDoc = true;
+        else if (R.hadDoc && !R.leaving && !isHost()) { raceEnd('You were removed from the room by the host.'); return; }
+        onRace();
+      }, function (err) { console.error(err); }));
+    }
+    function detach() { R.unsubs.forEach(function (u) { try { u(); } catch (e) {} }); R.unsubs = []; }
+    function raceEnd(msg) { detach(); store.del(RACE_KEY); R.code = null; R.room = null; showMenu(); setTimeout(function () { alert(msg); }, 10); }
+    async function raceLeave() {
+      R.leaving = true;
+      try {
+        var fb = await loadFirebase();
+        if (isHost()) {
+          var b = fb.fs.writeBatch(fb.db);
+          Object.keys(R.players).forEach(function (uid) { b.delete(playerRef(fb, R.code, uid)); });
+          b.delete(roomRef(fb, R.code));
+          await b.commit();
+        } else await fb.fs.deleteDoc(playerRef(fb, R.code, R.uid));
+      } catch (err) { console.warn(err); }
+      detach(); store.del(RACE_KEY); R.code = null; R.room = null; showMenu();
+    }
+
+    /* A snapshot arrived: work out what should be on screen. */
+    function onRace() {
+      var room = R.room; if (!room) return;
+      var me = R.players[R.uid];
+      R.inRace = !!(me && me.gen === room.gen && room.status !== 'lobby');
+      var L = CE.level(room.level);
+      // A new round (or the first time we see this one): rebuild the board.
+      if (!G || G.mode !== 'race' || G.gen !== room.gen || G.level !== room.level) {
+        var ans = room.gen ? CE.fromSeed(room.level, room.seed) : CE.generate(room.level, CE.rngFrom(1)); // gen 0 = lobby placeholder
+        G = newGameState('race', room.level, ans, { gen: room.gen });
+        var saved = store.get(RACE_KEY, {});
+        if (room.gen && saved.code === R.code && saved.gen === room.gen && saved.rows) {
+          restoreInto(G, saved); G.timeMs = saved.timeMs;
+        }
+        R.gateFor = null; R.shownFor = null;
+        showGame(); buildBoard(); buildKeyboard(); fitTiles();
+        closeModal('endModal');
+      }
+      // Joined a round already under way on this device's doc? (A new round starts every
+      // player on a fresh doc for that gen — each client resets its own.)
+      if (me && room.gen && me.gen !== room.gen && room.status === 'playing' && R.resetFor !== room.gen) { R.resetFor = room.gen; resetMine(room.gen); }
+      if (room.startGateAtMs && R.gateFor !== room.gen) {
+        // Count down from the moment WE saw the start, so a skewed classroom
+        // clock cannot rob anyone of time.
+        var remaining = Math.min(3500, Math.max(0, room.startGateAtMs - Date.now()));
+        if (room.status !== 'playing' || remaining === 0) remaining = 0;
+        R.gateLocal = Date.now() + remaining; R.gateFor = room.gen;
+        var saved2 = store.get(RACE_KEY, {});
+        if (saved2.gateLocal && saved2.gen === room.gen && saved2.code === R.code) R.gateLocal = saved2.gateLocal;
+        else store.set(RACE_KEY, Object.assign(saved2, { gateLocal: R.gateLocal, gen: room.gen, code: R.code }));
+      }
+      $('gamePage').classList.toggle('spectate', isHost() && !room.hostPlays);
+      $('gamePage').classList.toggle('in-lobby', room.status === 'lobby');
+      $('racePanel').classList.remove('hidden');
+      $('roomCodeText').textContent = R.code;
+      $('leaveBtn').textContent = isHost() ? 'Close room' : 'Leave room';
+      paintAll();
+      paintRace();
+      raceTick();
+      if (isHost()) hostAutoFinish();
+      if (room.status === 'finished' && R.shownFor !== room.gen) { R.shownFor = room.gen; setTimeout(raceResult, 700); }
+    }
+    async function resetMine(gen) {
+      try { var fb = await loadFirebase(); await fb.fs.setDoc(playerRef(fb, R.code, R.uid), Object.assign(freshPlayer(fb, gen), { name: R.players[R.uid].name, joinedAtMs: R.players[R.uid].joinedAtMs })); } catch (e) { console.warn(e); }
+    }
+    function raceTick() {
+      if (!R.room || !G || G.mode !== 'race') return;
+      var room = R.room, cd = $('countdownOverlay'), lob = $('lobbyOverlay');
+      var spectate = isHost() && !room.hostPlays;
+      if (room.status === 'lobby') { lob.classList.add('show'); cd.classList.remove('show'); paintLobby(); return; }
+      lob.classList.toggle('show', !R.inRace && room.status === 'playing' && !spectate);
+      if (!R.inRace && room.status === 'playing' && !spectate) paintLobby();
+      var left = R.gateLocal ? R.gateLocal - Date.now() : 0;
+      if (room.status === 'playing' && left > 0) { cd.classList.add('show'); $('countdownText').textContent = Math.ceil(left / 1000); }
+      else {
+        if (cd.classList.contains('show')) { cd.classList.remove('show'); if (R.inRace && !G.done) setMessage('Go! Crack the equation — ' + G.len + ' tiles.', 'success'); paintCurrent(); }
+      }
+    }
+    function paintLobby() {
+      var room = R.room, host = isHost(), list = rankedPlayers();
+      var n = list.length;
+      var h = '<h3>' + (room.status === 'lobby' ? 'Waiting to start' : 'Round under way') + '</h3>';
+      h += '<div class="big-code">' + esc(R.code) + '</div>';
+      h += '<p class="form-note">' + CE.level(room.level).icon + ' ' + CE.level(room.level).name + ' · ' + (room.winBy === 'fewest' ? 'fewest guesses wins' : 'fastest wins') + ' · ' + n + ' player' + (n === 1 ? '' : 's') + ' joined. Join at millsmathstools.au → Crack the Equation → Race Mode.</p>';
+      if (room.status === 'playing') h += '<p class="form-note">You can play from the next round.</p>';
+      else if (host) {
+        h += '<div class="two"><label>Level<select id="lobbyLevel">' + CE.LEVELS.map(function (L) { return '<option value="' + L.id + '"' + (L.id === room.level ? ' selected' : '') + '>' + L.icon + ' ' + L.name + '</option>'; }).join('') + '</select></label>' +
+          '<div style="display:grid;align-items:end"><button class="btn-green" id="lobbyStart" type="button"' + (canStart() ? '' : ' disabled') + '>Start the race</button></div></div>';
+        if (!canStart()) h += '<p class="form-note">' + (room.hostPlays ? 'Waiting for at least one more player.' : 'Waiting for players to join.') + '</p>';
+      } else h += '<p class="form-note"><b>Waiting for ' + esc(room.hostName || 'the host') + ' to start.</b> Get ready — everyone starts together.</p>';
+      var card = $('lobbyCard');
+      var focusSel = document.activeElement && document.activeElement.id === 'lobbyLevel';
+      if (card.dataset.html === h) return; card.dataset.html = h;
+      card.innerHTML = h;
+      bind('lobbyStart', hostStart);
+      var sel = $('lobbyLevel');
+      if (sel) { sel.addEventListener('change', function () { hostUpdate({ level: sel.value }); }); if (focusSel) sel.focus(); }
+    }
+    function canStart() { var n = Object.keys(R.players).length; return R.room.hostPlays ? n >= 2 : n >= 1; }
+    async function hostUpdate(fields) {
+      try { var fb = await loadFirebase(); fields.updatedAtMs = Date.now(); await fb.fs.updateDoc(roomRef(fb, R.code), fields); }
+      catch (err) { console.error(err); setMessage(esc(fbError(err)), 'error'); }
+    }
+    function hostStart() {
+      if (!isHost()) return;
+      hostUpdate({ status: 'playing', gen: (R.room.gen || 0) + 1, seed: Math.floor(Math.random() * 2147483647) + 1, startGateAtMs: Date.now() + 3500, finishedAtMs: null });
+    }
+    function hostEndRound() { hostUpdate({ status: 'finished', finishedAtMs: Date.now() }); }
+    function hostAutoFinish() {
+      var room = R.room;
+      if (room.status !== 'playing') return;
+      var list = Object.values(R.players).filter(function (p) { return p.gen === room.gen; });
+      if (list.length && list.every(function (p) { return p.done; }) && !R.finishing) {
+        R.finishing = true; hostEndRound(); setTimeout(function () { R.finishing = false; }, 1500);
+      }
+    }
+    async function raceReport() {
+      try {
+        var fb = await loadFirebase();
+        await fb.fs.updateDoc(playerRef(fb, R.code, R.uid), {
+          gen: G.gen, rows: G.marks.slice(), done: G.done, solved: G.won, timeMs: G.done ? G.timeMs : null
+        });
+      } catch (err) { console.error(err); setMessage(esc(fbError(err)), 'error'); }
+    }
+    function raceShowResultSoon() {
+      if (G.won) setMessage('Cracked it in ' + G.rows.length + (G.rows.length === 1 ? ' guess' : ' guesses') + ' and ' + fmtTime(G.timeMs) + '! Watch the standings while the others finish.', 'success');
+      else setMessage('Out of guesses — the equation was <b>' + esc(CE.pretty(G.answer)) + '</b>. Watch the standings while the others finish.', 'warn');
+    }
+    function rankedPlayers() {
+      var room = R.room, gen = room.gen;
+      var arr = Object.keys(R.players).map(function (uid) { var p = R.players[uid]; return Object.assign({ uid: uid }, p, { cur: p.gen === gen && room.status !== 'lobby' }); });
+      function greens(p) { var r = p.rows && p.rows.length ? p.rows[p.rows.length - 1] : ''; return r.split('g').length - 1; }
+      arr.sort(function (a, b) {
+        if (a.cur !== b.cur) return a.cur ? -1 : 1;
+        if (!!a.solved !== !!b.solved) return a.solved ? -1 : 1;
+        if (a.solved) {
+          if (room.winBy === 'fewest' && a.rows.length !== b.rows.length) return a.rows.length - b.rows.length;
+          return (a.timeMs || 0) - (b.timeMs || 0);
+        }
+        var ga = greens(a), gb = greens(b); if (ga !== gb) return gb - ga;
+        return (a.joinedAtMs || 0) - (b.joinedAtMs || 0);
+      });
+      return arr;
+    }
+    function miniGrid(rows, n) {
+      var h = '<div class="mini" style="--n:' + n + '">';
+      for (var r = 0; r < ROWS; r++) {
+        h += '<div class="mr">';
+        for (var c = 0; c < n; c++) h += '<i class="' + (rows && rows[r] ? rows[r][c] : '') + '"></i>';
+        h += '</div>';
+      }
+      return h + '</div>';
+    }
+    function standingsHTML() {
+      var room = R.room, n = CE.level(room.level).len, host = isHost(), place = 0;
+      return rankedPlayers().map(function (p) {
+        var st;
+        if (!p.cur) st = room.status === 'lobby' ? 'ready' : 'joins next round';
+        else if (p.solved) st = '✓ ' + p.rows.length + '/6 · ' + fmtTime(p.timeMs);
+        else if (p.done) st = 'X/6';
+        else st = 'guess ' + (p.rows.length + 1) + ' of 6';
+        var pl = p.cur && p.solved ? ++place : '·';
+        return '<div class="srow' + (p.uid === R.uid ? ' me' : '') + (p.solved && p.cur ? ' solved' : '') + '"><span class="place">' + pl + '</span>' +
+          '<div class="who"><b>' + esc(p.name) + (p.uid === R.uid ? ' (you)' : '') + '</b><small>' + st + '</small></div>' +
+          '<div style="display:flex;gap:8px;align-items:center">' + miniGrid(p.cur ? p.rows : [], n) +
+          (host && p.uid !== R.uid ? '<button class="kick" type="button" data-kick="' + esc(p.uid) + '" title="Remove ' + esc(p.name) + '">×</button>' : '') + '</div></div>';
+      }).join('') || '<p class="form-note">No players yet.</p>';
+    }
+    function paintRace() {
+      var room = R.room, host = isHost();
+      var s = standingsHTML();
+      $('standings').innerHTML = s;
+      var spect = host && !room.hostPlays;
+      $('classView').innerHTML = spect ? '<div class="room-badge"><span>Room <span class="room-code">' + esc(R.code) + '</span> · ' + CE.level(room.level).icon + ' ' + CE.level(room.level).name + '</span><span>' + (room.status === 'lobby' ? 'Lobby' : room.status === 'playing' ? 'Racing' : 'Round over') + '</span></div><div class="standings">' + s + '</div>' : '';
+      document.querySelectorAll('[data-kick]').forEach(function (b) {
+        b.addEventListener('click', async function () {
+          try { var fb = await loadFirebase(); await fb.fs.deleteDoc(playerRef(fb, R.code, b.dataset.kick)); } catch (err) { console.error(err); }
+        });
+      });
+      var tools = '';
+      if (host) {
+        if (room.status === 'lobby') tools = '<button class="btn-green" id="hostStartBtn" type="button"' + (canStart() ? '' : ' disabled') + '>Start the race</button>';
+        else if (room.status === 'playing') tools = '<button class="btn" id="hostEndBtn" type="button">End round now</button>';
+        else tools = '<button class="btn-green" id="hostNextBtn" type="button">Next round</button><select id="hostLevel" style="width:auto">' + CE.LEVELS.map(function (L) { return '<option value="' + L.id + '"' + (L.id === room.level ? ' selected' : '') + '>' + L.icon + ' ' + L.name + '</option>'; }).join('') + '</select>';
+      }
+      $('hostTools').innerHTML = tools;
+      bind('hostStartBtn', hostStart); bind('hostEndBtn', function () { if (confirm('End the round for everyone now?')) hostEndRound(); });
+      bind('hostNextBtn', function () { var lv = $('hostLevel').value; hostUpdate({ level: lv }).then(hostStart); });
+      if (G && G.mode === 'race' && !G.done) {
+        if (room.status === 'finished' && R.inRace) setMessage('The round is over. The equation was <b>' + esc(CE.pretty(G.answer)) + '</b>.', 'warn');
+        else if (room.status === 'lobby') setMessage(host ? 'Share the room code. Press Start when everyone is in.' : 'You are in room ' + esc(R.code) + '. Waiting for the host to start.');
+        else if (spect) setMessage('Class view: everyone\'s colours, live. Nobody\'s guesses are shared.');
+      }
+      if (spect && room.status === 'finished') setMessage('Round over. The equation was <b>' + esc(CE.pretty(G.answer)) + '</b>.', 'success');
+      $('resultBtn').classList.toggle('hidden', room.status !== 'finished');
+    }
+    function raceResult() {
+      var room = R.room; if (!room || !G) return;
+      var list = rankedPlayers().filter(function (p) { return p.cur; });
+      var mine = R.players[R.uid];
+      var winner = list[0] && list[0].solved ? list[0] : null;
+      $('endTitle').textContent = winner ? (winner.uid === R.uid ? '🏆 You won the round!' : '🏁 ' + winner.name + ' wins the round') : 'Nobody cracked it this time';
+      $('endSub').textContent = CE.level(room.level).name + ' · ' + (room.winBy === 'fewest' ? 'fewest guesses, then fastest' : 'fastest to crack it') + (mine && mine.gen === room.gen ? ' · you: ' + (mine.solved ? mine.rows.length + '/6 in ' + fmtTime(mine.timeMs) : 'X/6') : '');
+      $('endAnswer').innerHTML = answerTiles(G.answer, true);
+      $('endWorking').innerHTML = workingLine(G.answer);
+      $('endExtra').innerHTML = '<div class="standings">' + standingsHTML() + '</div>';
+      $('shareFallback').classList.add('hidden');
+      var acts = isHost() ? '<button class="btn-green" type="button" id="endRaceNext">Next round</button>' : '<span class="form-note">Waiting for the host to start the next round…</span>';
+      $('endActions').innerHTML = acts;
+      bind('endRaceNext', function () { closeModal('endModal'); hostStart(); });
+      $('endModal').querySelectorAll('[data-kick]').forEach(function (b) { b.remove(); });
+      openModal('endModal');
+    }
+
+    /* ---------------------------------------------------------- boot */
+    window.__ce = { get G() { return G; }, R: R, CE: CE, settings: settings, press: press, startDaily: startDaily, startPractice: startPractice, showMenu: showMenu };
+    showMenu();
+  })();
+  </script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+</body>
+</html>

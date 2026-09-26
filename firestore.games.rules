@@ -11,7 +11,7 @@ rules_version = '2';
 // Reference copy of the LIVE rules. Deploy by pasting the whole file into
 // Firebase Console -> project mmt-firebase-games -> Firestore -> Rules -> Publish.
 //
-// Last reviewed: 2026-09-22 — FULL AUDIT (every page in the repo that loads Firebase,
+// Last reviewed: 2026-09-27 (equationRaceRooms added). Before that 2026-09-22 — FULL AUDIT (every page in the repo that loads Firebase,
 // traced to its projectId and every doc()/collection() path it touches).
 // nastyGameRooms added 2026-09-21. Previous full audit 2026-07-29 — full audit of every page in the site that talks
 // to this project. Every game below was traced from its firebaseConfig through
@@ -27,6 +27,7 @@ rules_version = '2';
 //   games/checkers.html                games/checkers/rooms/{code}               OK (2026-09-19)
 //   games/cartesian-connect-4.html     games/cartesianConnect4/rooms/{code}      OK
 //   games/nasty-game.html              nastyGameRooms/{code} (+ members, tables) ADDED 2026-09-21
+//   games/crack-the-equation.html      equationRaceRooms/{code} (+ players)      ADDED 2026-09-27
 //   games/closest-to-100.html is listed further down (closestTo100Games) — its
 //   config uses single quotes, which is easy to miss in a search.
 //
@@ -57,6 +58,9 @@ rules_version = '2';
 //
 // CHANGED IN THIS REVISION
 // ----------------------------------------------------------------------------
+//   + equationRaceRooms — 2026-09-27, Crack the Equation's race mode. MUST BE
+//                         PUBLISHED before races work (single player and today's
+//                         equations need no Firebase at all).
 //   ! 2026-09-22 REPAIR — the 2026-09-21 edit that added nastyGameRooms
 //     overwrote the squareChainRooms/members rule and dropped the top of the
 //     nastyGameRooms block. Both are restored here. If the 2026-09-21 file was
@@ -262,6 +266,79 @@ service cloud.firestore {
           && request.resource.data.gen == resource.data.gen
           && request.resource.data.g is string
           && request.resource.data.g.size() < 60000;
+      }
+    }
+
+    // ======================================================================
+    // Crack the Equation — race rooms  (NEW 2026-09-27)
+    // games/crack-the-equation.html
+    // ----------------------------------------------------------------------
+    // equationRaceRooms/{CODE}                  the room — written by the HOST only
+    //   hostUid, hostName, hostPlays, status 'lobby'|'playing'|'finished',
+    //   level, winBy 'fast'|'fewest', seed, gen, startGateAtMs, finishedAtMs,
+    //   createdAtMs, updatedAtMs, expireAt
+    // equationRaceRooms/{CODE}/players/{uid}    one per player — written by THAT player
+    //   name, joinedAtMs, gen, rows (COLOURS only, e.g. "gybbgybg" — never
+    //   a guess), done, solved, timeMs, hostUid, expireAt
+    //
+    // The room holds a SEED, never the equation; every client builds the same
+    // equation from it. Players are separate docs so 30 students guessing at
+    // once never contend for one document. A player may join only while the
+    // room is not mid-round (so nobody slips in after the start), may only
+    // ever write their own doc, and cannot change the hostUid it carries —
+    // which is what lets the host remove a player or close the room in one
+    // batch without a get() per document.
+    // Codes are 5 characters from A–Z/2–9 without I and O; listing rooms is
+    // denied so they cannot be enumerated.
+    //
+    // HOUSEKEEPING: add TTL policies on `expireAt` for the collection groups
+    // equationRaceRooms and players (Firestore -> TTL). Rooms last 3 days.
+    // ======================================================================
+    match /equationRaceRooms/{code} {
+
+      function signedIn() { return request.auth != null; }
+      function goodCode() { return code.matches('^[A-HJ-NP-Z2-9]{5}$'); }
+      function roomData() { return get(/databases/$(database)/documents/equationRaceRooms/$(code)).data; }
+      function goodRoom(d) {
+        return d.keys().hasOnly(['hostUid','hostName','hostPlays','status','level','winBy','seed','gen',
+                                 'startGateAtMs','finishedAtMs','createdAtMs','updatedAtMs','expireAt'])
+          && d.status in ['lobby','playing','finished']
+          && d.level in ['sweet','mild','medium','spicy','extra']
+          && d.gen is int && d.seed is int
+          && d.hostName is string && d.hostName.size() <= 24;
+      }
+      function goodPlayer(d) {
+        return d.keys().hasOnly(['name','joinedAtMs','gen','rows','done','solved','timeMs','hostUid','expireAt'])
+          && d.name is string && d.name.size() >= 1 && d.name.size() <= 24
+          && d.rows is list && d.rows.size() <= 6
+          && d.done is bool && d.solved is bool && d.gen is int;
+      }
+
+      allow get:    if signedIn();
+      allow list:   if false;
+      allow create: if signedIn() && goodCode()
+                    && request.resource.data.hostUid == request.auth.uid
+                    && request.resource.data.status == 'lobby'
+                    && goodRoom(request.resource.data);
+      allow update: if signedIn()
+                    && resource.data.hostUid == request.auth.uid
+                    && request.resource.data.hostUid == resource.data.hostUid
+                    && goodRoom(request.resource.data);
+      allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+
+      match /players/{uid} {
+        allow get, list: if signedIn();
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && roomData().status != 'playing'
+          && request.resource.data.hostUid == roomData().hostUid
+          && goodPlayer(request.resource.data);
+        allow update: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.hostUid == resource.data.hostUid
+          && goodPlayer(request.resource.data);
+        allow delete: if signedIn()
+          && (request.auth.uid == uid || resource.data.hostUid == request.auth.uid);
       }
     }
 
