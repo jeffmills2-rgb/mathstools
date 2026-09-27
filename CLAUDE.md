@@ -1,3 +1,7 @@
+## Offline app (PWA)
+- Before every push: run `node tools/build-pwa.mjs` and commit `precache-manifest.js`.
+- New pages: run `node tools/build-pwa.mjs --inject` once so they get the PWA tags.
+
 # Mills Maths Tools — Project Brief
 
 > Hand this file to Claude at the start of any chat to get up to speed without
