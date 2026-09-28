@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Crosswise v1 (2026-09-28): maths crosswords in two modes — an equation
+     crossword and a clue-style cross-number. Five levels each. -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#123b7a" />
+  <title>Crosswise — Maths Crosswords | Mills Maths Tools</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue2:#1d4ed8; --purple:#7c3aed; --green:#6cbc4a; --green2:#49a529;
+      --red:#ef4444; --amber:#f59e0b; --btn:#eef2f7; --btnHover:#e5ebf3;
+      --mathFont:"Cambria Math","STIX Two Math","STIXGeneral","Times New Roman",serif;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      /* The three clue colours. Colour-blind mode swaps them (body.cb). */
+      --hit:#3f9b2b;  --hitInk:#ffffff;
+      --near:#f59e0b; --nearInk:#3b1d02;
+      --miss:#475569; --missInk:#ffffff;
+    }
+    body.cb{ --hit:#ea580c; --hitInk:#ffffff; --near:#2563eb; --nearInk:#ffffff; }
+
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;}
+    body{margin:0;font-family:var(--uiFont);color:var(--ink);
+      background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+                 radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),var(--bg);}
+
+    .mmtTopbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);color:white;
+      padding:8px 18px;min-height:64px;display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(300px,1fr);align-items:center;gap:14px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);}
+    .mmtBrand{display:flex;align-items:center;gap:9px;justify-self:start;text-decoration:none;color:white;border-radius:14px;padding:5px 9px;margin-left:-9px;font-weight:900;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;user-select:none;}
+    .mmtBrand:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4);}
+    .mmtBrandLogo{width:36px;height:36px;object-fit:contain;background:white;border-radius:6px;padding:3px;flex:0 0 auto;}
+    .mmtBrandText strong{display:block;font-size:1.05rem;line-height:1;letter-spacing:-.03em;color:white;}
+    .mmtBrandText span{display:block;font-size:.72rem;opacity:.82;font-weight:650;color:white;}
+    .mmtTopTitle{font-weight:850;font-size:clamp(1.1rem,1.7vw,1.45rem);letter-spacing:-.04em;text-align:center;color:white;white-space:nowrap;}
+    .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+
+    button,select,input{font:inherit;}
+    button{border:1px solid transparent;cursor:pointer;border-radius:14px;padding:11px 15px;font-weight:900;font-size:15px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;user-select:none;font-family:var(--uiFont);}
+    button:hover{transform:translateY(-1px);}
+    button:active{transform:translateY(0);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.24);}
+    .btn,.btn-soft{border-color:rgba(15,23,42,.08);background:var(--btn);color:var(--ink);}
+    .btn:hover,.btn-soft:hover{background:var(--btnHover);}
+    .mmtTopbar .btn{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.14);color:white;padding:9px 13px;font-size:14px;border-radius:13px;}
+    .mmtTopbar .btn:hover{background:rgba(255,255,255,.22);}
+    .btn-primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.20);}
+    .btn-primary:hover{background:var(--blue2);}
+    .btn-green{background:var(--green2);color:white;border-color:var(--green2);}
+    .btn-red{background:#fff1f2;color:#b91c1c;border-color:#fecdd3;}
+    .btn-purple{background:var(--purple);color:white;border-color:var(--purple);}
+    input[type="text"],select{width:100%;border:1px solid var(--border);background:white;border-radius:14px;padding:12px 14px;color:var(--ink);outline:none;font-weight:800;}
+    input[type="text"]:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    label{color:#334155;font-weight:850;font-size:.92rem;display:grid;gap:6px;}
+
+    .layout{width:min(1400px,calc(100vw - 36px));margin:12px auto 8px;}
+    .card{background:rgba(255,255,255,.95);border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:var(--shadow);}
+    .hidden{display:none!important;}
+    h1,h2,h3,p{margin-top:0;}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;}
+
+    /* ------------------------------------------------------------ MENU */
+    .menu-card{padding:28px;display:grid;gap:18px;place-items:center;min-height:560px;}
+    .menu-inner{width:min(900px,100%);display:grid;gap:18px;}
+    .intro{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;}
+    .intro h1{font-size:clamp(1.8rem,3.4vw,2.8rem);letter-spacing:-.06em;margin:0 0 6px;line-height:1;}
+    .intro p{margin:0;color:#475569;font-weight:700;line-height:1.45;}
+    .demo-row{display:flex;gap:4px;}
+    .demo-row .tile{width:38px;height:38px;font-size:1.25rem;border-radius:9px;}
+    .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+    .mode-card{display:grid;align-content:start;gap:6px;text-align:left;padding:18px;border-radius:22px;border:2px solid var(--border);background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 14px 28px rgba(15,23,42,.08);color:var(--ink);}
+    .mode-card:hover{border-color:#bfdbfe;background:linear-gradient(180deg,#eef6ff,#fff);}
+    .mode-card .mode-icon{width:52px;height:52px;border-radius:16px;background:#eef2ff;display:grid;place-items:center;font-size:1.8rem;}
+    .mode-card strong{font-size:1.25rem;font-weight:950;letter-spacing:-.03em;}
+    .mode-card span.desc{color:var(--muted);font-size:.92rem;font-weight:750;line-height:1.35;}
+    .today-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .today-chip{font-size:.78rem;font-weight:900;padding:4px 8px;border-radius:999px;background:#e2e8f0;color:#334155;}
+    .today-chip.won{background:#dcfce7;color:#166534;}
+    .today-chip.lost{background:#fee2e2;color:#991b1b;}
+
+    /* ----------------------------------------------------- MODAL SHELL */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.40);display:none;place-items:center;z-index:90;padding:18px;}
+    .modal-backdrop.open{display:grid;}
+    .modal{width:min(640px,100%);max-height:calc(100dvh - 36px);overflow:auto;background:white;border-radius:26px;box-shadow:0 34px 90px rgba(15,23,42,.34);border:1px solid #dbe3ef;padding:22px;display:grid;gap:14px;}
+    .modal.wide{width:min(760px,100%);}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;}
+    .modal h2{margin:0;font-size:1.4rem;letter-spacing:-.03em;}
+    .form-note{font-size:.88rem;color:var(--muted);font-weight:750;line-height:1.4;margin:0;}
+    .level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    .level-btn{background:white;border:2px solid var(--border);color:#334155;text-align:left;display:grid;gap:4px;padding:12px;border-radius:16px;align-content:start;position:relative;}
+    .level-btn .li{font-size:1.5rem;}
+    .level-btn strong{font-size:.98rem;}
+    .level-btn span{font-size:.74rem;color:var(--muted);font-weight:800;line-height:1.3;}
+    .level-btn.selected{border-color:var(--purple);background:#f5f3ff;color:#4c1d95;box-shadow:0 0 0 4px rgba(124,58,237,.10);}
+    .level-btn .done-badge{position:absolute;top:8px;right:8px;font-size:.72rem;font-weight:950;border-radius:999px;padding:2px 7px;}
+    .done-badge.won{background:#dcfce7;color:#166534;}
+    .done-badge.lost{background:#fee2e2;color:#991b1b;}
+    .done-badge.going{background:#fef3c7;color:#92400e;}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+    .tabs{display:flex;gap:6px;background:#f1f5f9;border-radius:14px;padding:4px;}
+    .tabs button{flex:1;background:transparent;padding:9px;border-radius:11px;color:#334155;}
+    .tabs button.on{background:white;box-shadow:0 2px 8px rgba(15,23,42,.1);color:var(--blue2);}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .check-row{display:flex;align-items:center;gap:10px;font-weight:850;color:#334155;}
+    .check-row input{width:20px;height:20px;}
+    .rules-list{display:grid;gap:10px;margin:0;padding:0;list-style:none;}
+    .rules-list li{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);font-weight:800;line-height:1.4;color:#334155;}
+    .rules-list li .demo-row{margin-top:8px;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);}
+    .toggle-row b{display:block;font-weight:950;}
+    .toggle-row small{display:block;color:var(--muted);font-weight:750;margin-top:2px;line-height:1.3;}
+    .switch{position:relative;width:52px;height:30px;flex:0 0 auto;}
+    .switch input{opacity:0;width:100%;height:100%;margin:0;position:absolute;inset:0;cursor:pointer;z-index:2;}
+    .switch span{position:absolute;inset:0;border-radius:999px;background:#cbd5e1;transition:background .2s;}
+    .switch span::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:white;box-shadow:0 2px 6px rgba(15,23,42,.25);transition:transform .2s;}
+    .switch input:checked + span{background:var(--blue);}
+    .switch input:checked + span::after{transform:translateX(22px);}
+    .switch input:focus-visible + span{box-shadow:0 0 0 4px rgba(37,99,235,.24);}
+
+    /* ------------------------------------------------------------ GAME */
+    .game-card{padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+    .status-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .turn-card{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--border);min-width:0;}
+    .status-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.3rem;flex:0 0 auto;}
+    .status-title{font-weight:950;font-size:1.05rem;letter-spacing:-.02em;}
+    .status-subtitle{color:var(--muted);font-size:.88rem;margin-top:2px;font-weight:750;}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:950;font-size:.9rem;}
+    .btn.on{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
+    .game-area{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start;}
+    .play-col{display:grid;gap:12px;justify-items:center;min-width:0;}
+    .message{width:min(100%,640px);padding:11px 14px;border-radius:16px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-weight:850;min-height:46px;line-height:1.4;}
+    .message.success{background:#dcfce7;border-color:#86efac;color:#166534;}
+    .message.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+    .message.error{background:#fee2e2;border-color:#fecaca;color:#991b1b;}
+
+    /* The board. --cols and --cell are set by fitBoard() from the MEASURED room. */
+    .board-wrap{width:100%;display:grid;justify-items:center;}
+    .board{display:grid;grid-template-columns:repeat(var(--cols),var(--cell,48px));grid-auto-rows:var(--cell,48px);gap:var(--gap,4px);touch-action:manipulation;}
+    /* Equation crossword cells */
+    .ec{border-radius:10px;display:grid;place-items:center;font-weight:900;font-size:calc(var(--cell,48px) * .4);font-variant-numeric:tabular-nums;user-select:none;line-height:1;}
+    .ec.void{visibility:hidden;}
+    .ec.num{background:white;border:2px solid #cbd5e1;color:var(--ink);}
+    .ec.num.long{font-size:calc(var(--cell,48px) * .31);}
+    .ec.num.given{background:#f1f5f9;border-color:#e2e8f0;}
+    .ec.blank{background:white;border:2px dashed #94a3b8;color:var(--blue2);cursor:pointer;}
+    .ec.blank.filled{border-style:solid;border-color:#64748b;}
+    .ec.op,.ec.eqs{font-family:var(--mathFont);font-size:calc(var(--cell,48px) * .5);color:#6d28d9;background:transparent;}
+    .ec.op.blank{background:#f5f3ff;border:2px dashed #a78bfa;color:#6d28d9;}
+    .ec.op.blank.filled{border-style:solid;}
+    .ec.eqs{color:#475569;border-radius:50%;}
+    .ec.eqs.ok{background:#dcfce7;color:#166534;}
+    .ec.eqs.bad{background:#fee2e2;color:#b91c1c;}
+    .ec.sel,.cc.sel{box-shadow:0 0 0 3px var(--blue);border-color:var(--blue)!important;}
+    .ec.wrong,.cc.wrong{background:#fee2e2!important;color:#b91c1c!important;}
+    .ec.lit{background:#eef6ff;}
+    /* Cross-number cells */
+    .cc{position:relative;background:white;border:1.5px solid #94a3b8;display:grid;place-items:center;font-weight:900;font-size:calc(var(--cell,48px) * .5);cursor:pointer;user-select:none;font-variant-numeric:tabular-nums;color:var(--ink);}
+    .cc.black{background:#1e293b;border-color:#1e293b;cursor:default;}
+    .cc .n{position:absolute;top:2px;left:3px;font-size:calc(var(--cell,48px) * .2);font-weight:900;color:#475569;line-height:1;}
+    .cc.inword{background:#dbeafe;}
+    .cc.sel{background:#fde68a;}
+    .board.cn{gap:0;border:2px solid #1e293b;border-radius:6px;overflow:hidden;}
+    .board.cn .cc{border-width:0 1px 1px 0;}
+    .solved .ec.num,.solved .cc:not(.black){background:#f0fdf4;}
+
+    .cluebar{width:min(100%,640px);display:flex;align-items:center;gap:8px;padding:8px;border-radius:16px;background:#1e3a8a;color:white;min-height:52px;}
+    .cluebar .cb-text{flex:1;font-weight:850;line-height:1.3;font-size:1.02rem;text-align:center;}
+    .cluebar .cb-text b{display:block;font-size:.78rem;opacity:.8;letter-spacing:.04em;text-transform:uppercase;}
+    .cluebar button{background:rgba(255,255,255,.16);color:white;border:1px solid rgba(255,255,255,.2);padding:8px 12px;min-height:40px;}
+    .clue-cols{display:grid;gap:12px;}
+    @media(min-width:1081px){ #cluePanel{max-height:calc(100dvh - 190px);overflow:auto;} }
+    .clue-list{list-style:none;margin:0;padding:0;display:grid;gap:3px;}
+    .clue-list li{display:grid;grid-template-columns:30px 1fr auto;gap:6px;padding:7px 8px;border-radius:10px;cursor:pointer;font-weight:750;color:#334155;line-height:1.35;}
+    .clue-list li:hover{background:#eef2ff;}
+    .clue-list li.cur{background:#dbeafe;color:#1e3a8a;}
+    .clue-list li .cn-num{font-weight:950;}
+    .clue-list li .mk{font-weight:950;}
+    .clue-list li.ok .mk{color:#16a34a;} .clue-list li.bad .mk{color:#dc2626;}
+    .clue-list li.full{opacity:.7;}
+    .clue-list li.cur.full{opacity:1;}
+
+    .bank{width:min(100%,640px);display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px;border-radius:16px;background:#f5f3ff;border:1px dashed #c4b5fd;}
+    .bank .tile{min-width:46px;height:44px;padding:0 10px;border-radius:12px;background:white;border:2px solid #c4b5fd;color:#4c1d95;font-weight:950;font-size:1.1rem;}
+    .bank .tile.used{opacity:.3;}
+    .bank-note{width:100%;text-align:center;font-size:.8rem;font-weight:850;color:#6d28d9;}
+
+    .side-panel .keyboard{width:100%;}
+    .keyboard{width:min(100%,640px);display:grid;gap:8px;padding:10px;border-radius:20px;background:#e8eef6;}
+    .krow{display:grid;gap:7px;}
+    .krow.digits{grid-template-columns:repeat(10,1fr);}
+    .krow.tools{grid-auto-flow:column;grid-auto-columns:1fr;}
+    .key{height:52px;padding:0;border-radius:12px;background:white;color:var(--ink);font-size:1.35rem;font-weight:900;border:1px solid #d7dfea;box-shadow:0 2px 0 #cbd5e1;}
+    .key.op{font-family:var(--mathFont);font-size:1.6rem;color:#6d28d9;}
+    .key.wide{font-size:.95rem;}
+    .key:hover{transform:none;filter:brightness(.97);}
+    .key:disabled{opacity:.35;}
+
+    .side-panel{display:grid;gap:14px;}
+    .panel-section{border-radius:20px;padding:14px;background:#f8fafc;border:1px solid var(--border);display:grid;gap:10px;}
+    .panel-section h2{font-size:1.05rem;margin:0;font-weight:950;letter-spacing:-.02em;}
+    .mini-rules{margin:0;padding-left:18px;color:#334155;font-weight:750;font-size:.9rem;line-height:1.45;display:grid;gap:4px;}
+    .end-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .stat-card{border-radius:14px;padding:10px;background:#f8fafc;border:1px solid var(--border);text-align:center;}
+    .stat-card strong{display:block;font-size:1.5rem;}
+    .stat-card span{display:block;color:#475569;font-weight:850;font-size:.8rem;}
+    .brand-footer{width:min(1400px,calc(100vw - 36px));margin:0 auto 8px;display:flex;align-items:center;justify-content:center;min-height:30px;font-size:12px;font-weight:900;color:#111827;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.95);border-radius:14px;text-align:center;}
+    .brand-footer a{color:var(--blue);text-decoration:none;font-weight:950;}
+    .confetti{position:fixed;width:10px;height:14px;top:-20px;z-index:100;animation:fall 1100ms linear forwards;border-radius:3px;pointer-events:none;}
+    @keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:0;}}
+    .mode-card .mode-demo{display:flex;gap:3px;margin:4px 0 2px;}
+    .mode-demo span{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-weight:900;font-size:.85rem;background:#f1f5f9;border:1px solid #cbd5e1;}
+    .mode-demo span.o{background:transparent;border:0;color:#6d28d9;font-family:var(--mathFont);font-size:1.05rem;}
+    .mode-demo span.q{border-style:dashed;background:white;color:var(--blue2);}
+    .mode-demo span.k{background:#1e293b;border-color:#1e293b;}
+    .continue-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;background:#fef3c7;border:1px solid #fcd34d;font-weight:850;color:#92400e;}
+
+    @media(max-width:1080px){
+      .mmtTopbar{grid-template-columns:1fr;justify-items:center;padding:12px 14px;}
+      .mmtBrand{justify-self:center;margin-left:0;}
+      .actions{justify-content:center;}
+      /* minmax(0,…) or the board's own width props the column open past the screen */
+      .game-area{grid-template-columns:minmax(0,1fr);}
+      .mode-grid{grid-template-columns:1fr!important;}
+      .level-grid{grid-template-columns:repeat(3,1fr);}
+      .clue-cols{grid-template-columns:1fr 1fr;}
+    }
+    @media(max-width:1080px) and (min-width:701px){
+      .mmtTopbar{grid-template-columns:auto 1fr auto;justify-items:stretch;padding:8px 14px;}
+      .mmtBrand{justify-self:start;}
+      .mmtTopTitle{text-align:center;}
+    }
+
+/* ==== MMT PHONE LAYOUT (added 2026-09-28) — do not edit above this line ==== */
+@media(max-width:700px){
+  .mmtTopbar{position:relative;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px 8px;padding:7px 10px;min-height:0;}
+  .mmtBrand{justify-self:start;margin:0;padding:2px;gap:6px;}
+  .mmtBrandText{display:none;}
+  .mmtBrandLogo{width:30px;height:30px;}
+  .mmtTopTitle{grid-column:2;justify-self:start;text-align:left;min-width:0;font-size:1.02rem;line-height:1.14;white-space:normal;}
+  .actions{grid-column:3;margin:0;display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:5px;}
+  .actions .btn,.actions button{padding:8px 10px;font-size:15px;line-height:1.15;border-radius:11px;white-space:nowrap;min-width:40px;min-height:40px;}
+  .actions .lbl{display:none;}
+  .modal-backdrop{padding:10px;align-items:start;overflow:auto;}
+  .modal{max-height:calc(100dvh - 20px);overflow:auto;-webkit-overflow-scrolling:touch;padding:16px;}
+  .layout,.layout>*,.card{min-width:0;}
+  .brand-footer{width:calc(100vw - 16px);padding:8px 10px;font-size:.8rem;}
+  /* Crosswise on a phone: board full width, current clue pinned above it,
+     keypad sticky at the thumb, clue lists underneath. */
+  .layout{width:calc(100vw - 16px);margin-top:8px;}
+  .menu-card{padding:16px;min-height:0;}
+  .intro{grid-template-columns:1fr;}
+  .level-grid{grid-template-columns:1fr 1fr;}
+  .game-card{padding:8px;gap:8px;}
+  .status-strip{flex-wrap:nowrap;gap:8px;}
+  .turn-card{padding:8px 10px;border-radius:14px;flex:1 1 auto;min-width:0;}
+  .status-icon{display:none;}
+  .status-title{font-size:.95rem;}
+  .status-subtitle{font-size:.8rem;}
+  .toolbar{flex-wrap:nowrap;flex:0 0 auto;gap:6px;}
+  .toolbar .btn,.toolbar button{padding:8px 10px;font-size:13px;min-height:40px;}
+  .toolbar .lbl{display:none;}
+  .chip{padding:6px 9px;font-size:.82rem;}
+  .message{padding:9px 11px;font-size:.9rem;min-height:0;}
+  .cluebar{position:sticky;top:0;z-index:7;border-radius:12px;min-height:48px;padding:6px;}
+  .cluebar .cb-text{font-size:.95rem;}
+  .cluebar button{padding:6px 10px;}
+  .keyboard{position:sticky;bottom:0;z-index:6;width:calc(100% + 16px);margin:0 -8px;border-radius:16px 16px 0 0;padding:8px 4px calc(8px + env(safe-area-inset-bottom));gap:6px;box-shadow:0 -10px 24px rgba(15,23,42,.08);}
+  .krow{gap:3px;}
+  .key{height:50px;font-size:1.25rem;border-radius:10px;}
+  .key.wide{font-size:.82rem;}
+  .clue-cols{grid-template-columns:1fr;}
+  .bank .tile{min-width:44px;height:44px;}
+  .end-stats{grid-template-columns:repeat(3,1fr);}
+  @media(max-width:359px){ .status-strip{flex-wrap:wrap;} .toolbar{margin-left:auto;} .mmtTopTitle{font-size:.9rem;} .actions .btn,.actions button{min-width:36px;padding:8px 7px;} }
+}
+/* ==== end MMT PHONE LAYOUT ==== */
+  </style>
+</head>
+<body>
+  <header class="mmtTopbar">
+    <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+      <img class="mmtBrandLogo" src="../assets/mmt.png" alt="Mills Maths Tools logo" />
+      <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+    </a>
+    <div class="mmtTopTitle">Crosswise</div>
+    <div class="actions">
+      <button class="btn" id="rulesBtn" type="button" aria-label="How to play" title="How to play">❓<span class="lbl"> How to play</span></button>
+      <button class="btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">⚙︎</button>
+      <button class="btn hidden" id="menuBtn" type="button" aria-label="Back to menu" title="Back to menu">☰<span class="lbl"> Menu</span></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- =========================================================== MENU -->
+    <section class="card menu-card" id="menuPage">
+      <div class="menu-inner">
+        <div class="intro">
+          <div class="mode-demo" aria-hidden="true" style="display:grid;grid-template-columns:repeat(5,26px);gap:3px">
+            <span>7</span><span class="o">×</span><span class="q">?</span><span class="o">=</span><span>42</span>
+            <span class="o">+</span><span class="o" style="visibility:hidden"></span><span class="o">−</span><span class="o" style="visibility:hidden"></span><span class="o">÷</span>
+            <span class="q">?</span><span class="o" style="visibility:hidden"></span><span>2</span><span class="o" style="visibility:hidden"></span><span>6</span>
+          </div>
+          <div>
+            <h1>Crosswise</h1>
+            <p>Maths crosswords, two ways. Fill a grid of equations that cross over each other, or solve a cross-number where every answer is a number and the clues are calculations, number facts and algebra.</p>
+          </div>
+        </div>
+        <div class="mode-grid" style="grid-template-columns:repeat(2,1fr)">
+          <button class="mode-card" id="eqModeBtn" type="button">
+            <span class="mode-icon">➕</span>
+            <strong>Equation crossword</strong>
+            <span class="desc">Every row and column is a small equation, and they share numbers where they cross. Find the missing numbers so every one is true.</span>
+            <span class="mode-demo"><span>9</span><span class="o">−</span><span class="q">?</span><span class="o">=</span><span>4</span></span>
+          </button>
+          <button class="mode-card" id="cnModeBtn" type="button">
+            <span class="mode-icon">🔢</span>
+            <strong>Cross-number</strong>
+            <span class="desc">A crossword where every answer is a number, one digit to a square. Clues are sums, number facts like "a square number", other answers and algebra.</span>
+            <span class="mode-demo"><span>1</span><span>4</span><span>4</span><span class="k"></span><span>7</span></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================== GAME -->
+    <section class="card game-card hidden" id="gamePage">
+      <div class="status-strip">
+        <div class="turn-card">
+          <div class="status-icon" id="statusIcon">➕</div>
+          <div style="min-width:0">
+            <div class="status-title" id="statusTitle">—</div>
+            <div class="status-subtitle" id="statusSub">—</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span class="chip hidden" id="timerChip">⏱ <span id="timerText">0:00</span></span>
+          <button class="btn hidden" id="bankBtn" type="button" title="Show or hide the missing numbers">🔢<span class="lbl"> Number bank</span></button>
+          <button class="btn" id="checkBtn" type="button" title="Check what you have filled in">✓<span class="lbl"> Check</span></button>
+          <button class="btn-primary" id="newBtn" type="button" title="New puzzle">↻<span class="lbl"> New puzzle</span></button>
+        </div>
+      </div>
+      <div class="game-area">
+        <div class="play-col">
+          <div class="message" id="message" role="status" aria-live="polite">—</div>
+          <div class="cluebar hidden" id="clueBar">
+            <button type="button" id="cluePrev" aria-label="Previous clue">◀</button>
+            <div class="cb-text" id="clueText">—</div>
+            <button type="button" id="clueNext" aria-label="Next clue">▶</button>
+          </div>
+          <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
+          <div class="bank hidden" id="bank"></div>
+          <div class="keyboard" id="keyboard" aria-label="Keypad"></div>
+        </div>
+        <aside class="side-panel" id="sidePanel">
+          <div class="panel-section hidden" id="cluePanel">
+            <div class="clue-cols">
+              <div><h2>Across</h2><ul class="clue-list" id="acrossList"></ul></div>
+              <div><h2>Down</h2><ul class="clue-list" id="downList"></ul></div>
+            </div>
+          </div>
+          <div class="panel-section" id="howPanel"></div>
+          <div class="panel-section"><button class="btn-red" id="giveUpBtn" type="button">Show the answer</button></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="brand-footer"><span>Made for <a href="https://www.millsmathstools.au">Mills Maths Tools</a> · maths crosswords</span></footer>
+
+  <!-- ========================================================= MODALS -->
+  <div class="modal-backdrop" id="levelModal" role="dialog" aria-modal="true" aria-labelledby="levelTitle">
+    <div class="modal wide">
+      <div class="modal-header"><h2 id="levelTitle">Choose a level</h2><button class="btn" data-close="levelModal" type="button">Back</button></div>
+      <div id="continueSlot"></div>
+      <p class="form-note" id="levelNote">—</p>
+      <div class="level-grid" id="levelGrid"></div>
+      <div class="modal-actions"><button class="btn-primary" id="levelStartBtn" type="button">Start</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="rulesTitle">How to play</h2><button class="btn" data-close="rulesModal" type="button">Close</button></div>
+      <h3 style="margin:0">Equation crossword</h3>
+      <ul class="rules-list">
+        <li>Each row and each column of boxes is one equation: number, sign, number, =, answer. Equations cross where they share a number.</li>
+        <li>Fill every dashed box so that EVERY equation is true. Start with an equation that has only one box missing — the number you find there helps the equation that crosses it.</li>
+        <li>Each = sign turns green when its equation is complete and true, and red when it is not.</li>
+        <li>Spicy and Extra Spicy use negative numbers. At Extra Spicy some signs are missing too — work out whether it is +, −, × or ÷.</li>
+        <li>Stuck on Sweet or Mild? The Number bank shows the missing numbers. Tap one to put it in the selected box.</li>
+      </ul>
+      <h3 style="margin:0">Cross-number</h3>
+      <ul class="rules-list">
+        <li>It is a crossword, but every answer is a number with one digit in each square. No answer starts with 0, and no two answers are the same.</li>
+        <li>Tap a square to choose it, and tap it again to swap between Across and Down. The clue you are on is shown above the grid.</li>
+        <li>Some clues have many possible answers — "a square number", "a multiple of 7". Use the digits from the answers that cross it to decide which one it is.</li>
+        <li>Some clues use another answer: "3 Down + 12" means add 12 to the answer to 3 Down.</li>
+        <li>Check marks each finished answer with ✓ or ✗.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="settingsTitle">Settings</h2><button class="btn" data-close="settingsModal" type="button">Close</button></div>
+      <div class="toggle-row"><div><b>Tick equations as I go</b><small>Equation crossword: each = turns green or red once its equation is filled in.</small></div><label class="switch"><input type="checkbox" id="setTicks" /><span></span></label></div>
+      <div class="toggle-row"><div><b>Check shows wrong squares</b><small>Cross-number: Check also colours the wrong digits, not just the wrong answers.</small></div><label class="switch"><input type="checkbox" id="setWrong" /><span></span></label></div>
+      <div class="toggle-row"><div><b>Show a timer</b><small>Your best time for each level is kept on this device.</small></div><label class="switch"><input type="checkbox" id="setTimer" /><span></span></label></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="endModal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+    <div class="modal">
+      <div class="modal-header"><h2 id="endTitle">—</h2><button class="btn" data-close="endModal" type="button">Close</button></div>
+      <p class="form-note" id="endSub">—</p>
+      <div id="endExtra"></div>
+      <div class="modal-actions" id="endActions"></div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       ENGINE — DOM-free. The harness require()s this block on its own.
+       ================================================================ -->
+  <script id="cwEngine">
+  var CW = (function () {
+    'use strict';
+    /* ------------------------------------------------------------ helpers */
+    function rngFrom(seed) { var a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+    function ri(r, a, b) { return a + Math.floor(r() * (b - a + 1)); }
+    function pick(a, r) { return a[Math.floor(r() * a.length)]; }
+    function shuffle(a, r) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a; }
+    var SHOW = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    function showNum(n) { return n < 0 ? '−' + (-n) : String(n); }
+    function apply(op, a, b) { return op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b; }
+
+    var LEVELS = [
+      { id: 'sweet',  icon: '🍬',  name: 'Sweet' },
+      { id: 'mild',   icon: '🍃',  name: 'Mild' },
+      { id: 'medium', icon: '🌶️', name: 'Medium' },
+      { id: 'spicy',  icon: '🔥',  name: 'Spicy' },
+      { id: 'extra',  icon: '🌋',  name: 'Extra Spicy' }
+    ];
+
+    /* ==================================================================
+       MODE 1 — EQUATION CROSSWORD
+       Every equation is five cells: number, sign, number, =, number.
+       Numbers sit on cells whose row AND column are even; signs on odd
+       offsets. So two equations can only ever cross on a NUMBER, a sign
+       never touches another equation, and no two cells run together.
+       ================================================================== */
+    var EQ = {
+      sweet:  { W: 7, H: 7, count: [4, 5],  ops: '+-',   hi: 20,  addHi: 19, mulMax: 0,  neg: false, hide: 0.36, opHide: 0,    bank: true,  blurb: '+ and − · numbers to 20' },
+      mild:   { W: 9, H: 9, count: [5, 6],  ops: '+-*',  hi: 100, addHi: 50, mulMax: 10, neg: false, hide: 0.44, opHide: 0,    bank: true,  blurb: '+ − × · tables to 10' },
+      medium: { W: 9, H: 9, count: [6, 7],  ops: '+-*/', hi: 144, addHi: 90, mulMax: 12, neg: false, hide: 0.5,  opHide: 0,    bank: false, blurb: 'all four · tables to 12' },
+      spicy:  { W: 9, H: 9, count: [7, 8],  ops: '+-*/', hi: 144, addHi: 30, mulMax: 12, neg: true,  hide: 0.55, opHide: 0,    bank: false, blurb: 'negative numbers' },
+      extra:  { W: 9, H: 9, count: [8, 9],  ops: '+-*/', hi: 200, addHi: 60, mulMax: 12, neg: true,  hide: 0.6,  opHide: 0.3,  bank: false, blurb: 'negatives · missing signs too' }
+    };
+    function eqValid(n, c) { return Number.isInteger(n) && n !== 0 && Math.abs(n) <= c.hi && (c.neg || n > 0); }
+    function facValid(n, c) { return Number.isInteger(n) && Math.abs(n) >= 2 && Math.abs(n) <= c.mulMax; }
+    function pairsOf(n, c, r) {
+      var out = [];
+      for (var a = 2; a <= c.mulMax; a++) if (n % a === 0) {
+        var b = n / a; if (!facValid(b, c)) continue;
+        out.push([a, b]); if (c.neg) out.push([-a, -b]);
+      }
+      return out;
+    }
+    // Find a, b, c with a OP b = c agreeing with any values already fixed by crossings.
+    function makeEq(op, fx, c, r) {
+      function R() { var v = ri(r, 1, c.addHi); return c.neg && r() < 0.4 ? -v : v; }
+      function F() { var v = ri(r, 2, c.mulMax); return c.neg && r() < 0.35 ? -v : v; }
+      for (var t = 0; t < 40; t++) {
+        var a = fx[0], b = fx[1], z = fx[2], P;
+        if (op === '+') {
+          if (z == null) { if (a == null) a = R(); if (b == null) b = R(); z = a + b; }
+          else if (a == null && b == null) { a = R(); b = z - a; }
+          else if (a == null) a = z - b; else if (b == null) b = z - a;
+        } else if (op === '-') {
+          if (a == null) { if (b == null) b = R(); if (z == null) z = R(); a = b + z; }
+          else if (b == null && z == null) { b = R(); z = a - b; }
+          else if (b == null) b = a - z; else if (z == null) z = a - b;
+        } else if (op === '*') {
+          if (z == null) { if (a == null) a = F(); if (b == null) b = F(); z = a * b; }
+          else if (a == null && b == null) { P = pairsOf(z, c, r); if (!P.length) return null; P = pick(P, r); a = P[0]; b = P[1]; }
+          else if (a == null) { if (z % b) return null; a = z / b; } else if (b == null) { if (z % a) return null; b = z / a; }
+          if (!facValid(a, c) || !facValid(b, c)) { if (fx[0] != null || fx[1] != null) return null; continue; }
+        } else {
+          if (a == null) { if (b == null) b = F(); if (z == null) z = F(); a = b * z; }
+          else if (b == null && z == null) { P = pairsOf(a, c, r); if (!P.length) return null; P = pick(P, r); b = P[0]; z = P[1]; }
+          else if (b == null) { if (a % z) return null; b = a / z; } else if (z == null) { if (a % b) return null; z = a / b; }
+          if (!facValid(b, c) || !facValid(z, c)) { if (fx[1] != null || fx[2] != null) return null; continue; }
+        }
+        if (eqValid(a, c) && eqValid(b, c) && eqValid(z, c) && apply(op, a, b) === z) return [a, b, z];
+      }
+      return null;
+    }
+    function eqCells(e) { // [[r,c] x5]
+      var out = [];
+      for (var i = 0; i < 5; i++) out.push(e.dir === 'h' ? [e.line, e.start + i] : [e.start + i, e.line]);
+      return out;
+    }
+    function key(r, c) { return r + ',' + c; }
+
+    function genEquation(levelId, r) {
+      var c = EQ[levelId]; r = r || Math.random;
+      for (var attempt = 0; attempt < 600; attempt++) {
+        var slots = [];
+        ['h', 'v'].forEach(function (dir) {
+          var lines = dir === 'h' ? c.H : c.W, len = dir === 'h' ? c.W : c.H;
+          for (var line = 0; line < lines; line += 2) for (var s = 0; s + 4 < len; s += 2) slots.push({ dir: dir, line: line, start: s });
+        });
+        var target = ri(r, c.count[0], c.count[1]);
+        var nums = {}, eqs = [];
+        var tries = 0;
+        while (eqs.length < target && tries++ < 400) {
+          var s = pick(slots, r);
+          if (eqs.some(function (e) { return e.dir === s.dir && e.line === s.line && Math.abs(e.start - s.start) < 6; })) continue;
+          var cs = eqCells(s), fx = [null, null, null], crosses = 0;
+          for (var i = 0; i < 3; i++) { var k = key(cs[i * 2][0], cs[i * 2][1]); if (nums[k] != null) { fx[i] = nums[k]; crosses++; } }
+          if (eqs.length && !crosses) continue;
+          var ops = shuffle(c.ops.split(''), r), vals = null, op = null;
+          // Lean toward the signs used least so far, so a grid is not all +.
+          ops.sort(function (x, y) { return eqs.filter(function (e) { return e.op === x; }).length - eqs.filter(function (e) { return e.op === y; }).length; });
+          for (var j = 0; j < ops.length && !vals; j++) { vals = makeEq(ops[j], fx, c, r); op = ops[j]; }
+          if (!vals) continue;
+          var e = { dir: s.dir, line: s.line, start: s.start, op: op, vals: vals };
+          eqs.push(e);
+          for (i = 0; i < 3; i++) nums[key(cs[i * 2][0], cs[i * 2][1])] = vals[i];
+        }
+        if (eqs.length < c.count[0]) continue;
+        var ops2 = {}; eqs.forEach(function (e) { ops2[e.op] = 1; });
+        if (Object.keys(ops2).length < Math.min(c.ops.length, 3)) continue;
+        var pz = { mode: 'eq', level: levelId, W: c.W, H: c.H, eqs: eqs, nums: nums };
+        if (hideEquation(pz, c, r)) return trimEq(pz);
+      }
+      throw new Error('Could not build an equation crossword');
+    }
+    // Remove numbers (and at Extra Spicy some signs) one at a time, keeping
+    // each only if the puzzle can STILL be finished by working out one
+    // unknown at a time. That is what makes the answer unique and means the
+    // puzzle never needs a guess.
+    function hideEquation(pz, c, r) {
+      var keys = shuffle(Object.keys(pz.nums), r), hidden = {}, opHidden = {};
+      // Signs first: a hidden sign is only found once its numbers are known,
+      // so it has to be chosen before the numbers are thinned out.
+      var idx = shuffle(pz.eqs.map(function (e, i) { return i; }), r), m = 0, ot = Math.round(c.opHide * pz.eqs.length);
+      for (var i = 0; i < idx.length && m < ot; i++) { opHidden[idx[i]] = 1; if (eqSolvable(pz, hidden, opHidden)) m++; else delete opHidden[idx[i]]; }
+      if (m < ot) return false;
+      var target = Math.round(c.hide * keys.length), n = 0;
+      for (i = 0; i < keys.length && n < target; i++) {
+        hidden[keys[i]] = 1;
+        if (eqSolvable(pz, hidden, opHidden)) n++; else delete hidden[keys[i]];
+      }
+      if (n < target - (ot ? 2 : 1)) return false;
+      pz.hidden = Object.keys(hidden).sort(); pz.opHidden = Object.keys(opHidden).map(Number).sort(function (a, b) { return a - b; });
+      return true;
+    }
+    function opsThatFit(a, b, z) { return '+-*/'.split('').filter(function (o) { return apply(o, a, b) === z; }); }
+    function eqSolvable(pz, hidden, opHidden) {
+      var known = {}; Object.keys(pz.nums).forEach(function (k) { if (!hidden[k]) known[k] = 1; });
+      var opKnown = pz.eqs.map(function (e, i) { return !opHidden[i]; });
+      var changed = true;
+      while (changed) {
+        changed = false;
+        pz.eqs.forEach(function (e, i) {
+          var cs = eqCells(e), ks = [0, 2, 4].map(function (o) { return key(cs[o][0], cs[o][1]); });
+          var unk = ks.filter(function (k) { return !known[k]; });
+          if (opKnown[i] && unk.length === 1) { known[unk[0]] = 1; changed = true; }
+          else if (!opKnown[i] && !unk.length && opsThatFit(pz.nums[ks[0]], pz.nums[ks[1]], pz.nums[ks[2]]).length === 1) { opKnown[i] = true; changed = true; }
+        });
+      }
+      return Object.keys(pz.nums).every(function (k) { return known[k]; }) && opKnown.every(Boolean);
+    }
+    function trimEq(pz) {
+      var rs = [], cs = [];
+      pz.eqs.forEach(function (e) { eqCells(e).forEach(function (p) { rs.push(p[0]); cs.push(p[1]); }); });
+      var r0 = Math.min.apply(null, rs), c0 = Math.min.apply(null, cs);
+      pz.eqs.forEach(function (e) { if (e.dir === 'h') { e.line -= r0; e.start -= c0; } else { e.line -= c0; e.start -= r0; } });
+      var nums = {}; Object.keys(pz.nums).forEach(function (k) { var p = k.split(',').map(Number); nums[key(p[0] - r0, p[1] - c0)] = pz.nums[k]; });
+      pz.hidden = pz.hidden.map(function (k) { var p = k.split(',').map(Number); return key(p[0] - r0, p[1] - c0); });
+      pz.nums = nums;
+      pz.H = Math.max.apply(null, rs) - r0 + 1; pz.W = Math.max.apply(null, cs) - c0 + 1;
+      return pz;
+    }
+    // The layout the page draws: every cell, what it holds, and whether it is to be found.
+    function eqLayout(pz) {
+      var cells = {};
+      pz.eqs.forEach(function (e, i) {
+        var cs = eqCells(e);
+        cs.forEach(function (p, o) {
+          var k = key(p[0], p[1]);
+          if (o % 2 === 0) cells[k] = cells[k] || { t: 'n', v: pz.nums[k], blank: pz.hidden.indexOf(k) >= 0, eqs: [] };
+          else if (o === 1) cells[k] = { t: 'o', v: e.op, blank: pz.opHidden.indexOf(i) >= 0, eqs: [] };
+          else cells[k] = { t: '=', eqs: [] };
+          cells[k].eqs.push(i);
+        });
+      });
+      return cells;
+    }
+
+    /* ==================================================================
+       MODE 2 — CROSS-NUMBER
+       A crossword grid filled with digits. Across and Down answers are
+       numbers; the clues are calculations, facts about numbers, other
+       answers, or algebra, depending on the level. Rules: no answer starts
+       with 0, and no two answers are the same.
+       ================================================================== */
+    var CN = {
+      sweet:  { n: 5, maxLen: 3, kinds: ['sum', 'diff', 'double', 'half'], props: 0, refs: 0, blurb: 'adding, subtracting, doubling' },
+      mild:   { n: 5, maxLen: 3, kinds: ['sum', 'diff', 'prod', 'quot', 'double', 'half'], props: 2, propKinds: ['square', 'mult', 'even'], refs: 0, prodMax: 10, blurb: 'all four operations · first number facts' },
+      medium: { n: 6, maxLen: 4, kinds: ['sum', 'diff', 'prod', 'quot', 'square', 'cube', 'power', 'half'], props: 3, propKinds: ['square', 'cube', 'prime', 'mult', 'digits', 'palin'], refs: 0, prodMax: 12, blurb: 'squares, cubes, primes, multiples' },
+      spicy:  { n: 7, maxLen: 4, kinds: ['sum', 'diff', 'prod', 'quot', 'percent', 'square', 'power', 'sqrt'], props: 3, propKinds: ['square', 'cube', 'prime', 'mult', 'digits', 'palin'], refs: 3, prodMax: 20, blurb: 'percentages, powers, clues that use other answers' },
+      extra:  { n: 7, maxLen: 4, kinds: ['evalx', 'solvex', 'lcm', 'hcf', 'sqrt', 'percent', 'power', 'prod', 'quot'], props: 3, propKinds: ['square', 'cube', 'prime', 'mult', 'digits', 'palin'], refs: 3, prodMax: 20, blurb: 'algebra, LCM and HCF, square roots' }
+    };
+    function isPrime(n) { if (n < 2) return false; for (var d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; }
+    function iroot(n, k) { var x = Math.round(Math.pow(n, 1 / k)); for (var y = x - 1; y <= x + 1; y++) if (y > 0 && Math.pow(y, k) === n) return y; return 0; }
+    function digitSum(n) { return String(n).split('').reduce(function (s, d) { return s + +d; }, 0); }
+    function rev(n) { return +String(n).split('').reverse().join(''); }
+    function len(n) { return String(n).length; }
+
+    function genPattern(n, maxLen, r) {
+      for (var t = 0; t < 4000; t++) {
+        var B = []; for (var i = 0; i < n * n; i++) B.push(false);
+        var d = 0.12 + r() * 0.14;
+        function setB(i) { B[i] = true; B[n * n - 1 - i] = true; } // 180° symmetry
+        for (i = 0; i < n * n; i++) if (r() < d) setB(i);
+        var guard = 0, dirty = true;
+        while (dirty && guard++ < 60) {
+          dirty = false;
+          var runs = runsOf(B, n);
+          runs.forEach(function (run) { if (run.cells.length > maxLen) { setB(run.cells[ri(r, 1, run.cells.length - 2)]); dirty = true; } });
+          if (dirty) continue;
+          // A white cell in no answer at all is a hole — fill it in.
+          for (i = 0; i < n * n; i++) if (!B[i] && !inEntry(B, n, i)) { setB(i); dirty = true; }
+        }
+        if (dirty) continue;
+        var ents = runsOf(B, n).filter(function (x) { return x.cells.length >= 2; });
+        var white = B.filter(function (b) { return !b; }).length;
+        if (white < n * n * 0.6) continue;
+        var cover = {}; ents.forEach(function (e) { e.cells.forEach(function (c) { cover[c] = (cover[c] || 0) + 1; }); });
+        var checked = Object.keys(cover).filter(function (c) { return cover[c] > 1; }).length;
+        if (checked < white * 0.55) continue;
+        if (!connected(B, n)) continue;
+        if (ents.length < n + 2) continue;
+        return { black: B, entries: numberEntries(B, n, ents) };
+      }
+      throw new Error('Could not make a grid');
+    }
+    function runsOf(B, n) {
+      var out = [];
+      for (var r = 0; r < n; r++) { var cur = []; for (var c = 0; c <= n; c++) { if (c < n && !B[r * n + c]) cur.push(r * n + c); else { if (cur.length) out.push({ dir: 'a', cells: cur }); cur = []; } } }
+      for (c = 0; c < n; c++) { cur = []; for (r = 0; r <= n; r++) { if (r < n && !B[r * n + c]) cur.push(r * n + c); else { if (cur.length) out.push({ dir: 'd', cells: cur }); cur = []; } } }
+      return out;
+    }
+    function inEntry(B, n, i) {
+      var r = Math.floor(i / n), c = i % n;
+      var h = (c > 0 && !B[i - 1]) || (c < n - 1 && !B[i + 1]);
+      var v = (r > 0 && !B[i - n]) || (r < n - 1 && !B[i + n]);
+      return h || v;
+    }
+    function connected(B, n) {
+      var start = B.indexOf(false); if (start < 0) return false;
+      var seen = {}, st = [start]; seen[start] = 1; var cnt = 0;
+      while (st.length) { var i = st.pop(); cnt++; var r = Math.floor(i / n), c = i % n;
+        [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(function (p) { if (p[0] >= 0 && p[0] < n && p[1] >= 0 && p[1] < n) { var j = p[0] * n + p[1]; if (!B[j] && !seen[j]) { seen[j] = 1; st.push(j); } } }); }
+      return cnt === B.filter(function (b) { return !b; }).length;
+    }
+    function numberEntries(B, n, ents) {
+      var starts = {}; ents.forEach(function (e) { starts[e.cells[0]] = 1; });
+      var num = {}, k = 1;
+      for (var i = 0; i < n * n; i++) if (starts[i]) num[i] = k++;
+      ents.forEach(function (e) { e.num = num[e.cells[0]]; e.label = e.num + (e.dir === 'a' ? ' Across' : ' Down'); e.len = e.cells.length; });
+      ents.sort(function (a, b) { return a.dir === b.dir ? a.num - b.num : a.dir === 'a' ? -1 : 1; });
+      ents.forEach(function (e, i) { e.id = i; });
+      return ents;
+    }
+    function nice(v) { return iroot(v, 2) || iroot(v, 3) || isPrime(v) || v === rev(v) || v % 25 === 0; }
+    function fillGrid(ents, n, lv, r) {
+      var pools = {};
+      function pool(L) {
+        if (pools[L]) return pools[L];
+        var a = []; for (var v = Math.pow(10, L - 1); v < Math.pow(10, L); v++) a.push(v);
+        shuffle(a, r);
+        if (lv !== 'sweet') { var bias = lv === 'mild' ? 0.25 : 0.45; a = a.map(function (v) { return [v, r() - (nice(v) ? bias : 0)]; }).sort(function (x, y) { return x[1] - y[1]; }).map(function (x) { return x[0]; }); }
+        return (pools[L] = a);
+      }
+      var dig = new Array(n * n).fill(null), val = new Array(ents.length).fill(null), used = {}, nodes = 0;
+      function fits(e, v) { var s = String(v); for (var i = 0; i < e.len; i++) { var d = dig[e.cells[i]]; if (d != null && d !== s[i]) return false; } return true; }
+      function rec(done) {
+        if (done === ents.length) return true;
+        if (++nodes > 4000) return false;
+        var best = null, bestList = null;
+        for (var i = 0; i < ents.length; i++) if (val[i] == null) {
+          var e = ents[i], list = [];
+          var P = pool(e.len);
+          for (var j = 0; j < P.length && list.length < 60; j++) if (!used[P[j]] && fits(e, P[j])) list.push(P[j]);
+          if (!list.length) return false;
+          if (!best || list.length < bestList.length) { best = e; bestList = list; }
+        }
+        for (var k = 0; k < bestList.length && k < 12; k++) {
+          var v = bestList[k], s = String(v), prev = best.cells.map(function (c) { return dig[c]; });
+          best.cells.forEach(function (c, q) { dig[c] = s[q]; }); val[best.id] = v; used[v] = 1;
+          if (rec(done + 1)) return true;
+          best.cells.forEach(function (c, q) { dig[c] = prev[q]; }); val[best.id] = null; delete used[v];
+        }
+        return false;
+      }
+      return rec(0) ? val : null;
+    }
+
+    /* ---------------------------------------------------------- clues
+       Each clue is a SPEC — kind + numbers — and the text is written from
+       it. The harness re-derives every answer from the spec on its own. */
+    function sup(k) { return '<sup>' + k + '</sup>'; }
+    var X = '<i>x</i>';
+    // A clue must never print its own answer ("10% of 8080" is 808).
+    function exactClue(kind, v, e, cfg, r) {
+      var c = rawClue(kind, v, e, cfg, r);
+      if (c && v > 99 && c.text.replace(/<[^>]+>/g, '').indexOf(String(v)) >= 0) return null;
+      return c;
+    }
+    function rawClue(kind, v, e, cfg, r) {
+      var L = e.len, a, b, d, p, P, m, k, x;
+      switch (kind) {
+        case 'sum': a = ri(r, Math.max(1, Math.ceil(v * 0.2)), Math.max(1, Math.floor(v * 0.8))); b = v - a; if (b < 1) return null; return { kind: kind, a: a, b: b, text: a + ' + ' + b };
+        case 'diff': b = ri(r, 2, Math.max(9, Math.floor(v * 0.6))); a = v + b; return { kind: kind, a: a, b: b, text: a + ' − ' + b };
+        case 'prod': P = []; for (a = 2; a <= (cfg.prodMax || 12); a++) if (v % a === 0 && v / a >= a && (cfg.prodMax > 10 || v / a <= 12)) P.push(a);
+          if (!P.length) return null; a = pick(P, r); return { kind: kind, a: a, b: v / a, text: a + ' × ' + v / a };
+        case 'quot': d = ri(r, 2, cfg.prodMax > 10 ? 9 : 5); return { kind: kind, a: v * d, b: d, text: v * d + ' ÷ ' + d };
+        case 'double': if (v % 2) return null; return { kind: kind, a: v / 2, text: 'Double ' + v / 2 };
+        case 'half': return { kind: kind, a: 2 * v, text: 'Half of ' + 2 * v };
+        case 'square': a = iroot(v, 2); if (!a) return null; return { kind: kind, a: a, text: a + sup(2) };
+        case 'cube': a = iroot(v, 3); if (!a) return null; return { kind: kind, a: a, text: a + sup(3) };
+        case 'power': for (b = 2; b <= 9; b++) for (k = 4; k <= 13; k++) if (Math.pow(b, k) === v) return { kind: kind, a: b, b: k, text: b + sup(k) }; return null;
+        case 'sqrt': if (v > 99) return null; return { kind: kind, a: v * v, text: '√' + v * v };
+        case 'percent': P = [20, 25, 50, 75, 5, 40].filter(function (q) { return (v * 100) % q === 0 && v * 100 / q <= 9999 && v * 100 / q !== v; });
+          if (!P.length) return null; p = pick(P, r); return { kind: kind, a: p, b: v * 100 / p, text: p + '% of ' + v * 100 / p };
+        case 'lcm': P = [];
+          for (a = 2; a <= 40; a++) for (b = a + 1; b <= 60; b++) if (b % a && gcd(a, b) > 1 && a * b / gcd(a, b) === v) P.push([a, b]);
+          if (!P.length) return null; P = pick(P, r); return { kind: kind, a: P[0], b: P[1], text: 'The LCM of ' + P[0] + ' and ' + P[1] };
+        case 'hcf': if (v > 99) return null; P = [];
+          for (a = 2; a <= 9; a++) for (b = a + 1; b <= 9; b++) if (gcd(a, b) === 1 && v * b <= 999) P.push([v * a, v * b]);
+          if (!P.length) return null; P = pick(P, r); return { kind: kind, a: P[0], b: P[1], text: 'The HCF of ' + P[0] + ' and ' + P[1] };
+        case 'evalx': if (v > 400) return null; for (var t = 0; t < 30; t++) { x = ri(r, 2, 12); m = ri(r, 2, 9); k = v - m * x; if (k !== 0 && Math.abs(k) < 100) return { kind: kind, a: m, b: k, x: x, text: m + X + ' ' + (k < 0 ? '− ' + (-k) : '+ ' + k) + ' when ' + X + ' = ' + x }; } return null;
+        case 'solvex': if (v > 150) return null; m = ri(r, 2, 9); k = ri(r, 1, 40); return { kind: kind, a: m, b: k, c: m * v - k, text: 'The value of ' + X + ' if ' + m + X + ' − ' + k + ' = ' + (m * v - k) };
+      }
+      return null;
+    }
+    var PROPS = {
+      square: { test: function (v) { return !!iroot(v, 2); }, text: function () { return 'A square number'; } },
+      cube:   { test: function (v) { return !!iroot(v, 3); }, text: function () { return 'A cube number'; } },
+      prime:  { test: isPrime, text: function () { return 'A prime number'; } },
+      even:   { test: function (v) { return v % 2 === 0; }, text: function () { return 'An even number'; } },
+      palin:  { test: function (v) { return v === rev(v) && v > 9; }, text: function () { return 'Reads the same forwards and backwards'; } },
+      digits: { test: function () { return true; }, text: function (s) { return 'Its digits add up to ' + s.s; } },
+      mult:   { test: function () { return true; }, text: function (s) { return 'A multiple of ' + s.m; } }
+    };
+    function propClue(kind, v, cfg) {
+      if (kind === 'mult') {
+        var ms = []; for (var m = cfg.propKinds.indexOf('prime') >= 0 ? 6 : 3; m <= 19; m++) if (v % m === 0 && m !== v) ms.push(m);
+        if (!ms.length) return null; m = ms[ms.length - 1];
+        return { kind: 'prop', prop: 'mult', m: m, text: PROPS.mult.text({ m: m }) };
+      }
+      if (kind === 'digits') { var s = digitSum(v); return { kind: 'prop', prop: 'digits', s: s, text: PROPS.digits.text({ s: s }) }; }
+      if (!PROPS[kind].test(v)) return null;
+      return { kind: 'prop', prop: kind, text: PROPS[kind].text({}) };
+    }
+    function propTest(spec, v) {
+      if (spec.prop === 'mult') return v % spec.m === 0;
+      if (spec.prop === 'digits') return digitSum(v) === spec.s;
+      return PROPS[spec.prop].test(v);
+    }
+    function refClue(v, T, tv, r) {
+      var opts = [];
+      if (v === 2 * tv) opts.push({ rel: 'double', text: 'Double ' + T.label });
+      if (tv % 10 && v === rev(tv) && v !== tv) opts.push({ rel: 'rev', text: T.label + ' with its digits reversed' });
+      for (var m = 3; m <= 9; m++) if (v === m * tv) opts.push({ rel: 'mul', m: m, text: m + ' × ' + T.label });
+      if (tv % 2 === 0 && v === tv / 2) opts.push({ rel: 'half', text: 'Half of ' + T.label });
+      var k = v - tv;
+      if (k && Math.abs(k) <= 400) opts.push({ rel: 'add', k: k, text: T.label + (k > 0 ? ' + ' + k : ' − ' + (-k)) });
+      if (!opts.length) return null;
+      var o = opts.length > 1 && opts[opts.length - 1].rel === 'add' && r() < 0.6 ? opts[0] : pick(opts, r);
+      o.kind = 'ref'; o.target = T.id; return o;
+    }
+    function refValue(spec, tv) {
+      switch (spec.rel) { case 'double': return 2 * tv; case 'rev': return rev(tv); case 'mul': return spec.m * tv; case 'half': return tv / 2; default: return tv + spec.k; }
+    }
+
+    // Count solutions (stopping at `limit`) the way a solver would: exact clues
+    // are single values, facts are every number that fits, a reference is
+    // worked out from the answer it points at. Answers must all differ.
+    function countSolutions(pz, limit, budget) {
+      var n = pz.n, ents = pz.entries, clues = pz.clues;
+      var cand = ents.map(function (e, i) {
+        var c = clues[i];
+        if (c.kind === 'ref') return null;
+        if (c.kind === 'prop') { var out = []; for (var v = Math.pow(10, e.len - 1); v < Math.pow(10, e.len); v++) if (propTest(c, v)) out.push(v); return out; }
+        return [exactValue(c)];
+      });
+      var order = ents.map(function (e, i) { return i; }).filter(function (i) { return cand[i]; })
+        .sort(function (a, b) { return cand[a].length - cand[b].length; })
+        .concat(ents.map(function (e, i) { return i; }).filter(function (i) { return !cand[i]; }));
+      var dig = new Array(n * n).fill(null), val = [], used = {}, count = 0, nodes = 0;
+      function rec(k) {
+        if (++nodes > budget) throw new Error('budget');
+        if (k === order.length) { count++; return count >= limit; }
+        var i = order[k], e = ents[i];
+        var list = cand[i] || [refValue(clues[i], val[clues[i].target])];
+        for (var j = 0; j < list.length; j++) {
+          var v = list[j]; if (!Number.isInteger(v) || len(v) !== e.len || used[v]) continue;
+          var s = String(v), ok = true;
+          for (var q = 0; q < e.len; q++) { var d = dig[e.cells[q]]; if (d != null && d !== s[q]) { ok = false; break; } }
+          if (!ok) continue;
+          var prev = e.cells.map(function (c) { return dig[c]; });
+          e.cells.forEach(function (c, q) { dig[c] = s[q]; }); val[i] = v; used[v] = 1;
+          var stop = rec(k + 1);
+          e.cells.forEach(function (c, q) { dig[c] = prev[q]; }); val[i] = undefined; delete used[v];
+          if (stop) return true;
+        }
+        return false;
+      }
+      try { rec(0); } catch (err) { return limit; }
+      return count;
+    }
+    function exactValue(c) {
+      switch (c.kind) {
+        case 'sum': return c.a + c.b; case 'diff': return c.a - c.b; case 'prod': return c.a * c.b; case 'quot': return c.a / c.b;
+        case 'double': return 2 * c.a; case 'half': return c.a / 2; case 'square': return c.a * c.a; case 'cube': return c.a * c.a * c.a;
+        case 'power': return Math.pow(c.a, c.b); case 'sqrt': return Math.round(Math.sqrt(c.a)); case 'percent': return c.a * c.b / 100;
+        case 'lcm': return c.a * c.b / gcd(c.a, c.b); case 'hcf': return gcd(c.a, c.b);
+        case 'evalx': return c.a * c.x + c.b; case 'solvex': return (c.c + c.b) / c.a;
+      }
+      return NaN;
+    }
+
+    function genCrossNumber(levelId, r) {
+      var cfg = CN[levelId]; r = r || Math.random;
+      for (var attempt = 0; attempt < 300; attempt++) {
+        var pat = genPattern(cfg.n, cfg.maxLen, r);
+        var vals = fillGrid(pat.entries, cfg.n, levelId, r);
+        if (!vals) continue;
+        var ents = pat.entries, clues = new Array(ents.length);
+        // 1. every clue exact first
+        var ok = true;
+        ents.forEach(function (e, i) {
+          if (!ok) return;
+          var ks = shuffle(cfg.kinds.slice(), r), c = null;
+          for (var j = 0; j < ks.length && !c; j++) c = exactClue(ks[j], vals[i], e, cfg, r);
+          if (!c) c = exactClue(r() < 0.5 ? 'sum' : 'diff', vals[i], e, cfg, r);
+          if (!c) ok = false; clues[i] = c;
+        });
+        if (!ok) continue;
+        // 2. some become facts about the number
+        var order = shuffle(ents.map(function (e, i) { return i; }), r), nProps = 0;
+        for (var q = 0; q < order.length && nProps < cfg.props; q++) {
+          var i = order[q], pk = shuffle(cfg.propKinds.slice(), r), pc = null;
+          for (var j = 0; j < pk.length && !pc; j++) pc = propClue(pk[j], vals[i], cfg);
+          if (pc) { clues[i] = pc; nProps++; }
+        }
+        // 3. some point at another answer (never at a reference, so no loops)
+        var nRefs = 0;
+        order = shuffle(ents.map(function (e, i) { return i; }), r);
+        for (q = 0; q < order.length && nRefs < cfg.refs; q++) {
+          i = order[q];
+          if (clues[i].kind === 'prop') continue;
+          if (clues.some(function (c) { return c && c.kind === 'ref' && c.target === i; })) continue;
+          var targets = shuffle(ents.map(function (e, k) { return k; }).filter(function (k) { return k !== i && clues[k].kind !== 'ref'; }), r);
+          for (j = 0; j < targets.length; j++) { var rc = refClue(vals[i], ents[targets[j]], vals[targets[j]], r); if (rc) { clues[i] = rc; nRefs++; break; } }
+        }
+        var pz = { mode: 'cn', level: levelId, n: cfg.n, black: pat.black, entries: ents, clues: clues, answers: vals };
+        // 4. while more than one filling fits, swap a fact for a calculation
+        var guard = 0;
+        while (countSolutions(pz, 2, 400000) > 1 && guard++ < 20) {
+          var props = clues.map(function (c, k) { return k; }).filter(function (k) { return clues[k].kind === 'prop'; });
+          if (!props.length) { guard = 99; break; }
+          var worst = props[Math.floor(r() * props.length)];
+          var ks2 = shuffle(cfg.kinds.slice(), r), nc = null;
+          for (j = 0; j < ks2.length && !nc; j++) nc = exactClue(ks2[j], vals[worst], ents[worst], cfg, r);
+          clues[worst] = nc || exactClue('sum', vals[worst], ents[worst], cfg, r);
+        }
+        if (guard >= 20) continue;
+        pz.solution = digitsOf(pz);
+        return pz;
+      }
+      throw new Error('Could not build a cross-number');
+    }
+    function digitsOf(pz) {
+      var d = new Array(pz.n * pz.n).fill('');
+      pz.entries.forEach(function (e, i) { String(pz.answers[i]).split('').forEach(function (ch, q) { d[e.cells[q]] = ch; }); });
+      return d;
+    }
+
+    return {
+      LEVELS: LEVELS, EQ: EQ, CN: CN, SHOW: SHOW, showNum: showNum, apply: apply,
+      genEquation: genEquation, eqLayout: eqLayout, eqCells: eqCells, eqSolvable: eqSolvable, opsThatFit: opsThatFit, key: key,
+      genCrossNumber: genCrossNumber, countSolutions: countSolutions, exactValue: exactValue, refValue: refValue, propTest: propTest,
+      rngFrom: rngFrom, isPrime: isPrime, iroot: iroot, digitSum: digitSum, rev: rev, gcd: gcd
+    };
+  })();
+  if (typeof module !== 'undefined') module.exports = CW;
+  </script>
+
+  <!-- ================================================================== APP -->
+  <script>
+  (function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var SAVE_KEY = 'mmtCrosswiseSave.v1', STATS_KEY = 'mmtCrosswiseStats.v1', SET_KEY = 'mmtCrosswiseSettings.v1';
+    var store = {
+      get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+      set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    };
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function fmtTime(ms) { var s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+    var settings = Object.assign({ ticks: true, wrong: false, timer: true }, store.get(SET_KEY, {}));
+    var S = null, pick = { mode: 'eq', level: 'medium' }, tick = null;
+    var MODE_NAME = { eq: 'Equation crossword', cn: 'Cross-number' };
+
+    /* ------------------------------------------------------------ menu / modals */
+    function openModal(id) { $(id).classList.add('open'); }
+    function dropFocusIn(m) { var a = document.activeElement; if (a && m.contains(a)) a.blur(); }
+    function closeModal(id) { var m = $(id); dropFocusIn(m); m.classList.remove('open'); }
+    function closeAll() { document.querySelectorAll('.modal-backdrop.open').forEach(function (m) { dropFocusIn(m); m.classList.remove('open'); }); }
+    document.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', function () { closeModal(b.dataset.close); }); });
+    document.querySelectorAll('.modal-backdrop').forEach(function (m) { m.addEventListener('click', function (e) { if (e.target === m) { dropFocusIn(m); m.classList.remove('open'); } }); });
+
+    function showMenu() {
+      stopTick(); saveGame(); S = null;
+      $('menuPage').classList.remove('hidden'); $('gamePage').classList.add('hidden'); $('menuBtn').classList.add('hidden');
+    }
+    function saved(mode) { var sv = store.get(SAVE_KEY, {}); var g = sv[mode]; return g && !g.done ? g : null; }
+    function openLevels(mode) {
+      pick.mode = mode;
+      var sv = saved(mode);
+      if (sv) pick.level = sv.level;
+      $('levelTitle').textContent = MODE_NAME[mode];
+      $('levelNote').textContent = mode === 'eq'
+        ? 'Every puzzle can be finished one missing number at a time — it never needs a guess — and has exactly one answer.'
+        : 'Every grid has exactly one way to fill it. At Medium and above some clues have several possible answers until a crossing answer rules the others out.';
+      $('continueSlot').innerHTML = sv ? '<div class="continue-row"><span>You have a ' + CW.LEVELS.filter(function (L) { return L.id === sv.level; })[0].name + ' puzzle on the go.</span><button class="btn-primary" type="button" id="continueBtn">Continue</button></div>' : '';
+      if (sv) $('continueBtn').addEventListener('click', function () { closeAll(); resume(mode); });
+      paintLevels();
+      openModal('levelModal');
+    }
+    function paintLevels() {
+      var cfgs = pick.mode === 'eq' ? CW.EQ : CW.CN, st = store.get(STATS_KEY, {});
+      $('levelGrid').innerHTML = CW.LEVELS.map(function (L) {
+        var s = st[pick.mode + '-' + L.id];
+        var badge = s && s.solved ? '<em class="done-badge won">✓ ' + s.solved + '</em>' : '';
+        return '<button type="button" class="level-btn' + (pick.level === L.id ? ' selected' : '') + '" data-level="' + L.id + '">' + badge +
+          '<span class="li">' + L.icon + '</span><strong>' + L.name + '</strong><span>' + cfgs[L.id].blurb + '</span></button>';
+      }).join('');
+      $('levelGrid').querySelectorAll('.level-btn').forEach(function (b) {
+        b.addEventListener('click', function () { pick.level = b.dataset.level; paintLevels(); });
+        b.addEventListener('dblclick', function () { pick.level = b.dataset.level; closeAll(); startNew(pick.mode, pick.level); });
+      });
+    }
+    $('eqModeBtn').addEventListener('click', function () { openLevels('eq'); });
+    $('cnModeBtn').addEventListener('click', function () { openLevels('cn'); });
+    $('levelStartBtn').addEventListener('click', function () { closeAll(); startNew(pick.mode, pick.level); });
+    $('rulesBtn').addEventListener('click', function () { openModal('rulesModal'); });
+    $('settingsBtn').addEventListener('click', function () { openModal('settingsModal'); });
+    $('menuBtn').addEventListener('click', showMenu);
+    [['setTicks', 'ticks'], ['setWrong', 'wrong'], ['setTimer', 'timer']].forEach(function (p) {
+      var i = $(p[0]); i.checked = !!settings[p[1]];
+      i.addEventListener('change', function () { settings[p[1]] = i.checked; store.set(SET_KEY, settings); if (S) paint(); });
+    });
+
+    /* ------------------------------------------------------------ games */
+    function startNew(mode, level) {
+      var pz = mode === 'eq' ? CW.genEquation(level) : CW.genCrossNumber(level);
+      S = { mode: mode, level: level, pz: pz, startMs: null, elapsed: 0, done: false, gaveUp: false, wrong: {}, marks: {} };
+      if (mode === 'eq') { S.vals = {}; S.ops = {}; S.bank = CW.EQ[level].bank; S.sel = firstBlank(); S.fresh = true; }
+      else { S.dig = new Array(pz.n * pz.n).fill(''); S.dir = 'a'; S.sel = pz.entries[0].cells[0]; }
+      enter();
+    }
+    function resume(mode) {
+      var g = saved(mode); if (!g) return;
+      S = g; S.startMs = null; S.fresh = true; enter();
+    }
+    function enter() {
+      closeAll();
+      $('menuPage').classList.add('hidden'); $('gamePage').classList.remove('hidden'); $('menuBtn').classList.remove('hidden');
+      buildKeypad(); paint(); fitBoard();
+      setMessage(S.mode === 'eq'
+        ? 'Find an equation with only one box missing, and start there.'
+        : 'Tap a square and type. Tap it again to swap between Across and Down.');
+      startTick(); saveGame();
+    }
+    function saveGame() {
+      if (!S) return;
+      var sv = store.get(SAVE_KEY, {});
+      var copy = Object.assign({}, S); copy.elapsed = elapsed(); copy.startMs = null;
+      sv[S.mode] = copy; store.set(SAVE_KEY, sv);
+    }
+    function elapsed() { return (S.elapsed || 0) + (S.startMs && !S.done ? Date.now() - S.startMs : 0); }
+    function startTick() { stopTick(); tick = setInterval(function () { if (S) $('timerText').textContent = fmtTime(elapsed()); }, 500); }
+    function stopTick() { if (tick) clearInterval(tick); tick = null; }
+    function touch() { if (!S.startMs && !S.done) S.startMs = Date.now(); }
+    function setMessage(h, kind) { var m = $('message'); m.className = 'message' + (kind ? ' ' + kind : ''); m.innerHTML = h; }
+    function lvl() { return CW.LEVELS.filter(function (L) { return L.id === S.level; })[0]; }
+
+    /* ================================================== EQUATION MODE */
+    var layout = null;
+    function blanks() { // reading order
+      var out = [];
+      Object.keys(layout).forEach(function (k) { if (layout[k].blank) out.push(k); });
+      return out.sort(function (a, b) { var p = a.split(',').map(Number), q = b.split(',').map(Number); return p[0] - q[0] || p[1] - q[1]; });
+    }
+    function firstBlank() { layout = CW.eqLayout(S.pz); return blanks()[0]; }
+    function cellVal(k) { // number (or op) now in a cell, or null
+      var c = layout[k];
+      if (c.t === 'n') { if (!c.blank) return c.v; var s = S.vals[k]; if (!s || s === '-') return null; return parseInt(s, 10); }
+      if (c.t === 'o') return c.blank ? (S.ops[c.eqs[0]] || null) : c.v;
+      return null;
+    }
+    function eqState(i) {
+      var cs = CW.eqCells(S.pz.eqs[i]).map(function (p) { return CW.key(p[0], p[1]); });
+      var a = cellVal(cs[0]), op = cellVal(cs[1]), b = cellVal(cs[2]), z = cellVal(cs[4]);
+      if (a == null || b == null || z == null || !op) return null;
+      return CW.apply(op, a, b) === z;
+    }
+    function eqIsFull() { return blanks().every(function (k) { return cellVal(k) != null; }); }
+    function eqSolved() { return eqIsFull() && S.pz.eqs.every(function (e, i) { return eqState(i) === true; }); }
+    function answerOf(k) { var c = layout[k]; return c.t === 'n' ? c.v : S.pz.eqs[c.eqs[0]].op; }
+    function paintEq() {
+      layout = CW.eqLayout(S.pz);
+      var W = S.pz.W, H = S.pz.H, h = '';
+      for (var r = 0; r < H; r++) for (var c = 0; c < W; c++) {
+        var k = CW.key(r, c), cell = layout[k];
+        if (!cell) { h += '<div class="ec void"></div>'; continue; }
+        var cls = 'ec', txt = '';
+        if (cell.t === 'n') {
+          cls += ' num';
+          if (cell.blank) { cls += ' blank'; var s = S.vals[k] || ''; txt = s.replace('-', '−'); if (s) cls += ' filled'; }
+          else { cls += ' given'; txt = CW.showNum(cell.v); }
+          if (txt.length >= 4) cls += ' long';
+        } else if (cell.t === 'o') {
+          cls += ' op'; var o = cell.blank ? S.ops[cell.eqs[0]] : cell.v;
+          if (cell.blank) { cls += ' blank'; if (o) cls += ' filled'; }
+          txt = o ? CW.SHOW[o] : '';
+        } else {
+          cls += ' eqs'; txt = '=';
+          if (settings.ticks) { var st = eqState(cell.eqs[0]); if (st === true) cls += ' ok'; else if (st === false) cls += ' bad'; }
+        }
+        if (k === S.sel && !S.done) cls += ' sel';
+        if (S.wrong[k]) cls += ' wrong';
+        h += '<div class="' + cls + '" data-k="' + k + '"' + (cell.blank ? ' role="button" tabindex="-1" aria-label="missing ' + (cell.t === 'o' ? 'sign' : 'number') + '"' : '') + '>' + esc(txt) + '</div>';
+      }
+      var b = $('board'); b.className = 'board eq' + (S.done ? ' solved' : ''); b.style.setProperty('--cols', W); b.innerHTML = h;
+      b.querySelectorAll('.ec.blank').forEach(function (el) { el.addEventListener('click', function () { if (S.done) return; S.sel = el.dataset.k; S.fresh = true; paint(); }); });
+      paintBank();
+    }
+    function paintBank() {
+      var show = S.mode === 'eq' && S.bank && !S.done;
+      $('bank').classList.toggle('hidden', !show);
+      $('bankBtn').classList.toggle('on', !!S.bank);
+      if (!show) return;
+      var need = S.pz.hidden.map(function (k) { return S.pz.nums[k]; }).sort(function (a, b) { return a - b; });
+      var placed = {}; S.pz.hidden.forEach(function (k) { var v = cellVal(k); if (v != null) placed[v] = (placed[v] || 0) + 1; });
+      var h = '<div class="bank-note">The missing numbers — tap one to use it</div>';
+      need.forEach(function (v) { var used = placed[v] > 0; if (used) placed[v]--; h += '<button type="button" class="tile' + (used ? ' used' : '') + '" data-v="' + v + '">' + esc(CW.showNum(v)) + '</button>'; });
+      $('bank').innerHTML = h;
+      $('bank').querySelectorAll('.tile').forEach(function (t) { t.addEventListener('click', function () { bankPlace(+t.dataset.v); }); });
+    }
+    function bankPlace(v) {
+      if (S.done) return;
+      var k = S.sel; if (!k || layout[k].t !== 'n') { k = blanks().filter(function (x) { return layout[x].t === 'n' && cellVal(x) == null; })[0]; if (!k) return; }
+      touch(); S.vals[k] = String(v); delete S.wrong[k]; S.sel = k; afterEdit(); moveBlank(1, true);
+    }
+    function moveBlank(step, emptyOnly) {
+      var bs = blanks(), i = bs.indexOf(S.sel);
+      for (var n = 1; n <= bs.length; n++) {
+        var k = bs[(i + step * n + bs.length * 4) % bs.length];
+        if (!emptyOnly || cellVal(k) == null) { S.sel = k; S.fresh = true; paint(); return; }
+      }
+      paint();
+    }
+    function moveSpatial(dr, dc) {
+      var p = S.sel.split(',').map(Number), best = null, bd = 1e9;
+      blanks().forEach(function (k) {
+        var q = k.split(',').map(Number), vr = q[0] - p[0], vc = q[1] - p[1];
+        var along = dr ? vr * dr : vc * dc, across = dr ? Math.abs(vc) : Math.abs(vr);
+        if (along <= 0) return; var d = along + across * 2.5; if (d < bd) { bd = d; best = k; }
+      });
+      if (best) { S.sel = best; S.fresh = true; paint(); }
+    }
+    function eqKey(k) {
+      if (S.done || !S.sel) return;
+      var cell = layout[S.sel];
+      if (k === 'ArrowLeft') return moveSpatial(0, -1);
+      if (k === 'ArrowRight') return moveSpatial(0, 1);
+      if (k === 'ArrowUp') return moveSpatial(-1, 0);
+      if (k === 'ArrowDown') return moveSpatial(1, 0);
+      if (k === 'Enter' || k === 'Tab' || k === 'next') return moveBlank(1, false);
+      if (k === 'prev') return moveBlank(-1, false);
+      touch();
+      if (cell.t === 'o') {
+        if ('+-*/'.indexOf(k) >= 0) { S.ops[cell.eqs[0]] = k; delete S.wrong[S.sel]; afterEdit(); return moveBlank(1, true); }
+        if (k === 'Backspace' || k === 'Delete') { delete S.ops[cell.eqs[0]]; afterEdit(); }
+        return;
+      }
+      var s = S.vals[S.sel] || '';
+      if (/^[0-9]$/.test(k)) {
+        if (S.fresh) s = s === '-' ? '-' : '';
+        var digits = s.replace('-', '');
+        if (digits.length >= 3) return;
+        s = s + k; S.fresh = false;
+      } else if (k === '-') {
+        if (!CW.EQ[S.level].neg) { setMessage('There are no negative numbers at this level.', 'warn'); return; }
+        // On a freshly chosen box, − starts a new negative number; otherwise it flips the sign.
+        s = S.fresh ? '-' : (s[0] === '-' ? s.slice(1) : '-' + s); S.fresh = false;
+      } else if (k === 'Backspace') {
+        if (!s) return moveBlank(-1, false);
+        s = S.fresh ? '' : s.slice(0, -1); S.fresh = false;
+      } else if (k === 'Delete') s = '';
+      else return;
+      if (s) S.vals[S.sel] = s; else delete S.vals[S.sel];
+      delete S.wrong[S.sel];
+      afterEdit();
+    }
+
+    /* ================================================== CROSS-NUMBER MODE */
+    function entriesAt(i) { return S.pz.entries.filter(function (e) { return e.cells.indexOf(i) >= 0; }); }
+    function curEntry() {
+      var es = entriesAt(S.sel);
+      return es.filter(function (e) { return e.dir === S.dir; })[0] || es[0];
+    }
+    function entryFull(e) { return e.cells.every(function (c) { return S.dig[c]; }); }
+    function entryRight(e) { return e.cells.every(function (c) { return S.dig[c] === S.pz.solution[c]; }); }
+    function paintCn() {
+      var pz = S.pz, n = pz.n, e = curEntry(), h = '';
+      var starts = {}; pz.entries.forEach(function (x) { starts[x.cells[0]] = x.num; });
+      for (var i = 0; i < n * n; i++) {
+        if (pz.black[i]) { h += '<div class="cc black"></div>'; continue; }
+        var cls = 'cc';
+        if (!S.done && e && e.cells.indexOf(i) >= 0) cls += ' inword';
+        if (!S.done && i === S.sel) cls += ' sel';
+        if (S.wrong[i]) cls += ' wrong';
+        h += '<div class="' + cls + '" data-i="' + i + '" role="button" aria-label="square">' + (starts[i] ? '<span class="n">' + starts[i] + '</span>' : '') + esc(S.dig[i] || '') + '</div>';
+      }
+      var b = $('board'); b.className = 'board cn' + (S.done ? ' solved' : ''); b.style.setProperty('--cols', n); b.innerHTML = h;
+      b.querySelectorAll('.cc:not(.black)').forEach(function (el) {
+        el.addEventListener('click', function () {
+          if (S.done) return;
+          var i = +el.dataset.i;
+          if (i === S.sel) { if (entriesAt(i).length > 1) S.dir = S.dir === 'a' ? 'd' : 'a'; }
+          else { S.sel = i; if (!entriesAt(i).some(function (x) { return x.dir === S.dir; })) S.dir = entriesAt(i)[0].dir; }
+          paint();
+        });
+      });
+      // clue bar and lists
+      $('clueText').innerHTML = e ? '<b>' + esc(e.label) + ' · ' + e.len + ' digits</b>' + pz.clues[e.id].text : '';
+      ['a', 'd'].forEach(function (d) {
+        $(d === 'a' ? 'acrossList' : 'downList').innerHTML = pz.entries.filter(function (x) { return x.dir === d; }).map(function (x) {
+          var m = S.marks[x.id], cls = (e && x.id === e.id ? 'cur ' : '') + (m || '') + (entryFull(x) ? ' full' : '');
+          return '<li class="' + cls + '" data-id="' + x.id + '"><span class="cn-num">' + x.num + '</span><span>' + pz.clues[x.id].text + ' <small style="color:#94a3b8">(' + x.len + ')</small></span><span class="mk">' + (m === 'ok' ? '✓' : m === 'bad' ? '✗' : '') + '</span></li>';
+        }).join('');
+      });
+      document.querySelectorAll('.clue-list li').forEach(function (li) { li.addEventListener('click', function () { selectEntry(pz.entries[+li.dataset.id]); }); });
+    }
+    function selectEntry(e, preferEmpty) {
+      if (!e) return;
+      S.dir = e.dir;
+      var empty = e.cells.filter(function (c) { return !S.dig[c]; })[0];
+      S.sel = preferEmpty !== false && empty != null ? empty : e.cells[0];
+      paint();
+    }
+    function nextEntry(step) {
+      var e = curEntry(), ents = S.pz.entries, i = ents.indexOf(e);
+      selectEntry(ents[(i + step + ents.length) % ents.length]);
+    }
+    function cnMove(dr, dc) {
+      var n = S.pz.n, r = Math.floor(S.sel / n), c = S.sel % n;
+      for (var k = 1; k < n; k++) {
+        var rr = r + dr * k, cc = c + dc * k; if (rr < 0 || rr >= n || cc < 0 || cc >= n) return;
+        var i = rr * n + cc; if (S.pz.black[i]) continue;
+        S.sel = i; var want = dr ? 'd' : 'a';
+        if (entriesAt(i).some(function (x) { return x.dir === want; })) S.dir = want;
+        else S.dir = entriesAt(i)[0].dir;
+        paint(); return;
+      }
+    }
+    function cnKey(k) {
+      if (S.done) return;
+      var e = curEntry(), pos = e.cells.indexOf(S.sel);
+      if (k === 'ArrowLeft') return cnMove(0, -1);
+      if (k === 'ArrowRight') return cnMove(0, 1);
+      if (k === 'ArrowUp') return cnMove(-1, 0);
+      if (k === 'ArrowDown') return cnMove(1, 0);
+      if (k === 'Enter' || k === 'Tab' || k === 'next') return nextEntry(1);
+      if (k === 'prev') return nextEntry(-1);
+      if (k === ' ' || k === 'flip') { if (entriesAt(S.sel).length > 1) { S.dir = S.dir === 'a' ? 'd' : 'a'; paint(); } return; }
+      touch();
+      if (/^[0-9]$/.test(k)) {
+        S.dig[S.sel] = k; clearMarks(S.sel);
+        if (pos < e.cells.length - 1) S.sel = e.cells[pos + 1];
+        return afterEdit();
+      }
+      if (k === 'Backspace') {
+        if (S.dig[S.sel]) { S.dig[S.sel] = ''; }
+        else if (pos > 0) { S.sel = e.cells[pos - 1]; S.dig[S.sel] = ''; }
+        clearMarks(S.sel); return afterEdit();
+      }
+      if (k === 'Delete') { S.dig[S.sel] = ''; clearMarks(S.sel); return afterEdit(); }
+    }
+    function clearMarks(cell) { delete S.wrong[cell]; entriesAt(cell).forEach(function (x) { delete S.marks[x.id]; }); }
+    function cnSolved() { return S.pz.solution.every(function (d, i) { return S.pz.black[i] || S.dig[i] === d; }); }
+
+    /* ================================================== shared */
+    function buildKeypad() {
+      var h = '<div class="krow digits">' + '1234567890'.split('').map(function (d) { return '<button type="button" class="key" data-k="' + d + '">' + d + '</button>'; }).join('') + '</div><div class="krow tools">';
+      if (S.mode === 'eq') {
+        var c = CW.EQ[S.level];
+        if (c.neg || c.opHide) h += '<button type="button" class="key op" data-k="-" aria-label="minus">−</button>';
+        if (c.opHide) h += '<button type="button" class="key op" data-k="+" aria-label="plus">+</button><button type="button" class="key op" data-k="*" aria-label="times">×</button><button type="button" class="key op" data-k="/" aria-label="divide">÷</button>';
+        h += '<button type="button" class="key wide" data-k="prev" aria-label="Previous box">◀</button><button type="button" class="key wide" data-k="next" aria-label="Next box">▶</button><button type="button" class="key wide" data-k="Backspace" aria-label="Delete">⌫</button>';
+      } else {
+        h += '<button type="button" class="key wide" data-k="prev" aria-label="Previous clue">◀ Clue</button><button type="button" class="key wide" data-k="flip" aria-label="Swap across and down">↔ Across/Down</button><button type="button" class="key wide" data-k="Backspace" aria-label="Delete">⌫</button><button type="button" class="key wide" data-k="next" aria-label="Next clue">Clue ▶</button>';
+      }
+      $('keyboard').innerHTML = h + '</div>';
+      $('keyboard').querySelectorAll('.key').forEach(function (b) { b.addEventListener('click', function () { press(b.dataset.k); b.blur(); }); });
+    }
+    function press(k) { if (!S) return; if (S.mode === 'eq') eqKey(k); else cnKey(k); }
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'Escape' && document.querySelector('.modal-backdrop.open')) { closeAll(); return; }
+      var tg = e.target;
+      if (tg && (tg.tagName === 'INPUT' || tg.tagName === 'SELECT' || tg.tagName === 'TEXTAREA')) return;
+      if (document.querySelector('.modal-backdrop.open') || !S || $('gamePage').classList.contains('hidden')) return;
+      var map = { 'x': '*', 'X': '*', '×': '*', '÷': '/', '−': '-' };
+      var k = map[e.key] || e.key;
+      if (e.key === 'Tab' && e.shiftKey) k = 'prev';
+      var ok = /^[0-9]$/.test(k) || '+-*/ '.indexOf(k) >= 0 || ['Enter', 'Tab', 'prev', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(k) >= 0;
+      if (!ok) return;
+      e.preventDefault(); press(k);
+    });
+
+    function paint() {
+      if (!S) return;
+      var L = lvl();
+      $('statusIcon').textContent = L.icon;
+      $('statusTitle').textContent = (innerWidth <= 700 ? { eq: 'Equations', cn: 'Cross-number' }[S.mode] : MODE_NAME[S.mode]) + ' · ' + L.name;
+      $('statusSub').textContent = S.done ? (S.gaveUp ? 'Answer shown' : 'Solved in ' + fmtTime(S.elapsed)) : (S.mode === 'eq' ? CW.EQ[S.level].blurb : CW.CN[S.level].blurb);
+      $('timerChip').classList.toggle('hidden', !settings.timer);
+      $('bankBtn').classList.toggle('hidden', S.mode !== 'eq' || S.done);
+      $('checkBtn').classList.toggle('hidden', S.done);
+      $('giveUpBtn').classList.toggle('hidden', S.done);
+      $('clueBar').classList.toggle('hidden', S.mode !== 'cn' || S.done);
+      $('cluePanel').classList.toggle('hidden', S.mode !== 'cn');
+      $('keyboard').classList.toggle('hidden', S.done);
+      $('howPanel').innerHTML = S.mode === 'eq'
+        ? '<h2>How it works</h2><ul class="mini-rules"><li>Every row and column of boxes is an equation.</li><li>Fill the dashed boxes so they are ALL true.</li><li>Start where only one box is missing.</li><li>An = goes green when its equation is true.</li>' + (CW.EQ[S.level].neg ? '<li>Type − before a number to make it negative.</li>' : '') + (CW.EQ[S.level].opHide ? '<li>Purple dashed boxes are missing signs: + − × or ÷.</li>' : '') + '</ul>'
+        : '<h2>How it works</h2><ul class="mini-rules"><li>One digit per square. No answer starts with 0.</li><li>No two answers are the same.</li><li>Tap a square twice to swap Across/Down.</li><li>Clues like "a prime number" are narrowed down by the answers that cross them.</li></ul>';
+      if (S.mode === 'eq') paintEq(); else paintCn();
+    }
+    function afterEdit() {
+      paint();
+      var solved = S.mode === 'eq' ? eqSolved() : cnSolved();
+      if (solved) finish(false);
+      else if (S.mode === 'eq' && eqIsFull()) setMessage('Every box is filled, but not every equation is true yet — look for a red =.', 'warn');
+      saveGame();
+    }
+    function finish(gaveUp) {
+      S.elapsed = elapsed(); S.startMs = null; S.done = true; S.gaveUp = gaveUp; S.wrong = {};
+      if (!gaveUp) {
+        var st = store.get(STATS_KEY, {}), key = S.mode + '-' + S.level, s = st[key] || { solved: 0, best: null };
+        s.solved++; s.newBest = s.best == null || S.elapsed < s.best; if (s.newBest) s.best = S.elapsed;
+        st[key] = s; store.set(STATS_KEY, st); S.stat = s;
+        confetti();
+        setMessage('Solved! Every ' + (S.mode === 'eq' ? 'equation is true.' : 'answer fits its clue.'), 'success');
+      } else setMessage('Here is the answer. A new puzzle is one tap away.', 'warn');
+      paint(); saveGame();
+      if (!gaveUp) setTimeout(showEnd, window.__cwFast ? 0 : 700);
+    }
+    function showEnd() {
+      var L = lvl(), s = S.stat || {};
+      $('endTitle').textContent = '🎉 Solved!';
+      $('endSub').textContent = MODE_NAME[S.mode] + ' · ' + L.icon + ' ' + L.name + ' · ' + fmtTime(S.elapsed);
+      $('endExtra').innerHTML = '<div class="end-stats"><div class="stat-card"><strong>' + fmtTime(S.elapsed) + '</strong><span>This time</span></div><div class="stat-card"><strong>' + (s.best != null ? fmtTime(s.best) : '—') + '</strong><span>' + (s.newBest ? 'New best!' : 'Best') + '</span></div><div class="stat-card"><strong>' + (s.solved || 1) + '</strong><span>Solved at this level</span></div></div>';
+      var idx = CW.LEVELS.findIndex(function (x) { return x.id === S.level; }), harder = CW.LEVELS[idx + 1];
+      $('endActions').innerHTML = '<button class="btn" type="button" id="endMenu">Menu</button>' + (harder ? '<button class="btn" type="button" id="endHarder">Try ' + harder.icon + ' ' + harder.name + '</button>' : '') + '<button class="btn-primary" type="button" id="endNext">Another one</button>';
+      $('endMenu').addEventListener('click', function () { closeAll(); showMenu(); });
+      $('endNext').addEventListener('click', function () { closeAll(); startNew(S.mode, S.level); });
+      if (harder) $('endHarder').addEventListener('click', function () { closeAll(); startNew(S.mode, harder.id); });
+      openModal('endModal');
+    }
+    $('checkBtn').addEventListener('click', function () {
+      if (!S || S.done) return;
+      if (S.mode === 'eq') {
+        S.wrong = {}; var n = 0, filled = 0;
+        blanks().forEach(function (k) { var v = cellVal(k); if (v == null) return; filled++; if (v !== answerOf(k)) { S.wrong[k] = 1; n++; } });
+        setMessage(!filled ? 'Fill in some boxes first.' : n ? n + ' box' + (n === 1 ? ' is' : 'es are') + ' not right yet — they are shown in red.' : 'Everything you have filled in so far is right.', n ? 'warn' : 'success');
+      } else {
+        S.wrong = {}; S.marks = {}; var bad = 0, done = 0;
+        S.pz.entries.forEach(function (e) { if (!entryFull(e)) return; done++; var ok = entryRight(e); S.marks[e.id] = ok ? 'ok' : 'bad'; if (!ok) { bad++; if (settings.wrong) e.cells.forEach(function (c) { if (S.dig[c] !== S.pz.solution[c]) S.wrong[c] = 1; }); } });
+        setMessage(!done ? 'Finish an answer first — Check marks whole answers.' : bad ? bad + ' of your ' + done + ' finished answers ' + (bad === 1 ? 'is' : 'are') + ' not right (✗ in the clue list).' : 'All ' + done + ' finished answers are right.', bad ? 'warn' : 'success');
+      }
+      paint(); saveGame();
+    });
+    $('newBtn').addEventListener('click', function () {
+      if (S && !S.done && (S.mode === 'eq' ? Object.keys(S.vals).length : S.dig.some(Boolean)) && !confirm('Start a new puzzle? This one will be lost.')) return;
+      startNew(S.mode, S.level);
+    });
+    $('bankBtn').addEventListener('click', function () { if (!S) return; S.bank = !S.bank; paint(); saveGame(); });
+    $('giveUpBtn').addEventListener('click', function () {
+      if (!S || S.done || !confirm('Show the answer? This ends the puzzle.')) return;
+      if (S.mode === 'eq') { layout = CW.eqLayout(S.pz); blanks().forEach(function (k) { var c = layout[k]; if (c.t === 'n') S.vals[k] = String(c.v); else S.ops[c.eqs[0]] = S.pz.eqs[c.eqs[0]].op; }); }
+      else S.dig = S.pz.solution.slice();
+      finish(true);
+    });
+    $('cluePrev').addEventListener('click', function () { press('prev'); });
+    $('clueNext').addEventListener('click', function () { press('next'); });
+
+    /* The board is sized from the MEASURED room: its width on a phone, and on
+       a projector also the height left above the keypad. */
+    function fitBoard() {
+      if (!S) return;
+      var cols = S.mode === 'eq' ? S.pz.W : S.pz.n, rows = S.mode === 'eq' ? S.pz.H : S.pz.n;
+      var gap = S.mode === 'eq' ? (innerWidth <= 700 ? 3 : 5) : 0;
+      // On a wide screen the keypad moves to the side column, so the board gets
+      // the full height; below 1081px it sits under the board (sticky on a phone).
+      var kbEl = $('keyboard'), wide = innerWidth > 1080;
+      if (wide && kbEl.parentNode !== $('sidePanel')) $('sidePanel').insertBefore(kbEl, $('sidePanel').firstChild);
+      if (!wide && kbEl.parentNode === $('sidePanel')) $('bank').parentNode.insertBefore(kbEl, $('bank').nextSibling);
+      var b = $('board'); b.style.setProperty('--cell', '20px'); // measure the room, not the old board
+      var w = $('boardWrap').clientWidth || 360;
+      var cell = (w - gap * (cols - 1)) / cols;
+      if (innerWidth > 700) {
+        var top = $('boardWrap').getBoundingClientRect().top + scrollY, kb = wide ? 0 : ($('keyboard').offsetHeight || 130);
+        var extra = S.mode === 'eq' && S.bank ? ($('bank').offsetHeight || 70) + 12 : 0;
+        var room = innerHeight - top - kb - extra - 48; // gaps + card padding + breathing room
+        cell = Math.min(cell, (room - gap * (rows - 1)) / rows);
+      }
+      cell = Math.max(26, Math.min(S.mode === 'eq' ? 66 : 70, cell));
+      b.style.setProperty('--cell', cell.toFixed(1) + 'px'); b.style.setProperty('--gap', gap + 'px');
+    }
+    window.addEventListener('resize', fitBoard);
+    function confetti() {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var cols = ['#6cbc4a', '#2563eb', '#7c3aed', '#f59e0b', '#ef4444'];
+      for (var i = 0; i < 60; i++) {
+        var c = document.createElement('div'); c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw'; c.style.background = cols[i % cols.length];
+        c.style.animationDelay = Math.random() * 400 + 'ms'; c.style.animationDuration = 900 + Math.random() * 700 + 'ms';
+        document.body.appendChild(c); setTimeout(function (el) { el.remove(); }, 2200, c);
+      }
+    }
+    window.addEventListener('pagehide', saveGame);
+    window.__cw = { get S() { return S; }, CW: CW, press: press, startNew: startNew, showMenu: showMenu, settings: settings, get layout() { return layout; } };
+    showMenu();
+  })();
+  </script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c7e5713b5e4f4993907eb285797dc89b"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+</body>
+</html>

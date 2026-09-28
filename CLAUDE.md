@@ -52,6 +52,47 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-28, session — being pushed): CROSSWISE — MATHS CROSSWORDS.**
+> `games/crosswise.html`, Puzzles group. One self-contained file on the `.mmtTopbar`
+> shell + MMT PHONE LAYOUT block, no Firebase, English only. Two modes, five levels
+> each (Sweet → Extra Spicy); progress per mode in `mmtCrosswiseSave.v1`, best
+> times in `mmtCrosswiseStats.v1`.
+> * **ENGINE IS DOM-FREE** (`<script id="cwEngine">`, `var CW`).
+> * **EQUATION CROSSWORD** (`CW.genEquation`, config `CW.EQ`): every equation is
+>   five cells (number, sign, number, =, answer). NUMBERS SIT ON CELLS WHOSE ROW AND
+>   COLUMN ARE BOTH EVEN, signs on odd offsets — so equations can only cross on a
+>   number, a sign never touches another equation, and two equations on one line
+>   are kept 6+ apart. Numbers are hidden one at a time and each kept hidden ONLY
+>   if the grid can still be finished one-unknown-at-a-time (`eqSolvable`), which
+>   makes the answer unique and never needs a guess. Extra Spicy hides SIGNS too —
+>   chosen BEFORE the numbers are thinned, or no sign can ever be hidden — and a
+>   sign is only hidden where exactly one of + − × ÷ fits. No zeros anywhere
+>   (0 × ? has no single answer). Spicy+ use negatives. Sweet/Mild open with a
+>   Number bank (the missing numbers as tiles). Each = goes green/red once its
+>   equation is filled (setting).
+> * **CROSS-NUMBER** (`CW.genCrossNumber`, config `CW.CN`): 5×5 to 7×7 grids with
+>   180° symmetric blacks, answers 2–4 digits, no leading zero, no repeated answer.
+>   Filled first, then clues written FROM SPECS (kind + numbers): sums, products,
+>   powers, √, percentages, LCM/HCF, algebra (evaluate / solve for x), references
+>   to other answers (never to another reference, so no loops) and number facts
+>   ("a prime number", "a multiple of 7", "its digits add up to 15") that only a
+>   crossing answer can pin down. `countSolutions` checks uniqueness; while two
+>   fillings fit, a fact clue is swapped for a calculation. A clue never prints its
+>   own answer (10% of 8080 was dropped for that reason).
+> * **LAYOUT:** board cells sized from MEASURED room; above 1080px the keypad moves
+>   into the side column so the board gets the height; phones get a sticky keypad
+>   and (cross-number) a sticky current-clue bar. `.game-card` and `.game-area`
+>   columns are `minmax(0,1fr)` — with plain `1fr` the board's own width propped
+>   the column past a 320px screen.
+> * **Verified:** engine harness (150k checks — every equation re-derived, an
+>   independent one-unknown solver recovering every hidden number and sign, every
+>   clue re-evaluated from its spec, facts re-tested, an independent brute-force
+>   solver confirming exactly one filling for 300 cross-numbers) and 145 UI checks
+>   (solve by keyboard, number bank, Check in both modes, resume, phones
+>   320/375/390 and 1024/1280/1920 with no sideways scroll and no text spilling a
+>   cell). Harnesses in the session scratch.
+> * Not built: printable worksheet version, race mode.
+>
 > **NEW (2026-09-27, session — being pushed): CRACK THE EQUATION.**
 > `games/crack-the-equation.html`, an original equation-guessing puzzle (the
 > Nerdle/Wordle idea, renamed and rebuilt in MMT colours — nothing copied).
