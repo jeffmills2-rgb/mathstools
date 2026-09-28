@@ -71,8 +71,10 @@ const COLONY_STAGE_CONFIGS = [
 
 /** A doubles-form label. kind: base ± adjust (adjust may be 0). Pure. */
 export function colonyFormLabel(base, adjust) {
+  // Written the way it's said aloud (audit 2026-09-28): "double 6, then +1"
+  // — "double 6 + 1" read to some students as double (6 + 1).
   if (adjust === 0) return `double ${base}`;
-  return `double ${base} ${adjust > 0 ? "+" : "−"} ${Math.abs(adjust)}`;
+  return `double ${base}, then ${adjust > 0 ? "+" : "−"}${Math.abs(adjust)}`;
 }
 
 /** Is `double base ± adjust` a TRUE reading of a + b? Pure. */
@@ -146,10 +148,17 @@ export function generateColonyRound(roundIndex, rand = Math.random) {
     pairs: a, // full pairs after alignment (diff-2 pairs a+1 after the waddle)
     middleBase: diff === 2 ? a + 1 : null,
     options: [],
+    // One step per line, for the feedback card.
+    working:
+      diff === 0
+        ? [`${a} + ${b} pair up exactly`, `Double ${a} = ${total}`]
+        : diff === 1
+          ? [`${a} + ${b}: ${a} pairs and 1 penguin left over`, `Double ${a} = ${2 * a}`, `${2 * a} + 1 = ${total}`]
+          : [`${a} + ${b}: one penguin waddles across`, `Now it's ${a + 1} + ${a + 1}`, `Double ${a + 1} = ${total}`],
     prompt:
       diff === 0
         ? `${a} + ${b} — the rows pair up perfectly. Which double is that?`
-        : `${a} + ${b} — which double is hiding in there?`,
+        : `${a} + ${b} — which double helps?`,
     reason:
       diff === 0
         ? `${a} + ${b} is exactly double ${a} = ${total}.`
@@ -192,8 +201,10 @@ export function gradeColonyPredict(round, optionIndex) {
     points: correct ? COLONY_PREDICT_POINTS : 0,
     label: correct
       ? `🐧 ${opt.label} — that's the one! +${COLONY_PREDICT_POINTS} pts`
+      // Never print the total here — typing it is Part B. (It used to say
+      // "… makes 11, not 13!", handing over the answer.)
       : opt
-        ? `${opt.label} makes ${2 * opt.base + opt.adjust}, not ${round.total}!`
+        ? `Not that one — look at which penguin is left over.`
         : "Pick a double!",
   };
 }

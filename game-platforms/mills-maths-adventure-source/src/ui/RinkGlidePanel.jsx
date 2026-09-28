@@ -7,7 +7,9 @@ import {
   RINK_MAX_QUEUE,
   RINK_PUSH_MS,
   RINK_GLIDE_TAIL_MS,
+  glideStops,
 } from "../data/snow/rinkGlideChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
  * ICE RINK — 2D panel (RG). PLAN a queue of pushes with the big buttons
@@ -21,6 +23,17 @@ const CELEBRATE_MS = 2200;
 
 const PUSH_LABEL = { 10: "+10", 1: "+1", "-10": "−10", "-1": "−1" };
 const PUSH_KEYS = { ArrowUp: 10, ArrowRight: 1, ArrowDown: -10, ArrowLeft: -1 };
+
+/** "+10 ×4 · +1 ×5" — the queue as runs, the way you'd say it. */
+function planText(queue) {
+  const runs = [];
+  for (const v of queue) {
+    const last = runs[runs.length - 1];
+    if (last && last.v === v) last.n += 1;
+    else runs.push({ v, n: 1 });
+  }
+  return runs.map((r) => `${PUSH_LABEL[r.v]}${r.n > 1 ? ` ×${r.n}` : ""}`).join("  ·  ");
+}
 
 export default function RinkGlidePanel() {
   const status = useRinkGlide((s) => s.status);
@@ -98,97 +111,95 @@ export default function RinkGlidePanel() {
   if (status === "idle") return null;
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>⛸️ The Ice Rink</span>
-          </div>
-          <div className="farm-challenge-line big">
-            The rink is a giant <span className="fc-value">number line</span> — glide the penguin to the fish bucket!
-          </div>
-          <div className="farm-challenge-line">
-            Queue your pushes, then GO. Land exactly = 15 pts. Fewest pushes = +10 more — big jumps beat little shoves!
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useRinkGlide.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useRinkGlide.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="⛸️"
+          title="The Ice Rink"
+          steps={[
+            <>The ice is a giant <b>number line</b> from 0 to 100.</>,
+            <>Press <b>+10</b> for a big glide and <b>+1</b> for a little step. Each push draws a hop on the ice.</>,
+            <>Land exactly on the <b>fish bucket</b>, then press GO!</>,
+            <>Use as <b>few pushes</b> as you can — big glides first.</>,
+          ]}
+          example="37 → 82:  +10 ×4 → 77,  +1 ×5 → 82  (9 pushes)"
+          onStart={() => useRinkGlide.getState().beginRounds()}
+          onQuit={() => useRinkGlide.getState().exit()}
+        />
       )}
 
-      {status === "planning" && round && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              ⛸️ Round {roundIndex + 1}/{RINK_ROUNDS_PER_SET} · {score} pts — glide{" "}
-              <span className="fc-value">{round.start}</span> → <span className="fc-value">{round.target}</span>
-            </span>
-            <button className="link-button" onClick={() => useRinkGlide.getState().exit()}>
-              Quit
-            </button>
-          </div>
-          <div className="plank-pieces">
-            {round.buttons.map((b) => (
+      {status === "planning" && round && (() => {
+        const stops = glideStops(round, queue);
+        const lands = stops[stops.length - 1];
+        const hit = lands === round.target;
+        return (
+          <div className="farm-challenge-card">
+            <SnowRoundHead
+              icon="⛸️"
+              roundIndex={roundIndex}
+              total={RINK_ROUNDS_PER_SET}
+              score={score}
+              onQuit={() => useRinkGlide.getState().exit()}
+            />
+            <div className="snow-q">
+              Glide from <span className="fc-value">{round.start}</span> to{" "}
+              <span className="fc-value">{round.target}</span>
+            </div>
+            <div className="plank-pieces">
+              {round.buttons.map((b) => (
+                <button
+                  key={b}
+                  className="plank-piece-btn"
+                  disabled={queue.length >= RINK_MAX_QUEUE}
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    useRinkGlide.getState().addPush(b);
+                  }}
+                >
+                  {PUSH_LABEL[b]}
+                </button>
+              ))}
               <button
-                key={b}
                 className="plank-piece-btn"
-                disabled={queue.length >= RINK_MAX_QUEUE}
+                disabled={queue.length === 0}
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  useRinkGlide.getState().addPush(b);
+                  useRinkGlide.getState().undoPush();
                 }}
               >
-                {PUSH_LABEL[b]}
+                ⌫ Undo
               </button>
-            ))}
-            <button
-              className="plank-piece-btn"
-              disabled={queue.length === 0}
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useRinkGlide.getState().undoPush();
-              }}
-            >
-              ⌫ Undo
-            </button>
+            </div>
+            <div className="snow-plan">
+              {queue.length === 0 ? (
+                <span className="snow-sub">
+                  Keys: ↑ +10 · → +1{round.four ? " · ↓ −10 · ← −1" : ""}
+                </span>
+              ) : (
+                <>
+                  {planText(queue)}{"  "}→{" "}
+                  <span className={hit ? "hit" : "miss"}>
+                    {hit ? `lands on ${lands} ✓` : `lands on ${lands}`}
+                  </span>
+                  <span className="snow-round"> · {queue.length} push{queue.length === 1 ? "" : "es"}</span>
+                </>
+              )}
+            </div>
+            <div className="farm-challenge-buttons" style={{ marginTop: 8 }}>
+              <button
+                className="primary-button"
+                disabled={queue.length === 0}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  useRinkGlide.getState().go();
+                }}
+              >
+                GO! (Enter)
+              </button>
+            </div>
           </div>
-          <div className="farm-challenge-line">
-            {queue.length === 0 ? (
-              <>Plan the glide (↑ +10 · → +1{round.four ? " · ↓ −10 · ← −1" : ""})…</>
-            ) : (
-              <>
-                {queue.map((v, i) => (
-                  <span key={i} className="fc-value">{PUSH_LABEL[v]}</span>
-                ))}{" "}
-                — {queue.length} push{queue.length === 1 ? "" : "es"}
-              </>
-            )}
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              disabled={queue.length === 0}
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useRinkGlide.getState().go();
-              }}
-            >
-              GO! (Enter)
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {status === "gliding" && round && (
         <div className="farm-challenge-card mini">
@@ -202,7 +213,7 @@ export default function RinkGlidePanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ Landed on {round.target} in {landResult.pushes} — {landResult.effLabel} +{landResult.points} pts · {score} pts
+              ✓ Landed on {round.target} in {landResult.pushes} push{landResult.pushes === 1 ? "" : "es"} — {landResult.effLabel} · ⭐ {score}
             </span>
           </div>
         </div>
@@ -211,9 +222,9 @@ export default function RinkGlidePanel() {
       {status === "feedback" && round && landResult && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            Slid to {landResult.finalValue} — not {round.target}! +0 pts
+            Slid to {landResult.finalValue} — the bucket is on {round.target}. The quickest way:
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

@@ -5,8 +5,8 @@ import { useSession, playerState } from "../game/sessionStore.js";
 import {
   GROVE_ROUNDS_PER_SET,
   GROVE_ADJUSTMENTS,
-  GROVE_TOTAL_POINTS,
 } from "../data/snow/groveLightsChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
  * CHRISTMAS TREE GROVE — 2D panel (GV). Three quick parts per round: GRAB
@@ -102,45 +102,34 @@ export default function GroveLightsPanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>🎄 Christmas Tree Grove</span>
-          </div>
-          <div className="farm-challenge-line big">
-            Lights come in <span className="fc-value">bundles of TEN</span> — clipping singles is slow!
-          </div>
-          <div className="farm-challenge-line">
-            Grab the friendly pile, hang the lot, then fix it: unclip the extra (ping!) or clip one more.
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useGroveLights.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useGroveLights.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="🎄"
+          title="Christmas Tree Grove"
+          steps={[
+            <>Fairy lights come in <b>bundles of 10</b>. Clipping on single lights is slow!</>,
+            <>Grab the number of bundles <b>closest</b> to what the tree needs.</>,
+            <>Then fix it: take the extra lights off, or add the few that are missing.</>,
+          ]}
+          example="47 + 29  →  47 + 30 = 77  →  take 1 off = 76"
+          onStart={() => useGroveLights.getState().beginRounds()}
+          onQuit={() => useGroveLights.getState().exit()}
+        />
       )}
 
       {status === "grabbing" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              🎄 Round {roundIndex + 1}/{GROVE_ROUNDS_PER_SET} · {score} pts — {round.start} lights on, {" "}
-              <span className="fc-value">{round.add} more</span> needed. Which grab?
-            </span>
-            <button className="link-button" onClick={() => useGroveLights.getState().exit()}>
-              Quit
-            </button>
+          <SnowRoundHead
+            icon="🎄"
+            roundIndex={roundIndex}
+            total={GROVE_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useGroveLights.getState().exit()}
+          />
+          <div className="snow-q">
+            The tree needs <span className="fc-value">{round.add} more</span> lights. Which is closest to{" "}
+            {round.add}?
           </div>
           <div className="plank-pieces">
             {round.grabOptions.map((n) => (
@@ -152,7 +141,7 @@ export default function GroveLightsPanel() {
                   useGroveLights.getState().chooseGrab(n);
                 }}
               >
-                {n} bundle{n === 1 ? "" : "s"} ({n * 10})
+                {n} bundle{n === 1 ? "" : "s"} = {n * 10}
               </button>
             ))}
           </div>
@@ -163,11 +152,11 @@ export default function GroveLightsPanel() {
         <div className="farm-challenge-card">
           <div className={`farm-challenge-verdict ${grabResult.correct ? "good" : "warm"}`}>
             {grabResult.label}
-            {!grabResult.correct && ` The quick grab was ${round.grabBundles} bundles (${round.grabValue}).`}
+            {!grabResult.correct && ` The closest was ${round.grabBundles} bundle${round.grabBundles === 1 ? "" : "s"} (${round.grabValue}).`}
           </div>
-          <div className="farm-challenge-line big">
-            {round.grabBundles} bundles hung: {round.start} + {round.grabValue} ={" "}
-            <span className="fc-value">{round.hung}</span>. The tree needed {round.add} more — what's the fix?
+          <div className="snow-q">
+            You hung <span className="fc-value">{round.grabValue}</span> lights. The tree needed{" "}
+            <span className="fc-value">{round.add}</span>. How do you fix it?
           </div>
           <div className="plank-pieces">
             {GROVE_ADJUSTMENTS.map((a) => (
@@ -193,12 +182,12 @@ export default function GroveLightsPanel() {
             {!adjustResult.correct &&
               ` It needed: ${GROVE_ADJUSTMENTS.find((a) => a.value === round.adjust)?.label.toLowerCase()}.`}
           </div>
-          <div className="farm-challenge-line big">
+          <div className="snow-q">
             {round.adjust < 0
-              ? <>{round.hung} − {-round.adjust} — how many lights now?</>
+              ? <>{round.hung} − {-round.adjust} = ? How many lights now?</>
               : round.adjust > 0
-                ? <>{round.hung} + {round.adjust} — how many lights now?</>
-                : <>So how many lights is that all together?</>}
+                ? <>{round.hung} + {round.adjust} = ? How many lights now?</>
+                : <>How many lights on the tree now?</>}
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
@@ -214,7 +203,7 @@ export default function GroveLightsPanel() {
             />
             <span className="weigh-unit">lights</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{GROVE_TOTAL_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -225,7 +214,7 @@ export default function GroveLightsPanel() {
           <div className="farm-challenge-head">
             <span>
               ✓ {round.start} + {round.grabValue}
-              {round.adjust < 0 ? ` − ${-round.adjust}` : round.adjust > 0 ? ` + ${round.adjust}` : ""} = {round.total}! · {score} pts
+              {round.adjust < 0 ? ` − ${-round.adjust}` : round.adjust > 0 ? ` + ${round.adjust}` : ""} = {round.total}! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -234,9 +223,9 @@ export default function GroveLightsPanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the total! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

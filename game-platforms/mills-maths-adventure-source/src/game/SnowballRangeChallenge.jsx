@@ -500,7 +500,7 @@ function HandfulRow({ round, status, splitIndex, splitResult }) {
       {!thrown && (
         <Html position={[0, -0.15, ROW_Z + 0.9]} center distanceFactor={9.5} className="ix-badge-anchor" zIndexRange={[24, 0]}>
           <div className="fc-count-chip">
-            {splitIndex} + {round.add - splitIndex}
+            {splitIndex} to the crate · {round.add - splitIndex} spare
           </div>
         </Html>
       )}
@@ -533,11 +533,15 @@ export default function SnowballRangeChallenge() {
 
   return (
     <group position={[RANGE_AREA.x, 0, RANGE_AREA.z]}>
-      {/* Idle dressing: the packed-crate stack + a waiting snowball pile. */}
-      <group position={[RANGE_CRATE_POS[0] - RANGE_AREA.x, 0, RANGE_CRATE_POS[1] - RANGE_AREA.z]}>
-        <TenCrate position={[0, 0, 0]} />
-        <TenCrate position={[0.25, 0.78, 0.1]} small />
-      </group>
+      {/* Idle dressing: the packed-crate stack + a waiting snowball pile.
+          Hidden while a round runs — two brown boxes beside the wall of
+          packed ten-frames read as MORE packed snowballs (audit 2026-09-28). */}
+      {!active && (
+        <group position={[RANGE_CRATE_POS[0] - RANGE_AREA.x, 0, RANGE_CRATE_POS[1] - RANGE_AREA.z]}>
+          <TenCrate position={[0, 0, 0]} />
+          <TenCrate position={[0.25, 0.78, 0.1]} small />
+        </group>
+      )}
       {!active && (
         <group position={[1.6, 0, 0.6]}>
           {[[0, 0], [0.5, 0.1], [0.25, 0.42]].map(([x, y], i) => (

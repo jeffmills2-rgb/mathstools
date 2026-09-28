@@ -93,7 +93,14 @@ export function generateYardRound(roundIndex, rand = Math.random) {
     afterOnes,
     tensHop,
     change,
-    prompt: `A hot chocolate costs ${price}. You hand over a 100-token — count UP the change!`,
+    prompt: `A hot chocolate costs ${price}c. You pay with $1 (100c) — count UP the change!`,
+    // One step per line, in cents, for the feedback card.
+    working:
+      onesHop === 0
+        ? [`${price}c is already a tens number`, `${price}c + ${tensHop}c = 100c`, `Change: ${change}c`]
+        : tensHop === 0
+          ? [`${price}c + ${onesHop}c = 100c`, `Change: ${change}c`]
+          : [`${price}c + ${onesHop}c = ${afterOnes}c`, `${afterOnes}c + ${tensHop}c = 100c`, `Change: ${onesHop}c + ${tensHop}c = ${change}c`],
     reason:
       onesHop === 0
         ? `${price} is already ON a ten — no ones hop! ${price} + ${tensHop} → 100. Change: ${change}.`
@@ -122,7 +129,8 @@ export function generateYardSet(rand = Math.random) {
 }
 
 function parseNum(text) {
-  const cleaned = String(text || "").replace(/\s/g, "");
+  // Cents now (audit 2026-09-28) — "35c" / "35¢" are fine answers too.
+  const cleaned = String(text || "").replace(/\s/g, "").replace(/(c|¢|cents?)$/i, "");
   return /^\d+$/.test(cleaned) ? Number(cleaned) : null;
 }
 

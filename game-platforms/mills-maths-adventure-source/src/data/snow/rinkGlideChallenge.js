@@ -35,7 +35,7 @@ export const RINK_LAND_POINTS = 15;
 export const RINK_EFF_BANDS = [
   { over: 0, points: 10, label: "🎯 Champion glide — fewest pushes!" },
   { over: 2, points: 6, label: "Nearly the fewest!" },
-  { over: Infinity, points: 3, label: "Landed — now try fewer pushes" },
+  { over: Infinity, points: 3, label: "Landed! Big +10 jumps would be quicker" },
 ];
 export const RINK_ROUND_POINTS = RINK_LAND_POINTS + RINK_EFF_BANDS[0].points; // 25
 export const RINK_MAX_SCORE = RINK_ROUNDS_PER_SET * RINK_ROUND_POINTS; // 375
@@ -116,6 +116,28 @@ export function routeText(round) {
   return `${round.start}: ${parts.join(", ")} — ${round.minPushes} push${round.minPushes === 1 ? "" : "es"}${overshot ? " (overshoot, then step back!)" : ""}.`;
 }
 
+/**
+ * The fewest-pushes route as feedback lines, one hop-group per line — the
+ * way the jumps are drawn on an empty number line ("38", "+10 ×4 → 78",
+ * "−1 → 77"). Pure.
+ */
+export function routeLines(round) {
+  const d = Math.abs(round.diff);
+  const sign = round.diff > 0 ? "+" : "−";
+  const k = round.four ? bestTensFor(d) : Math.floor(d / 10);
+  const afterTens = round.start + round.dir * 10 * k;
+  const remainder = round.target - afterTens;
+  const lines = [`Start on ${round.start}`];
+  if (k > 0) lines.push(`${sign}10 ×${k}  →  ${afterTens}`);
+  if (remainder !== 0) {
+    const s1 = remainder > 0 ? "+1" : "−1";
+    const overshot = Math.sign(remainder) === -round.dir;
+    lines.push(`${s1} ×${Math.abs(remainder)}  →  ${round.target}${overshot ? "  (one ten too far, so step back)" : ""}`);
+  }
+  lines.push(`${round.minPushes} push${round.minPushes === 1 ? "" : "es"} in all`);
+  return lines;
+}
+
 /** One round. roundIndex ∈ [0, 15); rand injectable for the checks. */
 export function generateRinkRound(roundIndex, rand = Math.random) {
   const stage = rinkStageFor(roundIndex);
@@ -155,8 +177,10 @@ export function generateRinkRound(roundIndex, rand = Math.random) {
     minPushes,
     prompt: `Glide the penguin from ${start} to exactly ${target} — plan your pushes, then GO!`,
     reason: "",
+    working: [],
   };
   round.reason = `Fewest pushes: ${routeText(round)}`;
+  round.working = routeLines(round);
   return round;
 }
 

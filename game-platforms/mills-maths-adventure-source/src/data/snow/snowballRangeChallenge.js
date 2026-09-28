@@ -97,8 +97,14 @@ export function generateRangeRound(roundIndex, rand = Math.random) {
     rest, // the spare pile
     nextTen,
     sum,
-    prompt: `Pip has packed ${start} snowball${start === 1 ? "" : "s"}. Throw your ${add} — split them to FILL the crate to ${nextTen} first!`,
+    prompt: `${start} + ${add}: how many of your ${add} snowballs fill the crate to ${nextTen}?`,
     reason: `${add} splits into ${comp} + ${rest}: ${start} + ${comp} = ${nextTen}, then ${nextTen} + ${rest} = ${sum}.`,
+    // The same solution, one step per line, for the feedback card.
+    working: [
+      `${add} = ${comp} + ${rest}`,
+      `${start} + ${comp} = ${nextTen}  — the crate is full`,
+      `${nextTen} + ${rest} = ${sum}`,
+    ],
   };
 }
 
@@ -139,8 +145,8 @@ export function gradeRangeSplit(round, firstCount) {
     label: correct
       ? `❄️ Perfect fill! +${RANGE_SPLIT_POINTS} pts`
       : short
-        ? "The crate isn't full yet!"
-        : "Too many — they bounced off!",
+        ? "Not full yet — there are still empty spaces!"
+        : "Too many — the extras bounced off!",
   };
 }
 

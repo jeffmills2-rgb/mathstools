@@ -99,7 +99,12 @@ export function generateCaveRound(roundIndex, rand = Math.random) {
     otherSteps: kind === "up" ? b : a - b, // the losing direction's count
     windowMin,
     windowMax,
-    prompt: `${a} − ${b}: light the crystals — count UP from ${b}, or count BACK from ${a}?`,
+    prompt: `${a} − ${b}: is it quicker to count UP from ${b}, or count BACK from ${a}?`,
+    // One step per line, for the feedback card.
+    working:
+      kind === "up"
+        ? [`${b} and ${a} are close together — count UP`, `${b} → ${a} is ${steps} steps`, `So ${a} − ${b} = ${answer}`]
+        : [`Only ${b} is taken away — count BACK`, `${b} steps back from ${a} lands on ${answer}`, `So ${a} − ${b} = ${answer}`],
     reason:
       kind === "up"
         ? `${b} is CLOSE to ${a} — count UP: ${steps} glows from ${b} to ${a}. The ANSWER is how many glows: ${answer}. (Counting back would take ${b} steps!)`
@@ -136,8 +141,8 @@ export function gradeCaveChoose(round, direction) {
     direction,
     points: correct ? CAVE_CHOOSE_POINTS : 0,
     label: correct
-      ? `🔦 ${round.steps} glow${round.steps === 1 ? "" : "s"} — the short way! +${CAVE_CHOOSE_POINTS} pts`
-      : `That way takes ${round.otherSteps} glows — the other way only needs ${round.steps}!`,
+      ? `🔦 Only ${round.steps} step${round.steps === 1 ? "" : "s"} — the quick way! +${CAVE_CHOOSE_POINTS} pts`
+      : `That way takes ${round.otherSteps} steps — the other way only takes ${round.steps}!`,
   };
 }
 

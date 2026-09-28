@@ -4,10 +4,10 @@ import { useColonyPairs } from "../game/colonyPairsStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
 import {
   COLONY_ROUNDS_PER_SET,
-  COLONY_TOTAL_POINTS,
   COLONY_PAIR_MS,
   COLONY_WADDLE_MS,
 } from "../data/snow/colonyPairsChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
  * PENGUIN COLONY — 2D panel (PC). PREDICT the hiding double (buttons or
@@ -103,45 +103,33 @@ export default function ColonyPairsPanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>🐧 Penguin Colony</span>
-          </div>
-          <div className="farm-challenge-line big">
-            The rows pair up — spot the <span className="fc-value">double hiding</span> in every sum!
-          </div>
-          <div className="farm-challenge-line">
-            7 + 8 is double 7 and one sticking out. And a gap of two hides the sneakiest double of all…
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useColonyPairs.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useColonyPairs.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="🐧"
+          title="Penguin Colony"
+          steps={[
+            <>Two rows of penguins line up in <b>pairs</b>.</>,
+            <>If every penguin has a partner, it's a <b>double</b>: 7 + 7 is double 7.</>,
+            <>One left over? It's a double and <b>one more</b>: 7 + 8 is double 7, then +1.</>,
+            <>Pick the double that helps, then find the total.</>,
+          ]}
+          example="7 + 8  →  double 7 = 14  →  14 + 1 = 15"
+          onStart={() => useColonyPairs.getState().beginRounds()}
+          onQuit={() => useColonyPairs.getState().exit()}
+        />
       )}
 
       {status === "predicting" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              🐧 Round {roundIndex + 1}/{COLONY_ROUNDS_PER_SET} · {score} pts — {round.prompt}
-            </span>
-            <button className="link-button" onClick={() => useColonyPairs.getState().exit()}>
-              Quit
-            </button>
-          </div>
+          <SnowRoundHead
+            icon="🐧"
+            roundIndex={roundIndex}
+            total={COLONY_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useColonyPairs.getState().exit()}
+          />
+          <div className="snow-q">{round.prompt}</div>
           <div className="plank-pieces">
             {round.options.map((o, i) => (
               <button
@@ -169,12 +157,17 @@ export default function ColonyPairsPanel() {
 
       {status === "typing" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-line big">
+          {predictResult && (
+            <div className={`farm-challenge-verdict ${predictResult.correct ? "good" : "warm"}`}>
+              {predictResult.label}
+            </div>
+          )}
+          <div className="snow-q">
             {round.diff === 0
-              ? <>Perfect pairs — <span className="fc-value">double {round.a}</span> makes what?</>
+              ? <>Perfect pairs: <span className="fc-value">double {round.a}</span>. How many penguins?</>
               : round.diff === 1
-                ? <>Paired up with one sticking out: <span className="fc-value">double {round.a} + 1</span> makes what?</>
-                : <>One waddled across — <span className="fc-value">double {round.middleBase}</span> makes what?</>}
+                ? <>{round.a} pairs and one left over: <span className="fc-value">double {round.a}, then +1</span>. How many penguins?</>
+                : <>One waddled across, so it's {round.middleBase} + {round.middleBase}: <span className="fc-value">double {round.middleBase}</span>. How many?</>}
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
@@ -190,7 +183,7 @@ export default function ColonyPairsPanel() {
             />
             <span className="weigh-unit">penguins</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{COLONY_TOTAL_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -200,7 +193,7 @@ export default function ColonyPairsPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.a} + {round.b} = {round.total}! · {score} pts
+              ✓ {round.a} + {round.b} = {round.total}! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -209,9 +202,9 @@ export default function ColonyPairsPanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the total! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

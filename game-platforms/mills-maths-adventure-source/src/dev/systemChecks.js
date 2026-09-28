@@ -654,6 +654,7 @@ export function runSystemChecks(progressSnapshot) {
 
   // The Lodge Interior — the fifth region, behind the lodge's ajar door (CB).
   for (const c of runCabinChecks()) checks.push(c);
+  for (const c of runSnowAuditChecks()) checks.push(c);
 
   return checks;
 }
@@ -6789,7 +6790,7 @@ export function runSledSlopeChecks() {
     spRight.correct && spRight.points === SLED_PREDICT_POINTS && !spWrong.correct && spWrong.points === 0 &&
     slRight.correct && slRight.points === SLED_SLIDE_POINTS &&
     slFar.correct && !slWrong.correct && slWrong.points === 0 &&
-    slZero.correct && /no slides/i.test(slZero.label);
+    slZero.correct && /no sliding/i.test(slZero.label);
   const diffOk =
     checkSledDiff(probeSl, String(probeSl.gap)).correct &&
     checkSledDiff(probeSl, ` ${probeSl.gap} `).correct &&
@@ -6797,8 +6798,10 @@ export function runSledSlopeChecks() {
     !checkSledDiff(probeSl, String(probeSl.gap - 1)).correct &&
     !checkSledDiff(probeSl, "rope").valid && !checkSledDiff(probeSl, "").valid;
   const menuSlOk = JSON.stringify(SLED_PREDICT_OPTIONS) === JSON.stringify(["bigger", "same", "smaller"]);
+  // 2026-09-28: the rope prediction no longer scores in play — a round is
+  // slide 10 + difference 15.
   const scoreSlOk =
-    SLED_PREDICT_POINTS + SLED_SLIDE_POINTS + SLED_DIFF_POINTS === SLED_ROUND_POINTS &&
+    SLED_SLIDE_POINTS + SLED_DIFF_POINTS === SLED_ROUND_POINTS &&
     SLED_ROUND_POINTS === 25 &&
     SLED_MAX_SCORE === SLED_ROUNDS_PER_SET * SLED_ROUND_POINTS &&
     SLED_MAX_SCORE === SNOW_MAX_SCORES.sled;
@@ -6808,7 +6811,7 @@ export function runSledSlopeChecks() {
     SNOW_BEST_KEYS.sled === "mma-snow-sled-best";
   const sl3 = gradeSlOk && diffOk && menuSlOk && scoreSlOk && Boolean(trophySlOk);
   checks.push({
-    name: "Sledding Slope grading + scoring + trophy slot (10+5+10=25, max 375)",
+    name: "Sledding Slope grading + scoring + trophy slot (10+15=25, max 375)",
     pass: sl3,
     detail: sl3 ? "rope predict, any-decade slide, exact diff, slot renamed" : `grade:${gradeSlOk} diff:${diffOk} menu:${menuSlOk} score:${scoreSlOk} trophy:${Boolean(trophySlOk)}`,
   });
@@ -7255,7 +7258,9 @@ export function runAuroraLookoutChecks() {
     checkLookoutAnswer(probe5, String(probe5.answer)).correct &&
     !checkLookoutAnswer(probe5, String(probe5.answer + 1)).correct &&
     !checkLookoutAnswer(probe5, "aurora").valid;
-  const menuOk5 = LOOKOUT_STRATEGIES.length === 7 && new Set(menuKeys).size === 7;
+  // 2026-09-28: eight tools (🧊 Tens and ones added), each with an example.
+  const menuOk5 = LOOKOUT_STRATEGIES.length === 8 && new Set(menuKeys).size === 8 &&
+    menuKeys.includes("split") && LOOKOUT_STRATEGIES.every((t) => t.example && t.example.length > 4);
   const scoreOk5 =
     LOOKOUT_PICK_BEST_POINTS + LOOKOUT_ANSWER_POINTS === LOOKOUT_ROUND_POINTS && LOOKOUT_ROUND_POINTS === 25 &&
     LOOKOUT_PICK_SOUND_POINTS < LOOKOUT_PICK_BEST_POINTS &&
@@ -7268,8 +7273,130 @@ export function runAuroraLookoutChecks() {
   checks.push({
     name: "Aurora Lookout grading + scoring + trophy slot (10/5 pick + 15, max 375)",
     pass: al3,
-    detail: al3 ? "brightest/sound/unsound tiers, 7 tools, slot renamed" : `grade:${gradeOk5} ans:${ansOk5} menu:${menuOk5} score:${scoreOk5} trophy:${Boolean(trophyOk5)}`,
+    detail: al3 ? "brightest/sound/unsound tiers, 8 tools, slot renamed" : `grade:${gradeOk5} ans:${ansOk5} menu:${menuOk5} score:${scoreOk5} trophy:${Boolean(trophyOk5)}`,
   });
+
+  return checks;
+}
+
+// ---- SNOWBALL SUMS AUDIT (2026-09-28) ----------------------------------------
+import {
+  SNOW_CHALLENGE_VIEWS as SA_VIEWS,
+  inSnowChallengeView as saInView,
+  RANGE_FRAME_POS as SA_RANGE_FRAME,
+  RINK_GLIDE_LINE as SA_RINK_LINE,
+  GROVE_TREE_POS as SA_GROVE_TREE,
+  MEADOW_TOWER_LEFT as SA_MEADOW_L,
+  SLOPE_LANE as SA_SLOPE_LANE,
+  VILLAGE_BUILD_SITE as SA_VILLAGE_SITE,
+  COLONY_ROWS as SA_COLONY_ROWS,
+  COLONY_AREA as SA_COLONY_AREA,
+  CAVE_WALL as SA_CAVE_WALL,
+  YARD_BOARD as SA_YARD_BOARD,
+  LOOKOUT_AREA as SA_LOOKOUT_AREA,
+} from "../data/snow/snowLayout.js";
+import { generateRangeSet as saRange } from "../data/snow/snowballRangeChallenge.js";
+import { generateRinkSet as saRink } from "../data/snow/rinkGlideChallenge.js";
+import { generateGroveSet as saGrove } from "../data/snow/groveLightsChallenge.js";
+import { generateMeadowSet as saMeadow, gradeMeadowCall, meadowCountsAfterHops, MEADOW_ODD_ROUND_INDEX as SA_ODD } from "../data/snow/meadowLevelChallenge.js";
+import { generateSledSet as saSled } from "../data/snow/sledSlopeChallenge.js";
+import { generateVillageSet as saVillage } from "../data/snow/villageSplitChallenge.js";
+import { generateColonySet as saColony, gradeColonyPredict as saColonyGrade } from "../data/snow/colonyPairsChallenge.js";
+import { generateCaveSet as saCave } from "../data/snow/caveCrystalsChallenge.js";
+import { generateYardSet as saYard, checkYardChange as saYardChange } from "../data/snow/lodgeYardChallenge.js";
+import { generateLookoutSet as saLookout, LOOKOUT_STRATEGIES as SA_TOOLS, LOOKOUT_OPTIONS_PER_ROUND } from "../data/snow/auroraLookoutChallenge.js";
+import { useMeadowLevel as saMeadowStore } from "../game/meadowLevelStore.js";
+
+/**
+ * SA1–SA5 — the 2026-09-28 Year-7 audit of Snowball Sums: view corridors
+ * clear the camera line, every round carries a kid-sized worked solution
+ * and a jargon-free prompt, the colony never leaks the total on a wrong
+ * pick, the meadow's hop-it-yourself flow scores the FIRST call only, and
+ * the Aurora offers four tools (always including the easiest).
+ */
+export function runSnowAuditChecks() {
+  const checks = [];
+
+  // SA1) Each of the ten corridors exists and contains its activity's
+  //      front line — so what the camera films is what gets cleared for.
+  const focus = {
+    range: SA_RANGE_FRAME, rink: [(SA_RINK_LINE.xMin + SA_RINK_LINE.xMax) / 2, SA_RINK_LINE.z],
+    grove: SA_GROVE_TREE, meadow: SA_MEADOW_L,
+    sled: [(SA_SLOPE_LANE.xTop + SA_SLOPE_LANE.xBottom) / 2, SA_SLOPE_LANE.z],
+    village: SA_VILLAGE_SITE, colony: [SA_COLONY_AREA.x, SA_COLONY_ROWS.z1],
+    cave: [(SA_CAVE_WALL.xMin + SA_CAVE_WALL.xMax) / 2, SA_CAVE_WALL.z], yard: SA_YARD_BOARD,
+    lights: [SA_LOOKOUT_AREA.x, SA_LOOKOUT_AREA.z - 6],
+  };
+  const keys = Object.keys(focus);
+  const sa1 = keys.length === 10 && keys.every((k) => SA_VIEWS[k] && saInView(k, focus[k][0], focus[k][1] + 0.5)) &&
+    !saInView(null, 0, 0) && !saInView("range", 0, 0);
+  checks.push({ name: "Snow audit: ten view corridors cover their activities", pass: sa1, detail: sa1 ? "10 corridors OK" : "a corridor misses its activity" });
+
+  // SA2) Worked solutions + plain prompts over 100 sets of every challenge.
+  const jargon = /friendl|overflow|decade|sound tool|brightest|twins/i;
+  const gens = { range: saRange, rink: saRink, grove: saGrove, meadow: saMeadow, sled: saSled, village: saVillage, colony: saColony, cave: saCave, yard: saYard };
+  let sa2 = true; let sa2d = "working + plain prompts OK";
+  outer: for (const [k, gen] of Object.entries(gens)) {
+    for (let n = 0; n < 100; n++) {
+      for (const r of gen()) {
+        const w = r.working;
+        if (!Array.isArray(w) || w.length < 2 || !w.every((l) => typeof l === "string" && l.length > 3 && !/NaN|undefined/.test(l))) {
+          sa2 = false; sa2d = `${k}: bad working`; break outer;
+        }
+        if (jargon.test(r.prompt)) { sa2 = false; sa2d = `${k}: jargon in prompt "${r.prompt}"`; break outer; }
+      }
+    }
+  }
+  checks.push({ name: "Snow audit: every round has a worked solution + a jargon-free prompt", pass: sa2, detail: sa2d });
+
+  // SA3) Penguin Colony: a WRONG pick never prints the total (Part B's answer).
+  let sa3 = true;
+  for (let n = 0; n < 200 && sa3; n++) {
+    for (const r of saColony()) {
+      r.options.forEach((o, i) => {
+        if (!o.correct && saColonyGrade(r, i).label.includes(String(r.total))) sa3 = false;
+      });
+    }
+  }
+  checks.push({ name: "Snow audit: the colony's wrong-pick label never gives away the total", pass: sa3, detail: sa3 ? "no leak in 200 sets" : "total leaked" });
+
+  // SA4) Snowman Meadow hop-it-yourself: pure grading + the real store.
+  const probe = saMeadow()[1];
+  const odd = saMeadow()[SA_ODD];
+  const pureOk =
+    !gradeMeadowCall(probe, 0, "match").done && gradeMeadowCall(probe, probe.moves, "match").correct &&
+    !gradeMeadowCall(probe, probe.moves, "cant").correct && gradeMeadowCall(odd, 0, "cant").correct &&
+    meadowCountsAfterHops(probe, probe.moves).left === meadowCountsAfterHops(probe, probe.moves).right &&
+    meadowCountsAfterHops(probe, 99).left + meadowCountsAfterHops(probe, 99).right === probe.total;
+  const st = saMeadowStore.getState();
+  st.start(); st.beginRounds();
+  const r0 = saMeadowStore.getState().currentRound();
+  saMeadowStore.getState().call("match"); // wrong: nothing hopped yet
+  const afterWrong = saMeadowStore.getState();
+  for (let i = 0; i < r0.moves; i++) saMeadowStore.getState().hop(1);
+  if (r0.canTwin) saMeadowStore.getState().call("match"); else saMeadowStore.getState().call("cant");
+  const afterRight = saMeadowStore.getState();
+  const storeOk =
+    afterWrong.status === "hopping" && afterWrong.callMissed && Boolean(afterWrong.callNote) &&
+    afterRight.status === "typing" && afterRight.score === 0 && afterRight.predictResult && !afterRight.predictResult.correct;
+  saMeadowStore.getState().exit();
+  const sa4 = pureOk && storeOk;
+  checks.push({ name: "Snow audit: meadow hop-it-yourself (first call scores, nudges don't block)", pass: sa4, detail: sa4 ? "pure + store OK" : `pure:${pureOk} store:${storeOk}` });
+
+  // SA5) Aurora offers four distinct valid tools incl. the easiest; the
+  //      split archetype's easiest tool is 🧊 Tens and ones; cents parse.
+  const toolKeys = SA_TOOLS.map((t) => t.key);
+  let sa5 = LOOKOUT_OPTIONS_PER_ROUND === 4;
+  for (let n = 0; n < 300 && sa5; n++) {
+    for (const r of saLookout()) {
+      const o = r.options;
+      if (!o || o.length !== 4 || new Set(o).size !== 4 || !o.includes(r.best) || !o.every((k) => toolKeys.includes(k))) sa5 = false;
+      if (r.archetype === "splitAdd" && r.best !== "split") sa5 = false;
+    }
+  }
+  const yr = saYard()[0];
+  sa5 = sa5 && saYardChange(yr, `${yr.change}c`).correct && saYardChange(yr, `${yr.change}`).correct;
+  checks.push({ name: "Snow audit: Aurora offers 4 tools incl. the easiest; Lodge Yard takes cents", pass: sa5, detail: sa5 ? "OK" : "options/split/cents wrong" });
 
   return checks;
 }

@@ -36,10 +36,15 @@ export const SLED_ROUNDS_PER_SET = 15;
 const SLED_STAGES = 5;
 const SLED_ROUNDS_PER_STAGE = SLED_ROUNDS_PER_SET / SLED_STAGES;
 
+// 2026-09-28 audit: the rope thought-experiment (Part A) is retired — "ONLY
+// the front sled slips" contradicted the challenge's own rule that the rope
+// can't stretch, and Year 7s read it as a trick question. A round is now
+// SLIDE (10) + DIFFERENCE (15). gradeSledPredict stays exported (pure) but
+// no longer scores in play.
 export const SLED_PREDICT_POINTS = 10;
-export const SLED_SLIDE_POINTS = 5;
-export const SLED_DIFF_POINTS = 10;
-export const SLED_ROUND_POINTS = SLED_PREDICT_POINTS + SLED_SLIDE_POINTS + SLED_DIFF_POINTS; // 25
+export const SLED_SLIDE_POINTS = 10;
+export const SLED_DIFF_POINTS = 15;
+export const SLED_ROUND_POINTS = SLED_SLIDE_POINTS + SLED_DIFF_POINTS; // 25
 export const SLED_MAX_SCORE = SLED_ROUNDS_PER_SET * SLED_ROUND_POINTS; // 375
 
 // Part A's answers, in display order.
@@ -134,6 +139,14 @@ export function generateSledRound(roundIndex, rand = Math.random) {
     friendly,
     scenario: { ...scenario, answer, text: scenarioText(scenario.mover, scenario.delta) },
     prompt: `The roped sleds sit at ${a} and ${b} — the rope is the gap, and it can't stretch!`,
+    // One step per line, for the feedback card.
+    working: friendly
+      ? [`${b} is already a tens number`, `${a} − ${b} = ${gap}`]
+      : [
+          `Slide both ${shift > 0 ? `+${shift}` : `−${-shift}`}: ${a} − ${b} becomes ${a + shift} − ${decade}`,
+          `The rope didn't stretch, so the gap is the same`,
+          `${a + shift} − ${decade} = ${gap}`,
+        ],
     reason: friendly
       ? `${b} is ALREADY on a decade — no sliding needed: ${a} − ${b} = ${gap}.`
       : `Slide the pair ${shift > 0 ? `down ${shift}` : `up ${-shift}`}: ${a} − ${b} becomes ${a + shift} − ${decade}. The rope never stretched, so ${a} − ${b} = ${a + shift} − ${decade} = ${gap}.`,
@@ -191,9 +204,9 @@ export function gradeSledSlide(round, slid) {
     points: onDecade ? SLED_SLIDE_POINTS : 0,
     label: onDecade
       ? slid === 0
-        ? `👀 Already friendly — no slides needed! +${SLED_SLIDE_POINTS} pts`
-        : `❄️ ${back} — a friendly decade! +${SLED_SLIDE_POINTS} pts`
-      : `${back} isn't on a decade yet!`,
+        ? `👀 Already a tens number — no sliding needed! +${SLED_SLIDE_POINTS} pts`
+        : `❄️ ${back} — a tens number! +${SLED_SLIDE_POINTS} pts`
+      : `${back} isn't a tens number.`,
   };
 }
 

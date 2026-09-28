@@ -5,9 +5,8 @@ import { Html } from "@react-three/drei";
 import { MEADOW_AREA, MEADOW_TOWER_LEFT, MEADOW_TOWER_RIGHT } from "../data/snow/snowLayout.js";
 import { useMeadowLevel } from "./meadowLevelStore.js";
 import {
-  meadowCountsAfter,
-  meadowChain,
-  MEADOW_HOP_MS,
+  meadowCountsAfterHops,
+  meadowChainHops,
 } from "../data/snow/meadowLevelChallenge.js";
 import { ConfettiBurst } from "./OrderPartsChallenge.jsx";
 
@@ -22,9 +21,13 @@ import { ConfettiBurst } from "./OrderPartsChallenge.jsx";
  */
 
 const BALL = "#f4f8fd";
-const BALL_R = 0.17;
-const COL_W = 0.46;
-const ROW_H = 0.36;
+// Bigger balls (audit 2026-09-28): at 0.17 a tower of 12 read as a thin grey
+// stick from the camera. Now each ball is countable.
+const BALL_R = 0.22;
+const COL_W = 0.56;
+const ROW_H = 0.44;
+// One hop's flight (the student taps once per ball).
+const FLIGHT_MS = 520;
 const HAT = "#2c3252";
 const SCARF = "#d6493f";
 const SCARF_TWIN = "#e0a800";
@@ -37,15 +40,6 @@ function ballPos(i) {
   const col = Math.floor(i / 10);
   const row = i % 10;
   return [(col - 1.5) * COL_W, 0.24 + row * ROW_H, (col % 2) * 0.06];
-}
-
-/** How many hops are complete / whether one is mid-flight right now. */
-function hopState(round, startedAt) {
-  const elapsed = Date.now() - startedAt;
-  const completed = Math.max(0, Math.min(round.moves, Math.floor(elapsed / MEADOW_HOP_MS)));
-  const flying = completed < round.moves;
-  const frac = flying ? (elapsed - completed * MEADOW_HOP_MS) / MEADOW_HOP_MS : 0;
-  return { completed, flying, frac };
 }
 
 function Tower({ local, count, twin }) {
@@ -94,25 +88,37 @@ function topOfColumn(count) {
   return 0.24 + (balls - 1) * ROW_H + BALL_R;
 }
 
-/** The ball mid-hop between the towers (an arc, one beat long). */
-function FlyingBall({ round, startedAt }) {
+/** Is the latest hop still in the air? */
+function inFlight(hopAt) {
+  return hopAt > 0 && Date.now() - hopAt < FLIGHT_MS;
+}
+
+/**
+ * The ball mid-hop. A forward hop (dir +1) flies from the snowman that was
+ * TALLER at the start to the other one; a hop back (dir −1) flies home.
+ */
+function FlyingBall({ round, hops, hopAt, dir }) {
   const ref = useRef();
   useFrame(() => {
     if (!ref.current) return;
-    const { completed, flying, frac } = hopState(round, startedAt);
+    const flying = inFlight(hopAt);
     ref.current.visible = flying;
     if (!flying) return;
-    const counts = meadowCountsAfter(round, completed);
-    const fromLocal = round.tallerSide === "left" ? LEFT_LOCAL : RIGHT_LOCAL;
-    const toLocal = round.tallerSide === "left" ? RIGHT_LOCAL : LEFT_LOCAL;
-    const fromCount = (round.tallerSide === "left" ? counts.left : counts.right) - 1;
-    const toCount = round.tallerSide === "left" ? counts.right : counts.left;
+    const frac = (Date.now() - hopAt) / FLIGHT_MS;
+    const tallLeft = round.tallerSide === "left";
+    // Forward: from the taller side to the shorter. Back: the reverse.
+    const fromLeft = dir > 0 ? tallLeft : !tallLeft;
+    const fromLocal = fromLeft ? LEFT_LOCAL : RIGHT_LOCAL;
+    const toLocal = fromLeft ? RIGHT_LOCAL : LEFT_LOCAL;
+    const now = meadowCountsAfterHops(round, hops);
+    const fromCount = fromLeft ? now.left : now.right; // already shed the ball
+    const toCount = (fromLeft ? now.right : now.left) - 1; // lands in this slot
     const a = ballPos(Math.max(0, fromCount));
-    const b = ballPos(toCount);
+    const b = ballPos(Math.max(0, toCount));
     const e = frac * frac * (3 - 2 * frac);
     ref.current.position.set(
       fromLocal[0] + a[0] + (toLocal[0] + b[0] - fromLocal[0] - a[0]) * e,
-      a[1] + (b[1] - a[1]) * e + Math.sin(Math.PI * e) * 1.5,
+      a[1] + (b[1] - a[1]) * e + Math.sin(Math.PI * e) * 1.6,
       fromLocal[1] + a[2] + (toLocal[1] + b[2] - fromLocal[1] - a[2]) * e
     );
   });
@@ -127,14 +133,16 @@ function FlyingBall({ round, startedAt }) {
 export default function MeadowLevelChallenge() {
   const status = useMeadowLevel((s) => s.status);
   const shown = useMeadowLevel((s) => s.currentRound());
-  const startedAt = useMeadowLevel((s) => s.levelStartedAt);
+  const hops = useMeadowLevel((s) => s.hops);
+  const hopAt = useMeadowLevel((s) => s.hopAt);
+  const hopDir = useMeadowLevel((s) => s.hopDir);
   const active = status !== "idle" && status !== "intro";
   const tick = useRef(0);
   const [, force] = React.useReducer((n) => n + 1, 0);
-  // Re-render ~8×/s while the hops play so the towers + chain advance.
+  // Re-render while a ball is in the air so it lands in the tower on time.
   useFrame((state) => {
-    if (status !== "levelling") return;
-    if (state.clock.elapsedTime - tick.current > 0.12) {
+    if (!inFlight(hopAt) && !(hopAt > 0 && Date.now() - hopAt < FLIGHT_MS + 200)) return;
+    if (state.clock.elapsedTime - tick.current > 0.08) {
       tick.current = state.clock.elapsedTime;
       force();
     }
@@ -142,37 +150,31 @@ export default function MeadowLevelChallenge() {
 
   if (!active || !shown) return null;
 
-  const completed =
-    status === "levelling" && startedAt
-      ? hopState(shown, startedAt).completed
-      : status === "predicting"
-        ? 0
-        : shown.moves;
-  const counts = meadowCountsAfter(shown, completed);
-  const { flying } = status === "levelling" && startedAt ? hopState(shown, startedAt) : { flying: false };
-  // The in-flight ball has LEFT the taller tower but not yet landed.
-  const drawLeft = counts.left - (flying && shown.tallerSide === "left" ? 1 : 0);
-  const drawRight = counts.right - (flying && shown.tallerSide === "right" ? 1 : 0);
-  const twins = status !== "predicting" && status !== "levelling" && shown.canTwin;
+  const counts = meadowCountsAfterHops(shown, hops);
+  const flying = inFlight(hopAt);
+  // The in-flight ball has left one tower but not yet landed on the other.
+  const tallLeft = shown.tallerSide === "left";
+  const landingLeft = hopDir > 0 ? !tallLeft : tallLeft;
+  const drawLeft = counts.left - (flying && landingLeft ? 1 : 0);
+  const drawRight = counts.right - (flying && !landingLeft ? 1 : 0);
+  const twins = counts.left === counts.right && !flying;
 
-  const chain = meadowChain(shown, completed);
+  const chain = meadowChainHops(shown, hops);
   const chip =
-    status === "predicting"
-      ? `${shown.left} + ${shown.right}`
-      : status === "typing"
-        ? `${chain} = ?`
-        : status === "celebrate" || status === "feedback"
-          ? `${chain} = ${status === "celebrate" ? shown.total : "?"}`
-          : chain;
+    status === "typing" || status === "feedback"
+      ? `${chain} = ?`
+      : status === "celebrate"
+        ? `${chain} = ${shown.total}`
+        : chain;
 
   return (
     <group position={[MEADOW_AREA.x, 0, MEADOW_AREA.z]}>
       <Tower local={LEFT_LOCAL} count={Math.max(0, drawLeft)} twin={twins} />
       <Tower local={RIGHT_LOCAL} count={Math.max(0, drawRight)} twin={twins} />
-      {status === "levelling" && startedAt > 0 && <FlyingBall round={shown} startedAt={startedAt} />}
+      <FlyingBall round={shown} hops={hops} hopAt={hopAt} dir={hopDir} />
 
       {/* The growing equation chain — every sum the same, total unshown. */}
-      <Html position={[(LEFT_LOCAL[0] + RIGHT_LOCAL[0]) / 2, 4.6, (LEFT_LOCAL[1] + RIGHT_LOCAL[1]) / 2]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+      <Html position={[(LEFT_LOCAL[0] + RIGHT_LOCAL[0]) / 2, 0.24 + (Math.min(10, Math.max(drawLeft, drawRight, 1)) - 1) * ROW_H + 1.1, (LEFT_LOCAL[1] + RIGHT_LOCAL[1]) / 2]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
         <div className="milk-display">{chip}</div>
       </Html>
 

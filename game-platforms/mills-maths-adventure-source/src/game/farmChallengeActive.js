@@ -42,6 +42,45 @@ export function isAnyChallengeActive() {
   return false;
 }
 
+// The ten Snowball Sums challenges, keyed like SNOW_CHALLENGE_VIEWS in
+// data/snow/snowLayout.js (the view corridors that clear the camera's line).
+const SNOW_CHALLENGES = [
+  ["range", useSnowballRange], ["rink", useRinkGlide], ["grove", useGroveLights],
+  ["meadow", useMeadowLevel], ["sled", useSledSlope], ["village", useVillageSplit],
+  ["colony", useColonyPairs], ["cave", useCaveCrystals], ["yard", useLodgeYard],
+  ["lights", useAuroraLookout],
+];
+
+/** NON-REACTIVE: the running snow challenge's key ("range" …) or null. */
+export function activeSnowChallengeKey() {
+  for (const [key, store] of SNOW_CHALLENGES) {
+    if (store.getState().status !== "idle") return key;
+  }
+  return null;
+}
+
+/**
+ * REACTIVE: the running snow challenge's key, or null. Drives the view
+ * clearing (scenery, host NPCs and the parked player step out of the
+ * camera's line) and the bottom-docked question panel.
+ */
+export function useActiveSnowChallenge() {
+  const on = [
+    useSnowballRange((s) => s.status !== "idle"),
+    useRinkGlide((s) => s.status !== "idle"),
+    useGroveLights((s) => s.status !== "idle"),
+    useMeadowLevel((s) => s.status !== "idle"),
+    useSledSlope((s) => s.status !== "idle"),
+    useVillageSplit((s) => s.status !== "idle"),
+    useColonyPairs((s) => s.status !== "idle"),
+    useCaveCrystals((s) => s.status !== "idle"),
+    useLodgeYard((s) => s.status !== "idle"),
+    useAuroraLookout((s) => s.status !== "idle"),
+  ];
+  const i = on.indexOf(true);
+  return i < 0 ? null : SNOW_CHALLENGES[i][0];
+}
+
 /**
  * Is ANY in-world challenge (Fraction Farm OR Snowball Sums) currently
  * running? Used to suppress the generic interaction UI ("Press E …" /

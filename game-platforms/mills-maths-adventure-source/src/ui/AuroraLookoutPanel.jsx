@@ -5,8 +5,10 @@ import { useSession, playerState } from "../game/sessionStore.js";
 import {
   LOOKOUT_ROUNDS_PER_SET,
   LOOKOUT_STRATEGIES,
-  LOOKOUT_ANSWER_POINTS,
 } from "../data/snow/auroraLookoutChallenge.js";
+import { SnowIntro, SnowRoundHead } from "./SnowCardParts.jsx";
+
+const TOOL = Object.fromEntries(LOOKOUT_STRATEGIES.map((t) => [t.key, t]));
 
 /**
  * AURORA LOOKOUT — 2D panel (AL). The capstone: PICK the tool (buttons or
@@ -54,8 +56,9 @@ export default function AuroraLookoutPanel() {
       const typingInField = e.target && /input|textarea/i.test(e.target.tagName || "");
       if (typingInField) return;
       const num = Number(e.key);
-      if (st.status === "picking" && num >= 1 && num <= LOOKOUT_STRATEGIES.length) {
-        st.choosePick(LOOKOUT_STRATEGIES[num - 1].key);
+      const offered = st.currentRound()?.options || [];
+      if (st.status === "picking" && num >= 1 && num <= offered.length) {
+        st.choosePick(offered[num - 1]);
         return;
       }
       if (e.key !== "Enter") return;
@@ -90,57 +93,46 @@ export default function AuroraLookoutPanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>✨ Aurora Lookout</span>
-          </div>
-          <div className="farm-challenge-line big">
-            The aurora writes a sum — <span className="fc-value">choose the tool</span>, not the answer!
-          </div>
-          <div className="farm-challenge-line">
-            Every trick from the snow world works here. Any sound tool scores — the brightest path scores more.
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useAuroraLookout.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useAuroraLookout.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="✨"
+          title="Aurora Lookout"
+          steps={[
+            <>The northern lights write a sum in the sky.</>,
+            <>Pick the <b>tool</b> that makes it easiest — every tool is one you used somewhere in the snow world.</>,
+            <>Then use that tool to work out the answer.</>,
+          ]}
+          example="47 + 29?  🎄 Round, then fix:  47 + 30 − 1 = 76"
+          onStart={() => useAuroraLookout.getState().beginRounds()}
+          onQuit={() => useAuroraLookout.getState().exit()}
+        />
       )}
 
       {status === "picking" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              ✨ Round {roundIndex + 1}/{LOOKOUT_ROUNDS_PER_SET} · {score} pts — the aurora writes{" "}
-              <span className="fc-value">{round.expr}</span>. Which tool makes it easy?
-            </span>
-            <button className="link-button" onClick={() => useAuroraLookout.getState().exit()}>
-              Quit
-            </button>
+          <SnowRoundHead
+            icon="✨"
+            roundIndex={roundIndex}
+            total={LOOKOUT_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useAuroraLookout.getState().exit()}
+          />
+          <div className="snow-q">
+            <span className="fc-value">{round.expr}</span> — which tool makes it easiest?
           </div>
           <div className="plank-pieces">
-            {LOOKOUT_STRATEGIES.map((s) => (
+            {(round.options || LOOKOUT_STRATEGIES.map((t) => t.key)).map((key, i) => (
               <button
-                key={s.key}
-                className="plank-piece-btn"
+                key={key}
+                className="plank-piece-btn snow-tool-btn"
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  useAuroraLookout.getState().choosePick(s.key);
+                  useAuroraLookout.getState().choosePick(key);
                 }}
               >
-                {s.label}
+                <span>{i + 1}. {TOOL[key].label}</span>
+                <small>{TOOL[key].example}</small>
               </button>
             ))}
           </div>
@@ -152,7 +144,8 @@ export default function AuroraLookoutPanel() {
           <div className={`farm-challenge-verdict ${pickResult.best ? "good" : pickResult.sound ? "warm" : "bad"}`}>
             {pickResult.label}
           </div>
-          <div className="farm-challenge-line big">
+          <div className="snow-sub">Use {TOOL[round.best].label}:</div>
+          <div className="snow-q">
             {round.scaffold} <span className="fc-value">?</span>
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
@@ -169,7 +162,7 @@ export default function AuroraLookoutPanel() {
             />
             <span className="weigh-unit">= {round.expr}</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{LOOKOUT_ANSWER_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -179,7 +172,7 @@ export default function AuroraLookoutPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.expr} = {round.answer} — the sky approves! · {score} pts
+              ✓ {round.expr} = {round.answer} — the sky approves! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -188,9 +181,11 @@ export default function AuroraLookoutPanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not quite! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <div className="farm-challenge-prompt">
+            {TOOL[round.best].label}: {round.scaffold} {round.answer}
+          </div>
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"
@@ -211,7 +206,7 @@ export default function AuroraLookoutPanel() {
             <span>✨ Aurora Lookout — complete!</span>
           </div>
           <div className="farm-challenge-prompt">
-            You scored {score} points. Best so far: {Math.max(bestScore, score)} points. Ten challenges, ten tools — the snow world is yours.
+            You scored {score} points. Best so far: {Math.max(bestScore, score)} points. Ten challenges, eight tools — the snow world is yours.
           </div>
           <div className="farm-challenge-buttons">
             <button className="primary-button" onClick={() => useAuroraLookout.getState().start()}>

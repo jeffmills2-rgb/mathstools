@@ -39,11 +39,11 @@ export const GROVE_MAX_SCORE = GROVE_ROUNDS_PER_SET * GROVE_ROUND_POINTS; // 375
 // The five fix choices, in display order. `value` is lights added on top of
 // the hung bundles (negative = unclipped back into the box).
 export const GROVE_ADJUSTMENTS = [
-  { value: -2, label: "Unclip 2" },
-  { value: -1, label: "Unclip 1" },
-  { value: 0, label: "Perfect — done!" },
-  { value: 1, label: "Clip 1 more" },
-  { value: 2, label: "Clip 2 more" },
+  { value: -2, label: "Take 2 off" },
+  { value: -1, label: "Take 1 off" },
+  { value: 0, label: "Just right!" },
+  { value: 1, label: "Add 1 more" },
+  { value: 2, label: "Add 2 more" },
 ];
 
 /** Which concept stage (0–4) a round index belongs to. Pure. */
@@ -121,8 +121,18 @@ export function generateGroveRound(roundIndex, rand = Math.random) {
     hung,
     total,
     grabOptions,
-    prompt: `This tree wears ${start} lights and needs ${add} more. Bundles hold TEN — which grab is friendliest?`,
+    prompt: `The tree has ${start} lights and needs ${add} more. Bundles hold 10 — which is closest to ${add}?`,
     reason: `${add} is ${adjust === 0 ? "exactly" : "nearly"} ${grabValue}: hang ${grabBundles} bundle${grabBundles === 1 ? "" : "s"}, ${fixText}.`,
+    // The same solution, one step per line, for the feedback card.
+    working: [
+      `${add} is ${adjust === 0 ? "exactly" : "close to"} ${grabValue}`,
+      `${start} + ${grabValue} = ${hung}`,
+      adjust === 0
+        ? `No fixing needed: ${total}`
+        : adjust < 0
+          ? `${grabValue} is ${-adjust} too many, so ${hung} − ${-adjust} = ${total}`
+          : `${grabValue} is ${adjust} too few, so ${hung} + ${adjust} = ${total}`,
+    ],
   };
 }
 
@@ -160,10 +170,10 @@ export function gradeGroveGrab(round, bundles) {
     bundles,
     points: correct ? GROVE_GRAB_POINTS : 0,
     label: correct
-      ? `✨ Friendly grab! +${GROVE_GRAB_POINTS} pts`
+      ? `✨ Closest bundle! +${GROVE_GRAB_POINTS} pts`
       : short
-        ? `That leaves ${gap} singles to clip one… at… a… time!`
-        : `That's ${gap} too many — a whole extra unclipping job!`,
+        ? `That leaves ${gap} singles to clip on one at a time — slow!`
+        : `That's ${gap} too many — a lot to take back off!`,
   };
 }
 

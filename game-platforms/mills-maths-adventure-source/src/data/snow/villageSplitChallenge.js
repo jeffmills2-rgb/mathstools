@@ -114,7 +114,20 @@ export function generateVillageRound(roundIndex, rand = Math.random) {
     regroup: onesSum >= 10,
     exactTen: onesSum === 10,
     total,
-    prompt: `Join the igloos: ${a} and ${b}. Will the ones OVERFLOW into a new ten-block?`,
+    prompt: `Join the igloos: ${a} and ${b}. Do the ones make a new ten?`,
+    // One step per line, for the feedback card.
+    working:
+      onesSum >= 10
+        ? [
+            `Tens: ${ta * 10} + ${tb * 10} = ${tensSum}`,
+            `Ones: ${oa} + ${ob} = ${onesSum} — that's a new ten and ${onesSum - 10} more`,
+            `${tensSum} + ${onesSum} = ${total}`,
+          ]
+        : [
+            `Tens: ${ta * 10} + ${tb * 10} = ${tensSum}`,
+            `Ones: ${oa} + ${ob} = ${onesSum}`,
+            `${tensSum} + ${onesSum} = ${total}`,
+          ],
     reason:
       onesSum >= 10
         ? `Tens with tens: ${ta * 10} + ${tb * 10} = ${tensSum}. Ones with ones: ${oa} + ${ob} = ${onesSum} — ten of them SNAP into a new ten-block! ${tensSum} + 10 + ${onesSum - 10} = ${total}.`
@@ -151,10 +164,10 @@ export function gradeVillagePredict(round, saidYes) {
     saidYes,
     points: correct ? VILLAGE_PREDICT_POINTS : 0,
     label: correct
-      ? `🧊 Good eye! ${round.oa} + ${round.ob} ${round.regroup ? "spills past ten" : "fits under ten"}. +${VILLAGE_PREDICT_POINTS} pts`
+      ? `🧊 Good eye! ${round.oa} + ${round.ob} ${round.regroup ? "makes a new ten" : "is less than ten"}. +${VILLAGE_PREDICT_POINTS} pts`
       : round.regroup
-        ? `${round.oa} + ${round.ob} = ${round.onesSum} — that's PAST ten, it overflows!`
-        : `${round.oa} + ${round.ob} = ${round.onesSum} — that still fits under ten.`,
+        ? `${round.oa} + ${round.ob} = ${round.onesSum} — that's 10 or more, so it DOES make a new ten!`
+        : `${round.oa} + ${round.ob} = ${round.onesSum} — less than 10, so no new ten.`,
   };
 }
 

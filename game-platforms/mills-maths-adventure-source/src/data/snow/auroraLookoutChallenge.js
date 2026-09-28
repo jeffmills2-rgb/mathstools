@@ -49,16 +49,45 @@ export const LOOKOUT_ANSWER_POINTS = 15;
 export const LOOKOUT_ROUND_POINTS = LOOKOUT_PICK_BEST_POINTS + LOOKOUT_ANSWER_POINTS; // 25
 export const LOOKOUT_MAX_SCORE = LOOKOUT_ROUNDS_PER_SET * LOOKOUT_ROUND_POINTS; // 375
 
-// The tool menu, in display order (keys 1–7).
+// The tool menu (keys 1–4 pick from the round's four offered tools).
+// 2026-09-28 audit: EIGHT tools — "🧊 Tens and ones" (Igloo Village's split
+// strategy) was missing, even though the splitAdd archetype's own scaffold
+// ("tens 20 + 30, ones 5 + 7") IS that strategy. Each tool now carries a
+// tiny worked example so a student who has forgotten the name still
+// recognises the move. And a round OFFERS only four of them (see
+// lookoutOptionsFor) — seven buttons at once was a wall of text.
 export const LOOKOUT_STRATEGIES = [
-  { key: "bridge", label: "❄️ Make ten first" },
-  { key: "jump", label: "⛸️ Jump by tens" },
-  { key: "comp", label: "🎄 Round, then adjust" },
-  { key: "double", label: "🐧 Use a double" },
-  { key: "countup", label: "🌌 Count up the gap" },
-  { key: "slide", label: "🛷 Slide both numbers" },
-  { key: "friends", label: "☕ Friends of 100" },
+  { key: "bridge", label: "❄️ Make ten first", example: "8 + 5 → 8 + 2 + 3" },
+  { key: "jump", label: "⛸️ Jump by tens", example: "47 + 30 → 57, 67, 77" },
+  { key: "comp", label: "🎄 Round, then fix", example: "47 + 29 → 47 + 30 − 1" },
+  { key: "double", label: "🐧 Use a double", example: "25 + 26 → double 25, +1" },
+  { key: "split", label: "🧊 Tens and ones", example: "34 + 25 → 30 + 20, 4 + 5" },
+  { key: "countup", label: "🌌 Count up the gap", example: "83 − 79 → 79 … 83" },
+  { key: "slide", label: "🛷 Slide both numbers", example: "62 − 29 → 63 − 30" },
+  { key: "friends", label: "☕ Count up to 100", example: "100 − 65 → 70 … 100" },
 ];
+
+export const LOOKOUT_OPTIONS_PER_ROUND = 4;
+
+/**
+ * The four tools OFFERED this round: the brightest, one sound alternative
+ * (when the round has one), and the rest drawn from the unsound tools —
+ * shuffled, so position gives nothing away. Pure (rand injectable).
+ */
+export function lookoutOptionsFor(best, sound, rand = Math.random) {
+  const keys = LOOKOUT_STRATEGIES.map((t) => t.key);
+  const picked = [best];
+  if (sound.length) picked.push(sound[Math.floor(rand() * sound.length)]);
+  const rest = keys.filter((k) => !picked.includes(k) && !sound.includes(k));
+  while (picked.length < LOOKOUT_OPTIONS_PER_ROUND && rest.length) {
+    picked.push(rest.splice(Math.floor(rand() * rest.length), 1)[0]);
+  }
+  for (let i = picked.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [picked[i], picked[j]] = [picked[j], picked[i]];
+  }
+  return picked;
+}
 
 // One full pass of the archetypes, then a mixed back half — every archetype
 // appears at least once in every set. (Fixed, so the checks can assert it.)
@@ -123,8 +152,8 @@ const ARCHETYPES = {
     const a = ta * 10 + oa;
     const b = tb * 10 + ob;
     return {
-      expr: `${a} + ${b}`, answer: a + b, best: "jump", sound: ["bridge", "comp"],
-      scaffold: `tens ${ta * 10} + ${tb * 10}, ones ${oa} + ${ob}:`,
+      expr: `${a} + ${b}`, answer: a + b, best: "split", sound: ["jump", "bridge"],
+      scaffold: `tens ${ta * 10} + ${tb * 10} = ${(ta + tb) * 10}, ones ${oa} + ${ob} = ${oa + ob}, so`,
     };
   },
   closeSub: (rand) => {
@@ -170,6 +199,7 @@ export function generateLookoutRound(roundIndex, rand = Math.random) {
     best: built.best,
     sound: built.sound,
     scaffold: built.scaffold,
+    options: lookoutOptionsFor(built.best, built.sound, rand),
     prompt: `The aurora writes: ${built.expr}. Which tool makes it EASY?`,
     reason: `${built.expr}: the brightest tool is ${LOOKOUT_STRATEGIES.find((s) => s.key === built.best).label} — ${built.scaffold} ${built.answer}.`,
   };
@@ -207,8 +237,8 @@ export function gradeLookoutPick(round, key) {
     label: best
       ? `✨ The brightest path! +${LOOKOUT_PICK_BEST_POINTS} pts`
       : sound
-        ? `${strat ? strat.label : key} works — but a brighter tool was shining. +${LOOKOUT_PICK_SOUND_POINTS} pts`
-        : `${strat ? strat.label : key} doesn't fit this one!`,
+        ? `${strat ? strat.label : key} works — but there's an even easier way. +${LOOKOUT_PICK_SOUND_POINTS} pts`
+        : `${strat ? strat.label : key} doesn't fit this one — let's use the easiest tool.`,
   };
 }
 

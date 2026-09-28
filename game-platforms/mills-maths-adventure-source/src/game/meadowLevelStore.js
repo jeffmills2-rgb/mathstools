@@ -3,19 +3,25 @@ import { create } from "zustand";
 import {
   generateMeadowSet,
   gradeMeadowPredict,
+  gradeMeadowCall,
   checkMeadowTotal,
+  meadowMaxHops,
   MEADOW_ROUNDS_PER_SET,
   MEADOW_TOTAL_POINTS,
+  MEADOW_PREDICT_POINTS,
 } from "../data/snow/meadowLevelChallenge.js";
 import { useProgress } from "../progress/store.js";
 import { useUI } from "../ui/effects/uiStore.js";
 
 /**
  * MEADOW LEVEL STORE (ML) — session state for the levelling challenge.
- *   predicting  call the hop count (or "Can't make twins!") → choosePredict()
- *   levelling   the TRUE hops play out, one ball per beat (panel-timed via
- *               MEADOW_HOP_MS) — the equation chain grows as they land
+ *   hopping     (2026-09-28) the student HOPS balls across one tap at a time
+ *               → hop(±1), then CALLS it → call("match" | "cant"). A wrong
+ *               call is a nudge, not a dead end: the hopping carries on,
+ *               but the round's +10 is gone (first call scores).
  *   typing      type the total via the double → submitTotal()
+ * The old predict-first path (predicting → levelling) is kept in the store
+ * for the checks, but the panel no longer uses it.
  * Correct typing → celebrate (auto-next); wrong → shake + reason card.
  *
  * NOTE: progress is LOCAL-ONLY for now — same note as the other snow stores.
@@ -45,8 +51,17 @@ export const useMeadowLevel = create((set, get) => ({
   status: "idle",
   rounds: [],
   roundIndex: 0,
-  predictResult: null, // gradeMeadowPredict() after Part A
+  predictResult: null, // gradeMeadowPredict() / the scored call after Part A
   levelStartedAt: 0, // Date.now() when the hops began (drives the 3D)
+  // Hop-it-yourself state: balls moved so far (from the ORIGINAL taller
+  // snowman), when the latest hop started + its direction (for the 3D
+  // flight), whether a wrong call has already been made this round (no
+  // points after that), and the nudge text shown on the card.
+  hops: 0,
+  hopAt: 0,
+  hopDir: 1,
+  callMissed: false,
+  callNote: null,
   typedCorrect: null,
   results: [],
   score: 0,
@@ -64,6 +79,11 @@ export const useMeadowLevel = create((set, get) => ({
       roundIndex: 0,
       predictResult: null,
       levelStartedAt: 0,
+      hops: 0,
+      hopAt: 0,
+      hopDir: 1,
+      callMissed: false,
+      callNote: null,
       typedCorrect: null,
       results: [],
       score: 0,
@@ -73,7 +93,48 @@ export const useMeadowLevel = create((set, get) => ({
 
   beginRounds() {
     if (get().status !== "intro") return;
-    set({ status: "predicting" });
+    set({ status: "hopping" });
+  },
+
+  /** Hop one ball across (+1, from the taller) or back (−1). */
+  hop(dir) {
+    const { status, hops } = get();
+    if (status !== "hopping" || (dir !== 1 && dir !== -1)) return;
+    const round = get().currentRound();
+    if (!round) return;
+    const next = hops + dir;
+    if (next < 0 || next > meadowMaxHops(round)) return;
+    set({ hops: next, hopAt: Date.now(), hopDir: dir, callNote: null });
+  },
+
+  /**
+   * Part A (hop-it-yourself): call "match" or "cant". A wrong call leaves the
+   * student hopping with a nudge; the round's points go with it. A right call
+   * moves to typing — on an odd gap the towers settle as near-twins.
+   */
+  call(kind) {
+    const { status, hops, callMissed } = get();
+    if (status !== "hopping") return;
+    const round = get().currentRound();
+    if (!round) return;
+    const g = gradeMeadowCall(round, hops, kind);
+    if (!g.done) {
+      set({ callMissed: true, callNote: g.label });
+      return;
+    }
+    const points = callMissed ? 0 : MEADOW_PREDICT_POINTS;
+    set((s) => ({
+      status: "typing",
+      hops: round.canTwin ? hops : round.moves,
+      hopAt: 0,
+      callNote: null,
+      predictResult: {
+        correct: points > 0,
+        points,
+        label: points > 0 ? g.label : g.label.replace(/ \+\d+ pts$/, ""),
+      },
+      score: s.score + points,
+    }));
   },
 
   /** Part A: predict the hop count — the TRUE hops always play out next. */
@@ -120,10 +181,15 @@ export const useMeadowLevel = create((set, get) => ({
     const results = [...get().results, { round, predictResult, typedCorrect }];
     if (roundIndex + 1 < MEADOW_ROUNDS_PER_SET) {
       set({
-        status: "predicting",
+        status: "hopping",
         roundIndex: roundIndex + 1,
         predictResult: null,
         levelStartedAt: 0,
+        hops: 0,
+        hopAt: 0,
+        hopDir: 1,
+        callMissed: false,
+        callNote: null,
         typedCorrect: null,
         results,
       });
@@ -150,6 +216,11 @@ export const useMeadowLevel = create((set, get) => ({
       roundIndex: 0,
       predictResult: null,
       levelStartedAt: 0,
+      hops: 0,
+      hopAt: 0,
+      hopDir: 1,
+      callMissed: false,
+      callNote: null,
       typedCorrect: null,
       results: [],
       score: 0,

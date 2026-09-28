@@ -95,6 +95,63 @@
 > depth (still only 2 sample skills) · more Stage 4 topics (Area extension)
 > · a DevPanel gallery to eyeball every new diagram/chart at once.
 
+## DONE (2026-09-28) — SNOWBALL SUMS YEAR-7 AUDIT (all ten activities)
+Jeff asked for an audit of the ten snow activities with the students' age in
+mind ("some aren't intuitive for this age"). Every activity was played in a
+headless browser and screenshotted before and after. **486 → 491 checks
+(new SA1–SA5 in `runSnowAuditChecks`), all passing; vite build clean.**
+- **Question card docks at the BOTTOM** (`.farm-challenge-panel.snow-dock`,
+  styles at the end of index.css). The top-docked card was covering the maths
+  each scene writes in the world (Grove, Lodge Yard and Aurora sums were fully
+  hidden). Every snow camera looks `SNOW_DOCK_LIFT × dist` below its activity
+  (Player.jsx) so the scene rides up clear of the card. The HUD movement hint
+  hides during a snow challenge.
+- **Nothing stands in the camera's line.** `SNOW_CHALLENGE_VIEWS` +
+  `inSnowChallengeView()` (snowLayout.js) define a corridor per challenge
+  (all filmed from the south). While one runs: scenery props in it are not
+  rendered (SnowScenery), host NPCs in it are hidden (Interactable
+  `outOfShot`), the parked player avatar is hidden (Player), wandering
+  penguins leave the colony, the rink sliders go during the rink, the sled
+  prop/flags go during the sled. Keys come from `useActiveSnowChallenge()` /
+  `activeSnowChallengeKey()` in farmChallengeActive.js.
+- **Kid-sized cards** — shared `ui/SnowCardParts.jsx`: `SnowIntro` (2–4
+  numbered steps + ONE worked example, no points maths), `SnowRoundHead`
+  ("Round 3 of 15 · ⭐ 50"), `SnowWorking` (feedback as one step per line —
+  every round now carries a `working` array in its logic file). Jargon gone
+  from student text: friendly, overflow, decade, level twins, sound tool,
+  brightest path, tokens.
+- **Per activity:** Range — idle crates hidden mid-round, pole chip reads
+  "2 to the crate · 4 spare". Rink — each queued push draws an arc on the ice
+  (an empty number line) + "lands on N" ring/readout; unit ticks; plan shown
+  as "+10 ×4 · +1 ×5". Grove — "which is closest to 8?", fixes are Take 2 off /
+  Take 1 off / Just right! / Add 1 / Add 2. **Meadow — HOP-IT-YOURSELF**:
+  students tap Hop / Hop back, then call "They match!" or "They can never
+  match" (first call scores the +10; a wrong call is a nudge, not a dead end),
+  and the "4 apart, only 2 hops" insight comes AFTER on the typing card;
+  bigger balls, closer camera. **Sled — number line now increases to the
+  RIGHT** (it ran backwards), the self-contradictory rope prediction is
+  retired (round = slide 10 + gap 15), bigger ticks/labels, closer camera.
+  Village — ten-blocks are ROD of ten unit cubes (same cube as the ones),
+  stronger colours, chips "23 = 2 tens + 3 ones", Part B is two sentence
+  rows ("Tens 20 + 20 = [ ]"). Colony — both rows share a left edge so pairs
+  line up, face the camera, row-count chips; "double 6, then +1" wording;
+  **a wrong pick no longer prints the total**. Cave — only the BACK half of
+  the dome is drawn (the front wall hid every crystal), pale-ice crystals,
+  "which way is quicker?", "steps". Lodge Yard — cents and $1 (answers
+  accept "35c"), lit cream bead board with 10c…100c row labels, camera on
+  the board. Aurora — EIGHT tools (🧊 Tens and ones added — splitAdd's
+  scaffold was that strategy but the menu lacked it), each with a one-line
+  example, and a round OFFERS only four (`lookoutOptionsFor`).
+- **Deployed** from a fresh `vite build` (the old bundle was a hand-patched
+  build; asset hashes changed). **Build gotcha:** vite resolves the PWA block
+  in the source index.html (`../../manifest.webmanifest`, the apple-touch
+  icon) and emits hashed copies into `dist/assets/` — after copying `dist`,
+  put those two hrefs back to `../../manifest.webmanifest` and
+  `../../icons/apple-touch-icon.png` and delete the two copied files.
+- **TODO:** a live iPad look (4:3 framing of the bottom card), Farsi/Arabic
+  strings for the new card text, the Cave's scenery mound sits inside the
+  cave mouth (visible left of the crystals).
+
 ## DONE (2026-07-29) — WORLD-QUIETING pass + Snowball Range re-stage (teacher feedback)
 From a live screenshot: the ten-frame crate was invisible behind its own area
 label, four world chips competed with the panel, and Pip/Alby/Fern all kept

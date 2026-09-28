@@ -84,7 +84,8 @@ export const useSledSlope = create((set, get) => ({
 
   beginRounds() {
     if (get().status !== "intro") return;
-    set({ status: "predicting" });
+    // 2026-09-28: straight to sliding — the rope prediction is retired.
+    set({ status: "sliding" });
   },
 
   /** Part A: the rope prediction. */
@@ -149,7 +150,7 @@ export const useSledSlope = create((set, get) => ({
     const results = [...get().results, { round, predictResult, slideResult, typedCorrect }];
     if (roundIndex + 1 < SLED_ROUNDS_PER_SET) {
       set({
-        status: "predicting",
+        status: "sliding",
         roundIndex: roundIndex + 1,
         slid: 0,
         slidesUsed: 0,

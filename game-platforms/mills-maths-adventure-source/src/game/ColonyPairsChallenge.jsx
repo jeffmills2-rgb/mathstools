@@ -44,7 +44,13 @@ function MiniPenguin({ odd }) {
   );
 }
 
-/** Where penguin k of a row of n stands (centred on the colony). */
+/**
+ * Where penguin k stands. BOTH rows share one left edge (sized to the longer
+ * row, n), so penguin k of the front row lines up with penguin k of the back
+ * row and the pairs are visible; the extra penguin sticks out at the right
+ * end. (Audit 2026-09-28: each row used to be centred on its own, which
+ * offset the rows by half a penguin and hid the pairing.)
+ */
 function rowX(k, n) {
   return (k - (n - 1) / 2) * SPACING;
 }
@@ -77,7 +83,7 @@ function WaddlingCrosser({ round }) {
     const { waddleFrac } = pairProgress(round, st.pairStartedAt);
     const e = waddleFrac * waddleFrac * (3 - 2 * waddleFrac);
     const from = [rowX(round.b - 1, round.b), COLONY_ROWS.z2 - COLONY_AREA.z];
-    const to = [rowX(round.a, round.a + 1), COLONY_ROWS.z1 - COLONY_AREA.z];
+    const to = [rowX(round.a, round.b), COLONY_ROWS.z1 - COLONY_AREA.z];
     ref.current.position.set(
       from[0] + (to[0] - from[0]) * e,
       Math.abs(Math.sin(state.clock.elapsedTime * 12)) * (waddleFrac < 1 ? 0.06 : 0),
@@ -129,7 +135,7 @@ export default function ColonyPairsChallenge() {
         ? shown.diff === 0
           ? `double ${shown.a} = ?`
           : shown.diff === 1
-            ? `double ${shown.a} + 1 = ?`
+            ? `double ${shown.a}, then +1 = ?`
             : `double ${shown.middleBase} = ?`
         : status === "celebrate"
           ? `${shown.a} + ${shown.b} = ${shown.total}`
@@ -139,13 +145,13 @@ export default function ColonyPairsChallenge() {
     <group position={[COLONY_AREA.x, 0, COLONY_AREA.z]}>
       {/* Row 1 (the shorter row, nearer the camera). */}
       {Array.from({ length: row1n }, (_, k) => (
-        <group key={`r1-${k}`} position={[rowX(k, row1n), 0, COLONY_ROWS.z1 - COLONY_AREA.z]}>
+        <group key={`r1-${k}`} position={[rowX(k, shown.b), 0, COLONY_ROWS.z1 - COLONY_AREA.z]}>
           <MiniPenguin odd={false} />
         </group>
       ))}
       {/* Row 2 — the ODD penguin (diff 1) is the last one, glowing gold. */}
       {Array.from({ length: row2n }, (_, k) => (
-        <group key={`r2-${k}`} position={[rowX(k, row2n), 0, COLONY_ROWS.z2 - COLONY_AREA.z]} rotation={[0, Math.PI, 0]}>
+        <group key={`r2-${k}`} position={[rowX(k, shown.b), 0, COLONY_ROWS.z2 - COLONY_AREA.z]}>
           <MiniPenguin odd={oddCount > 0 && k === row2n - 1 && started} />
         </group>
       ))}
@@ -157,12 +163,26 @@ export default function ColonyPairsChallenge() {
           <mesh
             key={`ring-${k}`}
             rotation={[-Math.PI / 2, 0, 0]}
-            position={[rowX(k, Math.max(row1n, 1)), 0.02, (COLONY_ROWS.z1 + COLONY_ROWS.z2) / 2 - COLONY_AREA.z]}
+            position={[rowX(k, shown.b), 0.02, (COLONY_ROWS.z1 + COLONY_ROWS.z2) / 2 - COLONY_AREA.z]}
           >
             <ringGeometry args={[0.3, 0.42, 20]} />
             <meshBasicMaterial color={RING} transparent opacity={0.8} />
           </mesh>
         ))}
+
+      {/* How many in each row, at the rows' shared left edge. */}
+      {[[row1n, COLONY_ROWS.z1], [row2n + (shown.diff === 2 ? 1 : 0), COLONY_ROWS.z2]].map(([n, z], i) => (
+        <Html
+          key={`rc${i}`}
+          position={[rowX(0, shown.b) - 1.1, 0.35, z - COLONY_AREA.z]}
+          center
+          distanceFactor={10}
+          className="ix-badge-anchor"
+          zIndexRange={[24, 0]}
+        >
+          <div className="fc-count-chip">{n}</div>
+        </Html>
+      ))}
 
       {/* The running sentence above the huddle. */}
       <Html position={[0, 2.9, COLONY_ROWS.z1 - COLONY_AREA.z]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>

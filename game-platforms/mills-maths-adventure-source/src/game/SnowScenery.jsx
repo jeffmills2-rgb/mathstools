@@ -29,10 +29,16 @@ import {
   RINK_SLIDERS,
   SLOPE,
   snowGroundHeight,
+  inSnowChallengeView,
 } from "../data/snow/snowLayout.js";
 import { rinkBankColliders } from "../data/snow/snowColliders.js";
 import { playerState } from "./sessionStore.js";
-import { isAnyChallengeActive, useFarmChallengeActive } from "./farmChallengeActive.js";
+import {
+  isAnyChallengeActive,
+  useFarmChallengeActive,
+  useActiveSnowChallenge,
+  activeSnowChallengeKey,
+} from "./farmChallengeActive.js";
 import { snowShelfEntries } from "../data/snow/snowRecords.js";
 import TrophyStandAssembly from "./TrophyStand.jsx";
 
@@ -344,7 +350,7 @@ function Lodge() {
 }
 
 /** The ICE CAVE corner — a snow mound with glowing ice crystals. */
-function IceCave() {
+function IceCave({ hide }) {
   const [mx, mz] = ICE_CAVE_MOUND.position;
   return (
     <group>
@@ -358,7 +364,7 @@ function IceCave() {
         <meshStandardMaterial color="#131a2b" />
       </mesh>
       {ICE_CRYSTALS.map(([cx, cz], i) => (
-        <group key={i} position={[cx, 0, cz]} rotation={[0, i * 1.7, 0.12]}>
+        <group key={i} position={[cx, 0, cz]} rotation={[0, i * 1.7, 0.12]} visible={!hide(cx, cz)}>
           <mesh castShadow position={[0, 0.9, 0]}>
             <coneGeometry args={[0.5, 1.9, 5]} />
             <meshStandardMaterial color="#9fdcf2" emissive="#59b8dd" emissiveIntensity={0.6} transparent opacity={0.92} flatShading />
@@ -586,11 +592,18 @@ function WaddlingPenguins() {
     // Hold still while a challenge runs — no ambient motion competing with
     // the maths for the student's attention.
     if (isAnyChallengeActive()) {
-      bodies.current.forEach((body) => {
+      // …and any penguin standing in a snow challenge's camera line steps out
+      // of shot (the colony's own challenge penguins are the ones to count).
+      const key = activeSnowChallengeKey();
+      bodies.current.forEach((body, i) => {
         if (body) { body.rotation.z = 0; body.position.y = 0; }
+        const g = refs.current[i];
+        const p = pens.current[i];
+        if (g && p) g.visible = !(key === "colony" || inSnowChallengeView(key, p.x, p.z));
       });
       return;
     }
+    refs.current.forEach((g) => { if (g) g.visible = true; });
     const b = PENGUIN_WANDER;
     const t = state.clock.elapsedTime;
     pens.current.forEach((p, i) => {
@@ -835,6 +848,10 @@ export default function SnowScenery() {
   // While an in-world challenge runs the world goes quiet: the area signposts
   // come down so nothing floats in front of the challenge props.
   const challengeActive = useFarmChallengeActive();
+  // The running snow challenge (or null) — props in its camera corridor are
+  // hidden so nothing stands between the student and the maths.
+  const snowKey = useActiveSnowChallenge();
+  const hide = (x, z) => inSnowChallengeView(snowKey, x, z);
   return (
     <group>
       {/* Base snowfield — extends WELL past the boundary bank so the peaks +
@@ -873,8 +890,10 @@ export default function SnowScenery() {
 
       {/* Buildings + landmarks. */}
       <Lodge />
-      <IceCave />
-      <SledAndFlags />
+      <IceCave hide={hide} />
+      {/* The sled prop + course flags sit on the Sledding Slope's own number
+          run — they step aside while that challenge is on. */}
+      {snowKey !== "sled" && <SledAndFlags />}
       <WelcomeSign />
       <IceRinkSheet />
 
@@ -887,25 +906,25 @@ export default function SnowScenery() {
       />
 
       {/* Props. */}
-      {SNOW_IGLOOS.map(([x, z, rot], i) => (
-        <Igloo key={`ig${i}`} position={[x, z]} rotationY={rot} />
+      {SNOW_IGLOOS.filter(([x, z]) => !hide(x, z)).map(([x, z, rot]) => (
+        <Igloo key={`ig${x},${z}`} position={[x, z]} rotationY={rot} />
       ))}
-      {SNOWMEN.map((pos, i) => (
-        <Snowman key={`sm${i}`} position={pos} />
+      {SNOWMEN.filter(([x, z]) => !hide(x, z)).map((pos) => (
+        <Snowman key={`sm${pos[0]},${pos[1]}`} position={pos} />
       ))}
-      {XMAS_TREES.map((pos, i) => (
-        <XmasTree key={`xt${i}`} position={pos} />
+      {XMAS_TREES.filter(([x, z]) => !hide(x, z)).map((pos) => (
+        <XmasTree key={`xt${pos[0]},${pos[1]}`} position={pos} />
       ))}
-      {SNOW_LAMPS.map((pos, i) => (
-        <LampPost key={`lp${i}`} position={pos} />
+      {SNOW_LAMPS.filter(([x, z]) => !hide(x, z)).map((pos) => (
+        <LampPost key={`lp${pos[0]},${pos[1]}`} position={pos} />
       ))}
-      {CANDY_CANES.map((pos, i) => (
-        <CandyCane key={`cc${i}`} position={pos} />
+      {CANDY_CANES.filter(([x, z]) => !hide(x, z)).map((pos) => (
+        <CandyCane key={`cc${pos[0]},${pos[1]}`} position={pos} />
       ))}
 
       {/* Wildlife: waddling penguins + two rink belly-sliders. */}
       <WaddlingPenguins />
-      <RinkPenguins />
+      {snowKey !== "rink" && <RinkPenguins />}
 
       {/* Challenge-area labels (the rink already reads as itself). They are
           signposts for a student WALKING the world — while a challenge runs

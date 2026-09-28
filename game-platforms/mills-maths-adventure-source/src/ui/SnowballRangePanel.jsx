@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { useSnowballRange } from "../game/snowballRangeStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
-import { RANGE_ROUNDS_PER_SET, RANGE_TYPE_POINTS } from "../data/snow/snowballRangeChallenge.js";
+import { RANGE_ROUNDS_PER_SET } from "../data/snow/snowballRangeChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
  * SNOWBALL RANGE — 2D panel (SR). Weigh-Station pacing: SPLIT the handful
@@ -93,45 +94,39 @@ export default function SnowballRangePanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>❄️ The Snowball Range</span>
-          </div>
-          <div className="farm-challenge-line big">
-            Split your handful to <span className="fc-value">FILL the crate to ten</span> first — then throw the rest!
-          </div>
-          <div className="farm-challenge-line">
-            Tap between the snowballs (or ← →) to place the split, then Throw. The crate must be
-            FULL before you can count the total — first-throw fill = +10, the total = +15.
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useSnowballRange.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useSnowballRange.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="❄️"
+          title="The Snowball Range"
+          steps={[
+            <>The crate holds <b>10</b> snowballs. Some are already packed.</>,
+            <>Drag the <b style={{ color: "#e04747" }}>red pole</b> through your snowballs. The ones on its <b>left</b> fly into the crate.</>,
+            <>Fill the crate to <b>exactly 10</b>, then press Throw.</>,
+            <>Count how many snowballs there are <b>altogether</b>.</>,
+          ]}
+          example="8 + 5  →  8 + 2 = 10  →  10 + 3 = 13"
+          onStart={() => useSnowballRange.getState().beginRounds()}
+          onQuit={() => useSnowballRange.getState().exit()}
+        />
       )}
 
       {status === "splitting" && round && (
-        <div className="farm-challenge-card mini">
-          {/* The split, the counts and the sum all live in the 3D scene (the
-              divider, the crate, the equation chip). The strip stays a thin
-              round/score bar + the action, so the student reads ONE place. */}
-          <div className="farm-challenge-head">
-            <span>
-              ❄️ Round {roundIndex + 1}/{RANGE_ROUNDS_PER_SET} · {score} pts
-            </span>
+        <div className="farm-challenge-card">
+          {/* The counts and the sum live in the 3D scene (the crate, the
+              pole, the chip above). The card asks ONE question. */}
+          <SnowRoundHead
+            icon="❄️"
+            roundIndex={roundIndex}
+            total={RANGE_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useSnowballRange.getState().exit()}
+          />
+          <div className="snow-q">How many snowballs will fill the crate?</div>
+          <div className="snow-sub">
+            Drag the red pole (or use ← →). Balls on its left go in the crate.
+          </div>
+          <div className="farm-challenge-buttons">
             <button
               className="primary-button"
               onClick={(e) => {
@@ -140,9 +135,6 @@ export default function SnowballRangePanel() {
               }}
             >
               Throw! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useSnowballRange.getState().exit()}>
-              Quit
             </button>
           </div>
         </div>
@@ -155,14 +147,13 @@ export default function SnowballRangePanel() {
       {status === "missed" && round && splitResult && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict warm">{splitResult.label}</div>
-          <div className="farm-challenge-line big">
-            The crate must reach <span className="fc-value">{round.nextTen}</span> before you can
-            count the rest.
+          <div className="snow-q">
+            Fill the crate to exactly <span className="fc-value">{round.nextTen}</span> first.
           </div>
-          <div className="farm-challenge-line">
+          <div className="snow-sub">
             {splitResult.short
-              ? "Look at the empty sockets — that's how many to throw first."
-              : "Too many went in. Only the empty sockets can take a snowball."}
+              ? "Count the empty spaces — that's how many to throw into the crate."
+              : "Only the empty spaces can take a snowball. Throw fewer."}
           </div>
           <div className="farm-challenge-buttons">
             <button
@@ -172,7 +163,7 @@ export default function SnowballRangePanel() {
                 useSnowballRange.getState().retrySplit();
               }}
             >
-              Try the split again (Enter)
+              Try again (Enter)
             </button>
             <button className="link-button" onClick={() => useSnowballRange.getState().exit()}>
               Quit
@@ -188,7 +179,7 @@ export default function SnowballRangePanel() {
           </div>
           {/* The sum itself is on the crate ("18 + 7 → 20 + 5"), so the card
               only asks the question and takes the answer. */}
-          <div className="farm-challenge-line big">How many altogether?</div>
+          <div className="snow-q">How many snowballs altogether?</div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
               ref={inputRef}
@@ -203,7 +194,7 @@ export default function SnowballRangePanel() {
             />
             <span className="weigh-unit">snowballs</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{RANGE_TYPE_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -213,7 +204,7 @@ export default function SnowballRangePanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.start} + {round.comp} = {round.nextTen}, then + {round.rest} = {round.sum}! · {score} pts
+              ✓ {round.start} + {round.comp} = {round.nextTen}, then + {round.rest} = {round.sum}! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -222,9 +213,9 @@ export default function SnowballRangePanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the total! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

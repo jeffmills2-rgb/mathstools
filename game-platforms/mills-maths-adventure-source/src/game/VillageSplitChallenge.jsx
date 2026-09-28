@@ -23,8 +23,10 @@ import { ConfettiBurst } from "./OrderPartsChallenge.jsx";
  * finished igloo gets its dome + confetti.
  */
 
-const ICE_TEN = "#9fdcf2";
-const ICE_ONE = "#d8f0fb";
+// Stronger ice colours (audit 2026-09-28): pale blue on pale snow was
+// unreadable in the twilight.
+const ICE_TEN = "#4da6e0";
+const ICE_ONE = "#f4fbff";
 const ICE_NEW = "#ffe14d"; // the freshly snapped ten-block
 const STAND = "#57462f";
 
@@ -32,50 +34,51 @@ const LEFT = [VILLAGE_LEFT_STAND[0] - VILLAGE_AREA.x, VILLAGE_LEFT_STAND[1] - VI
 const RIGHT = [VILLAGE_RIGHT_STAND[0] - VILLAGE_AREA.x, VILLAGE_RIGHT_STAND[1] - VILLAGE_AREA.z];
 const SITE = [VILLAGE_BUILD_SITE[0] - VILLAGE_AREA.x, VILLAGE_BUILD_SITE[1] - VILLAGE_AREA.z];
 
-const TEN_W = 1.05;
-const TEN_H = 0.5;
-const ONE_S = 0.34;
+// ONE unit cube, used for BOTH the ones and the ten-blocks (audit
+// 2026-09-28): a ten-block is now a ROD of ten of the same cubes, so a
+// student can see — and count — that it is ten ones joined up. The old
+// ten-block was a plain slab that could have been any size.
+const UNIT = 0.22;
+const UNIT_GAP = 0.018;
+const ROD_LEN = 10 * UNIT + 9 * UNIT_GAP;
 
-/** A ten-block (a big ice brick). */
+/** A ten-block: a rod of ten unit cubes. */
 function TenBlock({ position, fresh }) {
+  const color = fresh ? ICE_NEW : ICE_TEN;
   return (
-    <mesh castShadow position={position}>
-      <boxGeometry args={[TEN_W, TEN_H, 0.6]} />
-      <meshStandardMaterial
-        color={fresh ? ICE_NEW : ICE_TEN}
-        emissive={fresh ? ICE_NEW : ICE_TEN}
-        emissiveIntensity={fresh ? 0.8 : 0.25}
-        transparent
-        opacity={0.95}
-      />
-    </mesh>
+    <group position={position}>
+      {Array.from({ length: 10 }, (_, i) => (
+        <mesh key={i} castShadow position={[-ROD_LEN / 2 + UNIT / 2 + i * (UNIT + UNIT_GAP), 0, 0]}>
+          <boxGeometry args={[UNIT, UNIT, UNIT]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={fresh ? 0.8 : 0.3} />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
-/** A one-block (a small ice cube). */
+/** A one-block: a single unit cube. */
 function OneBlock({ position, hot }) {
   return (
     <mesh castShadow position={position}>
-      <boxGeometry args={[ONE_S, ONE_S, ONE_S]} />
+      <boxGeometry args={[UNIT, UNIT, UNIT]} />
       <meshStandardMaterial
-        color={ICE_ONE}
+        color={hot ? ICE_NEW : ICE_ONE}
         emissive={hot ? ICE_NEW : ICE_ONE}
-        emissiveIntensity={hot ? 0.9 : 0.2}
-        transparent
-        opacity={0.95}
+        emissiveIntensity={hot ? 0.9 : 0.25}
       />
     </mesh>
   );
 }
 
-/** Ten-block k's local slot in a wall (2 per course). */
+/** Ten-rod k's local slot: stacked one per course, like a wall. */
 function tenSlot(k) {
-  return [(k % 2 - 0.5) * (TEN_W + 0.08), TEN_H / 2 + Math.floor(k / 2) * (TEN_H + 0.06), 0];
+  return [0, UNIT / 2 + k * (UNIT + 0.05), -0.2];
 }
 
 /** One-block k's local slot in a pile (rows of 5 in front). */
 function oneSlot(k) {
-  return [((k % 5) - 2) * (ONE_S + 0.07), ONE_S / 2 + Math.floor(k / 5) * (ONE_S + 0.05), 0.85];
+  return [((k % 5) - 2) * (UNIT + 0.1), UNIT / 2 + Math.floor(k / 5) * (UNIT + 0.05), 0.75];
 }
 
 /** A source igloo: its ten wall + ones pile + count chip. */
@@ -94,7 +97,11 @@ function SourceIgloo({ local, tens, ones, count, hidden }) {
         <OneBlock key={`o${k}`} position={oneSlot(k)} />
       ))}
       <Html position={[0, 2.3, 0.3]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="fc-count-chip">{count}</div>
+        <div className="fc-count-chip">
+          {tens + ones > 0
+            ? `${count} = ${tens} ten${tens === 1 ? "" : "s"} + ${ones} one${ones === 1 ? "" : "s"}`
+            : count}
+        </div>
       </Html>
     </group>
   );

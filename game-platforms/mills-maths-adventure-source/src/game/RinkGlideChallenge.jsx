@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+import React, { useMemo, useRef } from "react";
+import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
@@ -183,10 +184,66 @@ function Flag({ value, color, bucket }) {
   );
 }
 
+// The PLAN, drawn as it's built (audit 2026-09-28): every queued push is an
+// arc over the ice from where it starts to where it lands — an empty number
+// line drawn in snow. A +10 is a tall blue arc, a +1 a little amber hop,
+// and backwards pushes are purple. The student sees where the plan goes
+// BEFORE pressing GO, instead of holding a string of pushes in their head.
+const ARC_TEN = "#3a86ff";
+const ARC_ONE = "#f4a261";
+const ARC_BACK = "#9b5de5";
+
+function PlanArc({ from, to }) {
+  const geom = useMemo(() => {
+    const x0 = rinkGlideX(from);
+    const x1 = rinkGlideX(to);
+    const span = Math.abs(x1 - x0);
+    const h = 0.35 + span * 0.32;
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(x0, LINE_Y + 0.05, LINE_Z),
+      new THREE.Vector3((x0 + x1) / 2, LINE_Y + h * 2, LINE_Z),
+      new THREE.Vector3(x1, LINE_Y + 0.05, LINE_Z)
+    );
+    return new THREE.TubeGeometry(curve, 20, span > 1 ? 0.045 : 0.03, 6, false);
+  }, [from, to]);
+  const big = Math.abs(to - from) >= 10;
+  const color = to < from ? ARC_BACK : big ? ARC_TEN : ARC_ONE;
+  return (
+    <mesh geometry={geom}>
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.55} />
+    </mesh>
+  );
+}
+
+function PlanOverlay({ round, queue, showLanding }) {
+  const stops = glideStops(round, queue);
+  const last = stops[stops.length - 1];
+  const hit = last === round.target;
+  return (
+    <group>
+      {queue.map((_, i) => (
+        <PlanArc key={`${i}-${stops[i]}-${stops[i + 1]}`} from={stops[i]} to={stops[i + 1]} />
+      ))}
+      {showLanding && queue.length > 0 && (
+        <group position={[rinkGlideX(last), LINE_Y + 0.01, LINE_Z]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.32, 0.46, 24]} />
+            <meshBasicMaterial color={hit ? START_COLOR : TARGET_COLOR} transparent opacity={0.9} />
+          </mesh>
+          <Html position={[0, 0.02, 1.35]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+            <div className={`fc-count-chip ${hit ? "good" : ""}`}>lands on {last}</div>
+          </Html>
+        </group>
+      )}
+    </group>
+  );
+}
+
 export default function RinkGlideChallenge() {
   const status = useRinkGlide((s) => s.status);
   const shown = useRinkGlide((s) => s.currentRound());
   const landResult = useRinkGlide((s) => s.landResult);
+  const queue = useRinkGlide((s) => s.queue);
   const active = status !== "idle" && status !== "intro";
   if (!active || !shown) return null;
 
@@ -211,6 +268,20 @@ export default function RinkGlideChallenge() {
           </Html>
         </group>
       ))}
+
+      {/* Faint unit ticks (every 1) with a slightly longer 5 — room to count
+          the little hops on an otherwise empty line. */}
+      {Array.from({ length: 101 }, (_, v) =>
+        v % 10 === 0 ? null : (
+          <mesh key={`u${v}`} position={[rinkGlideX(v), LINE_Y, LINE_Z]}>
+            <boxGeometry args={[0.03, 0.045, v % 5 === 0 ? 0.42 : 0.26]} />
+            <meshStandardMaterial color={TICK_COLOR} />
+          </mesh>
+        )
+      )}
+
+      {/* The plan so far, drawn as hops over the line. */}
+      <PlanOverlay round={shown} queue={queue} showLanding={status === "planning"} />
 
       {/* Start flag + the fish-bucket target. */}
       <Flag value={shown.start} color={START_COLOR} />

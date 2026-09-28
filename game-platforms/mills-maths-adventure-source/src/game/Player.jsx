@@ -30,6 +30,7 @@ import { useColonyPairs } from "./colonyPairsStore.js";
 import { useCaveCrystals } from "./caveCrystalsStore.js";
 import { useLodgeYard } from "./lodgeYardStore.js";
 import { useAuroraLookout } from "./auroraLookoutStore.js";
+import { useActiveSnowChallenge } from "./farmChallengeActive.js";
 import { useResults } from "../results/resultStore.js";
 import { isPlaygroundUnlocked } from "../results/resultUtils.js";
 import {
@@ -62,9 +63,15 @@ const LATE_SNOW_VIEW = {
   village: { spot: VILLAGE_VIEW_SPOT, look: [VILLAGE_BUILD_SITE[0], 1.5, VILLAGE_BUILD_SITE[1] + 1.2], fit: 9.0, base: 2.6 },
   colony: { spot: COLONY_VIEW_SPOT, look: [COLONY_AREA.x, 1.1, COLONY_AREA.z - 1.4], fit: 9.5, base: 2.4 },
   cave: { spot: CAVE_VIEW_SPOT, look: [CAVE_AREA.x, 1.3, CAVE_AREA.z - 4.0], fit: 8.5, base: 2.4 },
-  yard: { spot: YARD_VIEW_SPOT, look: [YARD_AREA.x + 1.2, 2.0, YARD_AREA.z - 2.0], fit: 8.5, base: 2.8 },
+  // Centred on the bead board (the stall sits to its left) — audit 2026-09-28.
+  yard: { spot: YARD_VIEW_SPOT, look: [YARD_AREA.x + 2.2, 2.0, YARD_AREA.z - 2.4], fit: 7.0, base: 2.8 },
   lights: { spot: LOOKOUT_VIEW_SPOT, look: [LOOKOUT_AREA.x, 4.6, LOOKOUT_AREA.z - 6.0], fit: 10.5, base: 3.4 },
 };
+
+// Snowball Sums cards dock at the BOTTOM of the screen (2026-09-28 audit),
+// so every snow camera looks a little BELOW its activity — the maths rides up
+// into the clear upper part of the frame instead of sitting under the card.
+const SNOW_DOCK_LIFT = 0.14;
 
 // Short decaying camera wobble for wrong answers (triggered by the challenge
 // panels via playerState.camShake = { start, dur }).
@@ -186,6 +193,10 @@ export default function Player() {
   const activeEncounterId = useSession((s) => s.activeEncounterId);
   const cameraLock = useUI((s) => s.cameraLock);
   const fpv = useUI((s) => s.fpv);
+  // While a Snowball Sums challenge runs the player is parked in front of
+  // the camera — step the avatar out of shot so it never stands between the
+  // student and the maths (2026-09-28 audit: it hid the range's handful row).
+  const snowChallenge = useActiveSnowChallenge();
 
   // Colliders depend on unlock-affecting progress AND the active region → rebuild
   // only when those change (not every frame).
@@ -847,7 +858,7 @@ export default function Player() {
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(RANGE_AREA.x, 2.4 + dist * 0.26, RANGE_AREA.z + 1.2 + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));
-      camLook.current.lerp({ x: RANGE_AREA.x, y: 1.9, z: RANGE_AREA.z - 2.4 }, 1 - Math.pow(0.01, delta));
+      camLook.current.lerp({ x: RANGE_AREA.x, y: 1.9 - SNOW_DOCK_LIFT * dist, z: RANGE_AREA.z - 2.4 }, 1 - Math.pow(0.01, delta));
       camera.lookAt(camLook.current);
       applyCamShake(camera); // wrong-answer wobble (SnowballRangePanel)
     } else if (rinkGlideMode) {
@@ -862,7 +873,7 @@ export default function Player() {
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(lineMidX, 3.5 + dist * 0.3, RINK_GLIDE_LINE.z + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));
-      camLook.current.lerp({ x: lineMidX, y: 0.6, z: RINK_GLIDE_LINE.z }, 1 - Math.pow(0.01, delta));
+      camLook.current.lerp({ x: lineMidX, y: 0.6 - SNOW_DOCK_LIFT * dist, z: RINK_GLIDE_LINE.z }, 1 - Math.pow(0.01, delta));
       camera.lookAt(camLook.current);
       applyCamShake(camera); // wrong-landing wobble (RinkGlidePanel)
     } else if (groveMode) {
@@ -874,7 +885,7 @@ export default function Player() {
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(GROVE_TREE_POS[0], 2.8 + dist * 0.3, GROVE_TREE_POS[1] + 2.0 + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));
-      camLook.current.lerp({ x: GROVE_TREE_POS[0], y: 2.2, z: GROVE_TREE_POS[1] }, 1 - Math.pow(0.01, delta));
+      camLook.current.lerp({ x: GROVE_TREE_POS[0], y: 2.2 - SNOW_DOCK_LIFT * dist, z: GROVE_TREE_POS[1] }, 1 - Math.pow(0.01, delta));
       camera.lookAt(camLook.current);
       applyCamShake(camera); // wrong-answer wobble (GroveLightsPanel)
     } else if (meadowMode) {
@@ -883,11 +894,13 @@ export default function Player() {
       // both stacks + the equation chain read clearly. ---
       const towersMidX = (MEADOW_TOWER_LEFT[0] + MEADOW_TOWER_RIGHT[0]) / 2;
       const halfW = Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
-      const dist = Math.min(26, Math.max(11, 8.0 / halfW));
+      // Closer than before (fit 8.0 → 7.2, audit 2026-09-28) so each snowball
+      // in the towers is big enough to count.
+      const dist = Math.min(26, Math.max(9, 7.2 / halfW));
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(towersMidX, 2.6 + dist * 0.3, MEADOW_TOWER_LEFT[1] + 2.0 + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));
-      camLook.current.lerp({ x: towersMidX, y: 1.9, z: MEADOW_TOWER_LEFT[1] }, 1 - Math.pow(0.01, delta));
+      camLook.current.lerp({ x: towersMidX, y: 2.3 - SNOW_DOCK_LIFT * dist, z: MEADOW_TOWER_LEFT[1] }, 1 - Math.pow(0.01, delta));
       camera.lookAt(camLook.current);
       applyCamShake(camera); // wrong-answer wobble (MeadowLevelPanel)
     } else if (sledMode) {
@@ -898,11 +911,12 @@ export default function Player() {
       const laneMidX = (SLOPE_LANE.xTop + SLOPE_LANE.xBottom) / 2;
       const laneMidH = snowGroundHeight(laneMidX, SLOPE_LANE.z);
       const halfW = Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
-      const dist = Math.min(30, Math.max(14, 9.5 / halfW));
+      // Closer (fit 9.5 → 7.2, audit 2026-09-28) — the ticks and sleds read.
+      const dist = Math.min(30, Math.max(10, 7.2 / halfW));
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(laneMidX, laneMidH + 2.6 + dist * 0.26, SLOPE_LANE.z + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));
-      camLook.current.lerp({ x: laneMidX, y: laneMidH + 1.1, z: SLOPE_LANE.z }, 1 - Math.pow(0.01, delta));
+      camLook.current.lerp({ x: laneMidX, y: laneMidH + 1.1 - SNOW_DOCK_LIFT * dist, z: SLOPE_LANE.z }, 1 - Math.pow(0.01, delta));
       camera.lookAt(camLook.current);
       applyCamShake(camera); // wrong-answer wobble (SledSlopePanel)
     } else if (lateSnowMode) {
@@ -916,7 +930,7 @@ export default function Player() {
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(view.look[0], view.base + dist * 0.3, view.look[2] + 3.0 + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));
-      camLook.current.lerp({ x: view.look[0], y: view.look[1], z: view.look[2] }, 1 - Math.pow(0.01, delta));
+      camLook.current.lerp({ x: view.look[0], y: view.look[1] - SNOW_DOCK_LIFT * dist, z: view.look[2] }, 1 - Math.pow(0.01, delta));
       camera.lookAt(camLook.current);
       applyCamShake(camera); // wrong-answer wobble (the five late panels)
     } else {
@@ -943,7 +957,7 @@ export default function Player() {
           (primitive avatar fallback until the model loads). HIDDEN in
           first-person view so the camera (at the eyes) never sits inside the
           character mesh. */}
-      <group visible={!fpv}>
+      <group visible={!fpv && !snowChallenge}>
         <PlayerCharacter profile={profile} />
       </group>
     </group>

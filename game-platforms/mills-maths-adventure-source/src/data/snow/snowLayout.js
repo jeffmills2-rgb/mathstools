@@ -318,6 +318,37 @@ export function isPeteSpotOk(x, z) {
 }
 
 // ==========================================================================
+// CHALLENGE VIEW CORRIDORS (2026-09-28 audit). Every snow challenge is
+// filmed from the SOUTH. While one runs, anything standing between the
+// camera and the activity — scenery props, the host NPCs, the parked player
+// — is hidden: it's world dressing, and a lamp post or a two-metre penguin
+// in front of the ten-frame is the difference between a Year 7 reading the
+// maths and not. A corridor is a box in x/z: ±halfW around the activity's
+// centre x, from `back` metres behind its front line `z` to `depth` metres
+// in front of it (toward the camera). Keys match the snow challenge keys in
+// game/farmChallengeActive.js.
+// ==========================================================================
+export const SNOW_CHALLENGE_VIEWS = {
+  range: { x: 33, z: 33, halfW: 9, back: 1.5, depth: 24 },
+  rink: { x: 16, z: 4, halfW: 15, back: 1.5, depth: 30 },
+  grove: { x: 35, z: 16.5, halfW: 9, back: 1.5, depth: 26 },
+  meadow: { x: -32, z: 33.5, halfW: 9, back: 1.5, depth: 26 },
+  sled: { x: 47.75, z: -38, halfW: 11, back: 5, depth: 24 },
+  village: { x: -36, z: -1.5, halfW: 9, back: 1.5, depth: 26 },
+  colony: { x: -14, z: -3.4, halfW: 12, back: 1.5, depth: 26 },
+  cave: { x: -40, z: -32.5, halfW: 9, back: 1.0, depth: 26 },
+  yard: { x: 14, z: -28, halfW: 9, back: 1.5, depth: 24 },
+  lights: { x: 38, z: -20, halfW: 12, back: 1.5, depth: 26 },
+};
+
+/** Is world point (x, z) inside the running challenge's view corridor? Pure. */
+export function inSnowChallengeView(key, x, z) {
+  const v = key && SNOW_CHALLENGE_VIEWS[key];
+  if (!v) return false;
+  return Math.abs(x - v.x) <= v.halfW && z >= v.z - v.back && z <= v.z + v.depth;
+}
+
+// ==========================================================================
 // SCENERY PLACEMENT — everything below is markers/props (glb-replaceable).
 // Positions are kept clear of the lanes, the rink, the ten challenge areas
 // (≥ ~2.5 m from each centre) and each other.

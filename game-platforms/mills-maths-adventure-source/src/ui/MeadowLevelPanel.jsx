@@ -4,18 +4,19 @@ import { useMeadowLevel } from "../game/meadowLevelStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
 import {
   MEADOW_ROUNDS_PER_SET,
-  MEADOW_MOVE_OPTIONS,
-  MEADOW_CANT,
-  MEADOW_TOTAL_POINTS,
-  MEADOW_HOP_MS,
-  MEADOW_LEVEL_TAIL_MS,
+  meadowCountsAfterHops,
+  meadowMaxHops,
 } from "../data/snow/meadowLevelChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
- * SNOWMAN MEADOW — 2D panel (ML). PREDICT the hop count with the buttons
- * (keys 1–4, or 5 for "Can't make twins!"), watch the balls hop and the
- * equation chain grow, then TYPE the total via the double. Wrong total →
- * camera shake + the levelling story on the reason card. Esc quits.
+ * SNOWMAN MEADOW — 2D panel (ML). HOP snowballs across one tap at a time
+ * (button, → or Space; ← or Backspace hops one back), watch the equation
+ * chain grow, then CALL it: "They match!" (key 1) or "They can never match"
+ * (key 2). Then TYPE the total via the double. Wrong total → camera shake +
+ * the worked levelling on the reason card. Esc quits.
+ * (2026-09-28 audit: replaced "predict the hop count first", which asked
+ * Year 7s for an idea — half the difference — before they'd seen one hop.)
  */
 
 const CELEBRATE_MS = 2200;
@@ -27,6 +28,8 @@ export default function MeadowLevelPanel() {
   const bestScore = useMeadowLevel((s) => s.bestScore);
   const round = useMeadowLevel((s) => s.currentRound());
   const predictResult = useMeadowLevel((s) => s.predictResult);
+  const hops = useMeadowLevel((s) => s.hops);
+  const callNote = useMeadowLevel((s) => s.callNote);
   const typedCorrect = useMeadowLevel((s) => s.typedCorrect);
   const regionId = useSession((s) => s.currentRegionId);
   const [typed, setTyped] = useState("");
@@ -48,7 +51,8 @@ export default function MeadowLevelPanel() {
     }
   }, [status, roundIndex]);
 
-  // Keys: Esc quits; Enter starts/advances; 1–5 answer the prediction.
+  // Keys: Esc quits; Enter starts/advances; → / Space hop; ← / Backspace hop
+  // back; 1 = "They match!", 2 = "They can never match".
   useEffect(() => {
     if (status === "idle") return undefined;
     function onKey(e) {
@@ -59,10 +63,19 @@ export default function MeadowLevelPanel() {
       }
       const typingInField = e.target && /input|textarea/i.test(e.target.tagName || "");
       if (typingInField) return;
-      const num = Number(e.key);
-      if (st.status === "predicting" && num >= 1 && num <= MEADOW_MOVE_OPTIONS.length) {
-        st.choosePredict(MEADOW_MOVE_OPTIONS[num - 1]);
-        return;
+      if (st.status === "hopping") {
+        if (e.key === "ArrowRight" || e.key === " ") {
+          e.preventDefault();
+          st.hop(1);
+          return;
+        }
+        if (e.key === "ArrowLeft" || e.key === "Backspace") {
+          e.preventDefault();
+          st.hop(-1);
+          return;
+        }
+        if (e.key === "1") { st.call("match"); return; }
+        if (e.key === "2") { st.call("cant"); return; }
       }
       if (e.key !== "Enter") return;
       if (st.status === "intro") st.beginRounds();
@@ -71,15 +84,6 @@ export default function MeadowLevelPanel() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [status]);
-
-  // The hops play one beat per ball — then the typing box appears.
-  useEffect(() => {
-    if (status !== "levelling") return undefined;
-    const st = useMeadowLevel.getState();
-    const moves = st.currentRound()?.moves || 1;
-    const t = setTimeout(() => useMeadowLevel.getState().finishLevel(), moves * MEADOW_HOP_MS + MEADOW_LEVEL_TAIL_MS);
-    return () => clearTimeout(t);
-  }, [status, roundIndex]);
 
   // Wrong typed total → shake.
   useEffect(() => {
@@ -107,79 +111,109 @@ export default function MeadowLevelPanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>⛄ Snowman Meadow</span>
-          </div>
-          <div className="farm-challenge-line big">
-            Hop snowballs across until the snowmen are <span className="fc-value">level twins</span> — then use the double!
-          </div>
-          <div className="farm-challenge-line">
-            The total NEVER changes while balls move. But watch out — some pairs can't be twins at all…
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useMeadowLevel.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useMeadowLevel.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="⛄"
+          title="Snowman Meadow"
+          steps={[
+            <>Two snowmen are made of snowballs. One is taller.</>,
+            <>Tap <b>Hop</b> to move one snowball from the tall snowman to the short one.</>,
+            <>Stop when they are the <b>same</b> height — or say so if they never can be!</>,
+            <>Then use the <b>double</b> to find the total.</>,
+          ]}
+          example="8 + 12  =  9 + 11  =  10 + 10  =  double 10 = 20"
+          onStart={() => useMeadowLevel.getState().beginRounds()}
+          onQuit={() => useMeadowLevel.getState().exit()}
+        />
       )}
 
-      {status === "predicting" && round && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              ⛄ Round {roundIndex + 1}/{MEADOW_ROUNDS_PER_SET} · {score} pts — {round.left} and {round.right} snowballs.{" "}
-              <span className="fc-value">How many must hop</span> to make level twins?
-            </span>
-            <button className="link-button" onClick={() => useMeadowLevel.getState().exit()}>
-              Quit
-            </button>
-          </div>
-          <div className="plank-pieces">
-            {MEADOW_MOVE_OPTIONS.map((m) => (
+      {status === "hopping" && round && (() => {
+        const now = meadowCountsAfterHops(round, hops);
+        return (
+          <div className="farm-challenge-card">
+            <SnowRoundHead
+              icon="⛄"
+              roundIndex={roundIndex}
+              total={MEADOW_ROUNDS_PER_SET}
+              score={score}
+              onQuit={() => useMeadowLevel.getState().exit()}
+            />
+            {callNote ? (
+              <div className="farm-challenge-verdict warm">{callNote}</div>
+            ) : (
+              <div className="snow-q">
+                Make the snowmen the <span className="fc-value">same height</span>.
+              </div>
+            )}
+            <div className="snow-sub">
+              Now: {now.left} and {now.right} · {hops} hop{hops === 1 ? "" : "s"} so far
+            </div>
+            <div className="plank-pieces">
               <button
-                key={m}
                 className="plank-piece-btn"
+                disabled={hops === 0}
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  useMeadowLevel.getState().choosePredict(m);
+                  useMeadowLevel.getState().hop(-1);
                 }}
               >
-                {m === MEADOW_CANT ? "Can't make twins!" : m}
+                ↩ Hop back
               </button>
-            ))}
+              <button
+                className="plank-piece-btn"
+                disabled={hops >= meadowMaxHops(round)}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  useMeadowLevel.getState().hop(1);
+                }}
+              >
+                Hop a snowball ➜
+              </button>
+            </div>
+            <div className="plank-pieces" style={{ marginTop: 2 }}>
+              <button
+                className="plank-piece-btn"
+                style={{ borderColor: "#2a9d2a" }}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  useMeadowLevel.getState().call("match");
+                }}
+              >
+                ⛄⛄ They match!
+              </button>
+              <button
+                className="plank-piece-btn"
+                style={{ borderColor: "#8a5fd3" }}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  useMeadowLevel.getState().call("cant");
+                }}
+              >
+                🤔 They can never match
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {status === "levelling" && round && predictResult && (
-        <div className="farm-challenge-card mini">
-          <div className="farm-challenge-head">
-            <span>
-              {predictResult.label} — watch the total stay the same…
-            </span>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {status === "typing" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-line big">
+          {predictResult && (
+            <div className={`farm-challenge-verdict ${predictResult.correct ? "good" : "warm"}`}>
+              {predictResult.label}
+            </div>
+          )}
+          {/* The insight, AFTER the hopping: half the gap, not the whole gap. */}
+          <div className="snow-sub">
             {round.canTwin
-              ? <>Level twins! <span className="fc-value">{round.level} + {round.level}</span> — double {round.level} makes what?</>
-              : <>As close as twins get: <span className="fc-value">{round.level} + {round.level + 1}</span> — double {round.level} and 1 more?</>}
+              ? <>They were {round.diff} apart, but it took only {round.diff / 2} hop{round.diff / 2 === 1 ? "" : "s"} — every hop makes one snowman smaller AND the other bigger.</>
+              : <>They were {round.diff} apart. An odd gap can't be shared evenly, so the closest is {round.level} and {round.level + 1}.</>}
+          </div>
+          <div className="snow-q">
+            {round.canTwin
+              ? <><span className="fc-value">{round.level} + {round.level}</span> is double {round.level}. How many snowballs altogether?</>
+              : <><span className="fc-value">{round.level} + {round.level + 1}</span> is double {round.level}, plus 1. How many altogether?</>}
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
@@ -195,7 +229,7 @@ export default function MeadowLevelPanel() {
             />
             <span className="weigh-unit">snowballs</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{MEADOW_TOTAL_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -205,7 +239,7 @@ export default function MeadowLevelPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.left} + {round.right} = {round.canTwin ? `double ${round.level}` : `double ${round.level} + 1`} = {round.total}! · {score} pts
+              ✓ {round.left} + {round.right} = {round.canTwin ? `double ${round.level}` : `double ${round.level} + 1`} = {round.total}! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -214,9 +248,9 @@ export default function MeadowLevelPanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the total! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

@@ -4,10 +4,8 @@ import { useVillageSplit } from "../game/villageSplitStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
 import {
   VILLAGE_ROUNDS_PER_SET,
-  VILLAGE_TENS_POINTS,
-  VILLAGE_ONES_POINTS,
-  VILLAGE_TOTAL_POINTS,
 } from "../data/snow/villageSplitChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
  * IGLOO VILLAGE — 2D panel (VG). PREDICT the overflow (Y/N buttons or keys
@@ -111,46 +109,34 @@ export default function VillageSplitPanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>🧊 Igloo Village</span>
-          </div>
-          <div className="farm-challenge-line big">
-            Join two igloos — <span className="fc-value">tens with tens, ones with ones</span>!
-          </div>
-          <div className="farm-challenge-line">
-            If the ones pile passes ten, ten of them SNAP into a brand-new ten-block. Watch for it!
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useVillageSplit.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useVillageSplit.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="🧊"
+          title="Igloo Village"
+          steps={[
+            <>Igloos are built from <b>ten-rods</b> (ten ice cubes stuck together) and single <b>ones</b>.</>,
+            <>To join two igloos, put <b>tens with tens</b> and <b>ones with ones</b>.</>,
+            <>If the ones make 10 or more, ten of them snap into a <b>new ten-rod</b>!</>,
+          ]}
+          example="38 + 25  →  30 + 20 = 50,  8 + 5 = 13  →  50 + 13 = 63"
+          onStart={() => useVillageSplit.getState().beginRounds()}
+          onQuit={() => useVillageSplit.getState().exit()}
+        />
       )}
 
       {status === "predicting" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              🧊 Round {roundIndex + 1}/{VILLAGE_ROUNDS_PER_SET} · {score} pts — join{" "}
-              <span className="fc-value">{round.a}</span> and <span className="fc-value">{round.b}</span>. Will the
-              ones OVERFLOW into a new ten-block?
-            </span>
-            <button className="link-button" onClick={() => useVillageSplit.getState().exit()}>
-              Quit
-            </button>
+          <SnowRoundHead
+            icon="🧊"
+            roundIndex={roundIndex}
+            total={VILLAGE_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useVillageSplit.getState().exit()}
+          />
+          <div className="snow-q">
+            The ones are <span className="fc-value">{round.oa}</span> and <span className="fc-value">{round.ob}</span>. Will
+            they make a new ten?
           </div>
           <div className="plank-pieces">
             <button
@@ -160,7 +146,7 @@ export default function VillageSplitPanel() {
                 useVillageSplit.getState().choosePredict(true);
               }}
             >
-              Yes — overflow!
+              Yes — 10 or more
             </button>
             <button
               className="plank-piece-btn"
@@ -169,7 +155,7 @@ export default function VillageSplitPanel() {
                 useVillageSplit.getState().choosePredict(false);
               }}
             >
-              No — it fits
+              No — less than 10
             </button>
           </div>
         </div>
@@ -180,36 +166,42 @@ export default function VillageSplitPanel() {
           <div className={`farm-challenge-verdict ${predictResult.correct ? "good" : "warm"}`}>
             {predictResult.label}
           </div>
-          <div className="farm-challenge-line big">
-            Tens with tens: {round.ta * 10} + {round.tb * 10}. Ones with ones: {round.oa} + {round.ob}.
+          <div className="snow-q">Join like with like:</div>
+          <div className={`snow-eq-rows${inputWobble ? " wobble" : ""}`}>
+            <div className="snow-eq-row">
+              <span className="snow-eq-label">Tens</span>
+              {round.ta * 10} + {round.tb * 10} =
+              <input
+                ref={tensRef}
+                className="text-input weigh-input"
+                type="text"
+                inputMode="numeric"
+                placeholder="?"
+                value={tensTyped}
+                maxLength={3}
+                onChange={(e) => setTensTyped(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && onesRef.current?.focus()}
+              />
+            </div>
+            <div className="snow-eq-row">
+              <span className="snow-eq-label">Ones</span>
+              {round.oa} + {round.ob} =
+              <input
+                ref={onesRef}
+                className="text-input weigh-input"
+                type="text"
+                inputMode="numeric"
+                placeholder="?"
+                value={onesTyped}
+                maxLength={2}
+                onChange={(e) => setOnesTyped(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitJoin()}
+              />
+            </div>
           </div>
-          <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
-            <span className="weigh-unit">tens wall</span>
-            <input
-              ref={tensRef}
-              className="text-input weigh-input"
-              type="text"
-              inputMode="numeric"
-              placeholder="?"
-              value={tensTyped}
-              maxLength={3}
-              onChange={(e) => setTensTyped(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onesRef.current?.focus()}
-            />
-            <span className="weigh-unit">ones pile</span>
-            <input
-              ref={onesRef}
-              className="text-input weigh-input"
-              type="text"
-              inputMode="numeric"
-              placeholder="?"
-              value={onesTyped}
-              maxLength={2}
-              onChange={(e) => setOnesTyped(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitJoin()}
-            />
+          <div className="farm-challenge-buttons">
             <button className="primary-button" onClick={submitJoin}>
-              Join! (+{VILLAGE_TENS_POINTS}+{VILLAGE_ONES_POINTS})
+              Join them!
             </button>
           </div>
         </div>
@@ -218,12 +210,12 @@ export default function VillageSplitPanel() {
       {status === "typing" && round && joinResult && (
         <div className="farm-challenge-card">
           <div className={`farm-challenge-verdict ${joinResult.tensCorrect && joinResult.onesCorrect ? "good" : "warm"}`}>
-            {joinResult.tensCorrect ? `Tens wall ${round.tensSum} ✓` : `The tens wall is ${round.tensSum}!`}{" "}
-            {joinResult.onesCorrect ? `Ones pile ${round.onesSum} ✓` : `The ones pile is ${round.onesSum} — the WHOLE pile!`}
+            {joinResult.tensCorrect ? `Tens ${round.tensSum} ✓` : `The tens make ${round.tensSum}.`}{" "}
+            {joinResult.onesCorrect ? `Ones ${round.onesSum} ✓` : `The ones make ${round.onesSum} (all of them).`}
           </div>
-          <div className="farm-challenge-line big">
+          <div className="snow-q">
             {round.regroup
-              ? <>Ten ones SNAP into a new ten-block: {round.tensSum} + 10 + {round.onesSum - 10} = ?</>
+              ? <>Ten ones snap into a new ten-rod: {round.tensSum} + 10 + {round.onesSum - 10} = ?</>
               : <>{round.tensSum} + {round.onesSum} = ?</>}
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
@@ -238,9 +230,9 @@ export default function VillageSplitPanel() {
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submitTyped()}
             />
-            <span className="weigh-unit">blocks</span>
+            <span className="weigh-unit">ice cubes</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{VILLAGE_TOTAL_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -250,7 +242,7 @@ export default function VillageSplitPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.a} + {round.b} = {round.tensSum} + {round.onesSum} = {round.total}! · {score} pts
+              ✓ {round.a} + {round.b} = {round.tensSum} + {round.onesSum} = {round.total}! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -259,9 +251,9 @@ export default function VillageSplitPanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the total! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

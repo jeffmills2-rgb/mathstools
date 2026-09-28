@@ -9,7 +9,8 @@ import { getInteractableStatus } from "./interactableStatus.js";
 import { groundHeightAt } from "../systems/collisionEngine.js";
 import { getRegion } from "../data/regions.js";
 import CharacterAvatar from "./characters/CharacterAvatar.jsx";
-import { useFarmChallengeActive } from "./farmChallengeActive.js";
+import { useFarmChallengeActive, useActiveSnowChallenge } from "./farmChallengeActive.js";
+import { inSnowChallengeView } from "../data/snow/snowLayout.js";
 
 // Default interaction range (in world units) if an object doesn't set one.
 // NOTE: this is the INTERACTION radius (when "Press E" appears), which is
@@ -38,6 +39,13 @@ export default function Interactable({ data }) {
   // challenge owns the student's attention.
   const challengeActive = useFarmChallengeActive();
   const quiet = modalOpen || challengeActive;
+  // Snow challenges are filmed from the south: a host standing in the
+  // camera's line (Pip beside the range, the placeholder hosts) steps out of
+  // the picture entirely while its challenge runs.
+  const snowKey = useActiveSnowChallenge();
+  const outOfShot =
+    Boolean(snowKey) && data.regionId === "snow-sums" &&
+    inSnowChallengeView(snowKey, data.position[0], data.position[1]);
   const completed = useProgress((s) =>
     s.completedEncounters.includes(data.encounterId)
   );
@@ -100,7 +108,7 @@ export default function Interactable({ data }) {
   }
 
   return (
-    <group position={[x, surfaceY, z]}>
+    <group position={[x, surfaceY, z]} visible={!outOfShot}>
       {/* Glowing interaction pad, brighter when in range. Fades right down
           while a challenge runs so the ground stays clean under the action. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>

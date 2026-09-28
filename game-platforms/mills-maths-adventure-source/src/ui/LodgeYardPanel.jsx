@@ -6,8 +6,8 @@ import {
   YARD_ROUNDS_PER_SET,
   YARD_ONES_POINTS,
   YARD_TENS_POINTS,
-  YARD_CHANGE_POINTS,
 } from "../data/snow/lodgeYardChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
  * THE LODGE YARD — 2D panel (LY). Three quick typed hops per round: the
@@ -94,75 +94,60 @@ export default function LodgeYardPanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>☕ The Lodge Yard</span>
-          </div>
-          <div className="farm-challenge-line big">
-            Pay with a <span className="fc-value">100-token</span> — count the change UP in two hops!
-          </div>
-          <div className="farm-challenge-line">
-            First hop to the next ten, then hop to 100. Careful: sometimes a hop is ZERO.
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useLodgeYard.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useLodgeYard.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="☕"
+          title="The Lodge Yard"
+          steps={[
+            <>You buy a hot chocolate and pay with <b>$1</b>. That's <b>100 cents</b>.</>,
+            <>Count UP the change in two hops: first to the <b>next ten</b>…</>,
+            <>…then up to <b>100c</b>. Add the two hops together.</>,
+          ]}
+          example="65c → 70c is 5c,  70c → 100c is 30c.  Change: 35c"
+          onStart={() => useLodgeYard.getState().beginRounds()}
+          onQuit={() => useLodgeYard.getState().exit()}
+        />
       )}
 
       {(status === "ones" || status === "tens" || status === "typing") && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              ☕ Round {roundIndex + 1}/{YARD_ROUNDS_PER_SET} · {score} pts — cocoa costs{" "}
-              <span className="fc-value">{round.price}</span>, paid with 100.
+          <SnowRoundHead
+            icon="☕"
+            roundIndex={roundIndex}
+            total={YARD_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useLodgeYard.getState().exit()}
+          >
+            <span className="snow-round">
+              Costs <span className="fc-value">{round.price}c</span> · paid $1
             </span>
-            <button className="link-button" onClick={() => useLodgeYard.getState().exit()}>
-              Quit
-            </button>
-          </div>
+          </SnowRoundHead>
           {status === "tens" && onesResult && (
             <div className={`farm-challenge-verdict ${onesResult.correct ? "good" : "warm"}`}>
               {onesResult.correct
-                ? `+${round.onesHop} → ${round.afterOnes} ✓ (+${YARD_ONES_POINTS} pts)`
-                : `The ones hop was ${round.onesHop}: ${round.price} + ${round.onesHop} → ${round.afterOnes}.`}
+                ? `${round.price}c + ${round.onesHop}c = ${round.afterOnes}c ✓ (+${YARD_ONES_POINTS} pts)`
+                : `It was ${round.onesHop}c: ${round.price}c + ${round.onesHop}c = ${round.afterOnes}c.`}
             </div>
           )}
           {status === "typing" && tensResult && (
             <div className={`farm-challenge-verdict ${tensResult.correct ? "good" : "warm"}`}>
               {tensResult.correct
-                ? `+${round.tensHop} → 100 ✓ (+${YARD_TENS_POINTS} pts)`
-                : `The tens hop was ${round.tensHop}: ${round.afterOnes} + ${round.tensHop} → 100.`}
+                ? `${round.afterOnes}c + ${round.tensHop}c = 100c ✓ (+${YARD_TENS_POINTS} pts)`
+                : `It was ${round.tensHop}c: ${round.afterOnes}c + ${round.tensHop}c = 100c.`}
             </div>
           )}
-          <div className="farm-challenge-line big">
+          <div className="snow-q">
             {status === "ones" && (
-              <>
-                Hop 1: {round.price} + <span className="fc-value">?</span> lands on the next ten (0 if it's there!)
-              </>
+              round.onesHop === 0
+                ? <>{round.price}c is already a tens number. How far to the next ten? (It might be 0!)</>
+                : <>Hop 1: {round.price}c to the next ten ({round.price - (round.price % 10) + 10}c) is <span className="fc-value">?</span></>
             )}
             {status === "tens" && (
-              <>
-                Hop 2: {round.afterOnes} + <span className="fc-value">?</span> lands on 100
-              </>
+              <>Hop 2: {round.afterOnes}c to 100c is <span className="fc-value">?</span></>
             )}
             {status === "typing" && (
-              <>
-                So the whole change is <span className="fc-value">?</span>
-              </>
+              <>So how much change do you get?</>
             )}
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
@@ -177,13 +162,9 @@ export default function LodgeYardPanel() {
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submitCurrent()}
             />
-            <span className="weigh-unit">tokens</span>
+            <span className="weigh-unit">cents</span>
             <button className="primary-button" onClick={submitCurrent}>
-              {status === "ones"
-                ? `Hop! (+${YARD_ONES_POINTS})`
-                : status === "tens"
-                  ? `Hop! (+${YARD_TENS_POINTS})`
-                  : `Change! (+${YARD_CHANGE_POINTS})`}
+              {status === "typing" ? "Check" : "Hop!"}
             </button>
           </div>
         </div>
@@ -193,7 +174,7 @@ export default function LodgeYardPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ 100 − {round.price} = {round.change} — enjoy the cocoa! · {score} pts
+              ✓ Your change is {round.change}c — enjoy the hot chocolate! · ⭐ {score}
             </span>
           </div>
         </div>
@@ -202,9 +183,9 @@ export default function LodgeYardPanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the change! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

@@ -37,16 +37,21 @@ function tiltAt(x) {
   return Math.atan(g);
 }
 
-/** The round's value→x mapping (values increase DOWNHILL, toward −x). */
+/**
+ * The round's value→x mapping. Values increase to the RIGHT — up the hill
+ * toward the crest — so the run reads like every other number line in the
+ * game. (2026-09-28 audit: it used to increase DOWNHILL, i.e. right-to-left
+ * on screen, a backwards number line.)
+ */
 function makeXFor(round) {
-  const winMin = round.b - 6;
-  const winMax = round.a + 6;
+  const winMin = round.b - 4;
+  const winMax = round.a + 4;
   const scale = LANE_LEN / (winMax - winMin);
   return {
     winMin,
     winMax,
     xFor: (v) =>
-      SLOPE_LANE.xTop -
+      SLOPE_LANE.xBottom +
       (Math.max(winMin, Math.min(winMax, v)) - winMin) * scale,
   };
 }
@@ -176,9 +181,7 @@ export default function SledSlopeChallenge() {
   const { winMin, winMax, xFor } = mapping;
 
   const pairChip =
-    status === "predicting"
-      ? `${shown.a} − ${shown.b}`
-      : status === "typing"
+    status === "typing"
         ? `${shown.a + slid} − ${shown.b + slid} = ?`
         : status === "celebrate"
           ? `${shown.a} − ${shown.b} = ${shown.a + slid} − ${shown.b + slid} = ${shown.gap}`
@@ -195,8 +198,8 @@ export default function SledSlopeChallenge() {
         const dec = v % 10 === 0;
         return (
           <group key={v} position={[x, y, LANE_Z]}>
-            <mesh position={[0, dec ? 0.3 : 0.16, -0.85]}>
-              <boxGeometry args={[dec ? 0.09 : 0.05, dec ? 0.6 : 0.3, 0.05]} />
+            <mesh position={[0, dec ? 0.4 : v % 5 === 0 ? 0.26 : 0.18, -0.85]}>
+              <boxGeometry args={[dec ? 0.1 : 0.06, dec ? 0.8 : v % 5 === 0 ? 0.52 : 0.36, 0.06]} />
               <meshStandardMaterial
                 color={dec ? DECADE : TICK}
                 emissive={dec ? DECADE : TICK}
@@ -204,7 +207,7 @@ export default function SledSlopeChallenge() {
               />
             </mesh>
             {dec && (
-              <Html position={[0, 0.95, -0.85]} center distanceFactor={13} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+              <Html position={[0, 1.15, -0.85]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
                 <div className="fc-count-chip">{v}</div>
               </Html>
             )}

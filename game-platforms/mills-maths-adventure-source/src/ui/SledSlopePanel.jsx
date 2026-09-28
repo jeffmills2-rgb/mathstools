@@ -4,14 +4,13 @@ import { useSledSlope } from "../game/sledSlopeStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
 import {
   SLED_ROUNDS_PER_SET,
-  SLED_PREDICT_OPTIONS,
-  SLED_DIFF_POINTS,
   SLED_MAX_SLIDES,
 } from "../data/snow/sledSlopeChallenge.js";
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
- * SLEDDING SLOPE — 2D panel (SL). PREDICT the rope thought-experiment
- * (buttons or keys 1–3), SLIDE the roped pair with the nudge buttons (or
+ * SLEDDING SLOPE — 2D panel (SL). (The rope thought-experiment was retired
+ * in the 2026-09-28 audit.) SLIDE the roped pair with the nudge buttons (or
  * ↓/→ down 1, ↑/← up 1) until the back sled sits on a decade, RACE! to
  * confirm, then TYPE the difference. Wrong difference → camera shake + the
  * constant-difference story on the reason card. Esc quits.
@@ -19,7 +18,6 @@ import {
 
 const CELEBRATE_MS = 2600;
 
-const PREDICT_LABEL = { bigger: "Gets bigger", same: "Stays the same", smaller: "Gets smaller" };
 
 export default function SledSlopePanel() {
   const status = useSledSlope((s) => s.status);
@@ -29,7 +27,6 @@ export default function SledSlopePanel() {
   const round = useSledSlope((s) => s.currentRound());
   const slid = useSledSlope((s) => s.slid);
   const slidesUsed = useSledSlope((s) => s.slidesUsed);
-  const predictResult = useSledSlope((s) => s.predictResult);
   const slideResult = useSledSlope((s) => s.slideResult);
   const typedCorrect = useSledSlope((s) => s.typedCorrect);
   const regionId = useSession((s) => s.currentRegionId);
@@ -52,7 +49,7 @@ export default function SledSlopePanel() {
     }
   }, [status, roundIndex]);
 
-  // Keys: Esc quits; Enter starts/races/advances; 1–3 predict; arrows nudge.
+  // Keys: Esc quits; Enter starts/races/advances; arrows nudge (→/↑ +1, ←/↓ −1).
   useEffect(() => {
     if (status === "idle") return undefined;
     function onKey(e) {
@@ -63,18 +60,13 @@ export default function SledSlopePanel() {
       }
       const typingInField = e.target && /input|textarea/i.test(e.target.tagName || "");
       if (typingInField) return;
-      const num = Number(e.key);
-      if (st.status === "predicting" && num >= 1 && num <= SLED_PREDICT_OPTIONS.length) {
-        st.choosePredict(SLED_PREDICT_OPTIONS[num - 1]);
-        return;
-      }
       if (st.status === "sliding") {
-        if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        if (e.key === "ArrowUp" || e.key === "ArrowRight") {
           e.preventDefault();
           st.nudge(1);
           return;
         }
-        if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        if (e.key === "ArrowDown" || e.key === "ArrowLeft") {
           e.preventDefault();
           st.nudge(-1);
           return;
@@ -115,84 +107,39 @@ export default function SledSlopePanel() {
   }
 
   return (
-    <div className="farm-challenge-panel">
+    <div className="farm-challenge-panel snow-dock">
       {status === "intro" && (
-        <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>🛷 Sledding Slope</span>
-          </div>
-          <div className="farm-challenge-line big">
-            Two sleds, one rope — <span className="fc-value">the rope is the gap</span>, and it can't stretch!
-          </div>
-          <div className="farm-challenge-line">
-            Slide the PAIR together until the back sled sits on a friendly decade — the difference never changes.
-          </div>
-          <div className="farm-challenge-buttons">
-            <button
-              className="primary-button"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useSledSlope.getState().beginRounds();
-              }}
-            >
-              Start! (Enter)
-            </button>
-            <button className="link-button" onClick={() => useSledSlope.getState().exit()}>
-              Quit
-            </button>
-          </div>
-        </div>
+        <SnowIntro
+          icon="🛷"
+          title="Sledding Slope"
+          steps={[
+            <>Two sleds sit on a number line, tied by a rope. The rope is the <b>gap</b> between the numbers.</>,
+            <>Slide <b>both</b> sleds together. The rope can't stretch, so the gap never changes.</>,
+            <>Stop when the smaller number is a <b>tens number</b> (20, 30, 40 …).</>,
+            <>Now the gap is easy to find!</>,
+          ]}
+          example="62 − 29  =  63 − 30  =  33"
+          onStart={() => useSledSlope.getState().beginRounds()}
+          onQuit={() => useSledSlope.getState().exit()}
+        />
       )}
 
-      {status === "predicting" && round && (
+      {status === "sliding" && round && (
         <div className="farm-challenge-card">
-          <div className="farm-challenge-head">
-            <span>
-              🛷 Round {roundIndex + 1}/{SLED_ROUNDS_PER_SET} · {score} pts — sleds at{" "}
-              <span className="fc-value">{round.a}</span> and <span className="fc-value">{round.b}</span>.{" "}
-              {round.scenario.text}
-            </span>
-            <button className="link-button" onClick={() => useSledSlope.getState().exit()}>
-              Quit
-            </button>
-          </div>
-          <div className="plank-pieces">
-            {SLED_PREDICT_OPTIONS.map((o) => (
-              <button
-                key={o}
-                className="plank-piece-btn"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  useSledSlope.getState().choosePredict(o);
-                }}
-              >
-                {PREDICT_LABEL[o]}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {status === "sliding" && round && predictResult && (
-        <div className="farm-challenge-card">
-          <div className={`farm-challenge-verdict ${predictResult.correct ? "good" : "warm"}`}>
-            {predictResult.label}
-          </div>
-          <div className="farm-challenge-line big">
-            Now slide the PAIR until the <span className="fc-value">back sled</span> sits on a decade:{" "}
+          <SnowRoundHead
+            icon="🛷"
+            roundIndex={roundIndex}
+            total={SLED_ROUNDS_PER_SET}
+            score={score}
+            onQuit={() => useSledSlope.getState().exit()}
+          />
+          <div className="snow-q">
             <span className="fc-value">{round.a + slid} − {round.b + slid}</span>
           </div>
+          <div className="snow-sub">
+            Slide both sleds until the smaller number is a tens number (like 30).
+          </div>
           <div className="plank-pieces">
-            <button
-              className="plank-piece-btn"
-              disabled={slidesUsed >= SLED_MAX_SLIDES}
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useSledSlope.getState().nudge(1);
-              }}
-            >
-              ⬊ Slide down 1
-            </button>
             <button
               className="plank-piece-btn"
               disabled={slidesUsed >= SLED_MAX_SLIDES}
@@ -201,7 +148,17 @@ export default function SledSlopePanel() {
                 useSledSlope.getState().nudge(-1);
               }}
             >
-              ⬉ Drag up 1
+              ◀ Both −1
+            </button>
+            <button
+              className="plank-piece-btn"
+              disabled={slidesUsed >= SLED_MAX_SLIDES}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                useSledSlope.getState().nudge(1);
+              }}
+            >
+              Both +1 ▶
             </button>
           </div>
           <div className="farm-challenge-buttons">
@@ -212,7 +169,7 @@ export default function SledSlopePanel() {
                 useSledSlope.getState().confirmSlide();
               }}
             >
-              RACE! (Enter)
+              That's it! (Enter)
             </button>
           </div>
         </div>
@@ -222,10 +179,10 @@ export default function SledSlopePanel() {
         <div className="farm-challenge-card">
           <div className={`farm-challenge-verdict ${slideResult.correct ? "good" : "warm"}`}>
             {slideResult.label}
-            {!slideResult.correct && ` The friendly spot: ${round.a + round.shift} − ${round.decade}.`}
+            {!slideResult.correct && ` Try ${round.a + round.shift} − ${round.decade}.`}
           </div>
-          <div className="farm-challenge-line big">
-            {round.a + slid} − {round.b + slid} — what's the difference?
+          <div className="snow-q">
+            {round.a + slid} − {round.b + slid} = ? What is the gap?
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
@@ -241,7 +198,7 @@ export default function SledSlopePanel() {
             />
             <span className="weigh-unit">apart</span>
             <button className="primary-button" onClick={submitTyped}>
-              Check (+{SLED_DIFF_POINTS})
+              Check
             </button>
           </div>
         </div>
@@ -251,7 +208,7 @@ export default function SledSlopePanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.a} − {round.b} = {round.gap} — and they're off! 🛷🛷 · {score} pts
+              ✓ {round.a} − {round.b} = {round.gap} — and they're off! 🛷🛷 · ⭐ {score}
             </span>
           </div>
         </div>
@@ -260,9 +217,9 @@ export default function SledSlopePanel() {
       {status === "feedback" && round && (
         <div className="farm-challenge-card">
           <div className="farm-challenge-verdict bad">
-            {typedCorrect === false ? "Not the gap! +0 pts" : "+0 pts"}
+            {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">{round.reason}</div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"

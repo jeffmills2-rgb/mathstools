@@ -126,7 +126,19 @@ export function generateMeadowRound(roundIndex, rand = Math.random) {
     moves, // balls that actually hop in the reveal
     level, // twins stand at level (+ level+1 when odd)
     total,
-    prompt: `Two snowmen: ${left} and ${right} snowballs. How many must hop across to make LEVEL TWINS?`,
+    prompt: `Two snowmen: ${left} and ${right} snowballs. Hop snowballs across until they are the SAME height.`,
+    // One step per line, for the feedback card.
+    working: odd
+      ? [
+          `${left} + ${right}: they are ${diff} apart — an odd gap`,
+          `Hop ${moves}: ${level} + ${level + 1} (they can't match exactly)`,
+          `Double ${level} is ${2 * level}, plus 1 more = ${total}`,
+        ]
+      : [
+          `${left} + ${right}: they are ${diff} apart`,
+          `Hop ${diff / 2} across: ${level} + ${level}`,
+          `Double ${level} = ${total}`,
+        ],
     reason: odd
       ? `The difference is ${diff} — an ODD difference can never make twins! Hop ${moves} to get ${level} + ${level + 1}: double ${level} and 1 more = ${total}.`
       : `The difference is ${diff}, but every hop helps BOTH snowmen — move HALF: ${diff / 2}. ${left} + ${right} becomes ${level} + ${level}, and double ${level} = ${total}. The total never changed!`,
@@ -202,3 +214,72 @@ export function meadowChain(round, k) {
   }
   return parts.join(" = ");
 }
+
+// ---- Hop-it-yourself (2026-09-28 audit) ------------------------------------
+// Year 7 feedback: asking for "how many hops?" BEFORE a single ball has moved
+// asks students to predict an idea (half the difference) they have never
+// seen happen. Now the student DOES the hopping — one ball per tap, from the
+// taller snowman to the shorter — watches the equation chain grow, and calls
+// it: "They match!" or "They can never match!". The insight arrives after the
+// act, on the typing card: "4 apart, but only 2 hops".
+
+/** Largest hop count the panel allows (a student may overshoot and hop back). */
+export function meadowMaxHops(round) {
+  return round.diff;
+}
+
+/**
+ * The two tower counts after k hops from the ORIGINALLY taller snowman —
+ * NOT capped at the levelling point, so an overshoot shows (and can be
+ * undone). k is clamped to 0…diff. Pure.
+ */
+export function meadowCountsAfterHops(round, k) {
+  const hops = Math.max(0, Math.min(meadowMaxHops(round), k));
+  const left = round.left + (round.tallerSide === "left" ? -hops : hops);
+  const right = round.right + (round.tallerSide === "left" ? hops : -hops);
+  return { left, right };
+}
+
+/** The chain for k free hops: "8 + 12 = 9 + 11 = 10 + 10". Pure. */
+export function meadowChainHops(round, k) {
+  const parts = [];
+  for (let i = 0; i <= Math.max(0, Math.min(meadowMaxHops(round), k)); i++) {
+    const { left, right } = meadowCountsAfterHops(round, i);
+    parts.push(`${left} + ${right}`);
+  }
+  return parts.join(" = ");
+}
+
+/**
+ * Grade the student's CALL after hopping. `call` is "match" or "cant";
+ * `hops` is how many balls they've moved. "match" is right only when the
+ * towers really are level; "cant" is right only on an odd gap. Returns
+ * whether the call ends the hopping (`done`) and a kid-sized label. Pure.
+ */
+export function gradeMeadowCall(round, hops, call) {
+  const { left, right } = meadowCountsAfterHops(round, hops);
+  if (call === "match") {
+    if (left === right) {
+      return { correct: true, done: true, label: `⛄ Level! +${MEADOW_PREDICT_POINTS} pts` };
+    }
+    return {
+      correct: false,
+      done: false,
+      label: `Not the same yet — ${left} and ${right}. Keep hopping!`,
+    };
+  }
+  // call === "cant"
+  if (!round.canTwin) {
+    return {
+      correct: true,
+      done: true,
+      label: `🧐 Right — an odd gap can never split evenly! +${MEADOW_PREDICT_POINTS} pts`,
+    };
+  }
+  return {
+    correct: false,
+    done: false,
+    label: "These two CAN match — keep hopping!",
+  };
+}
+

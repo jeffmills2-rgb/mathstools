@@ -23,7 +23,11 @@ const AWNING_A = "#d6493f";
 const AWNING_B = "#f3ead6";
 const BEAD_PAID = "#7a5638"; // cocoa
 const BEAD_CHANGE = "#ffd166"; // gold
-const BEAD_EMPTY = "#2c3252";
+// Empty beads are pale on a LIT cream board (audit 2026-09-28) — cocoa-brown
+// and navy beads on a brown frame were three dark colours on top of each
+// other in the twilight.
+const BEAD_EMPTY = "#dfe7f2";
+const BOARD_PANEL = "#fdf3dc";
 
 const STALL = [YARD_STALL[0] - YARD_AREA.x, YARD_STALL[1] - YARD_AREA.z];
 const BOARD = [YARD_BOARD[0] - YARD_AREA.x, YARD_BOARD[1] - YARD_AREA.z];
@@ -47,7 +51,7 @@ function changeBeads(round, status, onesAt, tensAt) {
   return Math.min(round.change, round.onesHop + tensLit);
 }
 
-function Stall() {
+function Stall({ shown }) {
   return (
     <group position={[STALL[0], 0, STALL[1]]} rotation={[0, 0.35, 0]}>
       {/* Counter + posts + striped awning. */}
@@ -77,7 +81,7 @@ function Stall() {
         <meshStandardMaterial color={BEAD_PAID} />
       </mesh>
       <Html position={[0, 3.0, 0]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="fc-count-chip">☕ cocoa stall</div>
+        <div className="fc-count-chip">☕ Hot chocolate {shown ? `${shown.price}c` : ""}</div>
       </Html>
     </group>
   );
@@ -108,20 +112,20 @@ export default function LodgeYardChallenge() {
 
   const chip =
     status === "ones"
-      ? `${shown.price} + ? → the next ten`
+      ? `${shown.price}c + ? → the next ten`
       : status === "tens"
-        ? `${shown.afterOnes} + ? → 100`
+        ? `${shown.afterOnes}c + ? → 100c`
         : status === "typing"
           ? shown.onesHop === 0
-            ? `${shown.price} + ${shown.tensHop} = 100 — change?`
+            ? `${shown.price}c + ${shown.tensHop}c = 100c — change?`
             : shown.tensHop === 0
-              ? `${shown.price} + ${shown.onesHop} = 100 — change?`
-              : `${shown.onesHop} + ${shown.tensHop} = change?`
-          : `100 − ${shown.price} = ${shown.change}`;
+              ? `${shown.price}c + ${shown.onesHop}c = 100c — change?`
+              : `${shown.onesHop}c + ${shown.tensHop}c = change?`
+          : `100c − ${shown.price}c = ${shown.change}c`;
 
   return (
     <group position={[YARD_AREA.x, 0, YARD_AREA.z]}>
-      <Stall />
+      <Stall shown={shown} />
 
       {/* The hundred-bead board on its stand. */}
       <group position={[BOARD[0], 0, BOARD[1]]} rotation={[0, -0.25, 0]}>
@@ -131,10 +135,29 @@ export default function LodgeYardChallenge() {
             <meshStandardMaterial color={WOOD_DARK} />
           </mesh>
         ))}
-        <mesh castShadow position={[0, 1.85, -0.05]}>
-          <boxGeometry args={[3.4, 3.4, 0.08]} />
+        <mesh castShadow position={[0, 1.85, -0.09]}>
+          <boxGeometry args={[3.6, 3.6, 0.08]} />
           <meshStandardMaterial color={WOOD} />
         </mesh>
+        <mesh position={[0, 1.85, -0.04]}>
+          <boxGeometry args={[3.3, 3.3, 0.04]} />
+          <meshStandardMaterial color={BOARD_PANEL} emissive={BOARD_PANEL} emissiveIntensity={0.4} />
+        </mesh>
+        {/* Each row is ten cents: 10c, 20c … 100c down the right edge. */}
+        {Array.from({ length: 10 }, (_, r) => (
+          <Html
+            key={`rl${r}`}
+            position={[5.3 * BEAD_GAP, 3.3 - r * BEAD_GAP, 0.1]}
+            center
+            distanceFactor={7}
+            className="ix-badge-anchor"
+            zIndexRange={[24, 0]}
+          >
+            <div style={{ fontWeight: 800, fontSize: 13, color: "#fdf3dc", textShadow: "0 1px 2px #000" }}>
+              {(r + 1) * 10}c
+            </div>
+          </Html>
+        ))}
         {Array.from({ length: 100 }, (_, i) => {
           const paid = i < shown.price;
           const change = !paid && i < shown.price + lit;
@@ -144,7 +167,7 @@ export default function LodgeYardChallenge() {
               <meshStandardMaterial
                 color={paid ? BEAD_PAID : change ? BEAD_CHANGE : BEAD_EMPTY}
                 emissive={paid ? BEAD_PAID : change ? BEAD_CHANGE : BEAD_EMPTY}
-                emissiveIntensity={change ? 0.9 : paid ? 0.25 : 0.15}
+                emissiveIntensity={change ? 0.9 : paid ? 0.2 : 0.1}
               />
             </mesh>
           );

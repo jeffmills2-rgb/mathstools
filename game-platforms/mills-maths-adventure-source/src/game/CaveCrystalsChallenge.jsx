@@ -19,8 +19,10 @@ import { ConfettiBurst } from "./OrderPartsChallenge.jsx";
  * confetti.
  */
 
-const DOME = "#141830";
-const CRYSTAL_DIM = "#2c3252";
+// Lighter cave + pale-ice resting crystals (audit 2026-09-28): the dim
+// crystals were dark-navy on a near-black dome — invisible from the camera.
+const DOME = "#27305a";
+const CRYSTAL_DIM = "#a9c4e4";
 const GLOW_UP = "#59d8e8";
 const GLOW_BACK = "#e8a020";
 const LAND = "#ffe14d";
@@ -50,7 +52,7 @@ function Crystal({ position, lit, color, landing, tall }) {
         <meshStandardMaterial
           color={lit ? color : CRYSTAL_DIM}
           emissive={lit ? color : CRYSTAL_DIM}
-          emissiveIntensity={lit ? 1.1 : 0.25}
+          emissiveIntensity={lit ? 1.1 : 0.12}
           transparent
           opacity={0.95}
           flatShading
@@ -109,8 +111,8 @@ export default function CaveCrystalsChallenge() {
       ? `${shown.a} − ${shown.b} ?`
       : status === "typing"
         ? shown.kind === "up"
-          ? `how many glows from ${shown.b} to ${shown.a}?`
-          : `${shown.b} steps back from ${shown.a} lands on…?`
+          ? `${shown.b} → ${shown.a}: how many steps?`
+          : `${shown.a} back ${shown.b} steps: where?`
         : status === "celebrate"
           ? `${shown.a} − ${shown.b} = ${shown.answer}`
           : `${shown.a} − ${shown.b}`;
@@ -119,8 +121,11 @@ export default function CaveCrystalsChallenge() {
     <group position={[CAVE_AREA.x, 0, CAVE_AREA.z]}>
       {/* The dark cave mouth — a half-dome swallowing the back wall. */}
       <mesh position={[DOME_LOCAL[0], 0, DOME_LOCAL[1]]}>
-        <sphereGeometry args={[CAVE_DOME.radius, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={DOME} side={2} transparent opacity={0.96} />
+        {/* The BACK half only (phi π…2π = the −z side, away from the camera).
+            A full dome put its front wall between the camera and the crystal
+            wall inside it — every crystal was hidden (audit 2026-09-28). */}
+        <sphereGeometry args={[CAVE_DOME.radius, 24, 16, Math.PI, Math.PI, 0, Math.PI / 2]} />
+        <meshStandardMaterial color={DOME} side={2} transparent opacity={0.9} />
       </mesh>
 
       {/* The numbered crystal wall (the round's window of the line). */}
@@ -147,7 +152,7 @@ export default function CaveCrystalsChallenge() {
       {/* The glow counter while the wall lights (up-rounds read THIS). */}
       {started && shown.kind === "up" && glows > 0 && (
         <Html position={[xFor(shown, shown.b + glows), 2.2, WALL[1]]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-          <div className="fc-count-chip">{glows} glow{glows === 1 ? "" : "s"}</div>
+          <div className="fc-count-chip">{glows} step{glows === 1 ? "" : "s"}</div>
         </Html>
       )}
 
