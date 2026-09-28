@@ -191,6 +191,7 @@
     .bank-note{width:100%;text-align:center;font-size:.8rem;font-weight:850;color:#6d28d9;}
 
     .side-panel .keyboard{width:100%;}
+    .keys{display:grid;gap:inherit;}
     .keyboard{width:min(100%,640px);display:grid;gap:8px;padding:10px;border-radius:20px;background:#e8eef6;}
     .krow{display:grid;gap:7px;}
     .krow.digits{grid-template-columns:repeat(10,1fr);}
@@ -275,7 +276,9 @@
   .key{height:50px;font-size:1.25rem;border-radius:10px;}
   .key.wide{font-size:.82rem;}
   .clue-cols{grid-template-columns:1fr;}
-  .bank .tile{min-width:44px;height:44px;}
+  .keyboard .bank{width:100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:6px;gap:5px;border-radius:12px;-webkit-overflow-scrolling:touch;}
+  .keyboard .bank .bank-note{display:none;}
+  .keyboard .bank .tile{flex:0 0 auto;min-width:44px;height:44px;}
   .end-stats{grid-template-columns:repeat(3,1fr);}
   @media(max-width:359px){ .status-strip{flex-wrap:wrap;} .toolbar{margin-left:auto;} .mmtTopTitle{font-size:.9rem;} .actions .btn,.actions button{min-width:36px;padding:8px 7px;} }
 }
@@ -355,7 +358,7 @@
           </div>
           <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
           <div class="bank hidden" id="bank"></div>
-          <div class="keyboard" id="keyboard" aria-label="Keypad"></div>
+          <div class="keyboard" id="keyboard" aria-label="Keypad"><div class="keys" id="keys"></div></div>
         </div>
         <aside class="side-panel" id="sidePanel">
           <div class="panel-section hidden" id="cluePanel">
@@ -1225,8 +1228,8 @@
       } else {
         h += '<button type="button" class="key wide" data-k="prev" aria-label="Previous clue">◀ Clue</button><button type="button" class="key wide" data-k="flip" aria-label="Swap across and down">↔ Across/Down</button><button type="button" class="key wide" data-k="Backspace" aria-label="Delete">⌫</button><button type="button" class="key wide" data-k="next" aria-label="Next clue">Clue ▶</button>';
       }
-      $('keyboard').innerHTML = h + '</div>';
-      $('keyboard').querySelectorAll('.key').forEach(function (b) { b.addEventListener('click', function () { press(b.dataset.k); b.blur(); }); });
+      $('keys').innerHTML = h + '</div>'; // the bank may share #keyboard on a phone — never wipe it
+      $('keys').querySelectorAll('.key').forEach(function (b) { b.addEventListener('click', function () { press(b.dataset.k); b.blur(); }); });
     }
     function press(k) { if (!S) return; if (S.mode === 'eq') eqKey(k); else cnKey(k); }
     document.addEventListener('keydown', function (e) {
@@ -1309,7 +1312,7 @@
       if (S && !S.done && (S.mode === 'eq' ? Object.keys(S.vals).length : S.dig.some(Boolean)) && !confirm('Start a new puzzle? This one will be lost.')) return;
       startNew(S.mode, S.level);
     });
-    $('bankBtn').addEventListener('click', function () { if (!S) return; S.bank = !S.bank; paint(); saveGame(); });
+    $('bankBtn').addEventListener('click', function () { if (!S) return; S.bank = !S.bank; paint(); fitBoard(); saveGame(); });
     $('giveUpBtn').addEventListener('click', function () {
       if (!S || S.done || !confirm('Show the answer? This ends the puzzle.')) return;
       if (S.mode === 'eq') { layout = CW.eqLayout(S.pz); blanks().forEach(function (k) { var c = layout[k]; if (c.t === 'n') S.vals[k] = String(c.v); else S.ops[c.eqs[0]] = S.pz.eqs[c.eqs[0]].op; }); }
@@ -1329,7 +1332,12 @@
       // the full height; below 1081px it sits under the board (sticky on a phone).
       var kbEl = $('keyboard'), wide = innerWidth > 1080;
       if (wide && kbEl.parentNode !== $('sidePanel')) $('sidePanel').insertBefore(kbEl, $('sidePanel').firstChild);
-      if (!wide && kbEl.parentNode === $('sidePanel')) $('bank').parentNode.insertBefore(kbEl, $('bank').nextSibling);
+      if (!wide && kbEl.parentNode === $('sidePanel')) $('boardWrap').parentNode.insertBefore(kbEl, $('boardWrap').nextSibling);
+      // On a phone the number bank rides at the top of the sticky keypad, so it
+      // is always under the thumb instead of hidden behind the keypad.
+      var bankEl = $('bank'), phone = innerWidth <= 700;
+      if (phone && bankEl.parentNode !== kbEl) kbEl.insertBefore(bankEl, kbEl.firstChild);
+      if (!phone && bankEl.parentNode === kbEl) $('boardWrap').parentNode.insertBefore(bankEl, $('boardWrap').nextSibling);
       var b = $('board'); b.style.setProperty('--cell', '20px'); // measure the room, not the old board
       var w = $('boardWrap').clientWidth || 360;
       var cell = (w - gap * (cols - 1)) / cols;
