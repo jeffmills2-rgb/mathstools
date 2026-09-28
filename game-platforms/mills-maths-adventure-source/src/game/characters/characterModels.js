@@ -39,7 +39,7 @@ export const CHARACTER_MODELS = {
   pip: { ...DEFAULT, file: "pip.glb", modelScale: 1.54 },
   fern: { ...DEFAULT, file: "fern.glb", modelScale: 1.54 },
   alby: { ...DEFAULT, file: "alby.glb", modelScale: 1.54 },
-  sage: { ...DEFAULT, file: "mills.glb", modelScale: 0.185 }, // "Mills" the guide — tiny, ~0.30u ≈ 30cm tall (full rig is ~2.5u at 1.54)
+  sage: { ...DEFAULT, file: "mills.glb", modelScale: 1.54 }, // "Mills" the guide — normal size (~2.5u), matching the other characters
   // Schoolyard staff (nine). Meshy models (~1.65u tall). modelScale 1.54 makes
   // them ~2.5u (10% up from the first pass). Each has a resting clip + a "Talk"
   // clip; the loader plays rest when away, Talk when the player enters the radius.
