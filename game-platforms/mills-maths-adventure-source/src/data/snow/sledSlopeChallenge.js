@@ -206,7 +206,7 @@ export function gradeSledSlide(round, slid) {
       ? slid === 0
         ? `👀 Already a tens number — no sliding needed! +${SLED_SLIDE_POINTS} pts`
         : `❄️ ${back} — a tens number! +${SLED_SLIDE_POINTS} pts`
-      : `${back} isn't a tens number.`,
+      : `There's an easier position — can the smaller number be a tens number?`,
   };
 }
 

@@ -4,8 +4,7 @@ import { useCaveCrystals } from "../game/caveCrystalsStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
 import {
   CAVE_ROUNDS_PER_SET,
-  CAVE_GLOW_MS,
-  CAVE_GLOW_TAIL_MS,
+  caveLightingMs,
 } from "../data/snow/caveCrystalsChallenge.js";
 import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
@@ -70,8 +69,9 @@ export default function CaveCrystalsPanel() {
   // The glows play one beat per crystal — then the typing box.
   useEffect(() => {
     if (status !== "lighting") return undefined;
-    const r = useCaveCrystals.getState().currentRound();
-    const ms = (r ? r.steps : 3) * CAVE_GLOW_MS + CAVE_GLOW_TAIL_MS;
+    const st = useCaveCrystals.getState();
+    const r = st.currentRound();
+    const ms = r ? caveLightingMs(r, st.chosen || r.kind) : 3000;
     const t = setTimeout(() => useCaveCrystals.getState().finishLighting(), ms);
     return () => clearTimeout(t);
   }, [status, roundIndex]);
@@ -106,9 +106,8 @@ export default function CaveCrystalsPanel() {
           icon="🌌"
           title="The Ice Cave"
           steps={[
-            <>Subtraction can be done two ways: count <b>back</b>, or count <b>up</b>.</>,
-            <>Numbers close together? <b>Count up</b> the little gap. Taking away a small number? <b>Count back</b>.</>,
-            <>Choose the quicker way — the crystals light up each step.</>,
+            <>Count <b>up</b> or count <b>back</b> — pick the quicker way.</>,
+            <>The crystals light up each step. Then answer the sum.</>,
           ]}
           example="52 − 49: count up 49 → 52 = 3 steps.   52 − 3: count back 3 → 49"
           onStart={() => useCaveCrystals.getState().beginRounds()}

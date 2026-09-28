@@ -584,7 +584,7 @@ export default function SnowballRangeChallenge() {
           {/* The running sentence above the crate. */}
           {chip && (
             <Html position={[FRAME_LOCAL[0], FRAME_Y + 1.6, FRAME_LOCAL[1]]} center distanceFactor={9.5} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-              <div className="milk-display">{chip}</div>
+              <div className="milk-display snow-chip">{chip}</div>
             </Html>
           )}
 

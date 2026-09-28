@@ -186,7 +186,7 @@ export default function ColonyPairsChallenge() {
 
       {/* The running sentence above the huddle. */}
       <Html position={[0, 2.9, COLONY_ROWS.z1 - COLONY_AREA.z]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="milk-display">{chip}</div>
+        <div className="milk-display snow-chip">{chip}</div>
       </Html>
 
       {status === "celebrate" && (

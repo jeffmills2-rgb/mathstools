@@ -2,12 +2,10 @@ import { create } from "zustand";
 
 import {
   generateYardSet,
-  checkYardOnes,
-  checkYardTens,
+  gradeYardCount,
+  yardTillAfter,
   checkYardChange,
   YARD_ROUNDS_PER_SET,
-  YARD_ONES_POINTS,
-  YARD_TENS_POINTS,
   YARD_CHANGE_POINTS,
 } from "../data/snow/lodgeYardChallenge.js";
 import { useProgress } from "../progress/store.js";
@@ -15,13 +13,12 @@ import { useUI } from "../ui/effects/uiStore.js";
 
 /**
  * LODGE YARD STORE (LY) — session state for the friends-of-100 challenge.
- *   ones     type the hop to the next ten → submitOnes() (the beads for
- *            that part-row fill on the board)
- *   tens     type the hop to 100 → submitTens() (the clean rows fill)
- *   typing   type the whole change → submitChange()
- * Correct change → celebrate (auto-next); wrong → shake + reason card.
- * Wrong hops score 0 but the TRUE hop still fills, so the board always
- * teaches the friendly path.
+ * Round 2 (2026-09-29):
+ *   paying   tap coins (addCoin) — each is a jump along the number line
+ *            from the price; undoCoin takes the last back; giveChange()
+ *            only goes through on exactly 100c
+ *   typing   say how much change that was → submitChange()
+ * Correct change → celebrate (auto-next); wrong → shake + worked card.
  *
  * NOTE: progress is LOCAL-ONLY for now — same note as the other snow stores.
  */
@@ -46,14 +43,14 @@ function writeBest(score) {
 }
 
 export const useLodgeYard = create((set, get) => ({
-  // "idle" | "intro" | "ones" | "tens" | "typing" | "celebrate" | "feedback" | "done"
+  // "idle" | "intro" | "paying" | "typing" | "celebrate" | "feedback" | "done"
   status: "idle",
   rounds: [],
   roundIndex: 0,
-  onesResult: null, // { correct } after submitOnes
-  tensResult: null, // { correct } after submitTens
-  onesFilledAt: 0, // Date.now() — drives the part-row bead fill
-  tensFilledAt: 0, // Date.now() — drives the clean-row bead fill
+  coins: [], // cents, in the order given
+  overshot: false, // the till went past 100c at some point this round
+  countResult: null, // gradeYardCount() once the change is given
+  note: null, // { text, tone, at }
   typedCorrect: null,
   results: [],
   score: 0,
@@ -69,10 +66,10 @@ export const useLodgeYard = create((set, get) => ({
       status: "intro",
       rounds: generateYardSet(),
       roundIndex: 0,
-      onesResult: null,
-      tensResult: null,
-      onesFilledAt: 0,
-      tensFilledAt: 0,
+      coins: [],
+      overshot: false,
+      countResult: null,
+      note: null,
       typedCorrect: null,
       results: [],
       score: 0,
@@ -82,44 +79,49 @@ export const useLodgeYard = create((set, get) => ({
 
   beginRounds() {
     if (get().status !== "intro") return;
-    set({ status: "ones" });
+    set({ status: "paying" });
   },
 
-  /** Part A: the hop to the next ten. Returns "invalid" | "done". */
-  submitOnes(text) {
-    const { status } = get();
-    if (status !== "ones") return "invalid";
+  /** Put one coin in the change pile (a jump along the line). */
+  addCoin(cents) {
+    const { status, coins, overshot } = get();
     const round = get().currentRound();
-    if (!round) return "invalid";
-    const { valid, correct } = checkYardOnes(round, text);
-    if (!valid) return "invalid";
-    set((s) => ({
-      status: "tens",
-      onesResult: { correct },
-      onesFilledAt: Date.now(),
-      score: s.score + (correct ? YARD_ONES_POINTS : 0),
-    }));
-    return "done";
+    if (status !== "paying" || !round || coins.length >= 20) return;
+    const next = [...coins, cents];
+    const till = yardTillAfter(round, next);
+    set({
+      coins: next,
+      overshot: overshot || till > 100,
+      note: till > 100 ? { text: `${till}c is past $1! Take a coin back.`, tone: "bad", at: Date.now() } : null,
+    });
   },
 
-  /** Part B: the hop to 100. Returns "invalid" | "done". */
-  submitTens(text) {
-    const { status } = get();
-    if (status !== "tens") return "invalid";
+  /** Take the last coin back. */
+  undoCoin() {
+    const { status, coins } = get();
+    if (status !== "paying" || !coins.length) return;
+    set({ coins: coins.slice(0, -1), note: null });
+  },
+
+  /** "Give the change" — only exactly 100c goes through. */
+  giveChange() {
+    const { status, coins, overshot } = get();
     const round = get().currentRound();
-    if (!round) return "invalid";
-    const { valid, correct } = checkYardTens(round, text);
-    if (!valid) return "invalid";
+    if (status !== "paying" || !round) return;
+    const g = gradeYardCount(round, coins, overshot);
+    if (!g.done) {
+      set({ note: { text: g.note, tone: "warm", at: Date.now() } });
+      return;
+    }
     set((s) => ({
       status: "typing",
-      tensResult: { correct },
-      tensFilledAt: Date.now(),
-      score: s.score + (correct ? YARD_TENS_POINTS : 0),
+      countResult: g,
+      note: { text: g.note, tone: "good", at: Date.now() },
+      score: s.score + g.points,
     }));
-    return "done";
   },
 
-  /** Part C: the whole change. Returns "invalid" | "correct" | "wrong". */
+  /** The whole change. Returns "invalid" | "correct" | "wrong". */
   submitChange(text) {
     const { status } = get();
     if (status !== "typing") return "invalid";
@@ -136,18 +138,18 @@ export const useLodgeYard = create((set, get) => ({
   },
 
   next() {
-    const { status, roundIndex, score, onesResult, tensResult, typedCorrect } = get();
+    const { status, roundIndex, score, countResult, coins, typedCorrect } = get();
     if (status !== "feedback" && status !== "celebrate") return;
     const round = get().currentRound();
-    const results = [...get().results, { round, onesResult, tensResult, typedCorrect }];
+    const results = [...get().results, { round, countResult, coins, typedCorrect }];
     if (roundIndex + 1 < YARD_ROUNDS_PER_SET) {
       set({
-        status: "ones",
+        status: "paying",
         roundIndex: roundIndex + 1,
-        onesResult: null,
-        tensResult: null,
-        onesFilledAt: 0,
-        tensFilledAt: 0,
+        coins: [],
+      overshot: false,
+      countResult: null,
+      note: null,
         typedCorrect: null,
         results,
       });
@@ -172,10 +174,10 @@ export const useLodgeYard = create((set, get) => ({
       status: "idle",
       rounds: [],
       roundIndex: 0,
-      onesResult: null,
-      tensResult: null,
-      onesFilledAt: 0,
-      tensFilledAt: 0,
+      coins: [],
+      overshot: false,
+      countResult: null,
+      note: null,
       typedCorrect: null,
       results: [],
       score: 0,

@@ -4,7 +4,7 @@ import { Html } from "@react-three/drei";
 
 import { CAVE_AREA, CAVE_WALL, CAVE_DOME } from "../data/snow/snowLayout.js";
 import { useCaveCrystals } from "./caveCrystalsStore.js";
-import { CAVE_GLOW_MS } from "../data/snow/caveCrystalsChallenge.js";
+import { cavePhases, CAVE_PHASE_GAP_MS } from "../data/snow/caveCrystalsChallenge.js";
 import { ConfettiBurst } from "./OrderPartsChallenge.jsx";
 
 /**
@@ -37,16 +37,25 @@ function xFor(round, v) {
   return WALL[0] + ((v - round.windowMin) / span) * WALL_LEN;
 }
 
-/** How many crystals glow right now (0 = just the start marker). */
-function glowProgress(round, startedAt) {
-  const elapsed = Date.now() - startedAt;
-  return Math.max(0, Math.min(round.steps, Math.floor(elapsed / CAVE_GLOW_MS)));
+/**
+ * Per-phase progress: how many crystals of each run are lit right now. The
+ * student's choice runs first; the quick way (if different) follows.
+ */
+function phaseProgress(phases, startedAt, done) {
+  if (done) return phases.map((p) => p.steps);
+  let t = Date.now() - startedAt;
+  return phases.map((p) => {
+    if (t <= 0) return 0;
+    const lit = Math.min(p.steps, Math.floor(t / p.msPerStep));
+    t -= p.steps * p.msPerStep + CAVE_PHASE_GAP_MS;
+    return lit;
+  });
 }
 
 /** One wall crystal (an octahedron on a stub). */
-function Crystal({ position, lit, color, landing, tall }) {
+function Crystal({ position, lit, color, landing, tall, size = 1 }) {
   return (
-    <group position={position}>
+    <group position={position} scale={[size, size, size]}>
       <mesh castShadow position={[0, tall ? 0.85 : 0.62, 0]} rotation={[0, 0.5, 0]}>
         <octahedronGeometry args={[tall ? 0.34 : 0.26]} />
         <meshStandardMaterial
@@ -90,21 +99,31 @@ export default function CaveCrystalsChallenge() {
   if (!active || !shown) return null;
 
   const started = status !== "choosing" && startedAt > 0;
-  const glows = started
-    ? status === "lighting"
-      ? glowProgress(shown, startedAt)
-      : shown.steps
-    : 0;
+  const chosen = useCaveCrystals.getState().chosen || shown.kind;
+  const phases = started ? cavePhases(shown, chosen) : [];
+  const done = status === "typing" || status === "celebrate" || status === "feedback";
+  const lit = started ? phaseProgress(phases, startedAt, done) : [];
 
-  // Which crystal values are lit, and where the run lands.
-  // up: light b+1 … b+glows (cyan). back: light a−1 … a−glows (amber).
-  const litSet = new Set();
-  for (let g = 1; g <= glows; g++) {
-    litSet.add(shown.kind === "up" ? shown.b + g : shown.a - g);
-  }
-  const landingValue = shown.kind === "up" ? shown.a : shown.answer;
-  const landed = glows === shown.steps && started;
-  const glowColor = shown.kind === "up" ? GLOW_UP : GLOW_BACK;
+  // value → colour of the LATEST run that lit it (the quick way paints over).
+  const litColor = new Map();
+  const landings = [];
+  phases.forEach((p, i) => {
+    const color = p.dir === "up" ? GLOW_UP : GLOW_BACK;
+    for (let g = 0; g < lit[i]; g++) litColor.set(p.values[g], color);
+    if (lit[i] === p.steps) landings.push(p.landing);
+  });
+
+  const count = shown.windowMax - shown.windowMin + 1;
+  const spacing = WALL_LEN / Math.max(1, count - 1);
+  const size = Math.min(1, spacing / 0.75);
+  const crowded = count > 16;
+  // a and b right next to each other on a long wall: stagger their labels.
+  const closeEnds = Math.abs(shown.a - shown.b) * spacing < 1.1;
+  // Label a and b always; the answer only once a run has LANDED on it (it
+  // must not sit on the wall before it is worked out). Crowded walls label
+  // only the tens that are clear of those.
+  const keyValues = new Set([shown.a, shown.b, ...landings]);
+  const nearKey = (v) => [...keyValues].some((k) => k !== v && Math.abs(k - v) <= Math.max(2, Math.round(count / 14)));
 
   const chip =
     status === "choosing"
@@ -128,41 +147,59 @@ export default function CaveCrystalsChallenge() {
         <meshStandardMaterial color={DOME} side={2} transparent opacity={0.9} />
       </mesh>
 
-      {/* The numbered crystal wall (the round's window of the line). */}
-      {Array.from({ length: shown.windowMax - shown.windowMin + 1 }, (_, i) => {
+      {/* The numbered crystal wall — wide enough to hold BOTH routes. */}
+      {Array.from({ length: count }, (_, i) => {
         const v = shown.windowMin + i;
         const endpoint = v === shown.a || v === shown.b;
-        const lit = litSet.has(v) || (started && endpoint && (v === (shown.kind === "up" ? shown.b : shown.a)));
+        const isStart = started && phases.some((p) => p.from === v);
+        const landed = landings.includes(v);
+        const c = litColor.get(v);
+        const hideAnswer = v === shown.answer && !landings.includes(v) && v !== shown.a && v !== shown.b;
+        const showLabel = !crowded ? !hideAnswer : keyValues.has(v) || (v % 10 === 0 && !nearKey(v) && !hideAnswer);
         return (
           <group key={v}>
             <Crystal
               position={[xFor(shown, v), 0, WALL[1]]}
-              lit={lit || (landed && v === landingValue)}
-              color={landed && v === landingValue ? LAND : glowColor}
-              landing={landed && v === landingValue}
+              lit={Boolean(c) || isStart || landed}
+              color={landed ? LAND : c || (isStart ? "#ffffff" : GLOW_UP)}
+              landing={landed}
               tall={endpoint}
+              size={endpoint ? Math.max(size, 0.7) : size}
             />
-            <Html position={[xFor(shown, v), 1.45, WALL[1]]} center distanceFactor={14} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-              <div className="fc-count-chip">{v}</div>
-            </Html>
+            {showLabel && (
+              <Html position={[xFor(shown, v), endpoint ? (closeEnds && v === shown.b ? 2.45 : 1.75) : 1.45, WALL[1]]} center distanceFactor={crowded ? 17 : 14} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+                <div className="fc-count-chip" style={endpoint ? { borderColor: "#3a86ff" } : undefined}>{v}</div>
+              </Html>
+            )}
           </group>
         );
       })}
 
-      {/* The glow counter while the wall lights (up-rounds read THIS). */}
-      {started && shown.kind === "up" && glows > 0 && (
-        <Html position={[xFor(shown, shown.b + glows), 2.2, WALL[1]]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-          <div className="fc-count-chip">{glows} step{glows === 1 ? "" : "s"}</div>
-        </Html>
+      {/* A step counter riding along each run. */}
+      {phases.map((p, i) =>
+        lit[i] > 0 ? (
+          <Html
+            key={`pc${i}`}
+            position={[xFor(shown, p.values[lit[i] - 1]), (closeEnds ? 3.15 : 2.5) + i * 0.75, WALL[1]]}
+            center
+            distanceFactor={11}
+            className="ix-badge-anchor"
+            zIndexRange={[24, 0]}
+          >
+            <div className="fc-count-chip" style={{ borderColor: p.dir === "up" ? GLOW_UP : GLOW_BACK }}>
+              {p.dir === "up" ? "⬆ up" : "⬇ back"}: {lit[i]} step{lit[i] === 1 ? "" : "s"}
+            </div>
+          </Html>
+        ) : null
       )}
 
       {/* The running sentence over the cave mouth. */}
       <Html position={[WALL[0] + WALL_LEN / 2, 3.6, WALL[1] + 1.2]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="milk-display">{chip}</div>
+        <div className="milk-display snow-chip">{chip}</div>
       </Html>
 
       {status === "celebrate" && (
-        <ConfettiBurst origin={[xFor(shown, landingValue), 1.6, WALL[1] + 0.6]} />
+        <ConfettiBurst origin={[xFor(shown, shown.kind === "up" ? shown.a : shown.answer), 1.6, WALL[1] + 0.6]} />
       )}
     </group>
   );

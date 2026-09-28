@@ -47,6 +47,7 @@ export const useCaveCrystals = create((set, get) => ({
   rounds: [],
   roundIndex: 0,
   chooseResult: null,
+  chosen: null, // the direction the student picked — it lights FIRST (round 2)
   lightStartedAt: 0, // Date.now() when the glows began (drives the 3D)
   typedCorrect: null,
   results: [],
@@ -87,6 +88,7 @@ export const useCaveCrystals = create((set, get) => ({
     set((s) => ({
       status: "lighting",
       chooseResult: choose,
+      chosen: direction,
       lightStartedAt: Date.now(),
       score: s.score + choose.points,
     }));
@@ -124,6 +126,7 @@ export const useCaveCrystals = create((set, get) => ({
         status: "choosing",
         roundIndex: roundIndex + 1,
         chooseResult: null,
+        chosen: null,
         lightStartedAt: 0,
         typedCorrect: null,
         results,

@@ -20,20 +20,32 @@
  *   S4  any price     11–89, all endings
  *   S5  zero hops     round 13 is ON a ten; round 14 is in the 90s
  *
+ * Round 2 (Jeff, 2026-09-29): the hundred-bead board "looks like a ratio".
+ * It is gone. The change is now COUNTED UP WITH COINS on a number line that
+ * runs from the price to $1: tap 1c, 5c, 10c, 20c or 50c coins and each one
+ * is a jump along the line ("Total so far: 65c → 70c → 100c"). Land on
+ * exactly 100c, press "Give the change", then say how much change it was.
+ *
  * Scoring (per round, max 25):
- *   A) the ONES hop to the next ten (0–9)   = 10
- *   B) the TENS hop to 100 (0, 10 … 90)     = 5
- *   C) TYPE the whole change                = 10
+ *   A) COUNT UP to exactly 100c with coins           = 10
+ *      (5 if the till ever went past 100c on the way)
+ *   B) TYPE the whole change (the coins added up)    = 15
  */
 
 export const YARD_ROUNDS_PER_SET = 15;
 const YARD_STAGES = 5;
 const YARD_ROUNDS_PER_STAGE = YARD_ROUNDS_PER_SET / YARD_STAGES;
 
+// The old hop-by-hop grades (kept pure for reference/checks).
 export const YARD_ONES_POINTS = 10;
 export const YARD_TENS_POINTS = 5;
-export const YARD_CHANGE_POINTS = 10;
-export const YARD_ROUND_POINTS = YARD_ONES_POINTS + YARD_TENS_POINTS + YARD_CHANGE_POINTS; // 25
+export const YARD_COUNT_POINTS = 10;
+export const YARD_COUNT_OVER_POINTS = 5;
+export const YARD_CHANGE_POINTS = 15;
+export const YARD_ROUND_POINTS = YARD_COUNT_POINTS + YARD_CHANGE_POINTS; // 25
+
+/** The coins on the counter (cents). */
+export const YARD_COINS = [1, 5, 10, 20, 50];
 export const YARD_MAX_SCORE = YARD_ROUNDS_PER_SET * YARD_ROUND_POINTS; // 375
 
 // The zero-hop traps land late in S5.
@@ -65,6 +77,22 @@ const YARD_STAGE_CONFIGS = [
   { onesSet: [1, 2, 3, 4, 5, 6, 7, 8, 9], tMin: 1, tMax: 8, name: "zero hops" },
 ];
 
+/** Fewest coins that make `cents` (the coin set is canonical, so greedy). Pure. */
+export function fewestCoinsFor(cents) {
+  let left = cents;
+  let n = 0;
+  for (const c of [...YARD_COINS].sort((a, b) => b - a)) {
+    n += Math.floor(left / c);
+    left %= c;
+  }
+  return n;
+}
+
+/** Where the till is after these coins. Pure. */
+export function yardTillAfter(round, coins) {
+  return round.price + coins.reduce((t, c) => t + c, 0);
+}
+
 /** One round. roundIndex ∈ [0, 15); rand injectable for the checks. */
 export function generateYardRound(roundIndex, rand = Math.random) {
   const stage = yardStageFor(roundIndex);
@@ -93,7 +121,11 @@ export function generateYardRound(roundIndex, rand = Math.random) {
     afterOnes,
     tensHop,
     change,
-    prompt: `A hot chocolate costs ${price}c. You pay with $1 (100c) — count UP the change!`,
+    // The number line on the board runs from the tens number at or below
+    // the price up to 100.
+    lineMin: Math.floor(price / 10) * 10,
+    fewestCoins: fewestCoinsFor(change),
+    prompt: `A hot chocolate costs ${price}c. You pay with $1 (100c). Count up the change.`,
     // One step per line, in cents, for the feedback card.
     working:
       onesHop === 0
@@ -154,3 +186,23 @@ export function checkYardChange(round, text) {
   if (v === null) return { valid: false, correct: false };
   return { valid: true, correct: v === round.change };
 }
+
+/** Grade "Give the change": only exactly 100c counts. Pure. */
+export function gradeYardCount(round, coins, overshot) {
+  const till = yardTillAfter(round, coins);
+  if (till !== 100) {
+    return {
+      done: false,
+      note: till < 100 ? `The till says ${till}c — keep counting up to 100c.` : `The till says ${till}c — that's past $1! Take a coin back.`,
+    };
+  }
+  const points = overshot ? YARD_COUNT_OVER_POINTS : YARD_COUNT_POINTS;
+  const fewest = coins.length <= round.fewestCoins;
+  return {
+    done: true,
+    points,
+    fewest,
+    note: `${fewest ? "🎯 Fewest coins! " : ""}Right on 100c! +${points} pts`,
+  };
+}
+

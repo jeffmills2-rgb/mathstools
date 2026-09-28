@@ -110,17 +110,10 @@ export default function AuroraLookoutChallenge() {
 
           {/* The sum, written in the sky. */}
           <Html position={[0, 8.2, -9]} center distanceFactor={16} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-            <div className="milk-display">
+            <div className="milk-display snow-chip">
               {status === "celebrate" ? `${shown.expr} = ${shown.answer} ✨` : shown.expr}
             </div>
           </Html>
-
-          {/* The scaffold appears under the sum once a tool is picked. */}
-          {(status === "typing" || status === "feedback") && (
-            <Html position={[0, 6.4, -9]} center distanceFactor={13} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-              <div className="fc-count-chip">{shown.scaffold} ?</div>
-            </Html>
-          )}
 
           {status === "celebrate" && <ConfettiBurst origin={[0, 7, -8]} />}
         </>

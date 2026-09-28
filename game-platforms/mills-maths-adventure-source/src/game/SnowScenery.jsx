@@ -354,12 +354,14 @@ function IceCave({ hide }) {
   const [mx, mz] = ICE_CAVE_MOUND.position;
   return (
     <group>
-      <mesh castShadow position={[mx, 0, mz]}>
+      {/* Stands in the cave challenge's shot — hidden while it runs (it hid
+          the left end of the crystal wall). */}
+      <mesh castShadow position={[mx, 0, mz]} visible={!hide(mx, mz)}>
         <sphereGeometry args={[ICE_CAVE_MOUND.radius, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color="#dce8f7" flatShading />
       </mesh>
       {/* Dark cave mouth facing the challenge area (south-east). */}
-      <mesh position={[mx + 1.7, 0.9, mz + 1.9]} rotation={[0, Math.atan2(1.7, 1.9), 0]}>
+      <mesh position={[mx + 1.7, 0.9, mz + 1.9]} rotation={[0, Math.atan2(1.7, 1.9), 0]} visible={!hide(mx, mz)}>
         <circleGeometry args={[1.0, 14, Math.PI, Math.PI]} />
         <meshStandardMaterial color="#131a2b" />
       </mesh>

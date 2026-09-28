@@ -117,10 +117,8 @@ export default function MeadowLevelPanel() {
           icon="⛄"
           title="Snowman Meadow"
           steps={[
-            <>Two snowmen are made of snowballs. One is taller.</>,
-            <>Tap <b>Hop</b> to move one snowball from the tall snowman to the short one.</>,
-            <>Stop when they are the <b>same</b> height — or say so if they never can be!</>,
-            <>Then use the <b>double</b> to find the total.</>,
+            <>Hop snowballs from the tall snowman to the short one until they <b>match</b>.</>,
+            <>Then use the <b>double</b> to answer the sum.</>,
           ]}
           example="8 + 12  =  9 + 11  =  10 + 10  =  double 10 = 20"
           onStart={() => useMeadowLevel.getState().beginRounds()}
@@ -210,10 +208,15 @@ export default function MeadowLevelPanel() {
               ? <>They were {round.diff} apart, but it took only {round.diff / 2} hop{round.diff / 2 === 1 ? "" : "s"} — every hop makes one snowman smaller AND the other bigger.</>
               : <>They were {round.diff} apart. An odd gap can't be shared evenly, so the closest is {round.level} and {round.level + 1}.</>}
           </div>
+          {/* Round 2 (Jeff, 2026-09-29): answer the ORIGINAL sum — the double
+              is the helper you can see, not the question. */}
           <div className="snow-q">
+            <span className="fc-value">{round.left} + {round.right}</span> = ?
+          </div>
+          <div className="snow-sub">
             {round.canTwin
-              ? <><span className="fc-value">{round.level} + {round.level}</span> is double {round.level}. How many snowballs altogether?</>
-              : <><span className="fc-value">{round.level} + {round.level + 1}</span> is double {round.level}, plus 1. How many altogether?</>}
+              ? <>Hint: it's the same as {round.level} + {round.level} — double {round.level}.</>
+              : <>Hint: it's the same as {round.level} + {round.level + 1} — double {round.level}, plus 1.</>}
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input

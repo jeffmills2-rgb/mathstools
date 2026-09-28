@@ -109,10 +109,8 @@ export default function ColonyPairsPanel() {
           icon="🐧"
           title="Penguin Colony"
           steps={[
-            <>Two rows of penguins line up in <b>pairs</b>.</>,
-            <>If every penguin has a partner, it's a <b>double</b>: 7 + 7 is double 7.</>,
-            <>One left over? It's a double and <b>one more</b>: 7 + 8 is double 7, then +1.</>,
-            <>Pick the double that helps, then find the total.</>,
+            <>Pair up the penguins. Pick the <b>double</b> that helps.</>,
+            <>Then find the total.</>,
           ]}
           example="7 + 8  →  double 7 = 14  →  14 + 1 = 15"
           onStart={() => useColonyPairs.getState().beginRounds()}

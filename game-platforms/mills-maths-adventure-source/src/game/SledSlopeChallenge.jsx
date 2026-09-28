@@ -234,7 +234,7 @@ export default function SledSlopeChallenge() {
 
       {/* The rewritten pair, riding above the rope. */}
       <Html position={[chipX, snowGroundHeight(chipX, LANE_Z) + 2.5, LANE_Z]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="milk-display">{pairChip}</div>
+        <div className="milk-display snow-chip">{pairChip}</div>
       </Html>
 
       {status === "celebrate" && (

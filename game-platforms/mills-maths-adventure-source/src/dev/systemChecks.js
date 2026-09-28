@@ -252,7 +252,7 @@ import {
 import {
   generateVillageSet, generateVillageRound, villageStageFor, gradeVillagePredict, checkVillageJoin, checkVillageTotal,
   VILLAGE_ROUNDS_PER_SET, VILLAGE_PREDICT_POINTS, VILLAGE_TENS_POINTS, VILLAGE_ONES_POINTS, VILLAGE_TOTAL_POINTS,
-  VILLAGE_ROUND_POINTS, VILLAGE_MAX_SCORE, VILLAGE_EXACT_ROUND_INDEX,
+  VILLAGE_BUILD_POINTS, villageSite, gradeVillageBuild, VILLAGE_ROUND_POINTS, VILLAGE_MAX_SCORE, VILLAGE_EXACT_ROUND_INDEX,
 } from "../data/snow/villageSplitChallenge.js";
 import {
   generateColonySet, generateColonyRound, colonyStageFor, gradeColonyPredict, checkColonyTotal, colonyFormTrue,
@@ -266,7 +266,8 @@ import {
 } from "../data/snow/caveCrystalsChallenge.js";
 import {
   generateYardSet, generateYardRound, yardStageFor, checkYardOnes, checkYardTens, checkYardChange,
-  YARD_ROUNDS_PER_SET, YARD_ONES_POINTS, YARD_TENS_POINTS, YARD_CHANGE_POINTS, YARD_ROUND_POINTS, YARD_MAX_SCORE,
+  YARD_ROUNDS_PER_SET, YARD_COUNT_POINTS, YARD_COUNT_OVER_POINTS, YARD_CHANGE_POINTS, YARD_ROUND_POINTS, YARD_MAX_SCORE,
+  gradeYardCount, fewestCoinsFor,
   YARD_ON_TEN_ROUND_INDEX, YARD_NINETIES_ROUND_INDEX,
 } from "../data/snow/lodgeYardChallenge.js";
 import {
@@ -6916,8 +6917,17 @@ export function runVillageSplitChecks() {
     checkVillageTotal(probe, String(probe.total)).correct &&
     !checkVillageTotal(probe, String(probe.total + 1)).correct &&
     !checkVillageTotal(probe, "igloo").valid;
-  const scoreOk =
-    VILLAGE_PREDICT_POINTS + VILLAGE_TENS_POINTS + VILLAGE_ONES_POINTS + VILLAGE_TOTAL_POINTS === VILLAGE_ROUND_POINTS &&
+  // Round 2 (2026-09-29): a round is BUILD 10 + TOTAL 15; the build grade
+  // refuses an unfinished move and a missed ten-for-ten swap.
+  const full = { ta: probe.ta, tb: probe.tb, oa: probe.oa, ob: probe.ob };
+  const bPart = gradeVillageBuild(probe, { ...full, oa: 0 }, false);
+  const bNoSwap = gradeVillageBuild(probe, full, false);
+  const bRight = gradeVillageBuild(probe, full, true);
+  const buildOk =
+    !bPart.done && !bPart.miss && !bNoSwap.done && bNoSwap.miss && bRight.done &&
+    villageSite(probe, full, true).value === probe.total;
+  const scoreOk = buildOk &&
+    VILLAGE_BUILD_POINTS + VILLAGE_TOTAL_POINTS === VILLAGE_ROUND_POINTS &&
     VILLAGE_ROUND_POINTS === 25 && VILLAGE_MAX_SCORE === 375 && VILLAGE_MAX_SCORE === SNOW_MAX_SCORES.village;
   const slot = SNOW_TROPHY_META.find((m) => m.key === "village");
   const trophyOk =
@@ -6925,7 +6935,7 @@ export function runVillageSplitChecks() {
     SNOW_BEST_KEYS.village === "mma-snow-village-best";
   const vg3 = gradeOk && totOk && scoreOk && Boolean(trophyOk);
   checks.push({
-    name: "Igloo Village grading + scoring + trophy slot (5+5+5+10=25, max 375)",
+    name: "Igloo Village grading + scoring + trophy slot (build 10 + total 15, max 375)",
     pass: vg3,
     detail: vg3 ? "raw ones pile enforced, slot renamed" : `grade:${gradeOk} tot:${totOk} score:${scoreOk} trophy:${Boolean(trophyOk)}`,
   });
@@ -7060,7 +7070,7 @@ export function runCaveCrystalsChecks() {
         r.stage === caveStageFor(i) && r.answer === r.a - r.b && r.a <= 97 && r.b >= 1 &&
         (r.kind === "up" ? r.steps === r.a - r.b && r.otherSteps === r.b : r.steps === r.b && r.otherSteps === r.a - r.b) &&
         r.steps < r.otherSteps && // the winning way genuinely wins
-        r.windowMax - r.windowMin <= 15 && r.windowMin <= (r.kind === "up" ? r.b : r.answer) && r.windowMax >= r.a &&
+        r.windowMax - r.windowMin <= 100 && r.windowMin <= Math.min(r.b, r.answer) && r.windowMax >= r.a &&
         (i === CAVE_LONG_ROUND_INDEX ? r.kind === "back" && r.steps >= 7 : true);
       if (!baseOk) { fuzzOk = false; fuzzDetail = `round invalid at ${i} (${r.a}−${r.b})`; break outer; }
       const stageOk =
@@ -7118,7 +7128,7 @@ export function runLodgeYardChecks() {
     Math.hypot(YARD_BOARD[0] - YARD_AREA.x, YARD_BOARD[1] - YARD_AREA.z) < 8;
   const ly1 = w.claims && w.collidersOk && w.spotClear && w.signOk && propsOk;
   checks.push({
-    name: "Lodge Yard: claims the yard, stall + bead board placed",
+    name: "Lodge Yard: claims the yard, stall + counting board placed",
     pass: ly1,
     detail: ly1 ? "stall + board + Cocoa placed" : `claims:${w.claims} cols:${w.collidersOk} clear:${w.spotClear} sign:${w.signOk} props:${propsOk}`,
   });
@@ -7174,8 +7184,17 @@ export function runLodgeYardChecks() {
     checkYardChange(probe4, String(probe4.change)).correct &&
     !checkYardChange(probe4, String(probe4.change + 1)).correct &&
     !checkYardOnes(probe4, "cocoa").valid;
-  const scoreOk4 =
-    YARD_ONES_POINTS + YARD_TENS_POINTS + YARD_CHANGE_POINTS === YARD_ROUND_POINTS && YARD_ROUND_POINTS === 25 &&
+  // Round 2 (2026-09-29): count up with coins — only exactly 100c goes
+  // through; overshooting on the way halves the count points.
+  const p4 = generateYardRound(2, () => 0.5);
+  const under = gradeYardCount(p4, [1], false);
+  const exact = gradeYardCount(p4, [p4.change], false);
+  const exactOver = gradeYardCount(p4, [p4.change], true);
+  const countOk4 =
+    !under.done && exact.done && exact.points === YARD_COUNT_POINTS && exactOver.points === YARD_COUNT_OVER_POINTS &&
+    fewestCoinsFor(35) === 3 && fewestCoinsFor(37) === 5 && fewestCoinsFor(0) === 0;
+  const scoreOk4 = countOk4 &&
+    YARD_COUNT_POINTS + YARD_CHANGE_POINTS === YARD_ROUND_POINTS && YARD_ROUND_POINTS === 25 &&
     YARD_MAX_SCORE === 375 && YARD_MAX_SCORE === SNOW_MAX_SCORES.lodgeyard;
   const slot4 = SNOW_TROPHY_META.find((m) => m.key === "lodgeyard");
   const trophyOk4 =
@@ -7183,7 +7202,7 @@ export function runLodgeYardChecks() {
     SNOW_BEST_KEYS.lodgeyard === "mma-snow-lodgeyard-best";
   const ly3 = gradeOk4 && scoreOk4 && Boolean(trophyOk4);
   checks.push({
-    name: "Lodge Yard grading + scoring + trophy slot (10+5+10=25, max 375)",
+    name: "Lodge Yard grading + scoring + trophy slot (count 10 + change 15, max 375)",
     pass: ly3,
     detail: ly3 ? "hops + change exact (zeros included), slot renamed" : `grade:${gradeOk4} score:${scoreOk4} trophy:${Boolean(trophyOk4)}`,
   });
@@ -7231,7 +7250,14 @@ export function runAuroraLookoutChecks() {
           menuKeys.includes(r.best) && r.sound.every((k) => menuKeys.includes(k)) &&
           !r.sound.includes(r.best) &&
           typeof r.scaffold === "string" && r.scaffold.length > 5 &&
-          r.reason.includes(String(r.answer));
+          r.reason.includes(String(r.answer)) &&
+          // Round 2: three concrete ways, all correct, none giving the answer away.
+          Array.isArray(r.choices) && r.choices.length === 3 &&
+          r.choices.every((c) => {
+            const last = c.steps[c.steps.length - 1];
+            return c.show && /= \?$/.test(last) &&
+              !(c.show.match(/\d+/g) || []).concat(last.match(/\d+/g) || []).includes(String(r.answer));
+          });
         if (!baseOk) { fuzzOk = false; fuzzDetail = `round invalid at ${i} (${r.expr})`; break outer; }
         if (i > 0 && r.expr === set[i - 1].expr) { fuzzOk = false; fuzzDetail = `repeat expr at ${i}`; break outer; }
       }
@@ -7259,7 +7285,7 @@ export function runAuroraLookoutChecks() {
     !checkLookoutAnswer(probe5, String(probe5.answer + 1)).correct &&
     !checkLookoutAnswer(probe5, "aurora").valid;
   // 2026-09-28: eight tools (🧊 Tens and ones added), each with an example.
-  const menuOk5 = LOOKOUT_STRATEGIES.length === 8 && new Set(menuKeys).size === 8 &&
+  const menuOk5 = LOOKOUT_STRATEGIES.length === 9 && new Set(menuKeys).size === 9 &&
     menuKeys.includes("split") && LOOKOUT_STRATEGIES.every((t) => t.example && t.example.length > 4);
   const scoreOk5 =
     LOOKOUT_PICK_BEST_POINTS + LOOKOUT_ANSWER_POINTS === LOOKOUT_ROUND_POINTS && LOOKOUT_ROUND_POINTS === 25 &&
@@ -7273,7 +7299,7 @@ export function runAuroraLookoutChecks() {
   checks.push({
     name: "Aurora Lookout grading + scoring + trophy slot (10/5 pick + 15, max 375)",
     pass: al3,
-    detail: al3 ? "brightest/sound/unsound tiers, 8 tools, slot renamed" : `grade:${gradeOk5} ans:${ansOk5} menu:${menuOk5} score:${scoreOk5} trophy:${Boolean(trophyOk5)}`,
+    detail: al3 ? "easiest/works/unsound tiers, 9 tools, slot renamed" : `grade:${gradeOk5} ans:${ansOk5} menu:${menuOk5} score:${scoreOk5} trophy:${Boolean(trophyOk5)}`,
   });
 
   return checks;
@@ -7306,9 +7332,13 @@ import { generateCaveSet as saCave } from "../data/snow/caveCrystalsChallenge.js
 import { generateYardSet as saYard, checkYardChange as saYardChange } from "../data/snow/lodgeYardChallenge.js";
 import { generateLookoutSet as saLookout, LOOKOUT_STRATEGIES as SA_TOOLS, LOOKOUT_OPTIONS_PER_ROUND } from "../data/snow/auroraLookoutChallenge.js";
 import { useMeadowLevel as saMeadowStore } from "../game/meadowLevelStore.js";
+import { useVillageSplit as saVillageStore } from "../game/villageSplitStore.js";
+import { useLodgeYard as saYardStore } from "../game/lodgeYardStore.js";
+import { useGroveLights as saGroveStore } from "../game/groveLightsStore.js";
+import { useAuroraLookout as saLookoutStore } from "../game/auroraLookoutStore.js";
 
 /**
- * SA1–SA5 — the 2026-09-28 Year-7 audit of Snowball Sums: view corridors
+ * SA1–SA8 — the 2026-09-28 Year-7 audit (+ round 2, 2026-09-29) of Snowball Sums: view corridors
  * clear the camera line, every round carries a kid-sized worked solution
  * and a jargon-free prompt, the colony never leaks the total on a wrong
  * pick, the meadow's hop-it-yourself flow scores the FIRST call only, and
@@ -7334,7 +7364,7 @@ export function runSnowAuditChecks() {
 
   // SA2) Worked solutions + plain prompts over 100 sets of every challenge.
   const jargon = /friendl|overflow|decade|sound tool|brightest|twins/i;
-  const gens = { range: saRange, rink: saRink, grove: saGrove, meadow: saMeadow, sled: saSled, village: saVillage, colony: saColony, cave: saCave, yard: saYard };
+  const gens = { range: saRange, rink: saRink, grove: saGrove, meadow: saMeadow, sled: saSled, village: saVillage, colony: saColony, cave: saCave, yard: saYard, lights: saLookout };
   let sa2 = true; let sa2d = "working + plain prompts OK";
   outer: for (const [k, gen] of Object.entries(gens)) {
     for (let n = 0; n < 100; n++) {
@@ -7383,20 +7413,106 @@ export function runSnowAuditChecks() {
   const sa4 = pureOk && storeOk;
   checks.push({ name: "Snow audit: meadow hop-it-yourself (first call scores, nudges don't block)", pass: sa4, detail: sa4 ? "pure + store OK" : `pure:${pureOk} store:${storeOk}` });
 
-  // SA5) Aurora offers four distinct valid tools incl. the easiest; the
+  // SA5) Aurora offers three distinct ways incl. the easiest; the
   //      split archetype's easiest tool is 🧊 Tens and ones; cents parse.
   const toolKeys = SA_TOOLS.map((t) => t.key);
-  let sa5 = LOOKOUT_OPTIONS_PER_ROUND === 4;
+  let sa5 = LOOKOUT_OPTIONS_PER_ROUND === 3;
   for (let n = 0; n < 300 && sa5; n++) {
     for (const r of saLookout()) {
       const o = r.options;
-      if (!o || o.length !== 4 || new Set(o).size !== 4 || !o.includes(r.best) || !o.every((k) => toolKeys.includes(k))) sa5 = false;
+      if (!o || o.length !== 3 || new Set(o).size !== 3 || !o.includes(r.best) || !o.every((k) => toolKeys.includes(k))) sa5 = false;
+      if (!r.choices || r.choices.some((c) => !c.show || /NaN|undefined/.test(c.show + c.steps.join()))) sa5 = false;
       if (r.archetype === "splitAdd" && r.best !== "split") sa5 = false;
     }
   }
   const yr = saYard()[0];
   sa5 = sa5 && saYardChange(yr, `${yr.change}c`).correct && saYardChange(yr, `${yr.change}`).correct;
-  checks.push({ name: "Snow audit: Aurora offers 4 tools incl. the easiest; Lodge Yard takes cents", pass: sa5, detail: sa5 ? "OK" : "options/split/cents wrong" });
+  checks.push({ name: "Snow audit: Aurora offers 3 ways incl. the easiest; Lodge Yard takes cents", pass: sa5, detail: sa5 ? "OK" : "options/split/cents wrong" });
+
+  // SA6) Igloo Village (round 2, 2026-09-29): the student BUILDS the sum —
+  //      Done before everything moved is a nudge, a missed swap costs the
+  //      build points, and the right build opens the typing step.
+  let sa6 = true; let sa6d = "build flow OK";
+  {
+    const vs = saVillageStore.getState();
+    vs.start();
+    vs.beginRounds();
+    // Find a regroup round to drive.
+    let guard = 0;
+    while (!saVillageStore.getState().currentRound().regroup && guard++ < 20) {
+      saVillageStore.setState({ roundIndex: saVillageStore.getState().roundIndex + 1 });
+    }
+    const r = saVillageStore.getState().currentRound();
+    const st = () => saVillageStore.getState();
+    st().finishBuild(); // nothing moved
+    const a1 = st().status === "building" && !st().buildMissed && st().buildNote;
+    for (let i = 0; i < r.ta; i++) st().moveBlock("a", "ten");
+    for (let i = 0; i < r.tb; i++) st().moveBlock("b", "ten");
+    st().moveAll("a", "one");
+    st().moveAll("b", "one");
+    const extra = st().moveBlock("a", "one"); // nothing left to move
+    st().finishBuild(); // 10+ ones not swapped → a miss
+    const a2 = st().status === "building" && st().buildMissed && !extra;
+    const swapped = st().regroup();
+    st().finishBuild();
+    const a3 = swapped && st().status === "typing" && st().score === 0;
+    st().submitTotal(String(r.total));
+    const a4 = st().status === "celebrate" && st().score === 15;
+    sa6 = Boolean(a1 && a2 && a3 && a4);
+    if (!sa6) sa6d = `nudge:${Boolean(a1)} miss:${a2} swap:${a3} total:${a4}`;
+    st().exit();
+  }
+  checks.push({ name: "Snow audit: Igloo Village is built by hand (move, swap, done)", pass: sa6, detail: sa6d });
+
+  // SA7) Lodge Yard (round 2): coins count up along the line; only exactly
+  //      100c gives the change; an overshoot halves the count points.
+  let sa7 = true; let sa7d = "coin flow OK";
+  {
+    const st = () => saYardStore.getState();
+    st().start();
+    st().beginRounds();
+    const r = st().currentRound();
+    st().giveChange(); // nothing counted yet
+    const b1 = st().status === "paying";
+    st().addCoin(50); st().addCoin(50); // past $1 for every price
+    const b2 = st().overshot && st().note && st().note.tone === "bad";
+    st().undoCoin(); st().undoCoin();
+    let left = r.change;
+    for (const c of [50, 20, 10, 5, 1]) while (left >= c) { st().addCoin(c); left -= c; }
+    st().giveChange();
+    const b3 = st().status === "typing" && st().score === YARD_COUNT_OVER_POINTS;
+    st().submitChange(`${r.change}c`);
+    const b4 = st().status === "celebrate" && st().score === YARD_COUNT_OVER_POINTS + YARD_CHANGE_POINTS;
+    sa7 = Boolean(b1 && b2 && b3 && b4);
+    if (!sa7) sa7d = `early:${b1} over:${Boolean(b2)} give:${b3} change:${b4}`;
+    st().exit();
+  }
+  checks.push({ name: "Snow audit: Lodge Yard counts up with coins to exactly 100c", pass: sa7, detail: sa7d });
+
+  // SA8) Grove: a wrong bundle is a shake + retry (no points, same step);
+  //      Aurora: whichever way is picked, typing follows its steps.
+  let sa8 = true; let sa8d = "retry + ways OK";
+  {
+    const g = () => saGroveStore.getState();
+    g().start(); g().beginRounds();
+    const r = g().currentRound();
+    const wrong = r.grabOptions.find((b) => b !== r.grabBundles);
+    g().chooseGrab(wrong);
+    const c1 = g().status === "grabbing" && g().missNote && g().score === 0;
+    g().chooseGrab(r.grabBundles);
+    const c2 = g().status === "adjusting" && g().score === 0;
+    g().exit();
+    const a = () => saLookoutStore.getState();
+    a().start(); a().beginRounds();
+    const lr = a().currentRound();
+    const other = lr.choices.find((c) => c.key !== lr.best);
+    a().choosePick(other.key);
+    const c3 = a().status === "typing" && a().score === 5 && a().pickResult.key === other.key;
+    a().exit();
+    sa8 = Boolean(c1 && c2 && c3);
+    if (!sa8) sa8d = `groveRetry:${Boolean(c1)} groveNext:${c2} aurora:${c3}`;
+  }
+  checks.push({ name: "Snow audit: Grove wrong bundle retries; Aurora any way works", pass: sa8, detail: sa8d });
 
   return checks;
 }

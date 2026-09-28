@@ -144,7 +144,7 @@ function ValueChip() {
   else if ((status === "celebrate" || status === "feedback") && landResult) shown = landResult.finalValue;
   return (
     <Html position={[0, 1.55, 0]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-      <div className="milk-display">{shown}</div>
+      <div className="milk-display snow-chip">{shown}</div>
     </Html>
   );
 }
@@ -215,26 +215,17 @@ function PlanArc({ from, to }) {
   );
 }
 
-function PlanOverlay({ round, queue, showLanding }) {
+// Round 2 (Jeff, 2026-09-29): the plan is NOT previewed on the ice — a live
+// "lands on 38 ✓" gave the answer away. While planning the student sees only
+// the TOTAL of their tiles; the hops are drawn as the penguin actually makes
+// them (a trail that stays for the feedback).
+function HopTrail({ round, queue, count }) {
   const stops = glideStops(round, queue);
-  const last = stops[stops.length - 1];
-  const hit = last === round.target;
   return (
     <group>
-      {queue.map((_, i) => (
+      {queue.slice(0, count).map((_, i) => (
         <PlanArc key={`${i}-${stops[i]}-${stops[i + 1]}`} from={stops[i]} to={stops[i + 1]} />
       ))}
-      {showLanding && queue.length > 0 && (
-        <group position={[rinkGlideX(last), LINE_Y + 0.01, LINE_Z]}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.32, 0.46, 24]} />
-            <meshBasicMaterial color={hit ? START_COLOR : TARGET_COLOR} transparent opacity={0.9} />
-          </mesh>
-          <Html position={[0, 0.02, 1.35]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-            <div className={`fc-count-chip ${hit ? "good" : ""}`}>lands on {last}</div>
-          </Html>
-        </group>
-      )}
     </group>
   );
 }
@@ -244,8 +235,24 @@ export default function RinkGlideChallenge() {
   const shown = useRinkGlide((s) => s.currentRound());
   const landResult = useRinkGlide((s) => s.landResult);
   const queue = useRinkGlide((s) => s.queue);
+  const startedAt = useRinkGlide((s) => s.glideStartedAt);
   const active = status !== "idle" && status !== "intro";
+  const tick = useRef(0);
+  const [, force] = React.useReducer((n) => n + 1, 0);
+  useFrame((state) => {
+    if (status !== "gliding") return;
+    if (state.clock.elapsedTime - tick.current > 0.1) {
+      tick.current = state.clock.elapsedTime;
+      force();
+    }
+  });
   if (!active || !shown) return null;
+  const trailCount =
+    status === "gliding" && startedAt
+      ? Math.min(queue.length, Math.floor((Date.now() - startedAt) / RINK_PUSH_MS) + 1)
+      : status === "celebrate" || status === "feedback"
+        ? queue.length
+        : 0;
 
   const lineLen = RINK_GLIDE_LINE.xMax - RINK_GLIDE_LINE.xMin;
   const missed = status === "feedback" && landResult && !landResult.landed;
@@ -280,8 +287,8 @@ export default function RinkGlideChallenge() {
         )
       )}
 
-      {/* The plan so far, drawn as hops over the line. */}
-      <PlanOverlay round={shown} queue={queue} showLanding={status === "planning"} />
+      {/* The hops, drawn as the penguin makes them. */}
+      <HopTrail round={shown} queue={queue} count={trailCount} />
 
       {/* Start flag + the fish-bucket target. */}
       <Flag value={shown.start} color={START_COLOR} />

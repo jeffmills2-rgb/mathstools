@@ -202,7 +202,7 @@ export default function GroveLightsChallenge() {
 
       {/* The running sentence above the tree. */}
       <Html position={[TREE_LOCAL[0], 5.2, TREE_LOCAL[1]]} center distanceFactor={9.5} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="milk-display">{chip}</div>
+        <div className="milk-display snow-chip">{chip}</div>
       </Html>
 
       {status === "celebrate" && (

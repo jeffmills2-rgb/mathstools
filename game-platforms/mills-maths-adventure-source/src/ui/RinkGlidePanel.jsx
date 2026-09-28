@@ -7,7 +7,6 @@ import {
   RINK_MAX_QUEUE,
   RINK_PUSH_MS,
   RINK_GLIDE_TAIL_MS,
-  glideStops,
 } from "../data/snow/rinkGlideChallenge.js";
 import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
@@ -23,17 +22,6 @@ const CELEBRATE_MS = 2200;
 
 const PUSH_LABEL = { 10: "+10", 1: "+1", "-10": "−10", "-1": "−1" };
 const PUSH_KEYS = { ArrowUp: 10, ArrowRight: 1, ArrowDown: -10, ArrowLeft: -1 };
-
-/** "+10 ×4 · +1 ×5" — the queue as runs, the way you'd say it. */
-function planText(queue) {
-  const runs = [];
-  for (const v of queue) {
-    const last = runs[runs.length - 1];
-    if (last && last.v === v) last.n += 1;
-    else runs.push({ v, n: 1 });
-  }
-  return runs.map((r) => `${PUSH_LABEL[r.v]}${r.n > 1 ? ` ×${r.n}` : ""}`).join("  ·  ");
-}
 
 export default function RinkGlidePanel() {
   const status = useRinkGlide((s) => s.status);
@@ -117,21 +105,17 @@ export default function RinkGlidePanel() {
           icon="⛸️"
           title="The Ice Rink"
           steps={[
-            <>The ice is a giant <b>number line</b> from 0 to 100.</>,
-            <>Press <b>+10</b> for a big glide and <b>+1</b> for a little step. Each push draws a hop on the ice.</>,
-            <>Land exactly on the <b>fish bucket</b>, then press GO!</>,
-            <>Use as <b>few pushes</b> as you can — big glides first.</>,
+            <>Use the number tiles to launch the penguin from the <b>flag</b> to the <b>fish bucket</b>.</>,
+            <>Use as few tiles as you can!</>,
           ]}
-          example="37 → 82:  +10 ×4 → 77,  +1 ×5 → 82  (9 pushes)"
+          example="15 → 38:  +10 +10 +1 +1 +1  =  +23"
           onStart={() => useRinkGlide.getState().beginRounds()}
           onQuit={() => useRinkGlide.getState().exit()}
         />
       )}
 
       {status === "planning" && round && (() => {
-        const stops = glideStops(round, queue);
-        const lands = stops[stops.length - 1];
-        const hit = lands === round.target;
+        const total = queue.reduce((a, v) => a + v, 0);
         return (
           <div className="farm-challenge-card">
             <SnowRoundHead
@@ -142,7 +126,7 @@ export default function RinkGlidePanel() {
               onQuit={() => useRinkGlide.getState().exit()}
             />
             <div className="snow-q">
-              Glide from <span className="fc-value">{round.start}</span> to{" "}
+              Launch from <span className="fc-value">{round.start}</span> to{" "}
               <span className="fc-value">{round.target}</span>
             </div>
             <div className="plank-pieces">
@@ -170,22 +154,17 @@ export default function RinkGlidePanel() {
                 ⌫ Undo
               </button>
             </div>
+            {/* Only the TOTAL so far — never where it will land. */}
             <div className="snow-plan">
-              {queue.length === 0 ? (
-                <span className="snow-sub">
-                  Keys: ↑ +10 · → +1{round.four ? " · ↓ −10 · ← −1" : ""}
-                </span>
-              ) : (
-                <>
-                  {planText(queue)}{"  "}→{" "}
-                  <span className={hit ? "hit" : "miss"}>
-                    {hit ? `lands on ${lands} ✓` : `lands on ${lands}`}
-                  </span>
-                  <span className="snow-round"> · {queue.length} push{queue.length === 1 ? "" : "es"}</span>
-                </>
+              Total so far:{" "}
+              <span className="fc-value">
+                {total > 0 ? `+${total}` : total < 0 ? `−${-total}` : "0"}
+              </span>
+              {queue.length > 0 && (
+                <span className="snow-round"> · {queue.length} tile{queue.length === 1 ? "" : "s"}</span>
               )}
             </div>
-            <div className="farm-challenge-buttons" style={{ marginTop: 8 }}>
+            <div className="farm-challenge-buttons" style={{ marginTop: 10 }}>
               <button
                 className="primary-button"
                 disabled={queue.length === 0}
@@ -194,7 +173,7 @@ export default function RinkGlidePanel() {
                   useRinkGlide.getState().go();
                 }}
               >
-                GO! (Enter)
+                🚀 Launch! (Enter)
               </button>
             </div>
           </div>
@@ -204,7 +183,7 @@ export default function RinkGlidePanel() {
       {status === "gliding" && round && (
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
-            <span>⛸️ Gliding… {queue.length} push{queue.length === 1 ? "" : "es"} queued</span>
+            <span>🚀 Launching… {queue.length} tile{queue.length === 1 ? "" : "s"}</span>
           </div>
         </div>
       )}
@@ -213,7 +192,7 @@ export default function RinkGlidePanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ Landed on {round.target} in {landResult.pushes} push{landResult.pushes === 1 ? "" : "es"} — {landResult.effLabel} · ⭐ {score}
+              ✓ Landed on {round.target} with {landResult.pushes} tile{landResult.pushes === 1 ? "" : "s"} — {landResult.effLabel} · ⭐ {score}
             </span>
           </div>
         </div>

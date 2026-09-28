@@ -2,20 +2,52 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { useVillageSplit } from "../game/villageSplitStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
-import {
-  VILLAGE_ROUNDS_PER_SET,
-} from "../data/snow/villageSplitChallenge.js";
+import { VILLAGE_ROUNDS_PER_SET, villageSite } from "../data/snow/villageSplitChallenge.js";
 import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
- * IGLOO VILLAGE — 2D panel (VG). PREDICT the overflow (Y/N buttons or keys
- * 1–2), JOIN like with like (two quick inputs: the tens wall, then the RAW
- * ones pile — 13, not 3!), then TYPE the finished igloo while the blocks
- * fly and the regroup SNAPS. Wrong total → shake + the split story. Esc
- * quits; leaving the snow world exits.
+ * IGLOO VILLAGE — 2D panel (VG). Round 2 (2026-09-29): no multiple-choice
+ * steps. The student BUILDS the sum — "Move a ten" / "Move a one" from each
+ * igloo (or tap the blocks in the world), "Swap 10 ones for a ten" when the
+ * middle pile reaches ten, then "Done!". Then they type a + b. A missed swap
+ * shakes and says what to do. Esc quits; leaving the snow world exits.
  */
 
 const CELEBRATE_MS = 2200;
+
+/** One source igloo's controls (compact: label over two side-by-side buttons). */
+function IglooControls({ label, side, round, moved }) {
+  const st = useVillageSplit.getState;
+  const tensLeft = round["t" + side] - moved["t" + side];
+  const onesLeft = round["o" + side] - moved["o" + side];
+  return (
+    <div className="snow-village-col">
+      <div className="snow-village-label">{label}</div>
+      <div className="snow-village-btns">
+        <button
+          className="plank-piece-btn"
+          disabled={tensLeft === 0}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            st().moveBlock(side, "ten");
+          }}
+        >
+          ➡ a ten <small>({tensLeft})</small>
+        </button>
+        <button
+          className="plank-piece-btn"
+          disabled={onesLeft === 0}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            st().moveBlock(side, "one");
+          }}
+        >
+          ➡ a one <small>({onesLeft})</small>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function VillageSplitPanel() {
   const status = useVillageSplit((s) => s.status);
@@ -23,16 +55,13 @@ export default function VillageSplitPanel() {
   const score = useVillageSplit((s) => s.score);
   const bestScore = useVillageSplit((s) => s.bestScore);
   const round = useVillageSplit((s) => s.currentRound());
-  const predictResult = useVillageSplit((s) => s.predictResult);
-  const joinResult = useVillageSplit((s) => s.joinResult);
+  const moved = useVillageSplit((s) => s.moved);
+  const regrouped = useVillageSplit((s) => s.regrouped);
+  const buildNote = useVillageSplit((s) => s.buildNote);
   const typedCorrect = useVillageSplit((s) => s.typedCorrect);
   const regionId = useSession((s) => s.currentRegionId);
-  const [tensTyped, setTensTyped] = useState("");
-  const [onesTyped, setOnesTyped] = useState("");
   const [typed, setTyped] = useState("");
   const [inputWobble, setInputWobble] = useState(false);
-  const tensRef = useRef(null);
-  const onesRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -42,11 +71,6 @@ export default function VillageSplitPanel() {
   }, [status, regionId]);
 
   useEffect(() => {
-    if (status === "joining") {
-      setTensTyped("");
-      setOnesTyped("");
-      setTimeout(() => tensRef.current?.focus(), 50);
-    }
     if (status === "typing") {
       setTyped("");
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -63,13 +87,9 @@ export default function VillageSplitPanel() {
       }
       const typingInField = e.target && /input|textarea/i.test(e.target.tagName || "");
       if (typingInField) return;
-      if (st.status === "predicting") {
-        if (e.key === "1") st.choosePredict(true);
-        if (e.key === "2") st.choosePredict(false);
-        return;
-      }
       if (e.key !== "Enter") return;
       if (st.status === "intro") st.beginRounds();
+      else if (st.status === "building") st.finishBuild();
       else if (st.status === "feedback" || st.status === "celebrate") st.next();
     }
     window.addEventListener("keydown", onKey);
@@ -83,6 +103,10 @@ export default function VillageSplitPanel() {
   }, [status, roundIndex]);
 
   useEffect(() => {
+    if (buildNote?.tone === "bad") playerState.camShake = { start: Date.now(), dur: 400 };
+  }, [buildNote?.at, buildNote?.tone]);
+
+  useEffect(() => {
     if (status !== "celebrate") return undefined;
     const t = setTimeout(() => useVillageSplit.getState().next(), CELEBRATE_MS);
     return () => clearTimeout(t);
@@ -90,14 +114,7 @@ export default function VillageSplitPanel() {
 
   if (status === "idle") return null;
 
-  function submitJoin() {
-    const result = useVillageSplit.getState().submitJoin(tensTyped, onesTyped);
-    if (result === "invalid") {
-      setInputWobble(true);
-      setTimeout(() => setInputWobble(false), 400);
-      (tensTyped.trim() === "" ? tensRef : onesRef).current?.focus();
-    }
-  }
+  const site = round ? villageSite(round, moved, regrouped) : { tens: 0, ones: 0 };
 
   function submitTyped() {
     const result = useVillageSplit.getState().submitTotal(typed);
@@ -115,17 +132,16 @@ export default function VillageSplitPanel() {
           icon="🧊"
           title="Igloo Village"
           steps={[
-            <>Igloos are built from <b>ten-rods</b> (ten ice cubes stuck together) and single <b>ones</b>.</>,
-            <>To join two igloos, put <b>tens with tens</b> and <b>ones with ones</b>.</>,
-            <>If the ones make 10 or more, ten of them snap into a <b>new ten-rod</b>!</>,
+            <>Move the <b>tens</b> and <b>ones</b> from both igloos into the middle igloo (tap them, or use the buttons).</>,
+            <>10 ones or more? <b>Swap 10 ones for a ten!</b> Then say how many.</>,
           ]}
-          example="38 + 25  →  30 + 20 = 50,  8 + 5 = 13  →  50 + 13 = 63"
+          example="38 + 25 → 5 tens + 13 ones → 6 tens + 3 ones = 63"
           onStart={() => useVillageSplit.getState().beginRounds()}
           onQuit={() => useVillageSplit.getState().exit()}
         />
       )}
 
-      {status === "predicting" && round && (
+      {status === "building" && round && (
         <div className="farm-challenge-card">
           <SnowRoundHead
             icon="🧊"
@@ -135,88 +151,54 @@ export default function VillageSplitPanel() {
             onQuit={() => useVillageSplit.getState().exit()}
           />
           <div className="snow-q">
-            The ones are <span className="fc-value">{round.oa}</span> and <span className="fc-value">{round.ob}</span>. Will
-            they make a new ten?
+            Build <span className="fc-value">{round.a}</span> + <span className="fc-value">{round.b}</span> in the middle igloo
           </div>
-          <div className="plank-pieces">
-            <button
-              className="plank-piece-btn"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useVillageSplit.getState().choosePredict(true);
-              }}
-            >
-              Yes — 10 or more
-            </button>
-            <button
-              className="plank-piece-btn"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                useVillageSplit.getState().choosePredict(false);
-              }}
-            >
-              No — less than 10
-            </button>
+          <div className="snow-village-cols">
+            <IglooControls label={`Igloo ${round.a}`} side="a" round={round} moved={moved} />
+            <div className="snow-village-col snow-village-mid">
+              <div className="snow-village-label">
+                Middle: <span className="snow-village-count">{site.tens} ten{site.tens === 1 ? "" : "s"} · {site.ones} one{site.ones === 1 ? "" : "s"}</span>
+              </div>
+              <div className="snow-village-btns">
+                <button
+                  className="plank-piece-btn"
+                  disabled={regrouped || site.ones < 10}
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    useVillageSplit.getState().regroup();
+                  }}
+                >
+                  🔄 10 ones → 1 ten
+                </button>
+                <button
+                  className="primary-button"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    useVillageSplit.getState().finishBuild();
+                  }}
+                >
+                  ✅ Done!
+                </button>
+              </div>
+            </div>
+            <IglooControls label={`Igloo ${round.b}`} side="b" round={round} moved={moved} />
           </div>
+          {buildNote && (
+            <div
+              key={buildNote.at}
+              className={`farm-challenge-verdict ${buildNote.tone === "bad" ? "bad snow-shake" : "warm"}`}
+            >
+              {buildNote.text}
+            </div>
+          )}
         </div>
       )}
 
-      {status === "joining" && round && predictResult && (
+      {status === "typing" && round && (
         <div className="farm-challenge-card">
-          <div className={`farm-challenge-verdict ${predictResult.correct ? "good" : "warm"}`}>
-            {predictResult.label}
-          </div>
-          <div className="snow-q">Join like with like:</div>
-          <div className={`snow-eq-rows${inputWobble ? " wobble" : ""}`}>
-            <div className="snow-eq-row">
-              <span className="snow-eq-label">Tens</span>
-              {round.ta * 10} + {round.tb * 10} =
-              <input
-                ref={tensRef}
-                className="text-input weigh-input"
-                type="text"
-                inputMode="numeric"
-                placeholder="?"
-                value={tensTyped}
-                maxLength={3}
-                onChange={(e) => setTensTyped(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && onesRef.current?.focus()}
-              />
-            </div>
-            <div className="snow-eq-row">
-              <span className="snow-eq-label">Ones</span>
-              {round.oa} + {round.ob} =
-              <input
-                ref={onesRef}
-                className="text-input weigh-input"
-                type="text"
-                inputMode="numeric"
-                placeholder="?"
-                value={onesTyped}
-                maxLength={2}
-                onChange={(e) => setOnesTyped(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitJoin()}
-              />
-            </div>
-          </div>
-          <div className="farm-challenge-buttons">
-            <button className="primary-button" onClick={submitJoin}>
-              Join them!
-            </button>
-          </div>
-        </div>
-      )}
-
-      {status === "typing" && round && joinResult && (
-        <div className="farm-challenge-card">
-          <div className={`farm-challenge-verdict ${joinResult.tensCorrect && joinResult.onesCorrect ? "good" : "warm"}`}>
-            {joinResult.tensCorrect ? `Tens ${round.tensSum} ✓` : `The tens make ${round.tensSum}.`}{" "}
-            {joinResult.onesCorrect ? `Ones ${round.onesSum} ✓` : `The ones make ${round.onesSum} (all of them).`}
-          </div>
+          {buildNote && <div className={`farm-challenge-verdict ${buildNote.tone}`}>{buildNote.text}</div>}
           <div className="snow-q">
-            {round.regroup
-              ? <>Ten ones snap into a new ten-rod: {round.tensSum} + 10 + {round.onesSum - 10} = ?</>
-              : <>{round.tensSum} + {round.onesSum} = ?</>}
+            {round.a} + {round.b} = ?
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
@@ -230,7 +212,6 @@ export default function VillageSplitPanel() {
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submitTyped()}
             />
-            <span className="weigh-unit">ice cubes</span>
             <button className="primary-button" onClick={submitTyped}>
               Check
             </button>
@@ -242,7 +223,7 @@ export default function VillageSplitPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.a} + {round.b} = {round.tensSum} + {round.onesSum} = {round.total}! · ⭐ {score}
+              ✓ {round.a} + {round.b} = {round.total}! · ⭐ {score}
             </span>
           </div>
         </div>

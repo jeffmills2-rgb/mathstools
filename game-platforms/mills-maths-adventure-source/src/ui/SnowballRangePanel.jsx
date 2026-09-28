@@ -100,10 +100,8 @@ export default function SnowballRangePanel() {
           icon="❄️"
           title="The Snowball Range"
           steps={[
-            <>The crate holds <b>10</b> snowballs. Some are already packed.</>,
-            <>Drag the <b style={{ color: "#e04747" }}>red pole</b> through your snowballs. The ones on its <b>left</b> fly into the crate.</>,
-            <>Fill the crate to <b>exactly 10</b>, then press Throw.</>,
-            <>Count how many snowballs there are <b>altogether</b>.</>,
+            <>Move the <b style={{ color: "#e04747" }}>red pole</b> to fill the crate to <b>exactly 10</b>, then Throw.</>,
+            <>Then say how many snowballs there are altogether.</>,
           ]}
           example="8 + 5  →  8 + 2 = 10  →  10 + 3 = 13"
           onStart={() => useSnowballRange.getState().beginRounds()}

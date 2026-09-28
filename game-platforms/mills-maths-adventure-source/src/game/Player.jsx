@@ -60,11 +60,14 @@ import {
 //   spot  where the player parks · look  the camera's look-at point ·
 //   fit   half-width the frame must fit · lift  camera-height factor
 const LATE_SNOW_VIEW = {
-  village: { spot: VILLAGE_VIEW_SPOT, look: [VILLAGE_BUILD_SITE[0], 1.5, VILLAGE_BUILD_SITE[1] + 1.2], fit: 9.0, base: 2.6 },
+  // Round 2 (2026-09-29): tighter + centred between the stands and the build
+  // site, so every rod and cube is big enough to tap.
+  village: { spot: VILLAGE_VIEW_SPOT, look: [VILLAGE_BUILD_SITE[0], 0.9, VILLAGE_BUILD_SITE[1] + 2.3], fit: 6.8, base: 2.6, minDist: 8.5 },
   colony: { spot: COLONY_VIEW_SPOT, look: [COLONY_AREA.x, 1.1, COLONY_AREA.z - 1.4], fit: 9.5, base: 2.4 },
-  cave: { spot: CAVE_VIEW_SPOT, look: [CAVE_AREA.x, 1.3, CAVE_AREA.z - 4.0], fit: 8.5, base: 2.4 },
-  // Centred on the bead board (the stall sits to its left) — audit 2026-09-28.
-  yard: { spot: YARD_VIEW_SPOT, look: [YARD_AREA.x + 2.2, 2.0, YARD_AREA.z - 2.4], fit: 7.0, base: 2.8 },
+  cave: { spot: CAVE_VIEW_SPOT, look: [CAVE_AREA.x, 1.1, CAVE_AREA.z - 4.0], fit: 6.6, base: 2.2, minDist: 8.5 },
+  // Centred on the counting-up board (round 2, 2026-09-29) — close enough
+  // to read every cent on the line; the stall peeks in at the left.
+  yard: { spot: YARD_VIEW_SPOT, look: [YARD_AREA.x + 2.6, 1.55, YARD_AREA.z - 2.5], fit: 4.3, base: 2.2, minDist: 6.5 },
   lights: { spot: LOOKOUT_VIEW_SPOT, look: [LOOKOUT_AREA.x, 4.6, LOOKOUT_AREA.z - 6.0], fit: 10.5, base: 3.4 },
 };
 
@@ -926,7 +929,7 @@ export default function Player() {
       // high so the aurora's written sum owns the screen). ---
       const view = LATE_SNOW_VIEW[lateSnowMode];
       const halfW = Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
-      const dist = Math.min(28, Math.max(11, view.fit / halfW));
+      const dist = Math.min(28, Math.max(view.minDist ?? 11, view.fit / halfW));
       if (!lockedPrev.current) camLook.current.set(p.x, p.y + 1, p.z);
       camTarget.current.set(view.look[0], view.base + dist * 0.3, view.look[2] + 3.0 + dist);
       camera.position.lerp(camTarget.current, 1 - Math.pow(0.01, delta));

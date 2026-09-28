@@ -1,54 +1,72 @@
-import React, { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import React, { useMemo } from "react";
+import * as THREE from "three";
 import { Html } from "@react-three/drei";
 
 import { YARD_AREA, YARD_STALL, YARD_BOARD } from "../data/snow/snowLayout.js";
 import { useLodgeYard } from "./lodgeYardStore.js";
-import { YARD_BEAD_MS } from "../data/snow/lodgeYardChallenge.js";
 import { ConfettiBurst } from "./OrderPartsChallenge.jsx";
 
 /**
  * THE LODGE YARD — 3D layer (LY). The lodge's hot-chocolate STALL (striped
- * awning, steaming mug) with the HUNDRED-BEAD COCOA BOARD beside it: ten
- * rows of ten beads on an upright frame. The price fills cocoa-brown beads
- * from the top; the change counts UP in gold — the ones hop finishes its
- * part-row bead by bead, then the tens hop floods the clean rows — so
- * "friends of 10 make friends of 100" is literally visible as rows
- * completing. Correct change → the mug steams double + confetti.
+ * awning, steaming mug) and, beside it, a lit COUNTING-UP BOARD: a number
+ * line from the price's tens number up to 100c ($1). Round 2 (2026-09-29):
+ * the hundred-bead board "looked like a ratio", so it is gone — every coin
+ * the student gives is a JUMP along this line from the price (65c → 70c →
+ * 100c), labelled with the coin. The till pin shows where they are; a jump
+ * past $1 glows red. Correct change → confetti.
  */
 
 const WOOD = "#6e5a44";
 const WOOD_DARK = "#57462f";
 const AWNING_A = "#d6493f";
 const AWNING_B = "#f3ead6";
-const BEAD_PAID = "#7a5638"; // cocoa
-const BEAD_CHANGE = "#ffd166"; // gold
-// Empty beads are pale on a LIT cream board (audit 2026-09-28) — cocoa-brown
-// and navy beads on a brown frame were three dark colours on top of each
-// other in the twilight.
-const BEAD_EMPTY = "#dfe7f2";
+const COCOA = "#7a5638";
 const BOARD_PANEL = "#fdf3dc";
+const LINE = "#2b2f45";
+const JUMP = "#e08a00";
+const OVER = "#e5484d";
+const TILL = "#ffd166";
 
 const STALL = [YARD_STALL[0] - YARD_AREA.x, YARD_STALL[1] - YARD_AREA.z];
 const BOARD = [YARD_BOARD[0] - YARD_AREA.x, YARD_BOARD[1] - YARD_AREA.z];
 
-const BEAD_R = 0.135;
-const BEAD_GAP = 0.31;
+// Board-local number line.
+const LINE_W = 5.2;
+const LINE_Y = 1.35;
+const LINE_Z = 0.06;
 
-/** Board-local position of bead i (0–99): row 0 on TOP, reading order. */
-function beadPos(i) {
-  const row = Math.floor(i / 10);
-  const col = i % 10;
-  return [(col - 4.5) * BEAD_GAP, 3.3 - row * BEAD_GAP, 0.1];
+/** Board-local x for a value on the line (past 100c runs a little further). */
+function xFor(round, v) {
+  const span = 100 - round.lineMin;
+  const clamped = Math.min(v, 100 + span * 0.08);
+  return -LINE_W / 2 + ((clamped - round.lineMin) / span) * LINE_W;
 }
 
-/** How many change beads are lit right now. */
-function changeBeads(round, status, onesAt, tensAt) {
-  if (status === "ones" || !onesAt) return 0;
-  const onesLit = Math.min(round.onesHop, Math.floor((Date.now() - onesAt) / YARD_BEAD_MS));
-  if (status === "tens" || !tensAt) return onesLit;
-  const tensLit = Math.min(round.tensHop, Math.floor((Date.now() - tensAt) / (YARD_BEAD_MS / 2)));
-  return Math.min(round.change, round.onesHop + tensLit);
+/** One coin's jump: an arc from `from` to `to` with the coin on top. */
+function CoinJump({ round, from, to, cents, over }) {
+  const x0 = xFor(round, from);
+  const x1 = xFor(round, to);
+  const span = Math.abs(x1 - x0);
+  const h = 0.25 + Math.min(1.1, span * 0.45);
+  const geom = useMemo(() => {
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(x0, LINE_Y + 0.04, LINE_Z + 0.03),
+      new THREE.Vector3((x0 + x1) / 2, LINE_Y + h * 2, LINE_Z + 0.03),
+      new THREE.Vector3(x1, LINE_Y + 0.04, LINE_Z + 0.03)
+    );
+    return new THREE.TubeGeometry(curve, 20, 0.03, 6, false);
+  }, [x0, x1, h]);
+  const color = over ? OVER : JUMP;
+  return (
+    <group>
+      <mesh geometry={geom}>
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
+      </mesh>
+      <Html position={[(x0 + x1) / 2, LINE_Y + h + 0.22, LINE_Z]} center distanceFactor={8} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+        <div className="yard-jump-chip" style={{ borderColor: color }}>+{cents}c</div>
+      </Html>
+    </group>
+  );
 }
 
 function Stall({ shown }) {
@@ -78,7 +96,7 @@ function Stall({ shown }) {
       </mesh>
       <mesh position={[0.6, 1.42, 0.1]}>
         <cylinderGeometry args={[0.15, 0.15, 0.05, 12]} />
-        <meshStandardMaterial color={BEAD_PAID} />
+        <meshStandardMaterial color={COCOA} />
       </mesh>
       <Html position={[0, 3.0, 0]} center distanceFactor={11} className="ix-badge-anchor" zIndexRange={[24, 0]}>
         <div className="fc-count-chip">☕ Hot chocolate {shown ? `${shown.price}c` : ""}</div>
@@ -90,91 +108,93 @@ function Stall({ shown }) {
 export default function LodgeYardChallenge() {
   const status = useLodgeYard((s) => s.status);
   const shown = useLodgeYard((s) => s.currentRound());
-  const onesAt = useLodgeYard((s) => s.onesFilledAt);
-  const tensAt = useLodgeYard((s) => s.tensFilledAt);
+  const coins = useLodgeYard((s) => s.coins);
   const active = status !== "idle" && status !== "intro";
-  const tick = useRef(0);
-  const [, force] = React.useReducer((n) => n + 1, 0);
-  useFrame((state) => {
-    if (status !== "tens" && status !== "typing") return; // beads filling
-    if (state.clock.elapsedTime - tick.current > 0.08) {
-      tick.current = state.clock.elapsedTime;
-      force();
-    }
-  });
 
   if (!active || !shown) return null;
 
-  const lit =
-    status === "celebrate" || status === "feedback"
-      ? shown.change
-      : changeBeads(shown, status, onesAt, tensAt);
-
-  const chip =
-    status === "ones"
-      ? `${shown.price}c + ? → the next ten`
-      : status === "tens"
-        ? `${shown.afterOnes}c + ? → 100c`
-        : status === "typing"
-          ? shown.onesHop === 0
-            ? `${shown.price}c + ${shown.tensHop}c = 100c — change?`
-            : shown.tensHop === 0
-              ? `${shown.price}c + ${shown.onesHop}c = 100c — change?`
-              : `${shown.onesHop}c + ${shown.tensHop}c = change?`
-          : `100c − ${shown.price}c = ${shown.change}c`;
+  // Cumulative stops along the line.
+  const stops = [shown.price];
+  for (const c of coins) stops.push(stops[stops.length - 1] + c);
+  const till = stops[stops.length - 1];
+  const tens = [];
+  for (let v = shown.lineMin; v <= 100; v += 10) tens.push(v);
+  const units = [];
+  for (let v = shown.lineMin; v <= 100; v++) if (v % 10 !== 0) units.push(v);
 
   return (
     <group position={[YARD_AREA.x, 0, YARD_AREA.z]}>
       <Stall shown={shown} />
 
-      {/* The hundred-bead board on its stand. */}
+      {/* The counting-up board on its stand. */}
       <group position={[BOARD[0], 0, BOARD[1]]} rotation={[0, -0.25, 0]}>
-        {[-1.6, 1.6].map((dx) => (
-          <mesh key={dx} castShadow position={[dx, 1.8, -0.06]}>
-            <boxGeometry args={[0.12, 3.6, 0.12]} />
+        {[-3.0, 3.0].map((dx) => (
+          <mesh key={dx} castShadow position={[dx, 1.2, -0.06]}>
+            <boxGeometry args={[0.12, 2.4, 0.12]} />
             <meshStandardMaterial color={WOOD_DARK} />
           </mesh>
         ))}
-        <mesh castShadow position={[0, 1.85, -0.09]}>
-          <boxGeometry args={[3.6, 3.6, 0.08]} />
+        <mesh castShadow position={[0, 1.75, -0.09]}>
+          <boxGeometry args={[6.2, 2.5, 0.08]} />
           <meshStandardMaterial color={WOOD} />
         </mesh>
-        <mesh position={[0, 1.85, -0.04]}>
-          <boxGeometry args={[3.3, 3.3, 0.04]} />
+        <mesh position={[0, 1.75, -0.04]}>
+          <boxGeometry args={[5.95, 2.3, 0.04]} />
           <meshStandardMaterial color={BOARD_PANEL} emissive={BOARD_PANEL} emissiveIntensity={0.4} />
         </mesh>
-        {/* Each row is ten cents: 10c, 20c … 100c down the right edge. */}
-        {Array.from({ length: 10 }, (_, r) => (
-          <Html
-            key={`rl${r}`}
-            position={[5.3 * BEAD_GAP, 3.3 - r * BEAD_GAP, 0.1]}
-            center
-            distanceFactor={7}
-            className="ix-badge-anchor"
-            zIndexRange={[24, 0]}
-          >
-            <div style={{ fontWeight: 800, fontSize: 13, color: "#fdf3dc", textShadow: "0 1px 2px #000" }}>
-              {(r + 1) * 10}c
-            </div>
-          </Html>
-        ))}
-        {Array.from({ length: 100 }, (_, i) => {
-          const paid = i < shown.price;
-          const change = !paid && i < shown.price + lit;
-          return (
-            <mesh key={i} position={beadPos(i)}>
-              <sphereGeometry args={[BEAD_R, 8, 8]} />
-              <meshStandardMaterial
-                color={paid ? BEAD_PAID : change ? BEAD_CHANGE : BEAD_EMPTY}
-                emissive={paid ? BEAD_PAID : change ? BEAD_CHANGE : BEAD_EMPTY}
-                emissiveIntensity={change ? 0.9 : paid ? 0.2 : 0.1}
-              />
+
+        {/* The line, its tens (labelled) and its ones. */}
+        <mesh position={[0, LINE_Y, LINE_Z]}>
+          <boxGeometry args={[LINE_W + 0.1, 0.045, 0.02]} />
+          <meshStandardMaterial color={LINE} />
+        </mesh>
+        {tens.map((v) => (
+          <group key={`t${v}`} position={[xFor(shown, v), LINE_Y, LINE_Z]}>
+            <mesh>
+              <boxGeometry args={[0.035, 0.26, 0.02]} />
+              <meshStandardMaterial color={LINE} />
             </mesh>
-          );
-        })}
-        <Html position={[0, 4.1, 0]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-          <div className="milk-display">{chip}</div>
-        </Html>
+            <Html position={[0, -0.34, 0]} center distanceFactor={8} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+              <div className="yard-tick-label">{v === 100 ? "100c ($1)" : `${v}c`}</div>
+            </Html>
+          </group>
+        ))}
+        {units.map((v) => (
+          <mesh key={`u${v}`} position={[xFor(shown, v), LINE_Y, LINE_Z]}>
+            <boxGeometry args={[0.018, v % 5 === 0 ? 0.16 : 0.1, 0.02]} />
+            <meshStandardMaterial color="#7b8198" />
+          </mesh>
+        ))}
+
+        {/* The price (where the counting starts) — a cocoa pin. */}
+        <group position={[xFor(shown, shown.price), LINE_Y, LINE_Z + 0.04]}>
+          <mesh>
+            <sphereGeometry args={[0.1, 12, 10]} />
+            <meshStandardMaterial color={COCOA} emissive={COCOA} emissiveIntensity={0.3} />
+          </mesh>
+          {shown.price % 10 !== 0 && (
+            <Html position={[0, -0.72, 0]} center distanceFactor={8} className="ix-badge-anchor" zIndexRange={[24, 0]}>
+              <div className="yard-tick-label yard-price">☕ {shown.price}c</div>
+            </Html>
+          )}
+        </group>
+
+        {/* Each coin given = one jump. */}
+        {coins.map((c, i) => (
+          <CoinJump key={`${i}-${stops[i]}`} round={shown} from={stops[i]} to={stops[i + 1]} cents={c} over={stops[i + 1] > 100} />
+        ))}
+
+        {/* The till: where the counting has got to. */}
+        {coins.length > 0 && (
+          <mesh position={[xFor(shown, till), LINE_Y, LINE_Z + 0.06]}>
+            <sphereGeometry args={[0.12, 14, 10]} />
+            <meshStandardMaterial
+              color={till > 100 ? OVER : TILL}
+              emissive={till > 100 ? OVER : TILL}
+              emissiveIntensity={0.9}
+            />
+          </mesh>
+        )}
       </group>
 
       {status === "celebrate" && <ConfettiBurst origin={[BOARD[0], 2.6, BOARD[1] + 0.6]} />}

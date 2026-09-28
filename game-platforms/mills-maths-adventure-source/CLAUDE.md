@@ -95,6 +95,56 @@
 > depth (still only 2 sample skills) · more Stage 4 topics (Area extension)
 > · a DevPanel gallery to eyeball every new diagram/chart at once.
 
+## DONE (2026-09-29) — SNOWBALL SUMS ROUND 2 (Jeff's feedback on the audit)
+Nine points from Jeff after playing the audit build. **491 → 494 checks (new
+SA6–SA8 drive the real stores), all passing; vite build clean; deployed.**
+- **Bigger cards everywhere** — a round-2 CSS block at the end of index.css
+  (`.snow-dock` card up to 980px, question 1.85rem, buttons/inputs larger,
+  world chips 30px). Every intro is now TWO short steps + one example.
+- **Rink** — no route preview (the arcs used to give the answer away): the
+  card shows only "Total so far: +22 · 4 tiles" and a 🚀 Launch button; the
+  hop arcs draw as the penguin actually hops.
+- **Grove** — a wrong bundle/fix is a shake + "Try again!" (no points, same
+  step: `missedThisPart`/`missNote`/`missAt` in the store).
+- **Sled** — the sleds STAY where the student leaves them; a non-tens spot
+  says "There's an easier position…" and misses the slide points (gold needs
+  the tens number).
+- **Meadow** — the typing step asks the ORIGINAL sum ("7 + 11 = ?") with the
+  double as a hint underneath.
+- **Cave** — the student's chosen way now actually plays (store `chosen`);
+  if it wasn't the quick way, the quick way plays after it
+  (`cavePhases`/`caveRunFor`), with "⬆ up: 4 steps" / "⬇ back: 47 steps"
+  counters, so the difference is SEEN. The window spans both routes; the
+  answer is never labelled on the wall before a run lands on it; the scenery
+  mound in the cave mouth hides during the challenge.
+- **Igloo Village — REBUILT as a manipulative.** No multiple choice: the
+  student moves tens and ones from both igloos into the middle one (tap the
+  3D rods/cubes, or "➡ a ten"/"➡ a one"), swaps 10 ones for a ten when the
+  pile reaches ten ("🔄 10 ones → 1 ten", or tap the pile), then ✅ Done!
+  (build 10 — lost if Done was pressed with 10+ ones unswapped), then types
+  a + b (15). Logic: `villageSite`, `gradeVillageBuild`,
+  `VILLAGE_BUILD_POINTS`/`VILLAGE_TOTAL_POINTS`. Tighter camera
+  (`LATE_SNOW_VIEW.village`, new per-view `minDist`).
+- **Lodge Yard — REBUILT.** The hundred-bead board "looked like a ratio". Now
+  a COUNTING-UP board: a number line from the price's tens number to 100c;
+  tap coins (1c 5c 10c 20c 50c) and each is a labelled jump ("+5c"); the
+  card shows "Total so far: 65c + 5c + 10c = 80c"; past $1 glows red (take a
+  coin back). "💰 Give the change" works only on exactly 100c (10 pts, 5 if
+  it went past $1 on the way), then "5c + 30c — how much change is that?"
+  (15). Logic: `YARD_COINS`, `gradeYardCount`, `yardTillAfter`,
+  `fewestCoinsFor`, `round.lineMin`.
+- **Aurora — REBUILT.** Strategy NAMES were unreadable for this age. A round
+  now offers THREE big tiles, each THIS sum rewritten (47 + 29 →
+  "47 + 30 − 1" / "40 + 20 + 7 + 9" / "47 + 20 + 9") — all correct — and asks
+  "Which way is easiest?" (easiest 10, the others 5). The student then does
+  the sum THEIR way, one step per line, typing the last. Each archetype
+  builds `ways` + `alts`; `round.choices` = [{key,label,show,steps}]. No tile
+  or last step may contain the answer (regenerated if it would). New tool
+  "🐾 Count in ones" (9 tools). makeTen avoids 9s and doubles so "easiest"
+  is never a coin flip.
+- **TODO:** live iPad look at the bigger cards (4:3), Farsi/Arabic strings
+  for all the new wording, a tap-target check on the village rods on touch.
+
 ## DONE (2026-09-28) — SNOWBALL SUMS YEAR-7 AUDIT (all ten activities)
 Jeff asked for an audit of the ten snow activities with the students' age in
 mind ("some aren't intuitive for this age"). Every activity was played in a

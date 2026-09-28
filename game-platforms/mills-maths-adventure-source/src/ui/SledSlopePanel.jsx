@@ -113,10 +113,8 @@ export default function SledSlopePanel() {
           icon="🛷"
           title="Sledding Slope"
           steps={[
-            <>Two sleds sit on a number line, tied by a rope. The rope is the <b>gap</b> between the numbers.</>,
-            <>Slide <b>both</b> sleds together. The rope can't stretch, so the gap never changes.</>,
-            <>Stop when the smaller number is a <b>tens number</b> (20, 30, 40 …).</>,
-            <>Now the gap is easy to find!</>,
+            <>Slide both sleds until the smaller number is a <b>tens number</b>.</>,
+            <>The rope never stretches, so the gap stays the same. Now find it!</>,
           ]}
           example="62 − 29  =  63 − 30  =  33"
           onStart={() => useSledSlope.getState().beginRounds()}
@@ -179,7 +177,7 @@ export default function SledSlopePanel() {
         <div className="farm-challenge-card">
           <div className={`farm-challenge-verdict ${slideResult.correct ? "good" : "warm"}`}>
             {slideResult.label}
-            {!slideResult.correct && ` Try ${round.a + round.shift} − ${round.decade}.`}
+
           </div>
           <div className="snow-q">
             {round.a + slid} − {round.b + slid} = ? What is the gap?

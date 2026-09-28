@@ -82,10 +82,11 @@ export function generateCaveRound(roundIndex, rand = Math.random) {
   const b = kind === "up" ? a - small : small;
   const answer = a - b;
   const steps = kind === "up" ? a - b : b; // glows along the wall
-  // The crystal window the wall shows: a little beyond both ends of the lit run.
-  const runLow = kind === "up" ? b : a - b;
-  const windowMin = Math.max(0, runLow - 2);
-  const windowMax = a + 2;
+  // The crystal wall shows BOTH routes (round 2, Jeff 2026-09-29): from the
+  // lower of b and a − b up to a. Seeing 32 and 37 sit side by side — while
+  // counting back 32 would walk nearly the whole wall — IS the choice.
+  const windowMin = Math.max(0, Math.min(b, a - b) - 1);
+  const windowMax = a + 1;
 
   return {
     roundIndex,
@@ -152,3 +153,42 @@ export function checkCaveAnswer(round, text) {
   if (!/^\d+$/.test(cleaned)) return { valid: false, correct: false };
   return { valid: true, correct: Number(cleaned) === round.answer };
 }
+
+// ---- Both ways, lit (round 2, 2026-09-29) ----------------------------------
+// Jeff: "when you select the less efficient one, it just does the other one
+// anyway." Now the student's OWN choice lights first — every step of it — and
+// if it was the long way, the quick way lights straight after in a second
+// colour, so the two step counts sit side by side.
+
+/** One counting run: which crystals light, from where, landing where. Pure. */
+export function caveRunFor(round, dir) {
+  const up = dir === "up";
+  const steps = up ? round.a - round.b : round.b;
+  const values = [];
+  for (let g = 1; g <= steps; g++) values.push(up ? round.b + g : round.a - g);
+  return {
+    dir,
+    from: up ? round.b : round.a,
+    steps,
+    values,
+    landing: up ? round.a : round.a - round.b,
+    // Long runs play faster so no run takes more than ~3.5 s.
+    msPerStep: Math.max(70, Math.min(CAVE_GLOW_MS, Math.floor(3500 / Math.max(1, steps)))),
+  };
+}
+
+/** The runs to play for a choice: the choice, then (if it was slower) the quick way. Pure. */
+export function cavePhases(round, chosen) {
+  const first = caveRunFor(round, chosen);
+  if (chosen === round.kind) return [first];
+  return [first, caveRunFor(round, round.kind)];
+}
+
+export const CAVE_PHASE_GAP_MS = 900;
+
+/** Total time the lighting takes for a choice (ms). Pure. */
+export function caveLightingMs(round, chosen) {
+  const phases = cavePhases(round, chosen);
+  return phases.reduce((t, p) => t + p.steps * p.msPerStep, 0) + (phases.length - 1) * CAVE_PHASE_GAP_MS + CAVE_GLOW_TAIL_MS;
+}
+

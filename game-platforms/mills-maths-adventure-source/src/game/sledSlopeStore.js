@@ -120,8 +120,11 @@ export const useSledSlope = create((set, get) => ({
     set((s) => ({
       status: "typing",
       slideResult: slide,
-      // A wrong resting spot reveals the friendly position for the typing.
-      slid: slide.correct ? slid : round.shift,
+      // Round 2 (Jeff, 2026-09-29): the sleds STAY where the student left
+      // them — no jumping to the friendly spot. They still find the gap from
+      // there (it's the same gap!), but only a tens-number spot earns the
+      // slide points, so gold needs the easy position.
+      slid,
       score: s.score + slide.points,
     }));
   },

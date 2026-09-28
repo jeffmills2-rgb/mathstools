@@ -33,7 +33,7 @@ const RINK_ROUNDS_PER_STAGE = RINK_ROUNDS_PER_SET / RINK_STAGES;
 
 export const RINK_LAND_POINTS = 15;
 export const RINK_EFF_BANDS = [
-  { over: 0, points: 10, label: "🎯 Champion glide — fewest pushes!" },
+  { over: 0, points: 10, label: "🎯 Champion launch — fewest tiles!" },
   { over: 2, points: 6, label: "Nearly the fewest!" },
   { over: Infinity, points: 3, label: "Landed! Big +10 jumps would be quicker" },
 ];
@@ -134,7 +134,7 @@ export function routeLines(round) {
     const overshot = Math.sign(remainder) === -round.dir;
     lines.push(`${s1} ×${Math.abs(remainder)}  →  ${round.target}${overshot ? "  (one ten too far, so step back)" : ""}`);
   }
-  lines.push(`${round.minPushes} push${round.minPushes === 1 ? "" : "es"} in all`);
+  lines.push(`${round.minPushes} tile${round.minPushes === 1 ? "" : "s"} in all`);
   return lines;
 }
 

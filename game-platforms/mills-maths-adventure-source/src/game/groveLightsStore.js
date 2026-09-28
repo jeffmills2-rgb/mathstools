@@ -49,6 +49,11 @@ export const useGroveLights = create((set, get) => ({
   roundIndex: 0,
   grabResult: null, // gradeGroveGrab() after Part A
   adjustResult: null, // gradeGroveAdjust() after Part B
+  // Round 2 (Jeff, 2026-09-29): a wrong pick SHAKES and the student tries
+  // again — only a first-try pick scores. `missNote` is the nudge on the card.
+  missedThisPart: false,
+  missNote: null,
+  missAt: 0,
   typedCorrect: null,
   results: [],
   score: 0,
@@ -78,31 +83,45 @@ export const useGroveLights = create((set, get) => ({
     set({ status: "grabbing" });
   },
 
-  /** Part A: pick a bundle pile. The friendly pile always hangs next. */
+  /** Part A: pick a bundle pile. Wrong → shake + try again (no points). */
   chooseGrab(bundles) {
-    const { status } = get();
+    const { status, missedThisPart } = get();
     if (status !== "grabbing") return;
     const round = get().currentRound();
     if (!round || !round.grabOptions.includes(bundles)) return;
     const grab = gradeGroveGrab(round, bundles);
+    if (!grab.correct) {
+      set({ missedThisPart: true, missNote: grab.label, missAt: Date.now() });
+      return;
+    }
+    const points = missedThisPart ? 0 : grab.points;
     set((s) => ({
       status: "adjusting",
-      grabResult: grab,
-      score: s.score + grab.points,
+      grabResult: { ...grab, points, label: points ? grab.label : "✨ That's the closest bundle!" },
+      missedThisPart: false,
+      missNote: null,
+      score: s.score + points,
     }));
   },
 
-  /** Part B: pick the fix (−2…+2 from GROVE_ADJUSTMENTS). */
+  /** Part B: pick the fix. Wrong → shake + try again (no points). */
   chooseAdjust(value) {
-    const { status } = get();
+    const { status, missedThisPart } = get();
     if (status !== "adjusting") return;
     const round = get().currentRound();
     if (!round) return;
     const adj = gradeGroveAdjust(round, value);
+    if (!adj.correct) {
+      set({ missedThisPart: true, missNote: "Not that one — compare what you hung with what it needed.", missAt: Date.now() });
+      return;
+    }
+    const points = missedThisPart ? 0 : adj.points;
     set((s) => ({
       status: "typing",
-      adjustResult: adj,
-      score: s.score + adj.points,
+      adjustResult: { ...adj, points, label: points ? adj.label : "💡 Fixed!" },
+      missedThisPart: false,
+      missNote: null,
+      score: s.score + points,
     }));
   },
 
@@ -133,6 +152,8 @@ export const useGroveLights = create((set, get) => ({
         roundIndex: roundIndex + 1,
         grabResult: null,
         adjustResult: null,
+        missedThisPart: false,
+        missNote: null,
         typedCorrect: null,
         results,
       });

@@ -20,22 +20,27 @@
  *   S4  big overflows       regrouping with bigger numbers
  *   S5  overflow or not?    mixed — round 13's ones make EXACTLY ten
  *
- * Scoring (per round, max 25):
- *   A) PREDICT the overflow (will the ones make a new ten-block?)  = 5
- *   B) JOIN like with like — type the tens wall + the ones pile    = 5 + 5
- *   C) TYPE the finished igloo's total                             = 10
+ * Scoring (per round, max 25) — round 2, 2026-09-29:
+ *   A) BUILD it: move every rod and cube to the middle igloo, and
+ *      swap ten ones for a new ten when the ones pile reaches ten    = 10
+ *      (first "Done!" only; a missed swap is a nudge, then retry)
+ *   B) TYPE the finished igloo's total                             = 15
  */
 
 export const VILLAGE_ROUNDS_PER_SET = 15;
 const VILLAGE_STAGES = 5;
 const VILLAGE_ROUNDS_PER_STAGE = VILLAGE_ROUNDS_PER_SET / VILLAGE_STAGES;
 
+// Round 2 (Jeff, 2026-09-29): the predict + two-box steps "distract from the
+// interactive". A round is now BUILD (move every rod and cube to the middle
+// igloo yourself, swapping ten ones for a ten when you have to) = 10, then
+// the TOTAL = 15. The older part-grades stay exported (pure) for reference.
 export const VILLAGE_PREDICT_POINTS = 5;
 export const VILLAGE_TENS_POINTS = 5;
 export const VILLAGE_ONES_POINTS = 5;
-export const VILLAGE_TOTAL_POINTS = 10;
-export const VILLAGE_ROUND_POINTS =
-  VILLAGE_PREDICT_POINTS + VILLAGE_TENS_POINTS + VILLAGE_ONES_POINTS + VILLAGE_TOTAL_POINTS; // 25
+export const VILLAGE_BUILD_POINTS = 10;
+export const VILLAGE_TOTAL_POINTS = 15;
+export const VILLAGE_ROUND_POINTS = VILLAGE_BUILD_POINTS + VILLAGE_TOTAL_POINTS; // 25
 export const VILLAGE_MAX_SCORE = VILLAGE_ROUNDS_PER_SET * VILLAGE_ROUND_POINTS; // 375
 
 // The exact-ten trap (ones sum EXACTLY 10 — overflow with nothing left over)
@@ -114,7 +119,7 @@ export function generateVillageRound(roundIndex, rand = Math.random) {
     regroup: onesSum >= 10,
     exactTen: onesSum === 10,
     total,
-    prompt: `Join the igloos: ${a} and ${b}. Do the ones make a new ten?`,
+    prompt: `Build ${a} + ${b} in the middle igloo.`,
     // One step per line, for the feedback card.
     working:
       onesSum >= 10
@@ -193,3 +198,33 @@ export function checkVillageTotal(round, text) {
   if (!/^\d+$/.test(cleaned)) return { valid: false, correct: false };
   return { valid: true, correct: Number(cleaned) === round.total };
 }
+
+/**
+ * What the middle igloo holds for a build state: `moved` = { ta, tb, oa, ob }
+ * blocks moved from each igloo, `regrouped` = ten ones swapped for a ten. Pure.
+ */
+export function villageSite(round, moved, regrouped) {
+  const tens = moved.ta + moved.tb + (regrouped ? 1 : 0);
+  const ones = moved.oa + moved.ob - (regrouped ? 10 : 0);
+  return { tens, ones, value: tens * 10 + ones };
+}
+
+/**
+ * Grade the "Done!" press on a build. Not everything moved → a gentle "keep
+ * going" (never a miss). Ten or more ones left un-swapped → a miss with the
+ * swap named. Otherwise the build is right. Pure.
+ */
+export function gradeVillageBuild(round, moved, regrouped) {
+  const allMoved = moved.ta === round.ta && moved.tb === round.tb && moved.oa === round.oa && moved.ob === round.ob;
+  if (!allMoved) return { done: false, miss: false, note: "Move ALL the rods and cubes to the middle igloo first." };
+  const site = villageSite(round, moved, regrouped);
+  if (site.ones >= 10) {
+    return { done: false, miss: true, note: `There are ${site.ones} ones — swap 10 of them for a new ten!` };
+  }
+  return {
+    done: true,
+    miss: false,
+    note: round.regroup ? `🧊 Built — nice swap! +${VILLAGE_BUILD_POINTS} pts` : `🧊 Built! +${VILLAGE_BUILD_POINTS} pts`,
+  };
+}
+

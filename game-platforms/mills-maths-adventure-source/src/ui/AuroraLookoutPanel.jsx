@@ -4,17 +4,15 @@ import { useAuroraLookout } from "../game/auroraLookoutStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
 import {
   LOOKOUT_ROUNDS_PER_SET,
-  LOOKOUT_STRATEGIES,
 } from "../data/snow/auroraLookoutChallenge.js";
-import { SnowIntro, SnowRoundHead } from "./SnowCardParts.jsx";
-
-const TOOL = Object.fromEntries(LOOKOUT_STRATEGIES.map((t) => [t.key, t]));
+import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
- * AURORA LOOKOUT — 2D panel (AL). The capstone: PICK the tool (buttons or
- * keys 1–7 — the brightest path scores full, any sound tool scores half),
- * then EXECUTE it against the one-line scaffold. Wrong answer → shake + the
- * brightest-path story. Esc quits; leaving the snow world exits.
+ * AURORA LOOKOUT — 2D panel (AL). Round 2 (2026-09-29): three BIG tiles,
+ * each THIS sum rewritten a different way (all correct) — "which way is
+ * easiest?" (click or keys 1–3). Then the student does the sum the way THEY
+ * picked, one small step per line, typing the last one. Wrong answer →
+ * shake + the easiest way worked through. Esc quits.
  */
 
 const CELEBRATE_MS = 2400;
@@ -26,6 +24,7 @@ export default function AuroraLookoutPanel() {
   const bestScore = useAuroraLookout((s) => s.bestScore);
   const round = useAuroraLookout((s) => s.currentRound());
   const pickResult = useAuroraLookout((s) => s.pickResult);
+  const picked = round && pickResult ? (round.choices || []).find((c) => c.key === pickResult.key) : null;
   const typedCorrect = useAuroraLookout((s) => s.typedCorrect);
   const regionId = useSession((s) => s.currentRegionId);
   const [typed, setTyped] = useState("");
@@ -99,11 +98,10 @@ export default function AuroraLookoutPanel() {
           icon="✨"
           title="Aurora Lookout"
           steps={[
-            <>The northern lights write a sum in the sky.</>,
-            <>Pick the <b>tool</b> that makes it easiest — every tool is one you used somewhere in the snow world.</>,
-            <>Then use that tool to work out the answer.</>,
+            <>The lights write a sum in the sky. There are three ways to do it — they all work!</>,
+            <>Pick the <b>easiest</b> way, then do the sum.</>,
           ]}
-          example="47 + 29?  🎄 Round, then fix:  47 + 30 − 1 = 76"
+          example="47 + 29 → 47 + 30 − 1 → 77 − 1 = 76"
           onStart={() => useAuroraLookout.getState().beginRounds()}
           onQuit={() => useAuroraLookout.getState().exit()}
         />
@@ -118,21 +116,22 @@ export default function AuroraLookoutPanel() {
             score={score}
             onQuit={() => useAuroraLookout.getState().exit()}
           />
-          <div className="snow-q">
-            <span className="fc-value">{round.expr}</span> — which tool makes it easiest?
-          </div>
-          <div className="plank-pieces">
-            {(round.options || LOOKOUT_STRATEGIES.map((t) => t.key)).map((key, i) => (
+          <div className="snow-q snow-big-sum">{round.expr}</div>
+          <div className="snow-sub">Which way is easiest?</div>
+          <div className="snow-choices">
+            {(round.choices || []).map((c, i) => (
               <button
-                key={key}
-                className="plank-piece-btn snow-tool-btn"
+                key={c.key}
+                className="snow-choice"
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  useAuroraLookout.getState().choosePick(key);
+                  useAuroraLookout.getState().choosePick(c.key);
                 }}
               >
-                <span>{i + 1}. {TOOL[key].label}</span>
-                <small>{TOOL[key].example}</small>
+                <span className="snow-choice-sum" style={c.show.length > 12 ? { fontSize: "1.3rem" } : undefined}>{c.show.replace(/ ([+−=]) /g, "\u00a0$1\u00a0")}</span>
+                <small>
+                  {i + 1}. {c.label}
+                </small>
               </button>
             ))}
           </div>
@@ -141,29 +140,34 @@ export default function AuroraLookoutPanel() {
 
       {status === "typing" && round && pickResult && (
         <div className="farm-challenge-card">
-          <div className={`farm-challenge-verdict ${pickResult.best ? "good" : pickResult.sound ? "warm" : "bad"}`}>
-            {pickResult.label}
+          <div className={`farm-challenge-verdict ${pickResult.best ? "good" : "warm"}`}>{pickResult.label}</div>
+          <div className="snow-sub">
+            {round.expr} → <b>{(picked || round.choices[0]).show}</b>
           </div>
-          <div className="snow-sub">Use {TOOL[round.best].label}:</div>
-          <div className="snow-q">
-            {round.scaffold} <span className="fc-value">?</span>
-          </div>
-          <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
-            <input
-              ref={inputRef}
-              className="text-input weigh-input"
-              type="text"
-              inputMode="numeric"
-              placeholder="?"
-              value={typed}
-              maxLength={3}
-              onChange={(e) => setTyped(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitTyped()}
-            />
-            <span className="weigh-unit">= {round.expr}</span>
-            <button className="primary-button" onClick={submitTyped}>
-              Check
-            </button>
+          <div className="snow-exec">
+            {(picked || round.choices[0]).steps.map((line, i, all) =>
+              i < all.length - 1 ? (
+                <div key={i} className="snow-exec-line">{line}</div>
+              ) : (
+                <div key={i} className={`snow-exec-line weigh-input-row${inputWobble ? " wobble" : ""}`}>
+                  <span>{line.replace(/\s*\?$/, "")}</span>
+                  <input
+                    ref={inputRef}
+                    className="text-input weigh-input"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="?"
+                    value={typed}
+                    maxLength={3}
+                    onChange={(e) => setTyped(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitTyped()}
+                  />
+                  <button className="primary-button" onClick={submitTyped}>
+                    Check
+                  </button>
+                </div>
+              )
+            )}
           </div>
         </div>
       )}
@@ -172,7 +176,8 @@ export default function AuroraLookoutPanel() {
         <div className="farm-challenge-card mini">
           <div className="farm-challenge-head">
             <span>
-              ✓ {round.expr} = {round.answer} — the sky approves! · ⭐ {score}
+              ✓ {round.expr} = {round.answer}
+              {pickResult && !pickResult.best ? ` · easiest: ${round.choices.find((c) => c.key === round.best).show}` : ""} · ⭐ {score}
             </span>
           </div>
         </div>
@@ -183,9 +188,7 @@ export default function AuroraLookoutPanel() {
           <div className="farm-challenge-verdict bad">
             {typedCorrect === false ? "Not quite — here's how it works:" : "Here's how it works:"}
           </div>
-          <div className="farm-challenge-prompt">
-            {TOOL[round.best].label}: {round.scaffold} {round.answer}
-          </div>
+          <SnowWorking lines={round.working} />
           <div className="farm-challenge-buttons">
             <button
               className="primary-button"
@@ -206,7 +209,7 @@ export default function AuroraLookoutPanel() {
             <span>✨ Aurora Lookout — complete!</span>
           </div>
           <div className="farm-challenge-prompt">
-            You scored {score} points. Best so far: {Math.max(bestScore, score)} points. Ten challenges, eight tools — the snow world is yours.
+            You scored {score} points. Best so far: {Math.max(bestScore, score)} points. You know lots of ways to add and take away!
           </div>
           <div className="farm-challenge-buttons">
             <button className="primary-button" onClick={() => useAuroraLookout.getState().start()}>

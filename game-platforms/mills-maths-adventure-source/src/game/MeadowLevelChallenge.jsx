@@ -175,7 +175,7 @@ export default function MeadowLevelChallenge() {
 
       {/* The growing equation chain — every sum the same, total unshown. */}
       <Html position={[(LEFT_LOCAL[0] + RIGHT_LOCAL[0]) / 2, 0.24 + (Math.min(10, Math.max(drawLeft, drawRight, 1)) - 1) * ROW_H + 1.1, (LEFT_LOCAL[1] + RIGHT_LOCAL[1]) / 2]} center distanceFactor={10} className="ix-badge-anchor" zIndexRange={[24, 0]}>
-        <div className="milk-display">{chip}</div>
+        <div className="milk-display snow-chip">{chip}</div>
       </Html>
 
       {status === "celebrate" && (

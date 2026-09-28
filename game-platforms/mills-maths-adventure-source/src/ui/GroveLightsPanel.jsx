@@ -25,6 +25,8 @@ export default function GroveLightsPanel() {
   const bestScore = useGroveLights((s) => s.bestScore);
   const round = useGroveLights((s) => s.currentRound());
   const grabResult = useGroveLights((s) => s.grabResult);
+  const missNote = useGroveLights((s) => s.missNote);
+  const missAt = useGroveLights((s) => s.missAt);
   const adjustResult = useGroveLights((s) => s.adjustResult);
   const typedCorrect = useGroveLights((s) => s.typedCorrect);
   const regionId = useSession((s) => s.currentRegionId);
@@ -76,6 +78,11 @@ export default function GroveLightsPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, [status]);
 
+  // A wrong bundle / fix → a little camera shake; the card wobbles too.
+  useEffect(() => {
+    if (missAt) playerState.camShake = { start: Date.now(), dur: 350 };
+  }, [missAt]);
+
   // Wrong typed total → shake.
   useEffect(() => {
     if (status === "feedback") {
@@ -108,11 +115,10 @@ export default function GroveLightsPanel() {
           icon="🎄"
           title="Christmas Tree Grove"
           steps={[
-            <>Fairy lights come in <b>bundles of 10</b>. Clipping on single lights is slow!</>,
-            <>Grab the number of bundles <b>closest</b> to what the tree needs.</>,
-            <>Then fix it: take the extra lights off, or add the few that are missing.</>,
+            <>Lights come in bundles of <b>10</b>. Pick the bundles closest to what the tree needs.</>,
+            <>Then add or take off a few to make it exact.</>,
           ]}
-          example="47 + 29  →  47 + 30 = 77  →  take 1 off = 76"
+          example="29 more?  3 bundles = 30, take 1 off"
           onStart={() => useGroveLights.getState().beginRounds()}
           onQuit={() => useGroveLights.getState().exit()}
         />
@@ -127,6 +133,9 @@ export default function GroveLightsPanel() {
             score={score}
             onQuit={() => useGroveLights.getState().exit()}
           />
+          {missNote && (
+            <div key={missAt} className="farm-challenge-verdict warm snow-shake">{missNote} Try again!</div>
+          )}
           <div className="snow-q">
             The tree needs <span className="fc-value">{round.add} more</span> lights. Which is closest to{" "}
             {round.add}?
@@ -151,8 +160,7 @@ export default function GroveLightsPanel() {
       {status === "adjusting" && round && grabResult && (
         <div className="farm-challenge-card">
           <div className={`farm-challenge-verdict ${grabResult.correct ? "good" : "warm"}`}>
-            {grabResult.label}
-            {!grabResult.correct && ` The closest was ${round.grabBundles} bundle${round.grabBundles === 1 ? "" : "s"} (${round.grabValue}).`}
+            {missNote ? <span key={missAt} className="snow-shake" style={{ display: "inline-block" }}>{missNote}</span> : grabResult.label}
           </div>
           <div className="snow-q">
             You hung <span className="fc-value">{round.grabValue}</span> lights. The tree needed{" "}
@@ -179,8 +187,6 @@ export default function GroveLightsPanel() {
         <div className="farm-challenge-card">
           <div className={`farm-challenge-verdict ${adjustResult.correct ? "good" : "warm"}`}>
             {adjustResult.label}
-            {!adjustResult.correct &&
-              ` It needed: ${GROVE_ADJUSTMENTS.find((a) => a.value === round.adjust)?.label.toLowerCase()}.`}
           </div>
           <div className="snow-q">
             {round.adjust < 0

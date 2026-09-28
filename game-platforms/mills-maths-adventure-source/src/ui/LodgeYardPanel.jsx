@@ -2,19 +2,15 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { useLodgeYard } from "../game/lodgeYardStore.js";
 import { useSession, playerState } from "../game/sessionStore.js";
-import {
-  YARD_ROUNDS_PER_SET,
-  YARD_ONES_POINTS,
-  YARD_TENS_POINTS,
-} from "../data/snow/lodgeYardChallenge.js";
+import { YARD_ROUNDS_PER_SET, YARD_COINS, yardTillAfter } from "../data/snow/lodgeYardChallenge.js";
 import { SnowIntro, SnowRoundHead, SnowWorking } from "./SnowCardParts.jsx";
 
 /**
- * THE LODGE YARD — 2D panel (LY). Three quick typed hops per round: the
- * ONES hop to the next ten, the TENS hop to 100, then the whole change —
- * each landing on the hundred-bead board as it's answered. Zero is
- * sometimes the right hop! Wrong change → shake + the friends-of-100
- * story. Esc quits; leaving the snow world exits.
+ * THE LODGE YARD — 2D panel (LY). Round 2 (2026-09-29): tap COINS to count
+ * up from the price to $1 — each coin is a jump on the board's number line
+ * and "Total so far" climbs (65c → 70c → 100c). Undo takes a coin back.
+ * "Give the change" works only on exactly 100c; then say how much change
+ * that was. Esc quits; leaving the snow world exits.
  */
 
 const CELEBRATE_MS = 2200;
@@ -25,8 +21,8 @@ export default function LodgeYardPanel() {
   const score = useLodgeYard((s) => s.score);
   const bestScore = useLodgeYard((s) => s.bestScore);
   const round = useLodgeYard((s) => s.currentRound());
-  const onesResult = useLodgeYard((s) => s.onesResult);
-  const tensResult = useLodgeYard((s) => s.tensResult);
+  const coins = useLodgeYard((s) => s.coins);
+  const note = useLodgeYard((s) => s.note);
   const typedCorrect = useLodgeYard((s) => s.typedCorrect);
   const regionId = useSession((s) => s.currentRegionId);
   const [typed, setTyped] = useState("");
@@ -41,7 +37,7 @@ export default function LodgeYardPanel() {
 
   // Fresh input + autofocus at each typed step.
   useEffect(() => {
-    if (status === "ones" || status === "tens" || status === "typing") {
+    if (status === "typing") {
       setTyped("");
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -56,8 +52,14 @@ export default function LodgeYardPanel() {
         return;
       }
       const typingInField = e.target && /input|textarea/i.test(e.target.tagName || "");
-      if (e.key !== "Enter" || typingInField) return;
+      if (typingInField) return;
+      if (st.status === "paying" && e.key === "Backspace") {
+        st.undoCoin();
+        return;
+      }
+      if (e.key !== "Enter") return;
       if (st.status === "intro") st.beginRounds();
+      else if (st.status === "paying") st.giveChange();
       else if (st.status === "feedback" || st.status === "celebrate") st.next();
     }
     window.addEventListener("keydown", onKey);
@@ -71,12 +73,18 @@ export default function LodgeYardPanel() {
   }, [status, roundIndex]);
 
   useEffect(() => {
+    if (note?.tone === "bad") playerState.camShake = { start: Date.now(), dur: 350 };
+  }, [note?.at, note?.tone]);
+
+  useEffect(() => {
     if (status !== "celebrate") return undefined;
     const t = setTimeout(() => useLodgeYard.getState().next(), CELEBRATE_MS);
     return () => clearTimeout(t);
   }, [status, roundIndex]);
 
   if (status === "idle") return null;
+
+  const till = round ? yardTillAfter(round, coins) : 0;
 
   function wobble() {
     setInputWobble(true);
@@ -87,9 +95,7 @@ export default function LodgeYardPanel() {
   function submitCurrent() {
     const st = useLodgeYard.getState();
     let result = "invalid";
-    if (st.status === "ones") result = st.submitOnes(typed);
-    else if (st.status === "tens") result = st.submitTens(typed);
-    else if (st.status === "typing") result = st.submitChange(typed);
+    if (st.status === "typing") result = st.submitChange(typed);
     if (result === "invalid") wobble();
   }
 
@@ -100,17 +106,16 @@ export default function LodgeYardPanel() {
           icon="☕"
           title="The Lodge Yard"
           steps={[
-            <>You buy a hot chocolate and pay with <b>$1</b>. That's <b>100 cents</b>.</>,
-            <>Count UP the change in two hops: first to the <b>next ten</b>…</>,
-            <>…then up to <b>100c</b>. Add the two hops together.</>,
+            <>A hot chocolate costs less than $1. You pay with <b>$1 (100c)</b>.</>,
+            <>Use coins to <b>count up</b> from the price to 100c. That's your change!</>,
           ]}
-          example="65c → 70c is 5c,  70c → 100c is 30c.  Change: 35c"
+          example="65c + 5c → 70c,  + 10c + 20c → 100c.  Change: 35c"
           onStart={() => useLodgeYard.getState().beginRounds()}
           onQuit={() => useLodgeYard.getState().exit()}
         />
       )}
 
-      {(status === "ones" || status === "tens" || status === "typing") && round && (
+      {status === "paying" && round && (
         <div className="farm-challenge-card">
           <SnowRoundHead
             icon="☕"
@@ -118,37 +123,64 @@ export default function LodgeYardPanel() {
             total={YARD_ROUNDS_PER_SET}
             score={score}
             onQuit={() => useLodgeYard.getState().exit()}
-          >
-            <span className="snow-round">
-              Costs <span className="fc-value">{round.price}c</span> · paid $1
-            </span>
-          </SnowRoundHead>
-          {status === "tens" && onesResult && (
-            <div className={`farm-challenge-verdict ${onesResult.correct ? "good" : "warm"}`}>
-              {onesResult.correct
-                ? `${round.price}c + ${round.onesHop}c = ${round.afterOnes}c ✓ (+${YARD_ONES_POINTS} pts)`
-                : `It was ${round.onesHop}c: ${round.price}c + ${round.onesHop}c = ${round.afterOnes}c.`}
-            </div>
-          )}
-          {status === "typing" && tensResult && (
-            <div className={`farm-challenge-verdict ${tensResult.correct ? "good" : "warm"}`}>
-              {tensResult.correct
-                ? `${round.afterOnes}c + ${round.tensHop}c = 100c ✓ (+${YARD_TENS_POINTS} pts)`
-                : `It was ${round.tensHop}c: ${round.afterOnes}c + ${round.tensHop}c = 100c.`}
-            </div>
-          )}
+          />
           <div className="snow-q">
-            {status === "ones" && (
-              round.onesHop === 0
-                ? <>{round.price}c is already a tens number. How far to the next ten? (It might be 0!)</>
-                : <>Hop 1: {round.price}c to the next ten ({round.price - (round.price % 10) + 10}c) is <span className="fc-value">?</span></>
-            )}
-            {status === "tens" && (
-              <>Hop 2: {round.afterOnes}c to 100c is <span className="fc-value">?</span></>
-            )}
-            {status === "typing" && (
-              <>So how much change do you get?</>
-            )}
+            Count up from <span className="fc-value">{round.price}c</span> to <span className="fc-value">100c</span>
+          </div>
+          <div className="yard-coins">
+            {YARD_COINS.map((c) => (
+              <button
+                key={c}
+                className={`yard-coin${c === 1 ? "" : " silver"}${c < 10 ? " small" : ""}`}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  useLodgeYard.getState().addCoin(c);
+                }}
+              >
+                {c}c
+              </button>
+            ))}
+          </div>
+          <div className="yard-total">
+            Total so far:{" "}
+            <span className={till > 100 ? "over" : ""}>
+              {coins.length ? `${round.price}c ${coins.map((c) => `+ ${c}c`).join(" ")} = ${till}c` : `${round.price}c`}
+            </span>
+          </div>
+          {note && (
+            <div key={note.at} className={`farm-challenge-verdict ${note.tone === "bad" ? "bad snow-shake" : "warm"}`}>
+              {note.text}
+            </div>
+          )}
+          <div className="farm-challenge-buttons">
+            <button
+              className="plank-piece-btn"
+              disabled={!coins.length}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                useLodgeYard.getState().undoCoin();
+              }}
+            >
+              ↩ Take one back
+            </button>
+            <button
+              className="primary-button"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                useLodgeYard.getState().giveChange();
+              }}
+            >
+              💰 Give the change (Enter)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status === "typing" && round && (
+        <div className="farm-challenge-card">
+          {note && <div className={`farm-challenge-verdict ${note.tone}`}>{note.text}</div>}
+          <div className="snow-q">
+            {coins.map((c) => `${c}c`).join(" + ")} — how much change is that?
           </div>
           <div className={`weigh-input-row${inputWobble ? " wobble" : ""}`}>
             <input
@@ -158,13 +190,13 @@ export default function LodgeYardPanel() {
               inputMode="numeric"
               placeholder="?"
               value={typed}
-              maxLength={3}
+              maxLength={4}
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submitCurrent()}
             />
             <span className="weigh-unit">cents</span>
             <button className="primary-button" onClick={submitCurrent}>
-              {status === "typing" ? "Check" : "Hop!"}
+              Check
             </button>
           </div>
         </div>
