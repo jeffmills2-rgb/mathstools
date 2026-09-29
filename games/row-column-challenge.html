@@ -656,7 +656,7 @@
 <div class="modal hidden collect-modal" id="collectModal"><div class="modalBox"><div id="collectContent"></div></div></div>
 
 
-<div class="modal hidden" id="rulesModal"><div class="modalBox"><h2>Rules</h2><p>Rows and Columns are fixed for the whole game. The Rows player can only take a number from the marker’s row. The Columns player can only take a number from the marker’s column.</p><p>The black arrow marker shows which direction is active: ↔ means a Rows turn, and ↕ means a Columns turn.</p><p>Take the number, add its value to your total, and move the marker to that number’s square. If it is your turn and your active row or column has no numbers left, the game ends. Highest total wins.</p><button class="btn-primary" id="closeRules" type="button">Close</button></div></div>
+<div class="modal hidden" id="rulesModal"><div class="modalBox"><h2>Rules</h2><p>Players take turns. On your turn you may take any number that lines up with the black marker — anywhere in the marker’s row <strong>or</strong> in the marker’s column. (Rows and Columns are just the names of the two players.)</p><p>Take the number, add its value to your total, and move the marker to that number’s square. If it is your turn and there are no numbers left in the marker’s row or column, the game ends. Highest total wins.</p><button class="btn-primary" id="closeRules" type="button">Close</button></div></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -908,14 +908,14 @@ function startGame(useLast=false){
   rowsPlayer=choice==='p1'?'p1':'p2'; colsPlayer=rowsPlayer==='p1'?'p2':'p1'; names={p1:lastSetup.p1,p2:lastSetup.p2}; scores={rows:0,cols:0}; collectedCards=freshCollectedCards(); currentRole='rows'; marker={r:CENTRE,c:CENTRE}; gameOver=false; endConfettiShown=false; board=makeNewBoard(numberSet);
   $('setupModal').classList.add('hidden'); $('endModal').classList.add('hidden'); $('collectModal').classList.add('hidden'); $('modeModal').classList.add('hidden'); showLast('Game started. Rows plays first.'); render(); checkNoMoves(); maybeComputerMove();
 }
-function legalCells(){const cells=[]; if(!board) return new Set(); if(currentRole==='rows'){for(let c=0;c<SIZE;c++) if(board[marker.r][c]!==null) cells.push(`${marker.r},${c}`);} else{for(let r=0;r<SIZE;r++) if(board[r][marker.c]!==null) cells.push(`${r},${marker.c}`);} return new Set(cells);}
+function legalCells(){const cells=[]; if(!board) return new Set(); for(let c=0;c<SIZE;c++) if(board[marker.r][c]!==null) cells.push(`${marker.r},${c}`); for(let r=0;r<SIZE;r++) if(board[r][marker.c]!==null) cells.push(`${r},${marker.c}`); return new Set(cells);}
 function renderEmpty(){board=Array.from({length:SIZE},()=>Array(SIZE).fill(null)); marker={r:CENTRE,c:CENTRE}; render(); $('turnText').textContent='Choose a game mode'; $('moveHint').textContent='Single Player, Pass and Play, or Online Multiplayer.'; $('cardsLeft').textContent='48';}
 function render(){
   const legal=legalCells(); const b=$('board'); b.innerHTML='';
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
     const cell=document.createElement('button'); cell.className='cell'; cell.type='button';
     if(r===marker.r) cell.classList.add('activeRow'); if(c===marker.c) cell.classList.add('activeCol');
-    if(r===marker.r&&c===marker.c){cell.classList.add('marker',currentRole==='rows'?'marker-row':'marker-col'); cell.setAttribute('aria-label',currentRole==='rows'?'Marker: rows play next':'Marker: columns play next'); cell.innerHTML=`<span class="marker-arrow" aria-hidden="true">${currentRole==='rows'?'↔':'↕'}</span>`;}
+    if(r===marker.r&&c===marker.c){cell.classList.add('marker',currentRole==='rows'?'marker-row':'marker-col'); cell.setAttribute('aria-label','Marker: take a number from this row or column'); cell.innerHTML=`<span class="marker-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="62%" height="62%" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/></svg></span>`;}
     else if(!board || board[r][c]===null){cell.classList.add('empty'); cell.textContent='';}
     else{const v=board[r][c]; cell.classList.add('card',v<0?'negative':v>0?'positive':'zero'); cell.textContent=v; if(legal.has(`${r},${c}`)&&canMoveLocal()&&!pendingMove){cell.classList.add('legal'); cell.onclick=()=>makeMove(r,c);}}
     b.appendChild(cell);
@@ -924,7 +924,7 @@ function render(){
   if(scoringMode==='collect' && board){$('p1Points').innerHTML=`<span class="cardsCollectedCount">${getCollectedCount(roleForPlayer('p1'))}</span><span class="cardsCollectedLabel">cards</span>`; $('p2Points').innerHTML=`<span class="cardsCollectedCount">${getCollectedCount(roleForPlayer('p2'))}</span><span class="cardsCollectedLabel">cards</span>`;}
   else{$('p1Points').textContent=scores[roleForPlayer('p1')]||0; $('p2Points').textContent=scores[roleForPlayer('p2')]||0;}
   $('p1Score').className='score p1'+(scoringMode==='collect'?' collectMode':'')+(playerForRole(currentRole)==='p1'?' active':'')+(pendingMove&&playerForRole(pendingMove.role)==='p1'?' manualActive':''); $('p2Score').className='score p2'+(scoringMode==='collect'?' collectMode':'')+(playerForRole(currentRole)==='p2'?' active':'')+(pendingMove&&playerForRole(pendingMove.role)==='p2'?' manualActive':'');
-  if(board){const playerName=names[playerForRole(currentRole)]; $('turnText').textContent=gameOver?'Game over':`${playerName}'s turn · ${currentRole.toUpperCase()}`; $('statusIcon').textContent=currentRole==='rows'?'↔️':'↕️'; $('moveHint').textContent=gameOver?'No legal moves remain.':(currentRole==='rows'?'Choose any available number in the highlighted row.':'Choose any available number in the highlighted column.'); $('cardsLeft').textContent=board.flat().filter(v=>v!==null).length;}
+  if(board){const playerName=names[playerForRole(currentRole)]; $('turnText').textContent=gameOver?'Game over':`${playerName}'s turn · ${currentRole.toUpperCase()}`; $('statusIcon').textContent='✥'; $('moveHint').textContent=gameOver?'No legal moves remain.':'Choose any available number in the highlighted row or column.'; $('cardsLeft').textContent=board.flat().filter(v=>v!==null).length;}
 }
 async function makeMove(r,c,forceComputer=false){
   if(gameOver || pendingMove || (!forceComputer && !canMoveLocal()))return; const legal=legalCells(); if(!legal.has(`${r},${c}`))return;
@@ -1360,8 +1360,8 @@ async function lockCollectScore(role,total){
 }
 function evaluateImmediateValue(grid, m, role){
   const vals=[];
-  if(role==='rows'){for(let c=0;c<SIZE;c++) if(grid[m.r][c]!==null) vals.push(grid[m.r][c]);}
-  else{for(let r=0;r<SIZE;r++) if(grid[r][m.c]!==null) vals.push(grid[r][m.c]);}
+  for(let c=0;c<SIZE;c++) if(grid[m.r][c]!==null) vals.push(grid[m.r][c]);
+  for(let r=0;r<SIZE;r++) if(grid[r][m.c]!==null) vals.push(grid[r][m.c]);
   return vals.length?Math.max(...vals):0;
 }
 function chooseComputerMove(){
