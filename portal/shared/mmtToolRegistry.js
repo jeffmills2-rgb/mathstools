@@ -218,6 +218,14 @@ export const MMT_TOOLS = Object.freeze([
     notes: "Sweet/Mild/Medium/Spicy/Extra Spicy, 10 questions (teacher design 2026-09-30, same ladder as Constant Difference). Sweet/Mild/Medium keep the WHOLE teaching tool (drag tiles or a selected group across, box-select, gap to the next ten, -n/+n chips, green on a ten) plus <-10 <-1 1-> 10-> buttons. Sweet two-digit, total under 100; Mild totals 100-199 (ten tens bundle into a FLAT); Medium three-digit with one number 1-35 below a hundred and the other able to give without breaking a ten. Hundreds are drawn as smaller flats stacked 2-3 high and stay put. Spicy = Mild's numbers, Extra Spicy = Medium's, no tiles. Answer never on screen before marking; first attempt only scores. types[]: add:s/t, usedten:n/t (model levels), level, model:on/off. No typed answer in the payload. masteryTopic 'addition-compensation'. Pairs with the teaching tool under MA3-AR-01.",
   },
   {
+    toolId: "kids-chess-adventure", title: "Kids Chess Adventure", category: "Game",
+    enabled: true, resultCollection: "achievements", richCollection: null,
+    achievementToolName: "kids-chess-adventure", topics: ["chess"], stage: "All stages",
+    launchUrl: "/games/chess-kids.html",
+    supportsAdventureAttempts: false, supportsSkillBreakdown: false,
+    notes: "Kids Chess Adventure (2026-09-30): 14 lessons + 20 animal bots in five worlds, reached from the Chess menu. ONE record per bot WIN (first win, or a better star count): score 1/1, level 'Bot n: Name', levelKey botNN, types[] bot:n, stars:1-3, variant:race|army|kings, oops:n, hints:n, moves:n. Lessons are not written (beating bot n implies every earlier node). category 'Game' keeps it out of the dashboard-task builder. The page reads the student's own records back on sign-in to restore progress on any device. No typed answers.",
+  },
+  {
     toolId: "constant-difference-quiz", title: "Constant Difference — Student Quiz", category: "Quiz",
     enabled: true, resultCollection: "achievements", richCollection: null,
     achievementToolName: "constant-difference-student-quiz", topics: ["number"], stage: "Stage 3",

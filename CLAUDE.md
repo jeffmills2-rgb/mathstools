@@ -52,6 +52,58 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-30, session — being pushed): KIDS CHESS ADVENTURE.**
+> `games/chess-kids.html`, reached from a new first card on the Chess menu (no
+> homepage card of its own; the chess card's search tags gained "kids"). English
+> only, built for ~8–10-year-olds: every instruction is READ ALOUD (Web Speech,
+> en-AU voice preferred, 🔊 replay on every bubble, voice/speed in ⚙ Grown-ups).
+> Child is always White; the board never turns.
+> * **ENGINE IS COPIED VERBATIM from chess.html** (the `chessEngineSrc` script +
+>   the `PIECE_SVG` script). Change chess.html's engine → re-copy both blocks.
+>   Three harmless engine additions made for this, in BOTH files: `attacked()`
+>   returns false for sq < 0 (kingless mini-games), a `quiesce:false` search
+>   option (a "greedy" bot that grabs guarded pieces), and `attacked` /
+>   `pseudoMoves` exported. Perft still exact. chess.html also gained
+>   `?level=sweet|mild|…` (opens Play the Computer on that level) and AR/FA
+>   strings for the card.
+> * **CURRICULUM** (`KIDS_DATA` script block — pure data): five worlds, 34 nodes,
+>   unlock in order: 14 lessons (pawn, rook, bishop, queen, knight, king, check,
+>   checkmate, special moves, piece points, free pieces, great starts, forks,
+>   checkmate challenge) and 20 animal bots (Penny the Penguin → Drake the
+>   Dragon). Lesson stage types: demo, stars (collect ⭐ / capture; a BFS solver
+>   resets the stage if it can no longer be finished, and powers "Show me"),
+>   puzzle (goals any/mate/castle/promote/ep/uci/develop/safe), choice, info.
+>   Coach Hoot 🦉 teaches. Don't use Pip/Fern/Alby (Adventure NPC names).
+> * **BOTS 1–8 ARE MINI-GAMES**: 1–2 pawn race, 3–6 pawns + one piece type
+>   (kingless: win by reaching the end, capturing everything, or leaving them
+>   no move), 7 kings+rooks+pawns, 8 no queens (real rules). 9–20 full chess.
+>   All depth 1 with noise + random moves; 1–14 also `quiesce:false`. Drake (20)
+>   is still easier than grown-up Sweet — measured by self-play against three
+>   "kid" proxy players (harness in session scratch: calib.mjs).
+> * **KID AIDS**: unlimited Oops (takeback), 💡 Hint (engine depth 3), 👀 Helper
+>   (on by default): own pieces in danger wobble with a red ring, red move dots =
+>   unsafe square, black pawns 2 steps from promoting flash, stalemate guard asks
+>   before a tie. Stars: 3 = no Oops/Hints, 2 = ≤3, 1 = a win. Friendly reasons
+>   for illegal moves ("that would put your king in danger"). Teacher decision
+>   2026-09-19 (no hints) applies to grown-up Chess only.
+> * **SAVING**: localStorage `mmtKidsChess.v1` — several player profiles per
+>   device (name + picture), finished nodes, best stars, a game in progress
+>   (resume). Optional ☁️ Sign in with the MMT student code via
+>   `/portal/shared/quizClient.js` (dynamic import; offline = local only). Each
+>   bot WIN (first, or more stars) → one `achievements` record, tool
+>   `kids-chess-adventure`, score 1/1, types `bot:n`,`stars:n`,… (registry entry
+>   `kids-chess-adventure`, category "Game"). On sign-in the page reads the
+>   student's OWN achievements (`where studentCode == claim` — the live rules
+>   allow it) and merges them; local wins the account lacks are uploaded. No
+>   rules change. The student code is never stored — only a hash, to match a
+>   profile to its account. Grown-up gate (a times-table question) guards
+>   unlock-all / reset / remove player.
+> * **Verified**: all 14 lessons solved through the UI, every puzzle/star stage
+>   checked by harness, all 20 bots reply, win/loss/tie/resign/oops/hint/resume/
+>   stalemate guard, cloud restore + upload with stubbed Firebase (code not in
+>   storage, other tools/students ignored), offline sign-in message, 1920/1366/
+>   1024/768/390 widths with no horizontal scroll.
+
 > **NEW (2026-09-30, session — being pushed): ADDITION BY COMPENSATION.**
 > `interactive-tools/stage-3/number/addition-compensation/`, MA3-AR-01. Self-contained,
 > no Firebase. Tools ▾ is ONE row: Student Quiz (teacher decision 2026-09-30).
