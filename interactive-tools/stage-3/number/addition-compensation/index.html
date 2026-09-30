@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Addition by Compensation | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --green:#22c55e;
+      --green-dark:#15803d;
+      --purple:#7c3aed;
+      --purple-dark:#5b21b6;
+      --orange:#f97316;
+      --orange-dark:#c2410c;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --red:#dc2626;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+
+    .app{ min-height:100dvh; display:flex; flex-direction:column; min-width:0; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px;
+      margin-left:-12px; font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4); }
+    .mmtBrandLogo{
+      width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08); flex:0 0 auto;
+    }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{
+      font-weight:850; font-size:clamp(1.05rem,1.9vw,1.5rem); letter-spacing:-.04em;
+      text-align:center; color:white; white-space:nowrap;
+    }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px;
+      cursor:pointer; transition:.18s ease; user-select:none;
+    }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover,.toolLink:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+    .toolLink.is-disabled{ color:var(--line-soft); cursor:not-allowed; }
+    .toolLink.is-disabled::after{ content:'\2022'; color:var(--line-soft); font-size:.9rem; }
+    .toolLink.is-disabled:hover{ background:transparent; color:var(--line-soft); }
+    .toolLink.is-disabled small{ color:var(--line-soft); }
+
+    .settingsMenu.open{ gap:11px; padding:15px 18px; min-width:330px; max-height:min(74vh,640px); overflow:auto; }
+    .settingsHead{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .settingsNote{ margin:0; font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.4; }
+    .settingsRule{ height:1px; background:var(--border); margin:1px 0; }
+
+    .selRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .selRow > span{ font-weight:900; font-size:.92rem; color:var(--ink); white-space:nowrap; }
+    .selRow select{
+      appearance:none; border:1.5px solid var(--border);
+      padding:8px 30px 8px 11px; border-radius:11px; font-weight:850; font-size:.88rem;
+      color:var(--line); min-width:172px; cursor:pointer;
+      background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
+      background-size:11px;
+    }
+    .selRow select:hover{ border-color:var(--line-soft); }
+    .selRow select:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+
+    .ownRow{ display:flex; align-items:center; gap:8px; font-family:var(--mathFont); font-size:1.35rem; font-weight:700; color:var(--line); }
+    .ownRow input{
+      width:3.1em; text-align:center; font-family:var(--mathFont); font-size:1.35rem; font-weight:700;
+      border:1.5px solid var(--border); border-radius:11px; padding:5px 4px; color:var(--ink);
+      -moz-appearance:textfield;
+    }
+    .ownRow input::-webkit-outer-spin-button,.ownRow input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .ownRow input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+    .ownRow input.is-bad{ border-color:var(--red); color:var(--red); animation:shake .34s; }
+    .ownGo{
+      margin-left:auto; appearance:none; border:none; border-radius:11px; padding:9px 14px; cursor:pointer;
+      background:var(--blue); color:#fff; font-family:var(--uiFont); font-weight:900; font-size:.88rem;
+    }
+    .ownGo:hover{ background:var(--blue-dark); }
+    .ownMsg{ margin:0; font-size:.76rem; font-weight:800; color:var(--red); line-height:1.4; }
+
+    .sw{ display:inline-flex; align-items:center; gap:11px; cursor:pointer; user-select:none; font-weight:850; color:var(--line); font-size:.93rem; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:50px; height:29px; border-radius:999px; background:#cbd5e1; transition:.18s ease; flex:0 0 auto; box-shadow:inset 0 1px 3px rgba(15,23,42,.18); }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(15,23,42,.3); transition:.18s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(21px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.28); }
+
+    /* ---------- layout ---------- */
+    .layout{
+      flex:1; width:min(1420px,100%); margin:0 auto; padding:18px 22px 24px;
+      display:flex; flex-direction:column; gap:14px; min-width:0;
+    }
+    .boardCard{
+      position:relative; background:var(--card); border:1px solid var(--border); border-radius:22px;
+      box-shadow:var(--shadow); padding:12px 16px 12px; min-width:0;
+    }
+    .outcomeTag{
+      position:absolute; top:14px; right:16px; z-index:2;
+      font-size:.66rem; letter-spacing:.1em; font-weight:950; text-transform:uppercase;
+      color:var(--purple-dark); background:rgba(124,58,237,.11); border:1px solid rgba(124,58,237,.24);
+      padding:5px 9px; border-radius:999px; white-space:nowrap;
+    }
+
+    /* ---------- the two statements ---------- */
+    /* Both are a three-column grid whose middle column is the + sign, so the +
+       always sits over the gap between the two piles, and each number sits over
+       its own pile. */
+    .stmtRow{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:baseline;
+      column-gap:.3em; font-family:var(--mathFont); font-weight:700; line-height:1; }
+    .stmtRow .l{ justify-self:end; }
+    .stmtRow .r{ justify-self:start; white-space:nowrap; }
+    .stmtRow .op{ color:var(--line); }
+    .stmtRow .q{ color:var(--line-soft); }
+    .stmtRow .ans{ color:var(--green-dark); }
+    .nL{ color:var(--blue-dark); } .nR{ color:var(--orange-dark); }
+    .nL.onTen,.nR.onTen{ color:var(--green-dark); }
+    .live{ font-size:var(--stmtFs,3rem); }
+    .orig{ font-size:calc(var(--stmtFs,3rem) * .72); opacity:.92; }
+    .origWrap{ display:flex; justify-content:center; margin-top:4px; }
+    .origPill{ padding:8px 22px; border-radius:18px; background:#f8fafc; border:1.5px solid var(--border); }
+
+    /* equal-and-opposite chips under the live numbers */
+    .chipRow{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); column-gap:.3em; min-height:34px; margin:6px 0 2px; }
+    .chipRow .l{ justify-self:end; } .chipRow .r{ justify-self:start; }
+    .chipRow .mid{ width:1.2em; }
+    .jChip{ display:inline-block; font-weight:950; font-size:1.02rem; color:var(--purple-dark);
+      background:rgba(124,58,237,.11); border:1.5px solid rgba(124,58,237,.3); padding:4px 12px; border-radius:999px;
+      animation:popIn .3s cubic-bezier(.34,1.5,.5,1); }
+    .jChip[hidden]{ display:none; }
+
+    /* ---------- the tiles ---------- */
+    .field{ position:relative; margin:6px 0 8px; touch-action:none; user-select:none; -webkit-user-select:none; }
+    .half{ position:absolute; top:0; bottom:0; border-radius:18px; transition:background .15s ease; pointer-events:none; }
+    .half.is-target{ background:rgba(34,197,94,.08); box-shadow:inset 0 0 0 2px rgba(21,128,61,.28); }
+    .divider{ position:absolute; top:6%; bottom:6%; width:0; border-left:2px dashed #cbd5e1; pointer-events:none; }
+
+    .rod{ position:absolute; border-radius:9px; pointer-events:none;
+      border:1.5px solid rgba(148,163,184,.45); background:rgba(241,245,249,.55);
+      transition:transform .38s cubic-bezier(.4,0,.2,1), opacity .2s ease; }
+    .ghost{ position:absolute; border-radius:5px; pointer-events:none; border:2px dashed rgba(100,116,139,.55);
+      transition:transform .38s cubic-bezier(.4,0,.2,1), opacity .2s ease; }
+
+    .tile{ position:absolute; left:0; top:0; border-radius:5px; cursor:grab;
+      transition:transform .38s cubic-bezier(.4,0,.2,1), box-shadow .12s ease, filter .12s ease;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.18); will-change:transform; }
+    .tile.L{ background:linear-gradient(180deg,#3b82f6,var(--blue-dark)); }
+    .tile.R{ background:linear-gradient(180deg,#fb923c,var(--orange-dark)); }
+    .tile.sel{ box-shadow:0 0 0 3px #fff, 0 0 0 5.5px var(--purple); filter:brightness(1.08); z-index:3; }
+    .tile.dragging{ transition:none; z-index:10; cursor:grabbing; box-shadow:0 0 0 3px #fff, 0 0 0 5.5px var(--purple), 0 10px 20px rgba(15,23,42,.3); }
+    .tile.instant{ transition:none; }
+    .lasso{ position:absolute; border:2px dashed var(--purple); background:rgba(124,58,237,.08); border-radius:6px; pointer-events:none; z-index:20; }
+
+    /* ---------- controls ---------- */
+    .ctrlCard{
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:11px;
+    }
+    .stepBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:12px 20px; border-radius:15px; font-weight:950; font-size:1rem; cursor:pointer; transition:.16s ease;
+    }
+    .stepBtn:hover:not(:disabled){ border-color:var(--blue); background:#eef2ff; color:var(--blue-dark); transform:translateY(-1px); }
+    .stepBtn:disabled{ opacity:.38; cursor:not-allowed; transform:none; }
+    .nextBtn{
+      appearance:none; border:none; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      padding:13px 26px; border-radius:16px; font-weight:950; font-size:1.05rem; cursor:pointer;
+      box-shadow:0 10px 24px rgba(37,99,235,.30); transition:.18s ease; white-space:nowrap;
+    }
+    .nextBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 30px rgba(37,99,235,.38); }
+    .nextBtn[aria-pressed="true"]{ background:linear-gradient(135deg,var(--green-dark),#0f766e); box-shadow:0 10px 24px rgba(21,128,61,.3); }
+    .moveBtn{ appearance:none; border:1.5px solid rgba(124,58,237,.3); background:rgba(124,58,237,.08); color:var(--purple-dark);
+      padding:11px 14px; border-radius:14px; font-weight:950; font-size:.95rem; cursor:pointer; transition:.14s ease; white-space:nowrap; }
+    .moveBtn:hover:not(:disabled){ background:rgba(124,58,237,.16); transform:translateY(-1px); }
+    .moveBtn:disabled{ opacity:.35; cursor:not-allowed; transform:none; }
+    .genBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 15px; border-radius:14px; font-weight:900; font-size:.92rem; cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px; transition:.18s ease; white-space:nowrap;
+    }
+    .genBtn:hover{ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; transform:translateY(-1px); }
+    .dice{ font-size:1.15rem; line-height:1; }
+    .spacer{ flex:1 1 auto; }
+    .keyHint{ font-size:.78rem; font-weight:800; color:var(--line-soft); }
+    .keyHint kbd{ font-family:var(--uiFont); font-size:.74rem; font-weight:900; color:var(--muted);
+      border:1px solid var(--border); border-bottom-width:2px; border-radius:6px; padding:1px 6px; background:#f8fafc; }
+
+    @keyframes shake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-6px);} 75%{ transform:translateX(6px);} }
+    @keyframes popIn{ 0%{ transform:scale(.4); opacity:0;} 60%{ transform:scale(1.16);} 100%{ transform:scale(1); opacity:1;} }
+    @media (prefers-reduced-motion:reduce){
+      .tile,.rod,.ghost{ transition:none; } .jChip{ animation:none; }
+    }
+
+    /* ---------- responsive ---------- */
+    @media (max-width:1180px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr) auto; padding:12px 16px; gap:12px; }
+      .mmtBrandText{ display:none; }
+      .btn{ padding:10px 13px; font-size:14px; }
+      .layout{ padding:16px 14px 22px; }
+      .keyHint{ display:none; }
+    }
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:1fr; justify-items:center; padding:12px 14px; }
+      .mmtBrand{ margin-left:0; } .topActions{ justify-self:center; justify-content:center; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .layout{ padding:12px 10px 20px; }
+      .boardCard{ padding:10px 8px 8px; }
+      .keyHint{ display:none; }
+    }
+    @media (max-width:560px){
+      .genBtn .genLabel{ display:none; }
+      .stepBtn{ padding:11px 14px; }
+      .nextBtn{ padding:12px 18px; }
+      .outcomeTag{ display:none; }
+    }
+    @media print{ .mmtTopbar,.ctrlCard{ display:none; } }
+  </style>
+<!-- mmt-pwa -->
+<link rel="manifest" href="../../../../manifest.webmanifest">
+<meta name="theme-color" content="#1f3a5f">
+<link rel="apple-touch-icon" href="../../../../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MMT">
+<script src="../../../../pwa.js" defer></script>
+<!-- /mmt-pwa -->
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Addition by Compensation</div>
+      <div class="topActions">
+        <div class="menuWrap">
+          <button class="btn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false">Settings &#9662;</button>
+          <nav class="dropMenu settingsMenu" id="settingsMenu" aria-label="Settings">
+            <div class="settingsHead">The question</div>
+            <label class="selRow"><span>One number ends in</span>
+              <select id="endSel" aria-label="One number ends in">
+                <option value="9">9</option>
+                <option value="89" selected>8 or 9</option>
+                <option value="789">7, 8 or 9</option>
+              </select>
+            </label>
+            <label class="selRow"><span>Total</span>
+              <select id="totSel" aria-label="Size of the total">
+                <option value="under" selected>Under 100</option>
+                <option value="over">100 or more</option>
+                <option value="both">Either</option>
+              </select>
+            </label>
+            <p class="settingsNote">One number is one, two or three short of a ten, and the other has enough ones to give &mdash; so a few tiles across makes a ten.</p>
+            <div class="settingsHead">Type your own</div>
+            <div class="ownRow">
+              <input id="ownA" type="number" inputmode="numeric" min="1" max="99" placeholder="36" aria-label="First number">
+              <span>+</span>
+              <input id="ownB" type="number" inputmode="numeric" min="1" max="99" placeholder="49" aria-label="Second number">
+              <button class="ownGo" id="ownGo" type="button">Use</button>
+            </div>
+            <p class="ownMsg" id="ownMsg" hidden></p>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">On screen</div>
+            <label class="sw"><input type="checkbox" id="gapToggle" checked><span class="track"></span><span>Show the gap to the next ten</span></label>
+            <label class="sw"><input type="checkbox" id="jumpToggle" checked><span class="track"></span><span>Show what moved (&minus;1 / +1)</span></label>
+            <label class="sw"><input type="checkbox" id="tenToggle" checked><span class="track"></span><span>Turn green on a ten</span></label>
+          </nav>
+        </div>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-3/number/constant-difference/">Constant Difference<small>The subtraction strategy: move both numbers the same way</small></a>
+            <span class="toolLink is-disabled" aria-disabled="true">Student Quiz<small>Not built yet</small></span>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="newBtn" type="button">New question</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="boardCard" id="boardCard">
+        <span class="outcomeTag">MA3-AR-01</span>
+        <div class="stmtRow live" id="live" aria-live="polite">
+          <span class="l"><span class="nL" id="liveL">36</span></span>
+          <span class="op">+</span>
+          <span class="r"><span class="nR" id="liveR">49</span> <span class="op">=</span> <span class="q" id="liveAns">?</span></span>
+        </div>
+        <div class="chipRow" aria-hidden="true">
+          <span class="l"><span class="jChip" id="chipL" hidden></span></span>
+          <span class="mid"></span>
+          <span class="r"><span class="jChip" id="chipR" hidden></span></span>
+        </div>
+        <div class="field" id="field" role="application" aria-label="Two piles of tiles"></div>
+        <div class="origWrap">
+          <div class="origPill">
+            <div class="stmtRow orig" id="orig">
+              <span class="l"><span class="nL" id="origL">36</span></span>
+              <span class="op">+</span>
+              <span class="r"><span class="nR" id="origR">49</span> <span class="op">=</span> <span class="q" id="origAns">?</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="ctrlCard" id="ctrlCard">
+        <button class="stepBtn" id="homeBtn" type="button" disabled>&#8634; Back to the start</button>
+        <button class="nextBtn" id="revealBtn" type="button" aria-pressed="false">Show the total</button>
+        <button class="moveBtn" id="moveLeftBtn" type="button" title="Move one tile to the left pile">&larr; 1</button>
+        <button class="moveBtn" id="moveRightBtn" type="button" title="Move one tile to the right pile">1 &rarr;</button>
+        <span class="spacer"></span>
+        <span class="keyHint">drag tiles across &nbsp;&middot;&nbsp; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> move one</span>
+        <button class="genBtn" id="genBtn" type="button" title="A new addition with the same settings">
+          <span class="dice" aria-hidden="true">&#9860;</span><span class="genLabel">New numbers</span>
+        </button>
+      </div>
+    </main>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rnd = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  /* THE WHOLE IDEA: the total is the tiles, and tiles are never made or
+     destroyed — only carried from one pile to the other. So A + B and the
+     new statement are the same amount, and a class can SEE it is the same
+     amount, because every tile is still on the board.
+
+     Four decisions carry that:
+     1. Tiles stand in COLUMNS OF TEN (rods), so tens and ones read at a
+        glance and 49 is visibly "one short of five tens".
+     2. Each pile's unfinished ten stands NEXT TO THE MIDDLE, so the two
+        unfinished tens face each other and a tile only has a short trip.
+     3. The empty spaces in an unfinished ten are drawn as dashed slots —
+        the gap to the next ten is a thing you can point at.
+     4. A tile KEEPS ITS COLOUR when it moves. 50 is forty-nine orange tiles
+        and one blue one, which is exactly what 35 + 50 means. */
+  const S = {
+    A: 36, B: 49,
+    tiles: [],          /* { id, origin:"L"|"R", el } */
+    piles: { L: [], R: [] },   /* ids, in slot order */
+    sel: new Set(),
+    revealed: false,
+    ends: "89", tot: "under",
+    gap: true, jumps: true, tenGlow: true,
+    busy: false,
+    lastKey: "",
+    drag: null
+  };
+
+  /* ------------------------------------------------------------ questions */
+  /* One number ends in 7, 8 or 9 (a gap of 3, 2 or 1 to the next ten). The
+     other has at least that many ones (so giving them never breaks one of
+     its tens) but no more than 6 (so there is one obvious number to round). */
+  function makeQuestion(ends, tot){
+    const digits = String(ends).split("").map(Number);
+    const mode = tot === "both" ? pick(["under","over"]) : tot;
+    for(let tries = 0; tries < 1000; tries++){
+      const n = pick(digits), g = 10 - n;
+      const near = rnd(1, 8) * 10 + n;
+      const oOnes = rnd(g, 6);
+      const other = rnd(1, 8) * 10 + oOnes;
+      const sum = near + other;
+      if(mode === "under" && sum > 99) continue;
+      if(mode === "over" && sum < 100) continue;
+      const nearOnLeft = Math.random() < .5;
+      const A = nearOnLeft ? near : other, B = nearOnLeft ? other : near;
+      const key = A + "+" + B;
+      if(key === S.lastKey) continue;
+      return { A, B };
+    }
+    return { A: 36, B: 49 };
+  }
+
+  function setQuestion(A, B){
+    S.A = A; S.B = B; S.lastKey = A + "+" + B;
+    S.revealed = false; S.sel.clear();
+    const field = $("field");
+    field.textContent = "";
+    S.tiles = [];
+    S.piles = { L: [], R: [] };
+    let id = 0;
+    for(const side of ["L","R"]){
+      const n = side === "L" ? A : B;
+      for(let i = 0; i < n; i++){
+        const el = document.createElement("div");
+        el.className = "tile " + side + " instant";
+        el.dataset.id = String(id);
+        field.appendChild(el);
+        S.tiles.push({ id, origin: side, el });
+        S.piles[side].push(id);
+        id++;
+      }
+    }
+    layout(true);
+    requestAnimationFrame(() => S.tiles.forEach(t => t.el.classList.remove("instant")));
+  }
+
+  /* ------------------------------------------------------------ geometry */
+  let G = null;
+  const total = () => S.A + S.B;
+  function measure(){
+    const field = $("field");
+    const W = Math.max(280, field.getBoundingClientRect().width);
+    /* The scale is fixed for the whole question, sized so EITHER pile could
+       hold every tile — so nothing ever shrinks mid-lesson. */
+    const maxCols = Math.ceil(total() / 10);
+    const top = field.getBoundingClientRect().top + window.scrollY;
+    const origH = $("orig").closest(".origWrap").offsetHeight + 12;
+    const ctrlH = $("ctrlCard").getBoundingClientRect().height;
+    const availH = Math.max(170, window.innerHeight - top - origH - ctrlH - 14 - 24 - 14 - 16);
+    const midGap = Math.max(36, Math.min(80, W * .05));
+    // pitch units per column: tile + column gap (.42 of a tile)
+    const byW = (W - midGap - 24) / (2 * maxCols * 1.42);
+    const byH = availH / (10 * 1.14 + .6);
+    const s = Math.max(4, Math.min(46, byW, byH));
+    const cg = s * .42, rg = s * .14;
+    const H = Math.round(10 * s + 9 * rg + s * .8);
+    return { W, H, s, cg, rg, pitch: s + cg, midGap, cx: W / 2, baseY: H - s * .4 };
+  }
+  function slotXY(side, index, count){
+    const col = Math.floor(index / 10), row = index % 10;
+    const nCols = Math.ceil(count / 10) || 0;
+    const x = side === "L"
+      ? G.cx - G.midGap / 2 - (nCols - col) * G.pitch + G.cg / 2
+      : G.cx + G.midGap / 2 + (nCols - 1 - col) * G.pitch + G.cg / 2;
+    const y = G.baseY - (row + 1) * G.s - row * G.rg;
+    return { x, y };
+  }
+
+  function layout(fresh){
+    G = measure();
+    const field = $("field");
+    field.style.height = G.H + "px";
+    const stmtFs = Math.max(30, Math.min(58, G.s * 1.35 + 12));
+    $("boardCard").style.setProperty("--stmtFs", stmtFs + "px");
+
+    // furniture: halves (drop targets), divider, rods, ghost slots
+    field.querySelectorAll(".half,.divider,.rod,.ghost").forEach(n => n.remove());
+    for(const side of ["L","R"]){
+      const h = document.createElement("div");
+      h.className = "half"; h.dataset.side = side;
+      h.style.left = (side === "L" ? 0 : G.cx) + "px";
+      h.style.width = (G.W / 2) + "px";
+      field.insertBefore(h, field.firstChild);
+    }
+    const dv = document.createElement("div");
+    dv.className = "divider"; dv.style.left = (G.cx - 1) + "px";
+    field.insertBefore(dv, field.firstChild);
+
+    for(const side of ["L","R"]){
+      const pile = S.piles[side], n = pile.length, nCols = Math.ceil(n / 10);
+      for(let c = 0; c < nCols; c++){
+        const p = slotXY(side, c * 10, n);
+        const rod = document.createElement("div");
+        rod.className = "rod";
+        const pad = G.s * .16;
+        rod.style.width = (G.s + 2 * pad) + "px";
+        rod.style.height = (10 * G.s + 9 * G.rg + 2 * pad) + "px";
+        rod.style.transform = `translate(${p.x - pad}px, ${G.baseY - 10 * G.s - 9 * G.rg - pad}px)`;
+        field.insertBefore(rod, field.querySelector(".tile"));
+      }
+      // the gap to the next ten, as dashed empty slots
+      if(S.gap && n % 10 !== 0){
+        for(let i = n; i < Math.ceil(n / 10) * 10; i++){
+          const p = slotXY(side, i, n);
+          const g = document.createElement("div");
+          g.className = "ghost"; g.dataset.side = side;
+          g.style.width = G.s + "px"; g.style.height = G.s + "px";
+          g.style.transform = `translate(${p.x}px, ${p.y}px)`;
+          field.insertBefore(g, field.querySelector(".tile"));
+        }
+      }
+      pile.forEach((id, i) => {
+        const t = S.tiles[id], p = slotXY(side, i, n);
+        t.el.style.width = G.s + "px"; t.el.style.height = G.s + "px";
+        t.el.style.borderRadius = Math.max(3, G.s * .16) + "px";
+        if(!(S.drag && S.drag.ids && S.drag.moving && S.drag.ids.includes(id)))
+          t.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        t.x = p.x; t.y = p.y; t.side = side;
+      });
+    }
+    paintStatements();
+  }
+
+  function paintStatements(){
+    const nL = S.piles.L.length, nR = S.piles.R.length, d = nL - S.A;
+    const settled = !S.drag;
+    $("liveL").textContent = nL; $("liveR").textContent = nR;
+    $("liveL").classList.toggle("onTen", S.tenGlow && settled && d !== 0 && nL > 0 && nL % 10 === 0);
+    $("liveR").classList.toggle("onTen", S.tenGlow && settled && d !== 0 && nR > 0 && nR % 10 === 0);
+    $("origL").textContent = S.A; $("origR").textContent = S.B;
+    for(const id of ["liveAns","origAns"]){
+      $(id).textContent = S.revealed ? String(total()) : "?";
+      $(id).className = S.revealed ? "ans" : "q";
+    }
+    const cL = $("chipL"), cR = $("chipR");
+    const show = S.jumps && d !== 0;
+    const fmt = v => (v > 0 ? "+" : "−") + Math.abs(v);
+    if(show){
+      const tL = fmt(d), tR = fmt(-d);
+      if(cL.textContent !== tL || cL.hidden){ cL.textContent = tL; cL.hidden = false; restart(cL); }
+      if(cR.textContent !== tR || cR.hidden){ cR.textContent = tR; cR.hidden = false; restart(cR); }
+    } else { cL.hidden = true; cR.hidden = true; cL.textContent = ""; cR.textContent = ""; }
+    $("homeBtn").disabled = d === 0;
+    $("moveLeftBtn").disabled = nR === 0;
+    $("moveRightBtn").disabled = nL === 0;
+    $("revealBtn").setAttribute("aria-pressed", S.revealed ? "true" : "false");
+    $("revealBtn").textContent = S.revealed ? "Hide the total" : "Show the total";
+    S.tiles.forEach(t => t.el.classList.toggle("sel", S.sel.has(t.id)));
+    $("field").setAttribute("aria-label", `Left pile ${nL} tiles, right pile ${nR} tiles. Started as ${S.A} plus ${S.B}.`);
+  }
+  function restart(el){ el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
+
+  /* ------------------------------------------------------------ moving tiles */
+  /* Taking a tile out of a pile fills its slot with the pile's LAST tile, so
+     one tile slides and the rest of the pile stays put — a hole in a full ten
+     never ripples through every column. */
+  function takeOut(side, id){
+    const pile = S.piles[side], i = pile.indexOf(id);
+    if(i < 0) return;
+    const last = pile.pop();
+    if(last !== id) pile[i] = last;
+  }
+  function moveIds(ids, to){
+    const from = to === "L" ? "R" : "L";
+    // take the highest slots first, so earlier swaps don't disturb later ones
+    const ordered = ids.filter(id => S.piles[from].includes(id))
+      .sort((a, b) => S.piles[from].indexOf(b) - S.piles[from].indexOf(a));
+    if(!ordered.length) return 0;
+    for(const id of ordered){ takeOut(from, id); S.piles[to].push(id); }
+    return ordered.length;
+  }
+  /* The move buttons and arrow keys carry ONE tile. A tile that came from
+     the other side goes home first, so ← after → is an undo. */
+  function moveOne(to){
+    const from = to === "L" ? "R" : "L", pile = S.piles[from];
+    if(!pile.length) return;
+    let id = null;
+    for(let i = pile.length - 1; i >= 0; i--){ if(S.tiles[pile[i]].origin === to){ id = pile[i]; break; } }
+    if(id == null) id = pile[pile.length - 1];
+    S.sel.clear();
+    moveIds([id], to);
+    layout();
+  }
+  function home(){
+    S.sel.clear();
+    for(const side of ["L","R"]){
+      const other = side === "L" ? "R" : "L";
+      const away = S.piles[other].filter(id => S.tiles[id].origin === side);
+      if(away.length) moveIds(away, side);
+    }
+    // restore the original slot order so the piles look exactly as they started
+    S.piles.L = S.tiles.filter(t => t.origin === "L").map(t => t.id);
+    S.piles.R = S.tiles.filter(t => t.origin === "R").map(t => t.id);
+    layout();
+  }
+
+  /* ------------------------------------------------------------ pointer */
+  /* Tap a tile to select or unselect it. Drag a selected tile and every
+     selected tile on that side goes with it; drag an unselected one and it
+     goes alone. Drag on empty space to draw a box round a group. Let go on
+     the other side and they join that pile; anywhere else, they go back. */
+  function local(e){
+    const r = $("field").getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (G.W / r.width), y: (e.clientY - r.top) * (G.W / r.width) };
+  }
+  function tileAt(el){ const t = el && el.closest && el.closest(".tile"); return t ? S.tiles[+t.dataset.id] : null; }
+
+  function onDown(e){
+    if(e.button != null && e.button !== 0) return;
+    const t = tileAt(e.target), p = local(e);
+    e.preventDefault();
+    closeMenus();
+    if(t){
+      S.drag = { kind: "tile", start: p, id: t.id, side: t.side, moving: false, wasSel: S.sel.has(t.id) };
+    } else {
+      S.drag = { kind: "lasso", start: p, box: null };
+    }
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  }
+  function onMove(e){
+    const D = S.drag; if(!D) return;
+    const p = local(e);
+    const dx = p.x - D.start.x, dy = p.y - D.start.y;
+    if(D.kind === "tile"){
+      if(!D.moving){
+        if(Math.hypot(dx, dy) < 6) return;
+        D.moving = true;
+        // the group: every selected tile on this side, or just this one
+        if(!D.wasSel){ S.sel.clear(); S.sel.add(D.id); }
+        D.ids = [...S.sel].filter(id => S.tiles[id].side === D.side);
+        if(!D.ids.includes(D.id)) D.ids.push(D.id);
+        D.ids.forEach(id => { S.tiles[id].el.classList.add("dragging"); });
+        paintStatements();
+      }
+      D.ids.forEach(id => {
+        const t = S.tiles[id];
+        t.el.style.transform = `translate(${t.x + dx}px, ${t.y + dy}px)`;
+      });
+      const over = p.x < G.cx ? "L" : "R";
+      document.querySelectorAll(".half").forEach(h => h.classList.toggle("is-target", h.dataset.side === over && over !== D.side));
+    } else {
+      if(!D.box){
+        if(Math.hypot(dx, dy) < 6) return;
+        D.box = document.createElement("div"); D.box.className = "lasso"; $("field").appendChild(D.box);
+      }
+      const x0 = Math.min(p.x, D.start.x), y0 = Math.min(p.y, D.start.y);
+      const w = Math.abs(dx), h = Math.abs(dy);
+      Object.assign(D.box.style, { left: x0 + "px", top: y0 + "px", width: w + "px", height: h + "px" });
+      // a box selects on ONE side: the side it was started on
+      const side = D.start.x < G.cx ? "L" : "R";
+      S.sel.clear();
+      S.piles[side].forEach(id => {
+        const t = S.tiles[id];
+        if(t.x + G.s > x0 && t.x < x0 + w && t.y + G.s > y0 && t.y < y0 + h) S.sel.add(id);
+      });
+      S.tiles.forEach(t => t.el.classList.toggle("sel", S.sel.has(t.id)));
+    }
+  }
+  function onUp(e){
+    const D = S.drag; if(!D) return;
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+    document.querySelectorAll(".half").forEach(h => h.classList.remove("is-target"));
+    if(D.kind === "tile"){
+      if(!D.moving){
+        // a tap: toggle this tile
+        if(S.sel.has(D.id)) S.sel.delete(D.id); else S.sel.add(D.id);
+        // selection belongs to one side at a time
+        [...S.sel].forEach(id => { if(S.tiles[id].side !== S.tiles[D.id].side) S.sel.delete(id); });
+        S.drag = null; paintStatements(); return;
+      }
+      const p = local(e);
+      const over = p.x < G.cx ? "L" : "R";
+      D.ids.forEach(id => S.tiles[id].el.classList.remove("dragging"));
+      S.drag = null;
+      if(over !== D.side){ moveIds(D.ids, over); S.sel.clear(); }
+      else if(!D.wasSel) S.sel.delete(D.id);   // a tile that went nowhere is not left selected
+      layout();
+    } else {
+      if(D.box) D.box.remove(); else S.sel.clear();
+      S.drag = null; paintStatements();
+    }
+  }
+  $("field").addEventListener("pointerdown", onDown);
+
+  /* ------------------------------------------------------------ menus */
+  function closeMenus(){
+    ["settingsMenu","toolsMenu"].forEach(id => {
+      $(id).classList.remove("open");
+      $(id === "settingsMenu" ? "settingsBtn" : "toolsBtn").setAttribute("aria-expanded","false");
+    });
+  }
+  function toggleMenu(btnId, menuId){
+    $(btnId).addEventListener("click", e => {
+      e.stopPropagation();
+      const m = $(menuId), wasOpen = m.classList.contains("open");
+      closeMenus();
+      if(!wasOpen){ m.classList.add("open"); $(btnId).setAttribute("aria-expanded","true"); }
+    });
+  }
+  toggleMenu("settingsBtn","settingsMenu");
+  toggleMenu("toolsBtn","toolsMenu");
+  document.addEventListener("click", closeMenus);
+  $("settingsMenu").addEventListener("click", e => e.stopPropagation());
+  $("toolsMenu").addEventListener("click", e => e.stopPropagation());
+
+  /* ------------------------------------------------------------ wires */
+  function newQuestion(){ const q = makeQuestion(S.ends, S.tot); setQuestion(q.A, q.B); }
+  $("newBtn").addEventListener("click", newQuestion);
+  $("genBtn").addEventListener("click", newQuestion);
+  $("homeBtn").addEventListener("click", home);
+  $("revealBtn").addEventListener("click", () => { S.revealed = !S.revealed; paintStatements(); });
+  $("moveLeftBtn").addEventListener("click", () => moveOne("L"));
+  $("moveRightBtn").addEventListener("click", () => moveOne("R"));
+  $("endSel").addEventListener("change", e => { S.ends = e.target.value; newQuestion(); });
+  $("totSel").addEventListener("change", e => { S.tot = e.target.value; newQuestion(); });
+  $("gapToggle").addEventListener("change", e => { S.gap = e.target.checked; layout(); });
+  $("jumpToggle").addEventListener("change", e => { S.jumps = e.target.checked; paintStatements(); });
+  $("tenToggle").addEventListener("change", e => { S.tenGlow = e.target.checked; paintStatements(); });
+
+  function useOwn(){
+    const ia = $("ownA"), ib = $("ownB"), msg = $("ownMsg");
+    [ia, ib].forEach(n => n.classList.remove("is-bad"));
+    const a = Number(ia.value), b = Number(ib.value);
+    let bad = null, why = "";
+    if(ia.value === "" || !Number.isInteger(a) || a < 1 || a > 99){ bad = ia; why = "Type a number from 1 to 99."; }
+    else if(ib.value === "" || !Number.isInteger(b) || b < 1 || b > 99){ bad = ib; why = "Type a number from 1 to 99."; }
+    if(bad){ void bad.offsetWidth; bad.classList.add("is-bad"); msg.textContent = why; msg.hidden = false; bad.focus(); return; }
+    msg.hidden = true;
+    setQuestion(a, b);
+    closeMenus();
+  }
+  $("ownGo").addEventListener("click", useOwn);
+  ["ownA","ownB"].forEach(id => $(id).addEventListener("keydown", e => {
+    if(e.key === "Enter"){ e.preventDefault(); if(id === "ownA" && $("ownB").value === "") $("ownB").focus(); else useOwn(); }
+  }));
+
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ closeMenus(); S.sel.clear(); paintStatements(); return; }
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "INPUT" || tag === "SELECT") return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    if(e.key === "ArrowLeft"){ e.preventDefault(); moveOne("L"); }
+    else if(e.key === "ArrowRight"){ e.preventDefault(); moveOne("R"); }
+    else if(e.key === "Home" || e.key === "0"){ e.preventDefault(); home(); }
+    else if(e.key === "n" || e.key === "N"){ e.preventDefault(); newQuestion(); }
+    else if(e.key === "s" || e.key === "S"){ e.preventDefault(); S.revealed = !S.revealed; paintStatements(); }
+  });
+
+  let rz = 0;
+  window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => layout()); });
+
+  window.__AC__ = { S, makeQuestion, setQuestion, moveOne, moveIds, home, layout, geom: () => G };
+
+  setQuestion(36, 49);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => layout());
+})();
+</script>
+</body>
+</html>

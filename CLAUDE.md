@@ -52,6 +52,22 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-30, session — being pushed): ADDITION BY COMPENSATION.**
+> `interactive-tools/stage-3/number/addition-compensation/`, MA3-AR-01. Self-contained,
+> no Firebase. Tools ▾: Constant Difference + greyed Student Quiz.
+> * Each addend is a pile of DOM tiles in COLUMNS OF TEN (rods). Each pile's unfinished
+>   ten stands NEXT TO THE MIDDLE, so the two face each other; empty slots in it are
+>   dashed ("gap to the next ten", toggle). A moved tile KEEPS ITS COLOUR.
+> * Tap to select, drag a tile (or the selected group) across, or box-select on one
+>   side. Removing a tile swap-fills its slot with the pile's LAST tile (one tile slides,
+>   no ripple). ←/→ keys and buttons move one tile, sending a visiting tile home first.
+> * Live statement on top (+ sits over the divider), −n/+n chips, original question in
+>   a pill underneath; total `?` until "Show the total". Scale fixed per question so
+>   either pile could hold every tile. Numbers: one ends in 9 / 8–9 / 7–9, the other has
+>   gap..6 ones; total under 100 / 100+ / either; type your own.
+> * Verified: 63k Playwright checks (generation, drag, group, box select, keys, home,
+>   conservation, no overlap, answer hidden, six viewports).
+
 > **NEW (2026-09-30, session — being pushed): CONSTANT DIFFERENCE — TOOL + STUDENT QUIZ.**
 > Teaching tool `interactive-tools/stage-3/number/constant-difference/` and quiz
 > `online-quizzes/stage-3/number/constant-difference.html`, both under **MA3-AR-01**.

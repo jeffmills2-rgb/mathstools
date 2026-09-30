@@ -1,6 +1,6 @@
 /* Written by tools/build-pwa.mjs — do not edit by hand. */
 self.MMT_PRECACHE = {
- "version": "c2b486e3fc",
+ "version": "8bd1743f2e",
  "files": [
   "./",
   "assessment/exam-builder/app.js",
@@ -494,6 +494,7 @@ self.MMT_PRECACHE = {
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
+  "interactive-tools/stage-3/number/addition-compensation/index.html",
   "interactive-tools/stage-3/number/constant-difference/index.html",
   "interactive-tools/stage-3/number/division-grouping-bubbles/index.html",
   "interactive-tools/stage-3/number/halve-and-halve-again/index.html",

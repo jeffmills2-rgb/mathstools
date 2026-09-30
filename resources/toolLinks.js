@@ -92,6 +92,13 @@ window.MMT_TOOL_LINKS = {
 
   "MA3-AR-01": [
     {
+      title: "Addition by Compensation",
+      kind: "Teacher tool",
+      url: "/interactive-tools/stage-3/number/addition-compensation/",
+      note: "Two piles of tiles in tens: drag tiles from one pile to the other so 36 + 49 becomes 35 + 50. No tile is ever made or lost, so the total can't change.",
+      tags: ["compensation", "addition", "mental strategies", "bridging to ten", "make a ten", "friendly numbers", "tens and ones", "rearranging"]
+    },
+    {
       title: "Constant Difference",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-3/number/constant-difference/",
