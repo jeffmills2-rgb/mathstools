@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Constant Difference | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --green:#22c55e;
+      --green-dark:#15803d;
+      --purple:#7c3aed;
+      --purple-dark:#5b21b6;
+      --orange:#f97316;
+      --orange-dark:#c2410c;
+      --line:#334155;
+      --line-soft:#94a3b8;
+      --red:#dc2626;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0;
+      font-family:var(--uiFont);
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+
+    .app{ min-height:100dvh; display:flex; flex-direction:column; min-width:0; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:minmax(220px,1fr) auto minmax(320px,1fr);
+      align-items:center; gap:18px;
+      box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{
+      display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px;
+      margin-left:-12px; font-weight:900;
+      transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px);
+      box-shadow:0 0 10px rgba(124,58,237,.6),0 0 18px rgba(37,99,235,.4); }
+    .mmtBrandLogo{
+      width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.08); flex:0 0 auto;
+    }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{
+      font-weight:850; font-size:clamp(1.05rem,1.9vw,1.5rem); letter-spacing:-.04em;
+      text-align:center; color:white; white-space:nowrap;
+    }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px;
+      cursor:pointer; transition:.18s ease; user-select:none;
+    }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,.23); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn-primary:hover:not(:disabled){ background:#eef2ff; color:#1d4ed8; }
+
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px;
+      color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; line-height:1; }
+    .toolLink:hover,.toolLink:focus-visible{ background:#eef2ff; color:#1d4ed8; outline:none; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+    .toolLink.is-disabled{ color:var(--line-soft); cursor:not-allowed; }
+    .toolLink.is-disabled::after{ content:'\2022'; color:var(--line-soft); font-size:.9rem; }
+    .toolLink.is-disabled:hover{ background:transparent; color:var(--line-soft); }
+    .toolLink.is-disabled small{ color:var(--line-soft); }
+
+    .settingsMenu.open{ gap:11px; padding:15px 18px; min-width:330px; max-height:min(74vh,640px); overflow:auto; }
+    .settingsHead{ font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:950; color:var(--muted); }
+    .settingsNote{ margin:0; font-size:.76rem; font-weight:650; color:var(--muted); line-height:1.4; }
+    .settingsRule{ height:1px; background:var(--border); margin:1px 0; }
+
+    .selRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .selRow > span{ font-weight:900; font-size:.92rem; color:var(--ink); white-space:nowrap; }
+    .selRow select{
+      appearance:none; border:1.5px solid var(--border);
+      padding:8px 30px 8px 11px; border-radius:11px; font-weight:850; font-size:.88rem;
+      color:var(--line); min-width:172px; cursor:pointer;
+      background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
+      background-size:11px;
+    }
+    .selRow select:hover{ border-color:var(--line-soft); }
+    .selRow select:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+
+    .ownRow{ display:flex; align-items:center; gap:8px; font-family:var(--mathFont); font-size:1.35rem; font-weight:700; color:var(--line); }
+    .ownRow input{
+      width:3.1em; text-align:center; font-family:var(--mathFont); font-size:1.35rem; font-weight:700;
+      border:1.5px solid var(--border); border-radius:11px; padding:5px 4px; color:var(--ink);
+      -moz-appearance:textfield;
+    }
+    .ownRow input::-webkit-outer-spin-button,.ownRow input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .ownRow input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+    .ownRow input.is-bad{ border-color:var(--red); color:var(--red); animation:shake .34s; }
+    .ownGo{
+      margin-left:auto; appearance:none; border:none; border-radius:11px; padding:9px 14px; cursor:pointer;
+      background:var(--blue); color:#fff; font-family:var(--uiFont); font-weight:900; font-size:.88rem;
+    }
+    .ownGo:hover{ background:var(--blue-dark); }
+    .ownMsg{ margin:0; font-size:.76rem; font-weight:800; color:var(--red); line-height:1.4; }
+
+    .sw{ display:inline-flex; align-items:center; gap:11px; cursor:pointer; user-select:none; font-weight:850; color:var(--line); font-size:.93rem; }
+    .sw input{ position:absolute; opacity:0; width:0; height:0; }
+    .sw .track{ position:relative; width:50px; height:29px; border-radius:999px; background:#cbd5e1; transition:.18s ease; flex:0 0 auto; box-shadow:inset 0 1px 3px rgba(15,23,42,.18); }
+    .sw .track::after{ content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(15,23,42,.3); transition:.18s ease; }
+    .sw input:checked + .track{ background:var(--green); }
+    .sw input:checked + .track::after{ transform:translateX(21px); }
+    .sw input:focus-visible + .track{ box-shadow:0 0 0 4px rgba(37,99,235,.28); }
+
+    /* ---------- layout ---------- */
+    .layout{
+      flex:1; width:min(1420px,100%); margin:0 auto; padding:20px 22px 26px;
+      display:flex; flex-direction:column; gap:14px; min-width:0;
+    }
+    .boardCard{
+      position:relative; background:var(--card); border:1px solid var(--border); border-radius:22px;
+      box-shadow:var(--shadow); padding:14px 16px 10px; min-width:0;
+    }
+    .outcomeTag{
+      position:absolute; top:14px; right:16px; z-index:2;
+      font-size:.66rem; letter-spacing:.1em; font-weight:950; text-transform:uppercase;
+      color:var(--purple-dark); background:rgba(124,58,237,.11); border:1px solid rgba(124,58,237,.24);
+      padding:5px 9px; border-radius:999px; white-space:nowrap;
+    }
+    #board{ display:block; width:100%; touch-action:none; user-select:none; -webkit-user-select:none; overflow:visible; }
+
+    /* ---------- the board (SVG) ---------- */
+    .axis{ stroke:var(--line); stroke-width:3; stroke-linecap:round; }
+    .tick{ stroke:var(--line-soft); stroke-width:1.4; }
+    .tick.five{ stroke:#64748b; stroke-width:1.8; }
+    .tick.ten{ stroke:var(--line); stroke-width:2.6; }
+    .tickLab{ font-family:var(--uiFont); font-weight:850; fill:var(--line); text-anchor:middle; }
+
+    .stmt{ font-family:var(--mathFont); font-weight:700; text-anchor:middle; dominant-baseline:central; }
+    .stmt .op{ fill:var(--line); }
+    .stmt .q{ fill:var(--line-soft); }
+    .stmt .ans{ fill:var(--green-dark); }
+    .stmt.orig .a,.stmt.orig .b{ fill:var(--blue-dark); }
+    .stmt.moved .a,.stmt.moved .b{ fill:var(--orange-dark); }
+    .stmt.moved .b.onTen{ fill:var(--green-dark); }
+
+    .band rect.body{ stroke-width:2.5; }
+    .band.orig rect.body{ fill:rgba(37,99,235,.13); stroke:rgba(29,78,216,.55); }
+    .band.moved rect.body{ fill:rgba(249,115,22,.17); stroke:rgba(194,65,12,.62); }
+    .band .mid{ font-family:var(--mathFont); font-weight:700; text-anchor:middle; dominant-baseline:central; fill:var(--line-soft); }
+    .band .mid.known{ fill:var(--green-dark); }
+    .knob circle{ stroke:#fff; stroke-width:3; }
+    .band.orig .knob circle{ fill:var(--blue); }
+    .band.moved .knob circle{ fill:var(--orange); }
+    .band.moved .knob.onTen circle{ fill:var(--green); }
+    .knob text{ font-family:var(--uiFont); font-weight:950; fill:#fff; text-anchor:middle; dominant-baseline:central; }
+    .drop{ stroke-width:2; stroke-dasharray:5 5; }
+    .band.orig .drop{ stroke:rgba(29,78,216,.6); }
+    .band.moved .drop{ stroke:rgba(194,65,12,.65); }
+    .drop.onTen{ stroke:rgba(21,128,61,.75); }
+    .pin{ stroke:#fff; stroke-width:2; }
+    .band.orig .pin{ fill:var(--blue); }
+    .band.moved .pin{ fill:var(--orange); }
+
+    .band.moved{ cursor:grab; outline:none; }
+    .band.moved.dragging{ cursor:grabbing; }
+    .band.moved.dragging rect.body{ fill:rgba(249,115,22,.26); }
+    .band.moved:focus-visible rect.body{ stroke:var(--blue); stroke-width:4; }
+
+    .jump path{ fill:none; stroke:var(--purple); stroke-width:2.6; }
+    .jump text{ font-family:var(--uiFont); font-weight:950; fill:var(--purple-dark); text-anchor:middle; }
+    .jump polygon{ fill:var(--purple); }
+
+    /* ---------- controls ---------- */
+    .ctrlCard{
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+      padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:11px;
+    }
+    .stepBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:12px 20px; border-radius:15px; font-weight:950; font-size:1rem; cursor:pointer; transition:.16s ease;
+    }
+    .stepBtn:hover:not(:disabled){ border-color:var(--blue); background:#eef2ff; color:var(--blue-dark); transform:translateY(-1px); }
+    .stepBtn:disabled{ opacity:.38; cursor:not-allowed; transform:none; }
+    .nextBtn{
+      appearance:none; border:none; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      padding:13px 26px; border-radius:16px; font-weight:950; font-size:1.05rem; cursor:pointer;
+      box-shadow:0 10px 24px rgba(37,99,235,.30); transition:.18s ease; white-space:nowrap;
+    }
+    .nextBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 30px rgba(37,99,235,.38); }
+    .nextBtn[aria-pressed="true"]{ background:linear-gradient(135deg,var(--green-dark),#0f766e); box-shadow:0 10px 24px rgba(21,128,61,.3); }
+    .genBtn{
+      appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 15px; border-radius:14px; font-weight:900; font-size:.92rem; cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px; transition:.18s ease; white-space:nowrap;
+    }
+    .genBtn:hover{ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; transform:translateY(-1px); }
+    .dice{ font-size:1.15rem; line-height:1; }
+    .spacer{ flex:1 1 auto; }
+    .keyHint{ font-size:.78rem; font-weight:800; color:var(--line-soft); }
+    .keyHint kbd{ font-family:var(--uiFont); font-size:.74rem; font-weight:900; color:var(--muted);
+      border:1px solid var(--border); border-bottom-width:2px; border-radius:6px; padding:1px 6px; background:#f8fafc; }
+
+    @keyframes shake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-6px);} 75%{ transform:translateX(6px);} }
+    @keyframes nudge{ 0%,100%{ transform:translateX(0);} 30%{ transform:translateX(14px);} 65%{ transform:translateX(-8px);} }
+    .band.moved.nudge .bandInner{ animation:nudge .9s cubic-bezier(.4,1.6,.5,1) .35s 1; }
+    @media (prefers-reduced-motion:reduce){ .band.moved.nudge .bandInner{ animation:none; } }
+
+    /* ---------- responsive ---------- */
+    @media (max-width:1180px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr) auto; padding:12px 16px; gap:12px; }
+      .mmtBrandText{ display:none; }
+      .btn{ padding:10px 13px; font-size:14px; }
+      .layout{ padding:16px 14px 22px; }
+    }
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:1fr; justify-items:center; padding:12px 14px; }
+      .mmtBrand{ margin-left:0; } .topActions{ justify-self:center; justify-content:center; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .layout{ padding:12px 10px 20px; }
+      .boardCard{ padding:10px 8px 6px; }
+      .keyHint{ display:none; }
+    }
+    @media (max-width:560px){
+      .genBtn .genLabel{ display:none; }
+      .stepBtn{ padding:11px 14px; }
+      .nextBtn{ padding:12px 18px; }
+      .outcomeTag{ display:none; }
+    }
+    @media print{ .mmtTopbar,.ctrlCard{ display:none; } }
+  </style>
+<!-- mmt-pwa -->
+<link rel="manifest" href="../../../../manifest.webmanifest">
+<meta name="theme-color" content="#1f3a5f">
+<link rel="apple-touch-icon" href="../../../../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MMT">
+<script src="../../../../pwa.js" defer></script>
+<!-- /mmt-pwa -->
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Constant Difference</div>
+      <div class="topActions">
+        <div class="menuWrap">
+          <button class="btn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false">Settings &#9662;</button>
+          <nav class="dropMenu settingsMenu" id="settingsMenu" aria-label="Settings">
+            <div class="settingsHead">The question</div>
+            <label class="selRow"><span>Take away a number ending in</span>
+              <select id="endSel" aria-label="The number being taken away ends in">
+                <option value="9">9</option>
+                <option value="89" selected>8 or 9</option>
+                <option value="789">7, 8 or 9</option>
+              </select>
+            </label>
+            <p class="settingsNote">The number taken away is one, two or three short of a ten, and the first number always needs regrouping &mdash; so moving both up to the ten is the quick way.</p>
+            <div class="settingsHead">Type your own</div>
+            <div class="ownRow">
+              <input id="ownA" type="number" inputmode="numeric" min="1" max="999" placeholder="83" aria-label="First number">
+              <span>&minus;</span>
+              <input id="ownB" type="number" inputmode="numeric" min="0" max="999" placeholder="28" aria-label="Number taken away">
+              <button class="ownGo" id="ownGo" type="button">Use</button>
+            </div>
+            <p class="ownMsg" id="ownMsg" hidden></p>
+
+            <div class="settingsRule" role="separator"></div>
+            <div class="settingsHead">On screen</div>
+            <label class="selRow"><span>Number line</span>
+              <select id="lineSel" aria-label="Number line marks">
+                <option value="tens" selected>Tens labelled</option>
+                <option value="open">Open line</option>
+              </select>
+            </label>
+            <label class="sw"><input type="checkbox" id="jumpToggle" checked><span class="track"></span><span>Show the jump at each end</span></label>
+            <label class="sw"><input type="checkbox" id="tenToggle" checked><span class="track"></span><span>Turn green on a ten</span></label>
+          </nav>
+        </div>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-3/number/partition-splitter/">Partition Splitter<small>Split a number to add or subtract by place value</small></a>
+            <span class="toolLink is-disabled" aria-disabled="true">Worksheet Creator<small>Not built yet</small></span>
+            <span class="toolLink is-disabled" aria-disabled="true">Student Quiz<small>Not built yet</small></span>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="newBtn" type="button">New question</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="boardCard" id="boardCard">
+        <span class="outcomeTag">MA3-AR-01</span>
+        <svg id="board" role="application" aria-label="Number line showing the subtraction"></svg>
+      </section>
+
+      <div class="ctrlCard" id="ctrlCard">
+        <button class="stepBtn" id="homeBtn" type="button" disabled>&#8634; Back to the start</button>
+        <button class="nextBtn" id="revealBtn" type="button" aria-pressed="false">Show the difference</button>
+        <span class="spacer"></span>
+        <span class="keyHint"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> slide &nbsp;&middot;&nbsp; <kbd>Shift</kbd> jumps a ten</span>
+        <button class="genBtn" id="genBtn" type="button" title="A new subtraction with the same settings">
+          <span class="dice" aria-hidden="true">&#9860;</span><span class="genLabel">New numbers</span>
+        </button>
+      </div>
+    </main>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* THE WHOLE IDEA: a band of fixed length that slides along the line.
+     `a − b` is the question (fixed, drawn BELOW the line, blue).
+     `shift` is how far the orange band above the line has been slid.
+     The band on top always reads (a + shift) − (b + shift). Its length never
+     changes, and that is the only thing the tool asserts — the words are the
+     teacher's. */
+  let focusBandAfterRender = false;
+
+  const S = {
+    a: 83, b: 28,
+    shift: 0,          /* whole number — what the band reads */
+    pos: 0,            /* where the band is DRAWN (a float while tweening) */
+    lo: 10, hi: 100,   /* the visible stretch of number line */
+    revealed: false,
+    ends: "89",
+    line: "tens",
+    jumps: true,
+    tenGlow: true,
+    lastKey: "",
+    drag: null,
+    tween: 0
+  };
+
+  /* ------------------------------------------------------------ questions */
+  const rnd = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  /* The number taken away ends in 7, 8 or 9 (one to three short of a ten).
+     The first number's ones digit is SMALLER than that, so the ordinary
+     algorithm would have to regroup — the case where constant difference
+     earns its keep. Because its ones digit is smaller, sliding both up to the
+     ten never carries the first number into the next decade either:
+     83 − 28 → 85 − 30, never a new tens digit to think about. */
+  function makeQuestion(ends){
+    const digits = String(ends).split("").map(Number);
+    for(let tries = 0; tries < 500; tries++){
+      const bOnes = pick(digits);
+      const bTens = rnd(1, 7);
+      const b = bTens * 10 + bOnes;
+      const aOnes = rnd(1, bOnes - 1);            /* never 0: 80 − 28 is a different lesson */
+      const aTens = rnd(bTens + 1, 9);
+      const a = aTens * 10 + aOnes;
+      if(a - b < 12) continue;                    /* the band needs room to be a band */
+      const key = a + "-" + b;
+      if(key === S.lastKey) continue;
+      return { a, b };
+    }
+    return { a: 83, b: 28 };
+  }
+
+  function setQuestion(a, b){
+    S.a = a; S.b = b; S.lastKey = a + "-" + b;
+    S.shift = 0; S.pos = 0; S.revealed = false;
+    /* A ten either side of the question, and at least 50 across, so the
+       band has somewhere to go in both directions. */
+    let lo = Math.max(0, Math.floor(b / 10) * 10 - 10);
+    let hi = Math.ceil((a + 1) / 10) * 10 + 10;
+    if(a % 10 === 0) hi = a + 10;
+    while(hi - lo < 50){ if(lo > 0) lo = Math.max(0, lo - 10); else hi += 10; }
+    S.lo = lo; S.hi = hi;
+    cancelTween();
+    render(true);
+  }
+
+  /* ------------------------------------------------------------ geometry */
+  let G = null;   /* recomputed on every render from the real size */
+
+  function measure(){
+    const svg = $("board");
+    const W = Math.max(280, svg.getBoundingClientRect().width);
+    /* The board takes whatever height is left above the fold, within reason. */
+    const top = $("boardCard").getBoundingClientRect().top + window.scrollY;
+    const ctrlH = $("ctrlCard").getBoundingClientRect().height;
+    const avail = window.innerHeight - top - ctrlH - 14 /* gap */ - 26 /* bottom pad */ - 26 /* card pad */;
+    const H = Math.round(Math.max(300, Math.min(avail, 560, W * (W < 600 ? 1.05 : 0.62))));
+    const padX = Math.max(26, Math.min(56, W * 0.045));
+    const x0 = padX, x1 = W - padX;
+    const ppu = (x1 - x0) / (S.hi - S.lo);
+    const u = Math.min(1, Math.max(.62, H / 480, Math.min(1, W / 900)));   /* type scale */
+    return {
+      W, H, x0, x1, ppu, u,
+      /* mirror images about the line: statement, band, LINE, band, statement */
+      stmtTop: H * 0.10,
+      bandTopY: H * 0.24,
+      bandH: Math.max(40, H * 0.12),
+      lineY: H * 0.54,
+      bandBotY: H * 0.74,
+      stmtBot: H * 0.88,
+      knobR: Math.max(17, Math.min(27, H * 0.052)),
+      stmtSize: Math.max(26, Math.min(52, H * 0.092)),
+    };
+  }
+  const X = v => G.x0 + (v - S.lo) * G.ppu;
+
+  /* ------------------------------------------------------------ drawing */
+  function el(tag, attrs, parent){
+    const n = document.createElementNS(NS, tag);
+    for(const k in attrs) n.setAttribute(k, attrs[k]);
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function txt(parent, x, y, str, cls, size){
+    const t = el("text", { x, y, class: cls }, parent);
+    if(size) t.setAttribute("font-size", size);
+    t.textContent = str;
+    return t;
+  }
+
+  function render(fresh){
+    const svg = $("board");
+    if(document.activeElement && document.activeElement.id === "movedBand") focusBandAfterRender = true;
+    G = measure();
+    svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
+    svg.setAttribute("height", G.H);
+    svg.textContent = "";
+
+    drawLine(svg);
+    if(S.jumps) drawJumps(svg);
+    drawBand(svg, "orig", S.b, S.a, G.bandBotY, false);
+    drawStatement(svg, "orig", S.a, S.b, G.stmtBot, (X(S.b) + X(S.a)) / 2);
+    const mb = S.b + S.pos, ma = S.a + S.pos;
+    const moved = drawBand(svg, "moved", mb, ma, G.bandTopY, true);
+    drawStatement(svg, "moved", Math.round(ma), Math.round(mb), G.stmtTop, (X(mb) + X(ma)) / 2);
+    if(fresh && !reduceMotion && S.firstNudge){ moved.classList.add("nudge"); S.firstNudge = false; }
+
+    $("homeBtn").disabled = S.shift === 0 && S.pos === 0;
+    $("revealBtn").setAttribute("aria-pressed", S.revealed ? "true" : "false");
+    $("revealBtn").textContent = S.revealed ? "Hide the difference" : "Show the difference";
+    svg.setAttribute("aria-label",
+      "Number line. " + S.a + " minus " + S.b + " below the line. Above the line, the same gap slid to " +
+      (S.a + S.shift) + " minus " + (S.b + S.shift) + "." + (S.revealed ? " The difference is " + (S.a - S.b) + "." : ""));
+  }
+
+  function drawLine(svg){
+    const y = G.lineY, g = el("g", {}, svg);
+    el("line", { x1: G.x0 - 16, y1: y, x2: G.x1 + 16, y2: y, class: "axis" }, g);
+    /* arrowheads: the line keeps going */
+    el("polygon", { points: (G.x0-22)+","+y+" "+(G.x0-10)+","+(y-7)+" "+(G.x0-10)+","+(y+7), fill: "var(--line)" }, g);
+    el("polygon", { points: (G.x1+22)+","+y+" "+(G.x1+10)+","+(y-7)+" "+(G.x1+10)+","+(y+7), fill: "var(--line)" }, g);
+    if(S.line === "open") return;
+    const small = G.ppu < 7;   /* too tight for ones: fives and tens only */
+    const labSize = Math.round(15 + 5 * G.u);
+    /* label every ten if the labels fit, otherwise every twenty */
+    const labEvery = G.ppu * 10 >= labSize * 2.1 ? 10 : 20;
+    for(let v = S.lo; v <= S.hi; v++){
+      const ten = v % 10 === 0, five = v % 5 === 0;
+      if(small && !five) continue;
+      const h = ten ? 13 : five ? 9 : 5.5;
+      el("line", { x1: X(v), y1: y - h, x2: X(v), y2: y + h, class: "tick" + (ten ? " ten" : five ? " five" : "") }, g);
+      if(ten && v % labEvery === 0) txt(g, X(v), y + h + labSize + 2, String(v), "tickLab", labSize);
+    }
+  }
+
+  /* One band: a translucent bar with a number on a knob at each end, dashed
+     drops to the line, and the difference (? until revealed) in the middle. */
+  function drawBand(svg, kind, from, to, y, draggable){
+    const g = el("g", { class: "band " + kind }, svg);
+    const inner = el("g", { class: "bandInner" }, g);
+    const xa = X(from), xb = X(to), h = G.bandH, r = G.knobR;
+    const bandY = y - h / 2;
+    const toLine = kind === "moved" ? [y + r, G.lineY] : [G.lineY, y - r];
+    const fromN = Math.round(from), toN = Math.round(to);
+    const onTen = S.tenGlow && kind === "moved" && S.drag == null && S.tween === 0 && fromN % 10 === 0 && S.shift !== 0;
+
+    /* the drops first, so the knobs sit on top of them */
+    el("line", { x1: xa, y1: toLine[0], x2: xa, y2: toLine[1], class: "drop" + (onTen ? " onTen" : "") }, inner);
+    el("line", { x1: xb, y1: toLine[0], x2: xb, y2: toLine[1], class: "drop" }, inner);
+    el("circle", { cx: xa, cy: G.lineY, r: 6.5, class: "pin" }, inner);
+    el("circle", { cx: xb, cy: G.lineY, r: 6.5, class: "pin" }, inner);
+
+    el("rect", { x: xa, y: bandY, width: Math.max(0, xb - xa), height: h, rx: Math.min(14, h / 2.6), class: "body" }, inner);
+    const midSize = Math.round(G.stmtSize * .72);
+    if(xb - xa > 2 * r + midSize * 1.4){
+      const m = txt(inner, (xa + xb) / 2, y, S.revealed ? String(S.a - S.b) : "?", "mid" + (S.revealed ? " known" : ""), midSize);
+      m.setAttribute("dy", "0.05em");
+    }
+
+    const knobSize = Math.round(r * (String(Math.max(fromN, toN)).length > 2 ? .78 : .92));
+    [[xa, fromN, onTen], [xb, toN, false]].forEach(([x, n, ten]) => {
+      const k = el("g", { class: "knob" + (ten ? " onTen" : "") }, inner);
+      el("circle", { cx: x, cy: y, r }, k);
+      txt(k, x, y, String(n), "", knobSize).setAttribute("dy", "0.05em");
+    });
+
+    if(draggable){
+      g.setAttribute("tabindex", "0");
+      g.setAttribute("role", "slider");
+      g.setAttribute("aria-label", "Slide the gap along the line");
+      g.setAttribute("aria-valuemin", String(S.lo));
+      g.setAttribute("aria-valuemax", String(S.hi - (S.a - S.b)));
+      g.setAttribute("aria-valuenow", String(S.b + S.shift));
+      g.setAttribute("aria-valuetext", (S.a + S.shift) + " minus " + (S.b + S.shift));
+      g.id = "movedBand";
+      g.addEventListener("pointerdown", onDown);
+      g.addEventListener("keydown", onBandKey);
+      if(focusBandAfterRender){ focusBandAfterRender = false; g.focus({ preventScroll: true }); }
+    }
+    return g;
+  }
+
+  /* `a − b = ?` as one centred line. The moved one rides over its band and is
+     clamped so it never leaves the board. */
+  function drawStatement(svg, kind, a, b, y, cx){
+    const size = G.stmtSize;
+    const t = el("text", { x: cx, y, class: "stmt " + kind, "font-size": size }, svg);
+    const span = (s, cls) => { const n = el("tspan", { class: cls }, t); n.textContent = s; return n; };
+    const glow = kind === "moved" && S.tenGlow && S.drag == null && S.tween === 0 && b % 10 === 0 && S.shift !== 0;
+    span(String(a), "a");
+    span(" − ", "op");
+    span(String(b), "b" + (glow ? " onTen" : ""));
+    span(" = ", "op");
+    span(S.revealed ? String(S.a - S.b) : "?", S.revealed ? "ans" : "q");
+    const w = t.getBBox().width, half = w / 2 + 6;
+    const clamped = Math.min(G.W - half, Math.max(half, cx));
+    t.setAttribute("x", clamped);
+  }
+
+  /* Purple hops at BOTH ends, from the question's numbers to the band's —
+     the same size, the same direction. That picture is the strategy. */
+  function drawJumps(svg){
+    const d = S.pos;
+    if(Math.abs(d) < 0.5) return;
+    const g = el("g", { class: "jump" }, svg);
+    const y = G.lineY, lab = (d > 0 ? "+" : "−") + Math.abs(Math.round(d));
+    const labSize = Math.round(17 + 5 * G.u);
+    [S.b, S.a].forEach(v => {
+      const xs = X(v), xe = X(v + d), span = Math.abs(xe - xs);
+      const peak = Math.min(G.lineY - G.bandTopY - G.bandH / 2 - G.knobR - labSize - 4, 18 + span * .28);
+      const cx = (xs + xe) / 2;
+      el("path", { d: "M" + xs + "," + (y - 4) + " Q" + cx + "," + (y - 4 - peak * 2) + " " + xe + "," + (y - 4) }, g);
+      /* arrowhead pointing down onto the landing point */
+      const dir = xe > xs ? -1 : 1;
+      el("polygon", { points: xe + "," + (y - 3) + " " + (xe + dir * 9) + "," + (y - 12) + " " + (xe + dir * 1.5) + "," + (y - 15) }, g);
+      txt(g, cx, y - 4 - peak - 7, lab, "", labSize);
+    });
+  }
+
+  /* ------------------------------------------------------------ moving */
+  const minShift = () => S.lo - S.b;
+  const maxShift = () => S.hi - S.a;
+  const clampShift = s => Math.max(minShift(), Math.min(maxShift(), s));
+
+  function cancelTween(){ if(S.tween){ cancelAnimationFrame(S.tween); S.tween = 0; } }
+
+  function slideTo(target, animate){
+    target = clampShift(Math.round(target));
+    cancelTween();
+    S.shift = target;
+    if(!animate || reduceMotion || Math.abs(target - S.pos) < 1.01){
+      S.pos = target; render(); return;
+    }
+    const from = S.pos, t0 = performance.now(), dur = Math.min(700, 260 + Math.abs(target - from) * 14);
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      S.pos = from + (target - from) * e;
+      if(k < 1){ S.tween = requestAnimationFrame(step); render(); }
+      else { S.tween = 0; S.pos = target; render(); }
+    };
+    S.tween = requestAnimationFrame(step);
+  }
+
+  function unitAt(clientX){
+    const rect = $("board").getBoundingClientRect();
+    const x = (clientX - rect.left) * (G.W / rect.width);
+    return S.lo + (x - G.x0) / G.ppu;
+  }
+  function onDown(e){
+    if(e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    cancelTween();
+    S.pos = S.shift;
+    S.drag = { grab: unitAt(e.clientX) - S.shift, id: e.pointerId };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+    render();
+    $("movedBand").classList.add("dragging");
+  }
+  function onMove(e){
+    if(!S.drag || e.pointerId !== S.drag.id) return;
+    /* Snaps to whole numbers as it goes: the band always reads two whole
+       numbers, never 84.6 − 29.6. */
+    const s = clampShift(Math.round(unitAt(e.clientX) - S.drag.grab));
+    if(s !== S.shift){ S.shift = s; S.pos = s; render(); $("movedBand").classList.add("dragging"); }
+  }
+  function onUp(e){
+    if(!S.drag || e.pointerId !== S.drag.id) return;
+    S.drag = null;
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+    render();
+  }
+
+  function nudgeBy(n){ slideTo(S.shift + n, Math.abs(n) > 1); }
+
+  function onBandKey(e){
+    if(e.key === "ArrowRight" || e.key === "ArrowUp"){ e.preventDefault(); e.stopPropagation(); nudgeBy(e.shiftKey ? 10 : 1); }
+    else if(e.key === "ArrowLeft" || e.key === "ArrowDown"){ e.preventDefault(); e.stopPropagation(); nudgeBy(e.shiftKey ? -10 : -1); }
+    else if(e.key === "Home"){ e.preventDefault(); e.stopPropagation(); slideTo(0, true); }
+  }
+
+  /* ------------------------------------------------------------ menus */
+  function closeMenus(){
+    ["settingsMenu","toolsMenu"].forEach(id => {
+      $(id).classList.remove("open");
+      $(id === "settingsMenu" ? "settingsBtn" : "toolsBtn").setAttribute("aria-expanded","false");
+    });
+  }
+  function toggleMenu(btnId, menuId){
+    $(btnId).addEventListener("click", e => {
+      e.stopPropagation();
+      const m = $(menuId), wasOpen = m.classList.contains("open");
+      closeMenus();
+      if(!wasOpen){ m.classList.add("open"); $(btnId).setAttribute("aria-expanded","true"); }
+    });
+  }
+  toggleMenu("settingsBtn","settingsMenu");
+  toggleMenu("toolsBtn","toolsMenu");
+  document.addEventListener("click", closeMenus);
+  $("settingsMenu").addEventListener("click", e => e.stopPropagation());
+  $("toolsMenu").addEventListener("click", e => e.stopPropagation());
+
+  /* ------------------------------------------------------------ wires */
+  function newQuestion(){
+    const q = makeQuestion(S.ends);
+    S.firstNudge = false;
+    setQuestion(q.a, q.b);
+  }
+  $("newBtn").addEventListener("click", newQuestion);
+  $("genBtn").addEventListener("click", newQuestion);
+  $("homeBtn").addEventListener("click", () => slideTo(0, true));
+  $("revealBtn").addEventListener("click", () => { S.revealed = !S.revealed; render(); });
+
+  $("endSel").addEventListener("change", e => { S.ends = e.target.value; newQuestion(); });
+  $("lineSel").addEventListener("change", e => { S.line = e.target.value; render(); });
+  $("jumpToggle").addEventListener("change", e => { S.jumps = e.target.checked; render(); });
+  $("tenToggle").addEventListener("change", e => { S.tenGlow = e.target.checked; render(); });
+
+  function useOwn(){
+    const ia = $("ownA"), ib = $("ownB"), msg = $("ownMsg");
+    [ia, ib].forEach(n => n.classList.remove("is-bad"));
+    const a = Number(ia.value), b = Number(ib.value);
+    let bad = null, why = "";
+    if(ia.value === "" || !Number.isInteger(a) || a < 1 || a > 999){ bad = ia; why = "Type a whole number to start from."; }
+    else if(ib.value === "" || !Number.isInteger(b) || b < 0 || b > 999){ bad = ib; why = "Type a whole number to take away."; }
+    else if(b >= a){ bad = ib; why = "Take away a smaller number than " + a + "."; }
+    else if(a - b > 200 || a > 300){ bad = ia; why = "Keep it under 300, with a difference of 200 or less, so the line stays readable."; }
+    if(bad){
+      void bad.offsetWidth; bad.classList.add("is-bad");
+      msg.textContent = why; msg.hidden = false; bad.focus(); return;
+    }
+    msg.hidden = true;
+    setQuestion(a, b);
+    closeMenus();
+  }
+  $("ownGo").addEventListener("click", useOwn);
+  ["ownA","ownB"].forEach(id => $(id).addEventListener("keydown", e => {
+    if(e.key === "Enter"){ e.preventDefault(); if(id === "ownA" && $("ownB").value === "") $("ownB").focus(); else useOwn(); }
+  }));
+
+  /* Arrow keys slide the band from anywhere on the page (a teacher at the
+     board with a clicker or a keyboard should not have to click it first). */
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ closeMenus(); return; }
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "INPUT" || tag === "SELECT" || e.target.id === "movedBand") return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    if(e.key === "ArrowRight"){ e.preventDefault(); nudgeBy(e.shiftKey ? 10 : 1); }
+    else if(e.key === "ArrowLeft"){ e.preventDefault(); nudgeBy(e.shiftKey ? -10 : -1); }
+    else if(e.key === "Home" || e.key === "0"){ e.preventDefault(); slideTo(0, true); }
+    else if(e.key === "n" || e.key === "N"){ e.preventDefault(); newQuestion(); }
+    else if(e.key === "s" || e.key === "S"){ e.preventDefault(); S.revealed = !S.revealed; render(); }
+  });
+
+  let rz = 0;
+  window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => render()); });
+
+  /* test surface */
+  window.__CD__ = { S, makeQuestion, setQuestion, slideTo, render, geom: () => G, X: v => X(v) };
+
+  /* first question: the one from the brief. The band gives one small wiggle
+     once the page has settled, so the class can see it is the thing that moves. */
+  setQuestion(83, 28);
+  const settle = () => { S.firstNudge = true; render(true); };
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(settle); else settle();
+})();
+</script>
+</body>
+</html>

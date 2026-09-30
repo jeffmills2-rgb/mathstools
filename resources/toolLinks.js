@@ -92,6 +92,13 @@ window.MMT_TOOL_LINKS = {
 
   "MA3-AR-01": [
     {
+      title: "Constant Difference",
+      kind: "Teacher tool",
+      url: "/interactive-tools/stage-3/number/constant-difference/",
+      note: "Slide the gap between two numbers along an open number line: 83 − 28 becomes 85 − 30, and the difference never changes.",
+      tags: ["constant difference", "subtraction", "mental strategies", "open number line", "compensation", "bridging to ten", "difference", "same difference"]
+    },
+    {
       title: "Partition Splitter",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-3/number/partition-splitter/",
