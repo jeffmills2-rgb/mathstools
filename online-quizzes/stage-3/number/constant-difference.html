@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Constant Difference — Student Quiz | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue-dark:#1d4ed8;
+      --green:#22c55e; --green-dark:#15803d;
+      --purple:#7c3aed; --purple-dark:#5b21b6;
+      --orange:#f97316; --orange-dark:#c2410c;
+      --red:#dc2626; --line:#334155; --line-soft:#94a3b8;
+      --sweet:#16a34a; --mild:#d97706; --medium:#ea580c; --spicy:#b91c1c; --extra:#881337;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0; font-family:var(--uiFont); color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+    .app{ min-height:100dvh; display:flex; flex-direction:column; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+      align-items:center; gap:16px; box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{ display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px; margin-left:-12px; font-weight:900; }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); }
+    .mmtBrandLogo{ width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em; flex:0 0 auto; }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{ font-weight:850; font-size:clamp(1rem,1.8vw,1.42rem); letter-spacing:-.04em; text-align:center; color:white; white-space:nowrap; }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:nowrap; }
+
+    .btn{ appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px;
+      border-radius:10px; color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; }
+    .toolLink:hover{ background:#eef2ff; color:#1d4ed8; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+
+    .lvlChip{ font-weight:1000; font-size:.82rem; padding:6px 13px; border-radius:999px;
+      background:#fff; border:1px solid rgba(255,255,255,.3); color:var(--blue-dark); white-space:nowrap; }
+    .lvlChip.sweet{ color:var(--sweet); } .lvlChip.mild{ color:var(--mild); }
+    .lvlChip.medium{ color:var(--medium); } .lvlChip.spicy{ color:var(--spicy); } .lvlChip.extra{ color:var(--extra); }
+
+    .progressWrap{ height:6px; background:rgba(15,23,42,.10); }
+    .progressFill{ height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--purple)); transition:width .3s ease; }
+
+    /* ---------- layout ---------- */
+    .layout{ flex:1; width:min(1300px,100%); margin:0 auto; padding:16px 20px 22px;
+      display:flex; flex-direction:column; gap:12px; min-width:0; }
+
+    .headRow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .qCounter{ font-size:.86rem; font-weight:950; color:var(--muted); white-space:nowrap; }
+    .promptBar{ flex:1 1 320px; display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line); font-size:.98rem; min-height:46px; line-height:1.35; }
+    .promptBar .pIco{ font-size:1.2rem; flex:0 0 auto; }
+    .promptBar.good{ background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(37,99,235,.06)); border-color:rgba(21,128,61,.28); color:var(--green-dark); }
+    .promptBar.bad{ background:linear-gradient(135deg,rgba(220,38,38,.13),rgba(249,115,22,.07)); border-color:rgba(185,28,28,.28); color:#991b1b; }
+
+    /* no-model levels: the question on its own */
+    .qCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow);
+      padding:clamp(22px,5vh,48px) 18px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+    .sentence{ font-family:var(--mathFont); font-weight:700; font-size:clamp(2.4rem,7vw,4.4rem);
+      line-height:1; display:flex; align-items:baseline; gap:.24em; white-space:nowrap; }
+    .sentence .a,.sentence .b{ color:var(--blue-dark); }
+    .sentence .op{ color:var(--line); }
+    .sentence .q{ color:var(--line-soft); }
+    .sentence .ans{ color:var(--green-dark); }
+    .noModel{ font-weight:850; color:var(--muted); font-size:.95rem; text-align:center; line-height:1.45; }
+
+    /* ---------- the board (the teaching tool's, same drawing) ---------- */
+    .boardCard{ position:relative; background:var(--card); border:1px solid var(--border); border-radius:22px;
+      box-shadow:var(--shadow); padding:10px 14px 10px; min-width:0; }
+    #board{ display:block; width:100%; touch-action:none; user-select:none; -webkit-user-select:none; overflow:visible; }
+    .axis{ stroke:var(--line); stroke-width:3; stroke-linecap:round; }
+    .tick{ stroke:var(--line-soft); stroke-width:1.4; }
+    .tick.five{ stroke:#64748b; stroke-width:1.8; }
+    .tick.ten{ stroke:var(--line); stroke-width:2.6; }
+    .tickLab{ font-family:var(--uiFont); font-weight:850; fill:var(--line); text-anchor:middle; }
+    .stmt{ font-family:var(--mathFont); font-weight:700; text-anchor:middle; dominant-baseline:central; }
+    .stmt .op{ fill:var(--line); }
+    .stmt .q{ fill:var(--line-soft); }
+    .stmt .ans{ fill:var(--green-dark); }
+    .stmt.orig .a,.stmt.orig .b{ fill:var(--blue-dark); }
+    .stmt.moved .a,.stmt.moved .b{ fill:var(--orange-dark); }
+    .stmt.moved .b.onTen{ fill:var(--green-dark); }
+    .band rect.body{ stroke-width:2.5; }
+    .band.orig rect.body{ fill:rgba(37,99,235,.13); stroke:rgba(29,78,216,.55); }
+    .band.moved rect.body{ fill:rgba(249,115,22,.17); stroke:rgba(194,65,12,.62); }
+    .band .mid{ font-family:var(--mathFont); font-weight:700; text-anchor:middle; dominant-baseline:central; fill:var(--line-soft); }
+    .band .mid.known{ fill:var(--green-dark); }
+    .knob circle{ stroke:#fff; stroke-width:3; }
+    .band.orig .knob circle{ fill:var(--blue); }
+    .band.moved .knob circle{ fill:var(--orange); }
+    .band.moved .knob.onTen circle{ fill:var(--green); }
+    .knob text{ font-family:var(--uiFont); font-weight:950; fill:#fff; text-anchor:middle; dominant-baseline:central; }
+    .drop{ stroke-width:2; stroke-dasharray:5 5; }
+    .band.orig .drop{ stroke:rgba(29,78,216,.6); }
+    .band.moved .drop{ stroke:rgba(194,65,12,.65); }
+    .drop.onTen{ stroke:rgba(21,128,61,.75); }
+    .pin{ stroke:#fff; stroke-width:2; }
+    .band.orig .pin{ fill:var(--blue); }
+    .band.moved .pin{ fill:var(--orange); }
+    .band.moved{ cursor:grab; outline:none; }
+    .band.moved.dragging{ cursor:grabbing; }
+    .band.moved.dragging rect.body{ fill:rgba(249,115,22,.26); }
+    .band.moved:focus-visible rect.body{ stroke:var(--blue); stroke-width:4; }
+    .jump path{ fill:none; stroke:var(--purple); stroke-width:2.6; }
+    .jump text{ font-family:var(--uiFont); font-weight:950; fill:var(--purple-dark); text-anchor:middle; }
+    .jump polygon{ fill:var(--purple); }
+
+    /* slide buttons, for fingers and for landing exactly on a number */
+    .slideRow{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:4px; }
+    .slideBtn{ appearance:none; border:1.5px solid rgba(194,65,12,.3); background:rgba(249,115,22,.09); color:var(--orange-dark);
+      padding:8px 14px; border-radius:12px; font-weight:950; font-size:.95rem; cursor:pointer; min-width:54px; transition:.14s ease; }
+    .slideBtn:hover:not(:disabled){ background:rgba(249,115,22,.18); transform:translateY(-1px); }
+    .slideBtn:disabled{ opacity:.35; cursor:not-allowed; transform:none; }
+    .homeBtn{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--muted);
+      padding:8px 13px; border-radius:12px; font-weight:900; font-size:.86rem; cursor:pointer; margin-left:8px; }
+    .homeBtn:hover:not(:disabled){ border-color:var(--line-soft); color:var(--line); }
+    .homeBtn:disabled{ opacity:.4; cursor:not-allowed; }
+
+    /* ---------- answering ---------- */
+    .answerCard{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center;
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow); padding:12px 18px; }
+    .answerLab{ font-family:var(--mathFont); font-weight:700; font-size:1.6rem; color:var(--blue-dark); white-space:nowrap; }
+    .answerLab .op{ color:var(--line); }
+    .ansIn{ appearance:none; border:2px solid var(--border); background:#fff; border-radius:14px;
+      padding:9px 14px; font-family:var(--mathFont); font-size:1.6rem; font-weight:700; color:var(--blue-dark);
+      width:clamp(120px,14vw,170px); text-align:center; }
+    .ansIn:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+    .ansIn.right{ border-color:var(--green); background:#f0fdf4; color:var(--green-dark); }
+    .ansIn.wrong{ border-color:var(--red); background:#fef2f2; color:var(--red); animation:shake .34s; }
+    .checkBtn{ appearance:none; border:none; background:var(--blue); color:#fff; padding:12px 22px;
+      border-radius:14px; font-weight:950; font-size:1rem; cursor:pointer; }
+    .checkBtn:hover:not(:disabled){ background:var(--blue-dark); }
+    .fb{ font-weight:950; font-size:.98rem; }
+    .fb.ok{ color:var(--green-dark); } .fb.no{ color:var(--red); }
+
+    .navRow{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .navBtn{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 18px; border-radius:14px; font-weight:900; cursor:pointer; }
+    .navBtn:hover:not(:disabled){ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; }
+    .navBtn.next{ background:var(--blue); color:#fff; border-color:var(--blue); }
+    .navBtn.next:hover:not(:disabled){ background:var(--blue-dark); color:#fff; }
+    .navBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .spacer{ flex:1 1 auto; }
+
+    @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
+    .confetti{ position:fixed; inset:0; pointer-events:none; z-index:300; overflow:hidden; }
+
+    /* ---------- level chooser + certificate ---------- */
+    .modalBack{ position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; place-items:center; z-index:200; padding:14px; }
+    .modalBack.open{ display:grid; }
+    .modal{ width:min(640px,100%); max-height:calc(100dvh - 28px); overflow:auto; background:#fff;
+      border-radius:26px; box-shadow:0 34px 90px rgba(15,23,42,.34); border:1px solid #dbe3ef; padding:22px; }
+    .modal h2{ margin:0 0 6px; font-size:1.6rem; letter-spacing:-.03em; }
+    .modal p.sub{ margin:0 0 14px; color:var(--muted); font-weight:800; font-size:.95rem; line-height:1.4; }
+    .lvlList{ display:grid; gap:9px; }
+    .lvlRow{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:3px 14px; align-items:center;
+      border:2px solid var(--border); border-radius:18px; padding:11px 16px; background:#fff; cursor:pointer;
+      text-align:left; font-family:inherit; }
+    .lvlRow:hover{ border-color:#bfdbfe; background:#f8fbff; }
+    .lvlIco{ grid-column:1; grid-row:1/3; font-size:1.6rem; }
+    .lvlRow strong{ grid-column:2; grid-row:1; font-size:1.1rem; font-weight:1000; }
+    .lvlRow span.d{ grid-column:2; grid-row:2; color:var(--muted); font-weight:800; font-size:.86rem; line-height:1.35; }
+    .lvlRow .go{ grid-column:3; grid-row:1/3; font-weight:1000; color:var(--blue); font-size:1.3rem; }
+    .lvlRow.sweet strong{ color:var(--sweet); } .lvlRow.mild strong{ color:var(--mild); }
+    .lvlRow.medium strong{ color:var(--medium); } .lvlRow.spicy strong{ color:var(--spicy); } .lvlRow.extra strong{ color:var(--extra); }
+
+    .certBig{ font-size:2.6rem; font-weight:1000; text-align:center; color:var(--blue-dark); letter-spacing:-.03em; }
+    .certSub{ text-align:center; font-weight:850; color:var(--muted); font-size:.92rem; line-height:1.45; margin-top:8px; }
+    .certBreak{ margin-top:12px; font-weight:900; font-size:.95rem; line-height:1.7; text-align:center; }
+    .modalActions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; justify-content:center; }
+    .modalActions button{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 17px; border-radius:14px; font-weight:900; cursor:pointer; }
+    .modalActions button.primary{ background:var(--blue); color:#fff; border-color:var(--blue); }
+
+    .brandFoot{ text-align:center; font-size:.85rem; font-weight:850; color:var(--muted); padding:0 0 16px; }
+    .brandFoot a{ color:var(--blue); text-decoration:none; font-weight:1000; }
+
+    @media (max-width:1480px){ .mmtBrandText{ display:none; } }
+    @media (max-width:1180px){
+      .mmtTopbar{ padding:12px 16px; gap:12px; }
+      .mmtTopTitle{ white-space:normal; font-size:1.05rem; line-height:1.15; }
+      .btn{ padding:10px 13px; font-size:14px; }
+    }
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr); gap:6px 8px; padding:8px 10px; }
+      .mmtTopTitle{ grid-column:2; justify-self:start; text-align:left; font-size:1.02rem; white-space:normal; }
+      .topActions{ grid-column:1/-1; justify-content:center; flex-wrap:wrap; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .layout{ padding:10px 10px 18px; }
+      .boardCard{ padding:8px 6px; }
+      .ansIn{ font-size:1.4rem; }
+    }
+    @media (max-height:820px){
+      .layout{ gap:9px; padding-top:10px; padding-bottom:14px; }
+      .promptBar{ min-height:40px; padding:7px 13px; font-size:.93rem; }
+      .answerCard{ padding:8px 16px; }
+      .navBtn{ padding:9px 16px; }
+      .brandFoot{ padding-bottom:10px; }
+    }
+    @media (prefers-reduced-motion:reduce){ .ansIn.wrong{ animation:none; } }
+  </style>
+<!-- mmt-pwa -->
+<link rel="manifest" href="../../../manifest.webmanifest">
+<meta name="theme-color" content="#1f3a5f">
+<link rel="apple-touch-icon" href="../../../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MMT">
+<script src="../../../pwa.js" defer></script>
+<!-- /mmt-pwa -->
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Constant Difference &mdash; Student Quiz</div>
+      <div class="topActions">
+        <span id="mmtAuthSlot"></span>
+        <span class="lvlChip" id="levelChip" hidden>Sweet</span>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-3/number/constant-difference/">Teaching Tool<small>The whole-class number line this quiz is built on</small></a>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="menuBtn" type="button">Change level</button>
+      </div>
+    </header>
+
+    <div class="progressWrap"><div class="progressFill" id="progressFill"></div></div>
+
+    <main class="layout">
+      <div class="headRow">
+        <span class="qCounter" id="qCounter">Question 1 / 10</span>
+        <div class="promptBar" id="promptBar">
+          <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+          <span id="promptText">Choose a level to begin.</span>
+        </div>
+      </div>
+
+      <div class="boardCard" id="boardCard" hidden>
+        <svg id="board" role="application" aria-label="Number line showing the subtraction"></svg>
+        <div class="slideRow" id="slideRow">
+          <button class="slideBtn" type="button" data-d="-10">&minus;10</button>
+          <button class="slideBtn" type="button" data-d="-1">&minus;1</button>
+          <button class="slideBtn" type="button" data-d="1">+1</button>
+          <button class="slideBtn" type="button" data-d="10">+10</button>
+          <button class="homeBtn" id="homeBtn" type="button">&#8634; Back to the start</button>
+        </div>
+      </div>
+
+      <div class="qCard" id="qCard" hidden>
+        <div class="sentence" id="sentence" aria-live="polite">
+          <span class="a" id="sA">83</span><span class="op">&minus;</span><span class="b" id="sB">28</span><span class="op">=</span><span class="q" id="sAns">?</span>
+        </div>
+        <div class="noModel" id="noModel">No number line at this level &mdash; picture it, slide both numbers, then subtract.</div>
+      </div>
+
+      <div class="answerCard" id="answerCard">
+        <span class="answerLab" id="answerLab"></span>
+        <input id="ansInput" class="ansIn" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="Your answer" />
+        <button class="checkBtn" id="checkBtn" type="button">Check</button>
+        <span class="fb" id="feedback"></span>
+      </div>
+
+      <div class="navRow" id="navRow">
+        <button class="navBtn" id="prevBtn" type="button">&larr; Previous</button>
+        <button class="navBtn next" id="nextBtn" type="button">Next &rarr;</button>
+        <span class="spacer"></span>
+        <span id="mmtSubmitSlot"></span>
+      </div>
+    </main>
+
+    <div class="brandFoot">
+      This tool and more can be found at <a href="https://www.millsmathstools.au" target="_blank" rel="noopener">www.millsmathstools.au</a>
+    </div>
+  </div>
+
+  <!-- level chooser -->
+  <div class="modalBack" id="levelModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lvlTitle">
+      <h2 id="lvlTitle">Choose your level</h2>
+      <p class="sub">Slide both numbers the same amount and the difference stays the same.
+        The first three levels give you the number line; the last two take it away.</p>
+      <div class="lvlList" id="lvlList"></div>
+    </div>
+  </div>
+
+  <!-- certificate -->
+  <div class="modalBack" id="certModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="certTitle">
+      <h2 id="certTitle">Finished</h2>
+      <div class="certBig" id="certScore">0 / 10</div>
+      <div class="certSub" id="certSub"></div>
+      <div class="certBreak" id="certBreak"></div>
+      <div class="modalActions">
+        <button class="primary" id="againBtn" type="button">Try again</button>
+        <button id="changeLvlBtn" type="button">Change level</button>
+        <button id="copyBtn" type="button">Copy my result</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  const rnd = (a,b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUIZ_N = 10;
+
+  /* ================================================================
+     THE LEVELS (teacher design 2026-09-30). The model is the teaching
+     tool's number line, whole: drag the orange gap, the jumps, the
+     green on a ten. Sweet, Mild and Medium keep it; Spicy is Mild's
+     numbers with no model, Extra Spicy is Medium's with no model.
+
+     THE ANSWER IS NEVER ON SCREEN BEFORE IT IS MARKED. The band and
+     both statements read "?" until the question is settled. The
+     slid statement (85 − 30) is the METHOD, not the answer.
+     ================================================================ */
+  const LEVELS = {
+    sweet:  { name:"Sweet",       ico:"🍬", model:true,  gen:"two",
+              d:"The whole number line. Two-digit numbers, taking away a number that ends in 7, 8 or 9." },
+    mild:   { name:"Mild",        ico:"🌶️", model:true,  gen:"to200",
+              d:"The whole number line. Starting numbers up to 200." },
+    medium: { name:"Medium",      ico:"🔥", model:true,  gen:"three",
+              d:"The whole number line. Three-digit subtractions — slide to a hundred." },
+    spicy:  { name:"Spicy",       ico:"🌋", model:false, gen:"to200",
+              d:"Mild's numbers, with no number line." },
+    extra:  { name:"Extra Spicy", ico:"☄️", model:false, gen:"three",
+              d:"Medium's numbers, with no number line." }
+  };
+  const ORDER = ["sweet","mild","medium","spicy","extra"];
+
+  /* ------------------------------------------------------------ questions */
+  /* Every question needs regrouping the ordinary way, and sliding up to the
+     friendly number never changes the first number's leading digits — the
+     same two rules as the teaching tool. */
+  function makeTwo(){
+    // 2-digit − 2-digit, b ends in 7, 8 or 9, a's ones smaller (not 0)
+    for(;;){
+      const bo = pick([7,8,9]), bt = rnd(1,7), b = bt*10 + bo;
+      const a = rnd(bt+1, 9)*10 + rnd(1, bo-1);
+      if(a - b >= 12) return { a, b };
+    }
+  }
+  function makeTo200(){
+    // a from 101 to 199; b a two-digit number ending 7, 8 or 9 (sometimes 97–99),
+    // or a 100-and-something number ending 7, 8 or 9.
+    for(;;){
+      const bo = pick([7,8,9]);
+      const r = Math.random();
+      let b;
+      if(r < 0.25) b = 90 + bo;                       // 97, 98, 99 → slide to 100
+      else if(r < 0.8) b = rnd(2,8)*10 + bo;          // 27 … 89
+      else b = 100 + rnd(1,6)*10 + bo;               // 117 … 169
+      const aTens = rnd(Math.floor(b/10) + 1, 19);
+      const a = aTens*10 + rnd(1, bo-1);
+      if(a < 101 || a > 199) continue;
+      if(a - b < 15) continue;
+      return { a, b };
+    }
+  }
+  function makeThree(){
+    // 3-digit − 3-digit. b sits 1 to 35 below a hundred (467 → 500), and a's
+    // last two digits are smaller than b's, so it regroups the long way and
+    // sliding up never carries a into a new hundred.
+    for(;;){
+      const h = rnd(2,8), d = rnd(1,35), b = h*100 - d;   // 165 … 799
+      const bLast = b % 100;
+      const aH = rnd(h, 9);
+      const aLast = rnd(1, bLast - 1);
+      const a = aH*100 + aLast;
+      if(a - b < 60 || a + d > 999) continue;
+      if(aLast + d >= 100) continue;
+      return { a, b };
+    }
+  }
+  const GEN = { two:makeTwo, to200:makeTo200, three:makeThree };
+
+  function buildPaper(key){
+    const L = LEVELS[key], seen = new Set(), out = [];
+    let guard = 0;
+    while(out.length < QUIZ_N && guard++ < 5000){
+      const q = GEN[L.gen]();
+      const k = q.a + "-" + q.b;
+      if(seen.has(k)) continue;
+      // no two in a row ending in the same digit
+      if(out.length && out[out.length-1].b % 10 === q.b % 10 && guard < 4000) continue;
+      seen.add(k);
+      out.push({ a:q.a, b:q.b, expect:q.a - q.b, shift:0, pos:0, settled:false, correct:false,
+                 given:"", tries:0, usedTen:false, slid:false });
+    }
+    return out;
+  }
+
+  /* ------------------------------------------------------------ state */
+  const S = { levelKey:null, items:[], i:0, drag:null, tween:0 };
+  const cur = () => S.items[S.i];
+  const lv = () => LEVELS[S.levelKey];
+
+  /* ------------------------------------------------------------ the board */
+  let G = null;
+  let focusBand = false;
+
+  function rangeFor(it){
+    const a = it.a, b = it.b, diff = a - b;
+    const big = a >= 200;
+    const pad = big ? Math.max(40, Math.round(diff * .3 / 10) * 10) : 10;
+    // room to slide to the next friendly number, plus a little
+    const friendly = big ? Math.ceil((b + 1) / 100) * 100 : Math.ceil((b + 1) / 10) * 10;
+    let lo = Math.max(0, Math.floor((b - pad) / 10) * 10);
+    let hi = Math.ceil((a + pad) / 10) * 10;
+    hi = Math.max(hi, Math.ceil((a + (friendly - b) + (big ? 20 : 5)) / 10) * 10);
+    if(!big){ lo = Math.max(0, Math.floor(b / 10) * 10 - 10); }
+    while(hi - lo < 50){ if(lo > 0) lo = Math.max(0, lo - 10); else hi += 10; }
+    return { lo, hi };
+  }
+
+  function measure(){
+    const svg = $("board");
+    const W = Math.max(280, svg.getBoundingClientRect().width);
+    const top = svg.getBoundingClientRect().top + window.scrollY;
+    const below = $("slideRow").offsetHeight + 10 + 12 + $("answerCard").offsetHeight + 12 + $("navRow").offsetHeight + 16;
+    const avail = window.innerHeight - top - below;
+    const H = Math.round(Math.max(270, Math.min(avail, 500, W * (W < 600 ? 1.0 : 0.56))));
+    const padX = Math.max(26, Math.min(56, W * 0.045));
+    const x0 = padX, x1 = W - padX;
+    const ppu = (x1 - x0) / (G_range.hi - G_range.lo);
+    const u = Math.min(1, Math.max(.62, H / 480, Math.min(1, W / 900)));
+    return { W, H, x0, x1, ppu, u,
+      stmtTop: H * 0.10, bandTopY: H * 0.24, bandH: Math.max(38, H * 0.12),
+      lineY: H * 0.54, bandBotY: H * 0.74, stmtBot: H * 0.88,
+      knobR: Math.max(18, Math.min(28, H * 0.055)),
+      stmtSize: Math.max(24, Math.min(48, H * 0.09)) };
+  }
+  let G_range = { lo:0, hi:100 };
+  const X = v => G.x0 + (v - G_range.lo) * G.ppu;
+
+  function el(tag, attrs, parent){
+    const n = document.createElementNS(NS, tag);
+    for(const k in attrs) n.setAttribute(k, attrs[k]);
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function txt(parent, x, y, str, cls, size){
+    const t = el("text", { x, y, class: cls }, parent);
+    if(size) t.setAttribute("font-size", size);
+    t.textContent = str;
+    return t;
+  }
+  const isFriendly = n => n % 10 === 0;
+
+  function drawBoard(){
+    const it = cur(), svg = $("board");
+    if(document.activeElement && document.activeElement.id === "movedBand") focusBand = true;
+    G_range = rangeFor(it);
+    G = measure();
+    svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
+    svg.setAttribute("height", G.H);
+    svg.textContent = "";
+    drawLine(svg);
+    drawJumps(svg, it);
+    drawBand(svg, it, "orig", it.b, it.a, G.bandBotY);
+    drawStatement(svg, it, "orig", it.a, it.b, G.stmtBot, (X(it.b) + X(it.a)) / 2);
+    const mb = it.b + it.pos, ma = it.a + it.pos;
+    drawBand(svg, it, "moved", mb, ma, G.bandTopY);
+    drawStatement(svg, it, "moved", Math.round(ma), Math.round(mb), G.stmtTop, (X(mb) + X(ma)) / 2);
+    $("homeBtn").disabled = it.shift === 0 && it.pos === 0;
+    document.querySelectorAll(".slideBtn").forEach(bn => {
+      const s = it.shift + Number(bn.dataset.d);
+      bn.disabled = s !== clampShift(s);
+    });
+    svg.setAttribute("aria-label", "Number line. " + it.a + " minus " + it.b + " below the line. Above it, the same gap slid to "
+      + (it.a + it.shift) + " minus " + (it.b + it.shift) + ".");
+  }
+
+  function drawLine(svg){
+    const y = G.lineY, g = el("g", {}, svg);
+    el("line", { x1: G.x0 - 16, y1: y, x2: G.x1 + 16, y2: y, class: "axis" }, g);
+    el("polygon", { points: (G.x0-22)+","+y+" "+(G.x0-10)+","+(y-7)+" "+(G.x0-10)+","+(y+7), fill: "var(--line)" }, g);
+    el("polygon", { points: (G.x1+22)+","+y+" "+(G.x1+10)+","+(y-7)+" "+(G.x1+10)+","+(y+7), fill: "var(--line)" }, g);
+    const labSize = Math.round(14 + 5 * G.u);
+    const digits = String(G_range.hi).length;
+    const labW = labSize * 0.62 * digits + 16;
+    const labelStep = [10,20,50,100,200].find(s => G.ppu * s >= labW) || 500;
+    const minor = [1,5,10].find(s => G.ppu * s >= 5.5) || 10;
+    for(let v = Math.ceil(G_range.lo / minor) * minor; v <= G_range.hi; v += minor){
+      const lab = v % labelStep === 0, ten = v % 10 === 0, five = v % 5 === 0;
+      const h = lab ? 13 : ten ? 9 : five ? 7 : 5;
+      el("line", { x1: X(v), y1: y - h, x2: X(v), y2: y + h, class: "tick" + (lab ? " ten" : ten || five ? " five" : "") }, g);
+      if(lab) txt(g, X(v), y + h + labSize + 2, String(v), "tickLab", labSize);
+    }
+  }
+
+  function drawBand(svg, it, kind, from, to, y){
+    const g = el("g", { class: "band " + kind }, svg);
+    const xa = X(from), xb = X(to), h = G.bandH, r = G.knobR;
+    const toLine = kind === "moved" ? [y + r, G.lineY] : [G.lineY, y - r];
+    const fromN = Math.round(from), toN = Math.round(to);
+    const onTen = kind === "moved" && !S.drag && !S.tween && it.shift !== 0 && isFriendly(fromN);
+    el("line", { x1: xa, y1: toLine[0], x2: xa, y2: toLine[1], class: "drop" + (onTen ? " onTen" : "") }, g);
+    el("line", { x1: xb, y1: toLine[0], x2: xb, y2: toLine[1], class: "drop" }, g);
+    el("circle", { cx: xa, cy: G.lineY, r: 6.5, class: "pin" }, g);
+    el("circle", { cx: xb, cy: G.lineY, r: 6.5, class: "pin" }, g);
+    el("rect", { x: xa, y: y - h/2, width: Math.max(0, xb - xa), height: h, rx: Math.min(14, h/2.6), class: "body" }, g);
+    const midSize = Math.round(G.stmtSize * .72);
+    if(xb - xa > 2*r + midSize*1.6){
+      const known = it.settled;
+      txt(g, (xa + xb)/2, y, known ? String(it.expect) : "?", "mid" + (known ? " known" : ""), midSize).setAttribute("dy","0.05em");
+    }
+    const len = Math.max(String(fromN).length, String(toN).length);
+    const knobSize = Math.round(r * (len > 2 ? .74 : .92));
+    [[xa, fromN, onTen], [xb, toN, false]].forEach(([x, n, ten]) => {
+      const k = el("g", { class: "knob" + (ten ? " onTen" : "") }, g);
+      el("circle", { cx: x, cy: y, r }, k);
+      txt(k, x, y, String(n), "", knobSize).setAttribute("dy","0.05em");
+    });
+    if(kind === "moved"){
+      g.id = "movedBand";
+      g.setAttribute("tabindex","0");
+      g.setAttribute("role","slider");
+      g.setAttribute("aria-label","Slide the gap along the line");
+      g.setAttribute("aria-valuenow", String(it.b + it.shift));
+      g.setAttribute("aria-valuetext", (it.a + it.shift) + " minus " + (it.b + it.shift));
+      g.addEventListener("pointerdown", onDown);
+      g.addEventListener("keydown", onBandKey);
+      if(focusBand){ focusBand = false; g.focus({ preventScroll:true }); }
+    }
+  }
+
+  function drawStatement(svg, it, kind, a, b, y, cx){
+    const t = el("text", { x: cx, y, class: "stmt " + kind, "font-size": G.stmtSize }, svg);
+    const span = (s, cls) => { const n = el("tspan", { class: cls }, t); n.textContent = s; };
+    const glow = kind === "moved" && !S.drag && !S.tween && it.shift !== 0 && isFriendly(b);
+    span(String(a), "a"); span(" − ", "op"); span(String(b), "b" + (glow ? " onTen" : ""));
+    span(" = ", "op"); span(it.settled ? String(it.expect) : "?", it.settled ? "ans" : "q");
+    const half = t.getBBox().width / 2 + 6;
+    t.setAttribute("x", Math.min(G.W - half, Math.max(half, cx)));
+  }
+
+  function drawJumps(svg, it){
+    const d = it.pos;
+    if(Math.abs(d) < 0.5) return;
+    const g = el("g", { class: "jump" }, svg);
+    const y = G.lineY, lab = (d > 0 ? "+" : "−") + Math.abs(Math.round(d));
+    const labSize = Math.round(16 + 5 * G.u);
+    [it.b, it.a].forEach(v => {
+      const xs = X(v), xe = X(v + d), span = Math.abs(xe - xs);
+      const peak = Math.min(G.lineY - G.bandTopY - G.bandH/2 - G.knobR - labSize - 4, 18 + span * .28);
+      const cx = (xs + xe) / 2;
+      el("path", { d: "M" + xs + "," + (y-4) + " Q" + cx + "," + (y - 4 - peak*2) + " " + xe + "," + (y-4) }, g);
+      const dir = xe > xs ? -1 : 1;
+      el("polygon", { points: xe + "," + (y-3) + " " + (xe + dir*9) + "," + (y-12) + " " + (xe + dir*1.5) + "," + (y-15) }, g);
+      txt(g, cx, y - 4 - peak - 7, lab, "", labSize);
+    });
+  }
+
+  /* ------------------------------------------------------------ moving */
+  const clampShift = s => { const it = cur(); return Math.max(G_range.lo - it.b, Math.min(G_range.hi - it.a, s)); };
+  function cancelTween(){ if(S.tween){ cancelAnimationFrame(S.tween); S.tween = 0; } }
+  function landed(){
+    const it = cur();
+    if(it.shift !== 0) it.slid = true;
+    // "used a ten" is recorded only before the question is marked
+    if(!it.settled && it.shift !== 0 && isFriendly(it.b + it.shift)) it.usedTen = true;
+  }
+  function slideTo(target, animate){
+    const it = cur();
+    target = clampShift(Math.round(target));
+    cancelTween();
+    it.shift = target;
+    if(!animate || reduceMotion || Math.abs(target - it.pos) < 1.01){ it.pos = target; landed(); drawBoard(); return; }
+    const from = it.pos, t0 = performance.now(), dur = Math.min(650, 240 + Math.abs(target - from) * 12);
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      it.pos = from + (target - from) * e;
+      if(k < 1){ S.tween = requestAnimationFrame(step); drawBoard(); }
+      else { S.tween = 0; it.pos = target; landed(); drawBoard(); }
+    };
+    S.tween = requestAnimationFrame(step);
+  }
+  function unitAt(clientX){
+    const r = $("board").getBoundingClientRect();
+    return G_range.lo + ((clientX - r.left) * (G.W / r.width) - G.x0) / G.ppu;
+  }
+  function onDown(e){
+    if(e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    cancelTween();
+    const it = cur(); it.pos = it.shift;
+    S.drag = { grab: unitAt(e.clientX) - it.shift, id: e.pointerId };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+    drawBoard(); $("movedBand").classList.add("dragging");
+  }
+  function onMove(e){
+    if(!S.drag || e.pointerId !== S.drag.id) return;
+    const it = cur(), s = clampShift(Math.round(unitAt(e.clientX) - S.drag.grab));
+    if(s !== it.shift){ it.shift = s; it.pos = s; drawBoard(); $("movedBand").classList.add("dragging"); }
+  }
+  function onUp(e){
+    if(!S.drag || e.pointerId !== S.drag.id) return;
+    S.drag = null;
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+    landed(); drawBoard();
+  }
+  function onBandKey(e){
+    const it = cur();
+    let d = 0;
+    if(e.key === "ArrowRight" || e.key === "ArrowUp") d = e.shiftKey ? 10 : 1;
+    else if(e.key === "ArrowLeft" || e.key === "ArrowDown") d = e.shiftKey ? -10 : -1;
+    else if(e.key === "Home"){ e.preventDefault(); slideTo(0, true); return; }
+    if(!d) return;
+    e.preventDefault(); e.stopPropagation();
+    slideTo(it.shift + d, Math.abs(d) > 1);
+  }
+
+  /* ------------------------------------------------------------ painting */
+  function setPrompt(text, tone){
+    $("promptText").textContent = text;
+    $("promptBar").className = "promptBar" + (tone ? " " + tone : "");
+    $("promptIco").textContent = tone === "good" ? "✅" : tone === "bad" ? "💡" : "💭";
+  }
+
+  function paint(){
+    const it = cur(), L = lv();
+    if(!it) return;
+    cancelTween(); S.drag = null;
+    $("qCounter").textContent = `Question ${S.i + 1} / ${S.items.length}`;
+    $("progressFill").style.width = (S.i / S.items.length * 100).toFixed(1) + "%";
+
+    $("answerLab").innerHTML = `${it.a} <span class="op">&minus;</span> ${it.b} <span class="op">=</span>`;
+    $("boardCard").hidden = !L.model;
+    $("qCard").hidden = L.model;
+    // a model level keeps the question on the board; hidden elements hold nothing
+    if(!L.model){
+      $("sA").textContent = it.a; $("sB").textContent = it.b;
+      $("sAns").textContent = it.settled ? String(it.expect) : "?";
+      $("sAns").className = it.settled ? "ans" : "q";
+      $("noModel").hidden = S.i > 0;
+    } else {
+      $("sA").textContent = ""; $("sB").textContent = ""; $("sAns").textContent = "";
+    }
+
+    const ai = $("ansInput");
+    if(document.activeElement !== ai || ai.dataset.q !== String(S.i)) ai.value = it.given || "";
+    ai.dataset.q = String(S.i);
+    ai.className = "ansIn" + (it.settled ? (it.correct ? " right" : " wrong") : "");
+    $("feedback").textContent = it.settled ? (it.correct ? "Correct" : "The answer is " + it.expect) : "";
+    $("feedback").className = "fb " + (it.settled ? (it.correct ? "ok" : "no") : "");
+    $("prevBtn").disabled = S.i === 0;
+    $("nextBtn").textContent = S.i === S.items.length - 1 ? "Finish" : "Next →";
+
+    if(!it.settled){
+      setPrompt(L.model
+        ? "Drag the orange gap along the line — the difference stays the same. Find an easier subtraction, then type the answer."
+        : "Move both numbers the same amount to make it easier, then type the answer.");
+    } else {
+      setPrompt(it.correct ? "Correct." : `The answer is ${it.expect}.`, it.correct ? "good" : "bad");
+    }
+    if(L.model) drawBoard();
+  }
+
+  /* ------------------------------------------------------------ marking */
+  const normalise = s => { const t = String(s).trim().replace(/[\s,]/g, ""); return /^-?\d+$/.test(t) ? String(Number(t)) : null; };
+
+  function check(){
+    const it = cur();
+    if(!it) return;
+    const raw = $("ansInput").value, got = normalise(raw);
+    if(got === null){ setPrompt("Type a whole number.", "bad"); $("ansInput").focus(); return; }
+    const right = got === String(it.expect);
+    it.tries++;
+    if(!it.settled){
+      it.given = raw; it.correct = right; it.settled = true;   // ONLY the first attempt scores
+      if(right) confetti();
+      if(window.MMTSubmit && window.MMTSubmit.refresh) window.MMTSubmit.refresh();
+      paint();
+      if(!right){
+        setPrompt(lv().model
+          ? `The answer is ${it.expect}. Slide the gap until the number you take away is a ten — both numbers move the same.`
+          : `The answer is ${it.expect}. Add the same to both numbers so you take away a ten.`, "bad");
+      }
+      return;
+    }
+    // already marked — a later go is acknowledged but never re-scored
+    it.given = raw;
+    $("ansInput").className = "ansIn" + (right ? " right" : " wrong");
+    setPrompt(right ? "That is right. The mark for this one is from your first answer."
+                    : `Still not it — the answer is ${it.expect}.`, right ? "good" : "bad");
+  }
+
+  function next(){
+    const it = cur();
+    if(!it.settled){
+      it.settled = true; it.correct = false;
+      if(window.MMTSubmit && window.MMTSubmit.refresh) window.MMTSubmit.refresh();
+    }
+    if(S.i < S.items.length - 1){ S.i++; paint(); $("ansInput").focus({ preventScroll:true }); }
+    else finish();
+  }
+
+  /* ------------------------------------------------------------ finishing */
+  function isPartial(){ return !!(window.MMTSubmit && window.MMTSubmit.isPartial && window.MMTSubmit.isPartial()); }
+  function scores(){
+    const counted = isPartial() ? S.items.filter(x => x.settled) : S.items;
+    const score = counted.filter(x => x.correct).length;
+    const usedTen = counted.filter(x => x.usedTen).length;
+    const total = isPartial() && window.MMTSubmit.total ? window.MMTSubmit.total() : QUIZ_N;
+    return { score, total, counted: counted.length, usedTen };
+  }
+  function finish(){
+    if(!isPartial()) S.items.forEach(it => { if(!it.settled){ it.settled = true; it.correct = false; } });
+    const s = scores(), L = lv();
+    const pct = s.total ? Math.round(s.score / s.total * 100) : 0;
+    $("progressFill").style.width = "100%";
+    $("certScore").textContent = `${s.score} / ${s.total}`;
+    $("certSub").innerHTML = `Constant Difference &middot; ${L.name} &middot; ${pct}%`
+      + (window.MMTAuth && window.MMTAuth.certTail ? "<br>" + window.MMTAuth.certTail() : "");
+    $("certBreak").innerHTML = L.model
+      ? `Slid the gap onto a ten before answering: ${s.usedTen} / ${s.counted}`
+      : "";
+    $("certModal").classList.add("open");
+
+    /* No typed answer is ever in the payload — only marks and counts. */
+    if(window.MMTSave) window.MMTSave({
+      tool:"constant-difference-student-quiz", topic:"number",
+      level:L.name, levelKey:S.levelKey,
+      score:s.score, total:s.total, percent:pct,
+      masteryTopic:"constant-difference",
+      types: ["subtract:" + s.score + "/" + s.counted]
+        .concat(L.model ? ["usedten:" + s.usedTen + "/" + s.counted] : [])
+        .concat(["level:" + S.levelKey, "model:" + (L.model ? "on" : "off")]),
+      certificateText:"Constant Difference — " + L.name + ": " + s.score + "/" + s.total,
+      ...(window.MMTSubmit && window.MMTSubmit.fields ? window.MMTSubmit.fields() : {})
+    });
+  }
+
+  /* ------------------------------------------------------------ confetti */
+  const CONFETTI_COLOURS = ["#2563eb","#22c55e","#f59e0b","#ec4899","#7c3aed","#ef4444","#14b8a6"];
+  function confetti(){
+    if(reduceMotion) return;
+    const host = document.createElement("div");
+    host.className = "confetti"; host.setAttribute("aria-hidden","true");
+    document.body.appendChild(host);
+    const W = innerWidth, H = innerHeight, bits = [];
+    for(let i = 0; i < 56; i++){
+      const e = document.createElement("i"), size = 6 + Math.random()*7;
+      e.style.cssText = "position:absolute;top:0;left:0;width:" + size + "px;height:" + (size*.6) + "px;background:"
+        + CONFETTI_COLOURS[i % CONFETTI_COLOURS.length] + ";border-radius:" + (Math.random() < .3 ? "50%" : "2px") + ";";
+      host.appendChild(e);
+      bits.push({ e, x:W*(.15 + Math.random()*.7), y:-20 - Math.random()*H*.35, vx:(Math.random()-.5)*2.2,
+                  vy:2.6 + Math.random()*3.4, rot:Math.random()*360, vr:(Math.random()-.5)*18 });
+    }
+    const t0 = performance.now();
+    (function frame(now){
+      const t = now - t0; let live = false;
+      for(const b of bits){
+        b.x += b.vx; b.y += b.vy; b.vy += .06; b.rot += b.vr;
+        if(b.y < H + 40) live = true;
+        b.e.style.transform = "translate(" + b.x.toFixed(1) + "px," + b.y.toFixed(1) + "px) rotate(" + b.rot.toFixed(0) + "deg)";
+        b.e.style.opacity = t > 1500 ? String(Math.max(0, 1 - (t-1500)/700)) : "1";
+      }
+      if(live && t < 2300) requestAnimationFrame(frame); else host.remove();
+    })(t0);
+  }
+
+  /* ------------------------------------------------------------ levels */
+  function buildLevelList(){
+    $("lvlList").innerHTML = ORDER.map(k => {
+      const L = LEVELS[k];
+      return `<button class="lvlRow ${k}" type="button" data-k="${k}"><span class="lvlIco">${L.ico}</span>`
+        + `<strong>${L.name}</strong><span class="d">${L.d}</span><span class="go">&rsaquo;</span></button>`;
+    }).join("");
+    $("lvlList").querySelectorAll(".lvlRow").forEach(b => b.addEventListener("click", () => startLevel(b.dataset.k)));
+  }
+  function openLevels(){ $("certModal").classList.remove("open"); $("levelModal").classList.add("open"); }
+  function startLevel(k){
+    S.levelKey = k; S.items = buildPaper(k); S.i = 0;
+    $("levelModal").classList.remove("open"); $("certModal").classList.remove("open");
+    const chip = $("levelChip"); chip.hidden = false; chip.className = "lvlChip " + k; chip.textContent = LEVELS[k].name;
+    if(window.MMTSubmit && window.MMTSubmit.reset) window.MMTSubmit.reset();
+    paint();
+    $("ansInput").focus({ preventScroll:true });
+  }
+
+  /* ------------------------------------------------------------ wiring */
+  $("checkBtn").addEventListener("click", check);
+  $("ansInput").addEventListener("keydown", e => {
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    if(cur() && !cur().settled) check(); else next();
+  });
+  $("nextBtn").addEventListener("click", next);
+  $("prevBtn").addEventListener("click", () => { if(S.i > 0){ S.i--; paint(); } });
+  $("menuBtn").addEventListener("click", openLevels);
+  $("changeLvlBtn").addEventListener("click", openLevels);
+  $("againBtn").addEventListener("click", () => startLevel(S.levelKey));
+  $("homeBtn").addEventListener("click", () => slideTo(0, true));
+  document.querySelectorAll(".slideBtn").forEach(bn => bn.addEventListener("click", () => {
+    const d = Number(bn.dataset.d); slideTo(cur().shift + d, Math.abs(d) > 1);
+  }));
+  $("copyBtn").addEventListener("click", async () => {
+    const s = scores();
+    const line = "🏆 Mills Maths Tools — Constant Difference Student Quiz\n" + `${lv().name}: ${s.score}/${s.total}\n`
+      + (window.MMTAuth && window.MMTAuth.shareLine ? window.MMTAuth.shareLine() : "");
+    try { await navigator.clipboard.writeText(line); $("copyBtn").textContent = "Copied"; }
+    catch { $("copyBtn").textContent = "Could not copy"; }
+    setTimeout(() => { $("copyBtn").textContent = "Copy my result"; }, 1800);
+  });
+  $("toolsBtn").addEventListener("click", e => {
+    e.stopPropagation();
+    const m = $("toolsMenu"), was = m.classList.contains("open");
+    m.classList.toggle("open", !was); $("toolsBtn").setAttribute("aria-expanded", String(!was));
+  });
+  document.addEventListener("click", () => { $("toolsMenu").classList.remove("open"); $("toolsBtn").setAttribute("aria-expanded","false"); });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ $("toolsMenu").classList.remove("open"); return; }
+    if($("levelModal").classList.contains("open") || $("certModal").classList.contains("open")) return;
+    if(!S.items.length || !lv().model) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "INPUT" || tag === "BUTTON" || (e.target && e.target.id === "movedBand")) return;
+    if(e.key === "ArrowRight"){ e.preventDefault(); slideTo(cur().shift + (e.shiftKey ? 10 : 1), e.shiftKey); }
+    else if(e.key === "ArrowLeft"){ e.preventDefault(); slideTo(cur().shift - (e.shiftKey ? 10 : 1), e.shiftKey); }
+  });
+  let rt = 0;
+  addEventListener("resize", () => { cancelAnimationFrame(rt); rt = requestAnimationFrame(() => { if(S.items.length && lv().model) drawBoard(); }); });
+
+  /* The shared early-submit button. It is an ES module, so it is imported —
+     a plain <script> tag would stop at its `export` line and never define
+     window.MMTSubmit. If it cannot be reached (offline, file://) the quiz
+     simply works without it. */
+  import("/portal/shared/earlySubmit.js").then(m => {
+    window.MMTSubmit = m.MMTSubmit;
+    m.MMTSubmit.register({
+      progress: () => ({ attempted:S.items.filter(x => x.settled).length,
+                         correct:S.items.filter(x => x.correct).length, quizLength:QUIZ_N }),
+      finish: () => finish()
+    });
+  }).catch(() => {});
+
+  buildLevelList();
+  openLevels();
+
+  /* a small surface for the automated checks; nothing in the page reads it */
+  window.__CDQ__ = { S, LEVELS, ORDER, buildPaper, makeTwo, makeTo200, makeThree, rangeFor, startLevel, scores, finish, next, check, paint, slideTo };
+})();
+</script>
+
+  <!-- ===== MMT student-code login + secure save + sign-in banner ===== -->
+  <!-- The overlay, the sign-in chip and window.MMTSave() live in one shared
+       file rather than a copy inside every quiz. -->
+  <script src="/portal/shared/quizAuthUI.js"></script>
+</body>
+</html>

@@ -99,6 +99,13 @@ window.MMT_TOOL_LINKS = {
       tags: ["constant difference", "subtraction", "mental strategies", "open number line", "compensation", "bridging to ten", "difference", "same difference"]
     },
     {
+      title: "Constant Difference — Student Quiz",
+      kind: "Student quiz",
+      url: "/online-quizzes/stage-3/number/constant-difference.html",
+      note: "Sweet to Extra Spicy. The first three levels hand over the number line to slide; the last two take it away. Saves to the student dashboard.",
+      tags: ["quiz", "constant difference", "subtraction", "mental strategies", "open number line", "three digit"]
+    },
+    {
       title: "Partition Splitter",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-3/number/partition-splitter/",

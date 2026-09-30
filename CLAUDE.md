@@ -52,6 +52,29 @@
 > §2 "TWO folders", §3 deploy paths and §5's `mathstools-main 2` heading below
 > describe the OLD layout — this block supersedes them.
 >
+> **NEW (2026-09-30, session — being pushed): CONSTANT DIFFERENCE — TOOL + STUDENT QUIZ.**
+> Teaching tool `interactive-tools/stage-3/number/constant-difference/` and quiz
+> `online-quizzes/stage-3/number/constant-difference.html`, both under **MA3-AR-01**.
+> * **TOOL:** one number line, mirrored: slid statement · orange band (drag) · LINE ·
+>   blue band (fixed, the question) · question. The band snaps to whole numbers and
+>   never changes length; purple +n hops at BOTH ends; the number taken away goes
+>   green when released on a ten. Difference is `?` until "Show the difference".
+>   No explanation text on the board — the teacher talks. Tools ▾ is ONE row: Student
+>   Quiz (teacher decision 2026-09-30).
+> * **QUIZ:** registered as `constant-difference-quiz`, writing
+>   `tool: "constant-difference-student-quiz"`, masteryTopic `constant-difference`.
+>   Five levels, 10 questions: Sweet (2-digit, take away …7/8/9), Mild (from up to
+>   200), Medium (3-digit, take away 1–35 below a hundred) all keep the WHOLE tool plus
+>   −10/−1/+1/+10 buttons; Spicy = Mild's numbers, Extra Spicy = Medium's, no model.
+>   Every question regroups the long way; sliding up never changes the first number's
+>   leading digits. Answer never on screen before marking; first attempt only scores.
+>   types[]: `subtract:s/t`, `usedten:n/t` (model levels), `level:`, `model:on|off`.
+>   Early submit is `import()`ed and `register()`ed; the button sits in `#mmtSubmitSlot`
+>   in the nav row. No typed answer in the payload.
+> * **Verified:** tool 45k checks, quiz 52.7k (9000 generated questions against the
+>   rules, 250 papers, every level played through with the answer never on screen
+>   early, first-attempt scoring, full payload, early-submit button, six viewports).
+
 > **NEW (2026-09-28, session — being pushed): CROSSWISE — MATHS CROSSWORDS.**
 > `games/crosswise.html`, Puzzles group. One self-contained file on the `.mmtTopbar`
 > shell + MMT PHONE LAYOUT block, no Firebase, English only. Two modes, five levels

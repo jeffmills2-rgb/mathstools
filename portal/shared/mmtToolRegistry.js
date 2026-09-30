@@ -210,6 +210,14 @@ export const MMT_TOOLS = Object.freeze([
     notes: "Sweet/Mild/Medium/Spicy, 10 questions (teacher design 2026-09-21). Sweet = share a total only; Mild adds one share known; Medium mixes all three types (share a total, one share known, difference known); Spicy is all three with NO bar model. Sweet-Medium keep the teaching tool's model and ask for TWO steps: what one part is worth (typed into the glowing boxes, which mirror) and then the answer. A question scores only if BOTH steps are right first time. types[] carries per-type subtotals (type1/type2/type3:s/t), onepart:s/t at the model levels, level and model:on/off. No typed answer is ever in the payload. masteryTopic 'stacked-bar-ratio'. Pairs with the teaching tool and the worksheet creator, all under MA4-RAT-C-01.",
   },
   {
+    toolId: "constant-difference-quiz", title: "Constant Difference — Student Quiz", category: "Quiz",
+    enabled: true, resultCollection: "achievements", richCollection: null,
+    achievementToolName: "constant-difference-student-quiz", topics: ["number"], stage: "Stage 3",
+    launchUrl: "/online-quizzes/stage-3/number/constant-difference.html",
+    supportsAdventureAttempts: false, supportsSkillBreakdown: false,
+    notes: "Sweet/Mild/Medium/Spicy/Extra Spicy, 10 questions (teacher design 2026-09-30). Sweet/Mild/Medium keep the WHOLE teaching tool (drag the gap along the number line, jumps, green on a ten, plus -10/-1/+1/+10 buttons): Sweet two-digit taking away a number ending 7/8/9; Mild starting numbers 101-199; Medium three-digit with the number taken away 1-35 below a hundred (893 - 467 -> slide to 500). Spicy = Mild's numbers, Extra Spicy = Medium's, with no model. Every question regroups the long way. The answer is never on screen before marking. Only the FIRST attempt scores. types[]: subtract:s/t, usedten:n/t at model levels (slid the gap onto a ten before marking), level, model:on/off. No typed answer is ever in the payload. masteryTopic 'constant-difference'. Pairs with the teaching tool under MA3-AR-01.",
+  },
+  {
     toolId: "multiply-divide-by-ten-quiz", title: "Multiplying and Dividing by 10 — Student Quiz", category: "Quiz",
     enabled: true, resultCollection: "achievements", richCollection: null,
     achievementToolName: "multiply-divide-by-ten-student-quiz", topics: ["number"], stage: "Stage 3",
