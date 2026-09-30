@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Addition by Compensation — Student Quiz | Mills Maths Tools</title>
+
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 18px 45px rgba(15,23,42,.13);
+      --blue:#2563eb; --blue-dark:#1d4ed8;
+      --green:#22c55e; --green-dark:#15803d;
+      --purple:#7c3aed; --purple-dark:#5b21b6;
+      --orange:#f97316; --orange-dark:#c2410c;
+      --red:#dc2626; --line:#334155; --line-soft:#94a3b8;
+      --sweet:#16a34a; --mild:#d97706; --medium:#ea580c; --spicy:#b91c1c; --extra:#881337;
+      --uiFont:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mathFont:"STIX Two Math","Cambria Math","Latin Modern Math","Times New Roman",Georgia,serif;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+    body{
+      margin:0; font-family:var(--uiFont); color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 32rem),
+        radial-gradient(circle at top right,rgba(124,58,237,.12),transparent 34rem),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    button,input,select{ font:inherit; }
+    [hidden]{ display:none !important; }
+    .app{ min-height:100dvh; display:flex; flex-direction:column; }
+
+    /* ---------- topbar (shared MMT shell) ---------- */
+    .mmtTopbar{
+      position:relative; z-index:40;
+      background:linear-gradient(135deg,#0f172a,#123b7a 55%,#2563eb);
+      color:white; padding:14px 24px;
+      display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+      align-items:center; gap:16px; box-shadow:0 10px 28px rgba(15,23,42,.22);
+    }
+    .mmtBrand{ display:flex; align-items:center; gap:12px; justify-self:start;
+      text-decoration:none; color:white; border-radius:14px; padding:8px 12px; margin-left:-12px; font-weight:900; }
+    .mmtBrand:hover{ background:rgba(255,255,255,.12); }
+    .mmtBrandLogo{ width:44px; height:44px; border-radius:9px; background:white; color:#1d4ed8;
+      display:grid; place-items:center; font-weight:1000; letter-spacing:-.08em; flex:0 0 auto; }
+    .mmtBrandText strong{ display:block; font-size:1.18rem; line-height:1; letter-spacing:-.03em; color:white; }
+    .mmtBrandText span{ display:block; font-size:.78rem; opacity:.82; font-weight:650; color:white; }
+    .mmtTopTitle{ font-weight:850; font-size:clamp(1rem,1.8vw,1.42rem); letter-spacing:-.04em; text-align:center; color:white; white-space:nowrap; }
+    .topActions{ justify-self:end; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:nowrap; }
+
+    .btn{ appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14);
+      color:white; padding:11px 15px; border-radius:14px; font-weight:900; font-size:15px; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled){ background:rgba(255,255,255,.22); transform:translateY(-1px); }
+    .btn-primary{ background:white; color:#1d4ed8; border-color:white; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .menuWrap{ position:relative; display:inline-flex; }
+    .dropMenu{ position:absolute; top:calc(100% + 8px); right:0; min-width:250px; background:#fff; color:var(--ink);
+      border:1px solid rgba(226,232,240,.95); border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.22);
+      padding:7px; display:none; z-index:120; text-align:left; }
+    .dropMenu.open{ display:grid; gap:4px; }
+    .toolLink{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px;
+      border-radius:10px; color:var(--ink); text-decoration:none; font-weight:900; font-size:.9rem; }
+    .toolLink::after{ content:'\203A'; color:var(--blue); font-weight:1000; font-size:1.1rem; }
+    .toolLink:hover{ background:#eef2ff; color:#1d4ed8; }
+    .toolLink small{ display:block; font-weight:650; font-size:.74rem; color:var(--muted); }
+
+    .lvlChip{ font-weight:1000; font-size:.82rem; padding:6px 13px; border-radius:999px;
+      background:#fff; border:1px solid rgba(255,255,255,.3); color:var(--blue-dark); white-space:nowrap; }
+    .lvlChip.sweet{ color:var(--sweet); } .lvlChip.mild{ color:var(--mild); }
+    .lvlChip.medium{ color:var(--medium); } .lvlChip.spicy{ color:var(--spicy); } .lvlChip.extra{ color:var(--extra); }
+
+    .progressWrap{ height:6px; background:rgba(15,23,42,.10); }
+    .progressFill{ height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--purple)); transition:width .3s ease; }
+
+    /* ---------- layout ---------- */
+    .layout{ flex:1; width:min(1300px,100%); margin:0 auto; padding:16px 20px 22px;
+      display:flex; flex-direction:column; gap:12px; min-width:0; }
+
+    .headRow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .qCounter{ font-size:.86rem; font-weight:950; color:var(--muted); white-space:nowrap; }
+    .promptBar{ flex:1 1 320px; display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:16px;
+      background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(124,58,237,.08));
+      border:1px solid rgba(37,99,235,.20); font-weight:850; color:var(--line); font-size:.98rem; min-height:46px; line-height:1.35; }
+    .promptBar .pIco{ font-size:1.2rem; flex:0 0 auto; }
+    .promptBar.good{ background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(37,99,235,.06)); border-color:rgba(21,128,61,.28); color:var(--green-dark); }
+    .promptBar.bad{ background:linear-gradient(135deg,rgba(220,38,38,.13),rgba(249,115,22,.07)); border-color:rgba(185,28,28,.28); color:#991b1b; }
+
+    /* no-model levels: the question on its own */
+    .qCard{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow);
+      padding:clamp(22px,5vh,48px) 18px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+    .sentence{ font-family:var(--mathFont); font-weight:700; font-size:clamp(2.4rem,7vw,4.4rem);
+      line-height:1; display:flex; align-items:baseline; gap:.24em; white-space:nowrap; }
+    .sentence .a,.sentence .b{ color:var(--blue-dark); }
+    .sentence .op{ color:var(--line); }
+    .sentence .q{ color:var(--line-soft); }
+    .sentence .ans{ color:var(--green-dark); }
+    .noModel{ font-weight:850; color:var(--muted); font-size:.95rem; text-align:center; line-height:1.45; }
+
+    /* ---------- the board (the teaching tool's tiles, same drawing) ---------- */
+    .boardCard{ position:relative; background:var(--card); border:1px solid var(--border); border-radius:22px;
+      box-shadow:var(--shadow); padding:8px 14px 10px; min-width:0; }
+    .stmtRow{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:baseline;
+      column-gap:.3em; font-family:var(--mathFont); font-weight:700; line-height:1; }
+    .stmtRow .l{ justify-self:end; }
+    .stmtRow .r{ justify-self:start; white-space:nowrap; }
+    .stmtRow .op{ color:var(--line); }
+    .stmtRow .q{ color:var(--line-soft); }
+    .stmtRow .ans{ color:var(--green-dark); }
+    .nL{ color:var(--blue-dark); } .nR{ color:var(--orange-dark); }
+    .nL.onTen,.nR.onTen{ color:var(--green-dark); }
+    .live{ font-size:var(--stmtFs,2.6rem); }
+    .orig{ font-size:calc(var(--stmtFs,2.6rem) * .7); }
+    .origWrap{ display:flex; justify-content:center; margin-top:2px; }
+    .origPill{ padding:6px 20px; border-radius:16px; background:#f8fafc; border:1.5px solid var(--border); }
+    .chipRow{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); column-gap:.3em; min-height:30px; margin:4px 0 0; }
+    .chipRow .l{ justify-self:end; } .chipRow .r{ justify-self:start; }
+    .chipRow .mid{ width:1.2em; }
+    .jChip{ display:inline-block; font-weight:950; font-size:.96rem; color:var(--purple-dark);
+      background:rgba(124,58,237,.11); border:1.5px solid rgba(124,58,237,.3); padding:3px 11px; border-radius:999px; }
+    .field{ position:relative; margin:4px 0 6px; touch-action:none; user-select:none; -webkit-user-select:none; }
+    .half{ position:absolute; top:0; bottom:0; border-radius:18px; transition:background .15s ease; pointer-events:none; }
+    .half.is-target{ background:rgba(34,197,94,.08); box-shadow:inset 0 0 0 2px rgba(21,128,61,.28); }
+    .divider{ position:absolute; top:6%; bottom:6%; width:0; border-left:2px dashed #cbd5e1; pointer-events:none; }
+    .rod,.flat{ position:absolute; left:0; top:0; border-radius:9px; pointer-events:none;
+      border:1.5px solid rgba(148,163,184,.45); background:rgba(241,245,249,.55);
+      transition:transform .38s cubic-bezier(.4,0,.2,1); }
+    .flat{ border-radius:7px; border-color:rgba(100,116,139,.5); }
+    .ghost{ position:absolute; left:0; top:0; border-radius:5px; pointer-events:none; border:2px dashed rgba(100,116,139,.55);
+      transition:transform .38s cubic-bezier(.4,0,.2,1); }
+    .tile{ position:absolute; left:0; top:0; border-radius:5px; cursor:grab;
+      transition:transform .38s cubic-bezier(.4,0,.2,1), width .38s ease, height .38s ease, box-shadow .12s ease;
+      box-shadow:inset 0 -2px 0 rgba(15,23,42,.18); will-change:transform; }
+    .tile.L{ background:linear-gradient(180deg,#3b82f6,var(--blue-dark)); }
+    .tile.R{ background:linear-gradient(180deg,#fb923c,var(--orange-dark)); }
+    .tile.inFlat{ cursor:default; box-shadow:none; }
+    .tile.sel{ box-shadow:0 0 0 3px #fff, 0 0 0 5.5px var(--purple); z-index:3; }
+    .tile.dragging{ transition:none; z-index:10; cursor:grabbing; box-shadow:0 0 0 3px #fff, 0 0 0 5.5px var(--purple), 0 10px 20px rgba(15,23,42,.3); }
+    .tile.instant{ transition:none; }
+    .lasso{ position:absolute; border:2px dashed var(--purple); background:rgba(124,58,237,.08); border-radius:6px; pointer-events:none; z-index:20; }
+
+    .moveRow{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:4px; }
+    .moveBtn{ appearance:none; border:1.5px solid rgba(124,58,237,.3); background:rgba(124,58,237,.08); color:var(--purple-dark);
+      padding:8px 14px; border-radius:12px; font-weight:950; font-size:.95rem; cursor:pointer; min-width:62px; transition:.14s ease; white-space:nowrap; }
+    .moveBtn:hover:not(:disabled){ background:rgba(124,58,237,.16); transform:translateY(-1px); }
+    .moveBtn:disabled{ opacity:.35; cursor:not-allowed; transform:none; }
+    .homeBtn{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--muted);
+      padding:8px 13px; border-radius:12px; font-weight:900; font-size:.86rem; cursor:pointer; margin-left:8px; }
+    .homeBtn:hover:not(:disabled){ border-color:var(--line-soft); color:var(--line); }
+    .homeBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    @media (prefers-reduced-motion:reduce){ .tile,.rod,.flat,.ghost{ transition:none; } }
+
+    /* ---------- answering ---------- */
+    .answerCard{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center;
+      background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow); padding:12px 18px; }
+    .answerLab{ font-family:var(--mathFont); font-weight:700; font-size:1.6rem; color:var(--blue-dark); white-space:nowrap; }
+    .answerLab .op{ color:var(--line); }
+    .ansIn{ appearance:none; border:2px solid var(--border); background:#fff; border-radius:14px;
+      padding:9px 14px; font-family:var(--mathFont); font-size:1.6rem; font-weight:700; color:var(--blue-dark);
+      width:clamp(120px,14vw,170px); text-align:center; }
+    .ansIn:focus-visible{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.16); }
+    .ansIn.right{ border-color:var(--green); background:#f0fdf4; color:var(--green-dark); }
+    .ansIn.wrong{ border-color:var(--red); background:#fef2f2; color:var(--red); animation:shake .34s; }
+    .checkBtn{ appearance:none; border:none; background:var(--blue); color:#fff; padding:12px 22px;
+      border-radius:14px; font-weight:950; font-size:1rem; cursor:pointer; }
+    .checkBtn:hover:not(:disabled){ background:var(--blue-dark); }
+    .fb{ font-weight:950; font-size:.98rem; }
+    .fb.ok{ color:var(--green-dark); } .fb.no{ color:var(--red); }
+
+    .navRow{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .navBtn{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 18px; border-radius:14px; font-weight:900; cursor:pointer; }
+    .navBtn:hover:not(:disabled){ border-color:var(--blue); color:var(--blue-dark); background:#eef2ff; }
+    .navBtn.next{ background:var(--blue); color:#fff; border-color:var(--blue); }
+    .navBtn.next:hover:not(:disabled){ background:var(--blue-dark); color:#fff; }
+    .navBtn:disabled{ opacity:.4; cursor:not-allowed; }
+    .spacer{ flex:1 1 auto; }
+
+    @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
+    .confetti{ position:fixed; inset:0; pointer-events:none; z-index:300; overflow:hidden; }
+
+    /* ---------- level chooser + certificate ---------- */
+    .modalBack{ position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; place-items:center; z-index:200; padding:14px; }
+    .modalBack.open{ display:grid; }
+    .modal{ width:min(640px,100%); max-height:calc(100dvh - 28px); overflow:auto; background:#fff;
+      border-radius:26px; box-shadow:0 34px 90px rgba(15,23,42,.34); border:1px solid #dbe3ef; padding:22px; }
+    .modal h2{ margin:0 0 6px; font-size:1.6rem; letter-spacing:-.03em; }
+    .modal p.sub{ margin:0 0 14px; color:var(--muted); font-weight:800; font-size:.95rem; line-height:1.4; }
+    .lvlList{ display:grid; gap:9px; }
+    .lvlRow{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:3px 14px; align-items:center;
+      border:2px solid var(--border); border-radius:18px; padding:11px 16px; background:#fff; cursor:pointer;
+      text-align:left; font-family:inherit; }
+    .lvlRow:hover{ border-color:#bfdbfe; background:#f8fbff; }
+    .lvlIco{ grid-column:1; grid-row:1/3; font-size:1.6rem; }
+    .lvlRow strong{ grid-column:2; grid-row:1; font-size:1.1rem; font-weight:1000; }
+    .lvlRow span.d{ grid-column:2; grid-row:2; color:var(--muted); font-weight:800; font-size:.86rem; line-height:1.35; }
+    .lvlRow .go{ grid-column:3; grid-row:1/3; font-weight:1000; color:var(--blue); font-size:1.3rem; }
+    .lvlRow.sweet strong{ color:var(--sweet); } .lvlRow.mild strong{ color:var(--mild); }
+    .lvlRow.medium strong{ color:var(--medium); } .lvlRow.spicy strong{ color:var(--spicy); } .lvlRow.extra strong{ color:var(--extra); }
+
+    .certBig{ font-size:2.6rem; font-weight:1000; text-align:center; color:var(--blue-dark); letter-spacing:-.03em; }
+    .certSub{ text-align:center; font-weight:850; color:var(--muted); font-size:.92rem; line-height:1.45; margin-top:8px; }
+    .certBreak{ margin-top:12px; font-weight:900; font-size:.95rem; line-height:1.7; text-align:center; }
+    .modalActions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; justify-content:center; }
+    .modalActions button{ appearance:none; border:1.5px solid var(--border); background:#fff; color:var(--line);
+      padding:11px 17px; border-radius:14px; font-weight:900; cursor:pointer; }
+    .modalActions button.primary{ background:var(--blue); color:#fff; border-color:var(--blue); }
+
+    .brandFoot{ text-align:center; font-size:.85rem; font-weight:850; color:var(--muted); padding:0 0 16px; }
+    .brandFoot a{ color:var(--blue); text-decoration:none; font-weight:1000; }
+
+    @media (max-width:1480px){ .mmtBrandText{ display:none; } }
+    @media (max-width:1180px){
+      .mmtTopbar{ padding:12px 16px; gap:12px; }
+      .mmtTopTitle{ white-space:normal; font-size:1.05rem; line-height:1.15; }
+      .btn{ padding:10px 13px; font-size:14px; }
+    }
+    @media (max-width:900px){
+      .mmtTopbar{ grid-template-columns:auto minmax(0,1fr); gap:6px 8px; padding:8px 10px; }
+      .mmtTopTitle{ grid-column:2; justify-self:start; text-align:left; font-size:1.02rem; white-space:normal; }
+      .topActions{ grid-column:1/-1; justify-content:center; flex-wrap:wrap; }
+      .dropMenu{ right:auto; left:50%; transform:translateX(-50%); }
+      .layout{ padding:10px 10px 18px; }
+      .boardCard{ padding:8px 6px; }
+      .ansIn{ font-size:1.4rem; }
+    }
+    @media (max-height:820px){
+      .layout{ gap:9px; padding-top:10px; padding-bottom:14px; }
+      .promptBar{ min-height:40px; padding:7px 13px; font-size:.93rem; }
+      .answerCard{ padding:8px 16px; }
+      .navBtn{ padding:9px 16px; }
+      .brandFoot{ padding-bottom:10px; }
+    }
+    @media (prefers-reduced-motion:reduce){ .ansIn.wrong{ animation:none; } }
+  </style>
+<!-- mmt-pwa -->
+<link rel="manifest" href="../../../manifest.webmanifest">
+<meta name="theme-color" content="#1f3a5f">
+<link rel="apple-touch-icon" href="../../../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MMT">
+<script src="../../../pwa.js" defer></script>
+<!-- /mmt-pwa -->
+</head>
+<body>
+  <div class="app">
+    <header class="mmtTopbar">
+      <a class="mmtBrand" href="https://www.millsmathstools.au" target="_self" aria-label="Back to Mills Maths Tools">
+        <span class="mmtBrandLogo" aria-hidden="true">MMT</span>
+        <span class="mmtBrandText"><strong>MMT</strong><span>Mills Maths Tools</span></span>
+      </a>
+      <div class="mmtTopTitle">Addition by Compensation &mdash; Student Quiz</div>
+      <div class="topActions">
+        <span id="mmtAuthSlot"></span>
+        <span class="lvlChip" id="levelChip" hidden>Sweet</span>
+        <div class="menuWrap">
+          <button class="btn" id="toolsBtn" type="button" aria-haspopup="true" aria-expanded="false">Tools &#9662;</button>
+          <nav class="dropMenu" id="toolsMenu" aria-label="Related tools">
+            <a class="toolLink" href="/interactive-tools/stage-3/number/addition-compensation/">Teaching Tool<small>The whole-class tile board this quiz is built on</small></a>
+          </nav>
+        </div>
+        <button class="btn btn-primary" id="menuBtn" type="button">Change level</button>
+      </div>
+    </header>
+
+    <div class="progressWrap"><div class="progressFill" id="progressFill"></div></div>
+
+    <main class="layout">
+      <div class="headRow">
+        <span class="qCounter" id="qCounter">Question 1 / 10</span>
+        <div class="promptBar" id="promptBar">
+          <span class="pIco" id="promptIco" aria-hidden="true">&#128173;</span>
+          <span id="promptText">Choose a level to begin.</span>
+        </div>
+      </div>
+
+      <div class="boardCard" id="boardCard" hidden>
+        <div class="stmtRow live" id="live" aria-live="polite">
+          <span class="l"><span class="nL" id="liveL"></span></span>
+          <span class="op">+</span>
+          <span class="r"><span class="nR" id="liveR"></span> <span class="op">=</span> <span class="q" id="liveAns">?</span></span>
+        </div>
+        <div class="chipRow" aria-hidden="true">
+          <span class="l"><span class="jChip" id="chipL" hidden></span></span>
+          <span class="mid"></span>
+          <span class="r"><span class="jChip" id="chipR" hidden></span></span>
+        </div>
+        <div class="field" id="field" role="application" aria-label="Two piles of tiles"></div>
+        <div class="origWrap" id="origWrap">
+          <div class="origPill">
+            <div class="stmtRow orig" id="orig">
+              <span class="l"><span class="nL" id="origL"></span></span>
+              <span class="op">+</span>
+              <span class="r"><span class="nR" id="origR"></span> <span class="op">=</span> <span class="q" id="origAns">?</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="moveRow" id="moveRow">
+          <button class="moveBtn" type="button" data-to="L" data-n="10">&larr; 10</button>
+          <button class="moveBtn" type="button" data-to="L" data-n="1">&larr; 1</button>
+          <button class="moveBtn" type="button" data-to="R" data-n="1">1 &rarr;</button>
+          <button class="moveBtn" type="button" data-to="R" data-n="10">10 &rarr;</button>
+          <button class="homeBtn" id="homeBtn" type="button">&#8634; Back to the start</button>
+        </div>
+      </div>
+
+      <div class="qCard" id="qCard" hidden>
+        <div class="sentence" id="sentence" aria-live="polite">
+          <span class="a" id="sA"></span><span class="op">+</span><span class="b" id="sB"></span><span class="op">=</span><span class="q" id="sAns">?</span>
+        </div>
+        <div class="noModel" id="noModel">No tiles at this level &mdash; picture them, move some across to make a ten, then add.</div>
+      </div>
+
+      <div class="answerCard" id="answerCard">
+        <span class="answerLab" id="answerLab"></span>
+        <input id="ansInput" class="ansIn" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="Your answer" />
+        <button class="checkBtn" id="checkBtn" type="button">Check</button>
+        <span class="fb" id="feedback"></span>
+      </div>
+
+      <div class="navRow" id="navRow">
+        <button class="navBtn" id="prevBtn" type="button">&larr; Previous</button>
+        <button class="navBtn next" id="nextBtn" type="button">Next &rarr;</button>
+        <span class="spacer"></span>
+        <span id="mmtSubmitSlot"></span>
+      </div>
+    </main>
+
+    <div class="brandFoot">
+      This tool and more can be found at <a href="https://www.millsmathstools.au" target="_blank" rel="noopener">www.millsmathstools.au</a>
+    </div>
+  </div>
+
+  <!-- level chooser -->
+  <div class="modalBack" id="levelModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lvlTitle">
+      <h2 id="lvlTitle">Choose your level</h2>
+      <p class="sub">Move some from one number to the other and the total stays the same.
+        The first three levels give you the tiles; the last two take them away.</p>
+      <div class="lvlList" id="lvlList"></div>
+    </div>
+  </div>
+
+  <!-- certificate -->
+  <div class="modalBack" id="certModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="certTitle">
+      <h2 id="certTitle">Finished</h2>
+      <div class="certBig" id="certScore">0 / 10</div>
+      <div class="certSub" id="certSub"></div>
+      <div class="certBreak" id="certBreak"></div>
+      <div class="modalActions">
+        <button class="primary" id="againBtn" type="button">Try again</button>
+        <button id="changeLvlBtn" type="button">Change level</button>
+        <button id="copyBtn" type="button">Copy my result</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const rnd = (a,b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUIZ_N = 10;
+
+  /* ================================================================
+     THE LEVELS (teacher design 2026-09-30, same ladder as Constant
+     Difference). Sweet, Mild and Medium keep the WHOLE teaching tool:
+     drag tiles or a selected group across, box-select, the gap to the
+     next ten, the −n/+n chips, green on a ten. Spicy is Mild's numbers
+     with no tiles; Extra Spicy is Medium's.
+
+     BIG NUMBERS: a full hundred is bundled into a FLAT — ten rods side by
+     side, drawn smaller and stacked two or three high at the outer end of
+     the pile. So a pile always reads hundreds · tens · ones outward from the
+     middle, the board never needs more than nine rods and a loose column
+     per side, and the moment 97 + 3 becomes 100 the tens visibly bundle
+     into a hundred. Flats stay put (nothing ever needs one broken); tens
+     and ones are what move.
+
+     THE ANSWER IS NEVER ON SCREEN BEFORE IT IS MARKED. Both statements
+     read "?" until the question is settled.
+     ================================================================ */
+  const LEVELS = {
+    sweet:  { name:"Sweet",       ico:"🍬", model:true,  gen:"sweet",
+              d:"The whole tile board. Two-digit numbers with a total under 100." },
+    mild:   { name:"Mild",        ico:"🌶️", model:true,  gen:"mild",
+              d:"The whole tile board. Totals from 100 to 199 — watch ten tens bundle into a hundred." },
+    medium: { name:"Medium",      ico:"🔥", model:true,  gen:"medium",
+              d:"The whole tile board. Three-digit numbers — move tens and ones to make a hundred." },
+    spicy:  { name:"Spicy",       ico:"🌋", model:false, gen:"mild",
+              d:"Mild's numbers, with no tiles." },
+    extra:  { name:"Extra Spicy", ico:"☄️", model:false, gen:"medium",
+              d:"Medium's numbers, with no tiles." }
+  };
+  const ORDER = ["sweet","mild","medium","spicy","extra"];
+
+  /* ------------------------------------------------------------ questions */
+  /* The "near" number is just short of a ten (or a hundred at Medium); the
+     other number has enough tens and ones to fill the gap WITHOUT breaking
+     any of its own tens or hundreds, and is not itself near a ten, so there
+     is one obvious move. Every question regroups the ordinary way. */
+  const side = (near, other) => Math.random() < .5 ? { A:near, B:other, near:"L" } : { A:other, B:near, near:"R" };
+
+  function makeSweet(){
+    for(;;){
+      const n = pick([7,8,9]), g = 10 - n;
+      const near = rnd(1,8)*10 + n, other = rnd(1,8)*10 + rnd(g,6);
+      if(near + other > 99) continue;
+      return side(near, other);
+    }
+  }
+  function makeMild(){
+    for(;;){
+      const n = pick([7,8,9]), g = 10 - n, r = Math.random();
+      let near;
+      if(r < .3) near = 90 + n;                     // 97–99 → make a hundred
+      else if(r < .75) near = rnd(2,8)*10 + n;       // 27 … 89
+      else near = 100 + rnd(1,8)*10 + n;             // 117 … 189
+      const lo = Math.max(11, 100 - near), hi = Math.min(199 - near, 189);
+      if(hi < lo) continue;
+      const tLo = Math.ceil((lo - 6) / 10), tHi = Math.floor(hi / 10);
+      if(tHi < Math.max(1, tLo)) continue;
+      const other = rnd(Math.max(1, tLo), tHi)*10 + rnd(g, 6);
+      const sum = near + other;
+      if(other < 11 || sum < 100 || sum > 199) continue;
+      if(near >= 100 && other >= 100) continue;
+      return side(near, other);
+    }
+  }
+  function makeMedium(){
+    for(;;){
+      const d = rnd(1,35), h = rnd(2,8), near = h*100 - d;
+      const dT = Math.floor(d/10), dO = d % 10;
+      const oT = rnd(dT, 5), oO = rnd(Math.max(dO, 1), 9);
+      const other = rnd(1,8)*100 + oT*10 + oO;
+      if(other % 100 < d) continue;
+      if(near + other > 999) continue;
+      return side(near, other);
+    }
+  }
+  const GEN = { sweet:makeSweet, mild:makeMild, medium:makeMedium };
+
+  function buildPaper(key){
+    const L = LEVELS[key], seen = new Set(), out = [];
+    let guard = 0;
+    while(out.length < QUIZ_N && guard++ < 5000){
+      const q = GEN[L.gen]();
+      const k = q.A + "+" + q.B;
+      if(seen.has(k)) continue;
+      // no two in a row with the near number on the same side and the same ending
+      const last = out[out.length - 1];
+      const nearN = q.near === "L" ? q.A : q.B;
+      if(last && guard < 4000){
+        const lastN = last.near === "L" ? last.A : last.B;
+        if(lastN % 10 === nearN % 10 && last.near === q.near) continue;
+      }
+      seen.add(k);
+      out.push({ A:q.A, B:q.B, near:q.near, expect:q.A + q.B,
+                 piles:null, settled:false, correct:false, given:"", tries:0, usedTen:false });
+    }
+    return out;
+  }
+
+  /* ------------------------------------------------------------ state */
+  const S = { levelKey:null, items:[], i:0, tiles:[], sel:new Set(), drag:null };
+  const cur = () => S.items[S.i];
+  const lv = () => LEVELS[S.levelKey];
+
+  /* ------------------------------------------------------------ the board */
+  let G = null;
+
+  function measure(it){
+    const field = $("field");
+    const W = Math.max(280, field.getBoundingClientRect().width);
+    const total = it.A + it.B;
+    const maxH = Math.min(9, Math.floor(total / 100));
+    /* Flats stack two high while there are only one or two hundreds, three
+       high beyond that, so nine hundreds take three columns, not five. */
+    const fRows = maxH <= 2 ? 2 : 3;
+    const fUnit = (10 * 1.14 - .14 - (fRows - 1) * .5) / fRows;   // a flat's side in tile-widths
+    const flatCols = Math.ceil(maxH / fRows);
+    /* Width of one side, in tile-widths, when it holds everything it ever
+       could: nine rods and a loose column, plus the flats. Fixed for the
+       question, so nothing rescales while a student is working. */
+    const perSide = 10 * 1.42 + (flatCols ? .8 + flatCols * (fUnit + .5) : 0);
+    const midGap = Math.max(34, Math.min(70, W * .045));
+    const top = field.getBoundingClientRect().top + window.scrollY;
+    const below = $("origWrap").offsetHeight + $("moveRow").offsetHeight + 16 + 12
+                + $("answerCard").offsetHeight + 12 + $("navRow").offsetHeight + 14;
+    const availH = Math.max(150, window.innerHeight - top - below);
+    const byW = (W - midGap - 16) / (2 * perSide);
+    const byH = availH / 11.9;
+    const s = Math.max(4, Math.min(44, byW, byH));
+    const cg = s * .42, rg = s * .14, colH = 10 * s + 9 * rg;
+    const F = (colH - (fRows - 1) * s * .5) / fRows; // a flat's side
+    const cs = F / (10 + 9 * .06), cgap = cs * .06; // a cell in a flat
+    const H = Math.round(colH + s * .8);
+    return { W, H, s, cg, rg, colH, F, fRows, cs, cgap, pitch: s + cg, midGap, cx: W / 2, baseY: H - s * .4 };
+  }
+
+  /* Where tile number i of a pile of n stands. Outward from the middle:
+     the loose column, then the rods, then the flats. */
+  function slot(sd, i, n){
+    const H = Math.floor(n / 100), r = n - 100 * H, nRod = Math.ceil(r / 10);
+    const inner = G.midGap / 2;
+    if(i < 100 * H){
+      const f = Math.floor(i / 100), j = i % 100, col = Math.floor(j / 10), row = j % 10;
+      const fc = Math.floor(f / G.fRows), fr = f % G.fRows;
+      const d = nRod * G.pitch + (nRod ? G.s * .8 : G.s * .2) + fc * (G.F + G.s * .5);
+      const left = sd === "L" ? G.cx - inner - d - G.F : G.cx + inner + d;
+      const topY = G.baseY - G.F - fr * (G.F + G.s * .5);
+      return { x: left + col * (G.cs + G.cgap), y: topY + (9 - row) * (G.cs + G.cgap), size: G.cs, flat: true, f };
+    }
+    const k = i - 100 * H, col = Math.floor(k / 10), row = k % 10;
+    const x = sd === "L"
+      ? G.cx - inner - (nRod - col) * G.pitch + G.cg / 2
+      : G.cx + inner + (nRod - 1 - col) * G.pitch + G.cg / 2;
+    return { x, y: G.baseY - (row + 1) * G.s - row * G.rg, size: G.s, flat: false };
+  }
+
+  function buildTiles(it){
+    const field = $("field");
+    field.textContent = "";
+    S.tiles = [];
+    S.sel.clear();
+    const n = it.A + it.B;
+    for(let id = 0; id < n; id++){
+      const origin = id < it.A ? "L" : "R";
+      const el = document.createElement("div");
+      el.className = "tile " + origin + " instant";
+      el.dataset.id = String(id);
+      field.appendChild(el);
+      S.tiles.push({ id, origin, el, x:0, y:0, side:origin, flat:false });
+    }
+    layout();
+    requestAnimationFrame(() => S.tiles.forEach(t => t.el.classList.remove("instant")));
+  }
+
+  function layout(){
+    const it = cur();
+    G = measure(it);
+    const field = $("field");
+    field.style.height = G.H + "px";
+    $("boardCard").style.setProperty("--stmtFs", Math.max(26, Math.min(50, G.s * 1.2 + 14)) + "px");
+    field.querySelectorAll(".half,.divider,.rod,.flat,.ghost").forEach(n => n.remove());
+    const firstTile = field.querySelector(".tile");
+    const put = el => field.insertBefore(el, firstTile);
+    for(const sd of ["L","R"]){
+      const h = document.createElement("div");
+      h.className = "half"; h.dataset.side = sd;
+      h.style.left = (sd === "L" ? 0 : G.cx) + "px"; h.style.width = (G.W / 2) + "px";
+      put(h);
+    }
+    const dv = document.createElement("div"); dv.className = "divider"; dv.style.left = (G.cx - 1) + "px"; put(dv);
+
+    for(const sd of ["L","R"]){
+      const pile = it.piles[sd], n = pile.length;
+      const H = Math.floor(n / 100), r = n - 100 * H, nRod = Math.ceil(r / 10);
+      for(let f = 0; f < H; f++){
+        const p = slot(sd, f * 100 + 9, n);             // top-left cell of the flat
+        const pad = G.s * .12, fl = document.createElement("div");
+        fl.className = "flat";
+        fl.style.width = (G.F + 2 * pad) + "px"; fl.style.height = (G.F + 2 * pad) + "px";
+        fl.style.transform = `translate(${p.x - pad}px, ${p.y - pad}px)`;
+        put(fl);
+      }
+      for(let c = 0; c < nRod; c++){
+        const p = slot(sd, 100 * H + c * 10, n), pad = G.s * .16;
+        const rod = document.createElement("div");
+        rod.className = "rod";
+        rod.style.width = (G.s + 2 * pad) + "px"; rod.style.height = (G.colH + 2 * pad) + "px";
+        rod.style.transform = `translate(${p.x - pad}px, ${G.baseY - G.colH - pad}px)`;
+        put(rod);
+      }
+      if(r % 10 !== 0){
+        for(let i = n; i < n + (10 - r % 10); i++){
+          const q = slot(sd, i, n);
+          const g = document.createElement("div");
+          g.className = "ghost"; g.dataset.side = sd;
+          g.style.width = G.s + "px"; g.style.height = G.s + "px";
+          g.style.transform = `translate(${q.x}px, ${q.y}px)`;
+          put(g);
+        }
+      }
+      pile.forEach((id, i) => {
+        const t = S.tiles[id], p = slot(sd, i, n);
+        t.el.style.width = p.size + "px"; t.el.style.height = p.size + "px";
+        t.el.style.borderRadius = Math.max(p.flat ? 1 : 3, p.size * .16) + "px";
+        t.el.classList.toggle("inFlat", p.flat);
+        if(!(S.drag && S.drag.moving && S.drag.ids.includes(id)))
+          t.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        t.x = p.x; t.y = p.y; t.side = sd; t.flat = p.flat; t.size = p.size;
+      });
+    }
+    paintBoardText();
+  }
+
+  function paintBoardText(){
+    const it = cur();
+    const nL = it.piles.L.length, nR = it.piles.R.length, d = nL - it.A;
+    const still = !S.drag;
+    $("liveL").textContent = nL; $("liveR").textContent = nR;
+    $("liveL").classList.toggle("onTen", still && d !== 0 && nL > 0 && nL % 10 === 0);
+    $("liveR").classList.toggle("onTen", still && d !== 0 && nR > 0 && nR % 10 === 0);
+    $("origL").textContent = it.A; $("origR").textContent = it.B;
+    for(const id of ["liveAns","origAns"]){
+      $(id).textContent = it.settled ? String(it.expect) : "?";
+      $(id).className = it.settled ? "ans" : "q";
+    }
+    const fmt = v => (v > 0 ? "+" : "−") + Math.abs(v);
+    $("chipL").hidden = d === 0; $("chipR").hidden = d === 0;
+    $("chipL").textContent = d ? fmt(d) : ""; $("chipR").textContent = d ? fmt(-d) : "";
+    $("homeBtn").disabled = d === 0;
+    document.querySelectorAll(".moveBtn").forEach(b => {
+      const from = b.dataset.to === "L" ? "R" : "L";
+      b.disabled = movable(it, from).length < Number(b.dataset.n);
+    });
+    S.tiles.forEach(t => t.el.classList.toggle("sel", S.sel.has(t.id)));
+    $("field").setAttribute("aria-label", `Left pile ${nL}, right pile ${nR}. Started as ${it.A} plus ${it.B}.`);
+  }
+
+  /* ------------------------------------------------------------ moving */
+  /* Tiles in a flat stay put; everything else can move. Taking a tile out
+     fills its slot with the pile's last tile, so one tile slides rather
+     than the whole pile rippling. */
+  function movable(it, sd){
+    const n = it.piles[sd].length, H = Math.floor(n / 100);
+    return it.piles[sd].slice(100 * H);
+  }
+  function takeOut(pile, id){
+    const i = pile.indexOf(id); if(i < 0) return;
+    const last = pile.pop(); if(last !== id) pile[i] = last;
+  }
+  function moveIds(ids, to){
+    const it = cur(), from = to === "L" ? "R" : "L", src = it.piles[from];
+    const ordered = ids.filter(id => src.includes(id)).sort((a,b) => src.indexOf(b) - src.indexOf(a));
+    for(const id of ordered){ takeOut(src, id); it.piles[to].push(id); }
+    if(ordered.length) landed();
+    return ordered.length;
+  }
+  /* The buttons and arrow keys carry 1 or 10. Tiles visiting from the other
+     side go home first, so ← after → is an undo. */
+  function moveN(to, n){
+    const it = cur(), from = to === "L" ? "R" : "L";
+    const pool = movable(it, from);
+    if(pool.length < n) return;
+    const chosen = [];
+    for(let i = pool.length - 1; i >= 0 && chosen.length < n; i--) if(S.tiles[pool[i]].origin === to) chosen.push(pool[i]);
+    for(let i = pool.length - 1; i >= 0 && chosen.length < n; i--) if(!chosen.includes(pool[i])) chosen.push(pool[i]);
+    S.sel.clear();
+    moveIds(chosen, to);
+    layout();
+  }
+  function home(){
+    const it = cur();
+    S.sel.clear();
+    it.piles = { L: [], R: [] };
+    for(let id = 0; id < it.A + it.B; id++) it.piles[id < it.A ? "L" : "R"].push(id);
+    layout();
+  }
+  function landed(){
+    const it = cur(), nL = it.piles.L.length, nR = it.piles.R.length;
+    if(!it.settled && nL !== it.A && ((nL > 0 && nL % 10 === 0) || (nR > 0 && nR % 10 === 0))) it.usedTen = true;
+  }
+
+  /* ------------------------------------------------------------ pointer (the tool's) */
+  function local(e){
+    const r = $("field").getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (G.W / r.width), y: (e.clientY - r.top) * (G.W / r.width) };
+  }
+  function tileAt(el){
+    const t = el && el.closest && el.closest(".tile");
+    if(!t) return null;
+    const tile = S.tiles[+t.dataset.id];
+    return tile.flat ? null : tile;
+  }
+  function onDown(e){
+    if(e.button != null && e.button !== 0) return;
+    if(!cur() || !lv().model) return;
+    const t = tileAt(e.target), p = local(e);
+    e.preventDefault();
+    S.drag = t ? { kind:"tile", start:p, id:t.id, side:t.side, moving:false, wasSel:S.sel.has(t.id), ids:[] }
+               : { kind:"lasso", start:p, box:null, ids:[] };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  }
+  function onMove(e){
+    const D = S.drag; if(!D) return;
+    const p = local(e), dx = p.x - D.start.x, dy = p.y - D.start.y;
+    if(D.kind === "tile"){
+      if(!D.moving){
+        if(Math.hypot(dx, dy) < 6) return;
+        D.moving = true;
+        if(!D.wasSel){ S.sel.clear(); S.sel.add(D.id); }
+        D.ids = [...S.sel].filter(id => S.tiles[id].side === D.side && !S.tiles[id].flat);
+        if(!D.ids.includes(D.id)) D.ids.push(D.id);
+        D.ids.forEach(id => S.tiles[id].el.classList.add("dragging"));
+        paintBoardText();
+      }
+      D.ids.forEach(id => { const t = S.tiles[id]; t.el.style.transform = `translate(${t.x + dx}px, ${t.y + dy}px)`; });
+      const over = p.x < G.cx ? "L" : "R";
+      document.querySelectorAll(".half").forEach(h => h.classList.toggle("is-target", h.dataset.side === over && over !== D.side));
+    } else {
+      if(!D.box){
+        if(Math.hypot(dx, dy) < 6) return;
+        D.box = document.createElement("div"); D.box.className = "lasso"; $("field").appendChild(D.box);
+      }
+      const x0 = Math.min(p.x, D.start.x), y0 = Math.min(p.y, D.start.y), w = Math.abs(dx), h = Math.abs(dy);
+      Object.assign(D.box.style, { left: x0 + "px", top: y0 + "px", width: w + "px", height: h + "px" });
+      const sd = D.start.x < G.cx ? "L" : "R";
+      S.sel.clear();
+      cur().piles[sd].forEach(id => {
+        const t = S.tiles[id];
+        if(!t.flat && t.x + t.size > x0 && t.x < x0 + w && t.y + t.size > y0 && t.y < y0 + h) S.sel.add(id);
+      });
+      S.tiles.forEach(t => t.el.classList.toggle("sel", S.sel.has(t.id)));
+    }
+  }
+  function onUp(e){
+    const D = S.drag; if(!D) return;
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+    document.querySelectorAll(".half").forEach(h => h.classList.remove("is-target"));
+    if(D.kind === "tile"){
+      if(!D.moving){
+        if(S.sel.has(D.id)) S.sel.delete(D.id); else S.sel.add(D.id);
+        [...S.sel].forEach(id => { if(S.tiles[id].side !== S.tiles[D.id].side) S.sel.delete(id); });
+        S.drag = null; paintBoardText(); return;
+      }
+      const over = local(e).x < G.cx ? "L" : "R";
+      D.ids.forEach(id => S.tiles[id].el.classList.remove("dragging"));
+      S.drag = null;
+      if(over !== D.side){ moveIds(D.ids, over); S.sel.clear(); }
+      else if(!D.wasSel) S.sel.delete(D.id);
+      layout();
+    } else {
+      if(D.box) D.box.remove(); else S.sel.clear();
+      S.drag = null; paintBoardText();
+    }
+  }
+  $("field").addEventListener("pointerdown", onDown);
+
+  /* ------------------------------------------------------------ painting */
+  function setPrompt(text, tone){
+    $("promptText").textContent = text;
+    $("promptBar").className = "promptBar" + (tone ? " " + tone : "");
+    $("promptIco").textContent = tone === "good" ? "✅" : tone === "bad" ? "💡" : "💭";
+  }
+
+  function paint(fresh){
+    const it = cur(), L = lv();
+    if(!it) return;
+    S.drag = null;
+    $("qCounter").textContent = `Question ${S.i + 1} / ${S.items.length}`;
+    $("progressFill").style.width = (S.i / S.items.length * 100).toFixed(1) + "%";
+    $("answerLab").innerHTML = `${it.A} <span class="op">+</span> ${it.B} <span class="op">=</span>`;
+    $("boardCard").hidden = !L.model;
+    $("qCard").hidden = L.model;
+    if(!L.model){
+      $("sA").textContent = it.A; $("sB").textContent = it.B;
+      $("sAns").textContent = it.settled ? String(it.expect) : "?";
+      $("sAns").className = it.settled ? "ans" : "q";
+      $("noModel").hidden = S.i > 0;
+    } else {
+      $("sA").textContent = ""; $("sB").textContent = ""; $("sAns").textContent = "";
+      if(!it.piles) it.piles = { L: Array.from({length:it.A}, (_, k) => k), R: Array.from({length:it.B}, (_, k) => it.A + k) };
+      if(fresh) buildTiles(it); else layout();
+    }
+    const ai = $("ansInput");
+    if(fresh || document.activeElement !== ai) ai.value = it.given || "";
+    ai.className = "ansIn" + (it.settled ? (it.correct ? " right" : " wrong") : "");
+    $("feedback").textContent = it.settled ? (it.correct ? "Correct" : "The answer is " + it.expect) : "";
+    $("feedback").className = "fb " + (it.settled ? (it.correct ? "ok" : "no") : "");
+    $("prevBtn").disabled = S.i === 0;
+    $("nextBtn").textContent = S.i === S.items.length - 1 ? "Finish" : "Next →";
+    if(!it.settled){
+      setPrompt(L.model
+        ? "Drag tiles from one pile to the other to make a ten (or a hundred) — the total stays the same. Then type the answer."
+        : "Move some from one number to the other to make a ten or a hundred, then type the answer.");
+    } else setPrompt(it.correct ? "Correct." : `The answer is ${it.expect}.`, it.correct ? "good" : "bad");
+  }
+
+  /* ------------------------------------------------------------ marking */
+  const normalise = s => { const t = String(s).trim().replace(/[\s,]/g, ""); return /^-?\d+$/.test(t) ? String(Number(t)) : null; };
+  function check(){
+    const it = cur();
+    if(!it) return;
+    const raw = $("ansInput").value, got = normalise(raw);
+    if(got === null){ setPrompt("Type a whole number.", "bad"); $("ansInput").focus(); return; }
+    const right = got === String(it.expect);
+    it.tries++;
+    if(!it.settled){
+      it.given = raw; it.correct = right; it.settled = true;   // ONLY the first attempt scores
+      if(right) confetti();
+      if(window.MMTSubmit && window.MMTSubmit.refresh) window.MMTSubmit.refresh();
+      paint(false);
+      if(!right){
+        const nearN = it.near === "L" ? it.A : it.B, big = nearN >= 150 && S.levelKey !== "sweet" && lv().gen === "medium";
+        const target = big ? Math.ceil(nearN / 100) * 100 : Math.ceil(nearN / 10) * 10, g = target - nearN;
+        setPrompt(`The answer is ${it.expect}. Move ${g} across to make ${nearN} into ${target} — the total stays the same.`, "bad");
+      }
+      return;
+    }
+    it.given = raw;
+    $("ansInput").className = "ansIn" + (right ? " right" : " wrong");
+    setPrompt(right ? "That is right. The mark for this one is from your first answer."
+                    : `Still not it — the answer is ${it.expect}.`, right ? "good" : "bad");
+  }
+  function next(){
+    const it = cur();
+    if(!it.settled){
+      it.settled = true; it.correct = false;
+      if(window.MMTSubmit && window.MMTSubmit.refresh) window.MMTSubmit.refresh();
+    }
+    if(S.i < S.items.length - 1){ S.i++; paint(true); $("ansInput").focus({ preventScroll:true }); }
+    else finish();
+  }
+
+  /* ------------------------------------------------------------ finishing */
+  function isPartial(){ return !!(window.MMTSubmit && window.MMTSubmit.isPartial && window.MMTSubmit.isPartial()); }
+  function scores(){
+    const counted = isPartial() ? S.items.filter(x => x.settled) : S.items;
+    const score = counted.filter(x => x.correct).length;
+    const usedTen = counted.filter(x => x.usedTen).length;
+    const total = isPartial() && window.MMTSubmit.total ? window.MMTSubmit.total() : QUIZ_N;
+    return { score, total, counted: counted.length, usedTen };
+  }
+  function finish(){
+    if(!isPartial()) S.items.forEach(it => { if(!it.settled){ it.settled = true; it.correct = false; } });
+    const s = scores(), L = lv();
+    const pct = s.total ? Math.round(s.score / s.total * 100) : 0;
+    $("progressFill").style.width = "100%";
+    $("certScore").textContent = `${s.score} / ${s.total}`;
+    $("certSub").innerHTML = `Addition by Compensation &middot; ${L.name} &middot; ${pct}%`
+      + (window.MMTAuth && window.MMTAuth.certTail ? "<br>" + window.MMTAuth.certTail() : "");
+    $("certBreak").innerHTML = L.model ? `Moved tiles to make a ten before answering: ${s.usedTen} / ${s.counted}` : "";
+    $("certModal").classList.add("open");
+
+    /* No typed answer is ever in the payload — only marks and counts. */
+    if(window.MMTSave) window.MMTSave({
+      tool:"addition-compensation-student-quiz", topic:"number",
+      level:L.name, levelKey:S.levelKey,
+      score:s.score, total:s.total, percent:pct,
+      masteryTopic:"addition-compensation",
+      types: ["add:" + s.score + "/" + s.counted]
+        .concat(L.model ? ["usedten:" + s.usedTen + "/" + s.counted] : [])
+        .concat(["level:" + S.levelKey, "model:" + (L.model ? "on" : "off")]),
+      certificateText:"Addition by Compensation — " + L.name + ": " + s.score + "/" + s.total,
+      ...(window.MMTSubmit && window.MMTSubmit.fields ? window.MMTSubmit.fields() : {})
+    });
+  }
+
+  /* ------------------------------------------------------------ confetti */
+  const CONFETTI_COLOURS = ["#2563eb","#22c55e","#f59e0b","#ec4899","#7c3aed","#ef4444","#14b8a6"];
+  function confetti(){
+    if(reduceMotion) return;
+    const host = document.createElement("div");
+    host.className = "confetti"; host.setAttribute("aria-hidden","true");
+    document.body.appendChild(host);
+    const W = innerWidth, H = innerHeight, bits = [];
+    for(let i = 0; i < 56; i++){
+      const e = document.createElement("i"), size = 6 + Math.random()*7;
+      e.style.cssText = "position:absolute;top:0;left:0;width:" + size + "px;height:" + (size*.6) + "px;background:"
+        + CONFETTI_COLOURS[i % CONFETTI_COLOURS.length] + ";border-radius:" + (Math.random() < .3 ? "50%" : "2px") + ";";
+      host.appendChild(e);
+      bits.push({ e, x:W*(.15 + Math.random()*.7), y:-20 - Math.random()*H*.35, vx:(Math.random()-.5)*2.2,
+                  vy:2.6 + Math.random()*3.4, rot:Math.random()*360, vr:(Math.random()-.5)*18 });
+    }
+    const t0 = performance.now();
+    (function frame(now){
+      const t = now - t0; let live = false;
+      for(const b of bits){
+        b.x += b.vx; b.y += b.vy; b.vy += .06; b.rot += b.vr;
+        if(b.y < H + 40) live = true;
+        b.e.style.transform = "translate(" + b.x.toFixed(1) + "px," + b.y.toFixed(1) + "px) rotate(" + b.rot.toFixed(0) + "deg)";
+        b.e.style.opacity = t > 1500 ? String(Math.max(0, 1 - (t-1500)/700)) : "1";
+      }
+      if(live && t < 2300) requestAnimationFrame(frame); else host.remove();
+    })(t0);
+  }
+
+  /* ------------------------------------------------------------ levels */
+  function buildLevelList(){
+    $("lvlList").innerHTML = ORDER.map(k => {
+      const L = LEVELS[k];
+      return `<button class="lvlRow ${k}" type="button" data-k="${k}"><span class="lvlIco">${L.ico}</span>`
+        + `<strong>${L.name}</strong><span class="d">${L.d}</span><span class="go">&rsaquo;</span></button>`;
+    }).join("");
+    $("lvlList").querySelectorAll(".lvlRow").forEach(b => b.addEventListener("click", () => startLevel(b.dataset.k)));
+  }
+  function openLevels(){ $("certModal").classList.remove("open"); $("levelModal").classList.add("open"); }
+  function startLevel(k){
+    S.levelKey = k; S.items = buildPaper(k); S.i = 0;
+    $("levelModal").classList.remove("open"); $("certModal").classList.remove("open");
+    const chip = $("levelChip"); chip.hidden = false; chip.className = "lvlChip " + k; chip.textContent = LEVELS[k].name;
+    if(window.MMTSubmit && window.MMTSubmit.reset) window.MMTSubmit.reset();
+    paint(true);
+    $("ansInput").focus({ preventScroll:true });
+  }
+
+  /* ------------------------------------------------------------ wiring */
+  $("checkBtn").addEventListener("click", check);
+  $("ansInput").addEventListener("keydown", e => {
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    if(cur() && !cur().settled) check(); else next();
+  });
+  $("nextBtn").addEventListener("click", next);
+  $("prevBtn").addEventListener("click", () => { if(S.i > 0){ S.i--; paint(true); } });
+  $("menuBtn").addEventListener("click", openLevels);
+  $("changeLvlBtn").addEventListener("click", openLevels);
+  $("againBtn").addEventListener("click", () => startLevel(S.levelKey));
+  $("homeBtn").addEventListener("click", home);
+  document.querySelectorAll(".moveBtn").forEach(b => b.addEventListener("click", () => moveN(b.dataset.to, Number(b.dataset.n))));
+  $("copyBtn").addEventListener("click", async () => {
+    const s = scores();
+    const line = "🏆 Mills Maths Tools — Addition by Compensation Student Quiz\n" + `${lv().name}: ${s.score}/${s.total}\n`
+      + (window.MMTAuth && window.MMTAuth.shareLine ? window.MMTAuth.shareLine() : "");
+    try { await navigator.clipboard.writeText(line); $("copyBtn").textContent = "Copied"; }
+    catch { $("copyBtn").textContent = "Could not copy"; }
+    setTimeout(() => { $("copyBtn").textContent = "Copy my result"; }, 1800);
+  });
+  $("toolsBtn").addEventListener("click", e => {
+    e.stopPropagation();
+    const m = $("toolsMenu"), was = m.classList.contains("open");
+    m.classList.toggle("open", !was); $("toolsBtn").setAttribute("aria-expanded", String(!was));
+  });
+  document.addEventListener("click", () => { $("toolsMenu").classList.remove("open"); $("toolsBtn").setAttribute("aria-expanded","false"); });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ $("toolsMenu").classList.remove("open"); if(S.sel.size){ S.sel.clear(); if(cur() && lv().model) paintBoardText(); } return; }
+    if($("levelModal").classList.contains("open") || $("certModal").classList.contains("open")) return;
+    if(!S.items.length || !lv().model) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if(tag === "INPUT" || tag === "BUTTON") return;
+    if(e.key === "ArrowLeft"){ e.preventDefault(); moveN("L", e.shiftKey ? 10 : 1); }
+    else if(e.key === "ArrowRight"){ e.preventDefault(); moveN("R", e.shiftKey ? 10 : 1); }
+  });
+  let rt = 0;
+  addEventListener("resize", () => { cancelAnimationFrame(rt); rt = requestAnimationFrame(() => { if(S.items.length && lv().model) layout(); }); });
+
+  /* The shared early-submit button. It is an ES module, so it is imported —
+     a plain <script> tag would stop at its `export` line and never define
+     window.MMTSubmit. If it cannot be reached (offline, file://) the quiz
+     simply works without it. */
+  import("/portal/shared/earlySubmit.js").then(m => {
+    window.MMTSubmit = m.MMTSubmit;
+    m.MMTSubmit.register({
+      progress: () => ({ attempted:S.items.filter(x => x.settled).length,
+                         correct:S.items.filter(x => x.correct).length, quizLength:QUIZ_N }),
+      finish: () => finish()
+    });
+  }).catch(() => {});
+
+  buildLevelList();
+  openLevels();
+
+  /* a small surface for the automated checks; nothing in the page reads it */
+  window.__ACQ__ = { S, LEVELS, ORDER, buildPaper, makeSweet, makeMild, makeMedium, startLevel, scores, finish, next, check, paint, moveN, moveIds, home, layout, geom: () => G, slot };
+})();
+</script>
+
+  <!-- ===== MMT student-code login + secure save + sign-in banner ===== -->
+  <!-- The overlay, the sign-in chip and window.MMTSave() live in one shared
+       file rather than a copy inside every quiz. -->
+  <script src="/portal/shared/quizAuthUI.js"></script>
+</body>
+</html>

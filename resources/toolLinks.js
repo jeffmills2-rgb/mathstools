@@ -99,6 +99,13 @@ window.MMT_TOOL_LINKS = {
       tags: ["compensation", "addition", "mental strategies", "bridging to ten", "make a ten", "friendly numbers", "tens and ones", "rearranging"]
     },
     {
+      title: "Addition by Compensation — Student Quiz",
+      kind: "Student quiz",
+      url: "/online-quizzes/stage-3/number/addition-compensation.html",
+      note: "Sweet to Extra Spicy. The first three levels hand over the tile board (hundreds bundle into flats); the last two take it away. Saves to the student dashboard.",
+      tags: ["quiz", "compensation", "addition", "mental strategies", "make a ten", "three digit"]
+    },
+    {
       title: "Constant Difference",
       kind: "Teacher tool",
       url: "/interactive-tools/stage-3/number/constant-difference/",

@@ -1,6 +1,6 @@
 /* Written by tools/build-pwa.mjs — do not edit by hand. */
 self.MMT_PRECACHE = {
- "version": "8bd1743f2e",
+ "version": "72467414f7",
  "files": [
   "./",
   "assessment/exam-builder/app.js",
@@ -629,6 +629,7 @@ self.MMT_PRECACHE = {
   "mmt-screen/widgets/timer.js",
   "mmt-screen/widgets/traffic-light.js",
   "mmt-screen/widgets/vendor/qrcodegen.js",
+  "online-quizzes/stage-3/number/addition-compensation.html",
   "online-quizzes/stage-3/number/constant-difference.html",
   "online-quizzes/stage-3/number/division-grouping.html",
   "online-quizzes/stage-3/number/multiply-divide-by-ten.html",

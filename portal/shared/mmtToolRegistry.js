@@ -210,6 +210,14 @@ export const MMT_TOOLS = Object.freeze([
     notes: "Sweet/Mild/Medium/Spicy, 10 questions (teacher design 2026-09-21). Sweet = share a total only; Mild adds one share known; Medium mixes all three types (share a total, one share known, difference known); Spicy is all three with NO bar model. Sweet-Medium keep the teaching tool's model and ask for TWO steps: what one part is worth (typed into the glowing boxes, which mirror) and then the answer. A question scores only if BOTH steps are right first time. types[] carries per-type subtotals (type1/type2/type3:s/t), onepart:s/t at the model levels, level and model:on/off. No typed answer is ever in the payload. masteryTopic 'stacked-bar-ratio'. Pairs with the teaching tool and the worksheet creator, all under MA4-RAT-C-01.",
   },
   {
+    toolId: "addition-compensation-quiz", title: "Addition by Compensation — Student Quiz", category: "Quiz",
+    enabled: true, resultCollection: "achievements", richCollection: null,
+    achievementToolName: "addition-compensation-student-quiz", topics: ["number"], stage: "Stage 3",
+    launchUrl: "/online-quizzes/stage-3/number/addition-compensation.html",
+    supportsAdventureAttempts: false, supportsSkillBreakdown: false,
+    notes: "Sweet/Mild/Medium/Spicy/Extra Spicy, 10 questions (teacher design 2026-09-30, same ladder as Constant Difference). Sweet/Mild/Medium keep the WHOLE teaching tool (drag tiles or a selected group across, box-select, gap to the next ten, -n/+n chips, green on a ten) plus <-10 <-1 1-> 10-> buttons. Sweet two-digit, total under 100; Mild totals 100-199 (ten tens bundle into a FLAT); Medium three-digit with one number 1-35 below a hundred and the other able to give without breaking a ten. Hundreds are drawn as smaller flats stacked 2-3 high and stay put. Spicy = Mild's numbers, Extra Spicy = Medium's, no tiles. Answer never on screen before marking; first attempt only scores. types[]: add:s/t, usedten:n/t (model levels), level, model:on/off. No typed answer in the payload. masteryTopic 'addition-compensation'. Pairs with the teaching tool under MA3-AR-01.",
+  },
+  {
     toolId: "constant-difference-quiz", title: "Constant Difference — Student Quiz", category: "Quiz",
     enabled: true, resultCollection: "achievements", richCollection: null,
     achievementToolName: "constant-difference-student-quiz", topics: ["number"], stage: "Stage 3",

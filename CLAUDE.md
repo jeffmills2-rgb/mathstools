@@ -54,7 +54,16 @@
 >
 > **NEW (2026-09-30, session — being pushed): ADDITION BY COMPENSATION.**
 > `interactive-tools/stage-3/number/addition-compensation/`, MA3-AR-01. Self-contained,
-> no Firebase. Tools ▾: Constant Difference + greyed Student Quiz.
+> no Firebase. Tools ▾ is ONE row: Student Quiz (teacher decision 2026-09-30).
+> * **STUDENT QUIZ** `online-quizzes/stage-3/number/addition-compensation.html`, registry
+>   `addition-compensation-quiz`, writes `tool: "addition-compensation-student-quiz"`,
+>   masteryTopic `addition-compensation`. Same ladder as Constant Difference: Sweet (2-digit,
+>   total < 100), Mild (totals 100–199), Medium (3-digit, one number 1–35 below a hundred,
+>   the other can give without breaking a ten) keep the WHOLE tool + ←10 ←1 1→ 10→ buttons;
+>   Spicy/Extra Spicy = Mild/Medium numbers, no tiles. **Full hundreds bundle into FLATS**
+>   (smaller, stacked 2 high, 3 high past two hundreds, at the pile's outer end) and stay
+>   put — so a side never needs more than 9 rods + a loose column and the board scale is
+>   fixed per question. types[]: `add:s/t`, `usedten:n/t`, `level:`, `model:`. 42k checks.
 > * Each addend is a pile of DOM tiles in COLUMNS OF TEN (rods). Each pile's unfinished
 >   ten stands NEXT TO THE MIDDLE, so the two face each other; empty slots in it are
 >   dashed ("gap to the next ten", toggle). A moved tile KEEPS ITS COLOUR.
